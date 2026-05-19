@@ -16,5 +16,6 @@ export CLI_MFA=ykman
 export AWS_PROFILE=default
 export AWS_REGION=us-east-1
 export AWS_PAGER=""
+export BAT_PAGER=""
 
 export COILY_LOCKDOWN_ROOT="$HOME/projects/coilysiren"
