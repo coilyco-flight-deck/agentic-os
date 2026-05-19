@@ -75,7 +75,7 @@ workspace_decoration_visibility = "always_show"
 [appearance.tabs.header_toolbar_chip_selection]
 
 [appearance.tabs.header_toolbar_chip_selection.custom]
-left = ["tabs_panel"]
+left = ["tabs_panel", "tools_panel", "code_review"]
 right = ["notifications_mailbox"]
 
 [appearance.vertical_tabs]
@@ -142,7 +142,7 @@ cli_agent_toolbar_chip_selection_setting = "default"
 [warpify]
 
 [warpify.subshells]
-added_subshell_commands = ["docker compose .* run .*", "docker container exec .*"]
+added_subshell_commands = ["docker compose .* run .*", "docker container exec .*", "ssh kai@kai-server"]
 
 [code]
 
@@ -152,10 +152,19 @@ agent_mode_codebase_context_auto_indexing = false
 [code.editor]
 open_file_layout = "new_tab"
 open_file_editor = "warp"
-show_code_review_button = false
+show_code_review_button = true
 
 [account]
 # This file is the source of truth; the repo wins, not Warp's cloud sync.
 # Flipping back to true would let Warp overwrite the symlink target on every
 # settings-touch from any device. See coilysiren/agentic-os#50.
 is_settings_sync_enabled = false
+
+[session]
+
+[session.working_directory_config]
+advanced_mode = false
+global = { custom_dir = "~/projects/coilysiren", mode = "custom_dir" }
+new_tab = { custom_dir = "", mode = "previous_dir" }
+new_window = { custom_dir = "", mode = "previous_dir" }
+split_pane = { custom_dir = "", mode = "previous_dir" }
