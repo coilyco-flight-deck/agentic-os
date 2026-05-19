@@ -56,7 +56,14 @@ Then update the inventory list.
 2. If OAuth-protected: `mcporter auth <name>`.
 3. `mcporter emit-ts <name> --out <personal-os-repo>/mcp-servers/<name>.d.ts --mode types`.
 4. Add a one-line entry to the inventory.
-5. Commit (closes the same-repo issue per repo baseline).
+5. Re-run the personal-OS repo's setup script so the home-layer config picks up the new server (otherwise it only resolves when cwd is inside the source repo's tree).
+6. Commit (closes the same-repo issue per repo baseline).
+
+## Cross-cwd resolution
+
+mcporter layers two config sources: `<cwd>/config/mcporter.json` and the home candidate `~/.mcporter/mcporter.json`. Without the home layer, MCP calls only resolve when cwd sits inside a directory that ships its own config, so any MCP a user reaches for from `~/` or another non-config cwd is silently unreachable.
+
+The home layer can be populated either by symlinking it at a single canonical `config/mcporter.json` (single-source setup) or by a merge script that combines multiple source configs (multi-source setup, useful when MCP entries are spread across more than one personal repo). The personal-OS repo's setup script owns whichever wire-up is in use.
 
 ## Why no `.mcp.json`
 
