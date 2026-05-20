@@ -1,0 +1,86 @@
+---
+# claude-luca - daily-driver window for the luca stack.
+#
+# Stack: repo-recall (cyan), session-lattice (magenta), luca (yellow).
+# Layout: 3 scratch tabs (green) + 3 duos, one window.
+#
+# Conventions:
+#   - All tabs cwd /Users/kai/projects/coilysiren; per-tab repo binding via
+#     COILY_COMMIT_SCOPE, not cwd.
+#   - Titles use ` · ` separator and pre-pin with printf to resist auto-rename.
+#   - Each duo = working `claude` tab + pulse tab (watch loop or hint shell).
+#
+# luca pulse stays a bare shell on purpose: on-demand dictation, not a watch loop.
+# session-lattice pulse runs `watch git log` until the MCP lands.
+#
+# See ./README.md for the Warp launch-config schema and sharp edges.
+name: claude-luca
+windows:
+  - active_tab_index: 0
+    tabs:
+      - title: "scratch · 1"
+        color: green
+        layout:
+          cwd: /Users/kai/projects/coilysiren
+          commands:
+            - exec: |
+                printf '\033]0;scratch · 1\007'
+                printf '\n  \033[1mclaude-luca\033[0m  ·  %s\n\n' "$(date '+%A, %B %-d')"
+                printf '  CLAUDE.md       /Users/kai/projects/coilysiren/CLAUDE.md\n'
+                printf '  vault inbox     /Users/kai/projects/coilysiren/coilyco-vault/Obsidian\\ Vault/inbox\n'
+                printf '  design notes    /Users/kai/projects/coilysiren/agentic-os/warp/launch_configurations/claude-luca.yaml\n\n'
+                printf '  duos: \033[36mrepo-recall\033[0m   \033[35msession-lattice\033[0m   \033[33mluca\033[0m\n\n'
+      - title: "scratch · 2"
+        color: green
+        layout:
+          cwd: /Users/kai/projects/coilysiren
+          commands:
+            - exec: printf '\033]0;scratch · 2\007'
+      - title: "scratch · 3"
+        color: green
+        layout:
+          cwd: /Users/kai/projects/coilysiren
+          commands:
+            - exec: printf '\033]0;scratch · 3\007'
+      - title: "repo-recall · claude"
+        color: cyan
+        layout:
+          cwd: /Users/kai/projects/coilysiren
+          commands:
+            - exec: printf '\033]0;repo-recall · claude\007' && export COILY_COMMIT_SCOPE=/Users/kai/projects/coilysiren/repo-recall && claude
+      - title: "repo-recall · pulse"
+        color: cyan
+        layout:
+          cwd: /Users/kai/projects/coilysiren
+          commands:
+            - exec: printf '\033]0;repo-recall · pulse\007' && export COILY_COMMIT_SCOPE=/Users/kai/projects/coilysiren/repo-recall && watch -n 5 mcporter call repo-recall-dev.recall_dashboard
+      - title: "session-lattice · claude"
+        color: magenta
+        layout:
+          cwd: /Users/kai/projects/coilysiren
+          commands:
+            - exec: printf '\033]0;session-lattice · claude\007' && export COILY_COMMIT_SCOPE=/Users/kai/projects/coilysiren/session-lattice && claude
+      - title: "session-lattice · pulse"
+        color: magenta
+        layout:
+          cwd: /Users/kai/projects/coilysiren
+          commands:
+            - exec: printf '\033]0;session-lattice · pulse\007' && export COILY_COMMIT_SCOPE=/Users/kai/projects/coilysiren/session-lattice && watch -n 10 'git -C /Users/kai/projects/coilysiren/session-lattice log --oneline -15'
+      - title: "luca · claude"
+        color: yellow
+        layout:
+          cwd: /Users/kai/projects/coilysiren
+          commands:
+            - exec: printf '\033]0;luca · claude\007' && export COILY_COMMIT_SCOPE=/Users/kai/projects/coilysiren/luca && claude
+      - title: "luca · shell"
+        color: yellow
+        layout:
+          cwd: /Users/kai/projects/coilysiren
+          commands:
+            - exec: |
+                printf '\033]0;luca · shell\007'
+                export COILY_COMMIT_SCOPE=/Users/kai/projects/coilysiren/luca
+                printf '\n  \033[1mluca · shell\033[0m  ·  on-demand invocations\n\n'
+                printf '  /luca-inspect    recent agent activity (stateless)\n'
+                printf '  /luca-ask        natural-language question over recall data\n'
+                printf '  /luca            meta-loop digest with cross-run synthesis\n\n'

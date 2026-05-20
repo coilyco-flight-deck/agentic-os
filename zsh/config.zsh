@@ -90,6 +90,45 @@ github-token-load() {
   export HOMEBREW_GITHUB_PACKAGES_TOKEN="$GITHUB_PERSONAL_ACCESS_TOKEN"
 }
 
+autoload -Uz compinit && compinit
+
+# Warp ops. `warp launch <name>` opens a launch configuration; `warp list` shows them.
+warp() {
+  local dir="$HOME/.warp/launch_configurations"
+  case "$1" in
+    launch)
+      if [[ -z "$2" ]]; then
+        echo "usage: warp launch <name>" >&2
+        return 1
+      fi
+      open "warp://launch/$2"
+      # Fullscreen the new window. The YAML schema has no native fullscreen
+      # field, so we fire macOS Ctrl-Cmd-F via System Events after the window
+      # has time to appear.
+      sleep 0.6
+      osascript -e 'tell application "System Events" to tell process "Warp" to keystroke "f" using {control down, command down}' 2>/dev/null
+      ;;
+    list|ls)
+      ls "$dir" 2>/dev/null | sed 's/\.yaml$//'
+      ;;
+    *)
+      echo "usage: warp {launch <name> | list}" >&2
+      return 1
+      ;;
+  esac
+}
+_warp() {
+  local -a verbs configs
+  verbs=(launch list ls)
+  if (( CURRENT == 2 )); then
+    compadd -- $verbs
+  elif (( CURRENT == 3 )) && [[ $words[2] == launch ]]; then
+    configs=(${(f)"$(ls "$HOME/.warp/launch_configurations" 2>/dev/null | sed 's/\.yaml$//')"})
+    compadd -- $configs
+  fi
+}
+compdef _warp warp
+
 # ─── Integrations ─────────────────────────────────────────────────────────────
 command -v direnv >/dev/null && eval "$(direnv hook zsh)"
 
