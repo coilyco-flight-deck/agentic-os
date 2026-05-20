@@ -24,6 +24,7 @@ import argparse
 import os
 import platform
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -77,7 +78,8 @@ def rewrite_settings(theme_yaml_path: Path) -> bool:
         r'(\[appearance\.themes\]\s*\n\s*theme\s*=\s*\{\s*\n\s*custom\s*=\s*\{\s*\n\s*name\s*=\s*"[^"]*",\s*\n\s*path\s*=\s*")[^"]*(",)',
         re.MULTILINE,
     )
-    new_text, n = pattern.subn(rf"\g<1>{toml_str(theme_yaml_path)}\g<2>", text)
+    rendered = toml_str(theme_yaml_path)
+    new_text, n = pattern.subn(lambda m: m.group(1) + rendered + m.group(2), text)
     if n != 1:
         raise SystemExit(
             f"could not locate theme.custom.path in {SETTINGS_PATH}; "
@@ -95,7 +97,8 @@ def rewrite_theme_yaml(wallpaper: Path) -> bool:
         r"(background_image:\s*\n\s*path:\s*).*",
         re.MULTILINE,
     )
-    new_text, n = pattern.subn(rf"\g<1>{yaml_str(wallpaper)}", text)
+    rendered = yaml_str(wallpaper)
+    new_text, n = pattern.subn(lambda m: m.group(1) + rendered, text)
     if n != 1:
         raise SystemExit(
             f"could not locate background_image.path in {THEME_PATH}",
@@ -106,9 +109,27 @@ def rewrite_theme_yaml(wallpaper: Path) -> bool:
     return True
 
 
+_GIT_CANDIDATES = (
+    "git",
+    r"C:\Program Files\Git\bin\git.exe",
+    r"C:\Program Files\Git\cmd\git.exe",
+    "/usr/bin/git",
+    "/opt/homebrew/bin/git",
+    "/home/linuxbrew/.linuxbrew/bin/git",
+)
+
+
+def find_git() -> str:
+    for candidate in _GIT_CANDIDATES:
+        resolved = shutil.which(candidate) if "/" not in candidate and "\\" not in candidate else (candidate if Path(candidate).exists() else None)
+        if resolved:
+            return resolved
+    raise SystemExit("git not found on PATH or in common install locations")
+
+
 def git(*args: str) -> subprocess.CompletedProcess:
     return subprocess.run(
-        ["git", "-C", str(REPO_ROOT), *args],
+        [find_git(), "-C", str(REPO_ROOT), *args],
         check=True,
         capture_output=True,
         text=True,
