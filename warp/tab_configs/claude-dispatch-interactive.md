@@ -7,16 +7,26 @@ This doc walks the design top to bottom. If you know Warp's `tab_configs/` direc
 ## What it does
 
 ```
-$ coily dispatch interactive coilysiren/agentic-os#123
+$ coily dispatch interactive coilysiren/repo-recall#88
 ```
 
 opens a new tab in the active Warp Preview window. The tab:
 
-- cd's into the local checkout of the named repo
-- prints a one-line header (`coilysiren/agentic-os#123: <issue title>`) so the tab is identifiable at a glance
-- execs `claude -p "Work on issue coilysiren/agentic-os#123 - <prompt body>"`, dropping you straight into an interactive Claude session against that issue
+- cd's into `~/projects/coilysiren/repo-recall`
+- prints a one-line header like `coilysiren/repo-recall#88: rotate session-lattice token format` so the tab is identifiable at a glance from the vertical tabs sidebar
+- execs `claude -p "Work on issue coilysiren/repo-recall#88 - rotate session-lattice token format ..."`, dropping you straight into an interactive Claude session against that issue
 
-Multiple `coily dispatch interactive` calls can fire back to back. Each lands in its own tab without races.
+The fan-out shape that justifies the design: queue up half a dozen issues from the couch, walk away, come back to six tabs each labelled with its issue. None of them races the others.
+
+```
+$ coily dispatch interactive coilysiren/repo-recall#88
+$ coily dispatch interactive coilysiren/session-lattice#42
+$ coily dispatch interactive coilysiren/luca#17
+$ coily dispatch interactive coilysiren/eco-mods#203
+$ coily dispatch interactive coilysiren/agentic-os-kai#588
+$ coily dispatch interactive coilysiren/coily#274
+# six tabs open, each cd'd into its repo, each in its own claude session
+```
 
 ## The constraint that shapes it
 

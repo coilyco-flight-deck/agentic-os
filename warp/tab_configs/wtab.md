@@ -7,15 +7,25 @@ This doc walks the design top to bottom. If you know Warp's `tab_configs/` direc
 ## What it does
 
 ```
-$ warp tab blue "scratch"
+$ cd ~/projects/coilysiren/repo-recall
+$ warp tab cyan "🧜 repo-recall · scratch"
 ```
 
 opens a new tab in the active Warp Preview window:
 
-- Tab title: `scratch`
-- Tab color: blue (the ANSI blue from your theme)
-- cwd: whatever `$PWD` was when you ran the command
+- Tab title: `🧜 repo-recall · scratch`
+- Tab color: cyan (the ANSI cyan from your theme)
+- cwd: `~/projects/coilysiren/repo-recall` (whatever `$PWD` was when you ran the command)
 - Otherwise indistinguishable from a plus-button new tab: your normal shell, your normal startup, no extra processes
+
+A few more in the wild:
+
+```
+$ warp tab magenta "session-lattice · debug"   # match the per-repo color you use elsewhere
+$ warp tab red    "🔥 prod incident"            # so the angry tab is visibly angry
+$ warp tab green  "🌱 fresh branch"
+$ warp tab yellow "luca · readme polish"
+```
 
 `warp colors` lists the valid color set. `warp tab` with no args prints usage plus the list. Tab completion offers the same list.
 
