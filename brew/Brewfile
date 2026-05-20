@@ -166,6 +166,14 @@ brew "direnv"
 # https://github.com/jdx/mise
 brew "mise"
 
+# golangci-lint - Go linter aggregator (used by pre-commit on every Go repo)
+# https://github.com/golangci/golangci-lint
+brew "golangci-lint"
+
+# trufflehog - offline secret scanner (used by pre-commit across the catalog)
+# https://github.com/trufflesecurity/trufflehog
+brew "trufflehog"
+
 # ---- Casks ---- #
 
 # Warp - terminal emulator with block UI
