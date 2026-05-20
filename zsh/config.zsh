@@ -96,8 +96,14 @@ autoload -Uz compinit && compinit
 # `warp launch <name> <tab-arg>...` runs a single tab's sibling script
 # `<name>-<tab-arg-joined-with-->.sh` instead of opening the whole window, so
 # pulse/banner tabs can be stopped and restarted standalone.
+# `warp tab <color> <title...>` opens a new tab in the current window with the
+# given pinned title and ANSI tab color. cwd is inherited from $PWD. Color must
+# be one of the 8 ANSI values; Warp's tab_config schema rejects anything else
+# (AnsiColorIdentifier enum in warp_core/src/ui/theme/mod.rs).
 warp() {
   local dir="$HOME/.warp/launch_configurations"
+  local -a warp_tab_colors
+  warp_tab_colors=(black red green yellow blue magenta cyan white)
   case "$1" in
     launch)
       if [[ -z "$2" ]]; then
@@ -125,23 +131,75 @@ warp() {
       sleep 0.6
       osascript -e 'tell application "System Events" to tell process "Warp" to keystroke "f" using {control down, command down}' 2>/dev/null
       ;;
+    tab)
+      # Writes ~/.warp/tab_configs/wtab.toml fresh on every invocation with
+      # title, color, and cwd baked in as literals. Warp re-scans tab_configs/
+      # on each URI fire (handle_tab_config_uri calls load_tab_configs), so
+      # the fresh write is picked up before the tab opens.
+      #
+      # Why bake everything: Warp's `title` field is the actual tab title
+      # (rendered by render_tab_config; OSC 0 from commands can't override
+      # it). The URI handler doesn't thread query params into config params,
+      # so handlebars `{{ }}` templating from the URL isn't an option. Baking
+      # is the only path to a dynamic title.
+      if (( $# < 3 )); then
+        echo "usage: warp tab <color> <title...>" >&2
+        echo "colors: ${warp_tab_colors[*]}" >&2
+        return 1
+      fi
+      local color="$2"
+      shift 2
+      local title="$*"
+      if [[ ${warp_tab_colors[(Ie)$color]} -eq 0 ]]; then
+        echo "warp: invalid color '$color'" >&2
+        echo "colors: ${warp_tab_colors[*]}" >&2
+        return 1
+      fi
+      # TOML basic-string escaping: backslash and double-quote.
+      local esc_title=${title//\\/\\\\}
+      esc_title=${esc_title//\"/\\\"}
+      local esc_cwd=${PWD//\\/\\\\}
+      esc_cwd=${esc_cwd//\"/\\\"}
+      cat >$HOME/.warp/tab_configs/wtab.toml <<TOML
+name = "wtab"
+title = "$esc_title"
+color = "$color"
+
+[[panes]]
+id = "main"
+type = "terminal"
+directory = "$esc_cwd"
+
+[params]
+TOML
+      open "warppreview://tab_config/wtab"
+      ;;
     list|ls)
       ls "$dir" 2>/dev/null | sed 's/\.yaml$//'
       ;;
+    colors)
+      # Valid tab colors per Warp's AnsiColorIdentifier enum
+      # (warp_core/src/ui/theme/mod.rs:542). The schema rejects any other
+      # value, so this list is the source of truth for `warp tab`.
+      print -l -- $warp_tab_colors
+      ;;
     *)
-      echo "usage: warp {launch <name> [<tab-arg>...] | list}" >&2
+      echo "usage: warp {launch <name> [<tab-arg>...] | tab <color> <title...> | colors | list}" >&2
       return 1
       ;;
   esac
 }
 _warp() {
-  local -a verbs configs
-  verbs=(launch list ls)
+  local -a verbs configs colors
+  verbs=(launch tab colors list ls)
+  colors=(black red green yellow blue magenta cyan white)
   if (( CURRENT == 2 )); then
     compadd -- $verbs
   elif (( CURRENT == 3 )) && [[ $words[2] == launch ]]; then
     configs=(${(f)"$(ls "$HOME/.warp/launch_configurations" 2>/dev/null | sed 's/\.yaml$//')"})
     compadd -- $configs
+  elif (( CURRENT == 3 )) && [[ $words[2] == tab ]]; then
+    compadd -- $colors
   fi
 }
 compdef _warp warp
