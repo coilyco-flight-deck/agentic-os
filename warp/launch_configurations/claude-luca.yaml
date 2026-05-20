@@ -9,6 +9,12 @@
 #     COILY_COMMIT_SCOPE, not cwd.
 #   - Titles use ` · ` separator and pre-pin with printf to resist auto-rename.
 #   - Each duo = working `claude` tab + pulse tab (watch loop or hint shell).
+#   - Pulse tabs run against the local staging instance, never prod. Today only
+#     repo-recall has a prod/staging split (repo-recall-staging at 127.0.0.1:7777);
+#     session-lattice gets its own staging soon, swap its pulse over when it lands.
+#   - Every tab shells out to a sibling claude-luca-<tab-slug>.sh script for its
+#     body, even empty ones, so each `exec:` is a one-line printf + chain. Edit
+#     scripts to change behavior, edit this file only for layout/structure.
 #
 # luca pulse stays a bare shell on purpose: on-demand dictation, not a watch loop.
 # session-lattice pulse runs `watch git log` until the MCP lands.
@@ -23,64 +29,52 @@ windows:
         layout:
           cwd: /Users/kai/projects/coilysiren
           commands:
-            - exec: |
-                printf '\033]0;scratch · 1\007'
-                printf '\n  \033[1mclaude-luca\033[0m  ·  %s\n\n' "$(date '+%A, %B %-d')"
-                printf '  CLAUDE.md       /Users/kai/projects/coilysiren/CLAUDE.md\n'
-                printf '  vault inbox     /Users/kai/projects/coilysiren/coilyco-vault/Obsidian\\ Vault/inbox\n'
-                printf '  design notes    /Users/kai/projects/coilysiren/agentic-os/warp/launch_configurations/claude-luca.yaml\n\n'
-                printf '  duos: \033[36mrepo-recall\033[0m   \033[35msession-lattice\033[0m   \033[33mluca\033[0m\n\n'
+            - exec: printf '\033]0;scratch · 1\007' && /Users/kai/projects/coilysiren/agentic-os/warp/launch_configurations/claude-luca-scratch-1.sh
       - title: "scratch · 2"
         color: green
         layout:
           cwd: /Users/kai/projects/coilysiren
           commands:
-            - exec: printf '\033]0;scratch · 2\007'
+            - exec: printf '\033]0;scratch · 2\007' && /Users/kai/projects/coilysiren/agentic-os/warp/launch_configurations/claude-luca-scratch-2.sh
       - title: "scratch · 3"
         color: green
         layout:
           cwd: /Users/kai/projects/coilysiren
           commands:
-            - exec: printf '\033]0;scratch · 3\007'
+            - exec: printf '\033]0;scratch · 3\007' && /Users/kai/projects/coilysiren/agentic-os/warp/launch_configurations/claude-luca-scratch-3.sh
       - title: "repo-recall · claude"
         color: cyan
         layout:
           cwd: /Users/kai/projects/coilysiren
           commands:
-            - exec: printf '\033]0;repo-recall · claude\007' && export COILY_COMMIT_SCOPE=/Users/kai/projects/coilysiren/repo-recall && claude
+            - exec: printf '\033]0;repo-recall · claude\007' && export COILY_COMMIT_SCOPE=/Users/kai/projects/coilysiren/repo-recall && /Users/kai/projects/coilysiren/agentic-os/warp/launch_configurations/claude-luca-repo-recall-claude.sh
       - title: "repo-recall · pulse"
         color: cyan
         layout:
           cwd: /Users/kai/projects/coilysiren
           commands:
-            - exec: printf '\033]0;repo-recall · pulse\007' && export COILY_COMMIT_SCOPE=/Users/kai/projects/coilysiren/repo-recall && watch -n 5 mcporter call repo-recall-dev.recall_dashboard
+            - exec: printf '\033]0;repo-recall · pulse\007' && export COILY_COMMIT_SCOPE=/Users/kai/projects/coilysiren/repo-recall && /Users/kai/projects/coilysiren/agentic-os/warp/launch_configurations/claude-luca-repo-recall-pulse.sh
       - title: "session-lattice · claude"
         color: magenta
         layout:
           cwd: /Users/kai/projects/coilysiren
           commands:
-            - exec: printf '\033]0;session-lattice · claude\007' && export COILY_COMMIT_SCOPE=/Users/kai/projects/coilysiren/session-lattice && claude
+            - exec: printf '\033]0;session-lattice · claude\007' && export COILY_COMMIT_SCOPE=/Users/kai/projects/coilysiren/session-lattice && /Users/kai/projects/coilysiren/agentic-os/warp/launch_configurations/claude-luca-session-lattice-claude.sh
       - title: "session-lattice · pulse"
         color: magenta
         layout:
           cwd: /Users/kai/projects/coilysiren
           commands:
-            - exec: printf '\033]0;session-lattice · pulse\007' && export COILY_COMMIT_SCOPE=/Users/kai/projects/coilysiren/session-lattice && watch -n 10 'git -C /Users/kai/projects/coilysiren/session-lattice log --oneline -15'
+            - exec: printf '\033]0;session-lattice · pulse\007' && export COILY_COMMIT_SCOPE=/Users/kai/projects/coilysiren/session-lattice && /Users/kai/projects/coilysiren/agentic-os/warp/launch_configurations/claude-luca-session-lattice-pulse.sh
       - title: "luca · claude"
         color: yellow
         layout:
           cwd: /Users/kai/projects/coilysiren
           commands:
-            - exec: printf '\033]0;luca · claude\007' && export COILY_COMMIT_SCOPE=/Users/kai/projects/coilysiren/luca && claude
+            - exec: printf '\033]0;luca · claude\007' && export COILY_COMMIT_SCOPE=/Users/kai/projects/coilysiren/luca && /Users/kai/projects/coilysiren/agentic-os/warp/launch_configurations/claude-luca-luca-claude.sh
       - title: "luca · shell"
         color: yellow
         layout:
           cwd: /Users/kai/projects/coilysiren
           commands:
-            - exec: |
-                printf '\033]0;luca · shell\007'
-                export COILY_COMMIT_SCOPE=/Users/kai/projects/coilysiren/luca
-                printf '\n  \033[1mluca · shell\033[0m  ·  on-demand invocations\n\n'
-                printf '  /luca-inspect    recent agent activity (stateless)\n'
-                printf '  /luca-ask        natural-language question over recall data\n'
-                printf '  /luca            meta-loop digest with cross-run synthesis\n\n'
+            - exec: printf '\033]0;luca · shell\007' && export COILY_COMMIT_SCOPE=/Users/kai/projects/coilysiren/luca && /Users/kai/projects/coilysiren/agentic-os/warp/launch_configurations/claude-luca-luca-shell.sh
