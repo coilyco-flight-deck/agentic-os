@@ -98,7 +98,7 @@ completions_open_while_typing = true
 [general]
 default_session_mode = "terminal"
 default_tab_config_path = "/Users/kai/.warp/tab_configs/startup_config.toml"
-login_item = false
+login_item = true
 
 [workflows]
 show_global_workflows_in_universal_search = true
