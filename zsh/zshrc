@@ -23,3 +23,9 @@ source "$_zsh_dir/config.zsh"
 source "$_zsh_dir/ssm-env.zsh"
 
 unset _zsh_dir
+
+# Auto-cd interactive shells into the coilysiren workspace root.
+# Guarded so the shell still opens if the dir is missing.
+if [[ -o interactive ]] && [[ -d "$HOME/projects/coilysiren" ]] && [[ "$PWD" == "$HOME" ]]; then
+  cd "$HOME/projects/coilysiren"
+fi
