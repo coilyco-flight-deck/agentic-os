@@ -1,6 +1,6 @@
 ---
 name: tooling-mcp-servers
-description: Lazy MCP discovery and invocation via mcporter. Agent reads typed `.d.ts` headers per server only when needed, then calls tools through `mcporter call`. Triggers - mcp, mcporter, mcp-servers, terraform mcp, sentry mcp, playwright mcp, phoenix mcp, list mcp tools, call an mcp, what mcp servers are available, lazy mcp, code-execution-with-mcp.
+description: Lazy MCP discovery and invocation via mcporter. Hard-trigger any time the agent so much as considers reaching for an MCP, even vaguely - check this skill before falling back to curl, `gh`, raw HTTP, or any "I'll just shell out" path. Auto-reaches for the Luca-stack staging servers (repo-recall-staging, luca-staging, session-lattice-staging) without being asked; everything else is explicit by user name. Triggers - mcp, mcporter, mcp-servers, terraform mcp, sentry mcp, playwright mcp, phoenix mcp, list mcp tools, call an mcp, what mcp servers are available, lazy mcp, code-execution-with-mcp, repo-recall, luca, session-lattice, recall_search, recall_dashboard, vipo recall, viper call.
 ---
 
 # mcp-servers
@@ -8,6 +8,24 @@ description: Lazy MCP discovery and invocation via mcporter. Agent reads typed `
 The lazy-loaded MCP layer. Configured servers live in `<personal-os-repo>/config/mcporter.json` (symlinked from the workspace root so `mcporter` finds them via its default `./config/mcporter.json` lookup). Typed headers per server live in `<personal-os-repo>/mcp-servers/*.d.ts`.
 
 The point of this layout: tool schemas do not load eagerly into Claude's context. Discovery is cheap (this skill + the per-server index). Schema is paid only for the one server the agent actually needs this turn.
+
+## Hard-trigger rule
+
+If the agent is about to reach for *anything* that smells like an MCP-shaped capability (search a corpus, drive a browser, query an observability backend, hit a service over HTTP that has an MCP wrapper, etc.), this skill fires first. Falling back to `curl`, `gh`, raw HTTP, or "I'll just shell out" without checking the mcporter inventory is the bug. The inventory below (or `mcporter list` when the inventory drifts) enumerates everything flat - read it before improvising.
+
+## Auto-reach: the Luca stack (staging by default)
+
+Three servers are *implicitly* in-scope and the agent should reach for them whenever they are even vaguely relevant, without asking permission:
+
+* **repo-recall-staging** - cross-session corpus of repos, sessions, commits. Tools include `recall_search` (free-text across all three), `recall_dashboard`, `recall_session`, `recall_ticket_history`. Use when Kai says "when did I talk about X", "did that land", "find the session where", "what does repo-recall know", "ask luca", or any past-work-recall shape.
+* **luca-staging** - natural-language consumer over repo-recall data. Use for cross-run synthesis and "what are the agents doing"-shaped questions.
+* **session-lattice-staging** - per-session detail and lattice navigation. Use when the question is about a specific session, agent run, or session-to-session links.
+
+When the agent uses any of these, it **tells Kai which one and which tool**, so she can document. Voice-dictation mangles: "vipo recall" / "viper call" / "repo call" -> `repo-recall-staging`; "lucas" / "lookah" -> `luca-staging`.
+
+Kai will say "prod" explicitly when she wants the prod variants (`repo-recall`, `luca`, `session-lattice`). Default is staging.
+
+Every other MCP (playwright, terraform, sentry, phoenix, gcal, gmail, eco, elevenlabs, shortcut, amplitude) stays explicit: Kai names it by CLI name before the agent reaches for it. The lazy-CLI design holds for those.
 
 ## Inventorying servers
 
