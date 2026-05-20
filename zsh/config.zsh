@@ -93,13 +93,30 @@ github-token-load() {
 autoload -Uz compinit && compinit
 
 # Warp ops. `warp launch <name>` opens a launch configuration; `warp list` shows them.
+# `warp launch <name> <tab-arg>...` runs a single tab's sibling script
+# `<name>-<tab-arg-joined-with-->.sh` instead of opening the whole window, so
+# pulse/banner tabs can be stopped and restarted standalone.
 warp() {
   local dir="$HOME/.warp/launch_configurations"
   case "$1" in
     launch)
       if [[ -z "$2" ]]; then
-        echo "usage: warp launch <name>" >&2
+        echo "usage: warp launch <name> [<tab-arg>...]" >&2
         return 1
+      fi
+      if (( $# >= 3 )); then
+        local name="$2"
+        shift 2
+        local slug="${(j:-:)@}"
+        local yaml="$dir/$name.yaml"
+        local source_dir="$(dirname "$(readlink "$yaml" 2>/dev/null || echo "$yaml")")"
+        local script="$source_dir/$name-$slug.sh"
+        if [[ ! -x "$script" ]]; then
+          echo "warp: no such tab script: $script" >&2
+          return 1
+        fi
+        "$script"
+        return $?
       fi
       open "warp://launch/$2"
       # Fullscreen the new window. The YAML schema has no native fullscreen
@@ -112,7 +129,7 @@ warp() {
       ls "$dir" 2>/dev/null | sed 's/\.yaml$//'
       ;;
     *)
-      echo "usage: warp {launch <name> | list}" >&2
+      echo "usage: warp {launch <name> [<tab-arg>...] | list}" >&2
       return 1
       ;;
   esac
