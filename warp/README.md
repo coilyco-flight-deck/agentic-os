@@ -41,7 +41,7 @@ When a Preview regression breaks a workday:
 ## Subdirs
 
 - [`launch_configurations/`](launch_configurations/README.md) - one window with one or more tabs per YAML file. Window-scoped, opens a fresh window each fire. URI: `warp://launch/<name>` or `warppreview://launch/<name>`.
-- [`tab_configs/`](tab_configs/) - one tab per TOML file, opens in the active window. URI: `warp://tab_config/<name>` or `warppreview://tab_config/<name>`. The URI handler landed in warpdotdev/Warp#9379 and was first available in stable builds dated 2026-05-15 or later, in preview builds dated 2026-05-13 or later.
+- [`tab_configs/`](tab_configs/) - one tab per TOML file, opens in the active window. URI: `warp://tab_config/<name>` or `warppreview://tab_config/<name>`. The URI handler landed in warpdotdev/Warp#9379 and was first available in stable builds dated 2026-05-15 or later, in preview builds dated 2026-05-13 or later. Current entries: `startup_config.toml` (the "+ button" new-tab default) and `claude-dispatch-interactive.toml` (companion to the `launch_configurations/` entry of the same name, used when `coily dispatch interactive` fires with `--surface tab`, which is the default).
 - [`themes/`](themes/) - color theme YAML files.
 - [`scripts/`](scripts/) - host-side helpers (e.g. `set-warp-default-editor.sh`).
 - `settings.toml` - top-level Warp settings, symlinked into both channels' config dirs.
