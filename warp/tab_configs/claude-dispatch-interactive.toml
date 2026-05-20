@@ -20,7 +20,7 @@ id = "main"
 type = "terminal"
 directory = "/Users/kai/projects/coilysiren"
 commands = [
-  { exec = "printf '\\033]0;dispatch · interactive\\007' && /Users/kai/projects/coilysiren/agentic-os/warp/launch_configurations/claude-dispatch-interactive.sh" },
+  "printf '\\033]0;dispatch · interactive\\007' && /Users/kai/projects/coilysiren/agentic-os/warp/launch_configurations/claude-dispatch-interactive.sh",
 ]
 
 [params]
