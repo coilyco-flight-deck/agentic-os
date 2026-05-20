@@ -1,13 +1,17 @@
 #!/usr/bin/env bash
 # Set Warp as the default macOS app for prose and source files.
 #
-# Requires: macOS, Warp.app installed, `duti` on PATH (`brew install duti`).
+# Requires: macOS, WarpPreview.app installed, `duti` on PATH (`brew install duti`).
 #
 # What it does:
 #   1. Rebuilds the LaunchServices database so Warp's Info.plist claims
 #      (CFBundleTypeExtensions: .go, .tsx, .cjs, ...) are picked up directly.
 #   2. Sets Warp as the explicit handler for the UTIs and extensions that
 #      LaunchServices won't infer from Warp's plist on its own.
+#
+# Channel: targets Warp Preview, not Stable. Preview is the Mac daily-driver
+# channel per warp/README.md, so file-type defaults bind to Preview to match.
+# To pin to Stable instead, override BUNDLE_ID and APP_PATH at the top.
 #
 # Known gap: .pyi stays bound to Apple's IDLE.app. Apple's Python framework
 # registers a stronger claim than Warp's plist, and duti returns error -50 on
@@ -18,15 +22,16 @@
 
 set -uo pipefail
 
-BUNDLE_ID="dev.warp.Warp-Stable"
+BUNDLE_ID="${WARP_DEFAULT_EDITOR_BUNDLE_ID:-dev.warp.Warp-Preview}"
+APP_PATH="${WARP_DEFAULT_EDITOR_APP_PATH:-/Applications/WarpPreview.app}"
 
 if ! command -v duti >/dev/null 2>&1; then
   echo "duti not found. Install with: brew install duti" >&2
   exit 1
 fi
 
-if [ ! -d "/Applications/Warp.app" ]; then
-  echo "Warp.app not found in /Applications. Install Warp first." >&2
+if [ ! -d "$APP_PATH" ]; then
+  echo "$APP_PATH not found. Install with: coily pkg brew install --cask warp@preview --allow-untapped" >&2
   exit 1
 fi
 

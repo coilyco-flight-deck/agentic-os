@@ -178,7 +178,12 @@ brew "trufflehog"
 
 # Warp - terminal emulator with block UI
 # https://www.warp.dev
+# Both channels installed side by side. Preview is the daily driver
+# (see warp/README.md); Stable is the named fallback. Preview ships
+# weekly so newly-merged URI handlers (e.g. warp://tab_config/ from
+# warpdotdev/Warp#9379) land days after merge instead of weeks.
 cask "warp"
+cask "warp@preview"
 
 # Visual Studio Code - editor
 # https://code.visualstudio.com

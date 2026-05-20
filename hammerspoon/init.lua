@@ -2,7 +2,13 @@
 -- Watches for Fn release, then waits for Wispr's clipboard paste,
 -- then sends Return. Robust to Wispr's variable cloud latency.
 
-local WARP_BUNDLE = "dev.warp.Warp-Stable"
+-- Both Warp channels recognized as Warp-frontmost so Wispr auto-submit works
+-- whether the daily-driver Preview or the fallback Stable is focused.
+-- See agentic-os/warp/README.md for the channel-split rationale.
+local WARP_BUNDLES = {
+  ["dev.warp.Warp-Preview"] = true,
+  ["dev.warp.Warp-Stable"]  = true,
+}
 local ARM_TIMEOUT = 5.0
 local POLL_INTERVAL = 0.05
 
@@ -14,7 +20,7 @@ local state = {
 
 local function isWarpFrontmost()
   local app = hs.application.frontmostApplication()
-  return app and app:bundleID() == WARP_BUNDLE
+  return app and WARP_BUNDLES[app:bundleID()] == true
 end
 
 local function disarm()
