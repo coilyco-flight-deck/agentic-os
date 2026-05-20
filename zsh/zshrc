@@ -22,4 +22,13 @@ esac
 source "$_zsh_dir/config.zsh"
 source "$_zsh_dir/ssm-env.zsh"
 
+# Auto-load SSM-resolved env vars on interactive shells so tools like
+# mcporter (which expands ${VAR} at call time) see the values without a
+# manual `ssm-load`. Soft-fail: expired SSO / missing profile / offline
+# network all just leave the env empty rather than blocking the prompt.
+# Opt out with SKIP_SSM_LOAD=1 for CI or known-broken-SSO loops.
+if [[ -o interactive && -z "${SKIP_SSM_LOAD:-}" ]]; then
+  ssm-load --quiet 2>/dev/null || true
+fi
+
 unset _zsh_dir

@@ -6,10 +6,16 @@
 # Var name derivation matches the nu version: /foo/bar-baz -> FOO_BAR_BAZ
 #
 # Usage (interactive):   ssm-load
+# Usage (quiet, used by zshrc auto-load): ssm-load --quiet
 # Usage (other profile): ssm-load other us-west-2
 # Usage (one var only):  ssm-get /foo/bar-baz
 
 ssm-load() {
+  local quiet=0
+  if [[ "$1" == "--quiet" ]]; then
+    quiet=1
+    shift
+  fi
   local profile="${1:-default}"
   local region="${2:-us-east-1}"
   local json count
@@ -22,7 +28,7 @@ ssm-load() {
     export "$key=$value"
   done < <(printf '%s' "$json" | jq -r '.[] | [.Name, .Value] | @tsv')
   count=$(printf '%s' "$json" | jq 'length')
-  printf 'loaded %s SSM exports into env\n' "$count"
+  (( quiet )) || printf 'loaded %s SSM exports into env\n' "$count"
 }
 
 ssm-get() {
