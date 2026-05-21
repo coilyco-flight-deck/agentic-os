@@ -23,9 +23,15 @@ custom_secret_regex_list = [
   # the agentic-os-kai/AGENTS.md "RFC1918 + loopback are not opaque ids"
   # rule. CGNAT (100.64/10, where tailnet IPs live) is intentionally NOT
   # excluded so tailnet IPs still get flagged.
+  #
+  # Lookahead-free: Warp's secret-detection engine is Rust's `regex` crate,
+  # which rejects `(?!...)`. The exclusions are expressed by enumerating the
+  # allowed first/second octet ranges instead. First octet excludes 0/10/127
+  # entirely; 169 excludes second-octet 254; 172 excludes 16-31; 192 excludes
+  # 168. Trailing two octets are unrestricted 0-255.
   {
     name = "Public IPv4 Address",
-    pattern = '\b(?!(?:10|127|0)\.)(?!169\.254\.)(?!192\.168\.)(?!172\.(?:1[6-9]|2[0-9]|3[01])\.)(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|\d{1,2})){3}\b',
+    pattern = '\b(?:(?:[1-9]|1[1-9]|[2-9]\d|1[01]\d|12[0-6]|12[89]|1[3-5]\d|16[0-8]|17[01]|17[3-9]|18\d|19[01]|19[3-9]|2[0-4]\d|25[0-5])\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)|169\.(?:255|25[0-3]|2[0-4]\d|1\d\d|[1-9]?\d)|172\.(?:25[0-5]|2[0-4]\d|1\d\d|3[2-9]|[4-9]\d|1[0-5]|[0-9])|192\.(?:25[0-5]|2[0-4]\d|1[7-9]\d|16[0-7]|1[0-5]\d|169|[1-9]?\d))(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){2}\b',
   },
   {
     name = "IPv6 Address",
