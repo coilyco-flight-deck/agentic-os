@@ -1,0 +1,10 @@
+# RENDERED FILE - do not edit by hand.
+# Source of truth: agentic-os/warp/templates/profile.ps1.tmpl
+# Rendered and symlinked to the pwsh 7 $PROFILE by `coily exec warp apply`.
+#
+# Auto-cd into the coilysiren workspace root on shell start. Warp on the
+# Windows host launches pwsh 7, so this is what lands new tabs in the repo.
+# Guarded so the shell still opens cleanly if the workspace is unmapped.
+if (Test-Path '{{ .WorkspaceDir }}') {
+    Set-Location -Path '{{ .WorkspaceDir }}'
+}

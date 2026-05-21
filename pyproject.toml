@@ -35,7 +35,6 @@ check-catalog-block = "agentic_os.check_catalog_block:main"
 check-catalog-doc-size = "agentic_os.check_catalog_doc_size:main"
 check-catalog-trifecta = "agentic_os.check_catalog_trifecta:main"
 check-aws-config = "agentic_os.check_aws_config:main"
-strip-warp-thrash = "agentic_os.strip_warp_thrash:main"
 
 [tool.setuptools.packages.find]
 include = ["agentic_os*"]

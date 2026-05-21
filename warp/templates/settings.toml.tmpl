@@ -1,3 +1,7 @@
+# RENDERED FILE - do not edit by hand.
+# Source of truth: agentic-os/warp/templates/settings.toml.tmpl
+# Rendered to Warp's config dir by `coily exec warp apply`.
+
 [notifications]
 toast_duration_secs = 8
 
@@ -69,12 +73,7 @@ font_size = 11.0
 notebook_font_size = 14.0
 
 [appearance.themes]
-theme = {
-  custom = {
-    name = "Coilysiren Sombra (Wallpaper)",
-    path = "/Users/kai/.warp-preview/themes/coilysiren-sombra-wallpaper.yaml",
-  },
-}
+theme = { custom = { name = "Coilysiren Sombra (Wallpaper)", path = "{{ .ThemePath }}" } }
 
 [appearance.tabs]
 workspace_decoration_visibility = "always_show"
@@ -96,6 +95,9 @@ tab_item_mode = "focused_session"
 [appearance.icon]
 app_icon = "default"
 
+[appearance.window]
+zoom_level = 150
+
 [terminal]
 
 [terminal.input]
@@ -104,7 +106,7 @@ completions_open_while_typing = true
 
 [general]
 default_session_mode = "terminal"
-default_tab_config_path = "/Users/kai/.warp/tab_configs/startup_config.toml"
+default_tab_config_path = "{{ .TabConfigPath }}"
 login_item = true
 
 [workflows]
@@ -172,7 +174,7 @@ show_code_review_button = false
 
 [account]
 # This file is the source of truth; the repo wins, not Warp's cloud sync.
-# Flipping back to true would let Warp overwrite the symlink target on every
+# Flipping back to true would let Warp overwrite the rendered file on every
 # settings-touch from any device. See coilysiren/agentic-os#50.
 is_settings_sync_enabled = false
 
@@ -180,7 +182,7 @@ is_settings_sync_enabled = false
 
 [session.working_directory_config]
 advanced_mode = false
-global = { custom_dir = "~/projects/coilysiren", mode = "custom_dir" }
+global = { custom_dir = "{{ .WorkspaceDir }}", mode = "custom_dir" }
 new_tab = { custom_dir = "", mode = "previous_dir" }
 new_window = { custom_dir = "", mode = "previous_dir" }
 split_pane = { custom_dir = "", mode = "previous_dir" }

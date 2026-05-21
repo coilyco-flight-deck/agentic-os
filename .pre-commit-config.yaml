@@ -20,11 +20,17 @@ repos:
         entry: python -m agentic_os.check_commit_closes_issue
         language: python
         stages: [commit-msg]
-      - id: strip-warp-thrash
-        name: strip GUI thrash from warp/settings.toml
-        entry: python -m agentic_os.strip_warp_thrash
-        language: python
-        files: ^warp/settings\.toml$
+      # Guards the `coily exec warp` tool itself. Runs `go vet` (which
+      # compiles the module) so broken Go never lands. It deliberately does
+      # NOT run `warp doctor`: doctor inspects live host state, and the
+      # SQLite layer drifts as normal steady-state behavior, so a live check
+      # at commit time would block commits for reasons unrelated to the diff.
+      - id: warp-go-vet
+        name: vet the coily exec warp module
+        entry: bash -c 'cd warp && go vet ./...'
+        language: system
+        files: ^warp/.*\.go$
+        pass_filenames: false
         stages: [pre-commit]
   # No managed upstream-ref block here. This repo is the source; the rollout
   # is expected to never run against agentic-os itself. The local block above

@@ -1,8 +1,9 @@
-# Per-repo command allowlist. No dev verbs declared yet; present so coily's
-# repocfg loader recognizes the repo and the lockdown discipline is uniform
-# across coilysiren/* checkouts. Add verbs here as they emerge.
+# Per-repo command allowlist. Add verbs here as they emerge.
 
-commands: {}
+commands:
+  warp:
+    run: go run ./warp
+    description: "Establish and verify Kai's Warp config across hosts. `coily exec warp apply` renders all three state layers (repo template, config-dir TOML, SQLite); `coily exec warp doctor` reports drift. See project-a-coily-exec-warp.md."
 
 # Catalog metadata for the cross-repo knowledge graph.
 # Schema: coilysiren/agentic-os-kai#420 (tracker).
