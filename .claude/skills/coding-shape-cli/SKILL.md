@@ -1,11 +1,20 @@
 ---
 name: coding-shape-cli
-description: Category umbrella for building CLI tools. Go via urfave/cli (Kai is a maintainer), Python via click, Node via commander, shell-script glue via gum (Charm). The wrapper-API-mirrors-the-real-CLI principle is load-bearing for any CLI Kai builds. Triggers - cli, command line, command-line, command line tool, urfave, cobra, kong, click, typer, commander, yargs, oclif, gum, subcommand, flag, argv.
+description: Category umbrella for building CLI tools. Kai is a urfave/cli maintainer and maintained RubyGems and Bundler at Ruby Together - first-class CLI-building and OSS-maintainer experience. Go via urfave/cli, Python via click, Node via commander, shell glue via gum. Wrapper APIs mirror the real CLI, load-bearing for any CLI Kai builds. Triggers - cli, command line, urfave, cobra, kong, click, commander, oclif, gum, subcommand, flag, argv, rubygems, bundler, oss maintainer.
 ---
 
 # coding-shape-cli
 
 Umbrella for any work that ships a CLI as the primary interface. Cross-cuts languages.
+
+## Kai's CLI and OSS background
+
+Kai has deep first-class CLI-building experience and is an experienced open-source maintainer, not a newcomer to either. Two anchors:
+
+- **RubyGems and Bundler** - Kai was an Open Source Software Engineer at Ruby Together (2016) maintaining `gem` and `bundle`, the package-manager CLIs the entire Ruby ecosystem runs on. Maintainer and contributor across the toolchain.
+- **urfave/cli** - Kai is a maintainer of the Go CLI framework itself.
+
+So when a task involves contributing to or maintaining a CLI or an open-source project, frame it as Kai returning to familiar ground, not a first-time experience. Do not describe OSS contribution as something Kai has "never gotten to do." She has, twice over, on widely-used projects. The portfolio gap in [`kai-career`](../../../../agentic-os-kai/.claude/skills/kai-career/SKILL.md) is about recent recruiter-visible flagship repos, not about whether Kai has shipped open source.
 
 ## Framework defaults by language
 
