@@ -60,6 +60,15 @@ func resolveHostPaths() (*HostPaths, error) {
 		}
 		h.ConfigDir = filepath.Join(local, "warp", "Warp", "config")
 		h.SQLitePath = filepath.Join(local, "warp", "Warp", "data", "warp.sqlite")
+		// Warp's theme chooser scans %APPDATA%\warp\Warp\data\themes
+		// (Roaming), not the Local config dir that holds settings.toml and
+		// warp.sqlite. A theme rendered into <ConfigDir>/themes never shows
+		// up in the chooser. See coilysiren/agentic-os#137.
+		roaming := os.Getenv("APPDATA")
+		if roaming == "" {
+			return nil, fmt.Errorf("APPDATA is unset")
+		}
+		h.ThemeDir = filepath.Join(roaming, "warp", "Warp", "data", "themes")
 	case "darwin":
 		h.ConfigDir = filepath.Join(home, ".warp")
 		// Kai runs Warp Preview on the Mac; the Stable bundle id is the
@@ -74,7 +83,11 @@ func resolveHostPaths() (*HostPaths, error) {
 	}
 
 	h.SettingsPath = filepath.Join(h.ConfigDir, "settings.toml")
-	h.ThemeDir = filepath.Join(h.ConfigDir, "themes")
+	// ThemeDir is set per-OS above on Windows (Roaming, not ConfigDir).
+	// darwin/linux keep it under the config dir.
+	if h.ThemeDir == "" {
+		h.ThemeDir = filepath.Join(h.ConfigDir, "themes")
+	}
 	h.ThemePath = filepath.Join(h.ThemeDir, themeFileName)
 	h.TabConfigDir = filepath.Join(h.ConfigDir, "tab_configs")
 	h.TabConfigPath = filepath.Join(h.TabConfigDir, "startup_config.toml")
