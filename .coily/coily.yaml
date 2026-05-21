@@ -2,7 +2,7 @@
 
 commands:
   warp:
-    run: go run ./warp
+    run: go run -C warp .
     description: "Establish and verify Kai's Warp config across hosts. `coily exec warp apply` renders all three state layers (repo template, config-dir TOML, SQLite); `coily exec warp doctor` reports drift. See project-a-coily-exec-warp.md."
 
 # Catalog metadata for the cross-repo knowledge graph.
