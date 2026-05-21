@@ -4,7 +4,7 @@ Workspace-level conventions (git workflow, voice, ops boundary) load globally vi
 
 ## Skills
 
-`.claude/skills/` ships SKILL.md docs for the configs that live here (`tooling-zsh`, `tooling-warp`, `tooling-gpg-ssm`). agentic-os-kai's `setup.sh` walks this dir as a peer skill source and symlinks each entry into `~/.claude/skills/`. Edit the SKILL.md next to the config it describes, not in agentic-os-kai.
+`.claude/skills/` ships the generalizable, public-safe skills - tooling docs for the configs that live here, plus cross-repo skills that help any agentic-os user, not just Kai. agentic-os-kai's `setup.sh` walks this dir as a peer skill source and symlinks each entry into `~/.claude/skills/`. Edit the SKILL.md here, not a copy in agentic-os-kai.
 
 ## See also
 
