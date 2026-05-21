@@ -22,44 +22,29 @@ Cross-platform shell + terminal setup. Zsh on Mac, Linux, and Windows (Git Bash)
 
 ## Install
 
-### Mac
-
 ```bash
-ln -sf "$PWD/zsh/zshrc" ~/.zshrc
-mkdir -p ~/.warp/tab_configs ~/.local/bin
-ln -sf "$PWD/warp/settings.toml" ~/.warp/settings.toml
-ln -sf "$PWD/warp/tab_configs/startup_config.toml" ~/.warp/tab_configs/startup_config.toml
-ln -sf "$PWD/scripts/gpg-ssm" ~/.local/bin/gpg-ssm
+./setup.sh                # zsh + gpg-ssm symlinks
+coily exec warp apply     # warp config (see warp/README.md)
 ```
 
-(After symlinking Warp settings, restart Warp once so it re-reads. If a UI toggle silently snaps back to default, check that `[account] is_settings_sync_enabled` is still `false` - cloud sync will overwrite the symlink target.)
+`setup.sh` is idempotent. Detects host via `uname -s` and symlinks:
 
-Login shell defaults to `/bin/zsh`. If a previous shell-switch needs undoing:
+- `~/.zshrc` from `zsh/zshrc` (all hosts)
+- `~/.local/bin/gpg-ssm` from `scripts/gpg-ssm` (Mac, Linux) or `scripts/gpg-ssm.cmd` (Windows)
 
-```bash
-chsh -s /bin/zsh
-```
+Pre-existing real files are backed up to `<path>.bak` on first run; later runs replace the symlinks in place.
 
-### Linux (kai-server)
+### Per-host notes
 
-```bash
-ln -sf "$PWD/zsh/zshrc" ~/.zshrc
-mkdir -p ~/.local/bin
-ln -sf "$PWD/scripts/gpg-ssm" ~/.local/bin/gpg-ssm
-chsh -s "$(which zsh)"
-```
+- **Linux (kai-server)** - Login-shell switch is on the operator: `chsh -s "$(command -v zsh)"`.
+- **Windows (Git Bash)** - Install zsh via MSYS first: `pacman -S zsh`. Symlinks need either an elevated Git Bash or Settings → Privacy and Security → For developers → Developer Mode toggled on.
 
-### Windows (Git Bash)
-
-zsh inside Git Bash is installed via the MSYS environment (`pacman -S zsh`). Symlinks under Git Bash use POSIX paths.
+After the gpg-ssm symlink lands, wire it into git:
 
 ```bash
-ln -sf "$PWD/zsh/zshrc" ~/.zshrc
-mkdir -p ~/.local/bin
-ln -sf "$PWD/scripts/gpg-ssm.cmd" ~/.local/bin/gpg-ssm.cmd
+git config --global gpg.program "$HOME/.local/bin/gpg-ssm"   # Mac, Linux
+git config --global gpg.program "$HOME/.local/bin/gpg-ssm.cmd"  # Windows
 ```
-
-(Symlinks need either an elevated Git Bash or Settings -> Privacy and Security -> For developers -> Developer Mode toggled on.)
 
 ## Secrets pattern
 
