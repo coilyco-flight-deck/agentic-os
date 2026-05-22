@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Find dead cross-links inside .claude/skills/.
+Find dead cross-links inside the skill directory.
 
-Scans every Markdown file under .claude/skills/, extracts inline markdown
+Scans every Markdown file under the skill directory, extracts inline markdown
 links (`[text](target)` and `[text](target#anchor)`), and reports any
 local-relative target that doesn't resolve to a real file or directory.
 
@@ -33,6 +33,16 @@ from pathlib import Path
 # Pre-commit runs the hook with the consumer repo as cwd.
 REPO_ROOT = Path.cwd()
 SKILLS_DIR = REPO_ROOT / ".claude" / "skills"
+
+# Skill directory layout, canonical first. agents/skills is the current home.
+SKILLS_DIR_CANDIDATES = ("agents/skills", ".agents/skills", ".claude/skills", "skills")
+
+
+def detect_skills_dir() -> str:
+    for candidate in SKILLS_DIR_CANDIDATES:
+        if (REPO_ROOT / candidate).is_dir():
+            return candidate
+    return SKILLS_DIR_CANDIDATES[0]
 
 LINK_RE = re.compile(
     r"(?<!\!)\[(?P<text>[^\]\n]+)\]\((?P<target>[^)\s]+)(?:\s+\"[^\"]*\")?\)"
@@ -148,9 +158,10 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--skills-dir",
-        default=".claude/skills",
+        default=None,
         help="Path to the skills directory (relative to the repo root). "
-        "Default: .claude/skills. Ignored when positional paths are given.",
+        "Default: autodetect agents/skills, .agents/skills, .claude/skills, skills. "
+        "Ignored when positional paths are given.",
     )
     parser.add_argument(
         "paths",
@@ -161,7 +172,7 @@ def main(argv: list[str] | None = None) -> int:
     ns = parser.parse_args(argv[1:])
 
     global SKILLS_DIR
-    SKILLS_DIR = (REPO_ROOT / ns.skills_dir).resolve()
+    SKILLS_DIR = (REPO_ROOT / (ns.skills_dir or detect_skills_dir())).resolve()
 
     if ns.paths:
         roots = [Path(a).resolve() for a in ns.paths]

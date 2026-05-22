@@ -20,6 +20,7 @@ This validator checks, per markdown file:
     4. The file cites the canonical convention doc - either the new home
        at coilysiren/agentic-os#59 or the legacy home at
        coilysiren/agentic-os-kai#313 (during the migration window).
+    5. AGENTS.md contains the standard repo-local agent heading set.
 
 The .coily/coily.yaml file only needs to exist; no back-link required,
 since YAML is machine-consumed and the prose home is the .md files.
@@ -59,6 +60,19 @@ CATALOG_YAMLS = (
 )
 
 SEE_ALSO_HEADER = re.compile(r"^##\s+See also\s*$", re.MULTILINE)
+
+AGENTS_REQUIRED_H2 = [
+    "Scope",
+    "Project shape",
+    "Repo boundaries",
+    "Commands",
+    "Validation",
+    "Safety",
+    "Cross-repo contracts",
+    "Release",
+    "Agent rules",
+    "See also",
+]
 
 # Markdown inline link target extraction. Mirrors the form used by
 # check-dead-links.py so the two validators agree on what a "link" is.
@@ -139,7 +153,37 @@ def check_md_file(md_path: Path, catalog_yaml: Path) -> list[str]:
             f"'coilysiren/agentic-os-kai#313') in the See also footer."
         )
 
+    if md_path == Path("AGENTS.md"):
+        violations.extend(check_agents_headings(body))
+
     return violations
+
+
+def markdown_h2s(body: str) -> set[str]:
+    headings: set[str] = set()
+    in_code = False
+    for line in body.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("```"):
+            in_code = not in_code
+            continue
+        if in_code:
+            continue
+        if stripped.startswith("## ") and not stripped.startswith("### "):
+            headings.add(re.sub(r"\s+", " ", stripped[3:].strip()))
+    return headings
+
+
+def check_agents_headings(body: str) -> list[str]:
+    headings = markdown_h2s(body)
+    missing = [h for h in AGENTS_REQUIRED_H2 if h not in headings]
+    if not missing:
+        return []
+    return [
+        "AGENTS.md: missing required H2 heading(s): "
+        + ", ".join(f"## {h}" for h in missing)
+        + ". Standard sections keep repo-local operating rules scannable."
+    ]
 
 
 def check_catalog_yaml(catalog_yaml: Path | None) -> list[str]:

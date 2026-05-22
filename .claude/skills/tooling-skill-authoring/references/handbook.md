@@ -78,7 +78,7 @@ Every SKILL.md begins with YAML frontmatter:
 ```markdown
 ---
 name: <directory-name>
-description: One sentence what + one sentence when-to-use. Mention concrete trigger phrasings. End with `Triggers - keyword1, keyword2, keyword3.` Bias toward over-triggering since Claude under-triggers skills.
+description: Use when <routing condition>. Include the canonical task shape plus a compact alias set. Keep discovery text short; put procedure in the body.
 ---
 ```
 
@@ -86,11 +86,72 @@ Rules:
 
 * `name` MUST equal the directory name. Validator enforces this.
 * `description` MUST be non-empty. Validator enforces this.
-* `description` ends with a packed `Triggers - foo, bar, baz` line. This is the personal-OS repo's secondary trigger surface (upstream analog is AGENTS.md trigger stanzas, which this convention does not use).
+* `description` is routing metadata, not documentation. Claude and Codex both see it before reading the skill body. The field answers "when should the agent open this skill?"
+* `description` may include a compact `Triggers - foo, bar, baz` tail when trigger aliases help. The tail is optional, and it should earn its bytes. Avoid exhaustive keyword bags.
 * Cross-links to other skills use either:
   * bare backticks `` `skill-name` `` for in-prose passing mentions, or
   * markdown link `` [`skill-name`](../skill-name/SKILL.md) `` for navigable references.
   Either form is fine; both are validated. The dead-link checker resolves the markdown target.
+
+### Description budgets
+
+Descriptions are the highest-cost text in the skill system because every candidate skill pays the cost before an agent decides what to open. Claude's larger context can tolerate chatty descriptions, but Codex routing benefits from shorter, sharper metadata. Optimize the eager surface first; leave the skill body rich.
+
+Hard validator limits:
+
+* **Normal skills** - 500 by default. Override to 200 for a Codex-optimized catalog.
+* **Router/meta skills** - 2x the cap when the matched category declares `role: router` or `role: meta`. At the default cap, that means 1000 bytes.
+* **SKILL.md bodies** - 500 lines and 10 KB. Past either, the loader degrades. Move detail into `references/`, `scripts/`, or `assets/`.
+
+Target bands:
+
+* **Pointer skills** - under 160 chars. Use this when the body mostly points at a canonical doc elsewhere.
+* **Normal task skills** - 120-200 chars. Most coding, writing, gaming, vault, and tool-usage skills should fit here.
+* **Complex task skills** - 220-300 chars. Use this for skills with several adjacent trigger phrasings or one important boundary.
+* **Router/meta skills** - 250-400 chars. A router earns extra surface only when it prevents many child skills from carrying broad aliases.
+* **Rare exceptions** - 400-500 chars for public-safety, MCP routing, or cross-repo failure handling where false negatives are expensive.
+* **Cleanup signal** - over 500 chars means fix the description or explicitly justify a router/meta role in `categories.yaml`.
+
+What belongs in `description`:
+
+* The main user intent or task shape.
+* A few concrete trigger phrases Kai actually says.
+* Critical disambiguators that prevent the wrong skill from opening.
+* Router fan-out surface, only for true router skills.
+
+What belongs in the body instead:
+
+* Procedure, command sequences, examples, checklists, policy rationale, historical incidents, implementation details, path inventories, long voice-mangle lists, and "why this exists" context.
+
+Alias discipline:
+
+* Lead with the canonical noun phrase, then 3-8 high-signal aliases.
+* Stop adding aliases when the next one is just a spelling variant, a synonym the model already knows, or a phrase Kai rarely says.
+* For voice dictation mangles, keep the common mangles in the description and move rare mangles into the body.
+* If a skill needs more than 8-12 aliases, rename the skill, add a router parent, or split the domain.
+
+Templates:
+
+```yaml
+description: Use when Kai asks to <verb> <domain>, especially <2-4 concrete trigger phrases>.
+```
+
+```yaml
+description: Router for <domain> skills. Use when Kai asks about <broad domain>, then open the child skill for the specific verb or system.
+```
+
+```yaml
+description: Pointer for <rule/domain>. Use when Kai asks about <trigger>; read <canonical file> for the full procedure.
+```
+
+Audit baseline from a 2026-05-21 Codex scan of 103 local skills:
+
+* Average description length was 384 chars.
+* 96 descriptions were over 240 chars.
+* 66 descriptions were over 360 chars.
+* 4 descriptions were over 500 chars.
+
+That baseline is workable for Claude, but it is too chatty for a Codex-optimized lazy-loading surface. When touching a skill, shorten the description before expanding the body.
 
 ## 4. The status line (under H1, where enforced)
 
@@ -156,9 +217,35 @@ Plus any cross-cutting rules that apply to every routed-to skill. The router is 
 
 Free-form. Frontmatter still enforced.
 
+### Repo AGENTS.md heading set
+
+The catalog-trifecta validator enforces a standard H2 set for every repo-local `AGENTS.md`:
+
+* `## Scope`
+* `## Project shape`
+* `## Repo boundaries`
+* `## Commands`
+* `## Validation`
+* `## Safety`
+* `## Cross-repo contracts`
+* `## Release`
+* `## Agent rules`
+* `## See also`
+
+These headings are intentionally broad. If a repo has nothing special for a section, keep the heading and write one line saying the repo inherits the workspace default or has no repo-local rule. The point is fast agent scanning, not forcing every repo to invent policy.
+
 ## 6. Validators
 
 The structural validator and dead-link checker ship from [`coilysiren/agentic-os`](https://github.com/coilysiren/agentic-os) and are consumed via pre-commit. The em-dash check is a small local hook because the upstream is voice-neutral by design.
+
+### Documentation-wide validators
+
+`catalog-trifecta`, `catalog-doc-size`, `documentation-layout`, and `code-comments` apply beyond skills. Together they enforce the doc surface shape:
+
+* `README.md`, `AGENTS.md`, and `docs/FEATURES.md` exist, cross-link, and stay under 80 lines / 4000 chars.
+* `AGENTS.md` uses the standard repo-local H2 set.
+* Markdown lives only at repo root, flat `docs/*.md`, or skill folders, and every Markdown file stays under 80 lines / 4000 chars.
+* Code comments are one standalone line, max 90 chars, with long explanation moved to docs.
 
 ### `skill-conventions` (upstream) - structural check
 

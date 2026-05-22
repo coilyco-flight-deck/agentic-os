@@ -6,6 +6,8 @@
 #     hooks:
 #       - id: catalog-doc-size
 #       - id: catalog-trifecta
+#       - id: documentation-layout
+#       - id: code-comments
 #       - id: catalog-block-present
 #       - id: validate-skills
 #       - id: dead-cross-links
@@ -15,8 +17,8 @@
 # Rollout helper: agentic-os/scripts/apply-agentic-os-hooks.py.
 
 - id: catalog-doc-size
-  name: README + AGENTS + docs/FEATURES size caps
-  description: Cap line and byte counts (100 lines / 5000 bytes) on the three catalog-trifecta files. See coilysiren/agentic-os-kai#545.
+  name: Markdown size caps
+  description: Compatibility alias for documentation-layout Markdown size caps.
   entry: check-catalog-doc-size
   language: python
   always_run: true
@@ -27,6 +29,24 @@
   name: catalog-trifecta cross-link convention
   description: Enforce that README + AGENTS + docs/FEATURES + .coily/coily.yaml cross-link. See coilysiren/agentic-os#59.
   entry: check-catalog-trifecta
+  language: python
+  always_run: true
+  pass_filenames: false
+  stages: [pre-commit]
+
+- id: documentation-layout
+  name: documentation layout
+  description: Enforce Markdown placement and size: root allow-list, flat docs/, skill folders only, 80 lines / 4000 chars.
+  entry: check-documentation-layout
+  language: python
+  always_run: true
+  pass_filenames: false
+  stages: [pre-commit]
+
+- id: code-comments
+  name: code comment discipline
+  description: Enforce one-line, 90-character max standalone comments in code.
+  entry: check-code-comments
   language: python
   always_run: true
   pass_filenames: false

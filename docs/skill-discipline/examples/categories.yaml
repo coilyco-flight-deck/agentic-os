@@ -108,10 +108,11 @@ forbidden_body_strings: []
 #
 # - max_skill_md_lines (default 500): past this the harness loader degrades.
 # - max_skill_md_bytes (default 10000): same, by byte count.
-# - max_description_bytes (default 500): cap on frontmatter `description`
+# - max_description_bytes (default 500): hard cap on frontmatter `description`
 #   length. Descriptions load into every agent session for keyword matching,
-#   so they are pure always-on context cost. 500 fits a canonical-name +
-#   one sentence of trigger phrasings, no padding.
+#   so they are pure always-on context cost. Keep most descriptions below
+#   200 chars, complex skills below 300 chars, and router/meta skills below
+#   400 chars unless false negatives are very expensive.
 max_skill_md_lines: 500
 max_skill_md_bytes: 10000
 max_description_bytes: 500

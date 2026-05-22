@@ -1,13 +1,15 @@
 # skill-discipline
 
-Pre-commit hooks and authoring docs for Claude Code skill repositories.
+Pre-commit hooks and authoring docs for documentation and skill repositories.
 
 ## Hooks
 
-The validators live as standalone scripts in `agentic-os/scripts/`. Each consumer repo gets a stamped copy via `agentic-os-kai/scripts/apply-skill-discipline-hooks.py` (run from agentic-os-kai with `make apply-skill-discipline-hooks`).
+The validators live in the `agentic_os` Python package and ship through the managed `coilysiren/agentic-os` pre-commit block.
 
 - `validate-skills.py` - validates `.claude/skills/` against a spec at `.claude/skills/categories.yaml`. Checks frontmatter, prefix taxonomy, status lines, required sections, size caps, stale skill-name references.
 - `check-dead-links.py` - walks markdown inside `.claude/skills/`, fails if any inline `[text](path.md)` link does not resolve.
+- `check-documentation-layout.py` - keeps Markdown at repo root, flat `docs/*.md`, or skill folders only.
+- `check-code-comments.py` - keeps standalone code comments to one line, max 90 chars.
 - `check-commit-closes-issue.py` - rejects commits whose message lacks a `closes #N` / `fixes #N` / `resolves #N` keyword pointing at an issue in the same repo. (Already canonical here; just listed for completeness.)
 
 See [`examples/pre-commit-config.yaml`](examples/pre-commit-config.yaml) for the managed `.pre-commit-config.yaml` block.

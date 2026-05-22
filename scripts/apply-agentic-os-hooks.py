@@ -11,7 +11,8 @@ For each active repo (not archived, not a fork) checked out under
   1. Read or create `.pre-commit-config.yaml`.
   2. Strip legacy stamped `repo: local` blocks for the hooks now centralized
      here (catalog-block-present, catalog-doc-size, catalog-trifecta,
-     validate-skills, dead-cross-links, closes-issue, skill-discipline).
+     documentation-layout, code-comments, validate-skills, dead-cross-links,
+     closes-issue, skill-discipline).
   3. Insert/refresh the managed agentic-os block with the full hook set.
   4. Run `pre-commit install --hook-type pre-commit --hook-type commit-msg`.
 
@@ -74,6 +75,8 @@ LEGACY_STAMPED_SCRIPTS = [
 DEFAULT_HOOK_IDS = [
     "catalog-doc-size",
     "catalog-trifecta",
+    "documentation-layout",
+    "code-comments",
     "catalog-block-present",
     "validate-skills",
     "dead-cross-links",

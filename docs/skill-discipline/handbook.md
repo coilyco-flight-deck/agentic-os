@@ -94,6 +94,20 @@ Three size caps in `categories.yaml`, all with built-in defaults that apply when
 * `max_description_bytes` (default `500`) caps the frontmatter `description` field. Every skill's description is loaded into every agent session for keyword matching, so descriptions are pure always-on context cost. 500 fits a canonical-name + one sentence of trigger phrasings; past that you're paying for padding.
   * **Router/meta exception**: skills whose category declares `role: router` or `role: meta` get **2x** the cap (default 1000). Routers genuinely need wider keyword surface to fan out to all the skills they cross-link. The validator applies the multiplier automatically.
 
+### Description budget targets
+
+The validator enforces a hard byte cap, but the practical target should be lower. Treat `description` as routing metadata, not documentation. Codex and Claude both see this text before deciding whether to open the skill body.
+
+* **Pointer skills** - under 160 chars. Use this when the body mostly points at a canonical doc elsewhere.
+* **Normal task skills** - 120-200 chars. Most coding, writing, gaming, vault, and tool-usage skills should fit here.
+* **Complex task skills** - 220-300 chars. Use this for skills with several adjacent trigger phrasings or one important boundary.
+* **Router/meta skills** - 250-400 chars normally. A router earns extra surface only when it prevents many child skills from carrying broad aliases.
+* **Rare exceptions** - 400-500 chars for public-safety, MCP routing, or cross-repo failure handling where false negatives are expensive.
+
+Put the main task shape, a few trigger phrases, and critical disambiguators in `description`. Put procedure, examples, policy rationale, command sequences, long voice-mangle lists, implementation details, and historical context in the body or `references/`.
+
+If a skill needs more than 8-12 aliases in the description, rename the skill, add a router parent, or split the domain.
+
 ### Frozen-archive exemption
 
 `archive_path_components` (default `[]`) lists path components that mark a frozen archive. Any `.md` whose path contains one of these is skipped from the size caps — but only the size caps. Stale-ref, forbidden-body-string, and frontmatter checks still apply.
@@ -135,6 +149,37 @@ Runs `validate_skills.py`. Checks frontmatter, prefix/exact match, status (where
 ### dead-cross-links (pre-commit, pre-push)
 
 Runs `check_dead_links.py`. Walks every Markdown file under `.claude/skills/`, extracts inline `[text](target)` links, fails on any local-relative target that does not resolve to a real file. External URLs, anchors, placeholders (`...`, `TBD`, `TODO`), and paths escaping the repo are skipped.
+
+### catalog-trifecta (pre-commit, pre-push)
+
+Runs `check_catalog_trifecta.py`. Enforces the repo entrypoint set: `README.md`, `AGENTS.md`, `docs/FEATURES.md`, and one catalog YAML (`.coily/coily.yaml` or `.agent-guard/agent-guard.yaml`). Each Markdown file needs `## See also`, links to the other entrypoints, and the convention citation.
+
+`AGENTS.md` also carries a required repo-local heading set so agents can scan operating rules without guessing each repo's prose shape:
+
+* `## Scope`
+* `## Project shape`
+* `## Repo boundaries`
+* `## Commands`
+* `## Validation`
+* `## Safety`
+* `## Cross-repo contracts`
+* `## Release`
+* `## Agent rules`
+* `## See also`
+
+### documentation-layout (pre-commit)
+
+Runs `check_documentation_layout.py`. Enforces Markdown placement across the repo:
+
+* root Markdown is limited to the universal allow-list (`README.md`, `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `GOVERNANCE.md`, `SECURITY.md`, `SUPPORT.md`, `LICENSE.md`);
+* ordinary documentation lives in flat `docs/*.md`;
+* skill documentation lives under `.claude/skills/`, `.agents/skills/`, or `skills/`;
+* `docs/` has no subdirectories. Use filename prefixes when grouping is needed;
+* every Markdown file stays under 80 lines and 4000 chars.
+
+### code-comments (pre-commit)
+
+Runs `check_code_comments.py`. Enforces code-comment discipline for common source files: standalone comments are one line, max 90 chars, and not contiguous. Longer durable explanation belongs in `docs/*.md`; code gets a short pointer only.
 
 ### commit-closes-issue (commit-msg)
 

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Validator for a repo's .claude/skills/ surface.
+Validator for a repo's skill directory surface.
 
-Enforces structural rules driven by .claude/skills/categories.yaml.
+Enforces structural rules driven by the skill directory's categories.yaml.
 The consumer-facing handbook is shipped alongside this script in
 agentic-os/docs/skill-discipline/handbook.md.
 
@@ -40,6 +40,16 @@ except ModuleNotFoundError:
 REPO_ROOT = Path.cwd()
 SKILLS_DIR = REPO_ROOT / ".claude" / "skills"
 SPEC_PATH = SKILLS_DIR / "categories.yaml"
+
+# Skill directory layout, canonical first. agents/skills is the current home.
+SKILLS_DIR_CANDIDATES = ("agents/skills", ".agents/skills", ".claude/skills", "skills")
+
+
+def detect_skills_dir() -> str:
+    for candidate in SKILLS_DIR_CANDIDATES:
+        if (REPO_ROOT / candidate).is_dir():
+            return candidate
+    return SKILLS_DIR_CANDIDATES[0]
 
 DEFAULT_MAX_LINES = 500
 DEFAULT_MAX_BYTES = 10_000
@@ -280,7 +290,7 @@ def check_stale_skill_refs(
         line_no = body.count("\n", 0, m.start()) + 1
         report.fail(
             f"{md_path.relative_to(REPO_ROOT)}:{line_no}: stale skill reference "
-            f"`{ref}`. No such skill under .claude/skills/."
+            f"`{ref}`. No such skill in the skills directory."
         )
 
 
@@ -511,9 +521,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--skills-dir",
-        default=".claude/skills",
+        default=None,
         help="Path to the skills directory (relative to the repo root). "
-        "Default: .claude/skills",
+        "Default: autodetect agents/skills, .agents/skills, .claude/skills, skills.",
     )
     parser.add_argument(
         "--report-only",
@@ -531,7 +541,7 @@ def main(argv: list[str] | None = None) -> int:
     # Mutate the module globals so the rest of the validator's call graph
     # (which references SKILLS_DIR / SPEC_PATH directly) sees the override.
     global SKILLS_DIR, SPEC_PATH
-    SKILLS_DIR = (REPO_ROOT / ns.skills_dir).resolve()
+    SKILLS_DIR = (REPO_ROOT / (ns.skills_dir or detect_skills_dir())).resolve()
     SPEC_PATH = SKILLS_DIR / "categories.yaml"
 
     if not SKILLS_DIR.is_dir():
