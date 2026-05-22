@@ -7,6 +7,10 @@ description: Manual expansion of Kai's "start a sidequest" Wispr Flow snippet wh
 
 Kai's normal flow is to dictate `$$start a sidequest$$` and let Wispr Flow expand the snippet. When she can't verbalize (workshop, public space, sick voice), she'll ask Claude to expand it manually. This skill is the canonical expansion plus the act-on-it loop.
 
+## Platform
+
+Sidequest currently works only on Warp Preview - the `coily dispatch` spawn and the done-banner completion flow depend on Warp Preview behavior. Warp Preview is installed only on the Mac, so Sidequest is Mac-only for now. On other hosts, file the issue but expect the dispatch step to fail.
+
 ## The expansion
 
 The snippet body Kai accepted ahead of time:
