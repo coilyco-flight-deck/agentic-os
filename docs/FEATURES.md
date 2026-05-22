@@ -32,6 +32,10 @@ Small, single-purpose scripts that exist because the failure modes they handle a
 - Verbatim-echo wrapper that fences command output and clips to mobile-readable size, for the `$$ <cmd>` chat convention.
 - GPG signing doctor that walks every check needed to diagnose `failed to sign the data` and names the most-likely fix per failure mode.
 
+## Agent self-name
+
+Every Claude Code session gets a stable, human-readable name: `claude-<os>-<hostname>-<tag>`, where `<tag>` is the last four characters of the session id. `setup.sh` wires it into `~/.claude/settings.json` two ways - a persistent status line so the operator always sees which host and session they are talking to, and a SessionStart hook so the agent knows its own name from the first turn. Codex and OpenClaw agents swap the `claude-` prefix. The wiring is idempotent and never clobbers a status line the operator set themselves.
+
 ## Install surface
 
 [README.md](../README.md) carries per-OS install steps. Mac/Linux use plain `ln -sf`. Windows uses symlinks via Git Bash, which requires Developer Mode + `MSYS=winsymlinks:nativestrict`.

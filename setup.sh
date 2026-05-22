@@ -58,6 +58,13 @@ else
   ensure_link "$SCRIPT_DIR/scripts/gpg-ssm" "$HOME/.local/bin/gpg-ssm"
 fi
 
+# --- 3. Claude Code agent self-name (status line + SessionStart hook) ---
+if command -v python3 >/dev/null 2>&1; then
+  "$SCRIPT_DIR/scripts/install-agent-name.py"
+else
+  echo "skipped agent self-name wiring (python3 not on PATH)"
+fi
+
 echo
 echo "Done."
 current_shell="$(basename "${SHELL:-}")"
