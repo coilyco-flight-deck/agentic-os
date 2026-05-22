@@ -41,8 +41,8 @@ REPO_ROOT = Path.cwd()
 SKILLS_DIR = REPO_ROOT / ".claude" / "skills"
 SPEC_PATH = SKILLS_DIR / "categories.yaml"
 
-# Skill directory layout, canonical first. agents/skills is the current home.
-SKILLS_DIR_CANDIDATES = ("agents/skills", ".agents/skills", ".claude/skills", "skills")
+# Skill directory layout, canonical first. .agents/skills is the current home.
+SKILLS_DIR_CANDIDATES = (".agents/skills", ".claude/skills", "skills")
 
 
 def detect_skills_dir() -> str:
@@ -523,7 +523,7 @@ def main(argv: list[str] | None = None) -> int:
         "--skills-dir",
         default=None,
         help="Path to the skills directory (relative to the repo root). "
-        "Default: autodetect agents/skills, .agents/skills, .claude/skills, skills.",
+        "Default: autodetect .agents/skills, .claude/skills, skills.",
     )
     parser.add_argument(
         "--report-only",

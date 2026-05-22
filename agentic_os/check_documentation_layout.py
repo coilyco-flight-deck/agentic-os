@@ -4,7 +4,7 @@
 Markdown documentation may live only in:
     1. the repo root, with a small universal filename allow-list;
     2. docs/*.md, with no docs subdirectories;
-    3. skill folders (agents/skills, .agents/skills, .claude/skills, or skills).
+    3. skill folders (.agents/skills, .claude/skills, or skills).
 
 The rule keeps repo documentation structured, flat, and discoverable. One-off
 root Markdown files and nested docs trees drift quickly and make agents guess
@@ -47,7 +47,6 @@ SKIP_DIR_NAMES = {
 }
 
 SKILL_PATHS = (
-    ("agents", "skills"),
     (".agents", "skills"),
     (".claude", "skills"),
     ("skills",),
