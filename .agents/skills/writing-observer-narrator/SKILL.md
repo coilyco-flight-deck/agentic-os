@@ -84,4 +84,4 @@ When generating text in this archetype, run a pre-flight checklist:
 
 ## See also
 
-- [`tooling-elevenlabs-persona`](../../../../agentic-os-kai/.claude/skills/tooling-elevenlabs-persona/SKILL.md) - one Cortana-coded instance of this archetype, deployed as Kai's ElevenLabs voice.
+- [`tooling-elevenlabs-persona`](../../../../agentic-os-kai/.agents/skills/tooling-elevenlabs-persona/SKILL.md) - one Cortana-coded instance of this archetype, deployed as Kai's ElevenLabs voice.

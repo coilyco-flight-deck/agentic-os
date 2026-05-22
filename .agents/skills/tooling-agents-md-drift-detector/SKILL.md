@@ -26,7 +26,7 @@ The report goes to the vault inbox when reachable, otherwise stdout.
 Override with `AGENTS_DRIFT_INBOX=<dir>` env var before invoking.
 
 Under the hood: `make agents-md-drift` runs
-`python3 .claude/skills/tooling-agents-md-drift-detector/detect.py $(ARGS)`.
+`python3 .agents/skills/tooling-agents-md-drift-detector/detect.py $(ARGS)`.
 
 Each repo's AGENTS.md is classified as one of:
 

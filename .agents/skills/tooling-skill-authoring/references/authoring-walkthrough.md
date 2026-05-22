@@ -72,7 +72,7 @@ Voice-match the personal-OS AGENTS.md: no em-dashes, no italics, no semicolons i
 
 ```sh
 python3 scripts/validate_skills.py <skill-name>
-python3 scripts/check_dead_links.py .claude/skills/<skill-name>/
+python3 scripts/check_dead_links.py .agents/skills/<skill-name>/
 ```
 
 Both run automatically in pre-commit. Run them by hand during iteration to keep the feedback loop tight.

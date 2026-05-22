@@ -26,7 +26,7 @@ If the repo provides templates under (typically) a `templates/` directory, start
 
 ## Draft the SKILL.md
 
-Create the directory: `.claude/skills/<skill-name>/`. Add a `SKILL.md` with frontmatter and body.
+Create the directory: `.agents/skills/<skill-name>/`. Add a `SKILL.md` with frontmatter and body.
 
 Frontmatter rules (validator-enforced):
 

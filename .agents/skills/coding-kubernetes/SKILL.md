@@ -20,12 +20,12 @@ Umbrella for any Kubernetes work.
 
 - Manifests in [`coilysiren/infrastructure`](https://github.com/coilysiren/infrastructure). Apply via the repo's deploy scripts, not ad-hoc `kubectl apply`.
 - Namespaces match the service name. One service, one namespace, when reasonable.
-- Resource limits set explicitly (cluster is small, OOM evictions are real - see [`ops-investigation-k3s-pod-eviction`](../../../../agentic-os-kai/.claude/skills/ops-investigation-k3s-pod-eviction/SKILL.md)).
+- Resource limits set explicitly (cluster is small, OOM evictions are real - see [`ops-investigation-k3s-pod-eviction`](../../../../agentic-os-kai/.agents/skills/ops-investigation-k3s-pod-eviction/SKILL.md)).
 
 ## Investigation playbooks
 
-- Pod evictions → [`ops-investigation-k3s-pod-eviction`](../../../../agentic-os-kai/.claude/skills/ops-investigation-k3s-pod-eviction/SKILL.md).
-- Cluster upgrades → [`ops-investigation-k3s-upgrade-homelab`](../../../../agentic-os-kai/.claude/skills/ops-investigation-k3s-upgrade-homelab/SKILL.md).
+- Pod evictions → [`ops-investigation-k3s-pod-eviction`](../../../../agentic-os-kai/.agents/skills/ops-investigation-k3s-pod-eviction/SKILL.md).
+- Cluster upgrades → [`ops-investigation-k3s-upgrade-homelab`](../../../../agentic-os-kai/.agents/skills/ops-investigation-k3s-upgrade-homelab/SKILL.md).
 
 ## When this skill is active
 

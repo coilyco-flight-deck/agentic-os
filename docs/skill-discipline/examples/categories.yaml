@@ -1,6 +1,6 @@
-# Example .claude/skills/categories.yaml
+# Example .agents/skills/categories.yaml
 #
-# Copy this file to your consumer repo at .claude/skills/categories.yaml and
+# Copy this file to your consumer repo at .agents/skills/categories.yaml and
 # trim or extend to fit your skill surface. Source of truth for the
 # `skill-conventions` hook from coilysiren/agentic-os.
 #

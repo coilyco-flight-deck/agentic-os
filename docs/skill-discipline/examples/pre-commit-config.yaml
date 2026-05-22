@@ -11,7 +11,7 @@ repos:
     hooks:
       - id: validate-skills
         name: skill conventions
-        description: Validate the structure of .claude/skills/ against .claude/skills/categories.yaml.
+        description: Validate the structure of .agents/skills/ against .agents/skills/categories.yaml.
         entry: python scripts/validate-skills.py
         language: python
         additional_dependencies: [pyyaml]
@@ -21,7 +21,7 @@ repos:
 
       - id: check-dead-links
         name: dead cross-links
-        description: Validate that inline markdown links inside .claude/skills/ resolve to real files.
+        description: Validate that inline markdown links inside .agents/skills/ resolve to real files.
         entry: python scripts/check-dead-links.py
         language: python
         pass_filenames: false

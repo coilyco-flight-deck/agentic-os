@@ -15,7 +15,7 @@ Umbrella for any work that ships an HTTP server as the primary interface.
 
 ## Design principles
 
-- **OpenAPI from day one.** `/openapi.json` exists, accurate, kept in sync with handlers. Cross-link to the JSON-twin discoverability rule in [`kai-tech-prefs`](../../../../agentic-os-kai/.claude/skills/kai-tech-prefs/SKILL.md).
+- **OpenAPI from day one.** `/openapi.json` exists, accurate, kept in sync with handlers. Cross-link to the JSON-twin discoverability rule in [`kai-tech-prefs`](../../../../agentic-os-kai/.agents/skills/kai-tech-prefs/SKILL.md).
 - **Async I/O when there's I/O.** Sync handlers only when there's nothing to overlap.
 - **Structured errors.** Return shaped JSON for 4xx/5xx, not bare strings.
 - **Prometheus metrics from day one.** `/metrics` endpoint, request duration histograms, error counters. See [`coding-shape-observability`](../coding-shape-observability/SKILL.md).
@@ -38,4 +38,4 @@ Building a new HTTP server, refactoring an existing one, or designing the API su
 
 - [`coding-shape-observability`](../coding-shape-observability/SKILL.md) - metrics/tracing wiring.
 - [`coding-kubernetes`](../coding-kubernetes/SKILL.md) - deploy target for most servers Kai writes.
-- [`kai-tech-prefs`](../../../../agentic-os-kai/.claude/skills/kai-tech-prefs/SKILL.md) - JSON-twin discoverability rule.
+- [`kai-tech-prefs`](../../../../agentic-os-kai/.agents/skills/kai-tech-prefs/SKILL.md) - JSON-twin discoverability rule.

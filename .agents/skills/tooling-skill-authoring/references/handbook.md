@@ -1,14 +1,14 @@
 # Skills Repository Handbook
 
-**Purpose.** This file is the single source of truth for everything uniform and structured about `<personal-os-repo>/.claude/skills/`. Read it cold and you should be able to recreate the repo's skill organization from scratch: the category taxonomy, the canonical SKILL.md shape per category, the validator, the templates, the pre-commit wiring, the cross-link rules, and the rules for adding a new category.
+**Purpose.** This file is the single source of truth for everything uniform and structured about `<personal-os-repo>/.agents/skills/`. Read it cold and you should be able to recreate the repo's skill organization from scratch: the category taxonomy, the canonical SKILL.md shape per category, the validator, the templates, the pre-commit wiring, the cross-link rules, and the rules for adding a new category.
 
-This file is paired with [`categories.yaml`](../../categories.yaml) (at `.claude/skills/categories.yaml`), the machine-readable spec consumed by the `coilysiren/agentic-os` skill-discipline validator. When the two disagree, the YAML is authoritative for the validator and this file should be updated to match.
+This file is paired with [`categories.yaml`](../../categories.yaml) (at `.agents/skills/categories.yaml`), the machine-readable spec consumed by the `coilysiren/agentic-os` skill-discipline validator. When the two disagree, the YAML is authoritative for the validator and this file should be updated to match.
 
 ## 1. Layout
 
 ```
 <personal-os-repo>/
-├── .claude/skills/
+├── .agents/skills/
 │   ├── <personal-prefix>-<topic>/                            # operating-context rules
 │   ├── daily-<topic>/                          # cron'd inbox routines
 │   ├── ops-social-gws-<verb>/                  # Gmail family
@@ -37,7 +37,7 @@ This file is paired with [`categories.yaml`](../../categories.yaml) (at `.claude
 └── .pre-commit-config.yaml                     # subscribes to coilysiren/agentic-os hooks + local hooks
 ```
 
-**No skills outside `.claude/skills/`.** No skills inside other skills' directories. Flat is the only shape the loader supports.
+**No skills outside `.agents/skills/`.** No skills inside other skills' directories. Flat is the only shape the loader supports.
 
 ## 2. Categories
 
@@ -249,11 +249,11 @@ The structural validator and dead-link checker ship from [`coilysiren/agentic-os
 
 ### `skill-conventions` (upstream) - structural check
 
-Reads `.claude/skills/categories.yaml`, walks `.claude/skills/`, applies all checks, exits non-zero with a per-violation report.
+Reads `.agents/skills/categories.yaml`, walks `.agents/skills/`, applies all checks, exits non-zero with a per-violation report.
 
 What it checks:
 
-1. **Skill prefix.** Every directory under `.claude/skills/` matches an allowed prefix or exact name.
+1. **Skill prefix.** Every directory under `.agents/skills/` matches an allowed prefix or exact name.
 2. **SKILL.md exists.**
 3. **Frontmatter valid.** Has `name` (equal to dir name) and non-empty `description`.
 4. **Description prefix** (when enforced per category). Optional. Most categories leave this off.
@@ -265,11 +265,11 @@ What it checks:
 10. **Section lead lines** (when enforced).
 11. **Stale skill-name backtick references.** Catches `` `<prefix>-<topic>` `` references whose target skill doesn't exist.
 12. **SKILL.md size caps.** 500 lines, 10 KB. Past either, the loader degrades. Push detail into a sibling `references/` file.
-13. **Symlinks under `.claude/skills/`.** Symlink dirs are skipped, not validated. The loader follows them; the validator walks the canonical target.
+13. **Symlinks under `.agents/skills/`.** Symlink dirs are skipped, not validated. The loader follows them; the validator walks the canonical target.
 
 ### `dead-cross-links` (upstream) - cross-link check
 
-Walks every Markdown file under `.claude/skills/`, extracts inline `[text](target)` links, fails on any local-relative target that doesn't resolve.
+Walks every Markdown file under `.agents/skills/`, extracts inline `[text](target)` links, fails on any local-relative target that doesn't resolve.
 
 What it skips intentionally:
 
@@ -335,6 +335,6 @@ The validator's em-dash check flags U+2014 in SKILL.md prose. Wrap legitimate us
 
 ## 11. Symlinks and the global skill surface
 
-`./setup.sh` from `<personal-os-repo>/` creates symlinks at `~/.claude/skills/<name>` pointing back at each top-level directory under `.claude/skills/`. Restart Claude Code after running setup so the loader picks up new entries.
+`./setup.sh` from `<personal-os-repo>/` creates symlinks at `~/.claude/skills/<name>` pointing back at each top-level directory under `.agents/skills/`. Restart Claude Code after running setup so the loader picks up new entries.
 
-Some skills (e.g. `coily-passthroughs`) live as symlinks inside `.claude/skills/` rather than real directories. The validator skips symlinks; the canonical target is validated where it lives.
+Some skills (e.g. `coily-passthroughs`) live as symlinks inside `.agents/skills/` rather than real directories. The validator skips symlinks; the canonical target is validated where it lives.

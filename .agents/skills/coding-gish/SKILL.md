@@ -28,9 +28,9 @@ Kai dictates "gish" (or any trigger from the description). The current working t
 
 ## Cross-links
 
-- [`kai-git-workflow`](../../../../agentic-os-kai/.claude/skills/kai-git-workflow/SKILL.md) - the same-repo issue rule, readonly exceptions, lockdown notes.
+- [`kai-git-workflow`](../../../../agentic-os-kai/.agents/skills/kai-git-workflow/SKILL.md) - the same-repo issue rule, readonly exceptions, lockdown notes.
 - [`coding-github`](../coding-github/SKILL.md) - the broader GitHub umbrella, including the GraphQL hard rule.
-- [`coily-ops-gh-meta`](../../../../agentic-os-kai/.claude/skills/coily-ops-gh-meta/SKILL.md) - `coily ops gh` passthrough semantics, including the `--body-file` workaround for the shell-metacharacter gate.
+- [`coily-ops-gh-meta`](../../../../agentic-os-kai/.agents/skills/coily-ops-gh-meta/SKILL.md) - `coily ops gh` passthrough semantics, including the `--body-file` workaround for the shell-metacharacter gate.
 
 **Why this is one skill not three:** the three steps fail open if you skip one. An issue without a commit is a dangling intent. A commit without an issue gets rejected by the hook. A commit without a push is invisible. Bundling enforces all three.
 

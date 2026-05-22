@@ -88,7 +88,7 @@ the nudge intact.
 
 **Dedup against existing installs.** Before emitting the hydrated file,
 read `<personal-os-repo>/config/mcporter.json` (existing MCP entries) and
-`ls <personal-os-repo>/.claude/skills/` (existing skills). For each candidate,
+`ls <personal-os-repo>/.agents/skills/` (existing skills). For each candidate,
 fuzzy-match against installed names and aliases. If a probable
 duplicate is found, mark the entry `dedup: existing` and include the
 matched name in a `matches:` field. Dedup'd entries skip phase 4 audit

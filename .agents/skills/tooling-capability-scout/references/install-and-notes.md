@@ -9,7 +9,7 @@ batched, so a failure on entry N does not block entries N+1..M.
 - `gh issue create -R <owner>/<personal-os-repo> --title "skill: install <name>"
   --body "<short rationale, link to source>"`. Capture the issue
   number.
-- Create directory `<personal-os-repo>/.claude/skills/<name>/` and write
+- Create directory `<personal-os-repo>/.agents/skills/<name>/` and write
   `SKILL.md` (fetch from the source repo if the install method is
   copy-the-file; otherwise write a thin wrapper if the source skill is
   a plugin).

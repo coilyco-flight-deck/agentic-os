@@ -34,7 +34,7 @@ If still nothing, report to the user ("No marketplace skill at ≥5 stars matche
 
 ### Step 3: Automated vetting - clone and read
 
-Before showing anything to the user, download the skill yourself and read it with an adversarial eye. Clone to a scratch location - do NOT put it in `.claude/skills/` yet.
+Before showing anything to the user, download the skill yourself and read it with an adversarial eye. Clone to a scratch location - do NOT put it in `.agents/skills/` yet.
 
 **Threat model for this environment.** This host has credentials for:
 
@@ -153,12 +153,12 @@ Template:
 
 Do NOT install without explicit confirmation. Previous session approvals don't carry over; approval of one skill doesn't imply approval of another - each install is its own decision.
 
-### Step 5: Install into `<personal-os-repo>/.claude/skills/<skill-name>/`
+### Step 5: Install into `<personal-os-repo>/.agents/skills/<skill-name>/`
 
 On approval:
 
 ```sh
-target="$HOME/projects/<personal-os-repo>/.claude/skills/<skill-name>"
+target="$HOME/projects/<personal-os-repo>/.agents/skills/<skill-name>"
 mkdir -p "$(dirname "$target")"
 # If sparse-checked out, the skill files live at $dest/$subpath
 cp -r "$dest/$subpath" "$target"
@@ -174,7 +174,7 @@ Don't edit the installed skill's contents - if something needs changing, surface
 
 ### Step 6: Use the newly-installed skill to continue the work
 
-Immediately after install, read the new `.claude/skills/<skill-name>/SKILL.md` and apply its guidance to the task that prompted the search. That's the whole point - the user didn't ask to install a skill for its own sake, he asked for help with something.
+Immediately after install, read the new `.agents/skills/<skill-name>/SKILL.md` and apply its guidance to the task that prompted the search. That's the whole point - the user didn't ask to install a skill for its own sake, he asked for help with something.
 
 Because `setup.sh` symlinks every skill into `~/.claude/skills/`, the skill is globally discoverable from that point on - future sessions pick it up without extra work.
 

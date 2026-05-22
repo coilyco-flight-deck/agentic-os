@@ -1,6 +1,6 @@
 ---
 name: tooling-skill-authoring
-description: Author, modify, and validate Claude Code skills. Covers skill location, naming/category prefixes, description-size discipline, encode-the-why, flat-not-nested layout, Python-helpers bias, and plugin marketplace fast-forward. Triggers - skill, SKILL.md, frontmatter, plugin, .claude/skills, authoring skill, validator, categories.yaml.
+description: Author, modify, and validate Claude Code skills. Covers skill location, naming/category prefixes, description-size discipline, encode-the-why, flat-not-nested layout, Python-helpers bias, and plugin marketplace fast-forward. Triggers - skill, SKILL.md, frontmatter, plugin, .agents/skills, authoring skill, validator, categories.yaml.
 ---
 
 # Skill authoring
@@ -13,21 +13,21 @@ The rest of this file carries opinionated authoring discipline the handbook does
 
 ## Location
 
-**Default: skills live at `<personal-os-repo>/.claude/skills/`.** Canonical source for the cross-repo / runbook / operating-context skill surface. Global-scope copy at `~/.claude/skills/<name>` is a symlink managed by `./setup.sh`.
+**Default: skills live at `<personal-os-repo>/.agents/skills/`.** Canonical source for the cross-repo / runbook / operating-context skill surface. Global-scope copy at `~/.claude/skills/<name>` is a symlink managed by `./setup.sh`.
 
-**Exception: per-repo co-location for pure design-reference skills.** A repo may host its own `.claude/skills/` if the skills are pure design or usage reference for *that repo only* and never get invoked under cross-repo failure conditions. Per-repo skills surface only when Claude Code is operating in that repo's directory, which is the correct scope for design references. Runbooks, investigation playbooks, and anything that fires under partial-failure stay central (see "Investigation skills live centrally").
+**Exception: per-repo co-location for pure design-reference skills.** A repo may host its own `.agents/skills/` if the skills are pure design or usage reference for *that repo only* and never get invoked under cross-repo failure conditions. Per-repo skills surface only when Claude Code is operating in that repo's directory, which is the correct scope for design references. Runbooks, investigation playbooks, and anything that fires under partial-failure stay central (see "Investigation skills live centrally").
 
 When co-locating, the host repo must:
 
 1. Receive the skill-discipline pre-commit hooks (`validate-skills`, `dead-cross-links`) plus the rest of the catalog suite via `make apply-agentic-os-hooks` from `agentic-os-kai`. That rollout inserts one managed `repo: https://github.com/coilysiren/agentic-os` block into the host's `.pre-commit-config.yaml`. No stamped local copies. The validators live in the `agentic_os` Python package; pre-commit pip-installs them. See [coilysiren/agentic-os#61](https://github.com/coilysiren/agentic-os/issues/61).
-2. Ship a slim `.claude/skills/categories.yaml` at the skills root with only the categories the repo actually uses. The validator reads this path directly.
+2. Ship a slim `.agents/skills/categories.yaml` at the skills root with only the categories the repo actually uses. The validator reads this path directly.
 3. Run `pre-commit install` in the host repo. That activates the hooks for every commit.
 
-No `setup.sh` is required in the host repo. Claude Code auto-discovers skills under any `.claude/skills/` in the working tree.
+No `setup.sh` is required in the host repo. Claude Code auto-discovers skills under any `.agents/skills/` in the working tree.
 
 ## Authoring
 
-Directory under `.claude/skills/` with `SKILL.md` (frontmatter: `name`, `description` + instructions). Commit in the personal-OS repo, rerun `./setup.sh` from repo root (idempotent symlink refresh).
+Directory under `.agents/skills/` with `SKILL.md` (frontmatter: `name`, `description` + instructions). Commit in the personal-OS repo, rerun `./setup.sh` from repo root (idempotent symlink refresh).
 
 Bootstrap also handles client CLAUDE.md import, workspace CLAUDE.md import, parent-dir AGENTS.md symlink. Uses `ln -s`; on Windows needs `MSYS=winsymlinks:nativestrict` + Developer Mode.
 
@@ -39,7 +39,7 @@ pre-commit run dead-cross-links --all-files
 pre-commit run em-dash-check --all-files
 ```
 
-The structural validator enforces the category taxonomy from `.claude/skills/categories.yaml`. If your skill name doesn't match an allowed prefix or exact-name, the validator rejects it. See the handbook for the prefix list.
+The structural validator enforces the category taxonomy from `.agents/skills/categories.yaml`. If your skill name doesn't match an allowed prefix or exact-name, the validator rejects it. See the handbook for the prefix list.
 
 ## Encode the why, not just the what
 
@@ -51,7 +51,7 @@ Framing reference: https://simme.dev/posts/the-end-of-just-ask-sarah/.
 
 ## Skills are flat, not nested
 
-Every skill is a peer directory directly under `.claude/skills/`. Do **not** nest sub-skills inside another skill's directory (e.g. `meta-skill/sub-skill/SKILL.md`). Nested-skill discovery is poorly supported by the harness, and `setup.sh` only symlinks top-level skill dirs to `~/.claude/skills/<name>`. Anything below the top level is invisible to the loader.
+Every skill is a peer directory directly under `.agents/skills/`. Do **not** nest sub-skills inside another skill's directory (e.g. `meta-skill/sub-skill/SKILL.md`). Nested-skill discovery is poorly supported by the harness, and `setup.sh` only symlinks top-level skill dirs to `~/.claude/skills/<name>`. Anything below the top level is invisible to the loader.
 
 When a meta-skill needs to route to other skills, the routed skills live as **flat peers** alongside it. The meta's job is to name them and describe when each fires; the loader handles each one independently.
 
@@ -61,7 +61,7 @@ When a meta-skill needs to route to other skills, the routed skills live as **fl
 
 ## Investigation skills live centrally, not co-located with the tool
 
-Investigation / runbook-shaped skills go under the personal-OS repo's `.claude/skills/`, even when the tool they investigate lives in a different repo. A routed ops-investigation meta-skill with peer skills per failure-domain is the canonical shape.
+Investigation / runbook-shaped skills go under the personal-OS repo's `.agents/skills/`, even when the tool they investigate lives in a different repo. A routed ops-investigation meta-skill with peer skills per failure-domain is the canonical shape.
 
 **Why:** real failures cross component boundaries. A single command can fail in a way that implicates several services and hosts at once. An investigator under pressure should not have to clone three repos to find the right runbook. The runbook-monorepo pattern is well-established in SRE practice (Google SRE book, [sre.google/sre-book/](https://sre.google/sre-book/), chapter "Being On-Call"), and downstream tooling (Backstage, incident.io, FireHydrant, OpenTelemetry) all use the same emit-locally / investigate-centrally split. Co-locating optimizes for the runbook *author*; centralizing optimizes for the runbook *consumer*, who is always the one operating under partial-failure conditions.
 

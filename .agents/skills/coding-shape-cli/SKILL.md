@@ -14,7 +14,7 @@ Kai has deep first-class CLI-building experience and is an experienced open-sour
 - **RubyGems and Bundler** - Kai was an Open Source Software Engineer at Ruby Together (2016) maintaining `gem` and `bundle`, the package-manager CLIs the entire Ruby ecosystem runs on. Maintainer and contributor across the toolchain.
 - **urfave/cli** - Kai is a maintainer of the Go CLI framework itself.
 
-So when a task involves contributing to or maintaining a CLI or an open-source project, frame it as Kai returning to familiar ground, not a first-time experience. Do not describe OSS contribution as something Kai has "never gotten to do." She has, twice over, on widely-used projects. The portfolio gap in [`kai-career`](../../../../agentic-os-kai/.claude/skills/kai-career/SKILL.md) is about recent recruiter-visible flagship repos, not about whether Kai has shipped open source.
+So when a task involves contributing to or maintaining a CLI or an open-source project, frame it as Kai returning to familiar ground, not a first-time experience. Do not describe OSS contribution as something Kai has "never gotten to do." She has, twice over, on widely-used projects. The portfolio gap in [`kai-career`](../../../../agentic-os-kai/.agents/skills/kai-career/SKILL.md) is about recent recruiter-visible flagship repos, not about whether Kai has shipped open source.
 
 ## Framework defaults by language
 
@@ -46,4 +46,4 @@ Designing or building a new CLI, refactoring an existing one, or wrapping a sub-
 
 - [`coding-shape-tui`](../coding-shape-tui/SKILL.md) - if the CLI grows an interactive surface.
 - [`coily-discipline`](../../../../coily/skills/coily-discipline/SKILL.md) - the load-bearing case study.
-- [`kai-tech-prefs`](../../../../agentic-os-kai/.claude/skills/kai-tech-prefs/SKILL.md) - urfave/cli + Charm + no-shortened-names rules.
+- [`kai-tech-prefs`](../../../../agentic-os-kai/.agents/skills/kai-tech-prefs/SKILL.md) - urfave/cli + Charm + no-shortened-names rules.

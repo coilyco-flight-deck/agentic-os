@@ -7,7 +7,7 @@ description: Discover and install skills from https://skillsmp.com (the Claude s
 
 Handle the full loop: notice a skill might help, search the marketplace, vet what comes back,
 show the user the skill's public page, confirm before install, and drop the skill into
-`<personal-os-repo>/.claude/skills/` so future sessions pick it up automatically.
+`<personal-os-repo>/.agents/skills/` so future sessions pick it up automatically.
 
 ## When to consider reaching for this skill
 
@@ -23,10 +23,10 @@ Concrete triggers:
 What NOT to trigger on:
 
 - Very generic requests ("write me a function that adds two numbers").
-- Tasks where a skill already exists locally (`<personal-os-repo>/.claude/skills/`) - use those first.
+- Tasks where a skill already exists locally (`<personal-os-repo>/.agents/skills/`) - use those first.
 - Requests where the user has said "do it yourself" or "don't use external tools".
 
-Before searching, scan existing skills in `<personal-os-repo>/.claude/skills/` - if a matching one is already there, skip the marketplace.
+Before searching, scan existing skills in `<personal-os-repo>/.agents/skills/` - if a matching one is already there, skip the marketplace.
 
 ## The API at a glance
 
@@ -73,4 +73,4 @@ When you decide a task warrants a marketplace check, say so in one short sentenc
 
 ## Commit after install
 
-The installed skill lives under `<personal-os-repo>/.claude/skills/` and is version-controlled. Per the personal-OS git workflow, commit the new skill directory directly to `main` and push after install. One commit per skill (installs are "purely additive").
+The installed skill lives under `<personal-os-repo>/.agents/skills/` and is version-controlled. Per the personal-OS git workflow, commit the new skill directory directly to `main` and push after install. One commit per skill (installs are "purely additive").

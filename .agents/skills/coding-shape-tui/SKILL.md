@@ -21,7 +21,7 @@ Umbrella for any work that ships a terminal UI as the primary surface.
 
 ## Why Charm
 
-Cotton-candy aesthetic, MIT-licensed, very actively maintained, plays nicely with `urfave/cli` for the imperative-CLI-with-occasional-TUI shape. See [`kai-tech-prefs`](../../../../agentic-os-kai/.claude/skills/kai-tech-prefs/SKILL.md).
+Cotton-candy aesthetic, MIT-licensed, very actively maintained, plays nicely with `urfave/cli` for the imperative-CLI-with-occasional-TUI shape. See [`kai-tech-prefs`](../../../../agentic-os-kai/.agents/skills/kai-tech-prefs/SKILL.md).
 
 ## Design principles
 

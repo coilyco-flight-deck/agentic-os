@@ -6,11 +6,11 @@ If your repo follows this handbook, the hooks will pass. If they disagree, the s
 
 ## 1. Layout
 
-A repo using these hooks ships skills under `.claude/skills/`, the location Claude Code reads from. The layout the hooks expect:
+A repo using these hooks ships skills under `.agents/skills/`, the location Claude Code reads from. The layout the hooks expect:
 
 ```
 <your-repo>/
-├── .claude/skills/
+├── .agents/skills/
 │   ├── categories.yaml        # spec consumed by skill-conventions hook
 │   ├── <skill-name>/
 │   │   ├── SKILL.md           # frontmatter + body
@@ -20,7 +20,7 @@ A repo using these hooks ships skills under `.claude/skills/`, the location Clau
 └── .pre-commit-config.yaml    # declares this repo's hook subscriptions
 ```
 
-Every skill is a peer directory directly under `.claude/skills/`. **Skills must be flat**, never nested inside another skill. Agent harnesses do not reliably discover sub-skills, and the validator only walks top-level directories.
+Every skill is a peer directory directly under `.agents/skills/`. **Skills must be flat**, never nested inside another skill. Agent harnesses do not reliably discover sub-skills, and the validator only walks top-level directories.
 
 ## 2. Categories
 
@@ -144,11 +144,11 @@ Framing reference: [The end of "just ask Sarah"](https://simme.dev/posts/the-end
 
 ### skill-conventions (pre-commit, pre-push)
 
-Runs `validate_skills.py`. Checks frontmatter, prefix/exact match, status (where enforced), H1 pattern, required sections, forbidden body strings, stale skill-name backtick references, size caps. Symlinks under `.claude/skills/` are skipped, since their canonical target is validated where it lives.
+Runs `validate_skills.py`. Checks frontmatter, prefix/exact match, status (where enforced), H1 pattern, required sections, forbidden body strings, stale skill-name backtick references, size caps. Symlinks under `.agents/skills/` are skipped, since their canonical target is validated where it lives.
 
 ### dead-cross-links (pre-commit, pre-push)
 
-Runs `check_dead_links.py`. Walks every Markdown file under `.claude/skills/`, extracts inline `[text](target)` links, fails on any local-relative target that does not resolve to a real file. External URLs, anchors, placeholders (`...`, `TBD`, `TODO`), and paths escaping the repo are skipped.
+Runs `check_dead_links.py`. Walks every Markdown file under `.agents/skills/`, extracts inline `[text](target)` links, fails on any local-relative target that does not resolve to a real file. External URLs, anchors, placeholders (`...`, `TBD`, `TODO`), and paths escaping the repo are skipped.
 
 ### catalog-trifecta (pre-commit, pre-push)
 
@@ -173,7 +173,7 @@ Runs `check_documentation_layout.py`. Enforces Markdown placement across the rep
 
 * root Markdown is limited to the universal allow-list (`README.md`, `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `GOVERNANCE.md`, `SECURITY.md`, `SUPPORT.md`, `LICENSE.md`);
 * ordinary documentation lives in flat `docs/*.md`;
-* skill documentation lives under `.claude/skills/`, `.agents/skills/`, or `skills/`;
+* skill documentation lives under `.agents/skills/`, `.agents/skills/`, or `skills/`;
 * `docs/` has no subdirectories. Use filename prefixes when grouping is needed;
 * every Markdown file stays under 80 lines and 4000 chars.
 

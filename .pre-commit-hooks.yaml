@@ -64,7 +64,7 @@
 
 - id: validate-skills
   name: skill conventions
-  description: Validate the structure of .claude/skills/ against .claude/skills/categories.yaml.
+  description: Validate the structure of .agents/skills/ against .agents/skills/categories.yaml.
   entry: validate-skills
   language: python
   additional_dependencies: [pyyaml]
@@ -74,7 +74,7 @@
 
 - id: dead-cross-links
   name: dead cross-links
-  description: Validate that inline markdown links inside .claude/skills/ resolve to real files.
+  description: Validate that inline markdown links inside .agents/skills/ resolve to real files.
   entry: check-dead-links
   language: python
   pass_filenames: false
