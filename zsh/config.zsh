@@ -100,6 +100,10 @@ autoload -Uz compinit && compinit
 # given pinned title and ANSI tab color. cwd is inherited from $PWD. Color must
 # be one of the 8 ANSI values; Warp's tab_config schema rejects anything else
 # (AnsiColorIdentifier enum in warp_core/src/ui/theme/mod.rs).
+# `warp theme <slug>` swaps the active color theme. Launch configs carry no
+# theme field, so the theme lives in settings.toml's [appearance.themes] block;
+# this verb rewrites that block and Warp applies it live (it watches the file).
+# `warp theme` with no arg lists the theme YAMLs in ~/.warp/themes/.
 warp() {
   local dir="$HOME/.warp/launch_configurations"
   local -a warp_tab_colors
@@ -174,6 +178,46 @@ directory = "$esc_cwd"
 TOML
       open "warppreview://tab_config/wtab"
       ;;
+    theme)
+      # Swaps the active Warp theme by rewriting the [appearance.themes] block
+      # in settings.toml. Warp watches the file and applies the theme live, no
+      # relaunch. settings.toml is a symlink into agentic-os/warp/, so the
+      # rewrite is done through the symlink (redirection follows it) to avoid
+      # replacing the link with a plain file.
+      local themes_dir="$HOME/.warp/themes"
+      local settings="$HOME/.warp/settings.toml"
+      if [[ -z "$2" || "$2" == list ]]; then
+        ls "$themes_dir" 2>/dev/null | sed 's/\.yaml$//'
+        return 0
+      fi
+      local slug="$2"
+      local yaml="$themes_dir/$slug.yaml"
+      if [[ ! -f "$yaml" ]]; then
+        echo "warp: no such theme: $slug" >&2
+        echo "themes: $(ls "$themes_dir" 2>/dev/null | sed 's/\.yaml$//' | tr '\n' ' ')" >&2
+        return 1
+      fi
+      # Display name is the `name:` field inside the theme YAML.
+      local tname=$(sed -n 's/^name:[[:space:]]*//p' "$yaml" | head -1)
+      tname=${tname#[\"\']}; tname=${tname%[\"\']}
+      local tmp=$(mktemp)
+      # Print the section header, drop the new single-line theme assignment,
+      # then skip the old assignment until the next blank line or [section].
+      # Handles both the multi-line and single-line forms of the old block.
+      awk -v name="$tname" -v path="$yaml" '
+        /^\[appearance\.themes\]/ {
+          print
+          print "theme = { custom = { name = \"" name "\", path = \"" path "\" } }"
+          skip = 1
+          next
+        }
+        skip && (/^$/ || /^\[/) { skip = 0; print; next }
+        skip { next }
+        { print }
+      ' "$settings" >"$tmp" || { rm -f "$tmp"; return 1; }
+      cat "$tmp" >"$settings" && rm -f "$tmp"
+      echo "warp: theme -> $tname"
+      ;;
     list|ls)
       ls "$dir" 2>/dev/null | sed 's/\.yaml$//'
       ;;
@@ -184,14 +228,14 @@ TOML
       print -l -- $warp_tab_colors
       ;;
     *)
-      echo "usage: warp {launch <name> [<tab-arg>...] | tab <color> <title...> | colors | list}" >&2
+      echo "usage: warp {launch <name> [<tab-arg>...] | tab <color> <title...> | theme [<slug>] | colors | list}" >&2
       return 1
       ;;
   esac
 }
 _warp() {
-  local -a verbs configs colors
-  verbs=(launch tab colors list ls)
+  local -a verbs configs colors themes
+  verbs=(launch tab theme colors list ls)
   colors=(black red green yellow blue magenta cyan white)
   if (( CURRENT == 2 )); then
     compadd -- $verbs
@@ -200,6 +244,9 @@ _warp() {
     compadd -- $configs
   elif (( CURRENT == 3 )) && [[ $words[2] == tab ]]; then
     compadd -- $colors
+  elif (( CURRENT == 3 )) && [[ $words[2] == theme ]]; then
+    themes=(${(f)"$(ls "$HOME/.warp/themes" 2>/dev/null | sed 's/\.yaml$//')"})
+    compadd -- $themes
   fi
 }
 compdef _warp warp

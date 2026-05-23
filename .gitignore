@@ -15,3 +15,8 @@ id_ed25519*
 .ssh/
 *.kdbx
 kai-server.conf
+
+# Copyrighted game art used as a local Warp theme background, not redistributable.
+# The factorio theme YAML references this path; absent on a fresh clone Warp just
+# shows no background image. Source: https://factorio.com/game/screenshots
+static/wallpaper-factorio.jpg
