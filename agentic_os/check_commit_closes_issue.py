@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Reject commit messages that lack a same-repo GitHub closing keyword.
+"""Reject commit messages that lack a same-repo Forgejo closing keyword.
 
 Wired into each active coilysiren/* repo as a `commit-msg` pre-commit hook
-via `apply-commit-msg-hook.py`. Canonical copy lives here in agentic-os-kai;
+via `apply-commit-msg-hook.py`. Canonical copy lives here in agentic-os;
 rollout copies this file verbatim into each sibling repo.
 
 Accepted patterns (case-insensitive):
@@ -36,7 +36,8 @@ ERROR = (
     "ERROR: commit message must close an issue in this repo.\n"
     "  Add 'closes #N' (or fixes #N / resolves #N) to the message.\n"
     "  Cross-repo refs (owner/other-repo#N) are rejected.\n"
-    "  File the issue in this repo first if one does not exist (gh issue create).\n"
+    "  File the issue in this repo first if one does not exist:\n"
+    "  https://forgejo.coilysiren.me/coilysiren/<repo>/issues/new\n"
 )
 REMOTE_RE = re.compile(r"[:/]([^/:]+)/([^/]+?)(?:\.git)?/?$")
 
