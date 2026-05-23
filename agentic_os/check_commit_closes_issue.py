@@ -2,8 +2,9 @@
 """Reject commit messages that lack a same-repo Forgejo closing keyword.
 
 Wired into each active coilysiren/* repo as a `commit-msg` pre-commit hook
-via `apply-commit-msg-hook.py`. Canonical copy lives here in agentic-os;
-rollout copies this file verbatim into each sibling repo.
+via `scripts/apply-agentic-os-hooks.py`. Canonical copy lives here in
+agentic-os; consumers reference this repo at a pinned `rev:` in their
+`.pre-commit-config.yaml` and pre-commit pip-installs the package.
 
 Accepted patterns (case-insensitive):
     closes #N | close #N | closed #N
