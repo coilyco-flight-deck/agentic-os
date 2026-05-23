@@ -90,7 +90,7 @@
 
 - id: conventional-commit
   name: conventional-commits 1.0.0
-  description: Enforce Conventional Commits 1.0.0 subject format. Powers release-please version bumps.
+  description: Enforce Conventional Commits 1.0.0 subject format.
   entry: check-conventional-commit
   language: python
   stages: [commit-msg]

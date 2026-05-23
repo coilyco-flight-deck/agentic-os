@@ -13,9 +13,6 @@ Auto-generated commits (Merge, Revert, fixup!, squash!) are exempt.
 Designed to coexist with the closes-issue hook. A subject like
 `feat: add foo` plus a `closes #N` in the body satisfies both.
 
-The validator powers release-please's version-bump logic in this repo:
-`feat:` -> minor, `fix:` -> patch, `feat!:` / `BREAKING CHANGE:` -> major.
-
 Usage:
     check-conventional-commit <commit-msg-file>
 
@@ -55,7 +52,7 @@ ERROR = (
     "    feat: add catalog-trifecta validator\n"
     "    fix(rollout): strip legacy blocks idempotently\n"
     "    feat!: drop language: script entry shape (BREAKING CHANGE)\n"
-    "  Optional !-flag marks a breaking change for release-please.\n"
+    "  Optional !-flag marks a breaking change.\n"
     "  Auto-generated subjects (Merge/Revert/fixup!/squash!/🚀) are exempt.\n"
 )
 
