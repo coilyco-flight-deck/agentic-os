@@ -10,10 +10,14 @@ Accepted patterns (case-insensitive):
     fixes #N  | fix #N   | fixed #N
     resolves #N | resolve #N | resolved #N
     <this-owner>/<this-repo>#N with any of the above keywords
+    https://forgejo.coilysiren.me/<this-owner>/<this-repo>/issues/N
+        with any of the above keywords (full URL form for unambiguous
+        clickable references; same-repo check still applied)
 
-Rejected: cross-repo refs (`owner/other-repo#N`). The issue must live
-in the repo the commit lands in. If the rule needs to span repos,
-file the issue locally and link out from there instead.
+Rejected: cross-repo refs (`owner/other-repo#N` or a Forgejo URL
+pointing at a different repo). The issue must live in the repo the
+commit lands in. If the rule needs to span repos, file the issue
+locally and link out from there instead.
 
 Exempt: Merge / Revert / fixup! / squash! commits.
 
@@ -27,15 +31,23 @@ import re
 import subprocess
 import sys
 
+KEYWORD = r"close[sd]?|fix(?:e[sd])?|resolve[sd]?"
 KEYWORD_RE = re.compile(
-    r"\b(close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+([\w.-]+/[\w.-]+)?#\d+",
+    rf"\b(?:{KEYWORD})\s+"
+    r"(?:"
+    r"https?://forgejo\.coilysiren\.me/(?P<fj_owner>[\w.-]+)/(?P<fj_repo>[\w.-]+)/issues/\d+"
+    r"|"
+    r"(?P<qualifier>[\w.-]+/[\w.-]+)?#\d+"
+    r")",
     re.IGNORECASE,
 )
 EXEMPT_PREFIXES = ("Merge ", "Revert ", "fixup! ", "squash! ")
 ERROR = (
     "ERROR: commit message must close an issue in this repo.\n"
-    "  Add 'closes #N' (or fixes #N / resolves #N) to the message.\n"
-    "  Cross-repo refs (owner/other-repo#N) are rejected.\n"
+    "  Add 'closes #N' (or fixes #N / resolves #N) to the message,\n"
+    "  or 'closes https://forgejo.coilysiren.me/<owner>/<repo>/issues/N'.\n"
+    "  Cross-repo refs (owner/other-repo#N or a Forgejo URL pointing at\n"
+    "  another repo) are rejected.\n"
     "  File the issue in this repo first if one does not exist:\n"
     "  https://forgejo.coilysiren.me/coilysiren/<repo>/issues/new\n"
 )
@@ -60,7 +72,15 @@ def this_repo() -> tuple[str, str] | None:
 
 def has_same_repo_ref(body: str, this: tuple[str, str] | None) -> bool:
     for match in KEYWORD_RE.finditer(body):
-        qualifier = match.group(2)
+        fj_owner = match.group("fj_owner")
+        fj_repo = match.group("fj_repo")
+        if fj_owner is not None and fj_repo is not None:
+            if this is None:
+                continue
+            if (fj_owner.lower(), fj_repo.lower()) == this:
+                return True
+            continue
+        qualifier = match.group("qualifier")
         if qualifier is None:
             return True
         if this is None:

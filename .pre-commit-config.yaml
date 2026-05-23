@@ -16,7 +16,7 @@ repos:
       # on this repo. README + docs/FEATURES still need See-also sections;
       # fix in a follow-up before enabling.
       - id: closes-issue
-        name: commit closes a GitHub issue
+        name: commit closes a Forgejo issue
         entry: python -m agentic_os.check_commit_closes_issue
         language: python
         stages: [commit-msg]
