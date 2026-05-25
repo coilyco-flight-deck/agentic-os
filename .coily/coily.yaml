@@ -4,6 +4,15 @@ commands:
   warp:
     run: go run -C warp .
     description: "Establish and verify Kai's Warp config across hosts. `coily exec warp apply` renders all three state layers (repo template, config-dir TOML, SQLite); `coily exec warp doctor` reports drift. See project-a-coily-exec-warp.md."
+  apply-agentic-os-hooks:
+    run: python3 scripts/apply-agentic-os-hooks.py
+    description: "Roll out the canonical pre-commit hook block to every coilysiren/* consumer repo. Idempotent."
+  audit-pre-commit-coverage:
+    run: python3 scripts/audit-pre-commit-coverage.py
+    description: "Audit every coilysiren/* repo for presence of the canonical agentic-os hook block."
+  pre-commit-all:
+    run: pre-commit run --all-files
+    description: "Run all pre-commit hooks against all files in the current repo."
 
 # Catalog metadata for the cross-repo knowledge graph.
 # Schema: coilysiren/agentic-os-kai#420 (tracker).
