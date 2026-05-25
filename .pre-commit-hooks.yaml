@@ -36,7 +36,7 @@
 
 - id: documentation-layout
   name: documentation layout
-  description: Enforce Markdown placement and size: root allow-list, flat docs/, skill folders only, 80 lines / 4000 chars.
+  description: "Enforce Markdown placement and size: root allow-list, flat docs/, skill folders only, 80 lines / 4000 chars."
   entry: check-documentation-layout
   language: python
   always_run: true
