@@ -1,0 +1,84 @@
+name: "Create a forgejo Release"
+description: |
+  POST a new Release to forgejo for the given tag. Replaces
+  softprops/action-gh-release for the forgejo-canonical release pipeline.
+  Idempotent: 409 (release already exists) is treated as success and the
+  existing release id is returned so subsequent asset-upload steps can
+  still attach files.
+
+inputs:
+  forgejo_token:
+    description: "Forgejo API token. Defaults to the auto-issued job token."
+    required: false
+    default: ${{ github.token }}
+  forgejo_base_url:
+    description: "Forgejo base URL."
+    required: false
+    default: "https://forgejo.coilysiren.me"
+  repo:
+    description: "owner/name on forgejo."
+    required: false
+    default: ${{ github.repository }}
+  tag:
+    description: "Tag the release is anchored to. Must already exist."
+    required: true
+  name:
+    description: "Release name. Defaults to the tag."
+    required: false
+    default: ""
+  body:
+    description: "Markdown release notes."
+    required: false
+    default: ""
+
+outputs:
+  release_id:
+    description: "Forgejo release id, usable for asset upload."
+    value: ${{ steps.create.outputs.release_id }}
+
+runs:
+  using: "composite"
+  steps:
+    - id: create
+      shell: bash
+      env:
+        FORGEJO_TOKEN: ${{ inputs.forgejo_token }}
+        FORGEJO_BASE_URL: ${{ inputs.forgejo_base_url }}
+        REPO: ${{ inputs.repo }}
+        TAG: ${{ inputs.tag }}
+        NAME: ${{ inputs.name }}
+        BODY: ${{ inputs.body }}
+      run: |
+        set -euo pipefail
+        rel_name="${NAME:-$TAG}"
+
+        # Marshal name/body via jq so newlines + quotes survive.
+        payload=$(jq -n --arg tag "$TAG" --arg name "$rel_name" --arg body "$BODY" \
+          '{tag_name:$tag, name:$name, body:$body, draft:false, prerelease:false}')
+
+        http_code=$(curl -sS -o /tmp/relresp.json -w '%{http_code}' \
+          -X POST \
+          -H "Authorization: token $FORGEJO_TOKEN" \
+          -H "Content-Type: application/json" \
+          -d "$payload" \
+          "$FORGEJO_BASE_URL/api/v1/repos/$REPO/releases")
+
+        case "$http_code" in
+          201)
+            release_id=$(jq -r '.id' /tmp/relresp.json)
+            ;;
+          409)
+            # Release already exists for this tag. Look it up and continue.
+            curl -sS -H "Authorization: token $FORGEJO_TOKEN" \
+              "$FORGEJO_BASE_URL/api/v1/repos/$REPO/releases/tags/$TAG" \
+              > /tmp/relresp.json
+            release_id=$(jq -r '.id' /tmp/relresp.json)
+            ;;
+          *)
+            echo "::error::forgejo release create failed: HTTP $http_code"
+            cat /tmp/relresp.json
+            exit 1
+            ;;
+        esac
+
+        echo "release_id=$release_id" >> "$GITHUB_OUTPUT"

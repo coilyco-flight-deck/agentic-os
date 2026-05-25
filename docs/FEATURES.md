@@ -38,6 +38,16 @@ Every Claude Code session gets a stable, human-readable name: `claude-<os>-<host
 
 `coily agent-name` is the single source of truth for the name. The status line script defers to coily and only falls back to computing the scheme locally when coily is absent.
 
+## Forgejo-canonical release actions
+
+Composite Forgejo Actions for the brew release pipeline now that `forgejo.coilysiren.me` is canonical source. Three actions, each a forgejo-API-only replacement for a github-coupled marketplace action:
+
+- `actions/tag-bump` - parse conventional commits, compute the next semver, create the tag via forgejo Tags API. Replaces `mathieudutour/github-tag-action`.
+- `actions/create-release` - POST to forgejo Releases API. Idempotent on tag collision. Replaces `softprops/action-gh-release` for the release-create step.
+- `actions/bump-formula` - rewrite a Homebrew Formula's `url ".."` line to pin the new tag + revision and PUT via forgejo Contents API. Same-repo write only; cross-repo bumps live in the consuming repo.
+
+Consumed via `uses: coilysiren/agentic-os/actions/<name>@main` from a `.forgejo/workflows/*.yml`. Auto-issued `${{ github.token }}` (forgejo's compatibility name for its per-job token) covers same-repo writes; no extra secret to provision.
+
 ## Install surface
 
 [README.md](../README.md) carries per-OS install steps. Mac/Linux use plain `ln -sf`. Windows uses symlinks via Git Bash, which requires Developer Mode + `MSYS=winsymlinks:nativestrict`.

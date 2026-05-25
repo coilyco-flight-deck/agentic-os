@@ -1,0 +1,161 @@
+name: "Conventional-commits tag bump"
+description: |
+  Parse conventional commits since the latest semver tag, compute the next
+  version (patch/minor/major), and create the tag on the forgejo repo via
+  the Releases API. Replaces mathieudutour/github-tag-action for the
+  forgejo-canonical release pipeline. Forgejo source of truth, no github
+  API calls.
+
+inputs:
+  forgejo_token:
+    description: "Forgejo API token. Defaults to the auto-issued job token."
+    required: false
+    default: ${{ github.token }}
+  forgejo_base_url:
+    description: "Forgejo base URL."
+    required: false
+    default: "https://forgejo.coilysiren.me"
+  repo:
+    description: "owner/name on forgejo."
+    required: false
+    default: ${{ github.repository }}
+  default_bump:
+    description: "Bump kind when no conventional-commit signals are present (patch|minor|major|none)."
+    required: false
+    default: "patch"
+  tag_prefix:
+    description: "Tag prefix. Tags are <prefix><semver>."
+    required: false
+    default: "v"
+  release_sha:
+    description: "Commit SHA the new tag should point at."
+    required: false
+    default: ${{ github.sha }}
+
+outputs:
+  new_tag:
+    description: "Newly created tag, empty when no bump happened."
+    value: ${{ steps.compute.outputs.new_tag }}
+  new_version:
+    description: "Newly created semver, empty when no bump happened."
+    value: ${{ steps.compute.outputs.new_version }}
+  previous_tag:
+    description: "Tag the bump is relative to."
+    value: ${{ steps.compute.outputs.previous_tag }}
+  changelog:
+    description: "Markdown changelog of the commits included in the bump."
+    value: ${{ steps.compute.outputs.changelog }}
+
+runs:
+  using: "composite"
+  steps:
+    - id: compute
+      shell: bash
+      env:
+        FORGEJO_TOKEN: ${{ inputs.forgejo_token }}
+        FORGEJO_BASE_URL: ${{ inputs.forgejo_base_url }}
+        REPO: ${{ inputs.repo }}
+        DEFAULT_BUMP: ${{ inputs.default_bump }}
+        TAG_PREFIX: ${{ inputs.tag_prefix }}
+        RELEASE_SHA: ${{ inputs.release_sha }}
+      run: |
+        set -euo pipefail
+
+        git fetch --tags --quiet
+
+        # Latest tag matching <prefix>MAJOR.MINOR.PATCH. Sort by version,
+        # not lex, so v10.0.0 > v2.9.0.
+        prev_tag=$(git tag --list "${TAG_PREFIX}[0-9]*.[0-9]*.[0-9]*" \
+                    --sort=-v:refname | head -n1 || true)
+        if [ -z "$prev_tag" ]; then
+          prev_ver="0.0.0"
+        else
+          prev_ver="${prev_tag#"$TAG_PREFIX"}"
+        fi
+
+        # Commits since prev_tag (or whole history if no prev).
+        if [ -n "$prev_tag" ]; then
+          range="${prev_tag}..HEAD"
+        else
+          range="HEAD"
+        fi
+
+        commits=$(git log --pretty=format:'%s' "$range" || true)
+
+        bump="none"
+        # Walk every commit subject. BREAKING wins over feat wins over fix
+        # wins over default.
+        while IFS= read -r line; do
+          [ -z "$line" ] && continue
+          if echo "$line" | grep -qE '^[a-zA-Z]+(\([^)]+\))?!:'; then
+            bump="major"; break
+          fi
+          case "$line" in
+            feat:*|feat\(*\):*) [ "$bump" != "major" ] && bump="minor" ;;
+            fix:*|fix\(*\):*) [ "$bump" = "none" ] && bump="patch" ;;
+          esac
+        done <<< "$commits"
+
+        # Body grep for BREAKING CHANGE: footer.
+        if [ "$bump" != "major" ]; then
+          if git log --pretty=format:'%B' "$range" 2>/dev/null \
+             | grep -qE '^BREAKING CHANGE:'; then
+            bump="major"
+          fi
+        fi
+
+        if [ "$bump" = "none" ]; then
+          bump="$DEFAULT_BUMP"
+        fi
+
+        if [ "$bump" = "none" ]; then
+          echo "no-bump signal; skipping tag creation"
+          echo "new_tag=" >> "$GITHUB_OUTPUT"
+          echo "new_version=" >> "$GITHUB_OUTPUT"
+          echo "previous_tag=$prev_tag" >> "$GITHUB_OUTPUT"
+          {
+            echo "changelog<<EOF"
+            echo ""
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        IFS='.' read -r maj min pat <<< "$prev_ver"
+        case "$bump" in
+          major) maj=$((maj+1)); min=0; pat=0 ;;
+          minor) min=$((min+1)); pat=0 ;;
+          patch) pat=$((pat+1)) ;;
+        esac
+        new_ver="${maj}.${min}.${pat}"
+        new_tag="${TAG_PREFIX}${new_ver}"
+
+        # Create the tag on forgejo. POST /api/v1/repos/{owner}/{name}/tags
+        # accepts {tag_name, target}. Auto-issued token has write scope on
+        # this repo. 201 Created on success.
+        payload=$(printf '{"tag_name":"%s","target":"%s"}' "$new_tag" "$RELEASE_SHA")
+        http_code=$(curl -sS -o /tmp/tagresp.json -w '%{http_code}' \
+          -X POST \
+          -H "Authorization: token $FORGEJO_TOKEN" \
+          -H "Content-Type: application/json" \
+          -d "$payload" \
+          "$FORGEJO_BASE_URL/api/v1/repos/$REPO/tags")
+        if [ "$http_code" != "201" ]; then
+          echo "::error::forgejo tag create failed: HTTP $http_code"
+          cat /tmp/tagresp.json
+          exit 1
+        fi
+
+        echo "new_tag=$new_tag" >> "$GITHUB_OUTPUT"
+        echo "new_version=$new_ver" >> "$GITHUB_OUTPUT"
+        echo "previous_tag=$prev_tag" >> "$GITHUB_OUTPUT"
+        {
+          echo "changelog<<EOF"
+          if [ -n "$prev_tag" ]; then
+            git log --pretty=format:'- %s (%h)' "$range"
+          else
+            git log --pretty=format:'- %s (%h)' HEAD
+          fi
+          echo ""
+          echo "EOF"
+        } >> "$GITHUB_OUTPUT"
