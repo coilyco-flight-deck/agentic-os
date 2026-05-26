@@ -16,6 +16,7 @@ MAX_COMMENT_LINE_CHARS = 90
 MAX_CONTIGUOUS_COMMENT_LINES = 2
 
 SKIP_DIR_NAMES = {
+    ".claude",
     ".git",
     ".mypy_cache",
     ".pytest_cache",
