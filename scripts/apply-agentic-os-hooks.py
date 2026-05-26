@@ -84,9 +84,23 @@ DEFAULT_HOOK_IDS = [
     "conventional-commit",
 ]
 
+# Hooks that a given repo opts out of by name. eco-* repos sit on Unity / C#
+# trees with mod-author comment conventions that conflict with the code-comments
+# rule. The other validators still apply.
+PER_REPO_HOOK_SKIPS: dict[str, set[str]] = {}
+ECO_HOOK_SKIPS = {"code-comments"}
 
-def managed_block(rev: str) -> str:
-    hook_lines = "\n".join(f"      - id: {h}" for h in DEFAULT_HOOK_IDS)
+
+def hook_ids_for(repo: str) -> list[str]:
+    skips: set[str] = set(PER_REPO_HOOK_SKIPS.get(repo, set()))
+    if repo.startswith("eco"):
+        skips |= ECO_HOOK_SKIPS
+    return [h for h in DEFAULT_HOOK_IDS if h not in skips]
+
+
+def managed_block(rev: str, hook_ids: list[str] | None = None) -> str:
+    ids = hook_ids if hook_ids is not None else DEFAULT_HOOK_IDS
+    hook_lines = "\n".join(f"      - id: {h}" for h in ids)
     return f"""\
   {BEGIN_MARKER}
   - repo: https://github.com/coilysiren/agentic-os
@@ -97,10 +111,10 @@ def managed_block(rev: str) -> str:
 """
 
 
-def empty_config_template(rev: str) -> str:
+def empty_config_template(rev: str, hook_ids: list[str] | None = None) -> str:
     return f"""\
 repos:
-{managed_block(rev)}"""
+{managed_block(rev, hook_ids)}"""
 
 
 def gh(*args: str) -> str:
@@ -142,19 +156,21 @@ def strip_legacy_blocks(text: str) -> tuple[str, int]:
     return text, removed
 
 
-def upsert_managed_block(config_path: Path, rev: str) -> tuple[str, int]:
+def upsert_managed_block(
+    config_path: Path, rev: str, hook_ids: list[str] | None = None
+) -> tuple[str, int]:
     """Insert or refresh the agentic-os upstream-ref block.
 
     Returns (status, legacy_blocks_removed).
     """
     if not config_path.exists():
-        config_path.write_text(empty_config_template(rev))
+        config_path.write_text(empty_config_template(rev, hook_ids))
         return "created", 0
 
     text = config_path.read_text()
     text, legacy_removed = strip_legacy_blocks(text)
 
-    block = managed_block(rev)
+    block = managed_block(rev, hook_ids)
     if BEGIN_MARKER in text and END_MARKER in text:
         before, _, rest = text.partition(BEGIN_MARKER)
         _, _, after = rest.partition(END_MARKER)
@@ -211,6 +227,7 @@ def apply_to_repo(repo: str, rev: str, dry_run: bool) -> tuple[str, str]:
         return ("skipped", "not a git working tree")
 
     config_path = repo_dir / ".pre-commit-config.yaml"
+    hook_ids = hook_ids_for(repo)
 
     if dry_run:
         if not config_path.exists():
@@ -236,7 +253,7 @@ def apply_to_repo(repo: str, rev: str, dry_run: bool) -> tuple[str, str]:
             yaml_status = ", ".join(parts)
         return ("dryrun", yaml_status)
 
-    yaml_status, legacy_removed = upsert_managed_block(config_path, rev)
+    yaml_status, legacy_removed = upsert_managed_block(config_path, rev, hook_ids)
     dropped = drop_legacy_stamped_scripts(repo_dir)
     install_status = install_pre_commit_hooks(repo_dir)
     parts = [yaml_status]

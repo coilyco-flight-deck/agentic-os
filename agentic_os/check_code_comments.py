@@ -2,8 +2,9 @@
 """Keep code comments short, durable, and non-contiguous.
 
 Inline code documentation is allowed, but it must stay local and durable:
-one standalone comment line, at most 90 characters. Longer explanations belong
-in docs/*.md and should be linked or referenced from code by a short pointer.
+up to two consecutive comment lines, each at most 90 characters. Longer
+explanations belong in docs/*.md and should be linked or referenced from
+code by a short pointer.
 """
 from __future__ import annotations
 
@@ -12,6 +13,7 @@ from pathlib import Path
 
 REPO_ROOT = Path.cwd()
 MAX_COMMENT_LINE_CHARS = 90
+MAX_CONTIGUOUS_COMMENT_LINES = 2
 
 SKIP_DIR_NAMES = {
     ".git",
@@ -120,12 +122,14 @@ def is_comment_line(line: str, suffix: str, line_no: int) -> bool:
 def check_file(rel: Path) -> list[str]:
     path = REPO_ROOT / rel
     violations: list[str] = []
-    previous_comment_line: int | None = None
+    streak_start: int | None = None
+    streak_len = 0
     for line_no, line in enumerate(
         path.read_text(encoding="utf-8", errors="replace").splitlines(), start=1
     ):
         if not is_comment_line(line, path.suffix, line_no):
-            previous_comment_line = None
+            streak_start = None
+            streak_len = 0
             continue
         if len(line) > MAX_COMMENT_LINE_CHARS:
             violations.append(
@@ -133,12 +137,18 @@ def check_file(rel: Path) -> list[str]:
                 f"the {MAX_COMMENT_LINE_CHARS}-char cap. Move durable detail "
                 f"to docs/."
             )
-        if previous_comment_line is not None:
-            violations.append(
-                f"{rel}:{line_no}: contiguous comment line after line "
-                f"{previous_comment_line}. Keep code comments to one line."
-            )
-        previous_comment_line = line_no
+        if streak_start is None:
+            streak_start = line_no
+            streak_len = 1
+        else:
+            streak_len += 1
+            if streak_len > MAX_CONTIGUOUS_COMMENT_LINES:
+                violations.append(
+                    f"{rel}:{line_no}: comment block of {streak_len} lines "
+                    f"starting at {streak_start}. Keep contiguous comment "
+                    f"blocks to {MAX_CONTIGUOUS_COMMENT_LINES} lines. Move "
+                    f"longer explanations to docs/."
+                )
     return violations
 
 
