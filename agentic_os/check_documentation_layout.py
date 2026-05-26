@@ -32,10 +32,12 @@ ROOT_MARKDOWN_ALLOWLIST = {
 }
 
 SKIP_DIR_NAMES = {
+    ".claude",
     ".git",
     ".mypy_cache",
     ".pytest_cache",
     ".ruff_cache",
+    ".terraform",
     ".tox",
     ".venv",
     "__pycache__",

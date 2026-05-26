@@ -21,6 +21,7 @@ SKIP_DIR_NAMES = {
     ".mypy_cache",
     ".pytest_cache",
     ".ruff_cache",
+    ".terraform",
     ".tox",
     ".venv",
     "__pycache__",
