@@ -37,7 +37,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-DEFAULT_REV = "v0.2.8"
+DEFAULT_REV = "v0.2.10"
 OWNER = "coilysiren"
 SIBLINGS_ROOT = Path.home() / "projects" / "coilysiren"
 
@@ -87,7 +87,9 @@ DEFAULT_HOOK_IDS = [
 # Hooks that a given repo opts out of by name. eco-* repos sit on Unity / C#
 # trees with mod-author comment conventions that conflict with the code-comments
 # rule. The other validators still apply.
-PER_REPO_HOOK_SKIPS: dict[str, set[str]] = {}
+PER_REPO_HOOK_SKIPS: dict[str, set[str]] = {
+    "infrastructure": {"code-comments"},
+}
 ECO_HOOK_SKIPS = {"code-comments"}
 
 
