@@ -19,6 +19,13 @@ REPO_ROOT = Path.cwd()
 MAX_MARKDOWN_LINES = 80
 MAX_MARKDOWN_CHARS = 4_000
 
+# Files whose content is canonical (verbatim upstream text, not repo-authored
+# prose) and therefore exempt from the size cap. Matched by basename in any
+# directory.
+SIZE_CAP_EXEMPT_BASENAMES = {
+    "CODE_OF_CONDUCT.md",
+}
+
 ROOT_MARKDOWN_ALLOWLIST = {
     "AGENTS.md",
     "CLAUDE.md",
@@ -95,6 +102,16 @@ def check_docs_flatness() -> list[str]:
     return violations
 
 
+def is_example_readme(rel: Path) -> bool:
+    # examples/<name>/README.md and examples/README.md are idiomatic in
+    # Go and Rust projects (per-example READMEs document each runnable
+    # sample, plus a top-level index). Exempt from the docs/ flatness rule.
+    parts = rel.parts
+    if not parts or parts[0] != "examples" or rel.name != "README.md":
+        return False
+    return len(parts) in (2, 3)
+
+
 def check_markdown_locations() -> list[str]:
     violations: list[str] = []
     for rel in markdown_files():
@@ -111,6 +128,8 @@ def check_markdown_locations() -> list[str]:
             continue
         if is_under_skill_path(rel):
             continue
+        if is_example_readme(rel):
+            continue
         violations.append(
             f"{rel}: Markdown files may live only at repo root, docs/*.md, "
             f"or inside a skill folder."
@@ -121,6 +140,8 @@ def check_markdown_locations() -> list[str]:
 def check_markdown_sizes() -> list[str]:
     violations: list[str] = []
     for rel in markdown_files():
+        if rel.name in SIZE_CAP_EXEMPT_BASENAMES:
+            continue
         path = REPO_ROOT / rel
         text = path.read_text(encoding="utf-8", errors="replace")
         n_lines = len(text.splitlines())
