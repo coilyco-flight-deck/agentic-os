@@ -1,6 +1,6 @@
 ---
 name: tooling-skill-authoring
-description: Author, modify, and validate Claude Code skills. Covers skill location, naming/category prefixes, description-size discipline, encode-the-why, flat-not-nested layout, Python-helpers bias, and plugin marketplace fast-forward. Triggers - skill, SKILL.md, frontmatter, plugin, .agents/skills, authoring skill, validator, categories.yaml.
+description: Author, modify, and validate Claude Code skills. Covers naming, description caps, why-encoding, flat layout, Python helpers.
 ---
 
 # Skill authoring
@@ -96,3 +96,7 @@ When editing a plugin's source repo (e.g. a sibling clone), also fast-forward th
 Push source first, then `git -C ~/.claude/plugins/marketplaces/<plugin> pull --ff-only`.
 
 Only safe for plugins you own (origin in your own namespace); third-party marketplace clones stay hands-off.
+
+## Triggers
+
+skill, SKILL.md, frontmatter, plugin, .agents/skills, authoring skill, validator, categories.yaml, skill location, naming, category prefix, description size, flat layout, Python helpers, plugin marketplace.
