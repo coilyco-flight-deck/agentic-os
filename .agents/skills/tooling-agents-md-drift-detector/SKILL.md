@@ -1,9 +1,15 @@
 ---
 name: tooling-agents-md-drift-detector
-description: Cross-repo AGENTS.md drift detector. Walks the configured repo set, classifies each repo's AGENTS.md against the canonical AGENTS.md, and surfaces forks (re-stated canonical content) rather than expected layering. Aliases - agents drift, AGENTS.md drift, agents md drift, agents-md-drift-detector, agents drift detector, cross-repo agents check, agents sync check, agents lint, repo agents audit.
+description: Cross-repo AGENTS.md drift detector. Surfaces forks (repos that re-state canonical content) rather than expected layering across the configured repo set.
 ---
 
 # agents-md-drift-detector
+
+## Triggers
+
+agents drift, AGENTS.md drift, agents md drift, agents-md-drift-detector, agents drift detector, cross-repo agents check, agents sync check, agents lint, repo agents audit.
+
+## Why
 
 Many AGENTS.md files can exist across a repo set. Most are slim
 per-repo files that delegate to canonical AGENTS.md via a
