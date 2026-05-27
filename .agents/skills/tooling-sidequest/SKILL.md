@@ -1,11 +1,15 @@
 ---
 name: tooling-sidequest
-description: Manual expansion of Kai's "start a sidequest" Wispr Flow snippet when she cannot verbalize the full directive. File a GitHub issue for the engineering work she describes, then `coily dispatch interactive` so it spawns in its own session. Multi-repo work fans out into a parent issue plus per-repo child issues, each dispatched. Every dispatched issue ships a completion contract - when the work is fully done and autonomous, merge to main and end the session so Warp shows the done banner. Resume interrupted work after. Triggers - "start a sidequest", "sidequest", "side quest", "expand sidequest", "manual sidequest", "parallelize across repos".
+description: Manual expansion of Kai's "start a sidequest" Wispr snippet when she can't dictate the full directive. Files a GitHub issue, then coily-dispatches it into its own session.
 ---
 
 # Sidequest (manual snippet expansion)
 
 Kai's normal flow is to dictate `$$start a sidequest$$` and let Wispr Flow expand the snippet. When she can't verbalize (workshop, public space, sick voice), she'll ask Claude to expand it manually. This skill is the canonical expansion plus the act-on-it loop.
+
+## Triggers
+
+"start a sidequest", "sidequest", "side quest", "expand sidequest", "manual sidequest", "parallelize across repos".
 
 ## Platform
 
