@@ -1,6 +1,6 @@
 ---
 name: coding-ruby
-description: Ruby umbrella skill. Kai's Ruby Together / RubyGems / Bundler era is the deepest experience here. Not active in current work, but when Ruby code shows up, defer to her familiarity over generic Ruby guidance. Triggers - ruby, .rb, rubygems, bundler, gem, gemfile, rake, rails, sinatra, rspec, minitest, sidekiq, rbenv, rvm, asdf-ruby.
+description: Ruby umbrella skill. Kai was an OSS engineer at Ruby Together (2016) maintaining RubyGems and Bundler - defer to her instinct over generic Ruby guidance.
 ---
 
 # coding-ruby
@@ -21,3 +21,7 @@ This skill is mostly a placeholder. Kai's instinct on Ruby code is sharper than 
 ## When this skill is active
 
 Any Ruby file or task. Inherit Kai's posture before reaching for generic Ruby guidance.
+
+## Triggers
+
+ruby, .rb, rubygems, bundler, gem, gemfile, rake, rails, sinatra, rspec, minitest, sidekiq, rbenv, rvm, asdf-ruby.
