@@ -111,6 +111,8 @@ class Spec:
         for cat in self.categories:
             if cat.get("kind") == "exact" and cat.get("exact") == skill_name:
                 return cat
+            if cat.get("kind") == "repo" and cat.get("repo") == skill_name:
+                return cat
         # Longest-prefix match (so `ops-eng-sentry` wins over a hypothetical `ops-`)
         best = None
         best_len = -1
@@ -330,6 +332,10 @@ def validate_skill(
         report.fail(f"{name}/SKILL.md: missing or malformed YAML frontmatter")
         return
 
+    if cat.get("kind") == "repo":
+        validate_repo_pointer(name, cat, fm, body, report)
+        return
+
     fm_name = fm.get("name")
     if fm_name != name:
         report.fail(
@@ -445,6 +451,58 @@ def validate_skill(
             report.fail(
                 f"{name}/SKILL.md: section '## {section_name}' first line "
                 f"does not match required pattern {lead_pat!r}. Got: {lead!r}"
+            )
+
+
+REPO_POINTER_DESC_RE = re.compile(r"^Pointer to the coilysiren/(?P<repo>[A-Za-z0-9._-]+) repo\.")
+REPO_POINTER_BULLETS = ("README.md", "AGENTS.md", "docs/FEATURES.md")
+REPO_POINTER_BODY_MAX_LINES = 10
+
+
+def validate_repo_pointer(
+    name: str, cat: dict, fm: dict, body: str, report: Report
+) -> None:
+    """Enforce shape rules for kind: repo pointer skills. See agentic-os-kai#312."""
+    repo = cat.get("repo")
+    fm_name = fm.get("name")
+    if fm_name != name:
+        report.fail(
+            f"{name}/SKILL.md: frontmatter `name: {fm_name!r}` does not match "
+            f"directory name {name!r}"
+        )
+    if repo != name:
+        report.fail(
+            f"{name}/SKILL.md: categories.yaml `repo: {repo!r}` does not match "
+            f"directory name {name!r}"
+        )
+
+    description = str(fm.get("description") or "").strip()
+    m = REPO_POINTER_DESC_RE.match(description)
+    if not m:
+        report.fail(
+            f"{name}/SKILL.md: description must start with "
+            f"'Pointer to the coilysiren/{name} repo.'. Got: {description[:100]!r}"
+        )
+    elif m.group("repo") != name:
+        report.fail(
+            f"{name}/SKILL.md: description names coilysiren/{m.group('repo')} but "
+            f"directory is {name!r}"
+        )
+
+    body_lines = [ln for ln in body.splitlines() if ln.strip()]
+    if len(body_lines) > REPO_POINTER_BODY_MAX_LINES:
+        report.fail(
+            f"{name}/SKILL.md: body has {len(body_lines)} non-blank lines, over "
+            f"the {REPO_POINTER_BODY_MAX_LINES}-line cap for kind: repo pointers. "
+            f"If the body needs more, write a real umbrella skill instead."
+        )
+
+    for bullet in REPO_POINTER_BULLETS:
+        if bullet not in body:
+            report.fail(
+                f"{name}/SKILL.md: missing required pointer bullet for {bullet!r}. "
+                f"kind: repo skills must reference README.md, AGENTS.md, and "
+                f"docs/FEATURES.md."
             )
 
 
