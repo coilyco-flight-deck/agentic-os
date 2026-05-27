@@ -1,11 +1,15 @@
 ---
 name: coding-shape-observability
-description: Category umbrella for observability work. Kai's professional spine - Datadog, Prometheus, Grafana, Sentry, CloudWatch, New Relic across multiple employers. Current edge is OTel + LLM consumers (luca substrate). Metrics + traces + logs as a unified surface. Triggers - observability, o11y, monitoring, metrics, traces, logs, datadog, prometheus, grafana, sentry, cloudwatch, new relic, opentelemetry, otel, fluent-bit, fluentd, vector, loki, tempo, jaeger, victoriametrics.
+description: Category umbrella for observability work across vendors - metrics, traces, logs, dashboards, alerting, SLOs. Current edge is OpenTelemetry plus LLM consumers (luca substrate).
 ---
 
 # coding-shape-observability
 
-Umbrella for any observability work. Spans metrics, traces, logs, dashboards, alerting, SLOs.
+Umbrella for any observability work. Spans metrics, traces, logs, dashboards, alerting, SLOs. Kai's professional spine across multiple employers: Datadog, Prometheus, Grafana, Sentry, CloudWatch, New Relic. Current edge is OTel plus LLM consumers (luca substrate).
+
+## Triggers
+
+observability, o11y, monitoring, metrics, traces, logs, datadog, prometheus, grafana, sentry, cloudwatch, new relic, opentelemetry, otel, fluent-bit, fluentd, vector, loki, tempo, jaeger, victoriametrics.
 
 ## Vendor familiarity (from resume)
 
