@@ -8,6 +8,7 @@ code by a short pointer.
 """
 from __future__ import annotations
 
+import subprocess
 import sys
 from pathlib import Path
 
@@ -85,13 +86,32 @@ def should_skip(path: Path) -> bool:
 def source_files() -> list[Path]:
     exts = set(LINE_COMMENT_PREFIXES) | BLOCK_COMMENT_EXTS
     out: list[Path] = []
-    for path in REPO_ROOT.rglob("*"):
-        if not path.is_file():
+    try:
+        result = subprocess.run(
+            ["git", "ls-files", "-z"],
+            capture_output=True,
+            check=True,
+            text=True,
+            cwd=REPO_ROOT,
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        # Not a git repo or git unavailable, fall back to rglob walk.
+        for path in REPO_ROOT.rglob("*"):
+            if not path.is_file():
+                continue
+            rel = path.relative_to(REPO_ROOT)
+            if should_skip(rel):
+                continue
+            if path.suffix in exts:
+                out.append(rel)
+        return sorted(out)
+    for entry in result.stdout.split("\x00"):
+        if not entry:
             continue
-        rel = path.relative_to(REPO_ROOT)
+        rel = Path(entry)
         if should_skip(rel):
             continue
-        if path.suffix in exts:
+        if rel.suffix in exts and (REPO_ROOT / rel).is_file():
             out.append(rel)
     return sorted(out)
 
