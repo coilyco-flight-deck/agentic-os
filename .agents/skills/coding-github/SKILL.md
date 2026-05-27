@@ -1,11 +1,15 @@
 ---
 name: coding-github
-description: GitHub umbrella skill. Carries the GraphQL hard rule (never reach for gh api graphql without double-confirming, REST is default), and routes to PR-lifecycle and coily-passthrough siblings. Triggers - github, gh, gh cli, gh api, octokit, graphql, repo, repository, pull request, PR, issue, fork, branch, workflow, action, release, tag, label.
+description: GitHub umbrella. Hard rule - never use gh api graphql without double-confirming, REST is default. Routes to PR-lifecycle and coily-passthrough siblings.
 ---
 
 # coding-github
 
 Umbrella skill for any work that touches GitHub. Owns the broad keyword surface, carries the hard rules that apply to every GitHub touch, and routes to the focused siblings for specific lifecycles.
+
+## Triggers
+
+github, gh, gh cli, gh api, octokit, graphql, repo, repository, pull request, PR, issue, fork, branch, workflow, action, release, tag, label.
 
 ## Hard rule: never use the GitHub GraphQL API without confirming first
 
