@@ -1,6 +1,6 @@
 ---
 name: tooling-openclaw-workspace
-description: OpenClaw workspace mechanics - startup (use runtime-provided context first, don't manually reread AGENTS.md/SOUL.md/USER.md), proactivity rules (heartbeat for batched/loose-timing, cron for exact timing, stay quiet when nothing changed), related-file map (USER.md / SOUL.md / TOOLS.md / HEARTBEAT.md). Triggers - openclaw, heartbeat, HEARTBEAT.md, SOUL.md, BOOTSTRAP.md, TOOLS.md, openclaw startup, openclaw proactivity, openclaw workspace, openclaw memory.
+description: OpenClaw workspace mechanics - startup, proactivity, related-file map. Use runtime-provided context first, don't manually reread AGENTS.md/SOUL.md/USER.md.
 ---
 
 # OpenClaw workspace
@@ -34,3 +34,7 @@ Do not store private personal logs in `<personal-os-repo>/openclaw/memory/`.
 - `SOUL.md` - OpenClaw-specific tone and agent identity.
 - `TOOLS.md` - OpenClaw tool notes and local command entrypoints.
 - `HEARTBEAT.md` - small heartbeat checklist if OpenClaw uses one.
+
+## Triggers
+
+openclaw, heartbeat, HEARTBEAT.md, SOUL.md, BOOTSTRAP.md, TOOLS.md, openclaw startup, openclaw proactivity, openclaw workspace, openclaw memory.
