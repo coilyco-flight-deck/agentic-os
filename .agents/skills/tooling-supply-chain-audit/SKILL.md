@@ -1,10 +1,14 @@
 ---
 name: tooling-supply-chain-audit
-description: Audit a third-party package, library, dependency, plugin, brew formula, MCP server, or upstream repo before pulling into your code. Confirms org and maintainers are real, code is not malicious, project is maintained, downstream adoption non-zero. Triggers - audit this dep, vet this crate, is this package safe, supply chain audit, trust check, before I add this dependency, deep scan this repo, investigate this org, is this maintainer real, audit before install, check this upstream.
+description: Audit third-party packages, libraries, plugins, MCP servers, or upstream repos before pulling them in. Confirms maintainers real, code not malicious, project maintained.
 allowed-tools: Bash Read Grep WebFetch
 ---
 
 # Supply chain audit
+
+## Triggers
+
+audit this dep, vet this crate, is this safe, supply chain audit, trust check.
 
 Vet a third-party package before it ships in your code. The output is a trust verdict (green / yellow / red) plus a short writeup. Don't recommend "allow" without running the checks.
 
