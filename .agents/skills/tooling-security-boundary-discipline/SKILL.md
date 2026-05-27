@@ -1,11 +1,15 @@
 ---
 name: tooling-security-boundary-discipline
-description: Discipline for designing, evaluating, maintaining CLI security boundaries (primarily coily, generalizes). Anti-signals to recognize - "plumbed through the gate makes it part of the boundary" (false), "summary stream is off-host shadow" (false), "drop the feature then build the replacement" (wrong order). Properties named - privileged-ops scope, escape-hatch resistance, audit trail. Triggers - coily, security boundary, threat model, escape hatch, audit log, off-host shadow, lockdown, SECURITY.md.
+description: Discipline for CLI security boundaries (primarily coily). Names anti-signals and load-bearing properties for designing, evaluating, and maintaining the boundary.
 ---
 
 # security-boundary-discipline
 
 The practices and anti-signals that came out of coily's security-boundary work. Use this skill to keep prose, runtime, and design moves aligned when modifying any CLI-as-security-boundary surface.
+
+## Triggers
+
+coily, security boundary, threat model, lockdown, SECURITY.md, privileged-ops scope, audit trail, escape-hatch creep, off-host shadows.
 
 ## Conventions for filling this out
 
