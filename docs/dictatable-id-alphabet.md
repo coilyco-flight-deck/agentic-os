@@ -11,8 +11,11 @@ the listener writing down the same thing. 🗣️
 ABCDEFGHJKMPQRSTUVWXYZ456789
 ```
 
-28 characters. 22 letters, 6 digits. An ID is a fixed-length draw from this set,
-so a 4-character ID is one of 28^4 = 614,656.
+28 characters. 22 letters, 6 digits. The 4-character ID is shaped as two
+letters then two digits (e.g. `AB45`, `HJ59`), which gives 22^2 * 6^2 = 17,424
+possible IDs. The letter-then-digit split keeps the shape recognizable when
+spoken ("letters first, digits last") and rules out all-letter or all-digit
+collisions with English words and bare numbers.
 
 ## Two rules, eight characters dropped
 

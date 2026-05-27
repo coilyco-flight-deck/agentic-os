@@ -19,7 +19,10 @@ local_name() {
   esac
   host="$(hostname -s 2>/dev/null || hostname)"
   host="$(printf '%s' "$host" | tr '[:upper:]' '[:lower:]' | cut -d. -f1)"
-  tag="$(printf '%s' "$sid" | tr '[:upper:]' '[:lower:]' | tr -cd 'a-z0-9' | tail -c 4)"
+  sid_lc="$(printf '%s' "$sid" | tr '[:upper:]' '[:lower:]')"
+  letters="$(printf '%s' "$sid_lc" | tr -cd 'a-z' | cut -c1-2)"
+  digits="$(printf '%s' "$sid_lc" | tr -cd '0-9' | cut -c1-2)"
+  tag="${letters}${digits}"
   printf 'claude-%s-%s' "$os" "$host"
   [ -n "$tag" ] && printf -- '-%s' "$tag"
 }
