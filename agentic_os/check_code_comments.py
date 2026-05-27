@@ -19,18 +19,8 @@ MAX_CONTIGUOUS_COMMENT_LINES = 2
 SKIP_DIR_NAMES = {
     ".claude",
     ".git",
-    ".mypy_cache",
-    ".pytest_cache",
-    ".ruff_cache",
     ".terraform",
-    ".tox",
-    ".venv",
-    "__pycache__",
     "build",
-    "dist",
-    "htmlcov",
-    "node_modules",
-    "pkg",
     "target",
     "vendor",
 }
