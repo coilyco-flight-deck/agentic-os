@@ -30,6 +30,10 @@ import re
 import sys
 from pathlib import Path
 
+from agentic_os.config import is_enabled, is_excluded, load_excludes
+
+HOOK_ID = "dead-cross-links"
+
 # Pre-commit runs the hook with the consumer repo as cwd.
 REPO_ROOT = Path.cwd()
 SKILLS_DIR = REPO_ROOT / ".claude" / "skills"
@@ -83,12 +87,19 @@ def strip_anchor(target: str) -> str:
 
 
 def iter_markdown_files(roots: list[Path]):
+    excludes = load_excludes(HOOK_ID)
     for root in roots:
         if root.is_file() and root.suffix == ".md":
             if root.name in SKIP_FILE_BASENAMES:
                 continue
             if SKIP_PATH_PARTS & set(root.parts):
                 continue
+            try:
+                rel = root.relative_to(REPO_ROOT)
+                if is_excluded(rel, excludes):
+                    continue
+            except ValueError:
+                pass
             yield root
             continue
         if root.is_dir():
@@ -97,6 +108,12 @@ def iter_markdown_files(roots: list[Path]):
                     continue
                 if SKIP_PATH_PARTS & set(p.parts):
                     continue
+                try:
+                    rel = p.relative_to(REPO_ROOT)
+                    if is_excluded(rel, excludes):
+                        continue
+                except ValueError:
+                    pass
                 yield p
 
 
@@ -149,6 +166,9 @@ def check_file(md_path: Path) -> list[str]:
 
 
 def main(argv: list[str] | None = None) -> int:
+    if not is_enabled(HOOK_ID):
+        print(f"{HOOK_ID}: disabled by repo config")
+        return 0
     if argv is None:
         argv = sys.argv
 

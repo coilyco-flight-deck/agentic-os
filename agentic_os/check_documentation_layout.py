@@ -15,7 +15,10 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+from agentic_os.config import is_enabled, is_excluded, load_excludes
+
 REPO_ROOT = Path.cwd()
+HOOK_ID = "documentation-layout"
 MAX_MARKDOWN_LINES = 80
 MAX_MARKDOWN_CHARS = 4_000
 
@@ -74,10 +77,13 @@ def is_under_skill_path(rel: Path) -> bool:
 
 
 def markdown_files() -> list[Path]:
+    excludes = load_excludes(HOOK_ID)
     out: list[Path] = []
     for path in REPO_ROOT.rglob("*.md"):
         rel = path.relative_to(REPO_ROOT)
         if should_skip(rel):
+            continue
+        if is_excluded(rel, excludes):
             continue
         out.append(rel)
     return sorted(out)
@@ -87,10 +93,13 @@ def check_docs_flatness() -> list[str]:
     docs = REPO_ROOT / "docs"
     if not docs.is_dir():
         return []
+    excludes = load_excludes(HOOK_ID)
     violations: list[str] = []
     for path in sorted(docs.rglob("*")):
         rel = path.relative_to(REPO_ROOT)
         if should_skip(rel):
+            continue
+        if is_excluded(rel, excludes):
             continue
         if path.is_dir() and path != docs:
             violations.append(
@@ -156,6 +165,9 @@ def check_markdown_sizes() -> list[str]:
 
 
 def main() -> int:
+    if not is_enabled(HOOK_ID):
+        print(f"{HOOK_ID}: disabled by repo config")
+        return 0
     violations = (
         check_docs_flatness()
         + check_markdown_locations()

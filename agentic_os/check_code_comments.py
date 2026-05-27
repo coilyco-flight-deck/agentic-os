@@ -12,7 +12,10 @@ import subprocess
 import sys
 from pathlib import Path
 
+from agentic_os.config import is_enabled, is_excluded, load_excludes
+
 REPO_ROOT = Path.cwd()
+HOOK_ID = "code-comments"
 MAX_COMMENT_LINE_CHARS = 90
 MAX_CONTIGUOUS_COMMENT_LINES = 2
 
@@ -77,6 +80,7 @@ def should_skip(path: Path) -> bool:
 
 def source_files() -> list[Path]:
     exts = set(LINE_COMMENT_PREFIXES) | BLOCK_COMMENT_EXTS
+    excludes = load_excludes(HOOK_ID)
     out: list[Path] = []
     try:
         result = subprocess.run(
@@ -92,7 +96,7 @@ def source_files() -> list[Path]:
             if not path.is_file():
                 continue
             rel = path.relative_to(REPO_ROOT)
-            if should_skip(rel):
+            if should_skip(rel) or is_excluded(rel, excludes):
                 continue
             if path.suffix in exts:
                 out.append(rel)
@@ -101,7 +105,7 @@ def source_files() -> list[Path]:
         if not entry:
             continue
         rel = Path(entry)
-        if should_skip(rel):
+        if should_skip(rel) or is_excluded(rel, excludes):
             continue
         if rel.suffix in exts and (REPO_ROOT / rel).is_file():
             out.append(rel)
@@ -167,6 +171,9 @@ def check_file(rel: Path) -> list[str]:
 
 
 def main() -> int:
+    if not is_enabled(HOOK_ID):
+        print(f"{HOOK_ID}: disabled by repo config")
+        return 0
     violations: list[str] = []
     for rel in source_files():
         violations.extend(check_file(rel))

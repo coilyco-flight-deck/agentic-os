@@ -21,6 +21,10 @@ import sys
 from pathlib import Path
 from typing import NoReturn
 
+from agentic_os.config import is_enabled
+
+HOOK_ID = "catalog-block-present"
+
 try:
     import yaml  # type: ignore[import-untyped, unused-ignore]
 except ImportError:  # pragma: no cover
@@ -66,6 +70,9 @@ CONFIG_PATHS = (
 
 
 def main() -> int:
+    if not is_enabled(HOOK_ID):
+        print(f"{HOOK_ID}: disabled by repo config")
+        return 0
     path = next((p for p in CONFIG_PATHS if p.exists()), None)
     if path is None:
         fail(

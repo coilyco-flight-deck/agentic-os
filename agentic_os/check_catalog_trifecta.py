@@ -41,7 +41,10 @@ import re
 import sys
 from pathlib import Path
 
+from agentic_os.config import is_enabled
+
 REPO_ROOT = Path.cwd()
+HOOK_ID = "catalog-trifecta"
 
 # Markdown files where the See also section lives.
 MD_FILES = [
@@ -194,6 +197,9 @@ def check_catalog_yaml(catalog_yaml: Path | None) -> list[str]:
 
 
 def main() -> int:
+    if not is_enabled(HOOK_ID):
+        print(f"{HOOK_ID}: disabled by repo config")
+        return 0
     catalog_yaml = resolve_catalog_yaml()
     all_violations: list[str] = []
     # Fall back to .coily/coily.yaml so error messages always name a concrete file.

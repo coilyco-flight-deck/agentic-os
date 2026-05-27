@@ -33,6 +33,9 @@ except ModuleNotFoundError:
     )
     sys.exit(2)
 
+from agentic_os.config import is_enabled
+
+HOOK_ID = "validate-skills"
 
 # cwd is the consumer repo root under pre-commit, same as direct dev runs.
 REPO_ROOT = Path.cwd()
@@ -508,6 +511,9 @@ def run_global_checks(
 
 
 def main(argv: list[str] | None = None) -> int:
+    if not is_enabled(HOOK_ID):
+        print(f"{HOOK_ID}: disabled by repo config")
+        return 0
     if argv is None:
         argv = sys.argv
 
