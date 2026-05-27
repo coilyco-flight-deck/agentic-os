@@ -37,7 +37,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-DEFAULT_REV = "v0.3.0"
+DEFAULT_REV = "v0.4.0"
 OWNER = "coilysiren"
 SIBLINGS_ROOT = Path.home() / "projects" / "coilysiren"
 

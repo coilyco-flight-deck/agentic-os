@@ -21,6 +21,7 @@ Conventional-commits semantics:
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import subprocess
 import sys
@@ -174,7 +175,10 @@ def main() -> int:
 
     if changed_files:
         run(["git", "add", *changed_files])
-        run(["git", "commit", "-m", f"chore: bump version to {new_tag}"])
+        # closes-issue is a working-code discipline. Bump commits are
+        # mechanical and have no upstream issue to close.
+        env = {**os.environ, "SKIP": "closes-issue"}
+        run(["git", "commit", "-m", f"chore: bump version to {new_tag}"], env=env)
         print(f"Committed version bump touching: {', '.join(changed_files)}")
 
     summary = entries[0][0] if entries else f"release {new_tag}"
