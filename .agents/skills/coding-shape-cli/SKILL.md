@@ -1,11 +1,15 @@
 ---
 name: coding-shape-cli
-description: Category umbrella for building CLI tools. Kai is a urfave/cli maintainer and maintained RubyGems and Bundler at Ruby Together - first-class CLI-building and OSS-maintainer experience. Go via urfave/cli, Python via click, Node via commander, shell glue via gum. Wrapper APIs mirror the real CLI, load-bearing for any CLI Kai builds. Triggers - cli, command line, urfave, cobra, kong, click, commander, oclif, gum, subcommand, flag, argv, rubygems, bundler, oss maintainer.
+description: Category umbrella for building CLI tools. Go via urfave/cli, Python via click, Node via commander, shell prompts via gum. Wrapper APIs mirror the real CLI.
 ---
 
 # coding-shape-cli
 
 Umbrella for any work that ships a CLI as the primary interface. Cross-cuts languages.
+
+## Triggers
+
+cli, command line, urfave, cobra, kong, click, commander, oclif, gum, subcommand, flag, argv, rubygems, bundler, oss maintainer.
 
 ## Kai's CLI and OSS background
 
