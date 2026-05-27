@@ -1,6 +1,6 @@
 ---
 name: coding-terraform
-description: Terraform umbrella skill. IaC for AWS, with the existing coding-terraform-module-library sibling for reusable module work. Backend state in S3 + DynamoDB lock, region us-east-1. Triggers - terraform, tf, tfstate, tfvars, hcl, opentofu, .tf, terragrunt, provider, backend, module, state, plan, apply, destroy, import.
+description: Terraform umbrella skill for AWS infra. Backend state in S3 with DynamoDB lock, region us-east-1. Pinned provider versions, plan-before-apply, for_each over count.
 ---
 
 # coding-terraform
@@ -32,6 +32,10 @@ Umbrella for any Terraform work.
 ## When this skill is active
 
 Editing `.tf` files, designing infrastructure, refactoring modules. Inherit conventions before reaching for general Terraform guidance.
+
+## Triggers
+
+terraform, tf, tfstate, tfvars, hcl, opentofu, .tf, terragrunt, provider, backend, module, state, plan, apply, destroy, import.
 
 ## See also
 
