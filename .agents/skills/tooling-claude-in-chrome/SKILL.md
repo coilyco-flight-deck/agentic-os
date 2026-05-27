@@ -1,9 +1,13 @@
 ---
 name: tooling-claude-in-chrome
-description: Drive the live Chrome browser via the Claude_in_Chrome MCP for web automation on logged-in sessions. Use JS over mouse (mouse trips a chrome-extension boundary that wedges the session), never leave a form dirty (Chrome's "Leave site?" modal blocks the extension until dismissed). Triggers - claude in chrome, chrome mcp, browser automation, remote browser, drive chrome, browser_batch, javascript_tool, scrape page, Codex environments, "different extension" error, Leave site dialog.
+description: Drive live Chrome via the Claude_in_Chrome MCP for logged-in web automation. Use JS over mouse (mouse trips the chrome-extension boundary). Never leave forms dirty (Leave site? modal wedges it).
 ---
 
 # claude-in-chrome
+
+## Triggers
+
+claude in chrome, chrome mcp, browser automation, remote browser, drive chrome, browser_batch, javascript_tool, scrape page, Codex environments, "different extension" error, Leave site dialog.
 
 The `mcp__Claude_in_Chrome__*` MCP attaches to a live local Chrome via the Claude in Chrome extension. Real auth, real cookies, real session state. Use it when a target has no usable API and clicking through is the only option (Codex env creation, OpenAI settings, recruiter portals, vendor dashboards).
 
