@@ -1,6 +1,6 @@
 ---
 name: coding-azure
-description: Azure umbrella skill. Multi-cloud experience from Textio (Azure OpenAI + BGP VPN to AWS). Reach for Azure when a job already runs there or when Azure OpenAI is specifically required. AWS is Kai's default cloud, GCP is secondary, Azure is third. Triggers - azure, az, microsoft azure, aks, azure storage, azure functions, azure openai, blob storage, cosmos db, azure devops, azure ad, entra, key vault.
+description: Azure umbrella skill. Tertiary cloud - reach for it when a job already runs there or when Azure OpenAI is specifically required. AWS is Kai's default for new infra.
 ---
 
 # coding-azure
@@ -29,3 +29,7 @@ Azure is third-priority for new infra. Reach for it when:
 ## When this skill is active
 
 Editing Azure-targeted code or infra. Inherit Kai's posture before reaching for generic Azure guidance.
+
+## Triggers
+
+azure, az, microsoft azure, aks, azure storage, azure functions, azure openai, blob storage, cosmos db, azure devops, azure ad, entra, key vault.
