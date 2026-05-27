@@ -1,11 +1,15 @@
 ---
 name: coding-shape-web-server
-description: Category umbrella for building HTTP / REST / GraphQL servers. Python via FastAPI default (sometimes Flask), Go via stdlib net/http or chi, Node via Express/Fastify if forced. Async-first, OpenAPI for discoverability, Prometheus metrics from day one. Triggers - web server, http server, rest api, graphql, fastapi, flask, django, sanic, starlette, gin, chi, echo, fiber, express, fastify, hapi, koa, openapi, swagger.
+description: Category umbrella for building HTTP / REST / GraphQL servers. Python via FastAPI (Flask on legacy), Go via stdlib net/http or chi, Node via Fastify. Async I/O, OpenAPI, Prometheus from day one.
 ---
 
 # coding-shape-web-server
 
 Umbrella for any work that ships an HTTP server as the primary interface.
+
+## Triggers
+
+web server, http server, rest api, graphql, fastapi, flask, django, sanic, starlette, gin, chi, echo, fiber, express, fastify, hapi, koa, openapi, swagger.
 
 ## Framework defaults by language
 
