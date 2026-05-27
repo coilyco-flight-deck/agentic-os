@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
-# gh-pulse.sh - across-the-room GitHub API health monitor.
-# Polls /rate_limit (authenticated via gh; free, doesn't count against quota).
-# Big loud output, per-resource pace tracking. Ctrl-C to quit.
+# Across-the-room GitHub API health monitor. See docs/github-pulse.md.
 
 set -u
 
@@ -10,8 +8,7 @@ SLEEP_BETWEEN=10
 HISTORY=()
 HISTORY_MAX=30
 
-# Resources to display, with their window length in seconds.
-# Order = display order. Add/remove freely.
+# Resources with window length in seconds. Order = display order.
 RESOURCES=(
   "core:3600"
   "search:60"
@@ -21,7 +18,7 @@ RESOURCES=(
 )
 
 check_once() {
-  # Emits: "<http_code>|<json>" where <json> is the full /rate_limit body, or empty on failure.
+  # Emits "<http_code>|<json>". Empty on failure.
   local out code body
   out=$(gh api --include /rate_limit 2>/dev/null) || true
   code=$(printf '%s\n' "$out" | awk 'NR == 1 && /^HTTP\// { print $2 }')
@@ -57,9 +54,7 @@ fmt_duration() {
   fi
 }
 
-# Pace = used% - elapsed%. Positive = burning faster than the clock. Negative = under pace.
-# Args: limit remaining reset_epoch window_seconds now_epoch
-# Echoes: "<pace_int>|<glyph>|<color_esc>"
+# Pace = used% - elapsed%. Positive burns faster than the clock.
 calc_pace() {
   local limit=$1 remaining=$2 reset=$3 window=$4 now=$5
   if (( limit <= 0 || window <= 0 )); then echo "0|  |\e[2m"; return; fi
@@ -143,7 +138,6 @@ except Exception:
   fi
 
   if [[ "$code" == "200" && -n "$body" ]]; then
-    # Header
     printf "       \e[1;97m%-22s  %-15s  %-12s  %s\e[0m\n" "resource" "usage" "pace" "resets"
     printf "       \e[2m%s\e[0m\n" "──────────────────────  ───────────────  ────────────  ──────────"
     for entry in "${RESOURCES[@]}"; do
@@ -164,7 +158,6 @@ print(f\"{d.get('limit',0)}|{d.get('remaining',0)}|{d.get('reset',0)}\")
       IFS='|' read -r pace pace_glyph pace_color <<<"$pace_info"
       local reset_in
       reset_in=$(fmt_duration $(( r_reset - now_ts )))
-      # Sign on pace
       local pace_str
       if (( pace > 0 )); then pace_str="+${pace}%"; else pace_str="${pace}%"; fi
       printf "       %-22s  \e[1m%5d / %-5d\e[0m   ${pace_color}%-5s %s\e[0m   \e[2m%s\e[0m\n" \

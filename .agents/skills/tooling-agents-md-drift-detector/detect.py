@@ -83,9 +83,7 @@ def categorize(repo: Path, canonical_text: str, canonical_headers: set[str]):
     text = am.read_text(errors="ignore")
     if has_delegation_header(text):
         return ("delegating", None)
-    # No delegation header. Check whether canonical section headers are
-    # restated (a sign of forking rather than a legitimately standalone
-    # project-only AGENTS.md).
+    # No delegation header: check for restated canonical headers (forking signal).
     repo_headers = {
         line.strip()
         for line in text.splitlines()

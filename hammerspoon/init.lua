@@ -1,10 +1,4 @@
--- Wispr Flow auto-submit in Warp.
--- Watches for Fn release, then waits for Wispr's clipboard paste,
--- then sends Return. Robust to Wispr's variable cloud latency.
-
--- Both Warp channels recognized as Warp-frontmost so Wispr auto-submit works
--- whether the daily-driver Preview or the fallback Stable is focused.
--- See agentic-os/warp/README.md for the channel-split rationale.
+-- Wispr Flow auto-submit in Warp. See agentic-os/warp/README.md.
 local WARP_BUNDLES = {
   ["dev.warp.Warp-Preview"] = true,
   ["dev.warp.Warp-Stable"]  = true,

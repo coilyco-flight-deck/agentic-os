@@ -50,10 +50,7 @@ MD_FILES = [
     Path("docs/FEATURES.md"),
 ]
 
-# Fourth member of the cross-link group. Existence-only check; linked
-# from the .md files but does not link back. Two valid forms - personal
-# repos carry `.coily/coily.yaml`, external-facing repos carry
-# `.agent-guard/agent-guard.yaml`. Same data shape, different host.
+# Existence-only fourth member; .coily for personal, .agent-guard for external.
 CATALOG_YAMLS = (
     Path(".coily/coily.yaml"),
     Path(".agent-guard/agent-guard.yaml"),
@@ -199,9 +196,7 @@ def check_catalog_yaml(catalog_yaml: Path | None) -> list[str]:
 def main() -> int:
     catalog_yaml = resolve_catalog_yaml()
     all_violations: list[str] = []
-    # Use the resolved catalog yaml if present; otherwise fall back to the
-    # canonical .coily/coily.yaml path for the link-presence checks (so the
-    # error message names a concrete file even when none exists).
+    # Fall back to .coily/coily.yaml so error messages always name a concrete file.
     link_target = catalog_yaml or CATALOG_YAMLS[0]
     for md in MD_FILES:
         all_violations.extend(check_md_file(md, link_target))

@@ -1,14 +1,4 @@
-# In-process AWS SSM secret loader. Ported from nu/ssm-env.nu.
-#
-# Pulls every SSM parameter under / from the named profile and loads
-# them into the current zsh process environment. Never writes to disk.
-#
-# Var name derivation matches the nu version: /foo/bar-baz -> FOO_BAR_BAZ
-#
-# Usage (interactive):   ssm-load
-# Usage (quiet, used by zshrc auto-load): ssm-load --quiet
-# Usage (other profile): ssm-load other us-west-2
-# Usage (one var only):  ssm-get /foo/bar-baz
+# In-process AWS SSM secret loader. See docs/ssm-env.md.
 
 ssm-load() {
   local quiet=0

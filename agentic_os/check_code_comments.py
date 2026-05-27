@@ -27,7 +27,9 @@ SKIP_DIR_NAMES = {
     "__pycache__",
     "build",
     "dist",
+    "htmlcov",
     "node_modules",
+    "pkg",
     "target",
     "vendor",
 }

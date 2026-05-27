@@ -9,8 +9,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-// storageRow is one decoded generic_string_objects row. Warp keeps every
-// settings value as a JSON blob in the `data` column.
+// storageRow is one decoded generic_string_objects row (JSON in `data`).
 type storageRow struct {
 	id       int64
 	Key      string `json:"storage_key"`
@@ -18,15 +17,11 @@ type storageRow struct {
 	Platform string `json:"platform"`
 }
 
-// warpDB wraps the Warp SQLite database (state layer 3). Warp holds the file
-// open in WAL mode while running; a busy_timeout lets a momentary write lock
-// from Warp retry instead of erroring.
+// warpDB wraps warp.sqlite. WAL mode plus a 5s busy_timeout.
 type warpDB struct {
 	db *sql.DB
 }
 
-// openWarpDB opens warp.sqlite. readonly=true is used by `doctor`; `apply`
-// opens read-write. Either way a 5s busy_timeout is set.
 func openWarpDB(path string, readonly bool) (*warpDB, error) {
 	dsn := "file:" + url.PathEscape(path) + "?_pragma=busy_timeout(5000)"
 	if readonly {
@@ -60,7 +55,7 @@ func (w *warpDB) get(storageKey string) (*storageRow, error) {
 		}
 		var r storageRow
 		if err := json.Unmarshal([]byte(data), &r); err != nil {
-			continue // skip rows that are not the standard settings shape
+			continue
 		}
 		if r.Key == storageKey {
 			r.id = id
@@ -70,8 +65,7 @@ func (w *warpDB) get(storageKey string) (*storageRow, error) {
 	return nil, rows.Err()
 }
 
-// set writes value for storageKey, updating the existing row or inserting a
-// new one. platform defaults to "Global" for fresh rows.
+// set upserts value for storageKey. New rows default platform to "Global".
 func (w *warpDB) set(storageKey string, value any) error {
 	existing, err := w.get(storageKey)
 	if err != nil {
@@ -96,7 +90,7 @@ func (w *warpDB) set(storageKey string, value any) error {
 	return nil
 }
 
-// MarshalJSON keeps the storage_key/value/platform field order Warp uses.
+// MarshalJSON keeps Warp's storage_key/value/platform field order.
 func (r storageRow) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]any{
 		"storage_key": r.Key,

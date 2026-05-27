@@ -1,8 +1,4 @@
-# Windows-specific PATH.
-#
-# Git Bash is the canonical shell on Windows. zsh runs under Git Bash via
-# MSYS, and uname reports MINGW*/MSYS*. Path entries are POSIX-style
-# (Git Bash translates).
+# Windows-specific PATH. zsh runs under Git Bash; paths are POSIX-style.
 
 typeset -U path PATH
 path=(

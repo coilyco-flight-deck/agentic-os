@@ -1,10 +1,5 @@
 #!/usr/bin/env bash
-# Run a command and emit chat-safe output:
-# - wrapped in a fenced code block
-# - max 20 lines, with ... appended if clipped
-# - max 100 chars per line (char-correct via awk substr)
-# Used by the `$$ <cmd>` chat convention so mobile sees output without
-# blowing the context window on huge dumps.
+# Run a command, emit chat-safe fenced output. See docs/verbatim-echo.md.
 set -o pipefail
 echo '```'
 "$@" 2>&1 | awk '

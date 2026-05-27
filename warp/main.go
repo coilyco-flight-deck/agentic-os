@@ -1,15 +1,4 @@
-// Command warp establishes and verifies Kai's Warp terminal configuration
-// across Windows, Mac, and Linux. It is run as `coily exec warp` (local Go
-// source via `go run`, not a released binary).
-//
-// Warp keeps the same logical setting in three layers that drift apart:
-//
-//	1. repo-tracked templates  (this repo - the source of truth)
-//	2. Warp's config-dir TOML  (rendered real files)
-//	3. Warp's SQLite database  (generic_string_objects)
-//
-// `apply` writes all three. `doctor` reports drift across all three.
-// See project-a-coily-exec-warp.md for the full design.
+// Command warp establishes and verifies Kai's Warp config.
 package main
 
 import (
@@ -49,10 +38,9 @@ func main() {
 type renderedFile struct {
 	label    string
 	template string
-	dest     string // native destination path
+	dest     string
 }
 
-// layer2Files returns the config-dir files apply renders, in order.
 func layer2Files(h *HostPaths) []renderedFile {
 	return []renderedFile{
 		{"settings.toml", "settings.toml.tmpl", h.SettingsPath},
@@ -60,8 +48,6 @@ func layer2Files(h *HostPaths) []renderedFile {
 		{"startup_config.toml", "startup_config.toml.tmpl", h.TabConfigPath},
 	}
 }
-
-// ----- apply -----------------------------------------------------------------
 
 func runApply() error {
 	h, err := resolveHostPaths()
@@ -71,7 +57,6 @@ func runApply() error {
 	data := newTemplateData(h)
 	fmt.Printf("apply: %s host, workspace %s\n", h.OS, h.WorkspaceDir)
 
-	// Layer 2: render the config-dir files as real files.
 	for _, f := range layer2Files(h) {
 		content, err := render(f.template, data)
 		if err != nil {
@@ -84,8 +69,7 @@ func runApply() error {
 		fmt.Printf("  %-22s %s %s\n", f.label, statusWord(changed), f.dest)
 	}
 
-	// Layer 2 (Windows only): the pwsh profile, rendered straight to $PROFILE
-	// as a real file - no symlink, same reasoning as settings.toml.
+	// Windows-only pwsh profile, rendered to $PROFILE as a real file.
 	if runtime.GOOS == "windows" {
 		profile, perr := resolvePwshProfile()
 		if perr != nil {
@@ -103,7 +87,6 @@ func runApply() error {
 		}
 	}
 
-	// Layer 3: reconcile the SQLite database.
 	return applySQLite(h)
 }
 
@@ -141,8 +124,6 @@ func applySQLite(h *HostPaths) error {
 	return nil
 }
 
-// ----- doctor ----------------------------------------------------------------
-
 func runDoctor() error {
 	h, err := resolveHostPaths()
 	if err != nil {
@@ -152,8 +133,6 @@ func runDoctor() error {
 	r := &report{}
 	fmt.Printf("doctor: %s host, workspace %s\n", h.OS, h.WorkspaceDir)
 
-	// Layer 1 vs layer 2: each rendered file must match byte-for-byte and be
-	// a real file, not a symlink into the repo.
 	for _, f := range layer2Files(h) {
 		want, err := render(f.template, data)
 		if err != nil {
@@ -173,10 +152,7 @@ func runDoctor() error {
 		}
 	}
 
-	// Supporting files.
 	checkExists(r, "wallpaper image", h.WallpaperPath)
-
-	// Layer 3: SQLite drift per mapped key.
 	doctorSQLite(r, h)
 
 	r.print()
@@ -223,8 +199,7 @@ func doctorSQLite(r *report, h *HostPaths) {
 	}
 }
 
-// checkRendered verifies a destination matches rendered content and is a real
-// file rather than a symlink.
+// checkRendered: dest must match content byte-for-byte and not be a symlink.
 func checkRendered(r *report, label, dest string, want []byte) {
 	info, err := os.Lstat(dest)
 	if err != nil {
@@ -255,11 +230,7 @@ func checkExists(r *report, label, path string) {
 	r.pass(label)
 }
 
-// ----- shared ----------------------------------------------------------------
-
-// writeReal writes content to dest as a real file. It creates parent dirs and
-// removes any pre-existing symlink first (Warp must never write through a
-// symlink into the repo). It returns whether the file changed.
+// writeReal writes a real file at dest, replacing any pre-existing symlink.
 func writeReal(dest string, content []byte) (changed bool, err error) {
 	if err := os.MkdirAll(filepath.Dir(dest), 0o755); err != nil {
 		return false, err
@@ -286,7 +257,6 @@ func statusWord(changed bool) string {
 	return "ok   "
 }
 
-// report accumulates doctor check results.
 type report struct {
 	lines  []string
 	failed int

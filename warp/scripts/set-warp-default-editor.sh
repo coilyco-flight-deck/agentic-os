@@ -1,24 +1,5 @@
 #!/usr/bin/env bash
-# Set Warp as the default macOS app for prose and source files.
-#
-# Requires: macOS, WarpPreview.app installed, `duti` on PATH (`brew install duti`).
-#
-# What it does:
-#   1. Rebuilds the LaunchServices database so Warp's Info.plist claims
-#      (CFBundleTypeExtensions: .go, .tsx, .cjs, ...) are picked up directly.
-#   2. Sets Warp as the explicit handler for the UTIs and extensions that
-#      LaunchServices won't infer from Warp's plist on its own.
-#
-# Channel: targets Warp Preview, not Stable. Preview is the Mac daily-driver
-# channel per warp/README.md, so file-type defaults bind to Preview to match.
-# To pin to Stable instead, override BUNDLE_ID and APP_PATH at the top.
-#
-# Known gap: .pyi stays bound to Apple's IDLE.app. Apple's Python framework
-# registers a stronger claim than Warp's plist, and duti returns error -50 on
-# the dynamic UTI macOS generates for the extension. Right-click -> Open With
-# -> Warp still works.
-#
-# Idempotent. Safe to re-run.
+# Set Warp Preview as default macOS app for prose and source files.
 
 set -uo pipefail
 
@@ -39,21 +20,12 @@ echo "==> Rebuilding LaunchServices database (this can take ~30s)..."
 /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister \
   -r -domain local -domain system -domain user
 
-# Targets: UTI or extension. duti accepts both. Extensions without a registered
-# UTI fall back to dynamic UTIs that duti can't bind; those are handled by the
-# lsregister rebuild above via Warp's Info.plist claims.
+# UTI or extension. Extensions without a registered UTI fall back to lsregister.
 TARGETS=(
-  # markdown
   "net.daringfireball.markdown"
-
-  # python
   "public.python-script"
   ".py"
-
-  # go
   ".go"
-
-  # javascript / typescript
   "com.netscape.javascript-source"
   ".js"
   ".mjs"
@@ -62,8 +34,6 @@ TARGETS=(
   ".ts"
   ".tsx"
   ".json"
-
-  # plain text + generic source fallback
   "public.plain-text"
   "public.source-code"
   ".txt"

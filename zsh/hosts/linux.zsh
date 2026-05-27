@@ -1,8 +1,4 @@
-# Linux-specific PATH (kai-server primarily).
-#
-# Harness allowlist matches the leading token of each command, so do NOT
-# prefix with cd or export here. PATH is set via this file, which zsh
-# sources at startup.
+# Linux-specific PATH. See docs/zsh-host-files.md for harness allowlist rules.
 
 typeset -U path PATH
 path=(

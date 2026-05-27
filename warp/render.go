@@ -9,9 +9,7 @@ import (
 	"text/template"
 )
 
-// templateData is the substitution set for every embedded template. All paths
-// are forward-slashed: TOML basic strings treat backslash as an escape, and
-// both Warp and PowerShell accept forward slashes on Windows.
+// templateData is the substitution set; all paths use forward slashes.
 type templateData struct {
 	WorkspaceDir  string
 	ThemePath     string
@@ -46,9 +44,7 @@ func render(templateName string, data templateData) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// resolvePwshProfile asks pwsh 7 where its $PROFILE lives. Windows only. The
-// path depends on the host's Documents (and OneDrive-redirected Documents)
-// layout, so it must be queried, not assumed.
+// resolvePwshProfile asks pwsh 7 for $PROFILE. Windows only.
 func resolvePwshProfile() (string, error) {
 	candidates := []string{
 		"pwsh", "pwsh.exe",

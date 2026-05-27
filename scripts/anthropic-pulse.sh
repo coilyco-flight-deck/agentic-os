@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
-# claude-pulse.sh - across-the-room Anthropic / Claude health monitor.
-# Polls Anthropic's public status API.
-# Loud terminal UI. Big banners. Rolling history. Ctrl-C to quit.
+# Across-the-room Anthropic / Claude health monitor.
 
 set -u
 

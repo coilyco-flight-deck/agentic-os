@@ -34,9 +34,7 @@ except ModuleNotFoundError:
     sys.exit(2)
 
 
-# When invoked as a pre-commit hook, the cwd is the consumer repo root.
-# When run directly during development of this repo, the same path resolves
-# correctly because that's also where the consumer-style examples live.
+# cwd is the consumer repo root under pre-commit, same as direct dev runs.
 REPO_ROOT = Path.cwd()
 SKILLS_DIR = REPO_ROOT / ".claude" / "skills"
 SPEC_PATH = SKILLS_DIR / "categories.yaml"
@@ -448,9 +446,7 @@ def validate_skill(
 
 
 def check_size_caps(md_path: Path, spec: Spec, report: Report) -> None:
-    # Frozen-archive exemption. Paths under any configured archive component
-    # are loaded by name on revisit, not by the loader on trigger, so the cap
-    # earns nothing there.
+    # Frozen-archive exemption: loaded by name on revisit, not by trigger.
     archive_parts = set(spec.archive_path_components)
     if archive_parts and archive_parts.intersection(md_path.parts):
         return
@@ -545,13 +541,10 @@ def main(argv: list[str] | None = None) -> int:
     SPEC_PATH = SKILLS_DIR / "categories.yaml"
 
     if not SKILLS_DIR.is_dir():
-        # Repos without a skills surface are a no-op. Lets a single
-        # upstream-ref pre-commit block cover the whole catalog without
-        # blocking commits in repos that have no .claude/skills/ at all.
+        # No-op for repos without a skills surface.
         return 0
     if not SPEC_PATH.is_file():
-        # Same shape: a partial skills surface (e.g. a placeholder dir)
-        # without categories.yaml is also a silent no-op.
+        # No-op for a partial skills surface lacking categories.yaml.
         return 0
 
     report_only = ns.report_only

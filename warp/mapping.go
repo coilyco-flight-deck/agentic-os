@@ -2,43 +2,26 @@ package main
 
 import "fmt"
 
-// valueKind classifies how a setting's value translates between the TOML
-// layer and the SQLite layer. See "Three layers of state" in
-// project-a-coily-exec-warp.md.
+// valueKind classifies a setting's TOML <-> SQLite crossing.
 type valueKind int
 
 const (
-	kindBool   valueKind = iota // TOML bool <-> JSON bool
-	kindInt                     // TOML int  <-> JSON number
-	kindEnum                    // string enum; SQLite spelling is per-key (see note)
-	kindOpaque                  // value Warp owns or whose SQLite spelling is unverified: doctor-only
+	kindBool valueKind = iota
+	kindInt
+	kindEnum
+	kindOpaque
 )
 
-// settingMap pairs one TOML key path with its SQLite generic_string_objects
-// storage_key, and carries both the canonical TOML value and the exact value
-// the SQLite layer should hold.
-//
-// The names do not mechanically transform, and neither do the values: Warp's
-// enum encoding is inconsistent across keys (view_mode stores lowercase
-// "expanded", primary_info stores PascalCase "Command"). So kindEnum carries
-// an explicit SQLiteValue rather than a computed transform. Keys whose SQLite
-// spelling is not yet verified are kindOpaque - doctor reports their drift but
-// apply never writes them.
+// settingMap pairs a TOML key path with its SQLite storage_key.
 type settingMap struct {
-	TOMLPath    string // dotted path in settings.toml, for labelling
-	StorageKey  string // SQLite generic_string_objects storage_key
+	TOMLPath    string
+	StorageKey  string
 	Kind        valueKind
-	Canonical   any    // value templates/settings.toml.tmpl defines
-	SQLiteValue string // exact value the SQLite layer should hold (kindEnum only)
+	Canonical   any
+	SQLiteValue string
 }
 
-// settingMaps is the embedded reconciliation table. Canonical mirrors
-// templates/settings.toml.tmpl and must be kept in step with it.
-//
-// SQLiteValue spellings for kindEnum are observed from a live database, not
-// from Warp source - reverify if Warp changes its settings serialization.
-// input_mode and theme are kindOpaque: their SQLite spelling is unverified,
-// so the tool reports their drift but does not auto-write them.
+// Reconciliation table. Mirror with templates/settings.toml.tmpl.
 var settingMaps = []settingMap{
 	{"privacy.crash_reporting_enabled", "CrashReportingEnabled", kindBool, true, ""},
 	{"privacy.telemetry_enabled", "TelemetryEnabled", kindBool, true, ""},
@@ -60,9 +43,7 @@ var settingMaps = []settingMap{
 	{"appearance.themes.theme", "Theme", kindOpaque, nil, ""},
 }
 
-// expected returns the value the SQLite layer should hold for this setting.
-// ok is false for kindOpaque (and for values that do not match their kind),
-// which apply skips and doctor reports as a manual NOTE.
+// expected returns the SQLite value; ok=false for kindOpaque or type mismatch.
 func (m settingMap) expected() (out any, ok bool) {
 	switch m.Kind {
 	case kindBool:
@@ -81,14 +62,12 @@ func (m settingMap) expected() (out any, ok bool) {
 			return nil, false
 		}
 		return m.SQLiteValue, true
-	default: // kindOpaque
+	default:
 		return nil, false
 	}
 }
 
-// valuesEqual compares two JSON-shaped values for reconciliation purposes.
-// Numbers cross the JSON boundary as float64, so it normalizes through a
-// canonical string form.
+// valuesEqual normalizes numbers through float64 before string-compare.
 func valuesEqual(a, b any) bool {
 	return fmt.Sprintf("%v", normalizeNum(a)) == fmt.Sprintf("%v", normalizeNum(b))
 }

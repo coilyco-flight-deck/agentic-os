@@ -1,14 +1,5 @@
 #!/usr/bin/env bash
-# git diff-global - enumerate dirty repos under ~/projects/coilysiren/*
-#
-# Wired in via ~/.gitconfig:
-#   [alias]
-#     diff-global = "!~/projects/coilysiren/agentic-os/scripts/git-diff-global.sh"
-#
-# Modes:
-#   git diff-global           # one block per dirty repo, porcelain status
-#   git diff-global --stat    # diff --stat per dirty repo
-#   git diff-global --full    # full diff per dirty repo
+# Enumerate dirty repos under ~/projects/coilysiren/*. See docs/git-diff-global.md.
 
 set -euo pipefail
 

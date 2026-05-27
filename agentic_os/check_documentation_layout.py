@@ -19,9 +19,7 @@ REPO_ROOT = Path.cwd()
 MAX_MARKDOWN_LINES = 80
 MAX_MARKDOWN_CHARS = 4_000
 
-# Files whose content is canonical (verbatim upstream text, not repo-authored
-# prose) and therefore exempt from the size cap. Matched by basename in any
-# directory.
+# Verbatim upstream files; exempt from size cap, matched by basename.
 SIZE_CAP_EXEMPT_BASENAMES = {
     "CODE_OF_CONDUCT.md",
 }
@@ -103,9 +101,7 @@ def check_docs_flatness() -> list[str]:
 
 
 def is_example_readme(rel: Path) -> bool:
-    # examples/<name>/README.md and examples/README.md are idiomatic in
-    # Go and Rust projects (per-example READMEs document each runnable
-    # sample, plus a top-level index). Exempt from the docs/ flatness rule.
+    # Go/Rust examples/<name>/README.md is idiomatic; exempt from flat-docs rule.
     parts = rel.parts
     if not parts or parts[0] != "examples" or rel.name != "README.md":
         return False

@@ -59,9 +59,7 @@ LEGACY_BLOCK_MARKERS = [
      "# END managed by agentic-os-kai/scripts/apply-commit-msg-hook.py"),
 ]
 
-# Legacy stamped scripts in consumer repos that should be deleted now that
-# every consumer references coilysiren/agentic-os directly. The validators
-# live in the agentic_os python package now.
+# Legacy stamped scripts to delete; validators ship from the agentic_os package now.
 LEGACY_STAMPED_SCRIPTS = [
     "scripts/check-catalog-block.py",
     "scripts/check-catalog-doc-size.py",
@@ -84,9 +82,7 @@ DEFAULT_HOOK_IDS = [
     "conventional-commit",
 ]
 
-# Hooks that a given repo opts out of by name. eco-* repos sit on Unity / C#
-# trees with mod-author comment conventions that conflict with the code-comments
-# rule. The other validators still apply.
+# Per-repo hook opt-outs. eco-* repos skip code-comments (Unity / C# conventions).
 PER_REPO_HOOK_SKIPS: dict[str, set[str]] = {
     "infrastructure": {"code-comments"},
 }
@@ -218,9 +214,7 @@ def install_pre_commit_hooks(repo_dir: Path) -> str:
 
 def apply_to_repo(repo: str, rev: str, dry_run: bool) -> tuple[str, str]:
     if repo == "agentic-os":
-        # This repo IS the source. Local .pre-commit-config.yaml dogfoods
-        # the validators via repo: local + python -m agentic_os.<module>.
-        # Inserting an upstream-ref block would duplicate hook IDs.
+        # Source repo dogfoods via repo: local; upstream-ref would duplicate IDs.
         return ("skipped", "self (source repo)")
     repo_dir = SIBLINGS_ROOT / repo
     if not repo_dir.is_dir():

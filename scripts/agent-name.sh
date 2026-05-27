@@ -1,23 +1,14 @@
 #!/usr/bin/env bash
-# Decorate this agent's self-name for the Claude Code status line or the
-# SessionStart hook.
-#
-# The name follows the scheme claude-<os>-<hostname>-<tag>. coily is the
-# single source of truth: when `coily agent-name` is available this script
-# defers to it. The local computation below is a fallback for hosts without
-# coily, or running a coily too old to know the verb.
-#
-# Argument 1 picks the flavor: "statusline" (default) or "sessionstart".
+# Decorate this agent's self-name. See docs/agent-name.md.
 set -euo pipefail
 
 mode="${1:-statusline}"
 
-# session_id arrives in the statusLine / SessionStart JSON payload on stdin.
 payload="$(cat | tr -d '\n')"
 sid="$(printf '%s' "$payload" \
   | sed -n 's/.*"session_id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)"
 
-# local_name mirrors `coily agent-name`, for hosts without coily.
+# Fallback for hosts without coily.
 local_name() {
   local os host tag
   case "$(uname -s)" in
@@ -33,8 +24,7 @@ local_name() {
   [ -n "$tag" ] && printf -- '-%s' "$tag"
 }
 
-# The name is stable per session; cache it so the status line does not
-# spawn coily on every refresh.
+# Stable per session, cached to avoid spawning coily on every status-line refresh.
 cache="${TMPDIR:-/tmp}/agent-name-${sid:-nosession}"
 if [ -s "$cache" ]; then
   name="$(cat "$cache")"
@@ -43,8 +33,7 @@ else
   if command -v coily >/dev/null 2>&1; then
     name="$(coily agent-name --session-id "$sid" 2>/dev/null | head -n1 || true)"
   fi
-  # Accept only a well-formed name; otherwise fall back to local compute.
-  # A valid name is lowercase claude-<...> with no spaces or other chars.
+  # Accept only well-formed names; fall back to local compute otherwise.
   if [[ "$name" != claude-* || "$name" == *[^a-z0-9-]* ]]; then
     name="$(local_name)"
   fi
