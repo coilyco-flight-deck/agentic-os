@@ -26,7 +26,7 @@ Applies to one-off commands, scripts, workflows, skills, and any code Kai will r
 - **PR lifecycle** (create branch, commit, open PR, monitor CI, auto-fix failures, merge) - [`coding-github-pr-workflow`](../coding-github-pr-workflow/SKILL.md).
 - **Coily passthrough for `gh`** (audit-log binding, scope routing) - [`coily-ops-gh-meta`](../coily-ops-gh-meta/SKILL.md).
 - **Git workflow for `coilysiren/*` repos** (commit-to-main default, every-commit-closes-an-issue rule, readonly exceptions) - [`kai-git-workflow`](../kai-git-workflow/SKILL.md).
-- **Autonomous engineering across the backlog** - [`kai-autonomous-engineering`](../kai-autonomous-engineering/SKILL.md).
+- **Autonomous engineering across the backlog** - `autonomous-dispatch` in `~/projects/coilysiren/luca/skills/`.
 
 ## See also
 

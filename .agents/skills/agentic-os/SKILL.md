@@ -1,6 +1,6 @@
 ---
 name: agentic-os
-description: Pointer to the coilysiren/agentic-os repo. Triggers - agentic-os, public dotfiles, nushell config, in-process SSM loader, shared aliases.
+description: Pointer to the coilysiren/agentic-os repo (Kai also calls this agentic-os-public). Triggers - agentic-os, agentic-os-public, aos, public dotfiles, zsh config, in-process SSM loader, shared aliases.
 ---
 
 # agentic-os

@@ -7,8 +7,6 @@ description: Zsh is Kai's default shell on every host (Warp on Mac/Linux, Git Ba
 
 Kai's shell on every host. Drafted commands should be zsh/bash-compatible.
 
-This is the replacement for `tooling-nushell` after the May 2026 Nushell rollback. If you see references to `agentic-os/nu/` in older notes or commits, that tree is dead and scheduled for deletion (see coilysiren/agentic-os#48).
-
 ## Config location
 
 Canonical files live at `~/projects/coilysiren/agentic-os/zsh/`, symlinked to `~/.zshrc` per host:
@@ -24,7 +22,7 @@ Files:
 - `config.zsh` - aliases, `def`s (git helpers, rg wrapper, etc.), the two-line siren-motif prompt, direnv hook, lazy `github-token-load`.
 - `ssm-env.zsh` - in-process AWS SSM secret loader. `ssm-load` reads `/coilysiren/env/*` into `$env` for the current session only. Never disk.
 
-## Functions ported from the old nu config
+## Functions
 
 Available in any interactive zsh:
 
@@ -37,7 +35,7 @@ Available in any interactive zsh:
 
 ## Prompt
 
-Two-line, mirroring the old nu prompt:
+Two-line, siren-motif:
 
 ```
 🕐 HH:MM:SS  🧜 user@host  📂 cwd  ⚓ branch ✨  💥 N
