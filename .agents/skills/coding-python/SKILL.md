@@ -1,11 +1,15 @@
 ---
 name: coding-python
-description: Python umbrella skill. Kai's primary language, 10+ years of practice. Modern Python defaults (3.12+, type hints, ruff for lint, uv for env management, pytest). Triggers - python, python3, .py, pip, uv, poetry, pyenv, pytest, ruff, mypy, pyright, asyncio, pydantic, typing, dataclass, fastapi, flask, django.
+description: Kai's primary language. Umbrella for Python work across repos. Carries her defaults (3.12+, uv, ruff, pyright/mypy, pytest) so agents inherit them before reaching for generic Python knowledge.
 ---
 
 # coding-python
 
-Umbrella skill for any Python work. Triggers on the broad Python keyword surface. Refine details over time as patterns crystallize.
+Umbrella skill for any Python work. Kai's primary language, 10+ years of practice. Refine details over time as patterns crystallize.
+
+## Triggers
+
+Broad Python keyword surface - python, python3, .py, pip, uv, poetry, pyenv, pytest, ruff, mypy, pyright, asyncio, pydantic, typing, dataclass, fastapi, flask, django.
 
 ## Defaults
 
