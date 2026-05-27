@@ -1,6 +1,6 @@
 ---
 name: coding-javascript
-description: JavaScript and TypeScript umbrella skill. Default to TypeScript over plain JavaScript. Node 20+. ESM modules. Frameworks live as subskills (e.g. coding-javascript-react). Triggers - javascript, typescript, js, ts, .js, .ts, .mjs, .tsx, node, nodejs, npm, pnpm, yarn, bun, deno, esm, cjs, vite, webpack, esbuild.
+description: JavaScript and TypeScript umbrella skill. Default to TypeScript over plain JavaScript. Node 20+. ESM modules. Frameworks live as subskills (e.g. coding-javascript-react).
 ---
 
 # coding-javascript
@@ -29,3 +29,7 @@ Umbrella for anything in the JS/TS world. Subskills (frameworks, runtimes, build
 ## When this skill is active
 
 Kai is editing or writing JS/TS. Inherit her defaults before falling back to training-data conventions.
+
+## Triggers
+
+javascript, typescript, js, ts, .js, .ts, .mjs, .tsx, node, nodejs, npm, pnpm, yarn, bun, deno, esm, cjs, vite, webpack, esbuild.
