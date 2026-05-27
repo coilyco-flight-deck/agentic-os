@@ -1,11 +1,15 @@
 ---
 name: coding-go
-description: Go umbrella skill. Kai is/was a urfave/cli maintainer; default to urfave/cli over cobra/kong for new CLIs. Charm stack for TUI surfaces. Modern Go (1.22+), modules, structured logging via slog. Triggers - go, golang, .go, go.mod, go.sum, gopls, urfave, cobra, kong, charm, bubbletea, lipgloss, gum, glow, slog, gofmt, goroutine, channel.
+description: Umbrella for Go work across repos. Carries Kai's defaults (Go 1.22+, urfave/cli over cobra/kong, Charm stack for TUI, slog for logging) so agents inherit them before reaching for generic Go.
 ---
 
 # coding-go
 
 Umbrella for any Go work.
+
+## Triggers
+
+go, golang, .go, go.mod, go.sum, gopls, urfave, cobra, kong, charm, bubbletea, lipgloss, gum, glow, slog, gofmt, goroutine, channel.
 
 ## Defaults
 
