@@ -1,6 +1,6 @@
 ---
 name: coding-aws
-description: AWS umbrella skill. Kai's primary cloud. Python via boto3, secrets and config via SSM Parameter Store, region pinned to us-east-1. Triggers - aws, amazon web services, boto3, botocore, awscli, aws-cli, ec2, s3, iam, lambda, ssm, parameter store, route53, cloudwatch, cloudfront, dynamodb, sqs, sns, eventbridge, rds, secrets manager, sts.
+description: AWS umbrella skill. Kai's primary cloud. Python via boto3, secrets and config via SSM Parameter Store, region pinned to us-east-1.
 ---
 
 # coding-aws
@@ -24,6 +24,10 @@ Umbrella for any AWS work.
 ## When this skill is active
 
 Anything that touches AWS APIs, configs, infrastructure, or the CLI. Inherit Kai's defaults before reaching for AWS conventions from training data.
+
+## Triggers
+
+aws, amazon web services, boto3, botocore, awscli, aws-cli, ec2, s3, iam, lambda, ssm, parameter store, route53, cloudwatch, cloudfront, dynamodb, sqs, sns, eventbridge, rds, secrets manager, sts.
 
 ## See also
 
