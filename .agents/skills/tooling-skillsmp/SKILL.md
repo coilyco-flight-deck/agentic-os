@@ -1,6 +1,6 @@
 ---
 name: tooling-skillsmp
-description: Discover and install skills from https://skillsmp.com (the Claude skill marketplace). Triggers - skillsmp, skillsmp.com, skill marketplace, is there a skill for X, narrow specialized requests (DOCX-to-PDF, scrape this RSS), about to curl / WebFetch skillsmp.com, or about to reinvent a common skill. First reach for narrow tasks. Route through this skill, never raw curl - the harness denies direct skillsmp.com fetches.
+description: Discover and install skills from skillsmp.com (the Claude skill marketplace). Route through this skill, never raw curl - the harness denies direct skillsmp.com fetches.
 ---
 
 # skillsmp Skill Discovery
