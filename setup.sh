@@ -44,8 +44,9 @@ fi
 
 if command -v python3 >/dev/null 2>&1; then
   "$SCRIPT_DIR/scripts/install-agent-name.py"
+  "$SCRIPT_DIR/scripts/install-session-pulse.py"
 else
-  echo "skipped agent self-name wiring (python3 not on PATH)"
+  echo "skipped agent self-name + session-pulse wiring (python3 not on PATH)"
 fi
 
 echo

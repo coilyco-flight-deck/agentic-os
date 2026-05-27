@@ -20,6 +20,8 @@ Cross-platform shell + terminal setup. Zsh on Mac, Linux, and Windows (Git Bash)
   - `check-commit-closes-issue.py` - commit-msg hook rejecting commits that lack a same-repo `closes #N` / `fixes #N` / `resolves #N`.
   - `agent-name.sh` - decorate the agent self-name for the Claude Code status line or the SessionStart hook. The name comes from `coily agent-name` (the source of truth) with a local fallback when coily is absent.
   - `install-agent-name.py` - idempotently wire `agent-name.sh` into `~/.claude/settings.json` as both a status line and a SessionStart hook.
+  - `session-pulse.sh` - SessionStart hook that cats `~/.cache/agentic-os/session-pulse.yaml` when present, no-op when absent. Any producer (daily skill, cron job, one-off script) writes to that path; the hook is provider-agnostic. Format is YAML so secondary surfaces (statuslines, dashboards) can reuse the same blob without re-parsing prose.
+  - `install-session-pulse.py` - idempotently wire `session-pulse.sh` into `~/.claude/settings.json` as a SessionStart hook.
 - `.agents/skills/` - SKILL.md docs for the configs that live here. `tooling-zsh`, `tooling-gpg-ssm`. agentic-os-kai's `setup.sh` walks this dir as a peer skill source, symlinking each entry into `~/.claude/skills/`. Co-located with the configs they describe so they don't drift.
 
 ## Install
@@ -34,7 +36,7 @@ coily exec warp apply     # warp config (see warp/README.md)
 - `~/.zshrc` from `zsh/zshrc` (all hosts)
 - `~/.local/bin/gpg-ssm` from `scripts/gpg-ssm` (Mac, Linux) or `scripts/gpg-ssm.cmd` (Windows)
 
-It also runs `install-agent-name.py` to wire the agent self-name into `~/.claude/settings.json` (status line plus SessionStart hook). A status line you set yourself is left untouched.
+It also runs `install-agent-name.py` to wire the agent self-name into `~/.claude/settings.json` (status line plus SessionStart hook), and `install-session-pulse.py` to wire a second SessionStart hook that surfaces `~/.cache/agentic-os/session-pulse.yaml` if a producer has written one. A status line you set yourself is left untouched.
 
 Pre-existing real files are backed up to `<path>.bak` on first run; later runs replace the symlinks in place.
 

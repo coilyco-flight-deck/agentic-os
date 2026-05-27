@@ -38,6 +38,10 @@ Every Claude Code session gets a stable, human-readable name: `claude-<os>-<host
 
 `coily agent-name` is the single source of truth for the name. The status line script defers to coily and only falls back to computing the scheme locally when coily is absent.
 
+## Session pulse
+
+Generic SessionStart hook that cats `~/.cache/agentic-os/session-pulse.yaml` when present and no-ops otherwise. Zero compute at session start. Stale cache is acceptable signal - the file's mtime tells the operator how fresh the orientation is. The plugin point is "write to that path." Any consumer (a daily skill, a cron job, a one-off script) can hook in. YAML so secondary surfaces can reuse the same blob without re-parsing prose. The producer is out of scope here; it lives in consumer-specific tooling.
+
 ## Forgejo-canonical release actions
 
 Composite Forgejo Actions for the brew release pipeline now that `forgejo.coilysiren.me` is canonical source. Three actions, each a forgejo-API-only replacement for a github-coupled marketplace action:
