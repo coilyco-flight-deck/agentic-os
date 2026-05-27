@@ -13,6 +13,9 @@ commands:
   pre-commit-all:
     run: pre-commit run --all-files
     description: "Run all pre-commit hooks against all files in the current repo."
+  release:
+    run: python3 scripts/release.py
+    description: "Cut a release: parse conventional commits since latest tag, bump pyproject + DEFAULT_REV, create signed tag, push. --bump major|minor|patch to override; --dry-run to preview."
 
 # Catalog metadata for the cross-repo knowledge graph.
 # Schema: coilysiren/agentic-os-kai#420 (tracker).
