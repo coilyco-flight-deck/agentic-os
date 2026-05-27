@@ -37,6 +37,7 @@ check-catalog-trifecta = "agentic_os.check_catalog_trifecta:main"
 check-code-comments = "agentic_os.check_code_comments:main"
 check-documentation-layout = "agentic_os.check_documentation_layout:main"
 check-aws-config = "agentic_os.check_aws_config:main"
+check-repo-pointer-skills = "agentic_os.check_repo_pointer_skills:main"
 
 [tool.setuptools.packages.find]
 include = ["agentic_os*"]

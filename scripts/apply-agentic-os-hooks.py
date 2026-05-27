@@ -78,6 +78,7 @@ DEFAULT_HOOK_IDS = [
     "catalog-block-present",
     "validate-skills",
     "dead-cross-links",
+    "repo-pointer-skills",
     "closes-issue",
     "conventional-commit",
 ]
