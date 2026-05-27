@@ -1,11 +1,15 @@
 ---
 name: coding-shape-cloud
-description: Category umbrella for cloud infrastructure work. Multi-cloud experience across AWS (primary), GCP (Bluelink/Kapwing), Azure (Textio). Cross-cloud patterns - region pinning, IAM-not-users, IaC over click-ops, secrets in cloud-native param stores. Triggers - cloud, public cloud, multi-cloud, hybrid cloud, iam, region, availability zone, vpc, peering, transit gateway, bgp vpn, cloud secrets, cloud parameter store, cloud iac, cloudformation, pulumi.
+description: Category umbrella for cloud infrastructure work. AWS primary, GCP secondary, Azure tertiary. Defaults - region pinned per project, IAM not keys, IaC over click-ops, secrets in native param stores.
 ---
 
 # coding-shape-cloud
 
 Umbrella for any work that targets a public cloud. Cross-cuts AWS, GCP, Azure, and any other future provider.
+
+## Background
+
+Multi-cloud experience across all three majors. AWS is Kai's default for new infra. GCP comes from Bluelink (GCP-primary, K8s on GKE) and Kapwing (Python/NodeJS on GCP). Azure comes from Textio (Azure OpenAI plus a BGP VPN back to AWS).
 
 ## Per-cloud skills
 
@@ -44,6 +48,10 @@ Not real reasons:
 ## When this skill is active
 
 Any cloud-targeted work, especially when it crosses providers or when the choice between providers is open.
+
+## Triggers
+
+cloud, public cloud, multi-cloud, hybrid cloud, iam, region, availability zone, vpc, peering, transit gateway, bgp vpn, cloud secrets, cloud parameter store, cloud iac, cloudformation, pulumi.
 
 ## See also
 
