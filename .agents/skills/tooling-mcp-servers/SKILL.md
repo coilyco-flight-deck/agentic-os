@@ -1,9 +1,13 @@
 ---
 name: tooling-mcp-servers
-description: Lazy MCP discovery and invocation via mcporter. Hard-trigger any time the agent so much as considers reaching for an MCP, even vaguely - check this skill before falling back to curl, `gh`, raw HTTP, or any "I'll just shell out" path. Auto-reaches for the Luca-stack staging servers (repo-recall-staging, luca-staging, session-lattice-staging) without being asked; everything else is explicit by user name. Triggers - mcp, mcporter, mcp-servers, terraform mcp, sentry mcp, playwright mcp, phoenix mcp, list mcp tools, call an mcp, what mcp servers are available, lazy mcp, code-execution-with-mcp, repo-recall, luca, session-lattice, recall_search, recall_dashboard.
+description: Lazy MCP discovery via mcporter. Hard-trigger before any curl, gh, or HTTP fallback. Auto-loads Luca-stack staging (repo-recall, luca, session-lattice).
 ---
 
 # mcp-servers
+
+## Triggers
+
+mcp, mcporter, repo-recall, luca, session-lattice, recall_search.
 
 The lazy-loaded MCP layer. Configured servers live in `<personal-os-repo>/config/mcporter.json` (symlinked from the workspace root so `mcporter` finds them via its default `./config/mcporter.json` lookup). Typed headers per server live in `<personal-os-repo>/mcp-servers/*.d.ts`.
 
