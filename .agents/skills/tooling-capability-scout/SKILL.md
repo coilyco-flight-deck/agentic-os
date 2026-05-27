@@ -1,9 +1,13 @@
 ---
 name: tooling-capability-scout
-description: Capability gap analysis for skills and MCP servers. Sweeps your repos and notes for capabilities she lacks, hydrates against skillsmp + glama (awesome-lists backstop), ranks bronze/silver/gold globally at 3:2:1, security-audits silver+gold via supply-chain-audit, presents gold-green inline for approval, installs one-issue-one-commit. Aliases - capability scout, scout skills, scout mcps, find me skills, find me mcps, skill prospecting, mcp prospecting, gap analysis, missing capabilities.
+description: Capability gap analysis for skills and MCP servers. Sweeps repos, hydrates against skillsmp and glama, security-audits silver/gold tiers, installs one-issue-one-commit.
 ---
 
 # capability-scout
+
+## Triggers
+
+capability scout, find me skills, find me mcps, gap analysis, missing capabilities.
 
 Six-phase routine. Each phase runs independently and checkpoints to a
 single-day vault inbox file, so the user can dictate "capability-scout phase 3"
