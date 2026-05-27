@@ -1,11 +1,19 @@
 ---
 name: tooling-warp
-description: Warp is Kai's terminal on every host. Block-mode shell with left-side vertical tabs. Two channels on the Mac daily driver - Preview (default) and Stable (fallback) - with configs at ~/.warp-preview/ and ~/.warp/ respectively, both symlinked into agentic-os/warp/. Use when editing Warp config, debugging UI noise, adjusting tab behavior, configuring shells per-OS, tuning Warp AI/agent surfaces, or wiring launch_configurations / tab_configs URI handlers. Triggers - warp, Warp, WarpPreview, ~/.warp, ~/.warp-preview, warp settings, settings.toml, vertical tabs, warp tabs, launch configuration, tab config, warp blocks, warp ai, warp agent, warpify, subshell, startup_config, warp://, warppreview://.
+description: Warp is Kai's terminal on every host. Block-mode shell with left-side vertical tabs, one shell per tab. Preview is the Mac daily driver, Stable is the fallback.
 ---
 
 # Warp
 
 The terminal on every host. Block-mode UI with left-side vertical tabs.
+
+## Use when
+
+Editing Warp config, debugging UI noise, adjusting tab behavior, configuring shells per-OS, tuning Warp AI/agent surfaces, or wiring `launch_configurations` / `tab_configs` URI handlers.
+
+## Triggers
+
+warp, Warp, WarpPreview, ~/.warp, ~/.warp-preview, warp settings, settings.toml, vertical tabs, warp tabs, launch configuration, tab config, warp blocks, warp ai, warp agent, warpify, subshell, startup_config, warp://, warppreview://.
 
 ## Channels
 
