@@ -1,11 +1,15 @@
 ---
 name: coding-shape-tui
-description: Category umbrella for building terminal user interfaces. Charm stack is the default - bubbletea for the framework, lipgloss for styling, gum for shell-script prompts, glow for markdown, huh for forms. Reach for tview/promptui only when an existing project commits to them. Triggers - tui, terminal ui, charm, charmbracelet, bubbletea, lipgloss, gum, glow, huh, freeze, vhs, soft-serve, wish, tview, promptui, blessed, ink, textual.
+description: Category umbrella for building terminal UIs. Charm stack is the default - bubbletea, lipgloss, gum, glow, huh. Fall back to tview/promptui only when a project already commits to them.
 ---
 
 # coding-shape-tui
 
 Umbrella for any work that ships a terminal UI as the primary surface.
+
+## Triggers
+
+tui, terminal ui, charm, charmbracelet, bubbletea, lipgloss, gum, glow, huh, freeze, vhs, soft-serve, wish, tview, promptui, blessed, ink, textual.
 
 ## Framework defaults by language
 
@@ -18,6 +22,8 @@ Umbrella for any work that ships a terminal UI as the primary surface.
   - `vhs` - terminal recording for demos.
 - **Python** → `textual` (Textualize) for full TUIs, `rich` for output styling without an interactive loop.
 - **Node/TypeScript** → `ink` (React-shaped, but acceptable in this niche).
+
+Reach for tview/promptui only when an existing project already commits to them.
 
 ## Why Charm
 
