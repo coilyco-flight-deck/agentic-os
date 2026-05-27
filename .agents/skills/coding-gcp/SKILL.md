@@ -1,6 +1,6 @@
 ---
 name: coding-gcp
-description: GCP umbrella skill. Multi-cloud experience from Bluelink (GCP-primary, K8s on GKE) and Kapwing (Python/NodeJS on GCP). Reach for GCP when a job already runs there, not as default for new infra (AWS is Kai's default). Triggers - gcp, google cloud, gke, gcs, cloud run, cloud functions, bigquery, pubsub, firestore, cloud sql, vertex ai, gcloud, gsutil, dataflow, secret manager, iam.
+description: GCP umbrella skill. Secondary cloud - reach for it when a job already runs there. AWS is Kai's default for new infra.
 ---
 
 # coding-gcp
@@ -23,6 +23,10 @@ GCP is reach-for-when-job-requires-it, not default. AWS is Kai's primary cloud (
 
 - **Kapwing** - Python/NodeJS on GCP, K8s, New Relic-monitored.
 - **Bluelink** - Java/Python on GKE, GCP-primary infrastructure.
+
+## Triggers
+
+gcp, google cloud, gke, gcs, cloud run, cloud functions, bigquery, pubsub, firestore, cloud sql, vertex ai, gcloud, gsutil, dataflow, secret manager, iam.
 
 ## When this skill is active
 
