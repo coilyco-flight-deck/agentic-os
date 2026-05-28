@@ -8,11 +8,11 @@ the two must exist and carry the block.
 Schema and rollout: coilysiren/agentic-os-kai#420. Two-file rollout: coilysiren/agentic-os-kai#480.
 
 Required keys inside `catalog:`:
-    kind, type, system, owner, lifecycle, description, dependsOn, providesApis.
+    kind, type, system, owner, lifecycle, description, dependsOn.
 
-`dependsOn` and `providesApis` must be lists. Trivial repos (e.g. a single
-.gitignore) still declare these, using `[]` for empty rather than omitting
-the key. Empty is fine. Missing is not.
+`dependsOn` must be a list. Trivial repos (e.g. a single .gitignore) still
+declare it, using `[]` for empty rather than omitting the key. Empty is
+fine. Missing is not.
 """
 
 from __future__ import annotations
@@ -51,9 +51,8 @@ REQUIRED_KEYS = (
     "lifecycle",
     "description",
     "dependsOn",
-    "providesApis",
 )
-LIST_KEYS = ("dependsOn", "providesApis")
+LIST_KEYS = ("dependsOn",)
 TRACKER = "coilysiren/agentic-os-kai#420"
 
 
