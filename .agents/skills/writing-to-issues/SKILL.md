@@ -1,6 +1,6 @@
 ---
 name: writing-to-issues
-description: Break a plan, spec, conversation, PRD, or oversized GitHub issue into independently-grabbable issues using tracer-bullet vertical slices, tagged HITL/AFK. Also fires proactively when a session opens with a bare issue reference ("work issue #142") AND the issue is oversized - fetch first, then offer to split. Triggers - convert this to issues, make tickets, break this down, decompose into vertical slices, split into AFK chunks, tracer-bullet breakdown, split #N, decompose #N, #N is oversized.
+description: Break a plan, PRD, or oversized issue into independently-grabbable tracer-bullet vertical slices, tagged HITL/AFK. Also fires when a session opens with a bare oversized issue ref. Triggers - convert to issues, make tickets, break this down, decompose, split #N.
 ---
 
 # To Issues

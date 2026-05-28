@@ -21,3 +21,6 @@ kai-server.conf
 # The factorio theme YAML references this path; absent on a fresh clone Warp just
 # shows no background image. Source: https://factorio.com/game/screenshots
 static/wallpaper-factorio.jpg
+
+# Rendered output of the warp/ template engine. Templates are tracked, output is not.
+warp/settings.toml

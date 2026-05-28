@@ -1,6 +1,6 @@
 ---
 name: system-improvement-vocab
-description: Distinguishes four related-but-distinct concepts in the system-improvement family - self-healing, self-improving systems, continuous comprehension, meta-improvement - on locus of agency and what gets changed. Triggers - self-healing, self-improving, continuous comprehension, meta-improvement, meta-progression, opaqueness fix, fix the bug or fix the system, patch the symptom, retry vs fix, reliability vocab, system improvement, locus of agency, vocab clarification, improvement loci.
+description: Distinguishes self-healing, self-improving, continuous comprehension, and meta-improvement on locus of agency and what gets changed. Triggers - self-healing, meta-improvement, fix the bug vs fix the system, improvement loci, reliability vocab.
 ---
 
 # System-improvement vocab

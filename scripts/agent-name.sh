@@ -4,9 +4,14 @@ set -euo pipefail
 
 mode="${1:-statusline}"
 
-payload="$(cat | tr -d '\n')"
-sid="$(printf '%s' "$payload" \
+payload="$(cat)"
+payload_flat="$(printf '%s' "$payload" | tr -d '\n')"
+sid="$(printf '%s' "$payload_flat" \
   | sed -n 's/.*"session_id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)"
+transcript="$(printf '%s' "$payload_flat" \
+  | sed -n 's/.*"transcript_path"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)"
+model_id="$(printf '%s' "$payload_flat" \
+  | sed -n 's/.*"model"[[:space:]]*:[[:space:]]*{[^}]*"id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)"
 
 # Fallback for hosts without coily.
 local_name() {
@@ -43,11 +48,64 @@ else
   printf '%s' "$name" >"$cache"
 fi
 
+# Context-usage snippet from the transcript's last assistant message.
+# Format: " | ctx 132k/1M (13%) out 4.2k". Empty on any failure.
+ctx_snippet() {
+  [ -n "$transcript" ] && [ -r "$transcript" ] || return 0
+  python3 - "$transcript" <<'PY' 2>/dev/null || true
+import json, sys
+path = sys.argv[1]
+# Soft budget. 250k = failure case per Kai. Progressive bands below.
+BUDGET = 250_000
+last_in = last_cr = last_crd = 0
+total_out = 0
+try:
+    with open(path) as f:
+        for line in f:
+            try:
+                d = json.loads(line)
+            except Exception:
+                continue
+            msg = d.get("message")
+            if not isinstance(msg, dict):
+                continue
+            u = msg.get("usage")
+            if not isinstance(u, dict):
+                continue
+            total_out += int(u.get("output_tokens") or 0)
+            if msg.get("role") == "assistant":
+                last_in = int(u.get("input_tokens") or 0)
+                last_cr = int(u.get("cache_read_input_tokens") or 0)
+                last_crd = int(u.get("cache_creation_input_tokens") or 0)
+except Exception:
+    sys.exit(0)
+ctx = last_in + last_cr + last_crd
+if ctx == 0 and total_out == 0:
+    sys.exit(0)
+def k(n):
+    if n >= 1_000_000: return f"{n/1_000_000:.1f}M"
+    if n >= 1_000: return f"{n/1000:.1f}k"
+    return str(n)
+pct = 100 * ctx / BUDGET
+# ANSI color bands. <50% green, 50-75% yellow, 75-100% bright-orange, >=100% bright-red bold blink.
+if pct < 50:
+    color, label = "\033[32m", "ok"     # green
+elif pct < 75:
+    color, label = "\033[33m", "warn"   # yellow
+elif pct < 100:
+    color, label = "\033[38;5;208m", "hot"  # 256-color orange
+else:
+    color, label = "\033[1;5;91m", "OVER"   # bold blink bright red
+reset = "\033[0m"
+print(f" | {color}ctx {k(ctx)}/250k ({pct:.0f}% {label}){reset} out {k(total_out)}", end="")
+PY
+}
+
 case "$mode" in
   sessionstart)
     printf '🐾 You are %s this session. When asked "who are you" or "what is your status", lead with this name.\n' "$name"
     ;;
   statusline | *)
-    printf '%s - your agent this session' "$name"
+    printf '%s - your agent this session%s' "$name" "$(ctx_snippet)"
     ;;
 esac

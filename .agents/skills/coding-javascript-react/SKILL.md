@@ -1,6 +1,6 @@
 ---
 name: coding-javascript-react
-description: React subskill of coding-javascript. Kai dislikes React strongly. Never recommend React for new projects, prefer alternatives (Vue, Svelte, HTMX, plain DOM). When forced to use React (existing codebase, work constraint), keep patterns simple. Triggers - react, react.js, reactjs, jsx, tsx, useState, useEffect, useContext, useReducer, hooks, next.js, nextjs, remix, gatsby, redux, zustand, jotai, recoil, react-query, tanstack-query.
+description: React subskill of coding-javascript. Kai dislikes React. Forced-only - existing codebases, work constraints. Prefer Vue, Svelte, HTMX, or plain DOM for new projects.
 ---
 
 # coding-javascript-react
