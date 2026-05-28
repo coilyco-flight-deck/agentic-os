@@ -13,6 +13,8 @@
 #       - id: dead-cross-links
 #       - id: repo-pointer-skills
 #       - id: closes-issue
+#       - id: trufflehog
+#       - id: coily-trailer
 #
 # See coilysiren/agentic-os#59 for the trifecta convention.
 # Rollout helper: agentic-os/scripts/apply-agentic-os-hooks.py.
@@ -105,3 +107,20 @@
   entry: check-conventional-commit
   language: python
   stages: [commit-msg]
+
+- id: trufflehog
+  name: trufflehog (secret scan, offline)
+  description: Detect secrets in staged changes via local trufflehog binary (no API verification). Requires the trufflehog binary on PATH (shipped in the agentic-os Brewfile).
+  entry: trufflehog git file://. --since-commit HEAD --no-verification --no-update --fail
+  language: system
+  pass_filenames: false
+  stages: [pre-commit, pre-push]
+
+- id: coily-trailer
+  name: coily audit-log trailer
+  description: Append Audit-log trailers to the commit message based on coily's audit log for this repo. Requires coily on PATH.
+  entry: coily git trailer-hook
+  language: system
+  stages: [prepare-commit-msg]
+  always_run: true
+  require_serial: true

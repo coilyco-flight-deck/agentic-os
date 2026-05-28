@@ -14,7 +14,8 @@ For each active repo (not archived, not a fork) checked out under
      documentation-layout, code-comments, validate-skills, dead-cross-links,
      closes-issue, skill-discipline).
   3. Insert/refresh the managed agentic-os block with the full hook set.
-  4. Run `pre-commit install --hook-type pre-commit --hook-type commit-msg`.
+  4. Run `pre-commit install --hook-type pre-commit --hook-type commit-msg
+     --hook-type prepare-commit-msg`.
 
 Pin a release tag with `--rev`. Default tracks the latest known release.
 
@@ -81,6 +82,8 @@ DEFAULT_HOOK_IDS = [
     "repo-pointer-skills",
     "closes-issue",
     "conventional-commit",
+    "trufflehog",
+    "coily-trailer",
 ]
 
 # Per-repo hook opt-outs. eco-* repos skip code-comments (Unity / C# conventions).
@@ -205,6 +208,7 @@ def install_pre_commit_hooks(repo_dir: Path) -> str:
             "pre-commit", "install",
             "--hook-type", "pre-commit",
             "--hook-type", "commit-msg",
+            "--hook-type", "prepare-commit-msg",
         ],
         cwd=repo_dir, capture_output=True, text=True, check=False,
     )
