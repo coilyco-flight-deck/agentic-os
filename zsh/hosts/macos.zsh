@@ -22,8 +22,10 @@ export PATH
 
 export JAVA_HOME=/opt/homebrew/opt/openjdk@17
 
-# Node: trust the local Caddy root CA for HTTPS dev work.
-export NODE_EXTRA_CA_CERTS="$HOME/Library/Application Support/Caddy/pki/authorities/local/root.crt"
+# Node: trust the local Caddy root CA for HTTPS dev work, when it exists.
+crt="$HOME/Library/Application Support/Caddy/pki/authorities/local/root.crt"
+[[ -r "$crt" ]] && export NODE_EXTRA_CA_CERTS="$crt"
+unset crt
 
 # brew shellenv resolves MANPATH/INFOPATH alongside PATH.
 eval "$(/opt/homebrew/bin/brew shellenv)"
