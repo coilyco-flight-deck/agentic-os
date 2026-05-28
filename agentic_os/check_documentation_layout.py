@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Enforce repo documentation placement.
+"""Enforce repo documentation placement and size.
+
+This module is the single source of truth for Markdown size caps across the
+agentic-os ecosystem. Docs (AGENTS.md, SKILL.md.template, handbook.md, etc.)
+should point here by reference rather than restating numbers, so the caps
+can never drift between code and prose.
 
 Markdown documentation may live only in:
     1. the repo root, with a small universal filename allow-list;
@@ -8,9 +13,11 @@ Markdown documentation may live only in:
        subdirectories inside an individual skill folder;
     4. anywhere under an `examples/` directory at any depth, any .md filename.
 
-The rule keeps repo documentation structured, flat, and discoverable. One-off
-root Markdown files, nested docs trees, and nested skill trees drift quickly
-and make agents guess where current information lives.
+Size caps are tiered by filename:
+    - Loader-bound (AGENTS.md, CLAUDE.md, SKILL.md): LOADER_MAX_LINES /
+      LOADER_MAX_CHARS. These are read by the agent loader on every session;
+      past either limit the loader degrades.
+    - All other Markdown: MAX_MARKDOWN_LINES / MAX_MARKDOWN_CHARS.
 """
 from __future__ import annotations
 
@@ -21,8 +28,20 @@ from agentic_os.config import is_enabled, is_excluded, load_excludes
 
 REPO_ROOT = Path.cwd()
 HOOK_ID = "documentation-layout"
+
+# Standard tier: regular Markdown documentation.
 MAX_MARKDOWN_LINES = 80
 MAX_MARKDOWN_CHARS = 4_000
+
+# Loader-bound tier: files the Claude / agent loader reads on every session.
+# Past these limits the loader degrades. Matched by basename, any path.
+LOADER_BOUND_BASENAMES = {
+    "AGENTS.md",
+    "CLAUDE.md",
+    "SKILL.md",
+}
+LOADER_MAX_LINES = 500
+LOADER_MAX_CHARS = 10_000
 
 # Verbatim upstream files; exempt from size cap, matched by basename.
 SIZE_CAP_EXEMPT_BASENAMES = {
@@ -169,6 +188,12 @@ def check_skill_flatness() -> list[str]:
     return violations
 
 
+def caps_for(rel: Path) -> tuple[int, int]:
+    if rel.name in LOADER_BOUND_BASENAMES:
+        return LOADER_MAX_LINES, LOADER_MAX_CHARS
+    return MAX_MARKDOWN_LINES, MAX_MARKDOWN_CHARS
+
+
 def check_markdown_sizes() -> list[str]:
     violations: list[str] = []
     for rel in markdown_files():
@@ -178,14 +203,15 @@ def check_markdown_sizes() -> list[str]:
         text = path.read_text(encoding="utf-8", errors="replace")
         n_lines = len(text.splitlines())
         n_chars = len(text)
-        if n_lines > MAX_MARKDOWN_LINES:
+        max_lines, max_chars = caps_for(rel)
+        if n_lines > max_lines:
             violations.append(
-                f"{rel}: {n_lines} lines exceeds the {MAX_MARKDOWN_LINES}-line "
+                f"{rel}: {n_lines} lines exceeds the {max_lines}-line "
                 f"cap. Split large docs into smaller docs/*.md files."
             )
-        if n_chars > MAX_MARKDOWN_CHARS:
+        if n_chars > max_chars:
             violations.append(
-                f"{rel}: {n_chars} chars exceeds the {MAX_MARKDOWN_CHARS}-char "
+                f"{rel}: {n_chars} chars exceeds the {max_chars}-char "
                 f"cap. Split large docs into smaller docs/*.md files."
             )
     return violations

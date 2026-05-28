@@ -37,7 +37,7 @@ Status line: only if the category enforces it. Format is `Status: <emoji> <Kind>
 
 Required H2 sections: only if the category enforces them, dispatched by status kind. The validator names the missing section in its error output; that is usually enough to know what to add.
 
-Body length: keep under 500 lines and 10 KB. If you outgrow either, split into `<skill>/references/<topic>.md` files. Linked from the SKILL.md, not inlined.
+Body length: see [`check_documentation_layout.py`](../../agentic_os/check_documentation_layout.py) for the loader-bound tier caps. If you outgrow either, split into sibling `<skill>/<topic>.md` files linked from the SKILL.md, not inlined.
 
 ## Voice
 

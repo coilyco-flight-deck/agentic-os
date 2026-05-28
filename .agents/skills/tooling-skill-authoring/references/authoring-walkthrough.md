@@ -33,7 +33,7 @@ Status line (where enforced - currently `ops-investigation-*` and `ops-investiga
 
 Required H2 sections per category: see handbook §5.
 
-Body length: hard cap of 500 lines and 10 KB. If it's growing past that, split into reference files under `<skill>/references/` and link from the SKILL.md.
+Body length: hard cap in the loader-bound tier of [`check_documentation_layout.py`](../../../../agentic_os/check_documentation_layout.py). If it's growing past that, split into sibling reference files alongside SKILL.md and link from the SKILL.md.
 
 ## Anatomy of a skill
 
@@ -53,7 +53,7 @@ skill-name/
 Skills load in three tiers:
 
 1. **Metadata** (name + description) - always in context (~100 words).
-2. **SKILL.md body** - in context whenever the skill triggers (under 500 lines / 10 KB).
+2. **SKILL.md body** - in context whenever the skill triggers (loader-bound tier in `check_documentation_layout.py`).
 3. **Bundled resources** - pulled in as needed; scripts can execute without their source loading.
 
 Patterns:
