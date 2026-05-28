@@ -1,8 +1,25 @@
 # Agent instructions
 
-Workspace-level conventions (git workflow, voice, ops boundary) load globally via `~/.claude/CLAUDE.md` -> `agentic-os-kai/AGENTS.md`. This file exists so the symmetric trifecta (README / AGENTS / docs/FEATURES) is complete and grep-discoverable, and it carries the conventions generic and public-safe enough to belong in the public repo.
+This file carries the public-safe, universal conventions (pronouns, voice, name-the-actor, command delivery) and is the global load point (`~/.claude/CLAUDE.md` -> this file) on public and work hosts. On Kai's personal machines, `agentic-os-kai/AGENTS.md` overlays the additional private context (identity, ops boundary, fleet, SSM paths, private skills). It also completes the symmetric trifecta (README / AGENTS / docs/FEATURES) and stays grep-discoverable.
 
 Kai calls this repo **aos** for short (chat, dictation, issue refs). `aos` and `agentic-os` refer to the same thing - the GitHub slug stays `agentic-os`.
+
+## Pronouns
+
+**She/her always.** Never he/him or they/them in any artifact for Kai - messages, chat, code, commits, PRs, public text. Default she/her when ambiguous; fix legacy they/them on contact, except in marked historical records. No private identity labels in public-facing content either (bios, profiles, READMEs, social, public PR text).
+
+## Voice Rules
+
+* No em-dashes - use periods, commas, parens, or ` - `.
+* No italics - bold only, for structural anchors.
+* No semicolons in prose.
+* No prose tables - flat bullets `* <anchor> - <cats> - <details>`.
+* "load-bearing" is physical-only, never metaphor.
+* No signature in drafts - Kai appends herself.
+
+## Name the Actor
+
+In every action sentence, name who performs it: "Kai commits them" or "Claude commits them", never "I'll commit them" (ambiguous). Matters most in `AskUserQuestion` option labels - every choice presented to Kai says whose hands are on it.
 
 ## Command Delivery
 
