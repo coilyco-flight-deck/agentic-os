@@ -1,82 +1,54 @@
 #!/usr/bin/env python3
-"""pre-commit hook: assert every repo in data/repo-registry.md has a kind: repo pointer skill.
+"""pre-commit hook: assert every `repo-<name>` pointer skill is auto-generated.
 
-Walks `data/repo-registry.md` for the canonical repo list and asserts that
-`.agents/skills/<repo-name>/SKILL.md` exists for each entry, plus a matching
-`kind: repo` row in `.agents/skills/categories.yaml`. Pointer-shape rules
-(description prefix, body bullets, line cap) are enforced by validate-skills;
-this hook covers the presence check that validate-skills cannot do alone.
+Repo-pointer skills (`.agents/skills/repo-<name>/SKILL.md`) are fully generated
+by `agentic_os.generate_repo_pointer_skill` from a repo's GitHub description and
+topics. They must never be hand-edited. This hook scans the current repo for any
+`repo-*` skill and regenerates it offline from its own frontmatter, failing on
+any drift in the pointer body or frontmatter and on a description that skipped
+the cleaning step (emoji, em/en dash, missing `Triggers -` line).
 
-No-ops when either `data/repo-registry.md` or `.agents/skills/categories.yaml`
-is missing, so the hook can ride in every consumer's managed block and only
-fire in agentic-os-kai.
+Prefix-driven and categories.yaml-independent, so it fires in every consumer
+repo, not just the ones that ship a skill categories spec. No-ops when the repo
+has no skills surface.
 
 Schema and rollout: coilysiren/agentic-os-kai#312, #317.
 """
 
 from __future__ import annotations
 
-import re
 import sys
 from pathlib import Path
 from typing import NoReturn
 
 from agentic_os.config import is_enabled
+from agentic_os.generate_repo_pointer_skill import SKILL_PREFIX, check_drift
 
 HOOK_ID = "repo-pointer-skills"
 TRACKER = "coilysiren/agentic-os-kai#312"
 
-REPO_ROOT = Path.cwd()
-REGISTRY_PATH = REPO_ROOT / "data" / "repo-registry.md"
-SKILLS_DIR = REPO_ROOT / ".agents" / "skills"
-CATEGORIES_PATH = SKILLS_DIR / "categories.yaml"
+SKILLS_DIR_CANDIDATES = (".agents/skills", ".claude/skills", "skills")
 
-# Match the canonical `[`coilysiren/<name>`]` bullet shape in repo-registry.md.
-REGISTRY_LINE_RE = re.compile(r"\[`coilysiren/(?P<name>[A-Za-z0-9._-]+)`\]")
-
-try:
-    import yaml  # type: ignore[import-untyped, unused-ignore]
-except ImportError:  # pragma: no cover
-    print(
-        f"check-{HOOK_ID}: PyYAML required. The hook entry in .pre-commit-hooks.yaml "
-        f"declares additional_dependencies: [pyyaml].",
-        file=sys.stderr,
-    )
-    sys.exit(1)
+REGEN_HINT = (
+    "  regenerate: coily ops forgejo repo view --repo coilysiren/<name> --json "
+    "| python -m agentic_os.generate_repo_pointer_skill <name> --from-json - --repo-root <repo>"
+)
 
 
 def fail(msgs: list[str]) -> NoReturn:
     for m in msgs:
         print(f"check-{HOOK_ID}: {m}", file=sys.stderr)
+    print(REGEN_HINT, file=sys.stderr)
     print(f"  see {TRACKER} for schema", file=sys.stderr)
     sys.exit(1)
 
 
-def parse_registry(text: str) -> list[str]:
-    names: list[str] = []
-    seen: set[str] = set()
-    for line in text.splitlines():
-        m = REGISTRY_LINE_RE.search(line)
-        if not m:
-            continue
-        name = m.group("name")
-        if name in seen:
-            continue
-        seen.add(name)
-        names.append(name)
-    return names
-
-
-def load_repo_categories() -> dict[str, dict]:
-    with CATEGORIES_PATH.open() as fh:
-        data = yaml.safe_load(fh) or {}
-    out: dict[str, dict] = {}
-    for cat in data.get("categories") or []:
-        if cat.get("kind") == "repo":
-            repo = cat.get("repo")
-            if isinstance(repo, str):
-                out[repo] = cat
-    return out
+def find_skills_dir(root: Path) -> Path | None:
+    for candidate in SKILLS_DIR_CANDIDATES:
+        d = root / candidate
+        if d.is_dir():
+            return d
+    return None
 
 
 def main() -> int:
@@ -84,30 +56,19 @@ def main() -> int:
         print(f"{HOOK_ID}: disabled by repo config")
         return 0
 
-    if not REGISTRY_PATH.is_file():
+    skills_dir = find_skills_dir(Path.cwd())
+    if skills_dir is None:
         return 0
-    if not CATEGORIES_PATH.is_file():
-        return 0
-
-    names = parse_registry(REGISTRY_PATH.read_text())
-    if not names:
-        return 0
-
-    cats = load_repo_categories()
 
     failures: list[str] = []
-    for name in names:
-        skill_md = SKILLS_DIR / name / "SKILL.md"
+    for d in sorted(skills_dir.glob(f"{SKILL_PREFIX}*")):
+        if not d.is_dir() or d.is_symlink():
+            continue
+        skill_md = d / "SKILL.md"
         if not skill_md.is_file():
-            failures.append(
-                f"repo {name!r} listed in data/repo-registry.md has no pointer "
-                f"skill at .agents/skills/{name}/SKILL.md"
-            )
-        if name not in cats:
-            failures.append(
-                f"repo {name!r} listed in data/repo-registry.md has no "
-                f"`kind: repo` entry in .agents/skills/categories.yaml"
-            )
+            failures.append(f"{d.name} has no SKILL.md")
+            continue
+        failures.extend(check_drift(d.name, skill_md.read_text()))
 
     if failures:
         fail(failures)

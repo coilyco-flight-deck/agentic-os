@@ -85,8 +85,8 @@
   stages: [pre-commit, pre-push]
 
 - id: repo-pointer-skills
-  name: repo-pointer skills present
-  description: Assert every repo in data/repo-registry.md has a kind:repo pointer skill. See coilysiren/agentic-os-kai#312.
+  name: repo-pointer skills auto-generated
+  description: Regenerate every repo-<name> pointer skill offline and fail on drift from generator output. See coilysiren/agentic-os-kai#312.
   entry: check-repo-pointer-skills
   language: python
   additional_dependencies: [pyyaml]

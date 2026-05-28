@@ -38,6 +38,7 @@ check-code-comments = "agentic_os.check_code_comments:main"
 check-documentation-layout = "agentic_os.check_documentation_layout:main"
 check-aws-config = "agentic_os.check_aws_config:main"
 check-repo-pointer-skills = "agentic_os.check_repo_pointer_skills:main"
+generate-repo-pointer-skill = "agentic_os.generate_repo_pointer_skill:main"
 
 [tool.setuptools.packages.find]
 include = ["agentic_os*"]
