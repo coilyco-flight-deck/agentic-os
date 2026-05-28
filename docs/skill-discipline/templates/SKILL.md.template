@@ -21,7 +21,7 @@ description: <One paragraph. What this skill does, when it should trigger. Pack 
   - `description` is the trigger surface: bias toward over-triggering.
 
   Size cap (validator-enforced):
-  - Loader-bound tier in `check_documentation_layout.py`. Push detail into a sibling `<topic>.md` next to this file if you outgrow.
+  - See `check_documentation_layout.py`. SKILL.md is not exempt. Push detail into a sibling `<topic>.md` next to this file if you outgrow.
 -->
 
 ## <First section>

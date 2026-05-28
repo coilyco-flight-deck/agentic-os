@@ -101,7 +101,7 @@ Hard validator limits:
 
 * **Normal skills** - 500 by default. Override to 200 for a Codex-optimized catalog.
 * **Router/meta skills** - 2x the cap when the matched category declares `role: router` or `role: meta`. At the default cap, that means 1000 bytes.
-* **SKILL.md bodies** - loader-bound tier in [`check_documentation_layout.py`](../../../../agentic_os/check_documentation_layout.py). Past either cap, the loader degrades. Move detail into a sibling `<topic>.md`, `scripts/`, or `assets/`.
+* **SKILL.md bodies** - cap in [`check_documentation_layout.py`](../../../../agentic_os/check_documentation_layout.py), same as all Markdown. SKILL.md is not exempt. Move detail into a sibling `<topic>.md`, `scripts/`, or `assets/`.
 
 Target bands:
 
@@ -244,7 +244,7 @@ The structural validator and dead-link checker ship from [`coilysiren/agentic-os
 
 * `README.md`, `AGENTS.md`, and `docs/FEATURES.md` exist, cross-link, and stay under the size caps in [`check_documentation_layout.py`](../../../../agentic_os/check_documentation_layout.py).
 * `AGENTS.md` uses the standard repo-local H2 set.
-* Markdown lives only at repo root, flat `docs/*.md`, or flat skill folders, and every Markdown file stays under the caps in `check_documentation_layout.py` (tiered: loader-bound vs standard).
+* Markdown lives only at repo root, flat `docs/*.md`, or flat skill folders, and every Markdown file stays under the cap in `check_documentation_layout.py` (single cap, no per-basename exception).
 * Code comments are one standalone line, max 90 chars, with long explanation moved to docs.
 
 ### `skill-conventions` (upstream) - structural check
@@ -264,7 +264,7 @@ What it checks:
 9. **Required H2 sections** (when enforced). Dispatched by Status kind.
 10. **Section lead lines** (when enforced).
 11. **Stale skill-name backtick references.** Catches `` `<prefix>-<topic>` `` references whose target skill doesn't exist.
-12. **SKILL.md size caps.** Loader-bound tier in [`check_documentation_layout.py`](../../../../agentic_os/check_documentation_layout.py). Past either cap, the loader degrades. Push detail into a sibling `<topic>.md` file.
+12. **SKILL.md size caps.** Cap in [`check_documentation_layout.py`](../../../../agentic_os/check_documentation_layout.py), same as all Markdown. Push detail into a sibling `<topic>.md` file.
 13. **Symlinks under `.agents/skills/`.** Symlink dirs are skipped, not validated. The loader follows them; the validator walks the canonical target.
 
 ### `dead-cross-links` (upstream) - cross-link check

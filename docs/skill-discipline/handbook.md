@@ -175,7 +175,7 @@ Runs `check_documentation_layout.py`. Enforces Markdown placement across the rep
 * ordinary documentation lives in flat `docs/*.md`;
 * skill documentation lives under `.agents/skills/`, `.agents/skills/`, or `skills/`;
 * `docs/` has no subdirectories. Use filename prefixes when grouping is needed;
-* every Markdown file stays under the size caps enforced by [`check_documentation_layout.py`](../../agentic_os/check_documentation_layout.py) (loader-bound tier for AGENTS.md / SKILL.md, standard tier for everything else).
+* every Markdown file stays under the size cap enforced by [`check_documentation_layout.py`](../../agentic_os/check_documentation_layout.py). AGENTS.md and SKILL.md are not exempt.
 
 ### code-comments (pre-commit)
 
