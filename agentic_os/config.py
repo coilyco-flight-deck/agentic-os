@@ -72,6 +72,20 @@ def is_enabled(hook_id: str, repo_root: Path | None = None) -> bool:
     return bool(value)
 
 
+def get_int_option(
+    hook_id: str, key: str, default: int, repo_root: Path | None = None
+) -> int:
+    """Return an int option for a hook, or `default` if unset or non-int.
+
+    `bool` is rejected (it is an int subclass but never a meaningful cap).
+    """
+    section = _load_hook_section(hook_id, repo_root)
+    value = section.get(key, default)
+    if isinstance(value, bool) or not isinstance(value, int):
+        return default
+    return value
+
+
 def _glob_to_regex(pattern: str) -> re.Pattern[str]:
     """Convert a gitignore-style glob to a regex.
 

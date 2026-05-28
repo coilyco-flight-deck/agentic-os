@@ -14,20 +14,38 @@ Markdown documentation may live only in:
     4. anywhere under an `examples/` directory at any depth, any .md filename.
 
 Every Markdown file shares one size cap: MAX_MARKDOWN_LINES /
-MAX_MARKDOWN_CHARS. AGENTS.md and SKILL.md are not special. CLAUDE.md is
-expected to be a one-line `@AGENTS.md` pointer.
+MAX_MARKDOWN_CHARS. SKILL.md is not special. CLAUDE.md is expected to be a
+one-line `@AGENTS.md` pointer.
+
+AGENTS.md may opt into a larger cap, per-repo, via config keys
+`agents_md_max_lines` / `agents_md_max_chars` under the documentation-layout
+hook section. Repos that don't set them get the standard cap for AGENTS.md
+too. The canonical agentic-os-kai AGENTS.md is loader-bound (read on every
+session) and holds universal-fire doctrine that can't split into docs/*.md
+without losing unconditional firing, so that repo opts in; nothing else does.
 """
 from __future__ import annotations
 
 import sys
 from pathlib import Path
 
-from agentic_os.config import is_enabled, is_excluded, load_excludes
+from agentic_os.config import (
+    get_int_option,
+    is_enabled,
+    is_excluded,
+    load_excludes,
+)
 
 REPO_ROOT = Path.cwd()
 HOOK_ID = "documentation-layout"
 MAX_MARKDOWN_LINES = 80
 MAX_MARKDOWN_CHARS = 4_000
+
+# Default AGENTS.md cap = standard. A repo opts into a larger AGENTS.md cap
+# via config (agents_md_max_lines / agents_md_max_chars). Only the canonical
+# agentic-os-kai AGENTS.md does so.
+AGENTS_DEFAULT_MAX_LINES = MAX_MARKDOWN_LINES
+AGENTS_DEFAULT_MAX_CHARS = MAX_MARKDOWN_CHARS
 
 # Verbatim upstream files; exempt from size cap, matched by basename.
 SIZE_CAP_EXEMPT_BASENAMES = {
@@ -174,6 +192,18 @@ def check_skill_flatness() -> list[str]:
     return violations
 
 
+def caps_for(rel: Path) -> tuple[int, int]:
+    if rel.name == "AGENTS.md":
+        max_lines = get_int_option(
+            HOOK_ID, "agents_md_max_lines", AGENTS_DEFAULT_MAX_LINES
+        )
+        max_chars = get_int_option(
+            HOOK_ID, "agents_md_max_chars", AGENTS_DEFAULT_MAX_CHARS
+        )
+        return max_lines, max_chars
+    return MAX_MARKDOWN_LINES, MAX_MARKDOWN_CHARS
+
+
 def check_markdown_sizes() -> list[str]:
     violations: list[str] = []
     for rel in markdown_files():
@@ -183,14 +213,15 @@ def check_markdown_sizes() -> list[str]:
         text = path.read_text(encoding="utf-8", errors="replace")
         n_lines = len(text.splitlines())
         n_chars = len(text)
-        if n_lines > MAX_MARKDOWN_LINES:
+        max_lines, max_chars = caps_for(rel)
+        if n_lines > max_lines:
             violations.append(
-                f"{rel}: {n_lines} lines exceeds the {MAX_MARKDOWN_LINES}-line "
+                f"{rel}: {n_lines} lines exceeds the {max_lines}-line "
                 f"cap. Split large docs into smaller docs/*.md files."
             )
-        if n_chars > MAX_MARKDOWN_CHARS:
+        if n_chars > max_chars:
             violations.append(
-                f"{rel}: {n_chars} chars exceeds the {MAX_MARKDOWN_CHARS}-char "
+                f"{rel}: {n_chars} chars exceeds the {max_chars}-char "
                 f"cap. Split large docs into smaller docs/*.md files."
             )
     return violations

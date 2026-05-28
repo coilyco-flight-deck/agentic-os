@@ -97,6 +97,14 @@ Push source first, then `git -C ~/.claude/plugins/marketplaces/<plugin> pull --f
 
 Only safe for plugins you own (origin in your own namespace); third-party marketplace clones stay hands-off.
 
+## Documentation discipline (all docs, not just skills)
+
+Four biases: **structure over sprawl** (named sections, short files, split when in doubt); **consistency over uniqueness** (keep standard headings even when the section defaults to a one-line rule); **strict validation over convention** (encode any rule a script can check, prefer strict failures over advisory drift); **deduplicate by pointer** (canonical file plus pointer, never two copies of the same list).
+
+Markdown layout: root only the universal allow-list, prose in flat `docs/*.md`, skill content in flat skill folders (no subdirs inside a skill). Size cap from [`documentation-layout`](https://github.com/coilysiren/agentic-os/blob/main/agentic_os/check_documentation_layout.py); don't restate. AGENTS.md is the one exception: double cap (8000 chars / 160 lines), since it is loader-bound and holds universal-fire doctrine.
+
+Code comments: one standalone line, max 90 chars, no contiguous blocks. Durable explanation lives in `docs/`, with the code pointing at the doc.
+
 ## Triggers
 
-skill, SKILL.md, frontmatter, plugin, .agents/skills, authoring skill, validator, categories.yaml, skill location, naming, category prefix, description size, flat layout, Python helpers, plugin marketplace.
+skill, SKILL.md, frontmatter, plugin, .agents/skills, authoring skill, validator, categories.yaml, skill location, naming, category prefix, description size, flat layout, Python helpers, plugin marketplace, documentation discipline, doc layout, code comments.

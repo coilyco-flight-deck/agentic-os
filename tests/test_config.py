@@ -5,7 +5,12 @@ from pathlib import Path
 
 import pytest
 
-from agentic_os.config import is_enabled, is_excluded, load_excludes
+from agentic_os.config import (
+    get_int_option,
+    is_enabled,
+    is_excluded,
+    load_excludes,
+)
 
 
 @pytest.fixture
@@ -104,6 +109,46 @@ def test_enabled_via_agentic_os_toml(repo: Path) -> None:
 enabled = false
 """)
     assert is_enabled("catalog-trifecta", repo) is False
+
+
+# ---------- get_int_option ----------
+
+def test_int_option_default_when_unset(repo: Path) -> None:
+    assert get_int_option("documentation-layout", "agents_md_max_chars", 4000, repo) == 4000
+
+
+def test_int_option_reads_pyproject(repo: Path) -> None:
+    write(repo / "pyproject.toml", """
+[tool.agentic-os.documentation-layout]
+agents_md_max_lines = 160
+agents_md_max_chars = 12000
+""")
+    assert get_int_option("documentation-layout", "agents_md_max_lines", 80, repo) == 160
+    assert get_int_option("documentation-layout", "agents_md_max_chars", 4000, repo) == 12000
+
+
+def test_int_option_rejects_non_int(repo: Path) -> None:
+    write(repo / "pyproject.toml", """
+[tool.agentic-os.documentation-layout]
+agents_md_max_chars = "lots"
+""")
+    assert get_int_option("documentation-layout", "agents_md_max_chars", 4000, repo) == 4000
+
+
+def test_int_option_rejects_bool(repo: Path) -> None:
+    write(repo / "pyproject.toml", """
+[tool.agentic-os.documentation-layout]
+agents_md_max_chars = true
+""")
+    assert get_int_option("documentation-layout", "agents_md_max_chars", 4000, repo) == 4000
+
+
+def test_int_option_scoped_to_hook(repo: Path) -> None:
+    write(repo / "pyproject.toml", """
+[tool.agentic-os.documentation-layout]
+agents_md_max_chars = 12000
+""")
+    assert get_int_option("code-comments", "agents_md_max_chars", 4000, repo) == 4000
 
 
 # ---------- is_excluded ----------

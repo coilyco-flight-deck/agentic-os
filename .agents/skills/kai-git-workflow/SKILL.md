@@ -1,11 +1,23 @@
 ---
 name: kai-git-workflow
-description: Git workflow exceptions for coilysiren/* - coily/infrastructure rules, readonly SSH, issues as tracker. Triggers - git workflow, commit, push, PR, gh, issue tracker, coily, lockdown.
+description: Git workflow for coilysiren/* - base rules, coily/infrastructure exceptions, readonly SSH, Forgejo as default tracker, flaky-test discipline. Triggers - git workflow, commit, push, PR, gh, issue tracker, coily, lockdown, file a todo, forgejo, flaky test, flake.
 ---
 
-# Git workflow exceptions
+# Git workflow
 
-Default rules (commit-to-main, push-after-each, no PRs, run-checks, never `--no-verify`, pre-commit with offline trufflehog) live in `AGENTS.md`. Below are the exceptions and details.
+Default across `~/projects/coilysiren/*`:
+
+- Commit to `main` directly; push after each. No PRs unless asked.
+- Run tests, linters, builds without asking. Fix failures.
+- Never `--no-verify`.
+- Readonly git/shell auto-allowed.
+- Every commit closes a same-repo issue. File first, then commit with `closes #N` / `fixes #N` / `resolves #N`.
+- `agentic-os-kai` only: one commit per discrete additive change.
+- `git commit --amend` is fine pre-push, preferred over a "fix lint" follow-on for hook fixes. If the amend changes substance relative to the closing-issue description, post a comment on that issue so the audit trail survives. Force-push off-limits. Overrides the default Claude Code rule.
+
+Never run destructive git commands unless Kai explicitly asks. Never revert changes you didn't make.
+
+Below are the exceptions and details.
 
 ## Repo-specific exceptions
 
@@ -35,6 +47,8 @@ Every repo has `.pre-commit-config.yaml` with offline trufflehog:
 ```
 
 # GitHub issues as work tracker
+
+Precedence: Kai's own work routes to Forgejo (see "Default TODO destination" below). The rules here apply to repos with an active *GitHub* issue tracker, which are the external-facing repos where external contributors file.
 
 When a coilysiren repo has an active issue tracker, issues are canonical - not vault inbox, not TodoWrite, not memory.
 
@@ -69,3 +83,15 @@ mutation { updateRepository(input:{repositoryId:"R_...",hasPullRequestsEnabled:f
 ```
 
 `pullRequestCreationPolicy` (`ALL` / `COLLABORATORS_ONLY`) is the softer "who can open PRs" dropdown, also on `updateRepository`. Pass the query as a file - `coily ops gh api graphql -F query=@/tmp/q.graphql` - because coily's metacharacter gate rejects the `{ }` in an inline `-f query=...` arg. Origin: coilysiren/agentic-os-kai#676.
+
+# Default TODO destination
+
+When Kai asks to file a todo without naming a destination, default to a Forgejo issue on `coilysiren/agentic-os-kai` (forgejo.coilysiren.me, the canonical tracker). If it clearly belongs elsewhere, file there and say so. The `closes-issue` hook accepts full Forgejo URLs as same-repo close refs, so commits close Forgejo issues directly.
+
+Kai's own work routes through Forgejo. GitHub issues on external-facing `coilysiren/*` repos are an inbox for external contributors only; agents never file there. Split by `hasIssuesEnabled` flag: on = external-facing, off = deployment-of-one or private. Either way, route to Forgejo.
+
+**Never ask whether to file an issue. Just file it.** If you're about to ask "should I file an issue for X" or offer it as a choice, the answer is always yes - file it and mention in one line what you filed. Issues are post-it notes: cheap, swept up by backlog routines. Asking is pure overhead, and at Kai's pace a deferred "want me to file this?" is something she will miss. Applies to any issue surfaced mid-task.
+
+# Test flake discipline
+
+Every flaky-test sighting in a `coilysiren/*` repo becomes a same-repo issue, no exceptions (flaky = failed then passed on re-run with no code change, or non-deterministic across two runs). File immediately, even mid-task: test name, both runs' output, candidate causes. Don't paper over by re-running until green.
