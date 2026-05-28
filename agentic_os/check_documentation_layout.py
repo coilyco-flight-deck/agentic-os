@@ -4,11 +4,13 @@
 Markdown documentation may live only in:
     1. the repo root, with a small universal filename allow-list;
     2. docs/*.md, with no docs subdirectories;
-    3. skill folders (.agents/skills, .claude/skills, or skills).
+    3. skill folders (.agents/skills, .claude/skills, or skills), flat - no
+       subdirectories inside an individual skill folder;
+    4. anywhere under an `examples/` directory at any depth, any .md filename.
 
 The rule keeps repo documentation structured, flat, and discoverable. One-off
-root Markdown files and nested docs trees drift quickly and make agents guess
-where current information lives.
+root Markdown files, nested docs trees, and nested skill trees drift quickly
+and make agents guess where current information lives.
 """
 from __future__ import annotations
 
@@ -109,12 +111,10 @@ def check_docs_flatness() -> list[str]:
     return violations
 
 
-def is_example_readme(rel: Path) -> bool:
-    # Go/Rust examples/<name>/README.md is idiomatic; exempt from flat-docs rule.
-    parts = rel.parts
-    if not parts or parts[0] != "examples" or rel.name != "README.md":
-        return False
-    return len(parts) in (2, 3)
+def is_under_examples(rel: Path) -> bool:
+    # Go/Rust examples/<name>/... is idiomatic at any depth and may contain
+    # .md files of any name, not just README.md.
+    return "examples" in rel.parts
 
 
 def check_markdown_locations() -> list[str]:
@@ -133,12 +133,39 @@ def check_markdown_locations() -> list[str]:
             continue
         if is_under_skill_path(rel):
             continue
-        if is_example_readme(rel):
+        if is_under_examples(rel):
             continue
         violations.append(
             f"{rel}: Markdown files may live only at repo root, docs/*.md, "
             f"or inside a skill folder."
         )
+    return violations
+
+
+def check_skill_flatness() -> list[str]:
+    excludes = load_excludes(HOOK_ID)
+    violations: list[str] = []
+    for skill_parts in SKILL_PATHS:
+        skill_root = REPO_ROOT.joinpath(*skill_parts)
+        if not skill_root.is_dir():
+            continue
+        for skill_dir in sorted(skill_root.iterdir()):
+            if not skill_dir.is_dir():
+                continue
+            if should_skip(skill_dir.relative_to(REPO_ROOT)):
+                continue
+            for path in sorted(skill_dir.rglob("*")):
+                if not path.is_dir():
+                    continue
+                rel = path.relative_to(REPO_ROOT)
+                if should_skip(rel):
+                    continue
+                if is_excluded(rel, excludes):
+                    continue
+                violations.append(
+                    f"{rel}: skill folders must be flat. Move contents up to "
+                    f"sit beside SKILL.md."
+                )
     return violations
 
 
@@ -172,6 +199,7 @@ def main() -> int:
         check_docs_flatness()
         + check_markdown_locations()
         + check_markdown_sizes()
+        + check_skill_flatness()
     )
     if not violations:
         print("documentation-layout check: OK")
