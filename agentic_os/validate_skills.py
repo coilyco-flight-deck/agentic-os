@@ -142,7 +142,7 @@ class Report:
 
 
 def load_spec() -> Spec:
-    with SPEC_PATH.open() as fh:
+    with SPEC_PATH.open(encoding="utf-8") as fh:
         data = yaml.safe_load(fh)
     return Spec(raw=data)
 
@@ -322,7 +322,7 @@ def validate_skill(
         report.fail(f"skill {name!r} is missing SKILL.md")
         return
 
-    text = skill_md.read_text()
+    text = skill_md.read_text(encoding="utf-8")
     try:
         fm, body = parse_frontmatter(text)
     except ValueError as exc:
@@ -511,7 +511,7 @@ def check_size_caps(md_path: Path, spec: Spec, report: Report) -> None:
     archive_parts = set(spec.archive_path_components)
     if archive_parts and archive_parts.intersection(md_path.parts):
         return
-    n_lines = sum(1 for _ in md_path.open())
+    n_lines = sum(1 for _ in md_path.open(encoding="utf-8"))
     if n_lines > spec.max_lines:
         report.fail(
             f"{md_path.relative_to(REPO_ROOT)}: {n_lines} lines exceeds the "
@@ -562,7 +562,7 @@ def run_global_checks(
         skill_md = entry / "SKILL.md"
         if not skill_md.is_file():
             continue
-        body = skill_md.read_text()
+        body = skill_md.read_text(encoding="utf-8")
         check_forbidden_body_strings(skill_md, body, spec, report)
         check_stale_skill_refs(skill_md, body, current_skills, spec, report)
         check_size_caps(skill_md, spec, report)
