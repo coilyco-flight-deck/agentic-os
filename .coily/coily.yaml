@@ -33,5 +33,3 @@ catalog:
   lifecycle: production
   description: "Personal agentic OS: shell config, terminal config, GPG/SSM tooling, Claude skills, and shared utility scripts symlinked into sibling coilysiren/* repos. Growing beyond just dotfiles into broader personal-OS scope."
   dependsOn: []
-  providesApis:
-    - shared-scripts
