@@ -10,6 +10,12 @@ commands:
   audit-pre-commit-coverage:
     run: python3 scripts/audit-pre-commit-coverage.py
     description: "Audit every coilysiren/* repo for presence of the canonical agentic-os hook block."
+  sweep-documentation-layout:
+    run: python3 scripts/sweep-documentation-layout.py
+    description: "Read-only sweep: run the documentation-layout check across every workspace git repo and report passing/failing/disabled plus per-repo violation detail."
+  sweep-precommit:
+    run: python3 scripts/sweep-precommit.py
+    description: "Run the full pre-commit hook set (pre-commit run --all-files) across every workspace git repo and report per-repo Passed/Failed plus failing hook ids. Reverts autofix mutations so trees stay clean."
   pre-commit-all:
     run: pre-commit run --all-files
     description: "Run all pre-commit hooks against all files in the current repo."
