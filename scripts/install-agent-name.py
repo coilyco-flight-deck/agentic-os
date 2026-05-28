@@ -31,8 +31,19 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 NAME_SCRIPT = SCRIPT_DIR / "agent-name.sh"
 SETTINGS_PATH = HOME / ".claude" / "settings.json"
 
-STATUSLINE_CMD = f"{NAME_SCRIPT} statusline"
-SESSIONSTART_CMD = f"{NAME_SCRIPT} sessionstart"
+def _cmd(mode: str) -> str:
+    """Command string for a given agent-name.sh mode.
+
+    On Windows, Claude Code cannot exec a .sh directly, so the script is run
+    through bash (resolved on PATH). Elsewhere the shebang handles it.
+    """
+    if os.name == "nt":
+        return f'bash "{NAME_SCRIPT.as_posix()}" {mode}'
+    return f"{NAME_SCRIPT} {mode}"
+
+
+STATUSLINE_CMD = _cmd("statusline")
+SESSIONSTART_CMD = _cmd("sessionstart")
 SESSIONSTART_MATCHER = "startup|resume|clear"
 
 

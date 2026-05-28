@@ -60,7 +60,7 @@ BUDGET = 250_000
 last_in = last_cr = last_crd = 0
 total_out = 0
 try:
-    with open(path) as f:
+    with open(path, encoding="utf-8", errors="ignore") as f:
         for line in f:
             try:
                 d = json.loads(line)
