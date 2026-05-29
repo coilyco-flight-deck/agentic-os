@@ -152,7 +152,7 @@ Runs `check_dead_links.py`. Walks every Markdown file under `.agents/skills/`, e
 
 ### catalog-trifecta (pre-commit, pre-push)
 
-Runs `check_catalog_trifecta.py`. Enforces the repo entrypoint set: `README.md`, `AGENTS.md`, `docs/FEATURES.md`, and one catalog YAML (`.coily/coily.yaml` or `.agent-guard/agent-guard.yaml`). Each Markdown file needs `## See also`, links to the other entrypoints, and the convention citation.
+Runs `check_catalog_trifecta.py`. Enforces the repo entrypoint set: `README.md`, `AGENTS.md`, `docs/FEATURES.md`, and one catalog YAML (`.coily/coily.yaml` or `.ward/ward.yaml`). Each Markdown file needs `## See also`, links to the other entrypoints, and the convention citation.
 
 `AGENTS.md` also carries a required repo-local heading set so agents can scan operating rules without guessing each repo's prose shape:
 
