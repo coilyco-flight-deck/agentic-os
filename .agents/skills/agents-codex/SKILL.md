@@ -1,11 +1,11 @@
 ---
 name: agents-codex
-description: Agent/harness profile for Codex (OpenAI's coding agent on GPT-family cloud models). Capable cloud agent, peer to Claude, an escalation target. Triggers - codex, openai codex.
+description: Agent/harness profile for Codex (OpenAI's coding agent on GPT-family cloud models). Pronouns he/him. Capable cloud agent, peer to Claude, an escalation target. Triggers - codex, openai codex.
 ---
 
 # agents-codex
 
-Profile for the **Codex** agent harness (OpenAI). This is the harness axis - orthogonal to the [`models-*`](../models-qwen/SKILL.md) capability axis.
+Profile for the **Codex** agent harness (OpenAI), he/him. This is the harness axis - orthogonal to the [`models-*`](../models-qwen/SKILL.md) capability axis.
 
 Codex is bound to a capable GPT-family cloud model. As with Claude, you name the harness ("codex") and the underlying model is implied.
 

@@ -1,11 +1,11 @@
 ---
 name: agents-claude
-description: Harness profile for Claude (Claude Code, Claude-family runtimes). Capable cloud agent, large context, semantic skill-selection. The escalation target small local models hand up to. Triggers - claude, claude code, claude-code, anthropic agent.
+description: Harness profile for Claude (Claude Code, Claude-family runtimes). Pronouns she/her. Capable cloud agent, large context, semantic skill-selection. The escalation target small local models hand up to. Triggers - claude, claude code, claude-code, anthropic agent.
 ---
 
 # agents-claude
 
-The **Claude** harness, and the capability axis's escalation target. Bound to a capable Claude-family cloud model (opus > sonnet > haiku); you name the harness, the tier is implied. Orthogonal to the [`models-*`](../models-qwen/SKILL.md) axis.
+The **Claude** harness (she/her), and the capability axis's escalation target. Bound to a capable Claude-family cloud model (opus > sonnet > haiku); you name the harness, the tier is implied. Orthogonal to the [`models-*`](../models-qwen/SKILL.md) axis.
 
 ## Posture
 

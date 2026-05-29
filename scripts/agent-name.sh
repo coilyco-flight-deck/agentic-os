@@ -30,6 +30,9 @@ local_name() {
   tag="${letters}${digits}"
   printf 'claude-%s-%s' "$os" "$host"
   [ -n "$tag" ] && printf -- '-%s' "$tag"
+  # Pronoun slug. The local fallback is claude-only, so always she-her.
+  # coily emits he-him / they-them for codex / openclaw.
+  printf -- '-she-her'
 }
 
 # Stable per session, cached to avoid spawning coily on every status-line refresh.
@@ -101,9 +104,20 @@ print(f" | {color}ctx {k(ctx)}/250k ({pct:.0f}% {label}){reset} out {k(total_out
 PY
 }
 
+# Human-readable pronouns parsed from the name's trailing slug, so this works
+# for coily-provided codex/openclaw names too, not just the claude fallback.
+pronoun_display() {
+  case "$1" in
+    *-she-her)   printf 'she/her' ;;
+    *-he-him)    printf 'he/him' ;;
+    *-they-them) printf 'they/them' ;;
+  esac
+}
+pronouns="$(pronoun_display "$name")"
+
 case "$mode" in
   sessionstart)
-    printf '🐾 You are %s this session. When asked "who are you" or "what is your status", lead with this name.\n' "$name"
+    printf '🐾 You are %s%s this session. When asked "who are you" or "what is your status", lead with this name.\n' "$name" "${pronouns:+ ($pronouns)}"
     ;;
   statusline | *)
     printf '%s - your agent this session%s' "$name" "$(ctx_snippet)"
