@@ -277,10 +277,18 @@ def check_stale_skill_refs(
         target = m.group(2) if m.lastindex and m.lastindex >= 2 else None
         if not target:
             continue
+        # Non-file targets (URLs, anchors, mailto) are not local cross-links.
+        if "://" in target or target.startswith(("#", "mailto:")):
+            continue
+        path_part = target.split("#", 1)[0]
+        # A link that escapes the repo is a cross-repo link, not a local skill
+        # cross-link, so it is not an intent signal for the stale-rename check.
+        if not (md_path.parent / path_part).resolve().is_relative_to(REPO_ROOT):
+            continue
         # Pull the basename if the target ends in /SKILL.md, else the last segment.
-        seg = target.rstrip("/").split("/")[-1]
+        seg = path_part.rstrip("/").split("/")[-1]
         if seg == "SKILL.md":
-            parts = target.rstrip("/").split("/")
+            parts = path_part.rstrip("/").split("/")
             if len(parts) >= 2:
                 seg = parts[-2]
         link_targets.add(seg)
