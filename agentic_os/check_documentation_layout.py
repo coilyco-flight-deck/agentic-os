@@ -9,8 +9,9 @@ can never drift between code and prose.
 Markdown documentation may live only in:
     1. the repo root, with a small universal filename allow-list;
     2. docs/*.md, with no docs subdirectories;
-    3. skill folders (.agents/skills, .claude/skills, or skills), flat - no
-       subdirectories inside an individual skill folder;
+    3. skill folders (.agents/skills, .claude/skills, or skills), flat apart
+       from support subdirs (references/, templates/, examples/) - no nested
+       sub-skills;
     4. anywhere under an `examples/` directory at any depth, any .md filename.
 
 Every Markdown file shares one size cap: MAX_MARKDOWN_LINES /
@@ -86,6 +87,12 @@ SKILL_PATHS = (
     (".claude", "skills"),
     ("skills",),
 )
+
+# Support subdirectories allowed inside a skill folder. The flatness rule exists
+# to keep nested SKILL.md sub-skills out (the loader only sees top-level skill
+# dirs); it is not meant to ban support material. references/ and templates/ are
+# the established patterns; examples/ is already location-allowed elsewhere.
+SKILL_SUPPORT_SUBDIRS = {"references", "templates", "examples"}
 
 
 def should_skip(path: Path) -> bool:
@@ -184,6 +191,11 @@ def check_skill_flatness() -> list[str]:
                 if should_skip(rel):
                     continue
                 if is_excluded(rel, excludes):
+                    continue
+                # Allow support subdirs (references/, templates/, examples/) and
+                # anything nested under them. The rule targets nested sub-skills,
+                # not support material that sits beside SKILL.md.
+                if path.relative_to(skill_dir).parts[0] in SKILL_SUPPORT_SUBDIRS:
                     continue
                 violations.append(
                     f"{rel}: skill folders must be flat. Move contents up to "

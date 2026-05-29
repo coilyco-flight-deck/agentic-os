@@ -56,6 +56,15 @@ DEFAULT_MAX_LINES = 500
 DEFAULT_MAX_BYTES = 10_000
 DEFAULT_MAX_DESCRIPTION_BYTES = 500
 
+# Thin skills (categories declaring `role: thin`) ship into small-local-model
+# contexts (models-* / agents-openclaw-on-a-small-model) where the whole skill
+# catalog must fit a ~25k-token budget and the model selects by exact string
+# match. The cap is 1/4 of the binding 4000-char / 80-line Markdown cap from
+# check_documentation_layout.py (the true normal cap), not 1/4 of the looser
+# defaults above. See docs/qwen-concept-surface.md.
+THIN_MAX_LINES = 20
+THIN_MAX_BYTES = 1_000
+
 STATUS_LINE_RE = re.compile(
     r"^Status:\s+(?P<emoji>\S+)\s+(?P<kind>[A-Za-z]+)\s+\|\s+Last\s+(?P<freshness>updated|tested):\s+(?P<date>\d{4}-\d{2}-\d{2})\s*$"
 )
@@ -456,24 +465,32 @@ def validate_skill(
             )
 
 
-def check_size_caps(md_path: Path, spec: Spec, report: Report) -> None:
+def check_size_caps(
+    md_path: Path, spec: Spec, report: Report, role: str | None = None
+) -> None:
     # Frozen-archive exemption: loaded by name on revisit, not by trigger.
     archive_parts = set(spec.archive_path_components)
     if archive_parts and archive_parts.intersection(md_path.parts):
         return
+    if role == "thin":
+        max_lines, max_bytes = THIN_MAX_LINES, THIN_MAX_BYTES
+        cap_note = " (role: thin, 1/4 cap)"
+    else:
+        max_lines, max_bytes = spec.max_lines, spec.max_bytes
+        cap_note = ""
     n_lines = sum(1 for _ in md_path.open(encoding="utf-8"))
-    if n_lines > spec.max_lines:
+    if n_lines > max_lines:
         report.fail(
             f"{md_path.relative_to(REPO_ROOT)}: {n_lines} lines exceeds the "
-            f"{spec.max_lines}-line cap. Move detail into a sibling "
+            f"{max_lines}-line cap{cap_note}. Move detail into a sibling "
             f"references/ file."
         )
     n_bytes = md_path.stat().st_size
-    if n_bytes > spec.max_bytes:
+    if n_bytes > max_bytes:
         report.fail(
             f"{md_path.relative_to(REPO_ROOT)}: {n_bytes} bytes exceeds the "
-            f"{spec.max_bytes}-byte cap. The Read tool refuses files past "
-            f"~10 KB. Move detail into a sibling references/ file."
+            f"{max_bytes}-byte cap{cap_note}. Move detail into a sibling "
+            f"references/ file."
         )
 
 
@@ -513,9 +530,11 @@ def run_global_checks(
         if not skill_md.is_file():
             continue
         body = skill_md.read_text(encoding="utf-8")
+        cat = spec.match(entry.name)
+        role = cat.get("role") if cat else None
         check_forbidden_body_strings(skill_md, body, spec, report)
         check_stale_skill_refs(skill_md, body, current_skills, spec, report)
-        check_size_caps(skill_md, spec, report)
+        check_size_caps(skill_md, spec, report, role=role)
 
 
 def main(argv: list[str] | None = None) -> int:

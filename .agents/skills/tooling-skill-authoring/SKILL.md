@@ -59,13 +59,9 @@ When a meta-skill needs to route to other skills, the routed skills live as **fl
 
 **How to apply:** when authoring a meta-skill, the routing table lists peer-skill names, not paths into the meta's own dir. New routed skills get their own top-level directory. If you find yourself wanting to nest, that's a signal the meta should instead be a thin SKILL.md that describes shared discipline, with the actual work split across peer skills.
 
-## Investigation skills live centrally, not co-located with the tool
+## Extended discipline
 
-Investigation / runbook-shaped skills go under the personal-OS repo's `.agents/skills/`, even when the tool they investigate lives in a different repo. A routed ops-investigation meta-skill with peer skills per failure-domain is the canonical shape.
-
-**Why:** real failures cross component boundaries. A single command can fail in a way that implicates several services and hosts at once. An investigator under pressure should not have to clone three repos to find the right runbook. The runbook-monorepo pattern is well-established in SRE practice (Google SRE book, [sre.google/sre-book/](https://sre.google/sre-book/), chapter "Being On-Call"), and downstream tooling (Backstage, incident.io, FireHydrant, OpenTelemetry) all use the same emit-locally / investigate-centrally split. Co-locating optimizes for the runbook *author*; centralizing optimizes for the runbook *consumer*, who is always the one operating under partial-failure conditions.
-
-**How to apply:** when a new skill is shaped like a runbook (anti-signals, case library, version-pin discipline, "what to check when X breaks"), it lives here regardless of which repo X is in. Co-location is appropriate only for skills that are pure tool-usage reference and never get invoked under failure.
+Three longer-form rules live in [`references/discipline.md`](references/discipline.md): investigation/runbook skills live centrally (not co-located with the tool they investigate), plugin-marketplace fast-forward, and full documentation discipline (layout, size caps, code comments).
 
 ## Bias toward Python helpers, not pure-prompt skills
 
@@ -88,22 +84,6 @@ Lead with the canonical name plus 2-3 natural-language phrasings a user might re
 **Why:** the `description` field is eager-loaded into every Claude turn forever. Aliases are paid only per invocation. At ~100 skills, the eager surface already crowds the catalog, and the system-reminder skill catalog truncates past ~80 entries, so selection accuracy degrades from sheer surface size before token cost even enters the picture. Alias-packing is the most expensive possible layer to solve discoverability at. Filed as [agentic-os-kai#583](https://github.com/coilysiren/agentic-os-kai/issues/583); the cap dropped from 600 to 500 after the post-#583 sweep (only 3 outliers remained over 500, all trimmable).
 
 **How to apply:** when authoring a new skill, write `description:` as one sentence of purpose plus 2-3 phrasings. When tempted to add a fourth alias, rename the skill or hoist a router parent instead. LUCA-driven cold-skill pruning (future audit chain) will validate whether existing aliases earn their bytes.
-
-## Plugin marketplace installs (gauntlet etc.)
-
-When editing a plugin's source repo (e.g. a sibling clone), also fast-forward the active marketplace clone at `~/.claude/plugins/marketplaces/<plugin>/` after pushing. Plugin work feels agile this way - same-session edit and use, no waiting for the plugin manager's next refresh.
-
-Push source first, then `git -C ~/.claude/plugins/marketplaces/<plugin> pull --ff-only`.
-
-Only safe for plugins you own (origin in your own namespace); third-party marketplace clones stay hands-off.
-
-## Documentation discipline (all docs, not just skills)
-
-Four biases: **structure over sprawl** (named sections, short files, split when in doubt); **consistency over uniqueness** (keep standard headings even when the section defaults to a one-line rule); **strict validation over convention** (encode any rule a script can check, prefer strict failures over advisory drift); **deduplicate by pointer** (canonical file plus pointer, never two copies of the same list).
-
-Markdown layout: root only the universal allow-list, prose in flat `docs/*.md`, skill content in flat skill folders (no subdirs inside a skill). Size cap from [`documentation-layout`](https://github.com/coilysiren/agentic-os/blob/main/agentic_os/check_documentation_layout.py); don't restate. AGENTS.md is the one exception: double cap (8000 chars / 160 lines), since it is loader-bound and holds universal-fire doctrine.
-
-Code comments: one standalone line, max 90 chars, no contiguous blocks. Durable explanation lives in `docs/`, with the code pointing at the doc.
 
 ## Triggers
 

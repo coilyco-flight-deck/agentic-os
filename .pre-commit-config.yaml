@@ -12,9 +12,18 @@ repos:
         always_run: true
         pass_filenames: false
         stages: [pre-commit]
-      # catalog-doc-size and catalog-trifecta intentionally not yet wired
-      # on this repo. README + docs/FEATURES still need See-also sections;
-      # fix in a follow-up before enabling.
+      - id: validate-skills
+        name: skill conventions (validate-skills)
+        entry: python -m agentic_os.validate_skills
+        language: python
+        additional_dependencies: [pyyaml]
+        pass_filenames: false
+        files: '^\.agents/skills/'
+        stages: [pre-commit]
+      # Deferred to the agentic-os self-compliance cascade (mirrors
+      # agentic-os-kai#464): documentation-layout, catalog-doc-size,
+      # catalog-trifecta, code-comments, dead-cross-links, repo-pointer-skills.
+      # README + docs/FEATURES still need See-also sections too.
       - id: closes-issue
         name: commit closes a Forgejo issue
         entry: python -m agentic_os.check_commit_closes_issue

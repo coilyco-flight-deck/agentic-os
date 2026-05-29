@@ -1,0 +1,81 @@
+# Machine-readable spec for skill categories under agentic-os/.agents/skills/.
+#
+# Source of truth for the `validate-skills` hook (and, once compliance lands,
+# documentation-layout / catalog-doc-size). agentic-os is the repo that SHIPS
+# these hooks; it dogfoods them via local refs in .pre-commit-config.yaml
+# rather than the managed remote block (a repo cannot reference itself by tag).
+#
+# Field reference: ../../docs/skill-discipline/examples/categories.yaml.
+
+categories:
+
+  - id: coding
+    kind: prefix
+    prefix: coding-
+    enforce_status: false
+
+  - id: tooling
+    kind: prefix
+    prefix: tooling-
+    enforce_status: false
+
+  - id: writing
+    kind: prefix
+    prefix: writing-
+    enforce_status: false
+
+  - id: vault
+    kind: prefix
+    prefix: vault-
+    enforce_status: false
+
+  - id: kai
+    kind: prefix
+    prefix: kai-
+    enforce_status: false
+
+  # ---- Model + agent capability/scope profiles (thin) ----
+  # role: thin caps these at 1/4 the intended Markdown size (1000 bytes /
+  # 20 lines) for the small-local-model surface. See the agents/models block
+  # in agentic-os-kai's categories.yaml and docs/qwen-concept-surface.md.
+
+  - id: agents
+    kind: prefix
+    prefix: agents-
+    role: thin
+    enforce_status: false
+
+  - id: models
+    kind: prefix
+    prefix: models-
+    role: thin
+    enforce_status: false
+
+  # ---- Exact-name skills ----
+
+  - id: agentic-os
+    kind: exact
+    exact: agentic-os
+    enforce_status: false
+
+  - id: claude-code-render
+    kind: exact
+    exact: claude-code-render
+    enforce_status: false
+
+  - id: system-improvement-vocab
+    kind: exact
+    exact: system-improvement-vocab
+    enforce_status: false
+
+# ---- Global checks ----
+
+forbidden_body_strings: []
+
+# Size caps. Defaults shown. documentation-layout's tighter 4000/80 Markdown
+# cap is deferred ecosystem-wide pending the compliance cascade (mirrors
+# agentic-os-kai#464). Tightening max_description_bytes to 200 (kai parity) is
+# also cascade work. role: thin categories get 1/4 the size cap (1000B / 20L).
+max_skill_md_lines: 500
+max_skill_md_bytes: 10000
+max_description_bytes: 500

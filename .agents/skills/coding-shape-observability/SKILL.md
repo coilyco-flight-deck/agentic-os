@@ -49,6 +49,6 @@ Designing instrumentation, building dashboards, configuring alerts, debugging vi
 
 ## See also
 
-- [`tooling-luca-meta-loop`](../../../../luca/skills/tooling-luca-meta-loop/SKILL.md) - the LLM-consumer substrate.
+- `tooling-luca-meta-loop` (in the luca repo) - the LLM-consumer substrate.
 - [`coding-shape-web-server`](../coding-shape-web-server/SKILL.md) - `/metrics` endpoint conventions.
 - `agentic-os-kai/SSM.md` - `/sentry-dsn/*` parameter inventory.

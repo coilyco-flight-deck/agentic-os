@@ -13,6 +13,11 @@
 #   id:                    short identifier used in error messages.
 #   kind:                  "prefix" or "exact".
 #   prefix / exact:        the matching name fragment.
+#   role:                  optional cap modifier. "router"/"meta" -> 2x the
+#                          description cap (broad keyword surface to fan out).
+#                          "thin" -> 1/4 the Markdown size cap (1000 bytes /
+#                          20 lines) for skills that ship into a small-local-
+#                          model context with a tight token budget.
 #   enforce_status:        if true, the SKILL.md must carry a status line
 #                          right under the H1, in the form
 #                          `Status: <emoji> <Kind> | Last <updated|tested>: YYYY-MM-DD`
