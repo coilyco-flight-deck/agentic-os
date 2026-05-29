@@ -52,6 +52,10 @@ Composite Forgejo Actions for the brew release pipeline now that `forgejo.coilys
 
 Consumed via `uses: coilysiren/agentic-os/actions/<name>@main` from a `.forgejo/workflows/*.yml`. Auto-issued `${{ github.token }}` (forgejo's compatibility name for its per-job token) covers same-repo writes; no extra secret to provision.
 
+## Voice dictation auto-submit
+
+Press Enter for you after a Wispr Flow dictation, so dictating into a prompt box auto-submits. Three implementations split by how the dictation ends. The macOS (`hammerspoon/init.lua`) and Windows (`autohotkey/wispr-auto-enter.ahk`) tools cover push-to-talk: they arm on releasing the Wispr hold and fire Enter when the clipboard paste lands. The Windows VAD daemon (`voice/vad-daemon.py`) covers hands-free toggle mode, which has no release gesture to arm on - it watches the raw mic with silero-vad and supplies the end-of-dictation signal itself, firing the toggle-off chord plus Enter after ~2s of silence after speech. A launcher signals session start over local UDP; `cancel` aborts without sending and `go` commits immediately. Tuning knobs are CLI flags, and off Windows the daemon dry-run-logs the keystrokes so the VAD pipeline stays testable anywhere. See [voice/README.md](../voice/README.md).
+
 ## Install surface
 
 [README.md](../README.md) carries per-OS install steps. Mac/Linux use plain `ln -sf`. Windows uses symlinks via Git Bash, which requires Developer Mode + `MSYS=winsymlinks:nativestrict`.
