@@ -53,10 +53,10 @@ MD_FILES = [
     Path("docs/FEATURES.md"),
 ]
 
-# Existence-only fourth member; .coily for personal, .agent-guard for external.
+# Existence-only fourth member; .coily for personal, .ward for external-facing.
 CATALOG_YAMLS = (
     Path(".coily/coily.yaml"),
-    Path(".agent-guard/agent-guard.yaml"),
+    Path(".ward/ward.yaml"),
 )
 
 SEE_ALSO_HEADER = re.compile(r"^##\s+See also\s*$", re.MULTILINE)
@@ -190,7 +190,7 @@ def check_catalog_yaml(catalog_yaml: Path | None) -> list[str]:
     if catalog_yaml is None:
         return [
             "catalog yaml missing. Every catalog repo needs one of "
-            ".coily/coily.yaml (personal) or .agent-guard/agent-guard.yaml "
+            ".coily/coily.yaml (personal) or .ward/ward.yaml "
             "(external-facing)."
         ]
     return []

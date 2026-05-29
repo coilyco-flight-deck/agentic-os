@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """pre-commit hook: assert this repo's catalog config has a top-level `catalog:` block.
 
-Looks at `.agent-guard/agent-guard.yaml` first (external-facing repos),
-then falls back to `.coily/coily.yaml` (Kai's personal repos). One of
-the two must exist and carry the block.
+Looks at `.ward/ward.yaml` first (external-facing repos), then falls back
+to `.coily/coily.yaml` (Kai's personal repos). One of the two must exist
+and carry the block.
 
 Schema and rollout: coilysiren/agentic-os-kai#420. Two-file rollout: coilysiren/agentic-os-kai#480.
 
@@ -63,7 +63,7 @@ def fail(msg: str) -> NoReturn:
 
 
 CONFIG_PATHS = (
-    Path(".agent-guard/agent-guard.yaml"),
+    Path(".ward/ward.yaml"),
     Path(".coily/coily.yaml"),
 )
 
@@ -76,8 +76,7 @@ def main() -> int:
     if path is None:
         fail(
             "no catalog config found. Every coilysiren/* repo needs either "
-            ".agent-guard/agent-guard.yaml (external-facing) or "
-            ".coily/coily.yaml (personal)."
+            ".ward/ward.yaml (external-facing) or .coily/coily.yaml (personal)."
         )
 
     try:
