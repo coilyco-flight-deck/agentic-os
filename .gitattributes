@@ -4,4 +4,5 @@
 *.bash text eol=lf
 *.nu   text eol=lf
 *.py   text eol=lf
+*.md   text eol=lf
 Makefile text eol=lf
