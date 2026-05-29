@@ -25,7 +25,7 @@ TRIGGER_ALT      := true   ; arm on Left Alt hold (Wispr "modifierShortcut")
 ; ===============================
 
 global armed := false, armedAt := 0
-global comboWasDown := false, comboDownAt := 0
+global comboWasDown := false, comboDownAt := 0, comboSawSpace := false
 global altWasDown := false, altDownAt := 0
 
 SetTimer(PollTriggers, 40)
@@ -35,10 +35,19 @@ PollTriggers(*) {
     global
     if (TRIGGER_COMBO) {
         comboDown := GetKeyState("LControl", "P") && GetKeyState("LWin", "P")
-        if (comboDown && !comboWasDown)
-            comboDownAt := A_TickCount
-        else if (!comboDown && comboWasDown && A_TickCount - comboDownAt >= MIN_HOLD_MS)
-            Arm()
+        if (comboDown) {
+            if (!comboWasDown)
+                comboDownAt := A_TickCount
+            ; Ctrl+Win+Space is Wispr's hands-free toggle, owned by vad-daemon.py.
+            ; Seeing Space during the hold marks this as a toggle, not a PTT release,
+            ; so we don't arm and double up on the daemon's Enter.
+            if (GetKeyState("Space", "P"))
+                comboSawSpace := true
+        } else if (comboWasDown) {
+            if (!comboSawSpace && A_TickCount - comboDownAt >= MIN_HOLD_MS)
+                Arm()
+            comboSawSpace := false
+        }
         comboWasDown := comboDown
     }
     if (TRIGGER_ALT) {
