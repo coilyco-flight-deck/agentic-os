@@ -31,6 +31,13 @@ def test_wrong_repo_url_rejected() -> None:
     assert classify(f"fix: thing\n\ncloses {other}", THIS) == "wrong-repo"
 
 
+def test_org_split_owner_mismatch_accepted() -> None:
+    # GitHub origin owner (coilyco-flight-deck) differs from the Forgejo
+    # tracker owner (coilysiren); repo name still matches -> accepted.
+    split = ("coilyco-flight-deck", "backend")
+    assert classify(f"fix\n\ncloses {URL}", split) == "ok"
+
+
 def test_no_reference() -> None:
     assert classify("chore: tidy up, no issue here", THIS) == "none"
 

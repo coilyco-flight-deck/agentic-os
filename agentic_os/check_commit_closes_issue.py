@@ -98,18 +98,18 @@ def this_repo() -> tuple[str, str] | None:
 def classify(body: str, this: tuple[str, str] | None) -> str:
     """Return 'ok', 'wrong-repo', 'short-form', or 'none'.
 
-    'ok' requires a same-repo Forgejo URL. A URL for a different repo yields
-    'wrong-repo'. Absent any URL, a short `#N` / `owner/repo#N` ref yields
-    'short-form' (targeted error); otherwise 'none'.
+    'ok' requires a Forgejo issue URL whose repo NAME matches this repo. The
+    owner is intentionally ignored: repos mid org-split have a GitHub origin
+    owner (e.g. coilyco-flight-deck/<name>) that differs from the canonical
+    Forgejo tracker owner (coilysiren/<name>), and the anti-GitHub-auto-close
+    safety goal does not depend on owner anyway (agentic-os-kai#496, #534). A
+    URL for a different repo name yields 'wrong-repo'. Absent any URL, a short
+    `#N` / `owner/repo#N` ref yields 'short-form'; otherwise 'none'.
     """
     saw_url_other_repo = False
     for match in URL_RE.finditer(body):
-        owner = match.group("owner").lower()
         repo = match.group("repo").lower()
-        if this is not None and (owner, repo) == this:
-            return "ok"
-        if this is None:
-            # Cannot confirm same-repo; accept any well-formed Forgejo URL.
+        if this is None or repo == this[1]:
             return "ok"
         saw_url_other_repo = True
     if saw_url_other_repo:
