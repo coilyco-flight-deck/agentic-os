@@ -1,29 +1,33 @@
 #!/usr/bin/env python3
-"""Reject commit messages that lack a same-repo Forgejo closing keyword.
+"""Require a same-repo Forgejo *URL* closing reference in commit messages.
 
 Wired into each active coilysiren/* repo as a `commit-msg` pre-commit hook
 via `scripts/apply-agentic-os-hooks.py`. Canonical copy lives here in
 agentic-os; consumers reference this repo at a pinned `rev:` in their
 `.pre-commit-config.yaml` and pre-commit pip-installs the package.
 
-Accepted patterns (case-insensitive):
-    closes #N | close #N | closed #N
-    fixes #N  | fix #N   | fixed #N
-    resolves #N | resolve #N | resolved #N
-    <this-owner>/<this-repo>#N with any of the above keywords
-    https://forgejo.coilysiren.me/<this-owner>/<this-repo>/issues/N
-        with any of the above keywords (full URL form for unambiguous
-        clickable references; same-repo check still applied)
+Why URL-only (coilysiren/agentic-os-kai#496): a bare `closes #N` (or the short
+`owner/repo#N`) is a GitHub closing keyword too. Repos that mirror to GitHub
+have those refs re-interpreted on the GitHub side at push time, silently
+closing whatever GitHub issue happens to hold number N - a different tracker
+than the canonical Forgejo one. The full Forgejo URL is the only form GitHub
+does not auto-close from, so it is the only accepted form.
 
-Rejected: cross-repo refs (`owner/other-repo#N` or a Forgejo URL
-pointing at a different repo). The issue must live in the repo the
-commit lands in. If the rule needs to span repos, file the issue
-locally and link out from there instead.
+Accepted (case-insensitive), the issue must live in THIS repo:
+    closes  https://forgejo.coilysiren.me/<this-owner>/<this-repo>/issues/N
+    fixes   https://forgejo.coilysiren.me/<this-owner>/<this-repo>/issues/N
+    resolves https://forgejo.coilysiren.me/<this-owner>/<this-repo>/issues/N
+    (close/closed/fix/fixed/resolve/resolved all accepted)
+
+Rejected:
+    - bare `closes #N` and short `closes owner/repo#N` (GitHub-auto-close risk)
+    - a Forgejo URL pointing at a different owner/repo
+    - no closing reference at all
 
 Exempt: Merge / Revert / fixup! / squash! commits.
 
-Exits 0 on accept, 1 on reject (with a dictation-friendly error
-that names the fix to apply from a phone).
+Exits 0 on accept, 1 on reject (with a dictation-friendly error that names
+the fix to apply from a phone).
 """
 
 from __future__ import annotations
@@ -33,24 +37,44 @@ import subprocess
 import sys
 
 KEYWORD = r"close[sd]?|fix(?:e[sd])?|resolve[sd]?"
-KEYWORD_RE = re.compile(
+FORGEJO_HOST = "forgejo.coilysiren.me"
+
+# The one accepted form: a keyword plus a full Forgejo issue URL.
+URL_RE = re.compile(
     rf"\b(?:{KEYWORD})\s+"
-    r"(?:"
-    r"https?://forgejo\.coilysiren\.me/(?P<fj_owner>[\w.-]+)/(?P<fj_repo>[\w.-]+)/issues/\d+"
-    r"|"
-    r"(?P<qualifier>[\w.-]+/[\w.-]+)?#\d+"
-    r")",
+    rf"https?://{re.escape(FORGEJO_HOST)}/"
+    r"(?P<owner>[\w.-]+)/(?P<repo>[\w.-]+)/issues/\d+",
     re.IGNORECASE,
 )
+
+# Short forms we explicitly reject (bare #N or owner/repo#N) - these are what
+# GitHub auto-closes from. Detected only to emit a targeted error message.
+SHORT_RE = re.compile(
+    rf"\b(?:{KEYWORD})\s+(?P<qualifier>[\w.-]+/[\w.-]+)?#\d+",
+    re.IGNORECASE,
+)
+
 EXEMPT_PREFIXES = ("Merge ", "Revert ", "fixup! ", "squash! ")
-ERROR = (
-    "ERROR: commit message must close an issue in this repo.\n"
-    "  Add 'closes #N' (or fixes #N / resolves #N) to the message,\n"
-    "  or 'closes https://forgejo.coilysiren.me/<owner>/<repo>/issues/N'.\n"
-    "  Cross-repo refs (owner/other-repo#N or a Forgejo URL pointing at\n"
-    "  another repo) are rejected.\n"
+
+ERROR_NO_REF = (
+    "ERROR: commit message must close an issue in this repo via its Forgejo URL.\n"
+    "  Add 'closes https://forgejo.coilysiren.me/<owner>/<repo>/issues/N'\n"
+    "  (fixes / resolves also accepted).\n"
     "  File the issue in this repo first if one does not exist:\n"
     "  https://forgejo.coilysiren.me/coilysiren/<repo>/issues/new\n"
+)
+ERROR_SHORT_FORM = (
+    "ERROR: bare 'closes #N' / 'owner/repo#N' is rejected.\n"
+    "  Those are GitHub closing keywords too: on a repo that mirrors to\n"
+    "  GitHub they silently close whatever GitHub issue holds number N,\n"
+    "  a different tracker than canonical Forgejo (agentic-os-kai#496).\n"
+    "  Use the full Forgejo URL instead:\n"
+    "  closes https://forgejo.coilysiren.me/<owner>/<repo>/issues/N\n"
+)
+ERROR_WRONG_REPO = (
+    "ERROR: the Forgejo issue URL points at a different repo.\n"
+    "  The closing reference must be an issue in THIS repo. File it here\n"
+    "  first and link that URL.\n"
 )
 REMOTE_RE = re.compile(r"[:/]([^/:]+)/([^/]+?)(?:\.git)?/?$")
 
@@ -71,25 +95,28 @@ def this_repo() -> tuple[str, str] | None:
     return (m.group(1).lower(), m.group(2).lower())
 
 
-def has_same_repo_ref(body: str, this: tuple[str, str] | None) -> bool:
-    for match in KEYWORD_RE.finditer(body):
-        fj_owner = match.group("fj_owner")
-        fj_repo = match.group("fj_repo")
-        if fj_owner is not None and fj_repo is not None:
-            if this is None:
-                continue
-            if (fj_owner.lower(), fj_repo.lower()) == this:
-                return True
-            continue
-        qualifier = match.group("qualifier")
-        if qualifier is None:
-            return True
+def classify(body: str, this: tuple[str, str] | None) -> str:
+    """Return 'ok', 'wrong-repo', 'short-form', or 'none'.
+
+    'ok' requires a same-repo Forgejo URL. A URL for a different repo yields
+    'wrong-repo'. Absent any URL, a short `#N` / `owner/repo#N` ref yields
+    'short-form' (targeted error); otherwise 'none'.
+    """
+    saw_url_other_repo = False
+    for match in URL_RE.finditer(body):
+        owner = match.group("owner").lower()
+        repo = match.group("repo").lower()
+        if this is not None and (owner, repo) == this:
+            return "ok"
         if this is None:
-            continue
-        owner, repo = qualifier.lower().split("/", 1)
-        if (owner, repo) == this:
-            return True
-    return False
+            # Cannot confirm same-repo; accept any well-formed Forgejo URL.
+            return "ok"
+        saw_url_other_repo = True
+    if saw_url_other_repo:
+        return "wrong-repo"
+    if SHORT_RE.search(body):
+        return "short-form"
+    return "none"
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -106,9 +133,16 @@ def main(argv: list[str] | None = None) -> int:
     first_line = body.split("\n", 1)[0]
     if first_line.startswith(EXEMPT_PREFIXES):
         return 0
-    if has_same_repo_ref(body, this_repo()):
+
+    verdict = classify(body, this_repo())
+    if verdict == "ok":
         return 0
-    sys.stderr.write(ERROR)
+    if verdict == "short-form":
+        sys.stderr.write(ERROR_SHORT_FORM)
+    elif verdict == "wrong-repo":
+        sys.stderr.write(ERROR_WRONG_REPO)
+    else:
+        sys.stderr.write(ERROR_NO_REF)
     return 1
 
 
