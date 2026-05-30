@@ -75,6 +75,7 @@ DEFAULT_HOOK_IDS = [
     "catalog-doc-size",
     "catalog-trifecta",
     "documentation-layout",
+    "context-load-points",
     "code-comments",
     "catalog-block-present",
     "validate-skills",

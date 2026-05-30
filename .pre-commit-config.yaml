@@ -21,8 +21,9 @@ repos:
         files: '^\.agents/skills/'
         stages: [pre-commit]
       # Deferred to the agentic-os self-compliance cascade (mirrors
-      # agentic-os-kai#464): documentation-layout, catalog-doc-size,
-      # catalog-trifecta, code-comments, dead-cross-links, repo-pointer-skills.
+      # agentic-os-kai#464): documentation-layout, context-load-points,
+      # catalog-doc-size, catalog-trifecta, code-comments, dead-cross-links,
+      # repo-pointer-skills.
       # README + docs/FEATURES still need See-also sections too.
       - id: closes-issue
         name: commit closes a Forgejo issue
