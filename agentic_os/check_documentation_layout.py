@@ -9,9 +9,10 @@ can never drift between code and prose.
 Markdown documentation may live only in:
     1. the repo root, with a small universal filename allow-list;
     2. docs/*.md, with no docs subdirectories;
-    3. skill folders (.agents/skills, .claude/skills, or skills), flat apart
-       from support subdirs (references/, templates/, examples/) - no nested
-       sub-skills;
+    3. skill folders (.agents/skills, .claude/skills, or skills), which may
+       carry any support subdirs (scripts/, assets/, references/, agents/,
+       ...) - the only flatness rule is that no nested SKILL.md may hide below
+       the top-level skill dir, since the loader only sees top-level dirs;
     4. anywhere under an `examples/` directory at any depth, any .md filename.
 
 Every Markdown file shares one size cap: MAX_MARKDOWN_LINES /
@@ -87,12 +88,6 @@ SKILL_PATHS = (
     (".claude", "skills"),
     ("skills",),
 )
-
-# Support subdirectories allowed inside a skill folder. The flatness rule exists
-# to keep nested SKILL.md sub-skills out (the loader only sees top-level skill
-# dirs); it is not meant to ban support material. references/ and templates/ are
-# the established patterns; examples/ is already location-allowed elsewhere.
-SKILL_SUPPORT_SUBDIRS = {"references", "templates", "examples"}
 
 
 def should_skip(path: Path) -> bool:
@@ -172,34 +167,38 @@ def check_markdown_locations() -> list[str]:
     return violations
 
 
-def check_skill_flatness() -> list[str]:
-    excludes = load_excludes(HOOK_ID)
+def check_skill_flatness(repo_root: Path | None = None) -> list[str]:
+    """Flag nested sub-skills, not support material.
+
+    The skill loader only sees top-level skill dirs, so a SKILL.md nested
+    below the top level is invisible and must move up. Support subdirs
+    (scripts/, assets/, references/, agents/, ...) are fine - the rule
+    targets hidden sub-skills, not material that sits beside SKILL.md.
+    """
+    root = repo_root or REPO_ROOT
+    excludes = load_excludes(HOOK_ID, root)
     violations: list[str] = []
     for skill_parts in SKILL_PATHS:
-        skill_root = REPO_ROOT.joinpath(*skill_parts)
+        skill_root = root.joinpath(*skill_parts)
         if not skill_root.is_dir():
             continue
         for skill_dir in sorted(skill_root.iterdir()):
             if not skill_dir.is_dir():
                 continue
-            if should_skip(skill_dir.relative_to(REPO_ROOT)):
+            if should_skip(skill_dir.relative_to(root)):
                 continue
-            for path in sorted(skill_dir.rglob("*")):
-                if not path.is_dir():
-                    continue
-                rel = path.relative_to(REPO_ROOT)
+            for nested in sorted(skill_dir.rglob("SKILL.md")):
+                if nested.parent == skill_dir:
+                    continue  # the skill's own top-level SKILL.md
+                rel = nested.relative_to(root)
                 if should_skip(rel):
                     continue
                 if is_excluded(rel, excludes):
                     continue
-                # Allow support subdirs (references/, templates/, examples/) and
-                # anything nested under them. The rule targets nested sub-skills,
-                # not support material that sits beside SKILL.md.
-                if path.relative_to(skill_dir).parts[0] in SKILL_SUPPORT_SUBDIRS:
-                    continue
                 violations.append(
-                    f"{rel}: skill folders must be flat. Move contents up to "
-                    f"sit beside SKILL.md."
+                    f"{rel}: nested SKILL.md must not hide below the top-level "
+                    f"skill dir - the loader only sees top-level dirs. Move "
+                    f"this sub-skill up to sit beside the others."
                 )
     return violations
 
