@@ -9,23 +9,27 @@ How to put a priority on every open issue and keep the backlog honest. Trackers 
 
 ## Tier definitions
 
-- **P0** - urgent AND blocking now. Active breakage/outage, security holes, data-loss risk, or blocks other committed work. Rare but real.
+- **P0** - urgent AND blocking now. Active breakage/outage, security holes, data-loss risk, or blocks other committed work. Assigned by **content rules, not quota** (see Target shape) - whatever genuinely matches is P0, however many that is.
 - **P1** - important, the clear next thing once P0s clear. Concrete, committed-direction, near-term value.
 - **P2** - backlog you genuinely intend to act on, just not yet. A real near-to-mid-term path to done.
-- **P3** - low but kept. Someday / nice-to-have / minor polish that is still real work you'd plausibly do. When unsure between P2 and P3, choose P3.
-- **P4** - icebox, the lowest tier. Parked / speculative-but-kept / won't-do-soon: hobby or hardware toys, "fork X" / "try Z tool" wishes, reading-list adds, vague mission/vision, blog-post drafts, far-future plays, one-line idea stubs. This is the demotion sink - the async triage loop pushes here rather than closing. When unsure between P3 and P4, choose P4.
+- **P3** - the DEFAULT tier. Low but kept; also where unsure, unscored, or freshly-filed issues land. Requires no positive evidence - it is the fallback.
+- **P4** - icebox, the lowest tier. The demotion sink: parked / speculative-but-kept / won't-do-soon (hobby or hardware toys, "fork X" / "try Z tool" wishes, reading-list adds, vague mission/vision, blog-post drafts, far-future plays, one-line idea stubs). Unlike P3, P4 needs positive "parked" judgment - the async triage loop pushes here rather than closing.
 
 ## Target shape
 
-Pick a global distribution (across the whole backlog, NOT per repo) and enforce it on the aggregate. A backlog-friendly default is **P0 5%, P1 15%, P2 30%, P3 25%, P4 25%** - a pyramid where urgency is scarce and the bottom two tiers hold the long tail. The split between P3 and P4 is a tuning knob; widen P4 to make the icebox tail heavier. Small or genuinely-urgent repos may deviate locally; the shape holds on the total.
+**P0 has no quota - it is content-based inclusion.** A script scans each issue's title+body for P0 signals and tags any match P0 regardless of count: secret/credential/token leak or exposure, arbitrary code execution or gate/auth bypass, data loss or corruption, active outage / crashloop / service-down, deploy-or-release pipeline broken end-to-end, or "blocks all / blocks other committed work". You never force a P0 percentage - urgent is whatever genuinely is.
+
+The **non-P0 remainder** splits to a global distribution (across the whole backlog, NOT per repo): **P1 5%, P2 15%, P3 30%, P4 50%** - urgency scarce, the icebox tail heavy. Small or genuinely-urgent repos may deviate locally; the shape holds on the total.
 
 ## Assignment method (the part that actually works)
 
-Distributed per-repo judgment cannot hit a global ratio on its own - it overshoots, first toward P2, then toward P3. So **let judgment provide the ordering and let percentile enforce the shape**:
+Distributed per-repo judgment cannot hit a global ratio on its own - it overshoots. So **carve P0 by rule, then let judgment provide the ordering and percentile enforce the shape** on the rest:
 
-1. Score each open issue by urgency. Robust signal: run two independent judgment passes (a triage cascade twice, or two rubrics), map `P0=4 P1=3 P2=2 P3=1 P4=0`, and sum.
-2. Rank all issues globally by score (tiebreak on the later/corrected pass, then issue number).
-3. Cut by percentile to your target: top 5% -> P0, next 15% -> P1, next 30% -> P2, next 25% -> P3, bottom 25% -> P4.
+1. **Carve P0 first** by the content rules above (deterministic script over title+body). These are P0 and leave the pool.
+2. Score the remaining pool by urgency. Robust signal: run two independent judgment passes (a triage cascade twice, or two rubrics), map `P1=3 P2=2 P3=1 P4=0`, sum. Unsure -> P3 (the default).
+3. Rank the remainder globally by score (tiebreak on the later/corrected pass, then issue number) and cut by percentile: top 5% -> P1, next 15% -> P2, next 30% -> P3, bottom 50% -> P4.
+
+Sanity-check that the P0 content rules actually catch the dangerous ones (credential leaks, arbitrary-code-execution, crashloops, broken deploys) - those are the failures you cannot afford to miss-tier.
 
 The agents' relative urgency calls survive; the ratio lands exactly. Sanity-check that obviously-urgent issues (credential leaks, arbitrary-code-execution, crashloops, broken deploys) land in P0.
 
