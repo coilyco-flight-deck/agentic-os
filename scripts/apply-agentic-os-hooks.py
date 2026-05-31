@@ -6,8 +6,8 @@ block in each consumer's `.pre-commit-config.yaml`. Block is delimited by marker
 comments so re-runs are idempotent. Replaces the older per-hook stamping
 rollouts that lived in coilysiren/agentic-os-kai/scripts/.
 
-For each active repo (not archived, not a fork) checked out under
-~/projects/coilysiren/<name>:
+For each repo checked out under ~/projects/coilysiren/<name> (any owner -
+coilysiren, coilyco-bridge, coilyco-flight-deck, post org-migration):
   1. Read or create `.pre-commit-config.yaml`.
   2. Strip legacy stamped `repo: local` blocks for the hooks now centralized
      here (catalog-block-present, catalog-doc-size, catalog-trifecta,
@@ -26,7 +26,14 @@ Usage:
     python3 scripts/apply-agentic-os-hooks.py --skip X Y  # exclude
     python3 scripts/apply-agentic-os-hooks.py --rev v0.2.0  # pin a different tag
 
-Stdlib only. Shells out to `gh` for the repo list.
+A repo carrying a .agentic-os-ignore file at its root is skipped entirely
+(declarative, repo-owned opt-out). Use --skip for one-off exclusions, the
+marker for durable ones. Honored fail-closed: presence skips, no override.
+
+Stdlib only. Drives off the on-disk checkout set (every git working tree
+under ~/projects/coilysiren), so it is owner-agnostic: the org migration of
+active repos to coilyco-bridge / coilyco-flight-deck no longer strands them
+the way a single hardcoded GitHub owner did. See coilysiren/agentic-os-kai#553.
 
 See coilysiren/agentic-os#59 for the convention design.
 """
@@ -39,8 +46,12 @@ import sys
 from pathlib import Path
 
 DEFAULT_REV = "v0.11.1"
-OWNER = "coilysiren"
 SIBLINGS_ROOT = Path.home() / "projects" / "coilysiren"
+
+# A repo carrying this marker at its root opts out of all baseline
+# normalization (hook block, host-tracker hook wiring). Honored fail-closed:
+# presence skips, no override flag. Remove the file to re-enroll.
+IGNORE_MARKER = ".agentic-os-ignore"
 
 BEGIN_MARKER = "# BEGIN managed by agentic-os/scripts/apply-agentic-os-hooks.py"
 END_MARKER = "# END managed by agentic-os/scripts/apply-agentic-os-hooks.py"
@@ -120,28 +131,24 @@ repos:
 {managed_block(rev, hook_ids)}"""
 
 
-def gh(*args: str) -> str:
-    result = subprocess.run(
-        ["gh", *args], capture_output=True, text=True, check=False
-    )
-    if result.returncode != 0:
-        raise RuntimeError(
-            f"gh {' '.join(args)!r} failed (rc={result.returncode}): "
-            f"{result.stderr.strip()}"
-        )
-    return result.stdout
+def list_local_repos() -> list[str]:
+    """Every git working tree checked out under ~/projects/coilysiren.
 
-
-def list_active_repos() -> list[str]:
-    out = gh(
-        "repo", "list", OWNER,
-        "--limit", "200",
-        "--no-archived",
-        "--source",
-        "--json", "name",
-        "--jq", ".[].name",
+    Owner-agnostic by design: this is a local-fleet tool (it runs
+    `pre-commit install` inside each checkout), so the on-disk set is both
+    the authoritative candidate list and the only set it can act on. Driving
+    off disk instead of `gh repo list <single-owner>` means the org migration
+    (coilyco-bridge / coilyco-flight-deck) can't silently strand repos.
+    apply_to_repo() still filters the source repo, the opt-out marker, and
+    non-git dirs; --skip handles one-off exclusions.
+    """
+    if not SIBLINGS_ROOT.is_dir():
+        return []
+    return sorted(
+        p.name
+        for p in SIBLINGS_ROOT.iterdir()
+        if p.is_dir() and (p / ".git").exists()
     )
-    return [line.strip() for line in out.splitlines() if line.strip()]
 
 
 def strip_legacy_blocks(text: str) -> tuple[str, int]:
@@ -227,6 +234,8 @@ def apply_to_repo(repo: str, rev: str, dry_run: bool) -> tuple[str, str]:
         return ("skipped", "not checked out locally")
     if not (repo_dir / ".git").exists():
         return ("skipped", "not a git working tree")
+    if (repo_dir / IGNORE_MARKER).exists():
+        return ("skipped", f"opted out ({IGNORE_MARKER})")
 
     config_path = repo_dir / ".pre-commit-config.yaml"
     hook_ids = hook_ids_for(repo)
@@ -282,7 +291,7 @@ def main(argv=None) -> int:
     if args.repo:
         repos = [args.repo]
     else:
-        repos = [r for r in list_active_repos() if r not in args.skip]
+        repos = [r for r in list_local_repos() if r not in args.skip]
 
     print(
         f"Rolling out agentic-os pre-commit suite "
