@@ -26,7 +26,7 @@ repos:
       # repo-pointer-skills.
       # README + docs/FEATURES still need See-also sections too.
       - id: closes-issue
-        name: commit closes a Forgejo issue
+        name: commit references a Forgejo issue
         entry: python -m agentic_os.check_commit_closes_issue
         language: python
         stages: [commit-msg]

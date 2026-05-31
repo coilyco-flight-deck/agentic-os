@@ -183,6 +183,6 @@ Runs `check_code_comments.py`. Enforces code-comment discipline for common sourc
 
 ### commit-closes-issue (commit-msg)
 
-Runs `check_commit_closes_issue.py`. Reads the commit message and rejects it if no `closes #N`, `fixes #N`, or `resolves #N` keyword is present for an issue in the same repo. Cross-repo refs (`owner/other-repo#N`) are rejected. Merge / Revert / fixup! / squash! commits are exempt.
+Runs `check_commit_closes_issue.py`. Reads the commit message and rejects it unless it references an issue in the same repo via its full Forgejo URL (`https://forgejo.coilysiren.me/<owner>/<repo>/issues/N`). A closing keyword (`closes` / `fixes` / `resolves`) in front is optional - the reference is what the rule requires, not the close. Bare `#N` / `owner/repo#N` keyword forms are rejected (they trigger GitHub auto-close on mirrored repos), as are Forgejo URLs pointing at a different repo. Merge / Revert / fixup! / squash! commits are exempt. (Loosening planned: eventually this fires only on commits merging into main.)
 
 This hook is independent of skill authoring but ships in the same repo because it carries the same family of discipline: a small, automated gate that catches process drift before it lands.

@@ -13,6 +13,16 @@ def test_same_repo_url_accepted() -> None:
     assert classify(f"fix: thing\n\ncloses {URL}", THIS) == "ok"
 
 
+def test_url_without_keyword_accepted() -> None:
+    # A bare URL reference (no closing keyword) is enough - the rule requires
+    # a reference, not a close.
+    assert classify(f"fix: thing\n\n{URL}", THIS) == "ok"
+
+
+def test_inline_url_reference_accepted() -> None:
+    assert classify(f"fix: thing (see {URL})", THIS) == "ok"
+
+
 @pytest.mark.parametrize("kw", ["closes", "close", "closed", "fixes", "fix", "resolves", "resolved"])
 def test_all_keywords_accepted(kw: str) -> None:
     assert classify(f"feat: x\n\n{kw} {URL}", THIS) == "ok"
