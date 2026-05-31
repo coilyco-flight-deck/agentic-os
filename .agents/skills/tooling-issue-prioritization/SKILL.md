@@ -9,7 +9,7 @@ How to put a priority on every open issue and keep the backlog honest. Trackers 
 
 ## Tier definitions
 
-- **P0** - urgent AND blocking now. Active breakage/outage, security holes, data-loss risk, or blocks other committed work. Assigned by **content rules, not quota** (see Target shape) - whatever genuinely matches is P0, however many that is.
+- **P0** - urgent AND blocking now. Active breakage/outage, security holes, data-loss risk, or blocks other committed work. Assigned by **content rules as a candidate net, then a judgment confirm** (see Target shape), never a quota - whatever genuinely matches is P0, however many that is.
 - **P1** - important, the clear next thing once P0s clear. Concrete, committed-direction, near-term value.
 - **P2** - backlog you genuinely intend to act on, just not yet. A real near-to-mid-term path to done.
 - **P3** - the DEFAULT tier. Low but kept; also where unsure, unscored, or freshly-filed issues land. Requires no positive evidence - it is the fallback.
@@ -17,7 +17,12 @@ How to put a priority on every open issue and keep the backlog honest. Trackers 
 
 ## Target shape
 
-**P0 has no quota - it is content-based inclusion.** A script scans each issue's title+body for P0 signals and tags any match P0 regardless of count: secret/credential/token leak or exposure, arbitrary code execution or gate/auth bypass, data loss or corruption, active outage / crashloop / service-down, deploy-or-release pipeline broken end-to-end, or "blocks all / blocks other committed work". You never force a P0 percentage - urgent is whatever genuinely is.
+**P0 has no quota - it is content-based, in two steps: net then confirm.**
+
+1. **Net (recall, deterministic):** a script scans each issue's title+body for P0 signals - secret/credential/token leak or exposure, arbitrary code execution or gate/auth bypass, data loss or corruption, active outage / crashloop / service-down, deploy-or-release pipeline broken end-to-end, "blocks all / blocks other committed work". The exact patterns live in [references/p0-content-rules.yaml](references/p0-content-rules.yaml). This casts a wide net.
+2. **Confirm (precision, judgment):** keyword rules over-match badly (~40% of hits are issues *about* a topic, not incidents *of* it - a design doc that gives an ACE example, a "set up SSO" task, a hardening proposal). So confirm each candidate with a one-line judgment call: **"is this an active incident / live exposure, or just discussing the topic?"** Keep only the active ones. This confirm is a bounded per-candidate decision - cheap, and exactly the shape a small local model can own.
+
+You never force a P0 percentage - urgent is whatever genuinely is (a re-triage of ~750 issues confirmed ~19).
 
 The **non-P0 remainder** splits to a global distribution (across the whole backlog, NOT per repo): **P1 5%, P2 15%, P3 30%, P4 50%** - urgency scarce, the icebox tail heavy. Small or genuinely-urgent repos may deviate locally; the shape holds on the total.
 
@@ -25,7 +30,7 @@ The **non-P0 remainder** splits to a global distribution (across the whole backl
 
 Distributed per-repo judgment cannot hit a global ratio on its own - it overshoots. So **carve P0 by rule, then let judgment provide the ordering and percentile enforce the shape** on the rest:
 
-1. **Carve P0 first** by the content rules above (deterministic script over title+body). These are P0 and leave the pool.
+1. **Carve P0 first**: run the content rules (net) over title+body, then judgment-confirm each candidate (above). The confirmed set is P0 and leaves the pool.
 2. Score the remaining pool by urgency. Robust signal: run two independent judgment passes (a triage cascade twice, or two rubrics), map `P1=3 P2=2 P3=1 P4=0`, sum. Unsure -> P3 (the default).
 3. Rank the remainder globally by score (tiebreak on the later/corrected pass, then issue number) and cut by percentile: top 5% -> P1, next 15% -> P2, next 30% -> P3, bottom 50% -> P4.
 
