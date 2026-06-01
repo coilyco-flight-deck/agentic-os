@@ -12,6 +12,7 @@ type HostPaths struct {
 	OS              string
 	RepoRoot        string
 	WorkspaceDir    string
+	StartupDir      string
 	ConfigDir       string
 	SettingsPath    string
 	ThemeDir        string
@@ -76,6 +77,15 @@ func resolveHostPaths() (*HostPaths, error) {
 	h.ThemePath = filepath.Join(h.ThemeDir, themeFileName)
 	h.TabConfigDir = filepath.Join(h.ConfigDir, "tab_configs")
 	h.TabConfigPath = filepath.Join(h.TabConfigDir, "startup_config.toml")
+
+	// StartupDir is where a fresh tab opens: the projects root. On Mac/Linux
+	// the repos nest under a coilysiren/ grouping dir, so the root is one
+	// level above WorkspaceDir. On Windows the layout is flat (projects-x\<repo>),
+	// so WorkspaceDir already is the root.
+	h.StartupDir = h.WorkspaceDir
+	if runtime.GOOS != "windows" {
+		h.StartupDir = filepath.Dir(h.WorkspaceDir)
+	}
 	return h, nil
 }
 
