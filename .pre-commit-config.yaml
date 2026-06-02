@@ -20,11 +20,61 @@ repos:
         pass_filenames: false
         files: '^\.agents/skills/'
         stages: [pre-commit]
-      # Deferred to the agentic-os self-compliance cascade (mirrors
-      # agentic-os-kai#464): documentation-layout, context-load-points,
-      # catalog-doc-size, catalog-trifecta, code-comments, dead-cross-links,
-      # repo-pointer-skills.
-      # README + docs/FEATURES still need See-also sections too.
+      # Self-compliance cascade now landed (agentic-os#81, #96, #22): the
+      # repo dogfoods its own catalog suite via the in-checkout package.
+      - id: documentation-layout
+        name: documentation layout
+        entry: python -m agentic_os.check_documentation_layout
+        language: python
+        additional_dependencies: [pyyaml]
+        always_run: true
+        pass_filenames: false
+        stages: [pre-commit]
+      - id: catalog-trifecta
+        name: catalog-trifecta cross-link convention
+        entry: python -m agentic_os.check_catalog_trifecta
+        language: python
+        always_run: true
+        pass_filenames: false
+        stages: [pre-commit]
+      - id: context-load-points
+        name: agent context load-points
+        entry: python -m agentic_os.check_context_load_points
+        language: python
+        always_run: true
+        pass_filenames: false
+        stages: [pre-commit]
+      - id: code-comments
+        name: code comment discipline
+        entry: python -m agentic_os.check_code_comments
+        language: python
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+      - id: dead-cross-links
+        name: dead cross-links
+        entry: python -m agentic_os.check_dead_links
+        language: python
+        additional_dependencies: [pyyaml]
+        always_run: true
+        pass_filenames: false
+        stages: [pre-commit]
+      - id: repo-pointer-skills
+        name: repo-pointer skills auto-generated
+        entry: python -m agentic_os.check_repo_pointer_skills
+        language: python
+        additional_dependencies: [pyyaml]
+        always_run: true
+        pass_filenames: false
+        stages: [pre-commit]
+      - id: misplaced-skills
+        name: no foreign repo-specific skills
+        entry: python -m agentic_os.check_misplaced_skills
+        language: python
+        additional_dependencies: [pyyaml]
+        always_run: true
+        pass_filenames: false
+        stages: [pre-commit]
       - id: closes-issue
         name: commit references a Forgejo issue
         entry: python -m agentic_os.check_commit_closes_issue

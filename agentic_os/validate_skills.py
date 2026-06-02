@@ -4,7 +4,7 @@ Validator for a repo's skill directory surface.
 
 Enforces structural rules driven by the skill directory's categories.yaml.
 The consumer-facing handbook is shipped alongside this script in
-agentic-os/docs/skill-discipline/handbook.md.
+agentic-os/docs/skill-discipline-handbook.md.
 
 Usage (when run directly):
     python3 scripts/validate-skills.py              # validate every skill
@@ -56,12 +56,8 @@ DEFAULT_MAX_LINES = 500
 DEFAULT_MAX_BYTES = 10_000
 DEFAULT_MAX_DESCRIPTION_BYTES = 500
 
-# Thin skills (categories declaring `role: thin`) ship into small-local-model
-# contexts (models-* / agents-openclaw-on-a-small-model) where the whole skill
-# catalog must fit a ~25k-token budget and the model selects by exact string
-# match. The cap is 1/4 of the binding 4000-char / 80-line Markdown cap from
-# check_documentation_layout.py (the true normal cap), not 1/4 of the looser
-# defaults above. See docs/qwen-concept-surface.md.
+# Thin skills (role: thin) must fit a small-local-model catalog budget. Cap is
+# 1/4 the 4000-char / 80-line Markdown cap. See docs/qwen-concept-surface.md.
 THIN_MAX_LINES = 20
 THIN_MAX_BYTES = 1_000
 
@@ -347,11 +343,8 @@ def validate_skill(
         report.fail(f"{name}/SKILL.md: missing or malformed YAML frontmatter")
         return
 
-    # Repo-pointer skills (repo- prefix) are fully generated and owned by the
-    # dedicated repo-pointer-skills hook, which regenerates and byte-diffs them.
-    # Skip generic shape validation here so there is one owner; global checks
-    # (size caps, stale cross-links, forbidden strings) still apply via
-    # run_global_checks.
+    # Repo-pointer skills are generated and owned by the repo-pointer-skills hook,
+    # so skip shape validation here. Global checks still apply via run_global_checks.
     if cat.get("role") == "repo-pointer":
         return
 

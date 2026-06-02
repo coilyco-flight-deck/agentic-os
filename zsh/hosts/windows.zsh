@@ -11,8 +11,6 @@ path=(
 )
 export PATH
 
-# Stop msys/Git Bash from rewriting leading-slash args into Windows paths
-# before they reach native exes. Without this, `coily ops aws ssm` mangles
-# SSM names like /coilysiren/... into C:/.../coilysiren/..., surfacing as
-# ParameterNotFound / ValidationException. See coilysiren/coily#156.
+# Stop msys/Git Bash rewriting leading-slash args into Windows paths before
+# they reach native exes (mangles SSM names). See coilysiren/coily#156.
 export MSYS_NO_PATHCONV=1

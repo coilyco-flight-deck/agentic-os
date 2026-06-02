@@ -26,29 +26,7 @@ You never force a P0 percentage - urgent is whatever genuinely is (a re-triage o
 
 The **non-P0 remainder** splits to a global distribution (across the whole backlog, NOT per repo): **P1 5%, P2 15%, P3 30%, P4 50%** - urgency scarce, the icebox tail heavy. Small or genuinely-urgent repos may deviate locally; the shape holds on the total.
 
-## Assignment method (the part that actually works)
+## Assignment, pruning, and running it over an API
 
-Distributed per-repo judgment cannot hit a global ratio on its own - it overshoots. So **carve P0 by rule, then let judgment provide the ordering and percentile enforce the shape** on the rest:
-
-1. **Carve P0 first**: run the content rules (net) over title+body, then judgment-confirm each candidate (above). The confirmed set is P0 and leaves the pool.
-2. Score the remaining pool by urgency. Robust signal: run two independent judgment passes (a triage cascade twice, or two rubrics), map `P1=3 P2=2 P3=1 P4=0`, sum. Unsure -> P3 (the default).
-3. Rank the remainder globally by score (tiebreak on the later/corrected pass, then issue number) and cut by percentile: top 5% -> P1, next 15% -> P2, next 30% -> P3, bottom 50% -> P4.
-
-Sanity-check that the P0 content rules actually catch the dangerous ones (credential leaks, arbitrary-code-execution, crashloops, broken deploys) - those are the failures you cannot afford to miss-tier.
-
-The agents' relative urgency calls survive; the ratio lands exactly. Sanity-check that obviously-urgent issues (credential leaks, arbitrary-code-execution, crashloops, broken deploys) land in P0.
-
-## Pruning - demote, merge, or close
-
-Default to **demoting to P4 (icebox)** rather than closing: speculative-but-kept work stays open and tracked at the lowest tier, and the async triage loop can only move issues between open tiers anyway. Reserve closing for two cases:
-
-- **Merge** near-duplicates into the lowest-numbered canonical (comment "merged into #N", then close the losers).
-- **Hard close** only the genuinely dead - superseded, abandoned, or one-line stubs with no value. For a bulk burn-down, an `icebox` label on the closed issue keeps it reversible (`state:closed label:icebox`).
-- **Keep** anything concrete, a bug, infra/security/ops, committed-direction, OR anything uncertain - at its earned tier. Keep is the safe default; demotion to P4 is the soft prune, closing is the hard one.
-
-## Running it over an API - lessons
-
-- **Resolve the canonical repo path before ANY write.** After a repo transfer or rename, the old path 301-redirects. Most HTTP clients follow the redirect on GET (reads succeed) but convert POST/PATCH/DELETE to GET and drop the body - the write silently no-ops and returns 200, looking like success. Fetch the repo first, read its post-redirect canonical name, and issue every write against that.
-- **Give fan-out triage agents a hard coverage mandate.** Per-repo agents reliably under-paginate and stop at roughly half a repo's issues. Hand each one its exact open count (the total-count response header) and require it to retrieve all N or fail.
-- **Count from the per-repo issues endpoint, not a cross-repo search.** Cross-repo issue-search totals can over-count (e.g. counting moved/duplicate rows); the per-repo issues endpoint's total-count header is the trustworthy number for ratio math.
-- **If your issue CLI lacks label add/remove verbs** (only label-definition CRUD), set per-issue labels via the API until those verbs exist.
+- [Assignment method](references/assignment-method.md) - the part that actually works: carve P0 by rule, score the rest by judgment, enforce the shape by percentile cut.
+- [Pruning and running it over an API](references/pruning-and-api.md) - demote/merge/close decisions plus the hard-won lessons for driving triage over an issue tracker API.

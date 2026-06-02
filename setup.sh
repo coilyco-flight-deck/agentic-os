@@ -42,9 +42,8 @@ else
   ensure_link "$SCRIPT_DIR/scripts/gpg-ssm" "$HOME/.local/bin/gpg-ssm"
 fi
 
-# Diagnostic + pulse helpers on PATH, dropping the .sh suffix so they invoke
-# by bare name (matching gpg-ssm). check-aws-config ships as a package console
-# script, not a scripts/ file, so it is not symlinked here.
+# Diagnostic + pulse helpers on PATH, .sh suffix dropped so they invoke by bare
+# name. check-aws-config ships as a console script, not symlinked here.
 for helper in verbatim-echo anthropic-pulse github-pulse git-diff-global; do
   ensure_link "$SCRIPT_DIR/scripts/$helper.sh" "$HOME/.local/bin/$helper"
 done

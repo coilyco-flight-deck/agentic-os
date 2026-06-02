@@ -43,9 +43,8 @@ except ModuleNotFoundError:  # pragma: no cover
 
 SKILL_PREFIX = "repo-"
 
-# Emoji and pictographic ranges plus variation selectors / zero-width joiners.
-# Literal GitHub descriptions routinely lead with badge emoji (coily, gauntlet,
-# repo-recall); they carry no routing signal and burn description bytes.
+# Strip leading badge emoji from GitHub descriptions: they carry no routing
+# signal and burn description bytes. Covers pictographs, VS, and ZWJ.
 _EMOJI_RE = re.compile(
     "["
     "\U0001f000-\U0001faff"  # symbols & pictographs, supplemental, extended-A

@@ -86,10 +86,8 @@ class VadDaemon:
         self._q = queue.Queue()
         self._stop = threading.Event()
 
-        # The mic stream is opened only for the duration of a session (start ->
-        # commit/cancel), so at rest the mic is released and the OS in-use
-        # indicator goes dark. Guarded by its own lock since open/close are
-        # driven from both the signal-listener and worker threads.
+        # Mic stream opens only during a session, so at rest the mic releases and
+        # the OS in-use indicator goes dark. Own lock: open/close are multi-threaded.
         self._stream = None
         self._stream_lock = threading.Lock()
 
@@ -121,9 +119,8 @@ class VadDaemon:
         log.info("mic stream opened")
 
     def _close_stream(self):
-        # Grab and null the handle under the lock, then stop/close outside it -
-        # stop() blocks until PortAudio's callback thread drains, and we don't
-        # want to hold the lock across that.
+        # Grab and null the handle under the lock, then stop/close outside it.
+        # stop() blocks on PortAudio's callback drain, too long to hold the lock.
         with self._stream_lock:
             stream, self._stream = self._stream, None
         if stream is None:
@@ -167,9 +164,8 @@ class VadDaemon:
         log.info("session committed (forced)")
 
     def _commit(self):
-        # Toggle Wispr off, which makes it transcribe and paste. Then wait for the
-        # paste to actually land (clipboard change) before pressing Enter - a fixed
-        # delay races Wispr's transcription and fires Enter into a still-empty box.
+        # Toggle Wispr off (transcribe + paste), then wait for the clipboard change
+        # before Enter. A fixed delay races transcription and Enters an empty box.
         seq0 = self.kbd.clipboard_seq()
         self.kbd.chord()
         deadline = time.time() + self.paste_timeout

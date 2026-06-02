@@ -43,9 +43,8 @@ HOOK_ID = "documentation-layout"
 MAX_MARKDOWN_LINES = 80
 MAX_MARKDOWN_CHARS = 4_000
 
-# Default AGENTS.md cap = standard. A repo opts into a larger AGENTS.md cap
-# via config (agents_md_max_lines / agents_md_max_chars). Only the canonical
-# agentic-os-kai AGENTS.md does so.
+# Standard AGENTS.md cap by default. Repos opt into a larger one via config
+# keys agents_md_max_lines / agents_md_max_chars.
 AGENTS_DEFAULT_MAX_LINES = MAX_MARKDOWN_LINES
 AGENTS_DEFAULT_MAX_CHARS = MAX_MARKDOWN_CHARS
 

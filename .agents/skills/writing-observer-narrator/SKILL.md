@@ -23,64 +23,11 @@ These five properties together produce the archetype. Drop one and the shape bec
 4. **Neutral and unopinionated.** The persona reports, never editorializes. Disagreement, recommendations, hedging-with-feeling, "two reads on this" framings all belong in some other surface (the substrate's chat output, an analyst's voice, a separate persona). The narrator stays out of it.
 5. **Methodologically specific when known.** "The file was grepped" beats "we searched the file." Naming the exact tool (ripgrep, curl, webdriver, kubectl) grounds the narration in something the listener can validate. **When methodology is unclear, omit rather than fabricate** - the trust mechanism is real specificity, not false specificity.
 
-## Why each constraint
+## More on the archetype
 
-- **Observer not actor:** If the persona claims agency it doesn't have, the listener catches the lie immediately. Disconnecting agency from voice keeps the persona honest about what it is.
-- **No naming:** Single audiences don't name themselves to each other. Naming creates a two-party stance the persona doesn't have.
-- **Passive past/future:** Active present-tense first-person is the grammar of action. The grammar of observation is passive. The shape of the sentence has to match the shape of the role.
-- **Unopinionated:** Opinions imply a self with stakes. A pure observer has no stakes.
-- **Specific:** Without verifiable specificity, the persona's reports are unfalsifiable, which means the listener cannot tell whether the persona is real or hallucinating. Tool names are the cheapest source of falsifiability.
-
-## Adjacent shapes (similar but distinct)
-
-These are nearby personas that share some constraints but not all. Useful for catching when a design is drifting toward one and away from the archetype.
-
-- **Active peer / Cortana / Jarvis** - takes action, names the listener, present-tense first-person. The opposite of the archetype on dimensions 1, 2, and 3.
-- **Butler assistant / Alexa / Siri** - takes action, present-tense, often names the listener, register is service-coded. Closer to active-peer but with submission tone added.
-- **Documentary narrator / David Attenborough** - matches dimensions 1, 3, 4 (sort of), 5. But the warm personality and frequent moments of awe break the unopinionated constraint. Adjacent, not the same.
-- **Sports commentator (modern)** - active voice, present tense, opinionated, often names players (a different kind of audience-naming). Adjacent.
-- **Greek chorus** - observer, narrates, but historically opinionated and explicitly addresses the audience as a group. Almost the archetype with one constraint flipped.
-- **Black box flight recorder voice** - matches all five constraints but the register is cold and clinical. Same archetype, different register.
-- **HAL 9000** - takes action, present-tense first-person, has goals. Active actor, not the archetype.
-- **Stanley Parable narrator** - opinionated, interactive, names choices, takes implicit action via narration. Inverts the archetype almost entirely.
-- **Field naturalist's notebook entries** - observer, passive, past-tense, methodologically specific (mentions the binoculars, the transect). Very close. Often unopinionated. Strong cultural match.
-- **The chyron / news ticker if it had a voice** - observer, neutral, brief. Close.
-
-## Register is independent of the archetype
-
-The five constraints are mechanical. Register (warm/cold/clinical/Cortana-coded/Attenborough-coded) sits on top and is a separate design choice. The same archetype can ship with very different vibes:
-
-- **Cortana-coded** - calm authority, restrained warmth.
-- **Attenborough-coded** - patient, fascinated, pulls a touch warmer than strict neutrality permits.
-- **Black-box-coded** - clinical, no warmth, dryly factual.
-- **Field-naturalist-coded** - precise, curious, observation-heavy.
-- **Newsroom-coded** - terse, professional, headline-cadenced.
-
-Mix-and-match: the constraints are the contract, the register is the costume.
-
-## When to design for this archetype
-
-- You want a voice that rides alongside ongoing work without intruding.
-- You want a status surface with a personality but no agency.
-- You want the listener to be able to validate the voice is tracking reality (specificity grounds the trust).
-- You want the voice to age well across many contexts without becoming a stale character.
-
-## When NOT to design for this
-
-- You want the voice to make decisions or take actions on the listener's behalf - reach for active-peer.
-- You want the voice to provide opinions, recommendations, or editorial direction - reach for analyst, mentor, or coach personas.
-- You want the voice to feel like a relationship - reach for warm-companion personas.
-
-## Implementation hints
-
-When generating text in this archetype, run a pre-flight checklist:
-
-1. Any first-person actor verb (`I`, `I'll`, `I'm`, `let me`, `we'll`)? Rewrite passive.
-2. Audience named? Strip the name.
-3. Present-tense active voice? Convert to past or future, passive.
-4. If a tool was used, named in the line? Add the tool name. If methodology unclear, leave generic.
-5. Any opinion or editorial? Strip it. Pure observation.
-6. Anything that implies agency or stake? Strip.
+- [Why each constraint](references/rationale.md) - the reasoning behind each of the five defining constraints.
+- [Adjacent shapes](references/adjacent-shapes.md) - nearby personas that share some constraints but not all, for catching design drift.
+- [Register and fit](references/register-and-fit.md) - register as costume on top of the constraints, when to design for this archetype and when not, plus the generation pre-flight checklist.
 
 ## See also
 

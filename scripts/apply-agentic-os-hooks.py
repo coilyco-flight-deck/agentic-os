@@ -49,18 +49,14 @@ DEFAULT_REV = "v0.13.0"
 SIBLINGS_ROOT = Path.home() / "projects" / "coilysiren"
 
 # A repo carrying this marker at its root opts out of all baseline
-# normalization (hook block, host-tracker hook wiring). Honored fail-closed:
-# presence skips, no override flag. Remove the file to re-enroll.
+# normalization, fail-closed. Remove the file to re-enroll.
 IGNORE_MARKER = ".agentic-os-ignore"
 
 BEGIN_MARKER = "# BEGIN managed by agentic-os/scripts/apply-agentic-os-hooks.py"
 END_MARKER = "# END managed by agentic-os/scripts/apply-agentic-os-hooks.py"
 
-# Canonical source for the shipped hook suite. Points at Forgejo, not the
-# GitHub mirror: Forgejo is the consumable source of truth, the public repo
-# is publicly readable so pre-commit clones it anonymously on every host, and
-# release tags land here first (the GitHub mirror is visibility-only and may
-# lag or never carry a given tag). See coilyco-flight-deck/agentic-os#129.
+# Canonical source for the hook suite. Forgejo, not the GitHub mirror: it is
+# the source of truth and lands release tags first. See agentic-os#129.
 AGENTIC_OS_REPO_URL = "https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os"
 
 # Legacy managed-block markers from the prior per-hook stamping rollouts.

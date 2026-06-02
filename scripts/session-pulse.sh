@@ -1,7 +1,6 @@
 #!/usr/bin/env sh
-# SessionStart hook: surface a cached orientation blob if one exists.
-# Contract: any producer writes YAML to ~/.cache/agentic-os/session-pulse.yaml.
-# Zero compute here. Missing file is a clean no-op.
+# SessionStart hook: cat a cached orientation blob if one exists, else no-op.
+# Contract: a producer writes YAML to ~/.cache/agentic-os/session-pulse.yaml.
 set -u
 
 pulse="${HOME}/.cache/agentic-os/session-pulse.yaml"

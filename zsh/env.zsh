@@ -18,8 +18,7 @@ export AWS_REGION=us-east-1
 export AWS_PAGER=""
 export BAT_PAGER=""
 
-# Post org-migration: the canonical repos split out of coilysiren/ into two org
-# dirs. coily owns the bridge org (agentic-os-kai); ward mirrors coily and owns
-# the flight-deck org (agentic-os). coilysiren/ is neither lockdown root.
+# Org-migration: repos split out of coilysiren/ into two org dirs. coily owns
+# the bridge root, ward owns the flight-deck root. coilysiren/ is neither.
 export COILY_LOCKDOWN_ROOT="$HOME/projects/coilyco-bridge"
 export WARD_LOCKDOWN_ROOT="$HOME/projects/coilyco-flight-deck"

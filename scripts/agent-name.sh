@@ -90,7 +90,8 @@ def k(n):
     if n >= 1_000: return f"{n/1000:.1f}k"
     return str(n)
 pct = 100 * ctx / BUDGET
-# ANSI color bands. <50% green, 50-75% yellow, 75-100% bright-orange, >=100% bright-red bold blink.
+# ANSI color bands. <50% green, 50-75% yellow, 75-100% bright-orange,
+# >=100% bright-red bold blink.
 if pct < 50:
     color, label = "\033[32m", "ok"     # green
 elif pct < 75:

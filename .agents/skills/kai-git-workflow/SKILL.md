@@ -46,52 +46,8 @@ Every repo has `.pre-commit-config.yaml` with offline trufflehog:
   stages: [pre-commit, pre-push]
 ```
 
-# GitHub issues as work tracker
+## More detail
 
-Precedence: Kai's own work routes to Forgejo (see "Default TODO destination" below). The rules here apply to repos with an active *GitHub* issue tracker, which are the external-facing repos where external contributors file.
-
-When a coilysiren repo has an active issue tracker, issues are canonical - not vault inbox, not TodoWrite, not memory.
-
-- **Open issues for new requests** before starting. Enough detail to act cold, labels matching the repo's scheme, cross-links. **Don't ask first.** When a change in a repo with an active issue tracker needs a closing issue, file it and proceed. The answer is always yes. Only ask if the issue's framing is genuinely ambiguous (scope unclear, multiple plausible repos), not just to confirm filing it.
-- **Close via commit subject** - `fixes #N` / `closes #N` auto-closes on push. For partial/tangential work, use `refs #N` and close manually: `gh issue close N --comment "<sha>: <one-liner>"`.
-- **Tracker issues stay open.** When a commit's work is motivated by a long-lived tracker (a collector issue meant to accumulate cases, drifts, or TODOs over time), do not `closes` the tracker. File a *separate atomic issue* for the commit and `closes` that one. Cheaper than rewriting the commit-msg hook to support non-closing keywords. Confirmed 2026-05-14: a Wispr Flow dictionary tracker got auto-closed by a commit that should have closed its own atomic implementation issue. Reopening works but pollutes the issue's state history.
-- **Skip for trivia** - typos, formatting sweeps, one-liners. No issue tracker → don't manufacture one.
-
-## Bot-attribution signature
-
-Claude-filed issues (and Claude-written issue comments) are wrapped top and bottom with `> 🤖 Filed by Claude Code on Kai's behalf.` as a blockquote. Top line, blank line, body, blank line, bottom line. Same convention as the `Co-Authored-By` trailer on commits - makes attribution scannable without a separate bot account. Skip for Kai-authored content she's just asking Claude to post verbatim.
-
-Check `gh issue list --repo coilysiren/<name>` when unsure.
-
-## Privileged ops via coily
-
-Reach for `coily gh ...`, `coily ops aws ...`, `coily kubectl ...`, `coily systemctl ...` etc. for privileged ops. Bare invocations of the *write* surface are denied by lockdown - destructive verbs (gh pr create/edit/merge, aws s3 cp, kubectl apply/delete, etc.) only work through coily, which gates them on argv validation and writes the audit row.
-
-**Read verbs are explicitly allowed bare** (`aws s3 ls`, `gh pr view`, `kubectl get pods`, etc.) - lockdown's allow list enumerates them, and bare reads are fine to use directly when convenient. The "everything through coily" rule that used to live here was always a hygiene preference rather than a security boundary, and it was stricter than what lockdown actually enforces.
-
-`coily gh` / `coily ops aws` / `coily kubectl` are now thin pass-throughs (issue #27) - they take the same args as the underlying CLI verbatim, no flag parsing on coily's side. **Limitations:** coily rejects shell metacharacters in argv (no `|`, `&`, `>` inside an argument), so pipe / redirect *outside* the coily call (`coily gh ... > /tmp/x.json`) is fine but keep them out of any single arg.
-
-## Disabling pull requests on a repo
-
-GitHub's per-repo "disable pull requests" toggle (shipped Feb 2026) must be set via **GraphQL**, not REST. This is a sanctioned exception to the REST-default rule: the REST path is broken. `has_pull_requests` on `PATCH /repos/{owner}/{repo}` echoes whatever you send but does not persist, and the REST `GET` reads back stale/inverted values - do not trust it to confirm state. GraphQL `Repository.hasPullRequestsEnabled` is authoritative both to read and to write.
-
-```graphql
-# resolve the repo node id (and read current state)
-query { repository(owner:"coilysiren",name:"REPO"){ id hasPullRequestsEnabled } }
-# disable PRs
-mutation { updateRepository(input:{repositoryId:"R_...",hasPullRequestsEnabled:false}){ repository{ name hasPullRequestsEnabled } } }
-```
-
-`pullRequestCreationPolicy` (`ALL` / `COLLABORATORS_ONLY`) is the softer "who can open PRs" dropdown, also on `updateRepository`. Pass the query as a file - `coily ops gh api graphql -F query=@/tmp/q.graphql` - because coily's metacharacter gate rejects the `{ }` in an inline `-f query=...` arg. Origin: coilysiren/agentic-os-kai#676.
-
-# Default TODO destination
-
-When Kai asks to file a todo without naming a destination, default to a Forgejo issue on `coilysiren/agentic-os-kai` (forgejo.coilysiren.me, the canonical tracker). If it clearly belongs elsewhere, file there and say so. The `closes-issue` hook accepts full Forgejo URLs as same-repo close refs, so commits close Forgejo issues directly.
-
-Kai's own work routes through Forgejo. GitHub issues on external-facing `coilysiren/*` repos are an inbox for external contributors only; agents never file there. Split by `hasIssuesEnabled` flag: on = external-facing, off = deployment-of-one or private. Either way, route to Forgejo.
-
-**Never ask whether to file an issue. Just file it.** If you're about to ask "should I file an issue for X" or offer it as a choice, the answer is always yes - file it and mention in one line what you filed. Issues are post-it notes: cheap, swept up by backlog routines. Asking is pure overhead, and at Kai's pace a deferred "want me to file this?" is something she will miss. Applies to any issue surfaced mid-task.
-
-# Test flake discipline
-
-Every flaky-test sighting in a `coilysiren/*` repo becomes a same-repo issue, no exceptions (flaky = failed then passed on re-run with no code change, or non-deterministic across two runs). File immediately, even mid-task: test name, both runs' output, candidate causes. Don't paper over by re-running until green.
+- [GitHub issues as work tracker](references/github-issue-tracker.md) - precedence, close-via-commit, tracker issues stay open, bot-attribution signature.
+- [Privileged ops via coily](references/coily-privileged-ops.md) - read vs write surface, thin pass-throughs, disabling PRs via GraphQL.
+- [Default TODO destination and flake discipline](references/default-todo-and-flake.md) - Forgejo as default tracker, never-ask-just-file, flaky-test rule.

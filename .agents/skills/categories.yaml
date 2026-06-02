@@ -5,7 +5,7 @@
 # these hooks; it dogfoods them via local refs in .pre-commit-config.yaml
 # rather than the managed remote block (a repo cannot reference itself by tag).
 #
-# Field reference: ../../docs/skill-discipline/examples/categories.yaml.
+# Field reference: ../../docs/skill-discipline-example-categories.yaml.
 
 categories:
 
