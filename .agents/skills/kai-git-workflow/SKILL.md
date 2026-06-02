@@ -65,7 +65,7 @@ Check `gh issue list --repo coilysiren/<name>` when unsure.
 
 ## Privileged ops via coily
 
-Reach for `coily gh ...`, `coily ops aws ...`, `coily kubectl ...`, `coily ssh kai-server` etc. for privileged ops. Bare invocations of the *write* surface are denied by lockdown - destructive verbs (gh pr create/edit/merge, aws s3 cp, kubectl apply/delete, etc.) only work through coily, which gates them on argv validation and writes the audit row.
+Reach for `coily gh ...`, `coily ops aws ...`, `coily kubectl ...`, `coily systemctl ...` etc. for privileged ops. Bare invocations of the *write* surface are denied by lockdown - destructive verbs (gh pr create/edit/merge, aws s3 cp, kubectl apply/delete, etc.) only work through coily, which gates them on argv validation and writes the audit row.
 
 **Read verbs are explicitly allowed bare** (`aws s3 ls`, `gh pr view`, `kubectl get pods`, etc.) - lockdown's allow list enumerates them, and bare reads are fine to use directly when convenient. The "everything through coily" rule that used to live here was always a hygiene preference rather than a security boundary, and it was stricter than what lockdown actually enforces.
 
