@@ -95,7 +95,6 @@ DEFAULT_HOOK_IDS = [
     "closes-issue",
     "conventional-commit",
     "trufflehog",
-    "coily-trailer",
 ]
 
 # Per-repo hook opt-outs. eco-* repos skip code-comments (Unity / C# conventions).

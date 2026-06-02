@@ -15,7 +15,6 @@
 #       - id: repo-pointer-skills
 #       - id: closes-issue
 #       - id: trufflehog
-#       - id: coily-trailer
 #
 # See coilysiren/agentic-os#59 for the trifecta convention.
 # Rollout helper: agentic-os/scripts/apply-agentic-os-hooks.py.
@@ -125,12 +124,3 @@
   language: system
   pass_filenames: false
   stages: [pre-commit, pre-push]
-
-- id: coily-trailer
-  name: coily audit-log trailer
-  description: Append Audit-log trailers to the commit message based on coily's audit log for this repo. Requires coily on PATH.
-  entry: coily git trailer-hook
-  language: system
-  stages: [prepare-commit-msg]
-  always_run: true
-  require_serial: true
