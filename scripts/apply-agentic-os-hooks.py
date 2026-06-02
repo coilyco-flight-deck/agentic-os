@@ -45,7 +45,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-DEFAULT_REV = "v0.11.1"
+DEFAULT_REV = "v0.12.0"
 SIBLINGS_ROOT = Path.home() / "projects" / "coilysiren"
 
 # A repo carrying this marker at its root opts out of all baseline
