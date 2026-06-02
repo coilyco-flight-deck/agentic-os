@@ -61,6 +61,14 @@ else
   echo "skipped agent self-name + session-pulse wiring (python3 not on PATH)"
 fi
 
+# Gate commits in this checkout. Without `pre-commit install` the .pre-commit-config.yaml
+# hooks never fire on `git commit`, so commits land unverified. Idempotent.
+if command -v pre-commit >/dev/null 2>&1 && git -C "$SCRIPT_DIR" rev-parse --git-dir >/dev/null 2>&1; then
+  ( cd "$SCRIPT_DIR" && pre-commit install && pre-commit install --hook-type commit-msg )
+else
+  echo "skipped pre-commit hook install (pre-commit not on PATH or not a git checkout)"
+fi
+
 # Warp config is coily-driven. Apply it now when coily is present; otherwise
 # leave the hint. The `|| echo` keeps a warp failure from aborting setup.
 if command -v coily >/dev/null 2>&1; then
