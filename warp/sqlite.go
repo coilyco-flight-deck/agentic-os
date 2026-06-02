@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 
@@ -39,6 +40,25 @@ func openWarpDB(path string, readonly bool) (*warpDB, error) {
 }
 
 func (w *warpDB) Close() error { return w.db.Close() }
+
+// hasStorageTable reports whether the generic_string_objects table exists. A
+// freshly created, empty, or never-launched warp.sqlite has no tables (opening
+// such a file still succeeds and Pings clean), so callers skip the reconcile
+// instead of erroring on the first query. Warp also self-updates and may
+// reshape its schema, so a missing table is treated as "not ready", not fatal.
+func (w *warpDB) hasStorageTable() (bool, error) {
+	var name string
+	err := w.db.QueryRow(
+		"SELECT name FROM sqlite_master WHERE type='table' AND name='generic_string_objects'",
+	).Scan(&name)
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, nil
+	}
+	if err != nil {
+		return false, fmt.Errorf("checking for generic_string_objects: %w", err)
+	}
+	return true, nil
+}
 
 // get returns the generic_string_objects row for a storage_key, if present.
 func (w *warpDB) get(storageKey string) (*storageRow, error) {

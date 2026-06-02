@@ -60,9 +60,10 @@ func resolveHostPaths() (*HostPaths, error) {
 		h.ThemeDir = filepath.Join(roaming, "warp", "Warp", "data", "themes")
 	case "darwin":
 		h.ConfigDir = filepath.Join(home, ".warp")
-		// Kai runs Preview; Stable bundle id is the best default.
+		// Kai runs Warp Preview on macOS, so target the Preview bundle's DB.
+		// (Preview ships on every platform, but on Windows Kai runs Stable.)
 		h.SQLitePath = filepath.Join(home, "Library", "Application Support",
-			"dev.warp.Warp-Stable", "warp.sqlite")
+			"dev.warp.Warp-Preview", "warp.sqlite")
 	case "linux":
 		h.ConfigDir = filepath.Join(home, ".config", "warp-terminal")
 		h.SQLitePath = filepath.Join(home, ".local", "state", "warp-terminal", "warp.sqlite")

@@ -91,12 +91,27 @@ func runApply() error {
 }
 
 func applySQLite(h *HostPaths) error {
+	// Stat first: opening read-write would create an empty warp.sqlite, and we
+	// must not seed a stray DB before Warp itself has initialized one.
+	if _, err := os.Stat(h.SQLitePath); os.IsNotExist(err) {
+		fmt.Printf("  %-22s SKIP  (warp.sqlite not found; launch Warp once to init it)\n", "sqlite layer")
+		return nil
+	}
+
 	db, err := openWarpDB(h.SQLitePath, false)
 	if err != nil {
 		fmt.Printf("  %-22s SKIP  %v\n", "sqlite layer", err)
 		return nil
 	}
 	defer db.Close()
+
+	if ok, err := db.hasStorageTable(); err != nil {
+		fmt.Printf("  %-22s SKIP  %v\n", "sqlite layer", err)
+		return nil
+	} else if !ok {
+		fmt.Printf("  %-22s SKIP  (no generic_string_objects table; launch Warp once to init it)\n", "sqlite layer")
+		return nil
+	}
 
 	for _, m := range settingMaps {
 		if m.Kind == kindOpaque {
@@ -163,12 +178,25 @@ func runDoctor() error {
 }
 
 func doctorSQLite(r *report, h *HostPaths) {
+	if _, err := os.Stat(h.SQLitePath); os.IsNotExist(err) {
+		r.note("sqlite layer (skipped): warp.sqlite not found; launch Warp once to init it")
+		return
+	}
+
 	db, err := openWarpDB(h.SQLitePath, true)
 	if err != nil {
 		r.fail("sqlite layer", err.Error())
 		return
 	}
 	defer db.Close()
+
+	if ok, err := db.hasStorageTable(); err != nil {
+		r.note("sqlite layer (skipped): " + err.Error())
+		return
+	} else if !ok {
+		r.note("sqlite layer (skipped): no generic_string_objects table; launch Warp once to init it")
+		return
+	}
 
 	for _, m := range settingMaps {
 		cur, err := db.get(m.StorageKey)
