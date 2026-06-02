@@ -22,7 +22,7 @@ Single Warp config tree symlinked into `~/.warp/` on Mac and Windows. The repo w
 
 ## Cross-repo pre-commit baseline
 
-Ships the canonical hook IDs that every `coilysiren/*` repo pins via `rev:`: catalog doc-size enforcement, README/AGENTS/FEATURES trifecta presence, documentation layout, agent context load-point hygiene (pure-pointer CLAUDE.md, no forked rungs, `@AGENTS.md` bridge), code-comment discipline, skill structural validation, dead cross-link detection, `closes #N` commit-msg enforcement, and the `catalog-block-present` check. Consumers don't stamp local copies of the validators; the `agentic-os` Python package is pip-installed into each repo's pre-commit env. Rolled out and audited from `agentic-os-kai`.
+Ships the canonical hook IDs that every `coilysiren/*` repo pins via `rev:`: catalog doc-size enforcement, README/AGENTS/FEATURES trifecta presence, documentation layout, agent context load-point hygiene (pure-pointer CLAUDE.md, no forked rungs, `@AGENTS.md` bridge), code-comment discipline, skill structural validation, dead cross-link detection, `closes #N` commit-msg enforcement, the `catalog-block-present` check, and a `misplaced-skills` guard (opt-in via `[tool.agentic-os.misplaced-skills]` deny/allow globs) that fails when a repo hosts a skill owned by another repo. Consumers don't stamp local copies of the validators; the `agentic-os` Python package is pip-installed into each repo's pre-commit env. Rolled out and audited from `agentic-os-kai`.
 
 ## Diagnostic + utility helpers
 

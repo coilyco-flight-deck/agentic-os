@@ -13,6 +13,7 @@
 #       - id: validate-skills
 #       - id: dead-cross-links
 #       - id: repo-pointer-skills
+#       - id: misplaced-skills
 #       - id: closes-issue
 #       - id: trufflehog
 #
@@ -99,6 +100,15 @@
   entry: check-repo-pointer-skills
   language: python
   additional_dependencies: [pyyaml]
+  always_run: true
+  pass_filenames: false
+  stages: [pre-commit]
+
+- id: misplaced-skills
+  name: no foreign repo-specific skills
+  description: "Assert a repo does not host skills owned by another repo. Opt in via [tool.agentic-os.misplaced-skills] deny/allow globs; no-ops otherwise. See coilyco-flight-deck/agentic-os#132."
+  entry: check-misplaced-skills
+  language: python
   always_run: true
   pass_filenames: false
   stages: [pre-commit]

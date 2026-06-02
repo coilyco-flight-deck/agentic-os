@@ -99,6 +99,7 @@ DEFAULT_HOOK_IDS = [
     "validate-skills",
     "dead-cross-links",
     "repo-pointer-skills",
+    "misplaced-skills",
     "closes-issue",
     "conventional-commit",
     "trufflehog",

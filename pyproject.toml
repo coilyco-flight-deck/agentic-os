@@ -40,6 +40,7 @@ check-context-load-points = "agentic_os.check_context_load_points:main"
 check-aws-config = "agentic_os.check_aws_config:main"
 check-ssm-path = "agentic_os.check_ssm_path:main"
 check-repo-pointer-skills = "agentic_os.check_repo_pointer_skills:main"
+check-misplaced-skills = "agentic_os.check_misplaced_skills:main"
 generate-repo-pointer-skill = "agentic_os.generate_repo_pointer_skill:main"
 
 [dependency-groups]

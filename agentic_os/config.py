@@ -56,13 +56,20 @@ def _load_hook_section(hook_id: str, repo_root: Path | None = None) -> dict:
     return {}
 
 
-def load_excludes(hook_id: str, repo_root: Path | None = None) -> list[str]:
-    """Return exclude patterns for a hook, or [] if none configured."""
+def load_str_list(
+    hook_id: str, key: str, repo_root: Path | None = None
+) -> list[str]:
+    """Return a list-of-strings option for a hook, or [] if unset/non-list."""
     section = _load_hook_section(hook_id, repo_root)
-    value = section.get("excludes")
+    value = section.get(key)
     if isinstance(value, list):
         return [str(p) for p in value if isinstance(p, str)]
     return []
+
+
+def load_excludes(hook_id: str, repo_root: Path | None = None) -> list[str]:
+    """Return exclude patterns for a hook, or [] if none configured."""
+    return load_str_list(hook_id, "excludes", repo_root)
 
 
 def is_enabled(hook_id: str, repo_root: Path | None = None) -> bool:
