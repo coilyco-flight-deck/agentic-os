@@ -9,8 +9,8 @@ GPG wrapper script that fetches the signing-key passphrase from AWS SSM at sign 
 
 ## Files
 
-- `~/projects/coilysiren/agentic-os/scripts/gpg-ssm` - the wrapper (bash). Symlinked to `~/.local/bin/gpg-ssm`.
-- `~/projects/coilysiren/agentic-os/scripts/gpg-ssm.cmd` - Windows shim for Git for Windows, which can't reliably invoke an extensionless shebang script. It's a `bash.exe` re-entry.
+- `~/projects/coilyco-flight-deck/agentic-os/scripts/gpg-ssm` - the wrapper (bash). Symlinked to `~/.local/bin/gpg-ssm` by `agentic-os/setup.sh`.
+- `~/projects/coilyco-flight-deck/agentic-os/scripts/gpg-ssm.cmd` - Windows shim for Git for Windows, which can't reliably invoke an extensionless shebang script. It's a `bash.exe` re-entry.
 
 ## Wire-up
 

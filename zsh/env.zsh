@@ -1,4 +1,4 @@
-# Sourced first. Identity, editor, AWS defaults, coily lockdown root.
+# Sourced first. Identity, editor, AWS defaults, coily + ward lockdown roots.
 # Cross-platform; per-host PATH lives in hosts/<os>.zsh.
 
 # History
@@ -18,4 +18,8 @@ export AWS_REGION=us-east-1
 export AWS_PAGER=""
 export BAT_PAGER=""
 
-export COILY_LOCKDOWN_ROOT="$HOME/projects/coilysiren"
+# Post org-migration: the canonical repos split out of coilysiren/ into two org
+# dirs. coily owns the bridge org (agentic-os-kai); ward mirrors coily and owns
+# the flight-deck org (agentic-os). coilysiren/ is neither lockdown root.
+export COILY_LOCKDOWN_ROOT="$HOME/projects/coilyco-bridge"
+export WARD_LOCKDOWN_ROOT="$HOME/projects/coilyco-flight-deck"
