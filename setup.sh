@@ -42,11 +42,33 @@ else
   ensure_link "$SCRIPT_DIR/scripts/gpg-ssm" "$HOME/.local/bin/gpg-ssm"
 fi
 
+# Diagnostic + pulse helpers on PATH, dropping the .sh suffix so they invoke
+# by bare name (matching gpg-ssm). check-aws-config ships as a package console
+# script, not a scripts/ file, so it is not symlinked here.
+for helper in verbatim-echo anthropic-pulse github-pulse git-diff-global; do
+  ensure_link "$SCRIPT_DIR/scripts/$helper.sh" "$HOME/.local/bin/$helper"
+done
+
+# macOS push-to-talk voice auto-enter. Harmless until Hammerspoon.app runs.
+if [ "$HOST" = "mac" ]; then
+  ensure_link "$SCRIPT_DIR/hammerspoon/init.lua" "$HOME/.hammerspoon/init.lua"
+fi
+
 if command -v python3 >/dev/null 2>&1; then
   "$SCRIPT_DIR/scripts/install-agent-name.py"
   "$SCRIPT_DIR/scripts/install-session-pulse.py"
 else
   echo "skipped agent self-name + session-pulse wiring (python3 not on PATH)"
+fi
+
+# Warp config is coily-driven. Apply it now when coily is present; otherwise
+# leave the hint. The `|| echo` keeps a warp failure from aborting setup.
+if command -v coily >/dev/null 2>&1; then
+  echo
+  echo "Applying Warp config (coily exec warp apply)..."
+  coily exec warp apply || echo "  - warp apply failed; run it by hand later (see warp/README.md)"
+else
+  echo "  - For Warp config, run: coily exec warp apply (see warp/README.md)"
 fi
 
 echo
@@ -55,4 +77,3 @@ current_shell="$(basename "${SHELL:-}")"
 if [ "$current_shell" != "zsh" ]; then
   echo "  - Login shell is $current_shell. To switch: chsh -s \"\$(command -v zsh)\""
 fi
-echo "  - For Warp config, run: coily exec warp apply (see warp/README.md)"

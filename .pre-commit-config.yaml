@@ -30,6 +30,11 @@ repos:
         entry: python -m agentic_os.check_commit_closes_issue
         language: python
         stages: [commit-msg]
+      - id: conventional-commit
+        name: commit message is conventional
+        entry: python -m agentic_os.check_conventional_commit
+        language: python
+        stages: [commit-msg]
       # Guards the `coily exec warp` tool itself. Runs `go vet` (which
       # compiles the module) so broken Go never lands. It deliberately does
       # NOT run `warp doctor`: doctor inspects live host state, and the
@@ -42,6 +47,33 @@ repos:
         files: ^warp/.*\.go$
         pass_filenames: false
         stages: [pre-commit]
+      # gofmt complements go vet: vet catches semantic issues, gofmt the layout.
+      # -w rewrites in place; pre-commit fails the run if it had to touch a file,
+      # so a reformatted file blocks the commit until it is re-staged.
+      - id: warp-gofmt
+        name: gofmt the coily exec warp module
+        entry: bash -c 'cd warp && gofmt -w .'
+        language: system
+        files: ^warp/.*\.go$
+        pass_filenames: false
+        stages: [pre-commit]
   # No managed upstream-ref block here. This repo is the source; the rollout
   # is expected to never run against agentic-os itself. The local block above
   # dogfoods the validators via the in-checkout package.
+  # Third-party linters for the shell + Python surfaces that have no
+  # agentic-os validator. Pin via `pre-commit autoupdate` to refresh revs.
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.11.0.1
+    hooks:
+      - id: shellcheck
+        # pre-commit tags .zsh as shell, but shellcheck has no zsh support
+        # (SC2148/SC2296 on every zsh expansion). The zsh tree is zsh-only.
+        exclude: ^zsh/
+        # Gate on error-level only. The bash scripts carry intentional
+        # patterns (literal \e passed to a later printf, ASCII-only tr) that
+        # trip info/warning checks but are correct by design.
+        args: [--severity=error]
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.15
+    hooks:
+      - id: ruff-check

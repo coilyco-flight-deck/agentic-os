@@ -262,8 +262,8 @@ type report struct {
 	failed int
 }
 
-func (r *report) pass(label string)        { r.lines = append(r.lines, "  PASS  "+label) }
-func (r *report) note(label string)        { r.lines = append(r.lines, "  NOTE  "+label) }
+func (r *report) pass(label string) { r.lines = append(r.lines, "  PASS  "+label) }
+func (r *report) note(label string) { r.lines = append(r.lines, "  NOTE  "+label) }
 func (r *report) fail(label, detail string) {
 	r.failed++
 	r.lines = append(r.lines, "  FAIL  "+label+" - "+detail)

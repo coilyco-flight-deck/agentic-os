@@ -376,7 +376,7 @@ def validate_skill(
         if role in {"router", "meta"}:
             effective_cap *= 2
         if desc_bytes > effective_cap:
-            role_note = f" (2x router/meta cap)" if role in {"router", "meta"} else ""
+            role_note = " (2x router/meta cap)" if role in {"router", "meta"} else ""
             report.fail(
                 f"{name}/SKILL.md: description is {desc_bytes} bytes, over the "
                 f"{effective_cap}-byte cap{role_note}. Every skill's description "
