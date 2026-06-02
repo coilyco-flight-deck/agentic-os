@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Roll out the coilysiren/agentic-os pre-commit hook suite to every catalog repo.
 
-Inserts (or refreshes) a single managed `repo: https://github.com/coilysiren/agentic-os`
+Inserts (or refreshes) a single managed `repo: <forgejo>/coilyco-flight-deck/agentic-os`
 block in each consumer's `.pre-commit-config.yaml`. Block is delimited by marker
 comments so re-runs are idempotent. Replaces the older per-hook stamping
 rollouts that lived in coilysiren/agentic-os-kai/scripts/.
@@ -55,6 +55,13 @@ IGNORE_MARKER = ".agentic-os-ignore"
 
 BEGIN_MARKER = "# BEGIN managed by agentic-os/scripts/apply-agentic-os-hooks.py"
 END_MARKER = "# END managed by agentic-os/scripts/apply-agentic-os-hooks.py"
+
+# Canonical source for the shipped hook suite. Points at Forgejo, not the
+# GitHub mirror: Forgejo is the consumable source of truth, the public repo
+# is publicly readable so pre-commit clones it anonymously on every host, and
+# release tags land here first (the GitHub mirror is visibility-only and may
+# lag or never carry a given tag). See coilyco-flight-deck/agentic-os#129.
+AGENTIC_OS_REPO_URL = "https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os"
 
 # Legacy managed-block markers from the prior per-hook stamping rollouts.
 # Strip these when present so consumers end up with one upstream-ref block.
@@ -116,7 +123,7 @@ def managed_block(rev: str, hook_ids: list[str] | None = None) -> str:
     hook_lines = "\n".join(f"      - id: {h}" for h in ids)
     return f"""\
   {BEGIN_MARKER}
-  - repo: https://github.com/coilysiren/agentic-os
+  - repo: {AGENTIC_OS_REPO_URL}
     rev: {rev}
     hooks:
 {hook_lines}
