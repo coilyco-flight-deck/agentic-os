@@ -27,6 +27,7 @@ Homepage = "https://github.com/coilysiren/agentic-os"
 Issues = "https://github.com/coilysiren/agentic-os/issues"
 
 [project.scripts]
+agent-compose = "agentic_os.agent_compose:main"
 validate-skills = "agentic_os.validate_skills:main"
 check-dead-links = "agentic_os.check_dead_links:main"
 check-commit-closes-issue = "agentic_os.check_commit_closes_issue:main"

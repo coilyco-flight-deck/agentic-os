@@ -34,6 +34,18 @@ ssm-get /eco/server-api-token     # fetch one value without storing it
 
 No disk write at any point. Same call works on Mac, Linux, Windows. AWS profile defaults to `default`; override with `ssm-load <profile> <region>`. For secrets at shell startup, append `ssm-load` to the end of `zsh/config.zsh`. The legacy cleartext-on-disk dump (`~/.cache/ssm-env.sh`) was deleted.
 
+## agent-compose
+
+Opt-in tooling that composes one global agent-context file from declared sources and points every harness load point (Claude Code, Codex, OpenClaw) at it by symlink, so all three load byte-identical context with nothing duplicated on disk. Inert until `~/.config/agent-compose/agent-compose.yaml` exists. See [docs/FEATURES.md](docs/FEATURES.md).
+
+**Prior art.** The idea is fresh in the agentic space but well-trodden in config management, and agent-compose is best understood as **Hiera-for-agent-doctrine, deployed Stow-style, scoped chezmoi-style**:
+
+- **[GNU Stow](https://www.gnu.org/software/stow/)** - symlink-farm manager. The "one canonical file, N symlinks" deployment mechanism.
+- **[chezmoi](https://www.chezmoi.io/)** - dotfile manager with per-machine targeting. The model for scoping context to each host.
+- **[Hiera](https://github.com/puppetlabs/hiera)** (Puppet) - hierarchical, scope-based data lookup. The conceptual twin of the machine-scope intersection that selects which sources compose.
+
+**Naming.** The field's vocabulary for this is **weave / layer / compose / overlay / blend**. We chose `compose` (assemble many inputs into one) over the earlier working name `meld`, which collides with the [GNOME Meld](https://meldmerge.org/) diff-and-merge tool both on search and on semantics (Meld resolves diffs, agent-compose assembles context).
+
 ## Credits
 
 - `static/wallpaper.jpg` - Sombra hacking skull, from the [Overwatch](https://overwatch.blizzard.com) Sombra ARG promotional materials, Blizzard Entertainment, circa 2016. All Overwatch art and iconography © Blizzard Entertainment. Used here for personal terminal decoration only.
