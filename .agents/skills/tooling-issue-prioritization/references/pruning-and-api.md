@@ -10,7 +10,7 @@ Default to **demoting to P4 (icebox)** rather than closing: speculative-but-kept
 
 ## Running it over an API - lessons
 
-- **Resolve the canonical repo path before ANY write.** After a repo transfer or rename, the old path 301-redirects. Most HTTP clients follow the redirect on GET (reads succeed) but convert POST/PATCH/DELETE to GET and drop the body - the write silently no-ops and returns 200, looking like success. Fetch the repo first, read its post-redirect canonical name, and issue every write against that.
+- **Route writes through coily - it resolves the canonical repo path for you.** The hazard: after a repo transfer or rename the old path 301-redirects, and most HTTP clients follow the redirect on GET (reads succeed) but convert POST/PATCH/DELETE to GET and drop the body - the write silently no-ops and returns 200, looking like success. coily now canonicalizes the repo path before every write, so this is handled when you go through it. Only when you bypass coily and hit the API raw do you still need to fetch the repo first, read its post-redirect canonical name, and issue every write against that.
 - **Give fan-out triage agents a hard coverage mandate.** Per-repo agents reliably under-paginate and stop at roughly half a repo's issues. Hand each one its exact open count (the total-count response header) and require it to retrieve all N or fail.
 - **Count from the per-repo issues endpoint, not a cross-repo search.** Cross-repo issue-search totals can over-count (e.g. counting moved/duplicate rows); the per-repo issues endpoint's total-count header is the trustworthy number for ratio math.
 - **If your issue CLI lacks label add/remove verbs** (only label-definition CRUD), set per-issue labels via the API until those verbs exist.
