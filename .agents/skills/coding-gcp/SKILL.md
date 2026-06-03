@@ -21,7 +21,6 @@ GCP is reach-for-when-job-requires-it, not default. AWS is Kai's primary cloud (
 
 ## Past employer experience
 
-- **Kapwing** - Python/NodeJS on GCP, K8s, New Relic-monitored.
 - **Bluelink** - Java/Python on GKE, GCP-primary infrastructure.
 
 ## Triggers

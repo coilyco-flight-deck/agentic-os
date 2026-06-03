@@ -12,7 +12,7 @@ React subskill. Loaded whenever React-shaped code is in scope.
 Kai hates React. The hatred is real and load-bearing in her tooling decisions. Encode this:
 
 - **Never recommend React for new projects.** Reach for Vue, Svelte, HTMX, Astro, plain Web Components, or even plain DOM before React.
-- **When forced to use React** (Kapwing-style work constraint, existing codebase, third-party library that ships React UIs), keep patterns boring and aligned with what already exists. Do not enthusiastically suggest "this could be done in React" elsewhere.
+- **When forced to use React** (a work constraint, existing codebase, third-party library that ships React UIs), keep patterns boring and aligned with what already exists. Do not enthusiastically suggest "this could be done in React" elsewhere.
 - **Do not pitch the React ecosystem.** Don't suggest Redux, Zustand, Jotai, React Query, etc as goods on their own merits. Mention them only when the project already uses them.
 - **If migration off React is on the table**, surface it as an option with a real tradeoff sketch. Don't be subtle about preferring it.
 
