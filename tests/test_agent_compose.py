@@ -215,3 +215,102 @@ def test_run_empty_sources_refuses(paths: dict[str, Path], tmp_path: Path) -> No
     rc = agent_compose.run(paths["config"], paths["composed"])
     assert rc == 1
     assert not paths["composed"].exists()
+
+
+# ---------- frontmatter + scopes (forgejo #137) ----------
+
+def test_parse_source_reads_scopes(tmp_path: Path) -> None:
+    src = tmp_path / "AGENTS.COMPOSE.md"
+    write(src, "---\nscopes: [a, b]\n---\nbody text\n")
+    scopes, body = agent_compose.parse_source(src)
+    assert scopes == ["a", "b"]
+    assert body.strip() == "body text"
+
+
+def test_parse_source_single_scope_string(tmp_path: Path) -> None:
+    src = tmp_path / "AGENTS.COMPOSE.md"
+    write(src, "---\nscopes: kai-public\n---\nx\n")
+    assert agent_compose.parse_source(src)[0] == ["kai-public"]
+
+
+def test_parse_source_no_frontmatter(tmp_path: Path) -> None:
+    src = tmp_path / "AGENTS.COMPOSE.md"
+    write(src, "# just doctrine\nno frontmatter\n")
+    scopes, body = agent_compose.parse_source(src)
+    assert scopes is None
+    assert "just doctrine" in body
+
+
+def test_compose_strips_frontmatter(tmp_path: Path) -> None:
+    src = tmp_path / "AGENTS.COMPOSE.md"
+    write(src, "---\nscopes: [kai-public]\n---\n# doctrine\nrule one\n")
+    out = agent_compose.compose([src])
+    assert "scopes:" not in out
+    assert "# doctrine" in out and "rule one" in out
+
+
+def test_select_no_machine_scopes_keeps_all(tmp_path: Path) -> None:
+    a = tmp_path / "a" / "AGENTS.COMPOSE.md"
+    b = tmp_path / "b" / "AGENTS.COMPOSE.md"
+    write(a, "x\n")
+    write(b, "y\n")
+    assert agent_compose.select_by_scope([a, b], None) == [a, b]
+
+
+def test_select_drops_untagged_under_filtering(tmp_path: Path) -> None:
+    tagged = tmp_path / "t" / "AGENTS.COMPOSE.md"
+    untagged = tmp_path / "u" / "AGENTS.COMPOSE.md"
+    write(tagged, "---\nscopes: [eco]\n---\nx\n")
+    write(untagged, "plain\n")
+    assert agent_compose.select_by_scope([tagged, untagged], ["eco"]) == [tagged]
+
+
+# The canonical compat matrix from forgejo #134's compat-matrix comment.
+SCOPE_SOURCES = ["kai-public", "work", "kai-private", "eco"]
+MATRIX = {
+    "work-mac": (["work", "kai-public"], {"work", "kai-public"}),
+    "personal-mac": (["kai-public", "kai-private"], {"kai-public", "kai-private"}),
+    "personal-windows": (["kai-public", "eco"], {"kai-public", "eco"}),
+}
+
+
+def _build_scoped_sources(tmp_path: Path) -> list[Path]:
+    out = []
+    for name in SCOPE_SOURCES:
+        p = tmp_path / name / "AGENTS.COMPOSE.md"
+        write(p, f"---\nscopes: [{name}]\n---\n# {name} doctrine\n")
+        out.append(p)
+    return out
+
+
+@pytest.mark.parametrize("machine", list(MATRIX))
+def test_compat_matrix(machine: str, tmp_path: Path) -> None:
+    sources = _build_scoped_sources(tmp_path)
+    machine_scopes, expected = MATRIX[machine]
+    selected = agent_compose.select_by_scope(sources, machine_scopes)
+    assert {p.parent.name for p in selected} == expected
+
+
+def test_run_filters_by_scope(paths: dict[str, Path], tmp_path: Path) -> None:
+    pub = tmp_path / "pub" / "AGENTS.COMPOSE.md"
+    eco = tmp_path / "eco" / "AGENTS.COMPOSE.md"
+    write(pub, "---\nscopes: [kai-public]\n---\npublic rule\n")
+    write(eco, "---\nscopes: [eco]\n---\neco rule\n")
+    write(
+        paths["config"],
+        f"scopes: [kai-public]\nsources:\n  - {pub}\n  - {eco}\n"
+        f"load_points:\n  claude: {paths['claude']}\n  codex: {paths['codex']}\n",
+    )
+    rc = agent_compose.run(paths["config"], paths["composed"])
+    assert rc == 0
+    out = paths["composed"].read_text(encoding="utf-8")
+    assert "public rule" in out and "eco rule" not in out
+
+
+def test_run_no_scope_match_refuses(paths: dict[str, Path], tmp_path: Path) -> None:
+    eco = tmp_path / "eco" / "AGENTS.COMPOSE.md"
+    write(eco, "---\nscopes: [eco]\n---\neco\n")
+    write(paths["config"], f"scopes: [work]\nsources:\n  - {eco}\n")
+    rc = agent_compose.run(paths["config"], paths["composed"])
+    assert rc == 1
+    assert not paths["composed"].exists()

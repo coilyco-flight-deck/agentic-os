@@ -2,7 +2,7 @@
 """Compose one global agent-context file from scoped sources, shared by symlink.
 
 agent-compose synthesizes a single canonical context file
-(`~/.config/agent-compose/composed.md`) from a set of source files declared in
+(`~/.config/agent-compose/COMPOSED.md`) from a set of source files declared in
 `~/.config/agent-compose/agent-compose.yaml`, then points each harness's global
 load point at that one file by symlink. Claude Code, Codex, and OpenClaw then
 load byte-identical context with no duplicated content on disk.
@@ -11,13 +11,27 @@ Sources are either listed explicitly or discovered by walking declared roots
 for files named AGENTS.COMPOSE.md (forgejo #136). AGENTS.COMPOSE.md is the
 disjoint source convention: it holds always-global doctrine and is never loaded
 by a harness's own AGENTS.md/CLAUDE.md cascade, so composing it in does not
-double-load. Scope filtering (#137) is not applied yet. Activation is opt-in:
-with no config file present the composer is a total no-op, so every harness
-behaves exactly as it does without agent-compose installed.
+double-load.
+
+Scope filtering (#137) selects which sources compose on this machine. The
+machine declares `scopes`; each source declares its own `scopes` in YAML
+frontmatter; a source composes iff the two sets intersect. Filtering is itself
+opt-in: a config with no `scopes` key composes every source. Activation overall
+is opt-in too: with no config file present the composer is a total no-op, so
+every harness behaves exactly as it does without agent-compose installed.
+
+Source frontmatter (stripped from COMPOSED.md, never leaks into output):
+
+    ---
+    scopes: [kai-public, work]
+    ---
+    # always-global doctrine ...
 
 Config schema (YAML):
 
     # Presence of this file activates agent-compose. Absent => no-op.
+    # This machine's scope tags. Omit to compose every source (filtering off).
+    scopes: [kai-public, work]
     # Explicit sources are composed first, in listed order.
     sources:
       - ~/projects/foo/AGENTS.COMPOSE.md
@@ -44,7 +58,7 @@ from pathlib import Path
 HOME = Path.home()
 CONFIG_DIR = HOME / ".config" / "agent-compose"
 CONFIG_PATH = CONFIG_DIR / "agent-compose.yaml"
-COMPOSED_PATH = CONFIG_DIR / "composed.md"
+COMPOSED_PATH = CONFIG_DIR / "COMPOSED.md"
 
 # Built-in global load points. OpenClaw has no global load point yet (forgejo
 # #135 decision: defer), so it is symlinked only when set in config.
@@ -62,6 +76,65 @@ SOURCE_FILENAME = "AGENTS.COMPOSE.md"
 
 def _expand(path: str | Path) -> Path:
     return Path(path).expanduser()
+
+
+def _normalize_scopes(value: object) -> list[str] | None:
+    """Coerce a scopes value to a list of strings, or None when unset."""
+    if value is None:
+        return None
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, list):
+        return [str(v) for v in value]
+    return None
+
+
+def _split_frontmatter(text: str) -> tuple[dict, str]:
+    """Split a leading `--- ... ---` YAML frontmatter block from the body.
+
+    Returns ({}, text) when there is no well-formed frontmatter fence.
+    """
+    lines = text.splitlines()
+    if not lines or lines[0].strip() != "---":
+        return {}, text
+    for i in range(1, len(lines)):
+        if lines[i].strip() == "---":
+            import yaml
+
+            try:
+                meta = yaml.safe_load("\n".join(lines[1:i])) or {}
+            except yaml.YAMLError:
+                meta = {}
+            body = "\n".join(lines[i + 1 :])
+            return (meta if isinstance(meta, dict) else {}), body
+    return {}, text
+
+
+def parse_source(path: Path) -> tuple[list[str] | None, str]:
+    """Read a source: return its declared scopes and its frontmatter-stripped body.
+
+    The scopes directive lives in YAML frontmatter and is removed from the body
+    so it never reaches COMPOSED.md. Scopes are None when none are declared.
+    """
+    meta, body = _split_frontmatter(path.read_text(encoding="utf-8"))
+    return _normalize_scopes(meta.get("scopes")), body
+
+
+def select_by_scope(sources: list[Path], machine_scopes: list[str] | None) -> list[Path]:
+    """Keep sources whose declared scopes intersect the machine scopes.
+
+    machine_scopes None (no `scopes` in config) turns filtering off: every
+    source is kept. Under active filtering a source with no declared scopes is
+    dropped, so an untagged file never leaks onto a scoped machine.
+    """
+    if machine_scopes is None:
+        return list(sources)
+    wanted = set(machine_scopes)
+    return [
+        path
+        for path in sources
+        if (scopes := parse_source(path)[0]) and wanted.intersection(scopes)
+    ]
 
 
 def discover_sources(root: Path) -> list[Path]:
@@ -122,8 +195,8 @@ def compose(sources: list[Path]) -> str:
     """
     parts = [BANNER]
     for src in sources:
-        text = src.read_text(encoding="utf-8").rstrip("\n")
-        parts.append(f"<!-- source: {src} -->\n{text}")
+        body = parse_source(src)[1].strip("\n")
+        parts.append(f"<!-- source: {src} -->\n{body}")
     return "\n\n".join(parts) + "\n"
 
 
@@ -181,30 +254,40 @@ def run(config_path: Path, composed_path: Path, *, dry_run: bool = False) -> int
         return 0
 
     config = load_config(config_path)
-    sources, errors = gather_sources(config)
+    gathered, errors = gather_sources(config)
     if errors:
         for err in errors:
             sys.stderr.write(f"agent-compose: {err}\n")
         return 1
+
+    machine_scopes = _normalize_scopes(config.get("scopes"))
+    sources = select_by_scope(gathered, machine_scopes)
+    excluded = len(gathered) - len(sources)
     if not sources:
+        reason = (
+            f"no sources matched this machine's scopes {machine_scopes}"
+            if machine_scopes is not None
+            else "no sources resolved (check `sources` / `roots`)"
+        )
         sys.stderr.write(
-            "agent-compose: config present but no sources resolved "
-            "(check `sources` / `roots`); refusing to write an empty composed.md\n"
+            f"agent-compose: config present but {reason}; "
+            "refusing to write an empty COMPOSED.md\n"
         )
         return 1
 
     body = compose(sources)
     load_points = resolve_load_points(config)
+    tail = f" ({excluded} excluded by scope)" if excluded else ""
 
     if dry_run:
-        print(f"would write {composed_path} ({len(sources)} source(s))")
+        print(f"would write {composed_path} ({len(sources)} source(s)){tail}")
         for harness, dst in sorted(load_points.items()):
             print(f"would link  {dst} -> {composed_path}  [{harness}]")
         return 0
 
     composed_path.parent.mkdir(parents=True, exist_ok=True)
     composed_path.write_text(body, encoding="utf-8")
-    print(f"wrote   {composed_path} ({len(sources)} source(s))")
+    print(f"wrote   {composed_path} ({len(sources)} source(s)){tail}")
     for harness, dst in sorted(load_points.items()):
         print(install_symlink(dst, composed_path) + f"  [{harness}]")
     return 0
