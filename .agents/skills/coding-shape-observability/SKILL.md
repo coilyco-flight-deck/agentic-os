@@ -14,7 +14,7 @@ observability, o11y, monitoring, metrics, traces, logs, datadog, prometheus, gra
 ## Vendor familiarity (from resume)
 
 - **Datadog** - Textio (custom Datadog + Fluent-bit setup), Bluelink-adjacent.
-- **New Relic** - Kapwing, Nava.
+- **New Relic** - prior platform roles.
 - **Prometheus + Grafana** - homelab default, also Textio-adjacent.
 - **Sentry** - personal stack, every coilysiren/* service ships a DSN.
 - **CloudWatch** - whenever AWS-native is the right reach.
