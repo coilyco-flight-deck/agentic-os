@@ -113,6 +113,33 @@
   pass_filenames: false
   stages: [pre-commit]
 
+- id: agent-compose-size
+  name: agent-compose source size budget
+  description: "Cap each AGENTS.COMPOSE.md and the repo's aggregate AGENTS.COMPOSE.md size. The composed file loads every session. See forgejo coilyco-flight-deck/agentic-os#138."
+  entry: check-agent-compose-size
+  language: python
+  always_run: true
+  pass_filenames: false
+  stages: [pre-commit]
+
+- id: agent-compose-dedup
+  name: agent-compose dedup
+  description: "Reject doctrine duplicated across AGENTS.COMPOSE.md sources or already present in the repo's AGENTS.md cascade. See forgejo coilyco-flight-deck/agentic-os#139."
+  entry: check-agent-compose-dedup
+  language: python
+  always_run: true
+  pass_filenames: false
+  stages: [pre-commit]
+
+- id: agent-compose-drift
+  name: agent-compose composed-file drift
+  description: "Verify ~/.config/agent-compose/COMPOSED.md is reproducible from the composer (not hand-edited or stale). Machine-state check; no-op without a config. See forgejo coilyco-flight-deck/agentic-os#140."
+  entry: check-agent-compose-drift
+  language: python
+  always_run: true
+  pass_filenames: false
+  stages: [pre-commit]
+
 - id: closes-issue
   name: commit closes a Forgejo issue (URL form)
   description: "Require a same-repo Forgejo issue URL close (closes/fixes/resolves https://forgejo.coilysiren.me/<owner>/<repo>/issues/N). Reject bare #N / owner/repo#N, which GitHub auto-closes by accident. See agentic-os-kai#496."

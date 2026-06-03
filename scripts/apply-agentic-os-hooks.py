@@ -96,6 +96,8 @@ DEFAULT_HOOK_IDS = [
     "dead-cross-links",
     "repo-pointer-skills",
     "misplaced-skills",
+    "agent-compose-size",
+    "agent-compose-dedup",
     "closes-issue",
     "conventional-commit",
     "trufflehog",

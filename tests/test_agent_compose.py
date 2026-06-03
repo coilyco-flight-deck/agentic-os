@@ -314,3 +314,37 @@ def test_run_no_scope_match_refuses(paths: dict[str, Path], tmp_path: Path) -> N
     rc = agent_compose.run(paths["config"], paths["composed"])
     assert rc == 1
     assert not paths["composed"].exists()
+
+
+# ---------- drift detection (forgejo #140) ----------
+
+def _written_config(paths: dict[str, Path], tmp_path: Path) -> None:
+    src = tmp_path / "AGENTS.COMPOSE.md"
+    write(src, "stable doctrine\n")
+    write(
+        paths["config"],
+        f"sources:\n  - {src}\n"
+        f"load_points:\n  claude: {paths['claude']}\n  codex: {paths['codex']}\n",
+    )
+
+
+def test_check_no_config_is_noop(paths: dict[str, Path]) -> None:
+    assert agent_compose.check(paths["config"], paths["composed"]) == 0
+
+
+def test_check_in_sync(paths: dict[str, Path], tmp_path: Path) -> None:
+    _written_config(paths, tmp_path)
+    agent_compose.run(paths["config"], paths["composed"])
+    assert agent_compose.check(paths["config"], paths["composed"]) == 0
+
+
+def test_check_detects_handedit(paths: dict[str, Path], tmp_path: Path) -> None:
+    _written_config(paths, tmp_path)
+    agent_compose.run(paths["config"], paths["composed"])
+    paths["composed"].write_text("hand-edited junk\n", encoding="utf-8")
+    assert agent_compose.check(paths["config"], paths["composed"]) == 1
+
+
+def test_check_detects_missing_output(paths: dict[str, Path], tmp_path: Path) -> None:
+    _written_config(paths, tmp_path)
+    assert agent_compose.check(paths["config"], paths["composed"]) == 1

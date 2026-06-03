@@ -75,6 +75,22 @@ repos:
         always_run: true
         pass_filenames: false
         stages: [pre-commit]
+      - id: agent-compose-size
+        name: agent-compose source size budget
+        entry: python -m agentic_os.check_agent_compose_size
+        language: python
+        additional_dependencies: [pyyaml]
+        always_run: true
+        pass_filenames: false
+        stages: [pre-commit]
+      - id: agent-compose-dedup
+        name: agent-compose dedup
+        entry: python -m agentic_os.check_agent_compose_dedup
+        language: python
+        additional_dependencies: [pyyaml]
+        always_run: true
+        pass_filenames: false
+        stages: [pre-commit]
       - id: closes-issue
         name: commit references a Forgejo issue
         entry: python -m agentic_os.check_commit_closes_issue

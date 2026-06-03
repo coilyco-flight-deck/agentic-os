@@ -293,14 +293,76 @@ def run(config_path: Path, composed_path: Path, *, dry_run: bool = False) -> int
     return 0
 
 
+def check(config_path: Path, composed_path: Path) -> int:
+    """Verify composed_path matches a fresh compose. Exit 1 on drift (#140).
+
+    No-op (return 0) when no config is present, mirroring run()'s opt-in. On
+    drift, prints a unified diff so the staleness is legible, then fails.
+    """
+    if not config_path.is_file():
+        print(f"agent-compose: no config at {config_path}; nothing to check (opt-in)")
+        return 0
+
+    config = load_config(config_path)
+    gathered, errors = gather_sources(config)
+    if errors:
+        for err in errors:
+            sys.stderr.write(f"agent-compose: {err}\n")
+        return 1
+    sources = select_by_scope(gathered, _normalize_scopes(config.get("scopes")))
+    if not sources:
+        sys.stderr.write("agent-compose: no sources resolved; cannot check drift\n")
+        return 1
+
+    expected = compose(sources)
+    actual = composed_path.read_text(encoding="utf-8") if composed_path.exists() else ""
+    if actual == expected:
+        print(f"agent-compose: {composed_path} in sync")
+        return 0
+
+    sys.stderr.write(
+        f"agent-compose: drift - {composed_path} is missing, stale, or hand-edited. "
+        "Run `agent-compose` to regenerate.\n"
+    )
+    import difflib
+
+    diff = difflib.unified_diff(
+        actual.splitlines(),
+        expected.splitlines(),
+        fromfile=f"{composed_path} (on disk)",
+        tofile="expected (fresh compose)",
+        lineterm="",
+    )
+    for line in list(diff)[:40]:
+        sys.stderr.write(line + "\n")
+    return 1
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument(
         "--dry-run", action="store_true", help="print the plan, change nothing"
+    )
+    group.add_argument(
+        "--check",
+        action="store_true",
+        help="verify COMPOSED.md is in sync with the sources; exit 1 on drift",
     )
     args = parser.parse_args()
     try:
+        if args.check:
+            return check(CONFIG_PATH, COMPOSED_PATH)
         return run(CONFIG_PATH, COMPOSED_PATH, dry_run=args.dry_run)
+    except RuntimeError as exc:
+        sys.stderr.write(f"agent-compose: {exc}\n")
+        return 1
+
+
+def check_main() -> int:
+    """Console entry for the drift pre-commit hook (check-agent-compose-drift)."""
+    try:
+        return check(CONFIG_PATH, COMPOSED_PATH)
     except RuntimeError as exc:
         sys.stderr.write(f"agent-compose: {exc}\n")
         return 1

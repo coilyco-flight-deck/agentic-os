@@ -28,6 +28,9 @@ Issues = "https://github.com/coilysiren/agentic-os/issues"
 
 [project.scripts]
 agent-compose = "agentic_os.agent_compose:main"
+check-agent-compose-size = "agentic_os.check_agent_compose_size:main"
+check-agent-compose-dedup = "agentic_os.check_agent_compose_dedup:main"
+check-agent-compose-drift = "agentic_os.agent_compose:check_main"
 validate-skills = "agentic_os.validate_skills:main"
 check-dead-links = "agentic_os.check_dead_links:main"
 check-commit-closes-issue = "agentic_os.check_commit_closes_issue:main"
