@@ -11,7 +11,7 @@ Eleven prefix families and five exact-name skills. Pick the prefix up front; the
 * `gaming-eco-*` - Eco modding (investigation, scaffolding, source-auditing).
 * `writing-*` - prose / voice / issue authoring surface (writing-voice-guide-linter, writing-bluesky, writing-refactor-plan, writing-to-issues).
 * `home-*` - smart-home control at My House (hue, sonos, cast).
-* `tooling-*` - agent-ecosystem meta (tooling-skillsmp, tooling-capability-scout, tooling-mcp-servers, tooling-supply-chain-audit, tooling-agents-md-drift-detector, tooling-security-boundary-discipline). `meta-tooling skills may stay in the personal-prefix` since they encode operating-context discipline.
+* `tooling-*` - agent-ecosystem meta (tooling-skillsmp, tooling-scout-capability, tooling-scout-displacement, tooling-mcp-servers, tooling-supply-chain-audit, tooling-agents-md-drift-detector, tooling-security-boundary-discipline). `meta-tooling skills may stay in the personal-prefix` since they encode operating-context discipline.
 * `vault-*` - Obsidian vault tooling (cli, markdown rules, vault rules).
 * `coding-*` - code-engineering recipes (Discord bot scaffolding, Terraform module library, GitHub PR workflow). Reusable build patterns, not tooling on the agent ecosystem itself.
 
