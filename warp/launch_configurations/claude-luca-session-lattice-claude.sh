@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
-# session-lattice claude working tab. COILY_COMMIT_SCOPE set by launch config.
+# session-lattice claude working tab.
 claude
