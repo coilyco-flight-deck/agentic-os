@@ -66,6 +66,22 @@ excludes = [
     "warp/tab_configs/**",
 ]
 
+# code-comments extended to YAML (#159). These pre-existing YAML files carry
+# rich teaching/config comment blocks (skill-discipline examples, the skills
+# category registry, warp launch configs); grandfathered so the rule enforces
+# net-new YAML. Cleanup tracked in #160.
+[tool.agentic-os.code-comments]
+excludes = [
+    ".agents/skills/categories.yaml",
+    ".agents/skills/tooling-issue-prioritization/references/p0-content-rules.yaml",
+    ".pre-commit-config.yaml",
+    ".pre-commit-hooks.yaml",
+    "actions/tag-bump/action.yml",
+    "docs/skill-discipline-example-categories.yaml",
+    "docs/skill-discipline-example-pre-commit-config.yaml",
+    "warp/launch_configurations/**",
+]
+
 [dependency-groups]
 dev = ["pytest>=8"]
 

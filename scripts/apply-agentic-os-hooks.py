@@ -104,9 +104,7 @@ DEFAULT_HOOK_IDS = [
 ]
 
 # Per-repo hook opt-outs. eco-* repos skip code-comments (Unity / C# conventions).
-PER_REPO_HOOK_SKIPS: dict[str, set[str]] = {
-    "infrastructure": {"code-comments"},
-}
+PER_REPO_HOOK_SKIPS: dict[str, set[str]] = {}
 ECO_HOOK_SKIPS = {"code-comments"}
 
 
