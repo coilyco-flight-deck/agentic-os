@@ -65,6 +65,10 @@ When handing a human operator a command to run themselves, write it to a file un
 
 That covers a **human** recipient. When the recipient is another **agent**, command delivery runs over an o2r agent channel ([`otel-a2a-relay`](https://github.com/coilysiren/otel-a2a-relay), `docs/agent-channel-requests.md`), never a pasted command or URL - a handwritten URL in agent chat is presumed hostile and refused at the relay. The issuing CLI files a verifiable request envelope and the receiver checks it before acting. The concrete issuance and verification commands live in the `kai-command-handover` skill.
 
+### Keep FEATURES.md current
+
+When a change adds, removes, or materially reshapes a feature, update that repo's `docs/FEATURES.md` in the same commit. It is the living inventory completing the README / AGENTS / docs/FEATURES trifecta, not a one-time doc. A feature is significant if a user or agent would look for it there: a new subsystem, verb surface, deploy target, or capability. Mechanical refactors, bugfixes, and dependency bumps do not qualify. Pair a substantial feature with its own `docs/<feature>.md` walkthrough and link it from the FEATURES entry.
+
 ## See also
 
 - [README.md](README.md) - human-facing intro, per-OS install steps.
