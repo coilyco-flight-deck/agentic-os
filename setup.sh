@@ -56,9 +56,8 @@ fi
 if command -v python3 >/dev/null 2>&1; then
   "$SCRIPT_DIR/scripts/install-agent-name.py"
   "$SCRIPT_DIR/scripts/install-session-pulse.py"
-  # Opt-in: composes the global agent-context file and points each harness's
-  # load point at it. No-ops unless ~/.config/agent-compose/agent-compose.yaml
-  # exists, so this is inert on hosts that have not opted in.
+  # Opt-in: composes the global agent-context file, symlinking harness load points to it.
+  # Inert unless ~/.config/agent-compose/agent-compose.yaml exists.
   PYTHONPATH="$SCRIPT_DIR" python3 -m agentic_os.agent_compose || true
 else
   echo "skipped agent self-name + session-pulse wiring (python3 not on PATH)"

@@ -44,7 +44,7 @@ Opt-in tooling that composes one global agent-context file from declared sources
 - **[chezmoi](https://www.chezmoi.io/)** - dotfile manager with per-machine targeting. The model for scoping context to each host.
 - **[Hiera](https://github.com/puppetlabs/hiera)** (Puppet) - hierarchical, scope-based data lookup. The conceptual twin of the machine-scope intersection that selects which sources compose.
 
-**Naming.** The field's vocabulary for this is **weave / layer / compose / overlay / blend**. We chose `compose` (assemble many inputs into one) over the earlier working name `meld`, which collides with the [GNOME Meld](https://meldmerge.org/) diff-and-merge tool both on search and on semantics (Meld resolves diffs, agent-compose assembles context).
+**Naming.** The field's vocabulary is **weave / layer / compose / overlay / blend**. We chose `compose` over the working name `meld`, which collides with [GNOME Meld](https://meldmerge.org/) on both search and semantics.
 
 ## Credits
 
