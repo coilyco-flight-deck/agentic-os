@@ -18,7 +18,7 @@ Usage (when run directly):
     python3 scripts/check-dead-links.py            # scan everything
     python3 scripts/check-dead-links.py path ...   # scan only the given files
 
-Canonical copy lives in coilysiren/agentic-os/scripts/. Each consumer repo
+Canonical copy lives in coilyco-flight-deck/agentic-os/scripts/. Each consumer repo
 gets a stamped copy via agentic-os-kai's apply-skill-discipline-hooks
 rollout. Exits 0 on clean, 1 with per-violation report on stderr.
 """

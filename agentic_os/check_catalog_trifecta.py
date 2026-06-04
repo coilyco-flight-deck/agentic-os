@@ -28,7 +28,7 @@ since YAML is machine-consumed and the prose home is the .md files.
 Usage (when run directly):
     python3 scripts/check-catalog-trifecta.py
 
-Canonical copy lives in coilysiren/agentic-os/scripts/. Each consumer
+Canonical copy lives in coilyco-flight-deck/agentic-os/scripts/. Each consumer
 repo gets a stamped copy via agentic-os-kai's apply-catalog-trifecta-hook
 rollout. Exits 0 on clean, 1 on any violation with a per-file report on
 stderr.

@@ -2,7 +2,7 @@
 #
 # Copy this file to your consumer repo at .agents/skills/categories.yaml and
 # trim or extend to fit your skill surface. Source of truth for the
-# `skill-conventions` hook from coilysiren/agentic-os.
+# `skill-conventions` hook from coilyco-flight-deck/agentic-os.
 #
 # Each entry under `categories` is either:
 #   - a prefix family (every skill whose directory name starts with the prefix

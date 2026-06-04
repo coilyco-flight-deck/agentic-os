@@ -11,7 +11,7 @@ Usage (when run directly):
     python3 scripts/validate-skills.py <name> ...   # validate only the named skills
     python3 scripts/validate-skills.py --report-only  # exit 0 even on failures
 
-Canonical copy lives in coilysiren/agentic-os/scripts/. Each consumer
+Canonical copy lives in coilyco-flight-deck/agentic-os/scripts/. Each consumer
 repo gets a stamped copy via agentic-os-kai's apply-skill-discipline-hooks
 rollout. Exits 0 on success, 1 on any failure with a per-violation report
 on stderr.

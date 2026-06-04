@@ -22,7 +22,7 @@ kubernetes, k8s, k3s, kubectl, helm, manifest, deployment, statefulset, daemonse
 
 ## Conventions
 
-- Manifests in [`coilysiren/infrastructure`](https://github.com/coilysiren/infrastructure). Apply via the repo's deploy scripts, not ad-hoc `kubectl apply`.
+- Manifests in [`coilyco-flight-deck/infrastructure`](https://github.com/coilyco-flight-deck/infrastructure). Apply via the repo's deploy scripts, not ad-hoc `kubectl apply`.
 - Namespaces match the service name. One service, one namespace, when reasonable.
 - Resource limits set explicitly (cluster is small, OOM evictions are real - see [`ops-investigation-k3s-pod-eviction`](../../../../agentic-os-kai/.agents/skills/ops-investigation-k3s-pod-eviction/SKILL.md)).
 

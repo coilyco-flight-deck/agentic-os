@@ -19,7 +19,7 @@ Sidequest currently works only on Warp Preview - the `coily dispatch` spawn and 
 
 The snippet body Kai accepted ahead of time:
 
-> Side quest. The next thing I say describes a piece of engineering work. Infer a sensible title from the description. File it as a GitHub issue against whichever coilysiren/* repo it most plausibly belongs to. Best guess from the content. Fall back to coilysiren/agentic-os-kai if nothing fits. Then run `coily dispatch interactive` on the new issue so it spawns in its own session. If this interrupted other work, resume that work after the dispatch lands.
+> Side quest. The next thing I say describes a piece of engineering work. Infer a sensible title from the description. File it as a GitHub issue against whichever coilysiren/* repo it most plausibly belongs to. Best guess from the content. Fall back to coilyco-bridge/agentic-os-kai if nothing fits. Then run `coily dispatch interactive` on the new issue so it spawns in its own session. If this interrupted other work, resume that work after the dispatch lands.
 
 Treat that as a $$...$$ Snippet expansion - a planned directive Kai accepted, not freshly dictated prose. Do not ask her to re-confirm the shape. The snippet text says "an issue" singular because that is the common case. The multi-repo fan-out below extends it. The snippet lives in Wispr Flow and is not edited here.
 

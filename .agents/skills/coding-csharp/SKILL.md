@@ -9,7 +9,7 @@ Umbrella for any C# / .NET work.
 
 ## Kai's actual C#
 
-Kai has put substantial first-class time into C#. Do not treat her as a C# beginner. The bulk of it is Eco game modding - [`eco-mods`](https://github.com/coilysiren/eco-mods) (private) and [`eco-mods-public`](https://github.com/coilysiren/eco-mods-public) - compiled against `Eco.ReferenceAssemblies`. That work is attribute-heavy, partial-class-heavy gameplay code: items, skills, recipes, plant definitions wired into the Eco TechTree.
+Kai has put substantial first-class time into C#. Do not treat her as a C# beginner. The bulk of it is Eco game modding - [`eco-mods`](https://github.com/coilyco-bridge/eco-mods) (private) and [`eco-mods-public`](https://github.com/coilyco-flight-deck/eco-mods-public) - compiled against `Eco.ReferenceAssemblies`. That work is attribute-heavy, partial-class-heavy gameplay code: items, skills, recipes, plant definitions wired into the Eco TechTree.
 
 Eco-specific modding mechanics live in the `gaming-eco-*` skill family. This skill is the general C# layer underneath that.
 

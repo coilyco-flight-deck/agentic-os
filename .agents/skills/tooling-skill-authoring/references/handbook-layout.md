@@ -30,7 +30,7 @@
 ├── scripts/
 │   ├── check-em-dashes.py                      # local voice-rule hook
 │   └── leak-check.py                           # local private-string denylist
-└── .pre-commit-config.yaml                     # subscribes to coilysiren/agentic-os hooks + local hooks
+└── .pre-commit-config.yaml                     # subscribes to coilyco-flight-deck/agentic-os hooks + local hooks
 ```
 
 **No skills outside `.agents/skills/`.** No skills inside other skills' directories. Flat is the only shape the loader supports.

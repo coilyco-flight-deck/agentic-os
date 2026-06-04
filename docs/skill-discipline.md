@@ -4,7 +4,7 @@ Pre-commit hooks and authoring docs for documentation and skill repositories.
 
 ## Hooks
 
-The validators live in the `agentic_os` Python package and ship through the managed `coilysiren/agentic-os` pre-commit block.
+The validators live in the `agentic_os` Python package and ship through the managed `coilyco-flight-deck/agentic-os` pre-commit block.
 
 - `validate-skills.py` - validates `.agents/skills/` against a spec at `.agents/skills/categories.yaml`. Checks frontmatter, prefix taxonomy, status lines, required sections, size caps, stale skill-name references.
 - `check-dead-links.py` - walks markdown inside `.agents/skills/`, fails if any inline `[text](path.md)` link does not resolve.

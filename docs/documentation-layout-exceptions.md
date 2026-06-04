@@ -1,6 +1,6 @@
 # Documentation-layout exceptions
 
-Every carve-out from the default `documentation-layout` rule: Markdown lives only at the root allowlist, `docs/*.md` (flat), or a skill dir, capped at 80 lines / 4000 chars. Enforced by [`check_documentation_layout.py`](https://github.com/coilysiren/agentic-os/blob/main/agentic_os/check_documentation_layout.py); per-repo config under `[tool.agentic-os.documentation-layout]` in `pyproject.toml`. File lists are a snapshot and drift; the mechanisms do not.
+Every carve-out from the default `documentation-layout` rule: Markdown lives only at the root allowlist, `docs/*.md` (flat), or a skill dir, capped at 80 lines / 4000 chars. Enforced by [`check_documentation_layout.py`](https://github.com/coilyco-flight-deck/agentic-os/blob/main/agentic_os/check_documentation_layout.py); per-repo config under `[tool.agentic-os.documentation-layout]` in `pyproject.toml`. File lists are a snapshot and drift; the mechanisms do not.
 
 ## Active in this repo
 

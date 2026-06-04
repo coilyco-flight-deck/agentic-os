@@ -2,7 +2,7 @@
 
 ## 6. Validators
 
-The structural validator and dead-link checker ship from [`coilysiren/agentic-os`](https://github.com/coilysiren/agentic-os) and are consumed via pre-commit. The em-dash check is a small local hook because the upstream is voice-neutral by design.
+The structural validator and dead-link checker ship from [`coilyco-flight-deck/agentic-os`](https://github.com/coilyco-flight-deck/agentic-os) and are consumed via pre-commit. The em-dash check is a small local hook because the upstream is voice-neutral by design.
 
 ### Documentation-wide validators
 
@@ -51,6 +51,6 @@ What it skips intentionally:
 
 ### Pre-commit wiring
 
-`.pre-commit-config.yaml` subscribes to `coilysiren/agentic-os` at a pinned tag for `skill-conventions`, `dead-cross-links`, and `commit-closes-issue`. The four local hooks (`trufflehog`, `leak-check`, `em-dash-check`, `setup-symlinks`, plus the `coily-trailer` prepare-commit-msg hook) stay as `repo: local` entries.
+`.pre-commit-config.yaml` subscribes to `coilyco-flight-deck/agentic-os` at a pinned tag for `skill-conventions`, `dead-cross-links`, and `commit-closes-issue`. The four local hooks (`trufflehog`, `leak-check`, `em-dash-check`, `setup-symlinks`, plus the `coily-trailer` prepare-commit-msg hook) stay as `repo: local` entries.
 
 Bump the `rev:` to pull upstream changes. Add new local checks as new `repo: local` hook entries.

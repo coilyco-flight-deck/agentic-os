@@ -2,7 +2,7 @@
 
 1. **Wait for the work description.** The trigger phrase alone is not enough - she still needs to describe the actual engineering work. If she hasn't yet, acknowledge briefly and wait.
 2. **Decide scope.** Single repo or multi-repo fan-out (see [fan-out](fan-out.md)). Default to single repo. Fan out only when the fan-out trigger is met.
-3. **Pick the repo.** Use `data/repo-registry.md` and `data/repo-digests/` to pick the most plausible `coilysiren/*` repo from the content. Fall back to `coilysiren/agentic-os-kai`. Do not ask which repo unless two are genuinely tied.
+3. **Pick the repo.** Use `data/repo-registry.md` and `data/repo-digests/` to pick the most plausible `coilysiren/*` repo from the content. Fall back to `coilyco-bridge/agentic-os-kai`. Do not ask which repo unless two are genuinely tied.
 4. **Infer a title.** Short, imperative, matches the repo's existing issue style. No emojis unless the repo's own issues use them.
 5. **File the issue.**
    ```bash

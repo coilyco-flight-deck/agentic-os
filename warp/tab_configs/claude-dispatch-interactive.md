@@ -1,6 +1,6 @@
 # `claude-dispatch-interactive`: spawn a Claude session in a new tab from a CLI
 
-A pattern for opening a new Warp tab whose payload is too dynamic, too large, or too structured to fit into a TOML literal. Used here to fire a `claude -p <multi-paragraph-prompt>` session in a new tab from a CLI invocation: `coily dispatch interactive <owner>/<repo>#<N>` (this repo's `coily` CLI lives at `github.com/coilysiren/coily`).
+A pattern for opening a new Warp tab whose payload is too dynamic, too large, or too structured to fit into a TOML literal. Used here to fire a `claude -p <multi-paragraph-prompt>` session in a new tab from a CLI invocation: `coily dispatch interactive <owner>/<repo>#<N>` (this repo's `coily` CLI lives at `github.com/coilyco-bridge/coily`).
 
 This doc walks the design top to bottom. If you know Warp's `tab_configs/` directory and the `warp://tab_config/<name>` URI scheme, you have all the prerequisites. A sibling doc, `wtab.md`, covers the simpler case where the dynamic params fit as TOML literals. Read that first if you want the lighter pattern.
 
@@ -83,7 +83,7 @@ The TOML stays small. A pre-registered file plus a single command line, no per-d
 - `~/.warp/tab_configs/claude-dispatch-interactive.toml` - the pre-registered tab config. Static.
 - `warp/launch_configurations/claude-dispatch-interactive.sh` - the shim. Reused by the launch_configuration sibling (`claude-dispatch-interactive.yaml`) and by this tab config.
 - `warp/launch_configurations/claude-dispatch-interactive.yaml` - launch config variant that fires this same shim but as a new window. Used by `coily dispatch interactive --surface window`.
-- `coily dispatch interactive` source: `github.com/coilysiren/coily`, see issues #270, #279, #280 for the design discussion.
+- `coily dispatch interactive` source: `github.com/coilyco-bridge/coily`, see issues #270, #279, #280 for the design discussion.
 
 ## See also
 
