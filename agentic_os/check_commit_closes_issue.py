@@ -86,20 +86,35 @@ ERROR_WRONG_REPO = (
 REMOTE_RE = re.compile(r"[:/]([^/:]+)/([^/]+?)(?:\.git)?/?$")
 
 
-def this_repo() -> tuple[str, str] | None:
-    """Return (owner, repo) lowercased from git remote 'origin', or None."""
+def _remote_url(name: str) -> str | None:
+    """Return the fetch URL for git remote `name`, or None if unset."""
     try:
         out = subprocess.check_output(
-            ["git", "config", "--get", "remote.origin.url"],
+            ["git", "config", "--get", f"remote.{name}.url"],
             text=True,
             stderr=subprocess.DEVNULL,
         ).strip()
     except (subprocess.CalledProcessError, FileNotFoundError):
         return None
-    m = REMOTE_RE.search(out)
-    if not m:
-        return None
-    return (m.group(1).lower(), m.group(2).lower())
+    return out or None
+
+
+def this_repo() -> tuple[str, str] | None:
+    """Return (owner, repo) lowercased for this repo, or None.
+
+    Keys off the canonical `forgejo` remote first, falling back to `origin`.
+    Forgejo is the source-of-truth tracker, so its remote names the owner/repo
+    the rule should enforce against. `origin` is the GitHub mirror in mirrored
+    repos and the fallback where no separate `forgejo` remote is configured.
+    """
+    for name in ("forgejo", "origin"):
+        url = _remote_url(name)
+        if url is None:
+            continue
+        m = REMOTE_RE.search(url)
+        if m:
+            return (m.group(1).lower(), m.group(2).lower())
+    return None
 
 
 def classify(body: str, this: tuple[str, str] | None) -> str:

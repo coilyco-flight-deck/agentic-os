@@ -3,7 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from agentic_os.check_commit_closes_issue import classify
+from agentic_os import check_commit_closes_issue as mod
+from agentic_os.check_commit_closes_issue import classify, this_repo
 
 THIS = ("coilysiren", "backend")
 URL = "https://forgejo.coilysiren.me/coilysiren/backend/issues/27"
@@ -65,3 +66,25 @@ def test_unknown_origin_accepts_any_forgejo_url() -> None:
 def test_http_scheme_accepted() -> None:
     http = "http://forgejo.coilysiren.me/coilysiren/backend/issues/27"
     assert classify(f"fix\n\ncloses {http}", THIS) == "ok"
+
+
+def test_this_repo_prefers_forgejo_remote(monkeypatch: pytest.MonkeyPatch) -> None:
+    # forgejo names the canonical owner/repo; origin is the GitHub mirror.
+    remotes = {
+        "forgejo": "https://forgejo.coilysiren.me/coilysiren/backend.git",
+        "origin": "git@github.com:coilyco-flight-deck/backend.git",
+    }
+    monkeypatch.setattr(mod, "_remote_url", lambda name: remotes.get(name))
+    assert this_repo() == ("coilysiren", "backend")
+
+
+def test_this_repo_falls_back_to_origin(monkeypatch: pytest.MonkeyPatch) -> None:
+    # No forgejo remote configured: fall back to origin.
+    remotes = {"origin": "git@github.com:coilysiren/backend.git"}
+    monkeypatch.setattr(mod, "_remote_url", lambda name: remotes.get(name))
+    assert this_repo() == ("coilysiren", "backend")
+
+
+def test_this_repo_none_when_no_remotes(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(mod, "_remote_url", lambda name: None)
+    assert this_repo() is None
