@@ -7,7 +7,16 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from agentic_os.check_documentation_layout import check_skill_flatness
+from agentic_os.check_documentation_layout import (
+    ROOT_MARKDOWN_ALLOWLIST,
+    check_skill_flatness,
+)
+
+
+def test_agents_compose_md_is_an_allowed_root_file() -> None:
+    # agent-compose's disjoint source is a repo-root convention; the layout
+    # rule must not reject it the way it rejects one-off root Markdown.
+    assert "AGENTS.COMPOSE.md" in ROOT_MARKDOWN_ALLOWLIST
 
 
 def write(path: Path, text: str = "x\n") -> None:

@@ -55,6 +55,9 @@ SIZE_CAP_EXEMPT_BASENAMES = {
 
 ROOT_MARKDOWN_ALLOWLIST = {
     "AGENTS.md",
+    # agent-compose's disjoint root source. Has its own size/dedup hooks
+    # (check-agent-compose-*), and no AGENTS.md/CLAUDE.md cascade loads it.
+    "AGENTS.COMPOSE.md",
     "CLAUDE.md",
     "CODE_OF_CONDUCT.md",
     "CONTRIBUTING.md",
