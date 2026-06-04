@@ -2,7 +2,7 @@
 #
 # These hooks are stamped into each consumer repo by agentic-os-kai's
 # `make apply-skill-discipline-hooks` rollout. The rollout copies
-# validate-skills.py and check-dead-links.py from coilysiren/agentic-os/scripts/
+# validate-skills.py and check-dead-links.py from coilyco-flight-deck/agentic-os/scripts/
 # into the consumer's own scripts/ dir, then upserts a managed block in
 # .pre-commit-config.yaml that looks like this:
 

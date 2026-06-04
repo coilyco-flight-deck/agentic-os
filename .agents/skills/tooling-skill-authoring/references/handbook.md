@@ -2,7 +2,7 @@
 
 **Purpose.** Single source of truth for everything uniform and structured about `<personal-os-repo>/.agents/skills/`. Read the linked sections cold and you can recreate the repo's skill organization from scratch: the category taxonomy, the canonical SKILL.md shape per category, the validator, the templates, the pre-commit wiring, the cross-link rules, and the rules for adding a new category.
 
-This handbook is paired with [`categories.yaml`](../../categories.yaml) (at `.agents/skills/categories.yaml`), the machine-readable spec consumed by the `coilysiren/agentic-os` skill-discipline validator. When the two disagree, the YAML is authoritative for the validator and these files should be updated to match.
+This handbook is paired with [`categories.yaml`](../../categories.yaml) (at `.agents/skills/categories.yaml`), the machine-readable spec consumed by the `coilyco-flight-deck/agentic-os` skill-discipline validator. When the two disagree, the YAML is authoritative for the validator and these files should be updated to match.
 
 The handbook is split into topical references so each stays under the documentation-layout caps. Read the one you need:
 

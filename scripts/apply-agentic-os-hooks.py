@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Roll out the coilysiren/agentic-os pre-commit hook suite to every catalog repo.
+"""Roll out the coilyco-flight-deck/agentic-os pre-commit hook suite to every catalog repo.
 
 Inserts (or refreshes) a single managed `repo: <forgejo>/coilyco-flight-deck/agentic-os`
 block in each consumer's `.pre-commit-config.yaml`. Block is delimited by marker
 comments so re-runs are idempotent. Replaces the older per-hook stamping
-rollouts that lived in coilysiren/agentic-os-kai/scripts/.
+rollouts that lived in coilyco-bridge/agentic-os-kai/scripts/.
 
 For each repo checked out under ~/projects/<org>/<name> across every org dir
 (coilysiren, coilyco-bridge, coilyco-flight-deck, post org-migration):

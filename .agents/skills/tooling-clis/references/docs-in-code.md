@@ -16,4 +16,4 @@ The Body ends with a one-liner: "for command behavior, run `coily X help`."
 
 ## Applying it to coily dispatch
 
-`coily dispatch` is the first command to take this shape. The current `coily-dispatch` skill body mixes the dictation-collision table (genuine tier-1/2 fuzzy-matching content, stays) with behavioral reference - headless vs interactive, detach mechanics, refusal conditions (tiers 3 to 5, moves into the CLI). The dispatch-side change is tracked on `coilysiren/coily`. This skill is the general model that change is one instance of.
+`coily dispatch` is the first command to take this shape. The current `coily-dispatch` skill body mixes the dictation-collision table (genuine tier-1/2 fuzzy-matching content, stays) with behavioral reference - headless vs interactive, detach mechanics, refusal conditions (tiers 3 to 5, moves into the CLI). The dispatch-side change is tracked on `coilyco-bridge/coily`. This skill is the general model that change is one instance of.
