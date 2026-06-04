@@ -2,7 +2,9 @@
 
 Continues the description-budget rules in [`handbook-frontmatter.md`](handbook-frontmatter.md).
 
-Target bands:
+**The hard cap is `categories.yaml:max_description_bytes`, not these bands.** The bands below are soft authoring targets written against the public agentic-os default of 500 bytes. A repo that tightens the validator wins: agentic-os-kai enforces 200, so there the upper bands (and the "400-500" exception) are unreachable - aim for pointer/normal-task sizing and treat 200 as the wall. Check your repo's `categories.yaml` before sizing, not these numbers from memory.
+
+Target bands (public 500-byte default):
 
 * **Pointer skills** - under 160 chars. Use this when the body mostly points at a canonical doc elsewhere.
 * **Normal task skills** - 120-200 chars. Most coding, writing, gaming, vault, and tool-usage skills should fit here.

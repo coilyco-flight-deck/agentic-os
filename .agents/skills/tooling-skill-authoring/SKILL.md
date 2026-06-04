@@ -41,7 +41,7 @@ Four high-signal rules each carry decision reasoning in [`references/opinionated
 - **Skills are flat, not nested** - every skill is a peer dir under `.agents/skills/`. Nesting is invisible to the loader.
 - **Bias toward Python helpers, not pure-prompt skills** - parsing, globbing, SQLite, date math go in committed `python3`. The LLM tier does synthesis, not parsing.
 
-Frontmatter-alias discipline (500-byte description ceiling, router-parent carve-out) lives in [`references/frontmatter-aliases.md`](references/frontmatter-aliases.md).
+Frontmatter-alias discipline (validator-enforced description ceiling - `categories.yaml:max_description_bytes`, default 500, kai-parity target 200 - and the router-parent carve-out) lives in [`references/frontmatter-aliases.md`](references/frontmatter-aliases.md).
 
 ## Extended discipline
 
