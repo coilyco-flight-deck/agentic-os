@@ -233,8 +233,10 @@ def load_config(config_path: Path) -> dict:
 def resolve_load_points(config: dict) -> dict[str, Path]:
     """Merge configured load-point overrides over the built-in defaults.
 
-    OpenClaw (and any other extra harness) is included only when its value is
-    set and truthy, keeping the deferred third symlink opt-in.
+    A truthy value sets (or adds) a harness's load point. An explicit falsy
+    value (`null` / `false`) opts a harness out, including a default one - so a
+    Claude-only machine sets `codex: null` and a Codex-only machine sets
+    `claude: null`. OpenClaw stays opt-in: it is wired only when given a path.
     """
     points = dict(DEFAULT_LOAD_POINTS)
     overrides = config.get("load_points") or {}
@@ -242,7 +244,7 @@ def resolve_load_points(config: dict) -> dict[str, Path]:
         for harness, value in overrides.items():
             if value:
                 points[harness] = _expand(value)
-            elif harness in points and harness not in DEFAULT_LOAD_POINTS:
+            else:
                 points.pop(harness, None)
     return points
 
