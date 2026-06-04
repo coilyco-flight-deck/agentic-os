@@ -11,4 +11,4 @@ Two Warp channels on the Mac daily driver. **Preview is the default-clicked term
 
 URL schemes are channel-specific. `warp://` always lands in Stable, `warppreview://` always lands in Preview. There is no macOS LaunchServices "default Warp" toggle that flips this. Tooling that fires Warp URIs picks the channel by scheme at call site.
 
-Preview was made the daily driver after warpdotdev/Warp#9379 (the `tab_config` URI handler) landed - that handler shipped to Preview builds dated 2026-05-13 or later, Stable builds 2026-05-15 or later. See `warp/README.md` for the install playbook (brew install, manual `settings.toml` symlink swap, `scripts/set-warp-default-editor.sh` to rebind file-type defaults via `duti` + `lsregister`).
+Preview was made the daily driver after warpdotdev/Warp#9379 (the `tab_config` URI handler) landed - that handler shipped to Preview builds dated 2026-05-13 or later, Stable builds 2026-05-15 or later. See `docs/warp-host-setup.md` for the install playbook (brew install, manual `settings.toml` symlink swap, `scripts/set-warp-default-editor.sh` to rebind file-type defaults via `duti` + `lsregister`).

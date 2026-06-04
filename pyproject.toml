@@ -62,7 +62,6 @@ excludes = [
     "CHANGELOG.md",
     "visual/**",
     "voice/README.md",
-    "warp/README.md",
     "warp/launch_configurations/**",
     "warp/tab_configs/**",
 ]

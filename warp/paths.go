@@ -7,7 +7,7 @@ import (
 	"runtime"
 )
 
-// HostPaths is the resolved per-OS layout. See docs/warp-paths.md.
+// HostPaths is the resolved per-OS layout. See docs/warp.md.
 type HostPaths struct {
 	OS              string
 	RepoRoot        string

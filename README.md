@@ -18,7 +18,7 @@ Full breakdown: [docs/repo-layout.md](docs/repo-layout.md).
 
 ```bash
 ./setup.sh                # zsh + gpg-ssm symlinks
-coily exec warp apply     # warp config (see warp/README.md)
+coily exec warp apply     # warp config (see docs/warp.md)
 ```
 
 `setup.sh` is idempotent. It detects the host via `uname -s`, symlinks `~/.zshrc` and the gpg-ssm wrapper, and wires the agent self-name plus session-pulse hooks into `~/.claude/settings.json`. Pre-existing real files are backed up to `<path>.bak` on first run. Per-host steps and the git gpg wiring: [docs/install.md](docs/install.md).
