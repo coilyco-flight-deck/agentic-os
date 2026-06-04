@@ -10,6 +10,7 @@ import (
 // HostPaths is the resolved per-OS layout. See docs/warp.md.
 type HostPaths struct {
 	OS              string
+	Channel         string // macOS Warp channel ("preview"/"stable"); empty off darwin
 	RepoRoot        string
 	WorkspaceDir    string
 	StartupDir      string
@@ -28,8 +29,9 @@ type HostPaths struct {
 
 const themeFileName = "coilysiren-sombra-wallpaper.yaml"
 
-// resolveHostPaths builds the layout for the current OS.
-func resolveHostPaths() (*HostPaths, error) {
+// resolveHostPaths builds the layout for the current OS. On darwin, channel
+// selects the Warp channel ("" auto-detects); ignored elsewhere. See docs/warp.md.
+func resolveHostPaths(channel string) (*HostPaths, error) {
 	repoRoot, err := findRepoRoot()
 	if err != nil {
 		return nil, err
@@ -61,11 +63,16 @@ func resolveHostPaths() (*HostPaths, error) {
 		}
 		h.ThemeDir = filepath.Join(roaming, "warp", "Warp", "data", "themes")
 	case "darwin":
-		h.ConfigDir = filepath.Join(home, ".warp")
-		// Kai runs Warp Preview on macOS, so target the Preview bundle's DB.
-		// (Preview ships on every platform, but on Windows Kai runs Stable.)
+		// Two Warp channels coexist; pick config dir and DB as a matched pair.
+		// Preview (default) at ~/.warp-preview, Stable at ~/.warp. See docs/warp.md.
+		ch, cerr := resolveDarwinChannel(channel)
+		if cerr != nil {
+			return nil, cerr
+		}
+		h.Channel = ch.Name
+		h.ConfigDir = filepath.Join(home, ch.ConfigRel)
 		h.SQLitePath = filepath.Join(home, "Library", "Application Support",
-			"dev.warp.Warp-Preview", "warp.sqlite")
+			ch.Bundle, "warp.sqlite")
 	case "linux":
 		h.ConfigDir = filepath.Join(home, ".config", "warp-terminal")
 		h.SQLitePath = filepath.Join(home, ".local", "state", "warp-terminal", "warp.sqlite")
