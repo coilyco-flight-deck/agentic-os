@@ -129,6 +129,20 @@ def test_load_point_override(tmp_path: Path) -> None:
     assert points["claude"] == custom
 
 
+def test_codex_disabled_via_null(tmp_path: Path) -> None:
+    points = agent_compose.resolve_load_points(
+        {"load_points": {"claude": str(tmp_path / "c.md"), "codex": None}}
+    )
+    assert set(points) == {"claude"}
+
+
+def test_claude_disabled_via_false(tmp_path: Path) -> None:
+    points = agent_compose.resolve_load_points(
+        {"load_points": {"claude": False, "codex": str(tmp_path / "x.md")}}
+    )
+    assert set(points) == {"codex"}
+
+
 # ---------- source discovery via roots (forgejo #136) ----------
 
 def test_discover_finds_source_files(tmp_path: Path) -> None:
