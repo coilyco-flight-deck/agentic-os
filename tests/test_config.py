@@ -9,7 +9,9 @@ from agentic_os.config import (
     get_int_option,
     is_enabled,
     is_excluded,
+    iter_workspace_repos,
     load_excludes,
+    projects_root,
 )
 
 
@@ -172,3 +174,72 @@ def test_is_excluded(path: str, patterns: list[str], expected: bool) -> None:
 
 def test_is_excluded_empty_patterns() -> None:
     assert is_excluded("anything.md", []) is False
+
+
+# ---------- projects_root ----------
+
+def test_projects_root_explicit_wins(monkeypatch, tmp_path: Path) -> None:
+    monkeypatch.setenv("PROJECTS_ROOT", "/should/be/ignored")
+    assert projects_root(tmp_path) == tmp_path
+
+
+def test_projects_root_env(monkeypatch, tmp_path: Path) -> None:
+    monkeypatch.setenv("PROJECTS_ROOT", str(tmp_path))
+    assert projects_root() == tmp_path
+
+
+def test_projects_root_default(monkeypatch) -> None:
+    monkeypatch.delenv("PROJECTS_ROOT", raising=False)
+    assert projects_root() == Path.home() / "projects"
+
+
+# ---------- iter_workspace_repos ----------
+
+def _make_repo(path: Path) -> None:
+    (path / ".git").mkdir(parents=True)
+
+
+def test_iter_workspace_repos_spans_org_dirs(tmp_path: Path) -> None:
+    # ~/projects layout: org dirs holding repos, no .git on the org dirs.
+    _make_repo(tmp_path / "coilysiren" / "repo-a")
+    _make_repo(tmp_path / "coilyco-bridge" / "repo-b")
+    _make_repo(tmp_path / "coilyco-flight-deck" / "repo-c")
+    repos = iter_workspace_repos(tmp_path)
+    # Sorted by (org dir, repo name): bridge, flight-deck, coilysiren.
+    assert [r.name for r in repos] == ["repo-b", "repo-c", "repo-a"]
+    assert (tmp_path / "coilyco-bridge" / "repo-b") in repos
+
+
+def test_iter_workspace_repos_single_org_root(tmp_path: Path) -> None:
+    # $PROJECTS_ROOT pointed straight at one org dir: children carry .git.
+    _make_repo(tmp_path / "repo-a")
+    _make_repo(tmp_path / "repo-b")
+    repos = iter_workspace_repos(tmp_path)
+    assert [r.name for r in repos] == ["repo-a", "repo-b"]
+
+
+def test_iter_workspace_repos_skips_hidden(tmp_path: Path) -> None:
+    _make_repo(tmp_path / "coilysiren" / "repo-a")
+    # .dispatch-worktrees scaffolding under an org dir, and a hidden org dir.
+    _make_repo(tmp_path / "coilysiren" / ".dispatch-worktrees" / "wt")
+    _make_repo(tmp_path / ".hidden-org" / "repo-x")
+    repos = iter_workspace_repos(tmp_path)
+    assert [r.name for r in repos] == ["repo-a"]
+
+
+def test_iter_workspace_repos_skips_non_git_dirs(tmp_path: Path) -> None:
+    _make_repo(tmp_path / "coilysiren" / "repo-a")
+    (tmp_path / "coilysiren" / "not-a-repo").mkdir(parents=True)
+    repos = iter_workspace_repos(tmp_path)
+    assert [r.name for r in repos] == ["repo-a"]
+
+
+def test_iter_workspace_repos_missing_root(tmp_path: Path) -> None:
+    assert iter_workspace_repos(tmp_path / "nope") == []
+
+
+def test_iter_workspace_repos_honors_env(monkeypatch, tmp_path: Path) -> None:
+    _make_repo(tmp_path / "coilysiren" / "repo-a")
+    monkeypatch.setenv("PROJECTS_ROOT", str(tmp_path))
+    repos = iter_workspace_repos()
+    assert [r.name for r in repos] == ["repo-a"]

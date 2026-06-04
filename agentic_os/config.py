@@ -18,6 +18,7 @@ paths. Patterns and paths use forward slashes on every platform.
 """
 from __future__ import annotations
 
+import os
 import re
 import sys
 from pathlib import Path, PurePosixPath
@@ -29,6 +30,64 @@ else:
     import tomli as tomllib
 
 REPO_ROOT = Path.cwd()
+
+
+# Workspace enumeration: one shared walk of ~/projects/<org>/* git trees, so
+# cross-repo tooling spans every org dir. See coilysiren/agentic-os-kai#560.
+
+
+def projects_root(root: Path | None = None) -> Path:
+    """Root holding the per-org checkout dirs. Override with $PROJECTS_ROOT.
+
+    ~/projects now holds per-org checkout dirs (coilysiren/, coilyco-bridge/,
+    coilyco-flight-deck/), each a plain dir of git working trees rather than a
+    repo itself, mirroring the GitHub org migration. This defaults to that
+    ~/projects (also the global default cwd). An explicit `root` argument wins
+    over the env var (used by tests).
+    """
+    if root is not None:
+        return root
+    env = os.environ.get("PROJECTS_ROOT")
+    if env:
+        return Path(env).expanduser()
+    return Path.home() / "projects"
+
+
+def iter_workspace_repos(root: Path | None = None) -> list[Path]:
+    """Every git working tree in the workspace, owner-agnostic.
+
+    Walks each immediate child of `projects_root()`:
+      * a child that is itself a git working tree (carries .git) is yielded
+        directly - this is the single-org-root layout (root already points at
+        an org dir like ~/projects/coilysiren).
+      * otherwise the child is a dir-of-checkouts (an org dir like coilysiren/,
+        coilyco-bridge/, coilyco-flight-deck/) and its own git-working-tree
+        children are yielded.
+
+    Handling both shapes means the default ~/projects root covers every org
+    dir, while a $PROJECTS_ROOT pointed straight at one org dir still works (it
+    mirrors the old single-root behaviour). Hidden dirs (.dispatch-worktrees
+    and other scaffolding) are skipped at both levels. Returns repo directory
+    Paths sorted by (org dir, repo name).
+    """
+    base = projects_root(root)
+    if not base.is_dir():
+        return []
+    repos: list[Path] = []
+    for child in sorted(base.iterdir()):
+        if not child.is_dir() or child.name.startswith("."):
+            continue
+        if (child / ".git").exists():
+            repos.append(child)
+            continue
+        for grandchild in sorted(child.iterdir()):
+            if (
+                grandchild.is_dir()
+                and not grandchild.name.startswith(".")
+                and (grandchild / ".git").exists()
+            ):
+                repos.append(grandchild)
+    return repos
 
 
 def _load_hook_section(hook_id: str, repo_root: Path | None = None) -> dict:

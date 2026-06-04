@@ -1,15 +1,32 @@
 #!/usr/bin/env bash
-# Enumerate dirty repos under ~/projects/coilysiren/*. See docs/git-diff-global.md.
+# Enumerate dirty repos across every git working tree, two levels deep under
+# ~/projects/<org>/*. Override the root with $PROJECTS_ROOT. See agentic-os-kai#560.
 
 set -euo pipefail
 
 mode="${1:-status}"
-root="${COILYSIREN_ROOT:-$HOME/projects/coilysiren}"
+root="${PROJECTS_ROOT:-$HOME/projects}"
 
+# Collect repo working trees. A $root child carrying .git is itself a repo
+# (single-org-root layout), otherwise it is an org dir holding the repos.
 shopt -s nullglob
+repos=()
+for child in "$root"/*/; do
+  child=${child%/}
+  if [ -e "$child/.git" ]; then
+    repos+=("$child")
+  else
+    for r in "$child"/*/; do
+      r=${r%/}
+      [ -e "$r/.git" ] && repos+=("$r")
+    done
+  fi
+done
+
 any=0
-for d in "$root"/*/.git; do
-  r=${d%/.git}
+# ${arr[@]+...} guard: empty-array expansion under `set -u` is an error on
+# bash 3.2 (the macOS default).
+for r in ${repos[@]+"${repos[@]}"}; do
   name=${r##*/}
 
   case "$mode" in

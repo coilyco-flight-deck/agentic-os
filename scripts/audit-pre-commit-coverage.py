@@ -2,9 +2,11 @@
 """Assert every catalog repo's .pre-commit-config.yaml references the
 expected coilysiren/agentic-os hook IDs.
 
-Walks `~/projects/coilysiren/*` (or `--source github` to query the
+Walks every git working tree under ~/projects/<org>/* via
+agentic_os.config.iter_workspace_repos (or `--source github` to query the
 contents API), reads each repo's `.pre-commit-config.yaml`, and reports
-which expected hook IDs are missing.
+which expected hook IDs are missing. Override the local root with
+$PROJECTS_ROOT. See coilysiren/agentic-os-kai#560.
 
 The expected set is the hook IDs declared in this repo's
 `.pre-commit-hooks.yaml`. Run this after a `apply-agentic-os-hooks.py`
@@ -30,6 +32,9 @@ import sys
 from pathlib import Path
 from typing import Any
 
+REPO_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO_ROOT))
+
 try:
     import yaml
 except ModuleNotFoundError:
@@ -38,10 +43,10 @@ except ModuleNotFoundError:
     )
     sys.exit(2)
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+from agentic_os import config as cfg  # noqa: E402
+
 HOOKS_FILE = REPO_ROOT / ".pre-commit-hooks.yaml"
 OWNER = "coilysiren"
-SIBLINGS_ROOT = Path.home() / "projects" / "coilysiren"
 AGENTIC_OS_URL = "https://github.com/coilysiren/agentic-os"
 
 
@@ -74,8 +79,8 @@ def list_active_repos() -> list[str]:
     return [line.strip() for line in out.splitlines() if line.strip()]
 
 
-def read_local_config(repo: str) -> str | None:
-    path = SIBLINGS_ROOT / repo / ".pre-commit-config.yaml"
+def read_local_config(repo_dir: Path) -> str | None:
+    path = repo_dir / ".pre-commit-config.yaml"
     if not path.is_file():
         return None
     return path.read_text(encoding="utf-8", errors="replace")
@@ -102,6 +107,17 @@ def read_remote_config(repo: str) -> str | None:
         return None
 
 
+def _is_agentic_os_repo(repo_url: str) -> bool:
+    """Match the agentic-os upstream-ref entry regardless of host or owner.
+
+    The managed block points at the Forgejo mirror
+    (forgejo.coilysiren.me/coilyco-flight-deck/agentic-os) while the GitHub
+    mirror uses github.com/coilysiren/agentic-os. Match on the trailing
+    `/agentic-os` path component so either lands.
+    """
+    return repo_url.rstrip("/").endswith("/agentic-os")
+
+
 def referenced_hook_ids(config_text: str) -> set[str]:
     """Pull hook IDs from the agentic-os upstream-ref block(s)."""
     try:
@@ -113,7 +129,7 @@ def referenced_hook_ids(config_text: str) -> set[str]:
         if not isinstance(entry, dict):
             continue
         repo = entry.get("repo", "")
-        if repo != AGENTIC_OS_URL:
+        if not _is_agentic_os_repo(repo):
             continue
         for hook in entry.get("hooks") or []:
             if isinstance(hook, dict) and "id" in hook:
@@ -121,9 +137,9 @@ def referenced_hook_ids(config_text: str) -> set[str]:
     return out
 
 
-def audit_repo(repo: str, expected: list[str], source: str) -> dict[str, Any]:
-    reader = read_local_config if source == "local" else read_remote_config
-    config_text = reader(repo)
+def audit_config(
+    repo: str, config_text: str | None, expected: list[str]
+) -> dict[str, Any]:
     if config_text is None:
         return {"repo": repo, "status": "no-config", "missing": expected}
     referenced = referenced_hook_ids(config_text)
@@ -137,33 +153,51 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=(__doc__ or "").splitlines()[0])
     ap.add_argument(
         "--source", choices=["local", "github"], default="local",
-        help="local: walk ~/projects/coilysiren/ (default). github: query the contents API."
+        help="local: walk ~/projects/<org>/* on disk (default). github: query the contents API."
     )
     ap.add_argument("--repo", help="audit a single repo by name")
     ap.add_argument("--skip", nargs="*", default=[])
     args = ap.parse_args(argv)
 
     expected = expected_hook_ids()
-    if args.repo:
-        repos = [args.repo]
-    else:
-        repos = [r for r in list_active_repos() if r not in args.skip]
+    skip = set(args.skip)
 
-    print(
-        f"Auditing {len(repos)} repo(s) against {len(expected)} expected "
-        f"hook(s) from {AGENTIC_OS_URL}/.pre-commit-hooks.yaml"
-    )
-    print(f"Source: {args.source}")
-    print()
-
+    # Local mode drives off the on-disk checkout set so it spans every org dir.
+    # Github mode keeps querying the coilysiren owner via the contents API.
     results = []
-    for repo in repos:
-        try:
-            results.append(audit_repo(repo, expected, args.source))
-        except RuntimeError as exc:
-            results.append(
-                {"repo": repo, "status": "error", "missing": [], "error": str(exc)}
-            )
+    if args.source == "local":
+        dirs = cfg.iter_workspace_repos()
+        if args.repo:
+            dirs = [d for d in dirs if d.name == args.repo]
+        else:
+            dirs = [d for d in dirs if d.name not in skip]
+        print(
+            f"Auditing {len(dirs)} repo(s) against {len(expected)} expected "
+            f"hook(s) from {AGENTIC_OS_URL}/.pre-commit-hooks.yaml"
+        )
+        print(f"Source: {args.source}")
+        print()
+        for d in dirs:
+            results.append(audit_config(d.name, read_local_config(d), expected))
+    else:
+        names = [args.repo] if args.repo else [
+            r for r in list_active_repos() if r not in skip
+        ]
+        print(
+            f"Auditing {len(names)} repo(s) against {len(expected)} expected "
+            f"hook(s) from {AGENTIC_OS_URL}/.pre-commit-hooks.yaml"
+        )
+        print(f"Source: {args.source}")
+        print()
+        for name in names:
+            try:
+                results.append(
+                    audit_config(name, read_remote_config(name), expected)
+                )
+            except RuntimeError as exc:
+                results.append(
+                    {"repo": name, "status": "error", "missing": [], "error": str(exc)}
+                )
 
     by_status: dict[str, list[dict[str, Any]]] = {}
     for r in results:

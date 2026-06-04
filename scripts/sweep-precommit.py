@@ -10,6 +10,11 @@ run-then-revert dance. Per-hook exclude: regexes still apply (no flag disables
 them); --all-files is the "rerun over everything" lever.
 
 Reports a per-repo Passed/Failed summary plus the failing hook ids.
+
+Spans every git working tree under ~/projects/<org>/* via
+agentic_os.config.iter_workspace_repos, not just the org dir the running
+agentic-os checkout sits in. Override the root with $PROJECTS_ROOT.
+See coilysiren/agentic-os-kai#560.
 """
 from __future__ import annotations
 
@@ -19,7 +24,10 @@ import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-WORKSPACE = REPO.parent
+sys.path.insert(0, str(REPO))
+
+from agentic_os import config as cfg  # noqa: E402
+
 TIMEOUT = 300
 
 # Hooks that rewrite files in place. Stripped from the temp config so the
@@ -112,15 +120,11 @@ def run_for_repo(repo: Path) -> dict:
 
 
 def main() -> int:
-    repos = sorted(
-        d for d in WORKSPACE.iterdir()
-        if d.is_dir() and (d / ".git").exists()
-        and (d / ".pre-commit-config.yaml").is_file()
-    )
+    all_repos = cfg.iter_workspace_repos()
+    repos = [d for d in all_repos if (d / ".pre-commit-config.yaml").is_file()]
     no_config = sorted(
-        d.name for d in WORKSPACE.iterdir()
-        if d.is_dir() and (d / ".git").exists()
-        and not (d / ".pre-commit-config.yaml").is_file()
+        d.name for d in all_repos
+        if not (d / ".pre-commit-config.yaml").is_file()
     )
 
     results = {r.name: run_for_repo(r) for r in repos}

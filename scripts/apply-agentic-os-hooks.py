@@ -6,8 +6,8 @@ block in each consumer's `.pre-commit-config.yaml`. Block is delimited by marker
 comments so re-runs are idempotent. Replaces the older per-hook stamping
 rollouts that lived in coilysiren/agentic-os-kai/scripts/.
 
-For each repo checked out under ~/projects/coilysiren/<name> (any owner -
-coilysiren, coilyco-bridge, coilyco-flight-deck, post org-migration):
+For each repo checked out under ~/projects/<org>/<name> across every org dir
+(coilysiren, coilyco-bridge, coilyco-flight-deck, post org-migration):
   1. Read or create `.pre-commit-config.yaml`.
   2. Strip legacy stamped `repo: local` blocks for the hooks now centralized
      here (catalog-block-present, catalog-doc-size, catalog-trifecta,
@@ -30,10 +30,11 @@ A repo carrying a .agentic-os-ignore file at its root is skipped entirely
 (declarative, repo-owned opt-out). Use --skip for one-off exclusions, the
 marker for durable ones. Honored fail-closed: presence skips, no override.
 
-Stdlib only. Drives off the on-disk checkout set (every git working tree
-under ~/projects/coilysiren), so it is owner-agnostic: the org migration of
-active repos to coilyco-bridge / coilyco-flight-deck no longer strands them
-the way a single hardcoded GitHub owner did. See coilysiren/agentic-os-kai#553.
+Drives off the on-disk checkout set via agentic_os.config.iter_workspace_repos
+(every git working tree under ~/projects/<org>/*), so it is owner-agnostic:
+the org migration of active repos to coilyco-bridge / coilyco-flight-deck no
+longer strands them the way a single hardcoded root did. Override the root
+with $PROJECTS_ROOT. See coilysiren/agentic-os-kai#553 and #560.
 
 See coilysiren/agentic-os#59 for the convention design.
 """
@@ -45,8 +46,11 @@ import subprocess
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from agentic_os import config as cfg  # noqa: E402
+
 DEFAULT_REV = "v0.14.0"
-SIBLINGS_ROOT = Path.home() / "projects" / "coilysiren"
 
 # A repo carrying this marker at its root opts out of all baseline
 # normalization, fail-closed. Remove the file to re-enroll.
@@ -134,24 +138,19 @@ repos:
 {managed_block(rev, hook_ids)}"""
 
 
-def list_local_repos() -> list[str]:
-    """Every git working tree checked out under ~/projects/coilysiren.
+def list_local_repo_dirs() -> list[Path]:
+    """Every git working tree checked out under ~/projects/<org>/*.
 
     Owner-agnostic by design: this is a local-fleet tool (it runs
     `pre-commit install` inside each checkout), so the on-disk set is both
     the authoritative candidate list and the only set it can act on. Driving
-    off disk instead of `gh repo list <single-owner>` means the org migration
+    off disk via config.iter_workspace_repos() instead of `gh repo list
+    <single-owner>` (or a single hardcoded org dir) means the org migration
     (coilyco-bridge / coilyco-flight-deck) can't silently strand repos.
     apply_to_repo() still filters the source repo, the opt-out marker, and
     non-git dirs; --skip handles one-off exclusions.
     """
-    if not SIBLINGS_ROOT.is_dir():
-        return []
-    return sorted(
-        p.name
-        for p in SIBLINGS_ROOT.iterdir()
-        if p.is_dir() and (p / ".git").exists()
-    )
+    return cfg.iter_workspace_repos()
 
 
 def strip_legacy_blocks(text: str) -> tuple[str, int]:
@@ -228,11 +227,11 @@ def install_pre_commit_hooks(repo_dir: Path) -> str:
     return "installed"
 
 
-def apply_to_repo(repo: str, rev: str, dry_run: bool) -> tuple[str, str]:
+def apply_to_repo(repo_dir: Path, rev: str, dry_run: bool) -> tuple[str, str]:
+    repo = repo_dir.name
     if repo == "agentic-os":
         # Source repo dogfoods via repo: local; upstream-ref would duplicate IDs.
         return ("skipped", "self (source repo)")
-    repo_dir = SIBLINGS_ROOT / repo
     if not repo_dir.is_dir():
         return ("skipped", "not checked out locally")
     if not (repo_dir / ".git").exists():
@@ -291,10 +290,18 @@ def main(argv=None) -> int:
     )
     args = ap.parse_args(argv)
 
+    all_dirs = list_local_repo_dirs()
     if args.repo:
-        repos = [args.repo]
+        repos = [d for d in all_dirs if d.name == args.repo]
+        if not repos:
+            print(
+                f"No checked-out repo named {args.repo!r} under "
+                f"{cfg.projects_root()}"
+            )
+            return 1
     else:
-        repos = [r for r in list_local_repos() if r not in args.skip]
+        skip = set(args.skip)
+        repos = [d for d in all_dirs if d.name not in skip]
 
     print(
         f"Rolling out agentic-os pre-commit suite "
@@ -305,10 +312,10 @@ def main(argv=None) -> int:
     print()
 
     counts: dict[str, int] = {}
-    for repo in repos:
-        action, detail = apply_to_repo(repo, args.rev, args.dry_run)
+    for repo_dir in repos:
+        action, detail = apply_to_repo(repo_dir, args.rev, args.dry_run)
         counts[action] = counts.get(action, 0) + 1
-        print(f"  {repo:24} {action:8} {detail}")
+        print(f"  {repo_dir.name:24} {action:8} {detail}")
 
     print()
     print("Summary:", ", ".join(f"{k}={v}" for k, v in counts.items()))
