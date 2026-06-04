@@ -36,8 +36,8 @@ scratch/notes location).
 
 Full per-phase detail, the inventory tooling, and the search recipe in [references/phases.md](references/phases.md).
 
-- **Phase 1 - Inventory sweep** - enumerate the custom surface with code-analysis or context-as-code tooling.
-- **Phase 2 - Hydration** - find OSS candidates per custom thing via a `site:github.com` search recipe, dedup against tools in use.
+- **Phase 1 - Inventory sweep** - run a fixed toolchain (`scc`, `ast-grep`, `repomix`), ansible-installed, across the target repos by path.
+- **Phase 2 - Hydration** - per-language github search (authority + liveness queries) for OSS that already does it, dedup against tools in use.
 - **Phase 3 - Categorize and rank** - 3:2:1 medal by fit plus displacement leverage.
 - **Phase 4 - Maturity and security audit** - 🥈/🥇 only, maturity signals plus supply-chain-audit.
 - **Phase 5 - Present 🥇🟢 inline** - top tier to chat with leverage spelled out, explicit-deny approval.
