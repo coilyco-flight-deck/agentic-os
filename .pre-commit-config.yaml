@@ -75,6 +75,13 @@ repos:
         always_run: true
         pass_filenames: false
         stages: [pre-commit]
+      - id: merge-conflicts
+        name: no merge-conflict markers
+        entry: python -m agentic_os.check_merge_conflicts
+        language: python
+        always_run: true
+        pass_filenames: false
+        stages: [pre-commit]
       - id: agent-compose-size
         name: agent-compose source size budget
         entry: python -m agentic_os.check_agent_compose_size
