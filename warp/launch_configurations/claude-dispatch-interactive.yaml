@@ -27,4 +27,4 @@ windows:
         layout:
           cwd: /Users/kai/projects/coilysiren
           commands:
-            - exec: printf '\033]0;dispatch · interactive\007' && /Users/kai/projects/coilysiren/agentic-os/warp/launch_configurations/claude-dispatch-interactive.sh
+            - exec: printf '\033]0;dispatch · interactive\007' && /Users/kai/projects/coilyco-flight-deck/agentic-os/warp/launch_configurations/claude-dispatch-interactive.sh

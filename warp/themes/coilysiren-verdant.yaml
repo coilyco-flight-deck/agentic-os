@@ -4,7 +4,7 @@ background: '#0c1410'
 foreground: '#e8f0e2'
 details: darker
 background_image:
-  path: /Users/kai/projects/coilysiren/agentic-os/static/wallpaper-verdant.jpg
+  path: /Users/kai/projects/coilyco-flight-deck/agentic-os/static/wallpaper-verdant.jpg
   opacity: 10
 terminal_colors:
   normal:

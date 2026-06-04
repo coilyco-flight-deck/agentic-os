@@ -31,64 +31,64 @@ windows:
         layout:
           cwd: /Users/kai/projects/coilysiren
           commands:
-            - exec: printf '\033]0;scratch · 1\007' && /Users/kai/projects/coilysiren/agentic-os/warp/launch_configurations/claude-luca-scratch-1.sh
+            - exec: printf '\033]0;scratch · 1\007' && /Users/kai/projects/coilyco-flight-deck/agentic-os/warp/launch_configurations/claude-luca-scratch-1.sh
       - title: "scratch · 2"
         color: green
         layout:
           cwd: /Users/kai/projects/coilysiren
           commands:
-            - exec: printf '\033]0;scratch · 2\007' && /Users/kai/projects/coilysiren/agentic-os/warp/launch_configurations/claude-luca-scratch-2.sh
+            - exec: printf '\033]0;scratch · 2\007' && /Users/kai/projects/coilyco-flight-deck/agentic-os/warp/launch_configurations/claude-luca-scratch-2.sh
       - title: "repo-recall · claude"
         color: cyan
         layout:
           cwd: /Users/kai/projects/coilysiren
           commands:
-            - exec: printf '\033]0;repo-recall · claude\007' && export COILY_COMMIT_SCOPE=/Users/kai/projects/coilysiren/repo-recall && /Users/kai/projects/coilysiren/agentic-os/warp/launch_configurations/claude-luca-repo-recall-claude.sh
+            - exec: printf '\033]0;repo-recall · claude\007' && export COILY_COMMIT_SCOPE=/Users/kai/projects/coilysiren/repo-recall && /Users/kai/projects/coilyco-flight-deck/agentic-os/warp/launch_configurations/claude-luca-repo-recall-claude.sh
       - title: "repo-recall · pulse"
         color: cyan
         layout:
           cwd: /Users/kai/projects/coilysiren
           commands:
-            - exec: printf '\033]0;repo-recall · pulse\007' && export COILY_COMMIT_SCOPE=/Users/kai/projects/coilysiren/repo-recall && /Users/kai/projects/coilysiren/agentic-os/warp/launch_configurations/claude-luca-repo-recall-pulse.sh
+            - exec: printf '\033]0;repo-recall · pulse\007' && export COILY_COMMIT_SCOPE=/Users/kai/projects/coilysiren/repo-recall && /Users/kai/projects/coilyco-flight-deck/agentic-os/warp/launch_configurations/claude-luca-repo-recall-pulse.sh
       - title: "repo-recall · edit"
         color: cyan
         layout:
           cwd: /Users/kai/projects/coilysiren/repo-recall
           commands:
-            - exec: printf '\033]0;repo-recall · edit\007' && export COILY_COMMIT_SCOPE=/Users/kai/projects/coilysiren/repo-recall && /Users/kai/projects/coilysiren/agentic-os/warp/launch_configurations/claude-luca-repo-recall-edit.sh
+            - exec: printf '\033]0;repo-recall · edit\007' && export COILY_COMMIT_SCOPE=/Users/kai/projects/coilysiren/repo-recall && /Users/kai/projects/coilyco-flight-deck/agentic-os/warp/launch_configurations/claude-luca-repo-recall-edit.sh
       - title: "session-lattice · claude"
         color: magenta
         layout:
           cwd: /Users/kai/projects/coilysiren
           commands:
-            - exec: printf '\033]0;session-lattice · claude\007' && export COILY_COMMIT_SCOPE=/Users/kai/projects/coilysiren/session-lattice && /Users/kai/projects/coilysiren/agentic-os/warp/launch_configurations/claude-luca-session-lattice-claude.sh
+            - exec: printf '\033]0;session-lattice · claude\007' && export COILY_COMMIT_SCOPE=/Users/kai/projects/coilysiren/session-lattice && /Users/kai/projects/coilyco-flight-deck/agentic-os/warp/launch_configurations/claude-luca-session-lattice-claude.sh
       - title: "session-lattice · pulse"
         color: magenta
         layout:
           cwd: /Users/kai/projects/coilysiren
           commands:
-            - exec: printf '\033]0;session-lattice · pulse\007' && export COILY_COMMIT_SCOPE=/Users/kai/projects/coilysiren/session-lattice && /Users/kai/projects/coilysiren/agentic-os/warp/launch_configurations/claude-luca-session-lattice-pulse.sh
+            - exec: printf '\033]0;session-lattice · pulse\007' && export COILY_COMMIT_SCOPE=/Users/kai/projects/coilysiren/session-lattice && /Users/kai/projects/coilyco-flight-deck/agentic-os/warp/launch_configurations/claude-luca-session-lattice-pulse.sh
       - title: "session-lattice · edit"
         color: magenta
         layout:
           cwd: /Users/kai/projects/coilysiren/session-lattice
           commands:
-            - exec: printf '\033]0;session-lattice · edit\007' && export COILY_COMMIT_SCOPE=/Users/kai/projects/coilysiren/session-lattice && /Users/kai/projects/coilysiren/agentic-os/warp/launch_configurations/claude-luca-session-lattice-edit.sh
+            - exec: printf '\033]0;session-lattice · edit\007' && export COILY_COMMIT_SCOPE=/Users/kai/projects/coilysiren/session-lattice && /Users/kai/projects/coilyco-flight-deck/agentic-os/warp/launch_configurations/claude-luca-session-lattice-edit.sh
       - title: "luca · claude"
         color: yellow
         layout:
           cwd: /Users/kai/projects/coilysiren
           commands:
-            - exec: printf '\033]0;luca · claude\007' && export COILY_COMMIT_SCOPE=/Users/kai/projects/coilysiren/luca && /Users/kai/projects/coilysiren/agentic-os/warp/launch_configurations/claude-luca-luca-claude.sh
+            - exec: printf '\033]0;luca · claude\007' && export COILY_COMMIT_SCOPE=/Users/kai/projects/coilysiren/luca && /Users/kai/projects/coilyco-flight-deck/agentic-os/warp/launch_configurations/claude-luca-luca-claude.sh
       - title: "luca · shell"
         color: yellow
         layout:
           cwd: /Users/kai/projects/coilysiren
           commands:
-            - exec: printf '\033]0;luca · shell\007' && export COILY_COMMIT_SCOPE=/Users/kai/projects/coilysiren/luca && /Users/kai/projects/coilysiren/agentic-os/warp/launch_configurations/claude-luca-luca-shell.sh
+            - exec: printf '\033]0;luca · shell\007' && export COILY_COMMIT_SCOPE=/Users/kai/projects/coilysiren/luca && /Users/kai/projects/coilyco-flight-deck/agentic-os/warp/launch_configurations/claude-luca-luca-shell.sh
       - title: "luca · edit"
         color: yellow
         layout:
           cwd: /Users/kai/projects/coilysiren/luca
           commands:
-            - exec: printf '\033]0;luca · edit\007' && export COILY_COMMIT_SCOPE=/Users/kai/projects/coilysiren/luca && /Users/kai/projects/coilysiren/agentic-os/warp/launch_configurations/claude-luca-luca-edit.sh
+            - exec: printf '\033]0;luca · edit\007' && export COILY_COMMIT_SCOPE=/Users/kai/projects/coilysiren/luca && /Users/kai/projects/coilyco-flight-deck/agentic-os/warp/launch_configurations/claude-luca-luca-edit.sh

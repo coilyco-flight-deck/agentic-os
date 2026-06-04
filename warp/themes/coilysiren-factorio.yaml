@@ -4,7 +4,7 @@ background: '#17120c'
 foreground: '#f0e3d0'
 details: darker
 background_image:
-  path: /Users/kai/projects/coilysiren/agentic-os/static/wallpaper-factorio.jpg
+  path: /Users/kai/projects/coilyco-flight-deck/agentic-os/static/wallpaper-factorio.jpg
   opacity: 16
 terminal_colors:
   normal:

@@ -25,7 +25,7 @@ Preview's config dir auto-symlinks `launch_configurations`, `tab_configs`, and `
 3. Replace Preview's fresh `~/.warp-preview/settings.toml` with a symlink to this repo's `settings.toml`:
    ```sh
    rm ~/.warp-preview/settings.toml
-   ln -s /Users/kai/projects/coilysiren/agentic-os/warp/settings.toml ~/.warp-preview/settings.toml
+   ln -s /Users/kai/projects/coilyco-flight-deck/agentic-os/warp/settings.toml ~/.warp-preview/settings.toml
    ```
 4. Bind file-type defaults to Preview by running [`scripts/set-warp-default-editor.sh`](scripts/set-warp-default-editor.sh). Covers markdown, python, go, the javascript/typescript family, json, plain text, and the generic source-code UTI. The script reads `WARP_DEFAULT_EDITOR_BUNDLE_ID` and `WARP_DEFAULT_EDITOR_APP_PATH` env vars so you can override per-host (e.g. to pin a non-Mac fallback to Stable).
 5. Manual: pin WarpPreview in the Dock, unpin Warp. Use Spotlight by typing `warppreview` rather than `warp` when reaching for the daily driver.
