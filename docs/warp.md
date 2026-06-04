@@ -20,9 +20,11 @@ The repo is the source of truth. `apply` pushes the repo's intent onto the host,
 
 `paths.go` resolves the layout per OS. The config dir is:
 
-- **macOS** - `~/.warp/`. SQLite lives under the Preview bundle (`dev.warp.Warp-Preview`), since Kai's Mac daily driver is Warp Preview.
+- **macOS** - channel-aware. Preview (default) at `~/.warp-preview/` with SQLite under `dev.warp.Warp-Preview`; Stable (fallback) at `~/.warp/` with SQLite under `dev.warp.Warp-Stable`. The config dir and SQLite bundle are always a matched pair (see below).
 - **Windows** - `%LOCALAPPDATA%\warp\Warp\config\`. Themes scan `%APPDATA%` (Roaming), a separate path.
 - **Linux** - `~/.config/warp-terminal/`.
+
+On macOS the two channels coexist, so `apply`/`doctor` pick one and target its config dir and SQLite together. Selection: `--channel preview|stable` (or `WARP_CHANNEL` env) wins; else auto-detect by which `/Applications` bundle exists, **preferring Preview**; else default to Preview. The resolved channel is echoed in the header line (`darwin host (warp preview)`). Windows and Linux are single-channel and ignore the flag.
 
 `WorkspaceDir` is the parent of the repo root. `StartupDir` (where a fresh tab opens) is one level above that on Mac/Linux, flat on Windows.
 

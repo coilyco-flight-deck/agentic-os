@@ -33,6 +33,7 @@ When a Preview regression breaks a workday:
 
 - `open -a Warp` opens Stable by bundle name.
 - `warp://` URIs always route to Stable - useful for known-good URI tests.
+- `coily exec warp apply --channel stable` reconciles Stable's `~/.warp/` config and `dev.warp.Warp-Stable` SQLite directly (or export `WARP_CHANNEL=stable`). Without it, apply/doctor auto-detect and prefer Preview.
 - `coily pkg brew upgrade --cask warp@preview --allow-untapped` picks up the next Preview release. Warp ships weekly.
 
 ## Subdirs

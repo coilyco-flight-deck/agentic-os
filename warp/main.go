@@ -12,6 +12,15 @@ import (
 )
 
 func main() {
+	channelFlag := func() []cli.Flag {
+		return []cli.Flag{
+			&cli.StringFlag{
+				Name:    "channel",
+				Usage:   "macOS Warp channel: `preview` or `stable` (default: auto-detect, prefer Preview)",
+				Sources: cli.EnvVars("WARP_CHANNEL"),
+			},
+		}
+	}
 	cmd := &cli.Command{
 		Name:  "warp",
 		Usage: "establish and verify Kai's Warp configuration across hosts",
@@ -19,12 +28,14 @@ func main() {
 			{
 				Name:   "apply",
 				Usage:  "host-aware, idempotent: render all three state layers",
-				Action: func(_ context.Context, _ *cli.Command) error { return runApply() },
+				Flags:  channelFlag(),
+				Action: func(_ context.Context, c *cli.Command) error { return runApply(c.String("channel")) },
 			},
 			{
 				Name:   "doctor",
 				Usage:  "verify only: PASS/FAIL per check, no mutation",
-				Action: func(_ context.Context, _ *cli.Command) error { return runDoctor() },
+				Flags:  channelFlag(),
+				Action: func(_ context.Context, c *cli.Command) error { return runDoctor(c.String("channel")) },
 			},
 		},
 	}
@@ -32,6 +43,15 @@ func main() {
 		fmt.Fprintln(os.Stderr, "error:", err)
 		os.Exit(1)
 	}
+}
+
+// channelSuffix annotates the header with the resolved macOS Warp channel, so
+// apply/doctor show which config dir they target. Empty off darwin.
+func channelSuffix(h *HostPaths) string {
+	if h.Channel == "" {
+		return ""
+	}
+	return " (warp " + h.Channel + ")"
 }
 
 // renderedFile is one template-to-destination mapping for layers 1 -> 2.
@@ -49,13 +69,13 @@ func layer2Files(h *HostPaths) []renderedFile {
 	}
 }
 
-func runApply() error {
-	h, err := resolveHostPaths()
+func runApply(channel string) error {
+	h, err := resolveHostPaths(channel)
 	if err != nil {
 		return err
 	}
 	data := newTemplateData(h)
-	fmt.Printf("apply: %s host, workspace %s\n", h.OS, h.WorkspaceDir)
+	fmt.Printf("apply: %s host%s, workspace %s\n", h.OS, channelSuffix(h), h.WorkspaceDir)
 
 	for _, f := range layer2Files(h) {
 		content, err := render(f.template, data)
@@ -143,14 +163,14 @@ func applySQLite(h *HostPaths) error {
 	return nil
 }
 
-func runDoctor() error {
-	h, err := resolveHostPaths()
+func runDoctor(channel string) error {
+	h, err := resolveHostPaths(channel)
 	if err != nil {
 		return err
 	}
 	data := newTemplateData(h)
 	r := &report{}
-	fmt.Printf("doctor: %s host, workspace %s\n", h.OS, h.WorkspaceDir)
+	fmt.Printf("doctor: %s host%s, workspace %s\n", h.OS, channelSuffix(h), h.WorkspaceDir)
 
 	for _, f := range layer2Files(h) {
 		want, err := render(f.template, data)
