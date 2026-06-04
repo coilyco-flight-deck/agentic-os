@@ -1,6 +1,6 @@
 ---
 name: tooling-scout-displacement
-description: Outbound half of the scout pair. Build-vs-buy / NIH audit - finds custom code you maintain that off-the-shelf OSS already does, and proposes shedding it. Sweeps your own subsystems, hydrates candidate replacements, maturity+security-audits them, lands adopt/watch verdicts to a stateful ledger. Paired with tooling-scout-capability (what to ADD).
+description: Outbound half of the scout pair. Build-vs-buy / NIH audit - finds custom code you maintain that off-the-shelf OSS already does, and proposes shedding it. Inventories your subsystems with code-analysis or context-as-code tooling, hydrates candidates via a targeted github search, maturity+security-audits them, lands adoptions one-issue-one-commit. Paired with tooling-scout-capability (what to ADD).
 ---
 
 # scout-displacement
@@ -26,11 +26,6 @@ for one model run, and the phases have different cost/risk profiles. Phase 1 is
 open-ended inventory, phase 4 is a maturity-and-security gate, phase 6 mutates a real
 repo. Splitting forces an explicit checkpoint between "speculate" and "adopt."
 
-**Why a ledger, not just a report:** this audit recurs, and the value on run 2+ is the
-watch-list - the OSS tool that was too immature last quarter but crossed the line this
-quarter. The durable output is a verdict ledger that reruns diff against. Full spec and
-phase detail in the references below.
-
 **Outputs go to the notes/scratch location, not the personal-OS repo.** Sweeping your
 own subsystems incidentally surfaces private repo intent and architecture. Only the
 final per-adoption commits land in a real repo. Inbox path:
@@ -39,14 +34,14 @@ scratch/notes location).
 
 ## Phases
 
-Full detail and the verdict-ledger spec in [references/phases.md](references/phases.md).
+Full per-phase detail, the inventory tooling, and the search recipe in [references/phases.md](references/phases.md).
 
-- **Phase 1 - Inventory sweep** - build the custom-surface list, seeded from the ledger.
-- **Phase 2 - Hydration** - resolve OSS candidates per custom thing, dedup against tools in use.
+- **Phase 1 - Inventory sweep** - enumerate the custom surface with code-analysis or context-as-code tooling.
+- **Phase 2 - Hydration** - find OSS candidates per custom thing via a `site:github.com` search recipe, dedup against tools in use.
 - **Phase 3 - Categorize and rank** - 3:2:1 medal by fit plus displacement leverage.
-- **Phase 4 - Maturity and security audit** - 🥈/🥇 only, maturity signals plus supply-chain-audit, sets verdict.
+- **Phase 4 - Maturity and security audit** - 🥈/🥇 only, maturity signals plus supply-chain-audit.
 - **Phase 5 - Present 🥇🟢 inline** - top tier to chat with leverage spelled out, explicit-deny approval.
-- **Phase 6 - Land approved entries** - one issue + one commit per adoption, ledger update per verdict.
+- **Phase 6 - Land approved entries** - one issue + one commit per adoption.
 
 ## Paired with
 
@@ -59,6 +54,6 @@ Run scout-displacement when the tooling surface feels too big or too custom. Run
 
 ## See also
 
-- [Phases and ledger](references/phases.md) - full per-phase routine and the verdict-ledger spec.
+- [Phases](references/phases.md) - full per-phase routine, inventory tooling, and the github search recipe.
 - [tooling-scout-capability](../tooling-scout-capability/SKILL.md) - the inbound sibling.
 - [tooling-supply-chain-audit](../tooling-supply-chain-audit/SKILL.md) - the phase-4 security gate, shared with the inbound scout.
