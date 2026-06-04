@@ -100,6 +100,7 @@ DEFAULT_HOOK_IDS = [
     "dead-cross-links",
     "repo-pointer-skills",
     "misplaced-skills",
+    "merge-conflicts",
     "agent-compose-size",
     "agent-compose-dedup",
     "closes-issue",
