@@ -40,7 +40,7 @@ When a Preview regression breaks a workday:
 
 ## Subdirs
 
-- [`launch_configurations/`](launch_configurations/README.md) - one window with one or more tabs per YAML file. Window-scoped, opens a fresh window each fire. URI: `warp://launch/<name>` or `warppreview://launch/<name>`.
+- [`launch_configurations/`](launch_configurations/README.md) - one window with one or more tabs per YAML file. Window-scoped, opens a fresh window each fire. URI: `warp://launch/<name>` or `warppreview://launch/<name>`. `coily exec warp apply` symlinks every `*.yaml` here into the Warp config dir's `launch_configurations/` and sweeps dangling links, so a new entry (or a moved checkout) reaches Warp without a hand `ln -s`.
 - [`tab_configs/`](tab_configs/) - one tab per TOML file, opens in the active window. URI: `warp://tab_config/<name>` or `warppreview://tab_config/<name>`. The URI handler landed in warpdotdev/Warp#9379 (merged 2026-05-15) and is available in any Warp build dated 2026-05-15 or later, both channels. Current entries: `startup_config.toml` (the "+ button" new-tab default) and `claude-dispatch-interactive.toml` (companion to the `launch_configurations/` entry of the same name, used when `coily dispatch interactive` fires with `--surface tab`, which is the default).
 - [`themes/`](themes/) - color theme YAML files.
 - [`scripts/`](scripts/) - host-side helpers (e.g. `set-warp-default-editor.sh`).
@@ -48,7 +48,7 @@ When a Preview regression breaks a workday:
 
 ## See also
 
-- coilysiren/agentic-os#106 - the open ask to automate the `warp/launch_configurations/*.yaml` symlink walk into `~/.warp/launch_configurations/`. Same plumbing gap applies to `tab_configs/`.
+- #10 - automate the `warp/launch_configurations/*.yaml` symlink walk into the Warp config dir. Done: `apply` now walks and sweeps (see `launch.go`). The same plumbing gap still applies to `tab_configs/` (those remain hand-placed real files).
 - coilysiren/agentic-os#107 - the dual-channel install that produced this doc.
 - coilysiren/coily#270 - `coily dispatch interactive` which consumes Warp URIs. Currently fires `warp://launch/...`; channel-aware variants are a follow-up.
 - warpdotdev/Warp#9379 - merged tab_config URI handler that motivated moving to Preview as the daily driver.

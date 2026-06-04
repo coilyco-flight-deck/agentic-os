@@ -87,6 +87,10 @@ func runApply() error {
 		}
 	}
 
+	if err := applyLaunchConfigs(h); err != nil {
+		return err
+	}
+
 	return applySQLite(h)
 }
 
@@ -168,6 +172,7 @@ func runDoctor() error {
 	}
 
 	checkExists(r, "wallpaper image", h.WallpaperPath)
+	doctorLaunchConfigs(r, h)
 	doctorSQLite(r, h)
 
 	r.print()

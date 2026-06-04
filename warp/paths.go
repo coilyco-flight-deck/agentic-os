@@ -19,6 +19,8 @@ type HostPaths struct {
 	ThemePath       string
 	TabConfigDir    string
 	TabConfigPath   string
+	LaunchSrcDir    string
+	LaunchDstDir    string
 	SQLitePath      string
 	WallpaperPath   string
 	PwshProfilePath string
@@ -78,6 +80,11 @@ func resolveHostPaths() (*HostPaths, error) {
 	h.ThemePath = filepath.Join(h.ThemeDir, themeFileName)
 	h.TabConfigDir = filepath.Join(h.ConfigDir, "tab_configs")
 	h.TabConfigPath = filepath.Join(h.TabConfigDir, "startup_config.toml")
+
+	// Launch configs are symlinked (not rendered): the repo dir is the source,
+	// the Warp config dir is the mirror. See launch.go and #10.
+	h.LaunchSrcDir = filepath.Join(repoRoot, "warp", "launch_configurations")
+	h.LaunchDstDir = filepath.Join(h.ConfigDir, "launch_configurations")
 
 	// StartupDir is where a fresh tab opens: the projects root. On Mac/Linux that
 	// is one level above WorkspaceDir (coilysiren/ grouping). On Windows it is flat.
