@@ -78,6 +78,18 @@ count-lines() {
   done | sort -rn
 }
 
+# bat every file two levels down: <dir>/*/*
+bat-dir() {
+  bat "${1:-.}"/*/*
+}
+
+# bat every file under a tree, flat. Skips directories so bat never errors.
+bat-tree() {
+  tree -fi --noreport "${1:-.}" | while IFS= read -r f; do
+    [[ -f "$f" ]] && printf '%s\0' "$f"
+  done | xargs -0 bat
+}
+
 # Lazy: call when needed, not at shell start.
 github-token-load() {
   GITHUB_PERSONAL_ACCESS_TOKEN=$(gh auth token)
