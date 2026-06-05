@@ -46,7 +46,10 @@ check-ssm-path = "agentic_os.check_ssm_path:main"
 check-repo-pointer-skills = "agentic_os.check_repo_pointer_skills:main"
 check-misplaced-skills = "agentic_os.check_misplaced_skills:main"
 check-merge-conflicts = "agentic_os.check_merge_conflicts:main"
+check-seed-skills = "agentic_os.check_seed_skills:main"
+check-seed-skills-drift = "agentic_os.seed_skills:check_drift_main"
 generate-repo-pointer-skill = "agentic_os.generate_repo_pointer_skill:main"
+generate-seed-skills = "agentic_os.seed_skills:main"
 
 # Self-compliance config for the hooks this repo ships. See agentic-os#81,
 # #96, #22.

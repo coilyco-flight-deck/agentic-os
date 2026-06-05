@@ -15,6 +15,7 @@
 #       - id: repo-pointer-skills
 #       - id: misplaced-skills
 #       - id: merge-conflicts
+#       - id: seed-skills
 #       - id: closes-issue
 #       - id: trufflehog
 #
@@ -119,6 +120,16 @@
   description: "Reject staged files still carrying merge-conflict markers (<<<<<<<, =======, >>>>>>>, |||||||). Catches a conflicted security-config script before it commits broken. See coilyco-flight-deck/agentic-os#39."
   entry: check-merge-conflicts
   language: python
+  always_run: true
+  pass_filenames: false
+  stages: [pre-commit]
+
+- id: seed-skills
+  name: code present implies seed-skill references
+  description: "Assert a repo references the seed skills its code requires (always-set plus one per detected language) so OpenClaw ingests the right context. Opt in via [tool.agentic-os.seed-skills]; no-ops otherwise. Ansible enables it fleet-wide. See coilyco-flight-deck/agentic-os#176."
+  entry: check-seed-skills
+  language: python
+  additional_dependencies: [pyyaml]
   always_run: true
   pass_filenames: false
   stages: [pre-commit]

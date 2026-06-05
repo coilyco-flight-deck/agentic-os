@@ -82,6 +82,17 @@ repos:
         always_run: true
         pass_filenames: false
         stages: [pre-commit]
+      # Drift dogfood: agentic-os owns the seed skills, so it regenerates
+      # seed_skills_data.py from their frontmatter. Consumers ship only the
+      # seed-skills hook (they have no skills checkout), never this one.
+      - id: seed-skills-drift
+        name: seed_skills_data.py in sync with skill frontmatter
+        entry: python -m agentic_os.seed_skills --check
+        language: python
+        additional_dependencies: [pyyaml]
+        always_run: true
+        pass_filenames: false
+        stages: [pre-commit]
       - id: agent-compose-size
         name: agent-compose source size budget
         entry: python -m agentic_os.check_agent_compose_size

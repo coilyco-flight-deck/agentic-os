@@ -37,6 +37,9 @@ commands:
   gen-repo-pointer-skill:
     run: uv run python -m agentic_os.generate_repo_pointer_skill
     description: "Generate a repo-<name> pointer skill from GitHub metadata. Pipe `coily ops gh repo view coilysiren/<name>` into it with `<name> --from-json -`, or pass --description/--topic. See agentic-os-kai#312."
+  gen-seed-skills:
+    run: uv run python -m agentic_os.seed_skills
+    description: "Regenerate agentic_os/seed_skills_data.py from the seed: frontmatter on the coding-<lang> skills. Run after editing a seed block; check-seed-skills-drift fails on staleness. See agentic-os#176."
 
 # Catalog metadata for the cross-repo knowledge graph.
 # Schema: coilysiren/agentic-os-kai#420 (tracker).

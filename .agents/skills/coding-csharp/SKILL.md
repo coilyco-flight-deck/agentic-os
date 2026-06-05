@@ -1,6 +1,10 @@
 ---
 name: coding-csharp
 description: C# / .NET umbrella skill. Kai's first-class C# is Eco game modding against Eco.ReferenceAssemblies. Triggers - c#, csharp, .cs, .csproj, dotnet, nuget, msbuild, eco mod, EcoModKit.
+seed:
+  kind: language
+  language: csharp
+  extensions: [".cs"]
 ---
 
 # coding-csharp

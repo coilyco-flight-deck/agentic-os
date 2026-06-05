@@ -1,6 +1,10 @@
 ---
 name: coding-ruby
 description: Ruby umbrella skill. Kai was an OSS engineer at Ruby Together (2016) maintaining RubyGems and Bundler - defer to her instinct over generic Ruby guidance.
+seed:
+  kind: language
+  language: ruby
+  extensions: [".rb"]
 ---
 
 # coding-ruby

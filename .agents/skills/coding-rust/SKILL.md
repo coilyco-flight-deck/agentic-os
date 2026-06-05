@@ -1,6 +1,10 @@
 ---
 name: coding-rust
 description: Rust umbrella skill. Kai's first-class Rust is the galaxy-gen physics engine. Triggers - rust, .rs, cargo, Cargo.toml, rustc, clippy, rustfmt, wasm-pack, crate, no_std, galaxy-gen.
+seed:
+  kind: language
+  language: rust
+  extensions: [".rs"]
 ---
 
 # coding-rust

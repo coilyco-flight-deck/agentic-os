@@ -138,6 +138,15 @@ def is_enabled(hook_id: str, repo_root: Path | None = None) -> bool:
     return bool(value)
 
 
+def has_hook_config(hook_id: str, repo_root: Path | None = None) -> bool:
+    """Return True if a `[tool.agentic-os.<hook_id>]` section is present.
+
+    The opt-in signal for hooks that default off and only enforce once a repo
+    declares them (e.g. seed-skills, enabled fleet-wide by Ansible).
+    """
+    return bool(_load_hook_section(hook_id, repo_root))
+
+
 def get_int_option(
     hook_id: str, key: str, default: int, repo_root: Path | None = None
 ) -> int:

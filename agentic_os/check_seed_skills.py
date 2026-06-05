@@ -1,0 +1,180 @@
+#!/usr/bin/env python3
+"""pre-commit hook: assert a repo references the seed skills its code requires.
+
+OpenClaw ingests a small amount of language context from inside each target
+repo. A repo that contains code in language X should reference the matching
+``coding-<lang>`` seed skill (and every always-on baseline skill, e.g.
+``coding-git``) so that context is present for ingestion.
+
+This hook detects the repo's languages by file extension, looks up the seed
+table shipped in the package (``agentic_os.seed_skills``, generated from skill
+frontmatter), and fails if the repo lacks a reference to an expected skill's
+canonical path, e.g. ``.agents/skills/coding-python/SKILL.md`` (as a relative
+ref or under the full forgejo.coilysiren.me/coilyco-flight-deck/agentic-os URL).
+
+Opt-in and generalizable: it ships in the suite but no-ops unless the repo
+declares ``[tool.agentic-os.seed-skills]`` in ``pyproject.toml`` (or
+``.agentic-os.toml``). Ansible drops the references and enables the hook
+together across the fleet; agentic-os itself (the source of the skills) simply
+omits the config. The actual copying of skills into repos is Ansible's job, not
+this hook's.
+
+Config (pyproject.toml):
+
+    [tool.agentic-os.seed-skills]
+    enabled = true                     # presence alone opts in; this is explicit
+    excludes = ["vendor/", "**/generated/**"]   # paths ignored during detection
+
+Schema and rollout: coilyco-flight-deck/agentic-os#176.
+"""
+from __future__ import annotations
+
+import subprocess
+import sys
+from pathlib import Path, PurePosixPath
+from typing import Iterable, NoReturn
+
+from agentic_os import config
+from agentic_os.seed_skills import canonical_ref, load_data, suggested_url
+
+HOOK_ID = "seed-skills"
+TRACKER = "coilyco-flight-deck/agentic-os#176"
+
+# Only these files are scanned for a skill reference - the references live in
+# agent-context docs, so reading code/binaries would be wasted work.
+DOC_SUFFIXES = (".md", ".markdown", ".mdx", ".txt")
+
+# Skipped during the filesystem-walk fallback (git ls-files already excludes
+# gitignored trees, so this only matters when the repo is not a git checkout).
+_WALK_SKIP_DIRS = {".git", "node_modules", ".venv", "venv", "vendor", "target",
+                   "dist", "build", "__pycache__", ".mypy_cache", ".ruff_cache"}
+
+
+def list_repo_files(root: Path) -> list[str]:
+    """Repo-relative POSIX paths of tracked files, or a walk if not a git tree."""
+    try:
+        out = subprocess.run(
+            ["git", "ls-files", "-z"],
+            cwd=root,
+            capture_output=True,
+            check=True,
+            text=True,
+        ).stdout
+        return [p for p in out.split("\0") if p]
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        pass
+    files: list[str] = []
+    for path in root.rglob("*"):
+        if not path.is_file():
+            continue
+        rel = path.relative_to(root)
+        if any(part in _WALK_SKIP_DIRS for part in rel.parts):
+            continue
+        files.append(str(PurePosixPath(rel)))
+    return sorted(files)
+
+
+def detect_languages(
+    rel_paths: Iterable[str], languages: dict[str, dict]
+) -> set[str]:
+    """Language ids whose extensions appear among the given paths."""
+    ext_to_lang = {
+        ext: lang_id
+        for lang_id, info in languages.items()
+        for ext in info["extensions"]
+    }
+    found: set[str] = set()
+    for rel in rel_paths:
+        suffix = PurePosixPath(rel).suffix
+        lang = ext_to_lang.get(suffix)
+        if lang is not None:
+            found.add(lang)
+    return found
+
+
+def required_skills(
+    detected: set[str], always: list[str], languages: dict[str, dict]
+) -> list[str]:
+    """Skills the repo must reference: the always-set plus one per language."""
+    skills = list(always)
+    skills += [languages[lang]["skill"] for lang in sorted(detected)]
+    # Stable order, deduped (a skill could be both always and a language owner).
+    seen: set[str] = set()
+    ordered = []
+    for s in skills:
+        if s not in seen:
+            seen.add(s)
+            ordered.append(s)
+    return ordered
+
+
+def referenced_skills(doc_texts: Iterable[str], skills: Iterable[str]) -> set[str]:
+    """Of `skills`, those whose canonical_ref appears in any doc text."""
+    blob = "\n".join(doc_texts)
+    return {s for s in skills if canonical_ref(s) in blob}
+
+
+def _read_docs(root: Path, rel_paths: Iterable[str]) -> list[str]:
+    texts: list[str] = []
+    for rel in rel_paths:
+        if not rel.lower().endswith(DOC_SUFFIXES):
+            continue
+        try:
+            texts.append((root / rel).read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError):
+            continue
+    return texts
+
+
+def fail(missing: list[str], detected: set[str]) -> NoReturn:
+    print(
+        f"check-{HOOK_ID}: this repo has code that requires seed-skill "
+        f"references it is missing:",
+        file=sys.stderr,
+    )
+    for skill in missing:
+        print(f"  - {skill}: add a reference to {suggested_url(skill)}", file=sys.stderr)
+    print(
+        f"  detected languages: {', '.join(sorted(detected)) or '(none)'}",
+        file=sys.stderr,
+    )
+    print(
+        "  reference each skill by its canonical path in an agent-context doc "
+        "(AGENTS.md, README.md, etc.) so OpenClaw ingests it",
+        file=sys.stderr,
+    )
+    print(f"  see {TRACKER}", file=sys.stderr)
+    sys.exit(1)
+
+
+def main() -> int:
+    if not config.has_hook_config(HOOK_ID):
+        return 0  # opt-in: no [tool.agentic-os.seed-skills] section means no-op
+    if not config.is_enabled(HOOK_ID):
+        print(f"{HOOK_ID}: disabled by repo config")
+        return 0
+
+    always, languages = load_data()
+    if not always and not languages:
+        return 0  # no seed table shipped (pre-generation); nothing to enforce
+
+    root = Path.cwd()
+    excludes = config.load_excludes(HOOK_ID)
+    rel_paths = [
+        p for p in list_repo_files(root) if not config.is_excluded(p, excludes)
+    ]
+
+    detected = detect_languages(rel_paths, languages)
+    required = required_skills(detected, always, languages)
+    if not required:
+        return 0
+
+    found = referenced_skills(_read_docs(root, rel_paths), required)
+    missing = [s for s in required if s not in found]
+    if missing:
+        fail(missing, detected)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
