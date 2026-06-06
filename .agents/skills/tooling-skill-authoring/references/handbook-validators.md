@@ -11,7 +11,7 @@ The structural validator and dead-link checker ship from [`coilyco-flight-deck/a
 * `README.md`, `AGENTS.md`, and `docs/FEATURES.md` exist, cross-link, and stay under the size caps in [`check_documentation_layout.py`](../../../../agentic_os/check_documentation_layout.py).
 * `AGENTS.md` uses the standard repo-local H2 set.
 * Markdown lives only at repo root, flat `docs/*.md`, or flat skill folders, and every Markdown file stays under the cap in `check_documentation_layout.py` (single cap, no per-basename exception).
-* Code comments are one standalone line, max 90 chars, with long explanation moved to docs.
+* Code comments are up to two contiguous lines, max 90 chars each, with long explanation moved to docs. YAML allows just one comment line, only as the first line, so a key-sorter cannot drift it off its target.
 
 ### `skill-conventions` (upstream) - structural check
 

@@ -70,17 +70,20 @@ excludes = [
     "warp/tab_configs/**",
 ]
 
-# code-comments extended to YAML (#159). These pre-existing YAML files carry
-# rich teaching/config comment blocks (skill-discipline examples, the skills
-# category registry, warp launch configs); grandfathered so the rule enforces
-# net-new YAML. Cleanup tracked in #160.
+# code-comments extended to YAML (#159), then tightened to one top-of-file
+# comment (#160) since a key-sorter drifts any lower comment off its target.
+# These pre-existing files carry rich teaching/config comment blocks
+# (skill-discipline examples, the skills registry, warp configs, the coily
+# catalog header) and are grandfathered so the rule enforces net-new YAML.
+# Cleanup tracked in #160. Bash comments inside `run: |` block scalars are no
+# longer over-read (#181), so actions/** needs no exclude.
 [tool.agentic-os.code-comments]
 excludes = [
     ".agents/skills/categories.yaml",
     ".agents/skills/tooling-issue-prioritization/references/p0-content-rules.yaml",
+    ".coily/coily.yaml",
     ".pre-commit-config.yaml",
     ".pre-commit-hooks.yaml",
-    "actions/tag-bump/action.yml",
     "docs/skill-discipline-example-categories.yaml",
     "docs/skill-discipline-example-pre-commit-config.yaml",
     "warp/launch_configurations/**",

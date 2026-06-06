@@ -5,9 +5,14 @@ Inline code documentation is allowed, but it must stay local and durable:
 up to two consecutive comment lines, each at most 90 characters. Longer
 explanations belong in docs/*.md and should be linked or referenced from
 code by a short pointer.
+
+YAML is stricter: a key-sorter rearranges YAML lines, so a comment anywhere
+but the very top would drift away from whatever it described. YAML therefore
+gets at most one comment line, and only as the first line of the file.
 """
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -18,6 +23,19 @@ REPO_ROOT = Path.cwd()
 HOOK_ID = "code-comments"
 MAX_COMMENT_LINE_CHARS = 90
 MAX_CONTIGUOUS_COMMENT_LINES = 2
+MAX_YAML_TOP_COMMENT_LINES = 1
+
+YAML_EXTS = {".yaml", ".yml"}
+
+# Header of a `|`/`>` block scalar (`run: |`, `- |`). Lines indented under it
+# are string content, so a leading `#` there is bash, not a YAML comment.
+_BLOCK_SCALAR_HEADER = re.compile(
+    r"(?::|^\s*-)\s*[|>][0-9+-]*\s*(?:#.*)?$"
+)
+
+
+def starts_block_scalar(line: str) -> bool:
+    return bool(_BLOCK_SCALAR_HEADER.search(line))
 
 SKIP_DIR_NAMES = {
     ".claude",
@@ -139,24 +157,54 @@ def is_comment_line(line: str, suffix: str, line_no: int) -> bool:
     return False
 
 
-def check_file(rel: Path) -> list[str]:
-    path = REPO_ROOT / rel
+def char_cap_violation(rel: Path, line_no: int, line: str) -> str:
+    return (
+        f"{rel}:{line_no}: comment line is {len(line)} chars, over "
+        f"the {MAX_COMMENT_LINE_CHARS}-char cap. Move durable detail "
+        f"to docs/."
+    )
+
+
+def scan_yaml(rel: Path, suffix: str, lines: list[str]) -> list[str]:
+    violations: list[str] = []
+    block_indent: int | None = None
+    for line_no, line in enumerate(lines, start=1):
+        indent = len(line) - len(line.lstrip())
+        if block_indent is not None:
+            # Blank or deeper-indented lines are block-scalar content, so a
+            # leading `#` is not a YAML comment. A dedent ends the block.
+            if line.strip() == "" or indent > block_indent:
+                continue
+            block_indent = None
+        if is_comment_line(line, suffix, line_no):
+            if len(line) > MAX_COMMENT_LINE_CHARS:
+                violations.append(char_cap_violation(rel, line_no, line))
+            if line_no > MAX_YAML_TOP_COMMENT_LINES:
+                violations.append(
+                    f"{rel}:{line_no}: YAML comment outside the top "
+                    f"{MAX_YAML_TOP_COMMENT_LINES}-line header. A key-sorter "
+                    f"would drift it away from its target. Keep YAML comments "
+                    f"to the first line; move the rest to docs/."
+                )
+            continue
+        if starts_block_scalar(line):
+            block_indent = indent
+    return violations
+
+
+def scan_lines(rel: Path, suffix: str, lines: list[str]) -> list[str]:
+    if suffix in YAML_EXTS:
+        return scan_yaml(rel, suffix, lines)
     violations: list[str] = []
     streak_start: int | None = None
     streak_len = 0
-    for line_no, line in enumerate(
-        path.read_text(encoding="utf-8", errors="replace").splitlines(), start=1
-    ):
-        if not is_comment_line(line, path.suffix, line_no):
+    for line_no, line in enumerate(lines, start=1):
+        if not is_comment_line(line, suffix, line_no):
             streak_start = None
             streak_len = 0
             continue
         if len(line) > MAX_COMMENT_LINE_CHARS:
-            violations.append(
-                f"{rel}:{line_no}: comment line is {len(line)} chars, over "
-                f"the {MAX_COMMENT_LINE_CHARS}-char cap. Move durable detail "
-                f"to docs/."
-            )
+            violations.append(char_cap_violation(rel, line_no, line))
         if streak_start is None:
             streak_start = line_no
             streak_len = 1
@@ -170,6 +218,12 @@ def check_file(rel: Path) -> list[str]:
                     f"longer explanations to docs/."
                 )
     return violations
+
+
+def check_file(rel: Path) -> list[str]:
+    path = REPO_ROOT / rel
+    lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    return scan_lines(rel, path.suffix, lines)
 
 
 def main() -> int:

@@ -41,7 +41,7 @@ Runs `check_documentation_layout.py`. Enforces Markdown placement across the rep
 
 ### code-comments (pre-commit)
 
-Runs `check_code_comments.py`. Enforces code-comment discipline for common source files: standalone comments are one line, max 90 chars, and not contiguous. Longer durable explanation belongs in `docs/*.md`; code gets a short pointer only.
+Runs `check_code_comments.py`. Enforces code-comment discipline for common source files: standalone comments are up to two contiguous lines, max 90 chars each. Longer durable explanation belongs in `docs/*.md`; code gets a short pointer only. YAML is stricter: a key-sorter would drift any lower comment off its target, so YAML allows just one comment line and only as the first line of the file.
 
 ### commit-closes-issue (commit-msg)
 
