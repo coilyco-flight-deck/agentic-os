@@ -28,6 +28,10 @@ Keep every artifact public-safe: messages, chat, code, commits, PRs, and public 
 
 ## Cross-repo contracts
 
+### Authoring vs rollout
+
+Anything that fits as a pre-commit validation is **authored** here in agentic-os (the `agentic_os/check_*.py` validator plus its `.pre-commit-hooks.yaml` entry). Its **fleet rollout** - the thing that fans it across every checkout - lives in infrastructure/ansible, never here. The same split applies to any fleet-wide mutation: the tool or logic is authored in its home repo, and an ansible role is the rollout. Install-time mass mutation never belongs in `coily setup` or a brew post-install. Homebrew installs the binary and stops. Ansible converges the fleet.
+
 ### Skills
 
 `.agents/skills/` ships the generalizable, public-safe skills - tooling docs for the configs that live here, plus cross-repo skills that help any agentic-os user, not just Kai. agentic-os-kai's `setup.sh` walks this dir as a peer skill source and symlinks each entry into `~/.claude/skills/`. Edit the SKILL.md here, not a copy in agentic-os-kai.
