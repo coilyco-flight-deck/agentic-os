@@ -2,6 +2,17 @@
 
 The collections worth standardizing on, by tech. Prefer the canonical namespace over keyword-search noise - Galaxy's modern backend does not expose a popularity sort, so the search results are not ranked by adoption.
 
+## Foundational
+
+The collections you lean on constantly, independent of any one tech.
+
+- **community.general** - the giant grab-bag, thousands of modules. You will use this.
+- **ansible.posix** - mount, sysctl, firewalld, authorized_key, the Unix primitives.
+- **ansible.utils** - ipaddr filters, network helpers.
+- **ansible.builtin** - pip/apt/sysctl/users ship in core. Don't search Galaxy for these.
+
+## By tech
+
 - **Docker** - `community.docker` (modules) + role `geerlingguy.docker` (engine install, the single most-downloaded role on Galaxy).
 - **Kubernetes** - `kubernetes.core` (the `k8s` module). For cluster bring-up itself, `geerlingguy.kubernetes` or `kubernetes_sigs.kubespray`.
 - **AWS** - `amazon.aws` (official) + `community.aws`. Drive AWS through modules, not roles.
@@ -15,6 +26,14 @@ The collections worth standardizing on, by tech. Prefer the canonical namespace 
 - **Hardening** - `devsec.hardening` (the dev-sec org, ssh/os/nginx/mysql CIS baselines).
 - **HashiCorp** - `community.hashi_vault` (Vault API). Consul installs via `brianshumate.consul`.
 - **Certs** - `community.crypto` (ACME modules), not a certbot role wrapper.
+
+## Host basics and bootstrap
+
+The geerlingguy org is the de-facto role library for host setup. Common ones:
+
+- **Bootstrap** - `robertdebock.bootstrap` or `buluma.bootstrap` (bare-host prep), `singleplatform-eng.users` (user management).
+- **Host services** - `geerlingguy.ntp`, `.nfs`, `.pip`, `.repo-epel`, `.homebrew`, `.certbot`.
+- **Unattended upgrades** - `jnv.unattended-upgrades`.
 
 ## Known gaps
 
