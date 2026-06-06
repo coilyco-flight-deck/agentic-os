@@ -1,5 +1,5 @@
 ---
-name: tooling-clis
+name: tooling-agent-workflows
 description: The five-tier information model for agent-facing CLI commands - description, body, intro, help, outro - plus push-short/pull-long. Use when documenting a CLI agents invoke, not humans.
 ---
 

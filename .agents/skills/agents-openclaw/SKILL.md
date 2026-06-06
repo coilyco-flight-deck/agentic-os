@@ -12,5 +12,4 @@ The **OpenClaw** harness (they/them). Unlike [`agents-claude`](../agents-claude/
 
 ## Related
 
-- `tooling-openclaw-workspace` - workspace mechanics.
 - `agents-claude`, `agents-codex` - sibling harnesses.

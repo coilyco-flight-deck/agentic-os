@@ -63,19 +63,9 @@ categories:
 
   # ---- Exact-name skills ----
 
-  - id: agentic-os
-    kind: exact
-    exact: agentic-os
-    enforce_status: false
-
   - id: claude-code-render
     kind: exact
     exact: claude-code-render
-    enforce_status: false
-
-  - id: system-improvement-vocab
-    kind: exact
-    exact: system-improvement-vocab
     enforce_status: false
 
 # ---- Global checks ----

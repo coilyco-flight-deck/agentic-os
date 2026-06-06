@@ -12,7 +12,7 @@ Umbrella for any Terraform work.
 - **Tool**: Terraform (not OpenTofu, unless a project pins it).
 - **State backend**: S3 bucket + DynamoDB lock table, both in `us-east-1`. Backend config goes in `backend.tf`, never inline literal credentials.
 - **Provider versions**: pinned in `versions.tf` with a `~>` constraint, not floating.
-- **Module shape**: see sibling [`coding-terraform-module-library`](../coding-terraform-module-library/SKILL.md) for reusable-module conventions (variable naming, output shape, README expectations).
+- **Module shape**: reusable modules keep variables in `variables.tf`, outputs in `outputs.tf`, a README per module, and pin provider versions. One stack per concern, never a mega-module.
 - **Multi-cloud**: Kai's primary is AWS. Azure / GCP / OCI are valid targets when a module needs to be portable.
 
 ## Style
@@ -39,5 +39,5 @@ terraform, tf, tfstate, tfvars, hcl, opentofu, .tf, terragrunt, provider, backen
 
 ## See also
 
-- [`coding-terraform-module-library`](../coding-terraform-module-library/SKILL.md) - reusable module conventions.
+- [`coding-shape-iac`](../coding-shape-iac/SKILL.md) - the IaC umbrella. Terraform is the API-hitting leg of the Ansible / Terraform / Kubernetes trifecta.
 - [`coding-aws`](../coding-aws/SKILL.md) - the cloud Terraform mostly targets.

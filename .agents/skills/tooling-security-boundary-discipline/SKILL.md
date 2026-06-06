@@ -31,7 +31,7 @@ When a future fill needs structured data (diff SECURITY.md claims against `TestS
 3. **Sequencing rules for boundary changes.** Drop / add / refactor each have an order that preserves the boundary mid-flight; doing them in the wrong order creates a degradation gap. Replace-before-drop is the canonical example.
 4. **Doc-runtime sync practice.** How the `TestSecurityClaim_*` family in coily works, why it exists, the rule that prose and runtime move together, and the convention that adding a load-bearing claim to `SECURITY.md` requires adding a corresponding test.
 5. **Decision template for "is this on the boundary."** A short checklist applied to any new feature ask. Distinguishes "uses the boundary" from "is the boundary."
-6. **References.** Pointers into `coily/SECURITY.md`, `pkg/policy`, `pkg/audit`, `pkg/verb`, `pkg/scope`, the security-claims test, and the git-workflow / ops-investigation / system-improvement-vocab skills this one composes with.
+6. **References.** Pointers into `coily/SECURITY.md`, `pkg/policy`, `pkg/audit`, `pkg/verb`, `pkg/scope`, the security-claims test, and the git-workflow / ops-investigation / writing-system-improvement-vocab skills this one composes with.
 
 ## Status
 
