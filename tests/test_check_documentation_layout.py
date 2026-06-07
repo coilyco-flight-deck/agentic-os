@@ -10,6 +10,7 @@ from pathlib import Path
 from agentic_os.check_documentation_layout import (
     ROOT_MARKDOWN_ALLOWLIST,
     check_skill_flatness,
+    is_harness_override,
 )
 
 
@@ -17,6 +18,16 @@ def test_agents_compose_md_is_an_allowed_root_file() -> None:
     # agent-compose's disjoint source is a repo-root convention; the layout
     # rule must not reject it the way it rejects one-off root Markdown.
     assert "AGENTS.COMPOSE.md" in ROOT_MARKDOWN_ALLOWLIST
+
+
+def test_harness_override_filenames_are_recognized() -> None:
+    # AGENTS.<harness>.md overrides sit at repo root beside AGENTS.md.
+    assert is_harness_override("AGENTS.codex.md")
+    assert is_harness_override("AGENTS.claude.md")
+    # not overrides: the uppercase disjoint source, the base, one-off docs.
+    assert not is_harness_override("AGENTS.COMPOSE.md")
+    assert not is_harness_override("AGENTS.md")
+    assert not is_harness_override("notes.md")
 
 
 def write(path: Path, text: str = "x\n") -> None:

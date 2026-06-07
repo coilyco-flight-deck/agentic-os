@@ -13,6 +13,25 @@ def write(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
+@pytest.fixture(autouse=True)
+def _isolate_default_load_points(
+    tmp_path_factory: pytest.TempPathFactory, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Stop tests from re-pointing the real ~/.claude and ~/.codex symlinks.
+
+    A test that omits `load_points` falls through to DEFAULT_LOAD_POINTS, which
+    is the operator's real load points. Without this, run() would clobber them
+    (and leave them dangling at a deleted tmp file). Redirect the defaults into
+    a throwaway dir for every test.
+    """
+    safe = tmp_path_factory.mktemp("load-points")
+    monkeypatch.setattr(
+        agent_compose,
+        "DEFAULT_LOAD_POINTS",
+        {"claude": safe / "claude" / "CLAUDE.md", "codex": safe / "codex" / "AGENTS.md"},
+    )
+
+
 @pytest.fixture
 def paths(tmp_path: Path) -> dict[str, Path]:
     return {
@@ -486,4 +505,91 @@ def test_check_detects_obsolete_generated_output(
     )
     agent_compose.run(paths["config"], paths["composed"])
     write(paths["composed"], agent_compose.compose([shared]))
+    assert agent_compose.check(paths["config"], paths["composed"]) == 1
+
+
+# ---------- per-harness section overrides ----------
+
+def test_apply_overrides_replaces_matching_section() -> None:
+    base = "## Keep\nkeep me\n\n## Reading\nread the whole file\n"
+    override = "## Reading\nread slices only\n"
+    out = agent_compose.apply_overrides(base, override)
+    assert "read slices only" in out
+    assert "read the whole file" not in out
+    assert "keep me" in out  # untouched section survives
+
+
+def test_apply_overrides_appends_new_section() -> None:
+    base = "## Keep\nkeep me\n"
+    override = "## Reading\nread slices only\n"
+    out = agent_compose.apply_overrides(base, override)
+    assert "keep me" in out
+    assert out.strip().endswith("read slices only")
+
+
+def test_apply_overrides_section_absorbs_subsections() -> None:
+    base = "## Rules\nintro\n### Sub\nold sub\n\n## After\ntail\n"
+    override = "## Rules\nfresh rules\n"
+    out = agent_compose.apply_overrides(base, override)
+    assert "fresh rules" in out
+    assert "old sub" not in out  # ### child absorbed by the ## override
+    assert "tail" in out  # next ## section preserved
+
+
+def test_apply_overrides_ambiguous_heading_raises() -> None:
+    base = "## Dup\none\n\n## Dup\ntwo\n"
+    with pytest.raises(RuntimeError):
+        agent_compose.apply_overrides(base, "## Dup\nmerged\n")
+
+
+def test_discover_override_finds_sibling(tmp_path: Path) -> None:
+    base = tmp_path / "AGENTS.md"
+    write(base, "## A\nx\n")
+    write(tmp_path / "AGENTS.codex.md", "## A\ny\n")
+    assert agent_compose.discover_override(base, "codex") == tmp_path / "AGENTS.codex.md"
+    assert agent_compose.discover_override(base, "claude") is None
+
+
+def test_run_applies_override_to_one_harness(
+    paths: dict[str, Path], tmp_path: Path
+) -> None:
+    base = tmp_path / "AGENTS.md"
+    write(base, "## Shared\nshared\n\n## Reading\nwhole file\n")
+    write(tmp_path / "AGENTS.codex.md", "## Reading\nslices only\n")
+    write(
+        paths["config"],
+        f"sources:\n  - {base}\n"
+        f"load_points:\n  claude: {paths['claude']}\n  codex: {paths['codex']}\n",
+    )
+
+    assert agent_compose.run(paths["config"], paths["composed"]) == 0
+
+    claude_output = tmp_path / "composed.claude.md"
+    codex_output = tmp_path / "composed.codex.md"
+    # the override alone forces divergent per-harness outputs
+    assert not paths["composed"].exists()
+    codex_text = codex_output.read_text(encoding="utf-8")
+    claude_text = claude_output.read_text(encoding="utf-8")
+    assert "slices only" in codex_text
+    assert "whole file" not in codex_text
+    assert "whole file" in claude_text  # claude keeps the base section
+    assert "shared" in codex_text and "shared" in claude_text
+
+
+def test_override_makes_check_pass_then_detects_drift(
+    paths: dict[str, Path], tmp_path: Path
+) -> None:
+    base = tmp_path / "AGENTS.md"
+    write(base, "## Shared\nshared\n\n## Reading\nwhole file\n")
+    write(tmp_path / "AGENTS.codex.md", "## Reading\nslices only\n")
+    write(
+        paths["config"],
+        f"sources:\n  - {base}\n"
+        f"load_points:\n  claude: {paths['claude']}\n  codex: {paths['codex']}\n",
+    )
+    agent_compose.run(paths["config"], paths["composed"])
+    assert agent_compose.check(paths["config"], paths["composed"]) == 0
+
+    # editing the override re-drifts the codex slice
+    write(tmp_path / "AGENTS.codex.md", "## Reading\ngrep then slice\n")
     assert agent_compose.check(paths["config"], paths["composed"]) == 1

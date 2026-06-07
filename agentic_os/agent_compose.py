@@ -29,6 +29,16 @@ Source frontmatter (stripped from composed output, never leaks into context):
     ---
     # always-global doctrine ...
 
+Per-harness section overrides let one harness diverge from a shared source
+without forking the whole file. An override is a sibling named
+``AGENTS.<harness>.md`` in the base source's own directory; it declares no
+target path, so it can only patch the base it sits beside. Its sections are
+keyed by verbatim heading: a heading already in the base replaces that section,
+a new heading is appended. Headings are unique within a single file, which is
+why the directory binding is enough to anchor unambiguously. A source's
+overrides feed the divergence signature, so an override alone splits COMPOSED.md
+into per-harness files (COMPOSED.<harness>.md).
+
 Config schema (YAML):
 
     # Presence of this file activates agent-compose. Absent => no-op.
@@ -54,6 +64,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 from pathlib import Path
 
@@ -128,6 +139,88 @@ def source_harnesses(path: Path) -> list[str] | None:
     return _normalize_scopes(meta.get("harnesses"))
 
 
+def discover_override(base: Path, harness: str) -> Path | None:
+    """Return the per-harness section override sitting beside base, if any.
+
+    An override is a sibling file named ``AGENTS.<harness>.md`` in the base's
+    own directory. It declares no target path: the directory binds it, so an
+    override can only patch the base source it lives next to and never reaches
+    another repo or folder. The harness comes from the filename, so dropping a
+    new override in place needs no config change.
+    """
+    candidate = base.parent / f"AGENTS.{harness}.md"
+    return candidate if candidate.is_file() else None
+
+
+def _header_level(line: str) -> int | None:
+    """ATX heading level (1-6) for line, or None when it is not a heading."""
+    match = re.match(r"(#{1,6}) +\S", line)
+    return len(match.group(1)) if match else None
+
+
+def _section_end(lines: list[str], start: int) -> int:
+    """Index just past the section opened by the heading at lines[start].
+
+    A section runs until the next heading of the same or shallower level, so a
+    ``##`` section absorbs its ``###`` children.
+    """
+    level = _header_level(lines[start])
+    assert level is not None
+    end = start + 1
+    while end < len(lines):
+        here = _header_level(lines[end])
+        if here is not None and here <= level:
+            break
+        end += 1
+    return end
+
+
+def _override_sections(body: str) -> list[tuple[str, list[str]]]:
+    """Split an override body into (verbatim-heading, section-lines) pairs.
+
+    Anything before the first heading is dropped: an override anchors by
+    heading, so a preamble would have nothing to bind to.
+    """
+    lines = body.strip("\n").split("\n")
+    start = 0
+    while start < len(lines) and _header_level(lines[start]) is None:
+        start += 1
+    sections: list[tuple[str, list[str]]] = []
+    while start < len(lines):
+        end = _section_end(lines, start)
+        sections.append((lines[start].rstrip(), lines[start:end]))
+        start = end
+    return sections
+
+
+def apply_overrides(base_body: str, override_body: str) -> str:
+    """Merge an override into a base body, keyed by verbatim heading line.
+
+    A heading already present in the base replaces that whole section (heading
+    through the next same-or-shallower heading). A heading absent from the base
+    is appended, so an override may both rewrite and add sections. A heading
+    that matches more than once raises RuntimeError, so an ambiguous anchor
+    fails the compose loudly rather than patching the wrong section silently.
+    Within a single source file headings are unique, which is exactly why the
+    override binds to one directory's base.
+    """
+    lines = base_body.split("\n")
+    for heading, section in _override_sections(override_body):
+        matches = [i for i, line in enumerate(lines) if line.rstrip() == heading]
+        if len(matches) > 1:
+            raise RuntimeError(
+                f"override heading {heading!r} matches {len(matches)} sections"
+            )
+        if matches:
+            start = matches[0]
+            lines[start:_section_end(lines, start)] = section
+        else:
+            if lines and lines[-1].strip():
+                lines.append("")
+            lines.extend(section)
+    return "\n".join(lines)
+
+
 def select_by_scope(sources: list[Path], machine_scopes: list[str] | None) -> list[Path]:
     """Keep sources whose declared scopes intersect the machine scopes.
 
@@ -163,17 +256,41 @@ def harness_output_path(composed_path: Path, harness: str) -> Path:
 
 def plan_outputs(
     sources: list[Path], load_points: dict[str, Path], composed_path: Path
-) -> tuple[dict[str, list[Path]], dict[str, Path], list[str]]:
-    """Select each harness slice and assign shared or divergent output paths."""
+) -> tuple[
+    dict[str, list[Path]],
+    dict[str, dict[Path, Path]],
+    dict[str, Path],
+    list[str],
+]:
+    """Select each harness slice, its overrides, and shared/divergent outputs.
+
+    A harness slice diverges when either its selected sources or its per-harness
+    overrides differ from the others, so a section override alone is enough to
+    split COMPOSED.md into per-harness files.
+    """
     slices = {
         harness: select_by_harness(sources, harness) for harness in load_points
+    }
+    overrides = {
+        harness: {
+            src: override
+            for src in selected
+            if (override := discover_override(src, harness)) is not None
+        }
+        for harness, selected in slices.items()
     }
     errors = [
         f"no sources matched harness {harness!r}"
         for harness, selected in slices.items()
         if not selected
     ]
-    signatures = {tuple(selected) for selected in slices.values()}
+    signatures = {
+        (
+            tuple(slices[harness]),
+            tuple(sorted((str(b), str(o)) for b, o in overrides[harness].items())),
+        )
+        for harness in load_points
+    }
     if len(signatures) <= 1:
         outputs = {harness: composed_path for harness in load_points}
     else:
@@ -181,7 +298,7 @@ def plan_outputs(
             harness: harness_output_path(composed_path, harness)
             for harness in load_points
         }
-    return slices, outputs, errors
+    return slices, overrides, outputs, errors
 
 
 def stale_generated_outputs(
@@ -262,16 +379,27 @@ def gather_sources(config: dict) -> tuple[list[Path], list[str]]:
     return ordered, errors
 
 
-def compose(sources: list[Path]) -> str:
+def compose(
+    sources: list[Path], overrides: dict[Path, Path] | None = None
+) -> str:
     """Concatenate source files into the composed-context body.
 
     Deterministic (no timestamps) so the drift check (#140) can reproduce it.
-    Each section is fenced by a source-path comment for debuggability.
+    Each section is fenced by a source-path comment for debuggability. When a
+    source has a per-harness override, its sections are merged in before fencing
+    and the fence records the override for provenance.
     """
+    overrides = overrides or {}
     parts = [BANNER]
     for src in sources:
         body = parse_source(src)[1].strip("\n")
-        parts.append(f"<!-- source: {src} -->\n{body}")
+        override = overrides.get(src)
+        if override is not None:
+            body = apply_overrides(body, parse_source(override)[1])
+            fence = f"<!-- source: {src} (override: {override.name}) -->"
+        else:
+            fence = f"<!-- source: {src} -->"
+        parts.append(f"{fence}\n{body}")
     return "\n\n".join(parts) + "\n"
 
 
@@ -353,7 +481,7 @@ def run(config_path: Path, composed_path: Path, *, dry_run: bool = False) -> int
         return 1
 
     load_points = resolve_load_points(config)
-    slices, outputs, harness_errors = plan_outputs(
+    slices, overrides, outputs, harness_errors = plan_outputs(
         sources, load_points, composed_path
     )
     if harness_errors:
@@ -362,15 +490,15 @@ def run(config_path: Path, composed_path: Path, *, dry_run: bool = False) -> int
         return 1
     tail = f" ({excluded} excluded by scope)" if excluded else ""
 
-    planned: dict[Path, list[Path]] = {}
+    planned: dict[Path, tuple[list[Path], dict[Path, Path]]] = {}
     for harness, target in outputs.items():
-        planned[target] = slices[harness]
+        planned[target] = (slices[harness], overrides[harness])
     if not load_points:
-        planned[composed_path] = sources
+        planned[composed_path] = (sources, {})
     stale = stale_generated_outputs(composed_path, set(planned))
 
     if dry_run:
-        for target, selected in sorted(planned.items(), key=lambda item: str(item[0])):
+        for target, (selected, _ov) in sorted(planned.items(), key=lambda item: str(item[0])):
             print(f"would write {target} ({len(selected)} source(s)){tail}")
         for target in stale:
             print(f"would remove {target} (obsolete generated output)")
@@ -382,8 +510,8 @@ def run(config_path: Path, composed_path: Path, *, dry_run: bool = False) -> int
     for target in stale:
         target.unlink()
         print(f"removed {target} (obsolete generated output)")
-    for target, selected in sorted(planned.items(), key=lambda item: str(item[0])):
-        target.write_text(compose(selected), encoding="utf-8")
+    for target, (selected, override_map) in sorted(planned.items(), key=lambda item: str(item[0])):
+        target.write_text(compose(selected, override_map), encoding="utf-8")
         print(f"wrote   {target} ({len(selected)} source(s)){tail}")
     for harness, dst in sorted(load_points.items()):
         print(install_symlink(dst, outputs[harness]) + f"  [{harness}]")
@@ -412,7 +540,7 @@ def check(config_path: Path, composed_path: Path) -> int:
         return 1
 
     load_points = resolve_load_points(config)
-    slices, outputs, harness_errors = plan_outputs(
+    slices, overrides, outputs, harness_errors = plan_outputs(
         sources, load_points, composed_path
     )
     if harness_errors:
@@ -420,11 +548,11 @@ def check(config_path: Path, composed_path: Path) -> int:
             sys.stderr.write(f"agent-compose: {err}\n")
         return 1
 
-    planned: dict[Path, list[Path]] = {}
+    planned: dict[Path, tuple[list[Path], dict[Path, Path]]] = {}
     for harness, target in outputs.items():
-        planned[target] = slices[harness]
+        planned[target] = (slices[harness], overrides[harness])
     if not load_points:
-        planned[composed_path] = sources
+        planned[composed_path] = (sources, {})
     stale = stale_generated_outputs(composed_path, set(planned))
 
     import difflib
@@ -436,8 +564,8 @@ def check(config_path: Path, composed_path: Path) -> int:
             f"agent-compose: drift - obsolete generated output remains at {target}. "
             "Run `agent-compose` to remove it.\n"
         )
-    for target, selected in sorted(planned.items(), key=lambda item: str(item[0])):
-        expected = compose(selected)
+    for target, (selected, override_map) in sorted(planned.items(), key=lambda item: str(item[0])):
+        expected = compose(selected, override_map)
         actual = target.read_text(encoding="utf-8") if target.exists() else ""
         if actual == expected:
             print(f"agent-compose: {target} in sync")

@@ -28,6 +28,7 @@ without losing unconditional firing, so that repo opts in; nothing else does.
 """
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 
@@ -67,6 +68,15 @@ ROOT_MARKDOWN_ALLOWLIST = {
     "SECURITY.md",
     "SUPPORT.md",
 }
+
+# agent-compose per-harness override AGENTS.<harness>.md sits beside its base.
+# Lowercase token mirrors a harness slug, so uppercase AGENTS.COMPOSE.md misses.
+HARNESS_OVERRIDE_RE = re.compile(r"^AGENTS\.[a-z][a-z0-9-]*\.md$")
+
+
+def is_harness_override(name: str) -> bool:
+    return bool(HARNESS_OVERRIDE_RE.match(name))
+
 
 SKIP_DIR_NAMES = {
     ".claude",
@@ -148,7 +158,9 @@ def check_markdown_locations() -> list[str]:
     violations: list[str] = []
     for rel in markdown_files():
         if len(rel.parts) == 1:
-            if rel.name not in ROOT_MARKDOWN_ALLOWLIST:
+            if rel.name not in ROOT_MARKDOWN_ALLOWLIST and not is_harness_override(
+                rel.name
+            ):
                 allowed = ", ".join(sorted(ROOT_MARKDOWN_ALLOWLIST))
                 violations.append(
                     f"{rel}: top-level Markdown filename is not allowed. "
