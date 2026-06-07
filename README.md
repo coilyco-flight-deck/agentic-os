@@ -36,7 +36,7 @@ No disk write at any point. Same call works on Mac, Linux, Windows. AWS profile 
 
 ## agent-compose
 
-Opt-in tooling that composes one global agent-context file from declared sources and points every harness load point (Claude Code, Codex, OpenClaw) at it by symlink, so all three load byte-identical context with nothing duplicated on disk. Inert until `~/.config/agent-compose/agent-compose.yaml` exists. See [docs/FEATURES.md](docs/FEATURES.md).
+Opt-in tooling that composes global agent context and symlinks each harness load point to it. Sources are shared unless optional `harnesses` frontmatter selects a harness-specific slice. Inert until `~/.config/agent-compose/agent-compose.yaml` exists. See [docs/FEATURES.md](docs/FEATURES.md).
 
 **Prior art.** The idea is fresh in the agentic space but well-trodden in config management, and agent-compose is best understood as **Hiera-for-agent-doctrine, deployed Stow-style, scoped chezmoi-style**:
 

@@ -13,7 +13,7 @@ This doc describes capabilities, not files. If you want a file inventory, run `l
 ## See also
 
 - [README.md](../README.md) - human-facing intro.
-- [AGENTS.md](../AGENTS.md) - agent-facing operating rules (delegates to `agentic-os-kai/AGENTS.md`).
+- [AGENTS.md](../AGENTS.md) - public-safe agent operating rules.
 - [.coily/coily.yaml](../.coily/coily.yaml) - allowlisted commands.
 
 Cross-reference convention from [coilysiren/agentic-os-kai#313](https://github.com/coilysiren/agentic-os-kai/issues/313).

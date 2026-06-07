@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Cap the size of AGENTS.COMPOSE.md sources, per file and per repo.
 
-AGENTS.COMPOSE.md sources are composed into a single global context file
-(agent-compose, forgejo #134) that every harness loads on every session, so
-their size is load-bearing in a way ordinary docs are not. The general
-documentation-layout hook already caps each Markdown file. The value this hook
-adds is the per-repo AGGREGATE budget: the sum of all AGENTS.COMPOSE.md a repo
-contributes to the always-loaded composed file, which no per-file cap bounds.
+AGENTS.COMPOSE.md sources are composed into always-loaded global context
+(agent-compose, forgejo #134), shared across harnesses by default and sliced
+when frontmatter requires it. Their size matters in a way ordinary docs do not.
+The general documentation-layout hook already caps each Markdown file. The
+value this hook adds is the per-repo AGGREGATE budget: the sum of all
+AGENTS.COMPOSE.md a repo contributes to composed context, which no per-file cap
+bounds.
 
 Caps (override per-repo under [tool.agentic-os.agent-compose-size]):
     max_source_chars  - per AGENTS.COMPOSE.md file (default 4000)
@@ -57,7 +58,7 @@ def find_violations(root: Path) -> list[str]:
     if total > max_total:
         violations.append(
             f"repo AGENTS.COMPOSE.md total {total} chars exceeds the {max_total}-char "
-            f"budget. The composed file loads every session; keep it lean."
+            f"budget. Composed context loads every session; keep it lean."
         )
     return violations
 

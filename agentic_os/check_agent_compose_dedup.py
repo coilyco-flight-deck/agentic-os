@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Reject content duplicated across AGENTS.COMPOSE.md sources or with AGENTS.md.
 
-agent-compose (forgejo #134) pulls AGENTS.COMPOSE.md doctrine into one global
-composed file. Two failure modes waste a session's context budget:
+agent-compose (forgejo #134) pulls AGENTS.COMPOSE.md doctrine into global
+composed context, shared across harnesses by default. Two failure modes waste a
+session's context budget:
 
     1. The same doctrine stated in two AGENTS.COMPOSE.md sources, so it composes
        twice.
@@ -61,7 +62,7 @@ def find_violations(root: Path) -> list[str]:
     sources = source_files(root)
 
     # Map each significant source line to the files it appears in (frontmatter
-    # stripped, since the scopes directive is not composed content).
+    # stripped, since source-selection directives are not composed content).
     line_to_files: dict[str, set[str]] = {}
     for rel in sources:
         body = agent_compose.parse_source(root / rel)[1]

@@ -257,9 +257,14 @@ def test_parse_source_no_frontmatter(tmp_path: Path) -> None:
 
 def test_compose_strips_frontmatter(tmp_path: Path) -> None:
     src = tmp_path / "AGENTS.COMPOSE.md"
-    write(src, "---\nscopes: [kai-public]\n---\n# doctrine\nrule one\n")
+    write(
+        src,
+        "---\nscopes: [kai-public]\nharnesses: [claude]\n---\n"
+        "# doctrine\nrule one\n",
+    )
     out = agent_compose.compose([src])
     assert "scopes:" not in out
+    assert "harnesses:" not in out
     assert "# doctrine" in out and "rule one" in out
 
 
@@ -330,6 +335,92 @@ def test_run_no_scope_match_refuses(paths: dict[str, Path], tmp_path: Path) -> N
     assert not paths["composed"].exists()
 
 
+# ---------- harness slices ----------
+
+def test_source_harnesses_reads_allowlist(tmp_path: Path) -> None:
+    src = tmp_path / "AGENTS.COMPOSE.md"
+    write(src, "---\nharnesses: [claude, codex]\n---\nx\n")
+    assert agent_compose.source_harnesses(src) == ["claude", "codex"]
+
+
+def test_source_without_harnesses_is_shared(tmp_path: Path) -> None:
+    src = tmp_path / "AGENTS.COMPOSE.md"
+    write(src, "shared\n")
+    assert agent_compose.select_by_harness([src], "codex") == [src]
+
+
+def test_run_writes_divergent_harness_slices(
+    paths: dict[str, Path], tmp_path: Path
+) -> None:
+    shared = tmp_path / "shared.md"
+    claude_only = tmp_path / "claude.md"
+    write(shared, "shared doctrine\n")
+    write(claude_only, "---\nharnesses: [claude]\n---\nclaude doctrine\n")
+    write(
+        paths["config"],
+        f"sources:\n  - {shared}\n  - {claude_only}\n"
+        f"load_points:\n  claude: {paths['claude']}\n  codex: {paths['codex']}\n",
+    )
+
+    assert agent_compose.run(paths["config"], paths["composed"]) == 0
+
+    claude_output = tmp_path / "composed.claude.md"
+    codex_output = tmp_path / "composed.codex.md"
+    assert paths["claude"].resolve() == claude_output.resolve()
+    assert paths["codex"].resolve() == codex_output.resolve()
+    assert "claude doctrine" in claude_output.read_text(encoding="utf-8")
+    assert "claude doctrine" not in codex_output.read_text(encoding="utf-8")
+    assert "shared doctrine" in codex_output.read_text(encoding="utf-8")
+    assert not paths["composed"].exists()
+
+
+def test_run_refuses_empty_harness_slice(
+    paths: dict[str, Path], tmp_path: Path
+) -> None:
+    claude_only = tmp_path / "claude.md"
+    write(claude_only, "---\nharnesses: [claude]\n---\nclaude doctrine\n")
+    write(
+        paths["config"],
+        f"sources:\n  - {claude_only}\n"
+        f"load_points:\n  claude: {paths['claude']}\n  codex: {paths['codex']}\n",
+    )
+    assert agent_compose.run(paths["config"], paths["composed"]) == 1
+    assert not paths["claude"].exists()
+    assert not paths["codex"].exists()
+
+
+def test_run_removes_obsolete_shared_output(
+    paths: dict[str, Path], tmp_path: Path
+) -> None:
+    shared = tmp_path / "shared.md"
+    claude_only = tmp_path / "claude.md"
+    write(shared, "shared doctrine\n")
+    write(paths["config"], f"sources:\n  - {shared}\n")
+    assert agent_compose.run(paths["config"], paths["composed"]) == 0
+    assert paths["composed"].exists()
+
+    write(claude_only, "---\nharnesses: [claude]\n---\nclaude doctrine\n")
+    write(
+        paths["config"],
+        f"sources:\n  - {shared}\n  - {claude_only}\n"
+        f"load_points:\n  claude: {paths['claude']}\n  codex: {paths['codex']}\n",
+    )
+    assert agent_compose.run(paths["config"], paths["composed"]) == 0
+    assert not paths["composed"].exists()
+
+
+def test_run_preserves_similarly_named_user_file(
+    paths: dict[str, Path], tmp_path: Path
+) -> None:
+    src = tmp_path / "shared.md"
+    user_file = tmp_path / "composed.notes.md"
+    write(src, "shared doctrine\n")
+    write(user_file, "user-owned notes\n")
+    write(paths["config"], f"sources:\n  - {src}\n")
+    assert agent_compose.run(paths["config"], paths["composed"]) == 0
+    assert user_file.read_text(encoding="utf-8") == "user-owned notes\n"
+
+
 # ---------- drift detection (forgejo #140) ----------
 
 def _written_config(paths: dict[str, Path], tmp_path: Path) -> None:
@@ -361,4 +452,38 @@ def test_check_detects_handedit(paths: dict[str, Path], tmp_path: Path) -> None:
 
 def test_check_detects_missing_output(paths: dict[str, Path], tmp_path: Path) -> None:
     _written_config(paths, tmp_path)
+    assert agent_compose.check(paths["config"], paths["composed"]) == 1
+
+
+def test_check_detects_drift_in_one_harness_slice(
+    paths: dict[str, Path], tmp_path: Path
+) -> None:
+    shared = tmp_path / "shared.md"
+    claude_only = tmp_path / "claude.md"
+    write(shared, "shared doctrine\n")
+    write(claude_only, "---\nharnesses: [claude]\n---\nclaude doctrine\n")
+    write(
+        paths["config"],
+        f"sources:\n  - {shared}\n  - {claude_only}\n"
+        f"load_points:\n  claude: {paths['claude']}\n  codex: {paths['codex']}\n",
+    )
+    agent_compose.run(paths["config"], paths["composed"])
+    (tmp_path / "composed.codex.md").write_text("drift\n", encoding="utf-8")
+    assert agent_compose.check(paths["config"], paths["composed"]) == 1
+
+
+def test_check_detects_obsolete_generated_output(
+    paths: dict[str, Path], tmp_path: Path
+) -> None:
+    shared = tmp_path / "shared.md"
+    claude_only = tmp_path / "claude.md"
+    write(shared, "shared doctrine\n")
+    write(claude_only, "---\nharnesses: [claude]\n---\nclaude doctrine\n")
+    write(
+        paths["config"],
+        f"sources:\n  - {shared}\n  - {claude_only}\n"
+        f"load_points:\n  claude: {paths['claude']}\n  codex: {paths['codex']}\n",
+    )
+    agent_compose.run(paths["config"], paths["composed"])
+    write(paths["composed"], agent_compose.compose([shared]))
     assert agent_compose.check(paths["config"], paths["composed"]) == 1

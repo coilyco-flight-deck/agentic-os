@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Compose one global agent-context file from scoped sources, shared by symlink.
+"""Compose global agent-context files from machine- and harness-scoped sources.
 
-agent-compose synthesizes a single canonical context file
-(`~/.config/agent-compose/COMPOSED.md`) from a set of source files declared in
-`~/.config/agent-compose/agent-compose.yaml`, then points each harness's global
-load point at that one file by symlink. Claude Code, Codex, and OpenClaw then
-load byte-identical context with no duplicated content on disk.
+agent-compose normally synthesizes one canonical context file
+(`~/.config/agent-compose/COMPOSED.md`) and points each harness's global load
+point at it by symlink. Sources may optionally declare `harnesses` in YAML
+frontmatter. When configured harnesses select different source slices, the
+composer writes `COMPOSED.<harness>.md` files instead. Shared sources remain
+shared by default, and byte-identical slices still use one file.
 
 Sources are either listed explicitly or discovered by walking declared roots
 for files named AGENTS.COMPOSE.md (forgejo #136). AGENTS.COMPOSE.md is the
@@ -20,10 +21,11 @@ opt-in: a config with no `scopes` key composes every source. Activation overall
 is opt-in too: with no config file present the composer is a total no-op, so
 every harness behaves exactly as it does without agent-compose installed.
 
-Source frontmatter (stripped from COMPOSED.md, never leaks into output):
+Source frontmatter (stripped from composed output, never leaks into context):
 
     ---
     scopes: [kai-public, work]
+    harnesses: [claude, codex]
     ---
     # always-global doctrine ...
 
@@ -120,6 +122,12 @@ def parse_source(path: Path) -> tuple[list[str] | None, str]:
     return _normalize_scopes(meta.get("scopes")), body
 
 
+def source_harnesses(path: Path) -> list[str] | None:
+    """Return a source's harness allowlist, or None when it applies to all."""
+    meta, _ = _split_frontmatter(path.read_text(encoding="utf-8"))
+    return _normalize_scopes(meta.get("harnesses"))
+
+
 def select_by_scope(sources: list[Path], machine_scopes: list[str] | None) -> list[Path]:
     """Keep sources whose declared scopes intersect the machine scopes.
 
@@ -135,6 +143,73 @@ def select_by_scope(sources: list[Path], machine_scopes: list[str] | None) -> li
         for path in sources
         if (scopes := parse_source(path)[0]) and wanted.intersection(scopes)
     ]
+
+
+def select_by_harness(sources: list[Path], harness: str) -> list[Path]:
+    """Keep sources shared globally or explicitly enabled for harness."""
+    return [
+        path
+        for path in sources
+        if (allowed := source_harnesses(path)) is None or harness in allowed
+    ]
+
+
+def harness_output_path(composed_path: Path, harness: str) -> Path:
+    """Return the divergent output path for a harness beside composed_path."""
+    return composed_path.with_name(
+        f"{composed_path.stem}.{harness}{composed_path.suffix}"
+    )
+
+
+def plan_outputs(
+    sources: list[Path], load_points: dict[str, Path], composed_path: Path
+) -> tuple[dict[str, list[Path]], dict[str, Path], list[str]]:
+    """Select each harness slice and assign shared or divergent output paths."""
+    slices = {
+        harness: select_by_harness(sources, harness) for harness in load_points
+    }
+    errors = [
+        f"no sources matched harness {harness!r}"
+        for harness, selected in slices.items()
+        if not selected
+    ]
+    signatures = {tuple(selected) for selected in slices.values()}
+    if len(signatures) <= 1:
+        outputs = {harness: composed_path for harness in load_points}
+    else:
+        outputs = {
+            harness: harness_output_path(composed_path, harness)
+            for harness in load_points
+        }
+    return slices, outputs, errors
+
+
+def stale_generated_outputs(
+    composed_path: Path, active_outputs: set[Path]
+) -> list[Path]:
+    """Find obsolete composer-owned outputs beside composed_path.
+
+    Only files carrying the generated banner qualify, so similarly named user
+    files are never removed.
+    """
+    candidates = [composed_path]
+    candidates.extend(
+        composed_path.parent.glob(
+            f"{composed_path.stem}.*{composed_path.suffix}"
+        )
+    )
+    stale: list[Path] = []
+    for path in candidates:
+        if path in active_outputs or not path.is_file():
+            continue
+        try:
+            with path.open(encoding="utf-8") as source:
+                first_line = source.readline().rstrip("\n")
+        except OSError:
+            continue
+        if first_line == BANNER:
+            stale.append(path)
+    return sorted(set(stale), key=str)
 
 
 def discover_sources(root: Path) -> list[Path]:
@@ -277,21 +352,41 @@ def run(config_path: Path, composed_path: Path, *, dry_run: bool = False) -> int
         )
         return 1
 
-    body = compose(sources)
     load_points = resolve_load_points(config)
+    slices, outputs, harness_errors = plan_outputs(
+        sources, load_points, composed_path
+    )
+    if harness_errors:
+        for err in harness_errors:
+            sys.stderr.write(f"agent-compose: {err}\n")
+        return 1
     tail = f" ({excluded} excluded by scope)" if excluded else ""
 
+    planned: dict[Path, list[Path]] = {}
+    for harness, target in outputs.items():
+        planned[target] = slices[harness]
+    if not load_points:
+        planned[composed_path] = sources
+    stale = stale_generated_outputs(composed_path, set(planned))
+
     if dry_run:
-        print(f"would write {composed_path} ({len(sources)} source(s)){tail}")
+        for target, selected in sorted(planned.items(), key=lambda item: str(item[0])):
+            print(f"would write {target} ({len(selected)} source(s)){tail}")
+        for target in stale:
+            print(f"would remove {target} (obsolete generated output)")
         for harness, dst in sorted(load_points.items()):
-            print(f"would link  {dst} -> {composed_path}  [{harness}]")
+            print(f"would link  {dst} -> {outputs[harness]}  [{harness}]")
         return 0
 
     composed_path.parent.mkdir(parents=True, exist_ok=True)
-    composed_path.write_text(body, encoding="utf-8")
-    print(f"wrote   {composed_path} ({len(sources)} source(s)){tail}")
+    for target in stale:
+        target.unlink()
+        print(f"removed {target} (obsolete generated output)")
+    for target, selected in sorted(planned.items(), key=lambda item: str(item[0])):
+        target.write_text(compose(selected), encoding="utf-8")
+        print(f"wrote   {target} ({len(selected)} source(s)){tail}")
     for harness, dst in sorted(load_points.items()):
-        print(install_symlink(dst, composed_path) + f"  [{harness}]")
+        print(install_symlink(dst, outputs[harness]) + f"  [{harness}]")
     return 0
 
 
@@ -316,28 +411,52 @@ def check(config_path: Path, composed_path: Path) -> int:
         sys.stderr.write("agent-compose: no sources resolved; cannot check drift\n")
         return 1
 
-    expected = compose(sources)
-    actual = composed_path.read_text(encoding="utf-8") if composed_path.exists() else ""
-    if actual == expected:
-        print(f"agent-compose: {composed_path} in sync")
-        return 0
-
-    sys.stderr.write(
-        f"agent-compose: drift - {composed_path} is missing, stale, or hand-edited. "
-        "Run `agent-compose` to regenerate.\n"
+    load_points = resolve_load_points(config)
+    slices, outputs, harness_errors = plan_outputs(
+        sources, load_points, composed_path
     )
+    if harness_errors:
+        for err in harness_errors:
+            sys.stderr.write(f"agent-compose: {err}\n")
+        return 1
+
+    planned: dict[Path, list[Path]] = {}
+    for harness, target in outputs.items():
+        planned[target] = slices[harness]
+    if not load_points:
+        planned[composed_path] = sources
+    stale = stale_generated_outputs(composed_path, set(planned))
+
     import difflib
 
-    diff = difflib.unified_diff(
-        actual.splitlines(),
-        expected.splitlines(),
-        fromfile=f"{composed_path} (on disk)",
-        tofile="expected (fresh compose)",
-        lineterm="",
-    )
-    for line in list(diff)[:40]:
-        sys.stderr.write(line + "\n")
-    return 1
+    drifted = False
+    for target in stale:
+        drifted = True
+        sys.stderr.write(
+            f"agent-compose: drift - obsolete generated output remains at {target}. "
+            "Run `agent-compose` to remove it.\n"
+        )
+    for target, selected in sorted(planned.items(), key=lambda item: str(item[0])):
+        expected = compose(selected)
+        actual = target.read_text(encoding="utf-8") if target.exists() else ""
+        if actual == expected:
+            print(f"agent-compose: {target} in sync")
+            continue
+        drifted = True
+        sys.stderr.write(
+            f"agent-compose: drift - {target} is missing, stale, or hand-edited. "
+            "Run `agent-compose` to regenerate.\n"
+        )
+        diff = difflib.unified_diff(
+            actual.splitlines(),
+            expected.splitlines(),
+            fromfile=f"{target} (on disk)",
+            tofile="expected (fresh compose)",
+            lineterm="",
+        )
+        for line in list(diff)[:40]:
+            sys.stderr.write(line + "\n")
+    return 1 if drifted else 0
 
 
 def main() -> int:
