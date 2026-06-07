@@ -29,6 +29,14 @@ Source frontmatter (stripped from composed output, never leaks into context):
     ---
     # always-global doctrine ...
 
+Composed output is read from ~/.config/agent-compose, not from a source's own
+repo, so two more repo-local conventions are rewritten at compose time (sources
+on disk are never touched). Relative markdown links are absolutized against the
+source's directory so ``](README.md)`` stays followable, and ``## See also``
+trifecta navigation sections are dropped as pure in-repo navigation. Both are
+symmetric with the frontmatter strip: what is meaningful only inside the source
+repo never reaches the composed context.
+
 Per-harness section overrides let one harness diverge from a shared source
 without forking the whole file. An override is a sibling named
 ``AGENTS.<harness>.md`` in the base source's own directory; it declares no
@@ -221,6 +229,76 @@ def apply_overrides(base_body: str, override_body: str) -> str:
     return "\n".join(lines)
 
 
+# Trifecta navigation headings stripped from composed output: pure in-repo
+# cross-links that mean nothing once read from ~/.config/agent-compose.
+NAVIGATION_HEADINGS = {"see also"}
+
+# A markdown inline-link tail ``(target)`` / ``(target "title")`` after a ``]``,
+# capturing the target apart from any title so only the target is rewritten.
+_LINK_RE = re.compile(r"(?<=\])\(([^)\s]+)(\s+[^)]*)?\)")
+
+
+def _heading_text(line: str) -> str | None:
+    """The text of an ATX heading line (hashes and surrounding space removed)."""
+    if _header_level(line) is None:
+        return None
+    return line.lstrip("#").strip()
+
+
+def strip_navigation_sections(body: str) -> str:
+    """Drop repo-local navigation sections (e.g. ``## See also``) from a body.
+
+    These trifecta cross-link sections address sibling files by repo-relative
+    path and are meaningful only inside the source repo. A section runs from its
+    heading to the next same-or-shallower heading, so it carries any trailing
+    prose (the cross-reference line) out with it. Headings are matched by text
+    against NAVIGATION_HEADINGS, case-insensitively.
+    """
+    lines = body.split("\n")
+    kept: list[str] = []
+    i = 0
+    while i < len(lines):
+        text = _heading_text(lines[i])
+        if text is not None and text.casefold() in NAVIGATION_HEADINGS:
+            i = _section_end(lines, i)
+            continue
+        kept.append(lines[i])
+        i += 1
+    return "\n".join(kept).strip("\n")
+
+
+def _is_global_target(target: str) -> bool:
+    """True when a link target already resolves without a source-repo cwd.
+
+    URLs (any ``scheme://``), site-absolute paths, bare in-document anchors and
+    ``mailto:`` targets need no rewrite; everything else is repo-relative.
+    """
+    return (
+        target.startswith(("/", "#", "mailto:"))
+        or re.match(r"[a-zA-Z][a-zA-Z0-9+.-]*://", target) is not None
+    )
+
+
+def absolutize_links(body: str, base_dir: Path) -> str:
+    """Rewrite repo-relative markdown link targets to absolute paths.
+
+    Composed output lives under ~/.config/agent-compose, so a source's
+    repo-relative link (``](README.md)``) would dead-end there. Each relative
+    target is resolved against base_dir (the source file's own directory) so the
+    link stays followable from anywhere. Global targets (see _is_global_target)
+    are left untouched, and a trailing ``#fragment`` on a relative path is kept.
+    """
+    def repl(match: re.Match[str]) -> str:
+        target, title = match.group(1), match.group(2) or ""
+        if _is_global_target(target):
+            return match.group(0)
+        path, sep, frag = target.partition("#")
+        absolute = (base_dir / path).resolve()
+        return f"({absolute}{sep}{frag}{title})"
+
+    return _LINK_RE.sub(repl, body)
+
+
 def select_by_scope(sources: list[Path], machine_scopes: list[str] | None) -> list[Path]:
     """Keep sources whose declared scopes intersect the machine scopes.
 
@@ -387,7 +465,10 @@ def compose(
     Deterministic (no timestamps) so the drift check (#140) can reproduce it.
     Each section is fenced by a source-path comment for debuggability. When a
     source has a per-harness override, its sections are merged in before fencing
-    and the fence records the override for provenance.
+    and the fence records the override for provenance. Repo-local conventions
+    are then rewritten for the composed context: ``## See also`` navigation is
+    stripped and relative markdown links are absolutized against the source's
+    own directory (#192).
     """
     overrides = overrides or {}
     parts = [BANNER]
@@ -399,6 +480,8 @@ def compose(
             fence = f"<!-- source: {src} (override: {override.name}) -->"
         else:
             fence = f"<!-- source: {src} -->"
+        body = strip_navigation_sections(body)
+        body = absolutize_links(body, src.parent)
         parts.append(f"{fence}\n{body}")
     return "\n\n".join(parts) + "\n"
 

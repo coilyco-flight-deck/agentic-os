@@ -593,3 +593,70 @@ def test_override_makes_check_pass_then_detects_drift(
     # editing the override re-drifts the codex slice
     write(tmp_path / "AGENTS.codex.md", "## Reading\ngrep then slice\n")
     assert agent_compose.check(paths["config"], paths["composed"]) == 1
+
+
+# ---------- repo-local conventions rewritten for the composed context (#192) ----------
+
+def test_strip_navigation_sections_drops_see_also() -> None:
+    body = (
+        "# Doctrine\nrule one\n\n"
+        "## See also\n- [README.md](README.md)\n\ncross-ref line\n"
+    )
+    out = agent_compose.strip_navigation_sections(body)
+    assert "## See also" not in out
+    assert "README.md" not in out
+    assert "cross-ref line" not in out  # trailing prose leaves with the section
+    assert "# Doctrine" in out and "rule one" in out
+
+
+def test_strip_navigation_is_case_insensitive_and_keeps_siblings() -> None:
+    body = "## Keep\nkept\n\n## SEE ALSO\n- [x](x.md)\n\n## After\ntail\n"
+    out = agent_compose.strip_navigation_sections(body)
+    assert "## SEE ALSO" not in out
+    # a same-level heading after See also is a sibling, not absorbed
+    assert "## Keep" in out and "kept" in out
+    assert "## After" in out and "tail" in out
+
+
+def test_absolutize_links_resolves_relative_targets(tmp_path: Path) -> None:
+    base = tmp_path / "repo"
+    out = agent_compose.absolutize_links("see [readme](README.md) now", base)
+    assert f"]({base / 'README.md'})" in out
+
+
+def test_absolutize_links_leaves_global_targets(tmp_path: Path) -> None:
+    body = (
+        "[site](https://example.com) [root](/etc/hosts) "
+        "[anchor](#scope) [mail](mailto:x@y.z)"
+    )
+    assert agent_compose.absolutize_links(body, tmp_path / "repo") == body
+
+
+def test_absolutize_links_preserves_fragment(tmp_path: Path) -> None:
+    base = tmp_path / "repo"
+    out = agent_compose.absolutize_links("[t](docs/F.md#frag)", base)
+    assert f"]({base / 'docs' / 'F.md'}#frag)" in out
+
+
+def test_compose_rewrites_see_also_and_links(tmp_path: Path) -> None:
+    src = tmp_path / "AGENTS.COMPOSE.md"
+    write(
+        src,
+        "# Doctrine\nRoute through [coily](.coily/coily.yaml).\n\n"
+        "## See also\n- [README.md](README.md)\n",
+    )
+    out = agent_compose.compose([src])
+    assert "## See also" not in out
+    assert "](README.md)" not in out
+    # the inline relative link is absolutized against the source's own dir
+    assert f"]({tmp_path / '.coily' / 'coily.yaml'})" in out
+
+
+def test_compose_strips_see_also_from_overridden_base(tmp_path: Path) -> None:
+    base = tmp_path / "AGENTS.COMPOSE.md"
+    write(base, "## Reading\nwhole file\n\n## See also\n- [r](README.md)\n")
+    override = tmp_path / "AGENTS.codex.md"
+    write(override, "## Reading\nslices only\n")
+    out = agent_compose.compose([base], {base: override})
+    assert "slices only" in out  # override applied
+    assert "## See also" not in out  # nav stripped after the merge
