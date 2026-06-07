@@ -13,6 +13,7 @@
 #       - id: validate-skills
 #       - id: dead-cross-links
 #       - id: repo-pointer-skills
+#       - id: agents-pointer
 #       - id: misplaced-skills
 #       - id: merge-conflicts
 #       - id: seed-skills
@@ -102,6 +103,15 @@
   entry: check-repo-pointer-skills
   language: python
   additional_dependencies: [pyyaml]
+  always_run: true
+  pass_filenames: false
+  stages: [pre-commit]
+
+- id: agents-pointer
+  name: AGENTS.md pointer block auto-generated
+  description: Regenerate the managed workspace-pointer block in AGENTS.md offline and fail on drift. No-ops for unmanaged orgs and the canonical base repos. See coilyco-flight-deck/agentic-os#196.
+  entry: check-agents-pointer
+  language: python
   always_run: true
   pass_filenames: false
   stages: [pre-commit]
