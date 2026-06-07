@@ -7,6 +7,10 @@ alias ....='cd ../../..'
 alias gt='git status'
 alias gush='git push -u origin HEAD'
 
+# Recompose the global agent-context files, then show both slices. The coily
+# verb is cwd-scoped to agentic-os, so the subshell cds there (shell stays put).
+alias agent-compose-bat='(cd ~/projects/coilyco-flight-deck/agentic-os && coily exec agent-compose) && bat ~/.config/agent-compose/COMPOSED.{claude,codex}.md'
+
 rg() {
   command rg --hidden --glob '!.git' --glob '!*.svg' --glob '!.vscode' "$@"
 }

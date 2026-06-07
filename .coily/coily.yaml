@@ -40,6 +40,9 @@ commands:
   gen-seed-skills:
     run: uv run python -m agentic_os.seed_skills
     description: "Regenerate agentic_os/seed_skills_data.py from the seed: frontmatter on the coding-<lang> skills. Run after editing a seed block; check-seed-skills-drift fails on staleness. See agentic-os#176."
+  agent-compose:
+    run: uv run python -m agentic_os.agent_compose
+    description: "Recompose the global agent-context files (~/.config/agent-compose/COMPOSED.<harness>.md) from the declared sources and re-point each harness load-point symlink. No-op without ~/.config/agent-compose/agent-compose.yaml. --dry-run prints the plan; --check fails on drift."
 
 # Catalog metadata for the cross-repo knowledge graph.
 # Schema: coilysiren/agentic-os-kai#420 (tracker).
