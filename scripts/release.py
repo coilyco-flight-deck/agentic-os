@@ -115,6 +115,20 @@ def bump_pyproject(new_ver: str) -> bool:
     return True
 
 
+def relock() -> bool:
+    """Re-resolve uv.lock so its editable self-version tracks pyproject.
+
+    uv.lock pins this package's own version, so a pyproject bump leaves the
+    lock a version behind. Untouched, the next `uv run` re-syncs and dirties
+    the tree (and `uv run python scripts/release.py` then refuses on its own
+    dirty check). Relocking here folds the lock bump into the release commit.
+    Returns True when uv.lock changed.
+    """
+    run(["uv", "lock"])
+    out = run(["git", "status", "--porcelain", "uv.lock"])
+    return out.stdout.strip() != ""
+
+
 def bump_default_rev(new_tag: str) -> bool:
     """Rewrite DEFAULT_REV in apply-agentic-os-hooks.py. Returns True if changed."""
     text = APPLY_HOOKS.read_text(encoding="utf-8")
@@ -172,6 +186,8 @@ def main() -> int:
         changed_files.append("pyproject.toml")
     if bump_default_rev(new_tag):
         changed_files.append("scripts/apply-agentic-os-hooks.py")
+    if relock():
+        changed_files.append("uv.lock")
 
     if changed_files:
         run(["git", "add", *changed_files])
