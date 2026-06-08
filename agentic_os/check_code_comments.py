@@ -6,9 +6,16 @@ up to two consecutive comment lines, each at most 90 characters. Longer
 explanations belong in docs/*.md and should be linked or referenced from
 code by a short pointer.
 
+A contiguous comment block at the very top of the file - the header above
+the first content line - is exempt from the two-line limit, so license and
+teaching headers are fine. The cap only governs comments after content
+begins. Shebang and encoding lines are part of the preamble, not content,
+so a header block may follow them.
+
 YAML is stricter: a key-sorter rearranges YAML lines, so a comment anywhere
 but the very top would drift away from whatever it described. YAML therefore
-gets at most one comment line, and only as the first line of the file.
+allows comments only as that top header block - everything above the first
+content line. Once a content line appears, any later comment is a violation.
 """
 from __future__ import annotations
 
@@ -23,7 +30,6 @@ REPO_ROOT = Path.cwd()
 HOOK_ID = "code-comments"
 MAX_COMMENT_LINE_CHARS = 90
 MAX_CONTIGUOUS_COMMENT_LINES = 2
-MAX_YAML_TOP_COMMENT_LINES = 1
 
 YAML_EXTS = {".yaml", ".yml"}
 
@@ -168,6 +174,7 @@ def char_cap_violation(rel: Path, line_no: int, line: str) -> str:
 def scan_yaml(rel: Path, suffix: str, lines: list[str]) -> list[str]:
     violations: list[str] = []
     block_indent: int | None = None
+    seen_content = False
     for line_no, line in enumerate(lines, start=1):
         indent = len(line) - len(line.lstrip())
         if block_indent is not None:
@@ -179,14 +186,16 @@ def scan_yaml(rel: Path, suffix: str, lines: list[str]) -> list[str]:
         if is_comment_line(line, suffix, line_no):
             if len(line) > MAX_COMMENT_LINE_CHARS:
                 violations.append(char_cap_violation(rel, line_no, line))
-            if line_no > MAX_YAML_TOP_COMMENT_LINES:
+            if seen_content:
                 violations.append(
-                    f"{rel}:{line_no}: YAML comment outside the top "
-                    f"{MAX_YAML_TOP_COMMENT_LINES}-line header. A key-sorter "
-                    f"would drift it away from its target. Keep YAML comments "
-                    f"to the first line; move the rest to docs/."
+                    f"{rel}:{line_no}: YAML comment below the top header "
+                    f"block. A key-sorter would drift it away from its "
+                    f"target. Keep YAML comments above the first content "
+                    f"line; move the rest to docs/."
                 )
             continue
+        if line.strip() != "":
+            seen_content = True
         if starts_block_scalar(line):
             block_indent = indent
     return violations
@@ -198,13 +207,20 @@ def scan_lines(rel: Path, suffix: str, lines: list[str]) -> list[str]:
     violations: list[str] = []
     streak_start: int | None = None
     streak_len = 0
+    seen_content = False
     for line_no, line in enumerate(lines, start=1):
         if not is_comment_line(line, suffix, line_no):
+            if line.strip() != "" and not is_shebang_or_encoding(line, line_no):
+                seen_content = True
             streak_start = None
             streak_len = 0
             continue
         if len(line) > MAX_COMMENT_LINE_CHARS:
             violations.append(char_cap_violation(rel, line_no, line))
+        # The top-of-file header block (comments above any content) is exempt
+        # from the contiguous-block limit. See docstring.
+        if not seen_content:
+            continue
         if streak_start is None:
             streak_start = line_no
             streak_len = 1

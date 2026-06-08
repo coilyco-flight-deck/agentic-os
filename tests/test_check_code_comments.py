@@ -1,8 +1,9 @@
 """Tests for agentic_os.check_code_comments comment discipline.
 
-Code files allow up to two contiguous comment lines. YAML is stricter: a
-key-sorter would drift any comment away from its target, so YAML gets at most
-one comment line and only as the first line of the file.
+Every file may carry a contiguous comment header block above the first
+content line. After content begins, code allows up to two contiguous comment
+lines. YAML is stricter: a key-sorter would drift any later comment away from
+its target, so YAML allows comments only in that top header block.
 """
 from __future__ import annotations
 
@@ -26,11 +27,21 @@ def test_yaml_rejects_comment_below_the_top() -> None:
     assert "snapshot.yaml:2:" in violations[0]
 
 
-def test_yaml_rejects_a_second_top_comment() -> None:
-    lines = ["# header one", "# header two", "date: '2026-05-27'"]
+def test_yaml_allows_a_contiguous_top_comment_block() -> None:
+    lines = ["# header one", "# header two", "# header three", "date: x"]
+    assert scan_lines(Path("snapshot.yaml"), ".yaml", lines) == []
+
+
+def test_yaml_allows_blank_lines_within_the_top_block() -> None:
+    lines = ["# header one", "", "# header two", "date: x"]
+    assert scan_lines(Path("snapshot.yaml"), ".yaml", lines) == []
+
+
+def test_yaml_rejects_comment_after_content_resumes() -> None:
+    lines = ["# header", "date: x", "# drifts under a sort", "id: W1"]
     violations = scan_lines(Path("snapshot.yaml"), ".yaml", lines)
     assert len(violations) == 1
-    assert "snapshot.yaml:2:" in violations[0]
+    assert "snapshot.yaml:3:" in violations[0]
 
 
 def test_yaml_top_comment_still_obeys_char_cap() -> None:
@@ -77,11 +88,21 @@ def test_yaml_folded_block_scalar_also_shields_comments() -> None:
     assert scan_lines(Path("c.yaml"), ".yaml", lines) == []
 
 
-def test_code_still_allows_two_contiguous_comments() -> None:
-    lines = ["# one", "# two", "x = 1"]
+def test_code_still_allows_two_contiguous_comments_after_content() -> None:
+    lines = ["x = 1", "# one", "# two", "y = 2"]
     assert scan_lines(Path("m.py"), ".py", lines) == []
 
 
-def test_code_rejects_three_contiguous_comments() -> None:
-    lines = ["# one", "# two", "# three", "x = 1"]
+def test_code_rejects_three_contiguous_comments_after_content() -> None:
+    lines = ["x = 1", "# one", "# two", "# three", "y = 2"]
     assert len(scan_lines(Path("m.py"), ".py", lines)) == 1
+
+
+def test_code_allows_long_top_header_block() -> None:
+    lines = ["# license 1", "# license 2", "# license 3", "# license 4", "import os"]
+    assert scan_lines(Path("m.py"), ".py", lines) == []
+
+
+def test_code_top_header_block_survives_a_shebang() -> None:
+    lines = ["#!/usr/bin/env python3", "# h1", "# h2", "# h3", "x = 1"]
+    assert scan_lines(Path("m.py"), ".py", lines) == []

@@ -73,7 +73,9 @@ excludes = [
 ]
 
 # code-comments extended to YAML (#159), then tightened to one top-of-file
-# comment (#160) since a key-sorter drifts any lower comment off its target.
+# comment (#160) since a key-sorter drifts any lower comment off its target,
+# then relaxed to allow a contiguous comment block above the first content
+# line (the whole header stays put under a sort).
 # These pre-existing files carry rich teaching/config comment blocks
 # (skill-discipline examples, the skills registry, warp configs, the coily
 # catalog header) and are grandfathered so the rule enforces net-new YAML.

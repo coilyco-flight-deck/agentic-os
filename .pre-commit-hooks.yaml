@@ -61,7 +61,7 @@
 
 - id: code-comments
   name: code comment discipline
-  description: Enforce one-line, 90-character max standalone comments in code.
+  description: Cap inline comments at two contiguous 90-char lines (a top-of-file header block is exempt); YAML allows comments only in that top block.
   entry: check-code-comments
   language: python
   always_run: true
