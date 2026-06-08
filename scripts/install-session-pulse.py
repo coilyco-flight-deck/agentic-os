@@ -6,7 +6,7 @@ Adds one SessionStart hook backed by scripts/session-pulse.sh, which cats
 Any consumer writes that file. The hook is provider-agnostic.
 
 Idempotent: re-runs that find a session-pulse.sh command already registered
-make no change. Stdlib only. Safe to call from setup.sh on every host.
+make no change. Stdlib only. Run by the claude-hooks ansible role on every host.
 
 Usage:
     scripts/install-session-pulse.py            # write the merged settings

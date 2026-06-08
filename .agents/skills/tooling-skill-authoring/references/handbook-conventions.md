@@ -46,6 +46,6 @@ The validator's em-dash check flags U+2014 in SKILL.md prose. Wrap legitimate us
 
 ## 11. Symlinks and the global skill surface
 
-`./setup.sh` from `<personal-os-repo>/` creates symlinks at `~/.claude/skills/<name>` pointing back at each top-level directory under `.agents/skills/`. Restart Claude Code after running setup so the loader picks up new entries.
+The skill mount (`make refresh-symlinks`) creates symlinks at `~/.claude/skills/<name>` pointing back at each top-level directory under `.agents/skills/`. Restart Claude Code after refreshing so the loader picks up new entries.
 
 Some skills (e.g. `coily-passthroughs`) live as symlinks inside `.agents/skills/` rather than real directories. The validator skips symlinks; the canonical target is validated where it lives.

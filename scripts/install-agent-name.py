@@ -11,7 +11,7 @@ Merge rules, idempotent and conservative:
   - The SessionStart hook is added once; re-runs that find an agent-name.sh
     command already registered make no change.
 
-Stdlib only. Safe to call from setup.sh on every host.
+Stdlib only. Run by the claude-hooks ansible role on every host.
 
 Usage:
     scripts/install-agent-name.py            # write the merged settings

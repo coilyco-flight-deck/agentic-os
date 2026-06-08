@@ -489,7 +489,7 @@ def compose(
 def install_symlink(dst: Path, target: Path) -> str:
     """Point dst at target, backing up a pre-existing real file to dst.bak.
 
-    Mirrors setup.sh's ensure_link: an existing symlink is replaced, an existing
+    Mirrors the shell role's ensure_link: an existing symlink is replaced, an existing
     regular file is moved aside, parents are created. Returns a log line.
     """
     dst.parent.mkdir(parents=True, exist_ok=True)

@@ -18,5 +18,5 @@
 2. If OAuth-protected: `mcporter auth <name>`.
 3. `mcporter emit-ts <name> --out <personal-os-repo>/mcp-servers/<name>.d.ts --mode types`.
 4. Add a one-line entry to the inventory.
-5. Re-run the personal-OS repo's setup script so the home-layer config picks up the new server (otherwise it only resolves when cwd is inside the source repo's tree).
+5. Re-run the personal-OS repo's host-config convergence (ansible freshen) so the home-layer config picks up the new server (otherwise it only resolves when cwd is inside the source repo's tree).
 6. Commit (closes the same-repo issue per repo baseline).

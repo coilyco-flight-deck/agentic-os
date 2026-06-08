@@ -13,13 +13,13 @@ The rest of this file carries opinionated authoring discipline the handbook does
 
 ## Location
 
-**Default: skills live at `<personal-os-repo>/.agents/skills/`.** Canonical source for the cross-repo / runbook / operating-context skill surface. Global-scope copy at `~/.claude/skills/<name>` is a symlink managed by `./setup.sh`.
+**Default: skills live at `<personal-os-repo>/.agents/skills/`.** Canonical source for the cross-repo / runbook / operating-context skill surface. Global-scope copy at `~/.claude/skills/<name>` is a symlink managed by the ansible skills role (`make refresh-symlinks`).
 
 **Exception: per-repo co-location for pure design-reference skills.** A repo may host its own `.agents/skills/` if the skills are pure design or usage reference for *that repo only* and never get invoked under cross-repo failure conditions. Per-repo skills surface only when Claude Code is operating in that repo's directory, the correct scope for design references. Runbooks, investigation playbooks, and anything that fires under partial-failure stay central. Co-location requirements (catalog hooks via `make apply-agentic-os-hooks`, a slim `categories.yaml`, `pre-commit install`) live in [`references/co-location.md`](references/co-location.md).
 
 ## Authoring
 
-Directory under `.agents/skills/` with `SKILL.md` (frontmatter: `name`, `description` + instructions). Commit in the personal-OS repo, rerun `./setup.sh` from repo root (idempotent symlink refresh).
+Directory under `.agents/skills/` with `SKILL.md` (frontmatter: `name`, `description` + instructions). Commit in the personal-OS repo, then refresh the skill mount (`make refresh-symlinks`, idempotent).
 
 Bootstrap also handles client CLAUDE.md import, workspace CLAUDE.md import, parent-dir AGENTS.md symlink. Uses `ln -s`; on Windows needs `MSYS=winsymlinks:nativestrict` + Developer Mode.
 

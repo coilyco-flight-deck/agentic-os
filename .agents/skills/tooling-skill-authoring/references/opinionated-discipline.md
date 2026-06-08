@@ -12,7 +12,7 @@ Framing reference: https://simme.dev/posts/the-end-of-just-ask-sarah/.
 
 ## Skills are flat, not nested
 
-Every skill is a peer directory directly under `.agents/skills/`. Do **not** nest sub-skills inside another skill's directory (e.g. `meta-skill/sub-skill/SKILL.md`). Nested-skill discovery is poorly supported by the harness, and `setup.sh` only symlinks top-level skill dirs to `~/.claude/skills/<name>`. Anything below the top level is invisible to the loader.
+Every skill is a peer directory directly under `.agents/skills/`. Do **not** nest sub-skills inside another skill's directory (e.g. `meta-skill/sub-skill/SKILL.md`). Nested-skill discovery is poorly supported by the harness, and the skill mount only symlinks top-level skill dirs to `~/.claude/skills/<name>`. Anything below the top level is invisible to the loader.
 
 When a meta-skill needs to route to other skills, the routed skills live as **flat peers** alongside it. The meta's job is to name them and describe when each fires; the loader handles each one independently.
 

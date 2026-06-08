@@ -13,7 +13,7 @@ batched, so a failure on entry N does not block entries N+1..M.
   `SKILL.md` (fetch from the source repo if the install method is
   copy-the-file; otherwise write a thin wrapper if the source skill is
   a plugin).
-- Run `./setup.sh` from the personal-OS repo root.
+- Refresh the skill mount (`make refresh-symlinks`).
 - `git add` the new skill dir, commit with `closes #<issue>`, push.
 
 **MCPs:**

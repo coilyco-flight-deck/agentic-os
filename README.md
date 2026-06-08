@@ -9,19 +9,23 @@ Cross-platform shell + terminal setup plus the cross-repo pre-commit hooks that 
 - `shell/` - cross-platform shell config. Shared `common.sh` (env, per-host PATH, aliases, git helpers, SSM loader) sourced by thin `zshrc` + `bashrc`, so bash and zsh match. `warp.zsh` is the zsh-only Warp dispatcher.
 - `warp/` - Warp config (`settings.toml`, `tab_configs/`) plus the `coily exec warp` Go module.
 - `scripts/` - portable utilities (gpg-ssm wrapper, agent-name + session-pulse hooks, aws-config lint).
-- `.agents/skills/` - SKILL.md docs for the configs that live here. agentic-os-kai's `setup.sh` walks this dir as a peer skill source.
+- `.agents/skills/` - SKILL.md docs for the configs that live here. agentic-os-kai's skill mount walks this dir as a peer skill source.
 - `agentic_os/` - the catalog pre-commit hooks this repo ships.
 
 Full breakdown: [docs/repo-layout.md](docs/repo-layout.md).
 
 ## Install
 
+Host config is converged by Ansible (the rollout lives in the infrastructure repo, per the authoring-vs-rollout split in [AGENTS.md](AGENTS.md)). Manual fallback:
+
 ```bash
-./setup.sh                # zsh + gpg-ssm symlinks
-coily exec warp apply     # warp config (see docs/warp.md)
+ln -sf "$PWD/shell/zshrc"  ~/.zshrc      # both source shell/common.sh
+ln -sf "$PWD/shell/bashrc" ~/.bashrc
+ln -sf "$PWD/scripts/gpg-ssm" ~/.local/bin/gpg-ssm
+coily exec warp apply                     # warp config
 ```
 
-`setup.sh` is idempotent. It detects the host via `uname -s`, symlinks `~/.zshrc` and the gpg-ssm wrapper, and wires the agent self-name plus session-pulse hooks into `~/.claude/settings.json`. Pre-existing real files are backed up to `<path>.bak` on first run. Per-host steps and the git gpg wiring: [docs/install.md](docs/install.md).
+Agent self-name + session-pulse hooks, per-host steps, and gpg wiring: [docs/install.md](docs/install.md).
 
 ## Secrets pattern
 

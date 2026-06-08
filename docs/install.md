@@ -2,16 +2,15 @@
 
 Quickstart is in [the README](../README.md). This covers per-host steps and the git gpg wiring.
 
-## What setup.sh symlinks
+## What the host install wires
 
-`setup.sh` is idempotent. It detects the host via `uname -s` and symlinks:
+The ansible `shell` role (in the infrastructure repo) symlinks, by `ansible_system`:
 
 - `~/.zshrc` from `shell/zshrc` and `~/.bashrc` from `shell/bashrc` (all hosts)
 - `~/.local/bin/gpg-ssm` from `scripts/gpg-ssm` (Mac, Linux) or `scripts/gpg-ssm.cmd` (Windows)
+- the `~/.local/bin` PATH helpers, and `~/.hammerspoon/init.lua` on macOS
 
-It also runs `install-agent-name.py` to wire the agent self-name into `~/.claude/settings.json` (status line plus SessionStart hook), and `install-session-pulse.py` to wire a second SessionStart hook that surfaces `~/.cache/agentic-os/session-pulse.yaml` if a producer has written one. A status line you set yourself is left untouched.
-
-Pre-existing real files are backed up to `<path>.bak` on first run; later runs replace the symlinks in place.
+A pre-existing regular `~/.zshrc` / `~/.bashrc` is backed up to `<path>.bak` before linking. The `claude-hooks` role then runs `install-agent-name.py` (status line + SessionStart self-name hook) and `install-session-pulse.py` (SessionStart hook surfacing `~/.cache/agentic-os/session-pulse.yaml` if a producer wrote one). Both are idempotent and never clobber a status line you set yourself. The manual symlink fallback (no ansible) is in [the README](../README.md).
 
 ## Per-host notes
 

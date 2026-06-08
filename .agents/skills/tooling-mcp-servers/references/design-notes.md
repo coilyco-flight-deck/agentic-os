@@ -4,7 +4,7 @@
 
 mcporter layers two config sources: `<cwd>/config/mcporter.json` and the home candidate `~/.mcporter/mcporter.json`. Without the home layer, MCP calls only resolve when cwd sits inside a directory that ships its own config, so any MCP a user reaches for from `~/` or another non-config cwd is silently unreachable.
 
-The home layer can be populated either by symlinking it at a single canonical `config/mcporter.json` (single-source setup) or by a merge script that combines multiple source configs (multi-source setup, useful when MCP entries are spread across more than one personal repo). The personal-OS repo's setup script owns whichever wire-up is in use.
+The home layer can be populated either by symlinking it at a single canonical `config/mcporter.json` (single-source setup) or by a merge script that combines multiple source configs (multi-source setup, useful when MCP entries are spread across more than one personal repo). The personal-OS repo's host-config convergence (ansible) owns whichever wire-up is in use.
 
 ## Why no `.mcp.json`
 
