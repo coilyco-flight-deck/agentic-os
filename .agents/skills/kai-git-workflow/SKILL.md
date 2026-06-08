@@ -1,11 +1,13 @@
 ---
 name: kai-git-workflow
-description: Git workflow for coilysiren/* - base rules, coily/infrastructure exceptions, readonly SSH, Forgejo as default tracker, flaky-test discipline. Triggers - git workflow, commit, push, PR, gh, issue tracker, coily, lockdown, file a todo, forgejo, flaky test, flake.
+description: git workflow, forgejo, default tracker, commit, push, PR, gh, fj, issue, todo, gish.
 ---
 
 # Git workflow
 
-Default across `~/projects/coilysiren/*`:
+Default across `~/projects/coilyco-*/*` and `~/projects/coilysiren/*`:
+
+<!-- TODO: a different ruleset for bridge -->
 
 - Commit to `main` directly; push after each. No PRs unless asked.
 - Run tests, linters, builds without asking. Fix failures.
@@ -14,6 +16,8 @@ Default across `~/projects/coilysiren/*`:
 - Every commit closes a same-repo issue. File first, then commit with `closes #N` / `fixes #N` / `resolves #N`.
 - `agentic-os-kai` only: one commit per discrete additive change.
 - `git commit --amend` is fine pre-push, preferred over a "fix lint" follow-on for hook fixes. If the amend changes substance relative to the closing-issue description, post a comment on that issue so the audit trail survives. Force-push off-limits. Overrides the default Claude Code rule.
+
+Default across
 
 Never run destructive git commands unless Kai explicitly asks. Never revert changes you didn't make.
 
@@ -36,9 +40,9 @@ Use `git reset --hard <sha>` instead of cherry-pick only when nothing else has m
 - **infrastructure** - auto-commit/push code/CI. Confirm before SSM/kubectl/cloud writes. Never print decrypted SSM values. Reach for `coily` before raw aws/kubectl.
 - **message-ops** - confirm before destructive social ops (archive, delete, block). Friends-list check before any archive pass.
 
-## Readonly SSH
+## `gish`
 
-Bare ssh to kai-server is readonly. Cluster reads run via `sudo k3s kubectl` (host-side NOPASSWD sudoers, scoped to that exact path). Writes need explicit confirmation, typically via `coily` or CI.
+`gish` is a hand typed shortcut for "**G**it **I**ssue, commit, pu**SH**". When it is mentioned you should: create an issue, make commit closing said issue, push to main. It is a single-command embodiment of the default flight deck workflow.
 
 ## Deploy knowledge
 
