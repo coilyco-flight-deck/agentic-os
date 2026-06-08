@@ -1,0 +1,36 @@
+# Top-level zsh entry. Symlinked to $HOME/.zshrc per host by the ansible shell
+# role. Sources the shared core, then adds the zsh-only surface.
+
+_shell_dir="${${(%):-%N}:A:h}"
+
+source "$_shell_dir/common.sh"
+
+# zsh history (HISTSIZE/SAVEHIST come from common.sh).
+HISTFILE=$HOME/.zsh_history
+setopt SHARE_HISTORY HIST_IGNORE_ALL_DUPS HIST_REDUCE_BLANKS HIST_VERIFY INTERACTIVE_COMMENTS
+
+# Everything below is interactive-only.
+if [[ -o interactive ]]; then
+  # compinit first: warp.zsh registers a completion via compdef.
+  autoload -Uz compinit && compinit
+  source "$_shell_dir/warp.zsh"
+
+  command -v direnv >/dev/null && eval "$(direnv hook zsh)"
+
+  # Two-line siren prompt: time, user@host, cwd, branch, error count.
+  autoload -Uz vcs_info
+  zstyle ':vcs_info:git:*' formats '%b'
+  zstyle ':vcs_info:git:*' check-for-changes true
+  zstyle ':vcs_info:git:*' unstagedstr ' %F{yellow}✨%f'
+  zstyle ':vcs_info:git:*' stagedstr ' %F{yellow}✨%f'
+  setopt PROMPT_SUBST
+  precmd() { vcs_info }
+  PROMPT='%F{cyan}🕐 %D{%H:%M:%S}%f  %F{magenta}🧜 %n%f@%m  %F{blue}📂 %~%f${vcs_info_msg_0_:+  %F{cyan}⚓ ${vcs_info_msg_0_}%f}%(?.. %F{red}💥 %?%f)
+%F{magenta}$%f '
+  RPROMPT=''
+fi
+
+# Host-local zsh overrides. Not tracked anywhere.
+[[ -f "$HOME/.zshrc.local" ]] && source "$HOME/.zshrc.local"
+
+unset _shell_dir

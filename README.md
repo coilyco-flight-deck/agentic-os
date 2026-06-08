@@ -6,11 +6,11 @@ Cross-platform shell + terminal setup plus the cross-repo pre-commit hooks that 
 
 ## Layout
 
-- `zsh/` - cross-platform shell config: `zshrc` entry, `env.zsh`, per-host `hosts/<os>.zsh`, `config.zsh`, and the in-process SSM secret loader `ssm-env.zsh`.
+- `shell/` - cross-platform shell config. Shared `common.sh` (env, per-host PATH, aliases, git helpers, SSM loader) sourced by thin `zshrc` + `bashrc`, so bash and zsh match. `warp.zsh` is the zsh-only Warp dispatcher.
 - `warp/` - Warp config (`settings.toml`, `tab_configs/`) plus the `coily exec warp` Go module.
-- `scripts/` - portable utilities (gpg-ssm signing wrapper, agent-name + session-pulse hooks, aws-config lint, verbatim-echo).
+- `scripts/` - portable utilities (gpg-ssm wrapper, agent-name + session-pulse hooks, aws-config lint).
 - `.agents/skills/` - SKILL.md docs for the configs that live here. agentic-os-kai's `setup.sh` walks this dir as a peer skill source.
-- `agentic_os/` - the catalog pre-commit hooks this repo ships and dogfoods.
+- `agentic_os/` - the catalog pre-commit hooks this repo ships.
 
 Full breakdown: [docs/repo-layout.md](docs/repo-layout.md).
 
@@ -32,7 +32,7 @@ ssm-load                          # pull every / parameter into the current shel
 ssm-get /eco/server-api-token     # fetch one value without storing it
 ```
 
-No disk write at any point. Same call works on Mac, Linux, Windows. AWS profile defaults to `default`; override with `ssm-load <profile> <region>`. For secrets at shell startup, append `ssm-load` to the end of `zsh/config.zsh`. The legacy cleartext-on-disk dump (`~/.cache/ssm-env.sh`) was deleted.
+No disk write at any point. Same call works on Mac, Linux, Windows. AWS profile defaults to `default`; override with `ssm-load <profile> <region>`. For secrets at shell startup, append `ssm-load` to the end of `shell/common.sh`. The legacy cleartext-on-disk dump (`~/.cache/ssm-env.sh`) was deleted.
 
 ## agent-compose
 

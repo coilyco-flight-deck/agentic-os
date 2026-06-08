@@ -1,26 +1,23 @@
 ---
 name: tooling-zsh
-description: Zsh is Kai's default shell on every host (Warp on Mac/Linux, Git Bash on Windows). Standard POSIX-ish syntax with zsh extras (PROMPT_SUBST, vcs_info, typeset -U). Use when drafting shell commands, editing agentic-os/zsh/*, configuring PATH or prompt, loading AWS secrets via ssm-load, debugging zsh startup. Triggers - zsh, zshrc, .zshrc, $PATH, typeset, autoload, vcs_info, precmd, ssm-load, ssm-env, env.zsh, config.zsh, hosts/macos.zsh, prompt, Warp.
+description: Zsh + bash are Kai's shells (zsh+Warp interactive, bash for ssh/non-interactive). One shared agentic-os/shell/common.sh sourced by both, thin zshrc/bashrc entries add prompt+completion. Use when drafting shell commands, editing agentic-os/shell/*, configuring PATH or prompt, loading AWS secrets via ssm-load, debugging shell startup. Triggers - zsh, bash, zshrc, bashrc, .zshrc, .bashrc, $PATH, common.sh, ssm-load, vcs_info, prompt, Warp.
 ---
 
-# Zsh
+# Shell (zsh + bash)
 
-Kai's shell on every host. Drafted commands should be zsh/bash-compatible.
+zsh and bash share one core, so drafted commands work in both.
 
 ## Config location
 
-Canonical files live at `~/projects/coilysiren/agentic-os/zsh/`, symlinked to `~/.zshrc` per host:
-
-- **Mac/Linux** - `~/.zshrc -> ~/projects/coilysiren/agentic-os/zsh/zshrc`
-- **Windows** - same path under Git Bash (zsh installed via MSYS `pacman -S zsh`).
+Canonical files live at `~/projects/coilyco-flight-deck/agentic-os/shell/`, symlinked per host (`~/.zshrc -> shell/zshrc`, `~/.bashrc -> shell/bashrc`) by the ansible `shell` role. Windows runs both under Git Bash (zsh via MSYS `pacman -S zsh`).
 
 Files:
 
-- `zshrc` - top-level entry. Resolves its own dir, then sources the other files in order.
-- `env.zsh` - runs first. Sets HISTFILE/HISTSIZE, `$LANG`, `$EDITOR`, AWS defaults, `$COILY_LOCKDOWN_ROOT`.
-- `hosts/{macos,linux,windows}.zsh` - per-OS PATH and tooling. Selected via `uname -s` in `zshrc`.
-- `config.zsh` - aliases, `def`s (git helpers, rg wrapper, etc.), the two-line siren-motif prompt, direnv hook, lazy `github-token-load`.
-- `ssm-env.zsh` - in-process AWS SSM secret loader. `ssm-load` reads `/coilysiren/env/*` into `$env` for the current session only. Never disk.
+- `common.sh` - the shared core (bash/zsh common subset). Sets env, per-OS PATH (via `uname -s`), aliases, git helpers, the `rg` wrapper, `ssm-load`/`ssm-get`, and auto-cd to `~/projects`. The env + PATH block runs once per terminal tree, gated by the exported `_SIREN_SHELL_ENV` guard; a nested shell inherits the env and skips it but still defines the aliases/functions.
+- `zshrc` - zsh entry. Sources `common.sh`, then zsh-only: `compinit`, the `vcs_info` siren prompt, `warp.zsh`.
+- `bashrc` - bash entry. Sources `common.sh`, then bash-only: completion, the `PROMPT_COMMAND` siren prompt.
+- `warp.zsh` - the zsh-only `warp` dispatcher + completion.
+- Host-local overrides: `~/.shellrc.local` (shared, sourced by `common.sh`), `~/.zshrc.local`, `~/.bashrc.local`. Untracked.
 
 ## Functions
 
@@ -50,17 +47,17 @@ Built on `vcs_info` + `PROMPT_SUBST`. No starship dependency.
 
 ## Editing
 
-- Edit the file in `~/projects/coilysiren/agentic-os/zsh/` (the symlink resolves there).
-- Reload with `exec zsh` in any open shell, or just open a new Warp tab.
-- Errors at startup surface immediately. `zsh -x` traces line-by-line if a function silently misbehaves.
+- Edit the files in `~/projects/coilyco-flight-deck/agentic-os/shell/` (the symlinks resolve there).
+- Reload with `exec zsh` / `exec bash`, or open a new Warp tab.
+- Errors at startup surface immediately. `zsh -x` / `bash -x` traces line-by-line if a function silently misbehaves.
 
 ## Common edits
 
-- **Add an alias** - drop into the alias block in `config.zsh`.
-- **Add a function** - append to `config.zsh`. Keep it portable (POSIX-ish) so Git Bash on Windows runs it too.
-- **Change PATH** - host-specific entries go in `hosts/<os>.zsh`. Cross-platform env vars go in `env.zsh`.
-- **Change the prompt** - edit `config.zsh`'s `PROMPT=` line. `PROMPT_SUBST` is already on; `vcs_info` is already autoloaded.
+- **Add an alias or function** - put it in `common.sh` so both shells get it. Keep it in the bash/zsh common subset (no `typeset -U`, no bash arrays).
+- **Change PATH** - per-OS entries go in `common.sh`'s `case "$(uname -s)"` block; cross-platform env vars go in the env block above it.
+- **Change the prompt** - zsh in `zshrc` (`PROMPT=`, `vcs_info`), bash in `bashrc` (`PROMPT_COMMAND`). They are intentionally separate.
+- **Add a zsh-only completion / dispatcher** - `warp.zsh`, or a new zsh-only file sourced from `zshrc`.
 
 ## Terminal
 
-Warp is the terminal on every host. Warp has its own settings file at `~/.warp/settings.toml` (managed in-app, not in this repo). zsh config and terminal config are intentionally separate - the same `zsh/` tree should work under any POSIX terminal.
+Warp is the terminal on every host. Warp has its own settings file at `~/.warp/settings.toml` (managed in-app, not in this repo). Shell config and terminal config are intentionally separate - the same `shell/` tree should work under any POSIX terminal.

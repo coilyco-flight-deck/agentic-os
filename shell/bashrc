@@ -1,0 +1,57 @@
+# Top-level bash entry. Symlinked to $HOME/.bashrc per host by the ansible shell
+# role. Sources the shared core, then adds the bash-only surface.
+
+# Resolve through the ~/.bashrc symlink to this file's real dir (bash has no
+# zsh :A; walk the symlink chain so common.sh resolves against shell/).
+_shell_src="${BASH_SOURCE[0]}"
+while [ -L "$_shell_src" ]; do
+  _shell_dir="$(cd -P "$(dirname "$_shell_src")" >/dev/null 2>&1 && pwd)"
+  _shell_src="$(readlink "$_shell_src")"
+  [ "${_shell_src#/}" = "$_shell_src" ] && _shell_src="$_shell_dir/$_shell_src"
+done
+_shell_dir="$(cd -P "$(dirname "$_shell_src")" >/dev/null 2>&1 && pwd)"
+unset _shell_src
+
+source "$_shell_dir/common.sh"
+
+# bash history (HISTSIZE/SAVEHIST come from common.sh).
+HISTFILE=$HOME/.bash_history
+HISTCONTROL=ignoreboth
+shopt -s histappend checkwinsize 2>/dev/null
+
+# Everything below is interactive-only.
+case $- in
+  *i*) ;;
+  *) unset _shell_dir; return ;;
+esac
+
+# Programmable completion (stock enablement).
+if ! shopt -oq posix; then
+  if [ -f /usr/share/bash-completion/bash_completion ]; then
+    . /usr/share/bash-completion/bash_completion
+  elif [ -f /etc/bash_completion ]; then
+    . /etc/bash_completion
+  fi
+fi
+
+command -v direnv >/dev/null && eval "$(direnv hook bash)"
+
+# Two-line siren prompt: time, user@host, cwd, branch, error count. Bash port of
+# the zsh PROMPT - git branch via PROMPT_COMMAND instead of vcs_info.
+_siren_git_branch() {
+  local b
+  b=$(git symbolic-ref --short HEAD 2>/dev/null) || return
+  printf '  \001\033[36m\002\342\232\223 %s\001\033[0m\002' "$b"
+}
+_siren_prompt() {
+  local rc=$?
+  local err=""
+  [ "$rc" -ne 0 ] && err=" \[\033[31m\]\360\237\222\245 $rc\[\033[0m\]"
+  PS1="\[\033[36m\]\360\237\225\220 \t\[\033[0m\]  \[\033[35m\]\360\237\247\234 \u\[\033[0m\]@\h  \[\033[34m\]\360\237\223\202 \w\[\033[0m\]$(_siren_git_branch)${err}\n\[\033[35m\]\$\[\033[0m\] "
+}
+PROMPT_COMMAND=_siren_prompt
+
+# Host-local bash overrides. Not tracked anywhere.
+[ -f "$HOME/.bashrc.local" ] && . "$HOME/.bashrc.local"
+
+unset _shell_dir

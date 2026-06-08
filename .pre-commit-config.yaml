@@ -150,9 +150,9 @@ repos:
     rev: v0.11.0.1
     hooks:
       - id: shellcheck
-        # pre-commit tags .zsh as shell, but shellcheck has no zsh support
-        # (SC2148/SC2296 on every zsh expansion). The zsh tree is zsh-only.
-        exclude: ^zsh/
+        # shellcheck has no zsh support (SC2148/SC2296 on every zsh expansion),
+        # so skip the zsh-only entry + warp dispatcher. common.sh + bashrc stay in.
+        exclude: ^shell/(zshrc|warp\.zsh)$
         # Gate on error-level only. The bash scripts carry intentional
         # patterns (literal \e passed to a later printf, ASCII-only tr) that
         # trip info/warning checks but are correct by design.

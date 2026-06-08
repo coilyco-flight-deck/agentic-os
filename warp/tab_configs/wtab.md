@@ -1,6 +1,6 @@
 # `wtab`: parameterized new tabs from the shell
 
-A pattern for opening a new Warp tab from the command line with a chosen title, ANSI tab color, and cwd. Driven by the `warp tab <color> <title>` zsh subverb (see `zsh/config.zsh` in this repo).
+A pattern for opening a new Warp tab from the command line with a chosen title, ANSI tab color, and cwd. Driven by the `warp tab <color> <title>` zsh subverb (see `shell/warp.zsh` in this repo).
 
 This doc walks the design top to bottom. If you know Warp's `tab_configs/` directory and the `warp://tab_config/<name>` URI scheme, you have all the prerequisites.
 
@@ -88,7 +88,7 @@ Failure modes are loud at the right layer. Invalid color is rejected in zsh befo
 ## Files
 
 - `~/.warp/tab_configs/wtab.toml` - the runtime-managed file. Overwritten on every `warp tab` call. Not committed.
-- `zsh/config.zsh` `warp()` function `tab` subverb - the shell side.
+- `shell/warp.zsh` `warp()` function `tab` subverb - the shell side.
 - This file - the design doc.
 
 ## See also

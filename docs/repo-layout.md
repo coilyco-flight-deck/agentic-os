@@ -2,13 +2,15 @@
 
 Full breakdown of what lives where. Summary in [the README](../README.md).
 
-## zsh
+## shell
 
-- `zsh/zshrc` - top-level entry, symlinked to `~/.zshrc`. Sources `env.zsh`, picks the right `hosts/<os>.zsh`, then `config.zsh` and `ssm-env.zsh`.
-- `zsh/env.zsh` - history, identity, editor, AWS defaults, `COILY_LOCKDOWN_ROOT`.
-- `zsh/hosts/{macos,linux,windows}.zsh` - per-host PATH and tooling. Picked automatically via `uname -s`.
-- `zsh/config.zsh` - aliases, git helpers, `rg` wrapper, prompt (two-line siren motif).
-- `zsh/ssm-env.zsh` - in-process AWS SSM secret loader. `ssm-load` reads `/coilysiren/*` into the current shell env. Never disk.
+One shared core, two thin per-shell entries, so bash and zsh run identical env, PATH, aliases, functions, and the SSM loader.
+
+- `shell/common.sh` - shared core (bash/zsh common subset). Env + per-OS PATH (picked via `uname -s`), aliases, git helpers, `rg` wrapper, the SSM loader, auto-cd to `~/projects`. Env runs once per terminal tree via the `_SIREN_SHELL_ENV` guard.
+- `shell/zshrc` - zsh entry, symlinked to `~/.zshrc`. Sources `common.sh`, then zsh-only bits: `compinit`, the `vcs_info` siren prompt, `warp.zsh`.
+- `shell/bashrc` - bash entry, symlinked to `~/.bashrc`. Sources `common.sh`, then bash-only bits: completion, the `PROMPT_COMMAND` siren prompt.
+- `shell/warp.zsh` - the zsh-only `warp` dispatcher + completion.
+- Host-local overrides: `~/.shellrc.local` (shared, sourced by `common.sh`), `~/.zshrc.local`, `~/.bashrc.local`. Untracked.
 
 ## warp
 

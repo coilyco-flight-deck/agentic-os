@@ -4,7 +4,9 @@ Cross-platform shell, terminal, and secret-handling capabilities.
 
 ## Cross-platform shell
 
-Single zsh config tree that boots cleanly on Mac, Linux (kai-server), and Windows (Git Bash). Picks the right host file via `uname -s` so there's no manual branching. Symlinked into `~/.zshrc` per host. Carries identity, history, AWS defaults, prompt, git helpers, aliases, an `rg` wrapper, and `COILY_LOCKDOWN_ROOT` for the coily security boundary.
+One shared config core (`shell/common.sh`) sourced by both shells, so bash and zsh run identical setup. zsh (`shell/zshrc`) and bash (`shell/bashrc`) are thin entries that source the core and add only their own prompt + completion. Boots cleanly on Mac, Linux (kai-server), and Windows (Git Bash), picking the right per-OS PATH via `uname -s`. Carries identity, history, AWS defaults, git helpers, aliases, an `rg` wrapper, the SSM loader, and `COILY_LOCKDOWN_ROOT` for the coily security boundary.
+
+The core's env + PATH block runs once per terminal tree, gated by an exported `_SIREN_SHELL_ENV` guard ("has this run in this terminal yet?"): a nested shell inherits the env and skips re-running brew/pyenv/PATH, while still defining aliases and functions (those are per-shell, never inherited). Env + PATH load for non-interactive shells too (scripts, ssh exec, the Claude Code Bash tool); prompt and completion are interactive-only. Both shells auto-cd a fresh interactive shell into `~/projects`. Host-specific lines live in untracked `~/.shellrc.local` (shared) or `~/.{bash,zsh}rc.local` (per shell).
 
 ## In-process AWS SSM secret loader
 
