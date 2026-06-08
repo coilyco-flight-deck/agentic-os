@@ -1,7 +1,4 @@
 repos:
-  # This repo ships the catalog hooks. Dogfood them via a local reference
-  # to the package in this checkout. Consumers reference us as
-  # repo: https://github.com/coilysiren/agentic-os instead.
   - repo: local
     hooks:
       - id: catalog-block-present
@@ -20,8 +17,6 @@ repos:
         pass_filenames: false
         files: '^\.agents/skills/'
         stages: [pre-commit]
-      # Self-compliance cascade now landed (agentic-os#81, #96, #22): the
-      # repo dogfoods its own catalog suite via the in-checkout package.
       - id: documentation-layout
         name: documentation layout
         entry: python -m agentic_os.check_documentation_layout
@@ -82,9 +77,6 @@ repos:
         always_run: true
         pass_filenames: false
         stages: [pre-commit]
-      # Drift dogfood: agentic-os owns the seed skills, so it regenerates
-      # seed_skills_data.py from their frontmatter. Consumers ship only the
-      # seed-skills hook (they have no skills checkout), never this one.
       - id: seed-skills-drift
         name: seed_skills_data.py in sync with skill frontmatter
         entry: python -m agentic_os.seed_skills --check
@@ -109,15 +101,6 @@ repos:
         always_run: true
         pass_filenames: false
         stages: [pre-commit]
-      # closes-issue + conventional-commit are no longer dogfooded here:
-      # they left the default suite when humans started hand-writing commits
-      # alongside agents. The validators still ship in the package and in
-      # .pre-commit-hooks.yaml for any repo that opts back in.
-      # Guards the `coily exec warp` tool itself. Runs `go vet` (which
-      # compiles the module) so broken Go never lands. It deliberately does
-      # NOT run `warp doctor`: doctor inspects live host state, and the
-      # SQLite layer drifts as normal steady-state behavior, so a live check
-      # at commit time would block commits for reasons unrelated to the diff.
       - id: warp-go-vet
         name: vet the coily exec warp module
         entry: bash -c 'cd warp && go vet ./...'
@@ -125,9 +108,6 @@ repos:
         files: ^warp/.*\.go$
         pass_filenames: false
         stages: [pre-commit]
-      # gofmt complements go vet: vet catches semantic issues, gofmt the layout.
-      # -w rewrites in place; pre-commit fails the run if it had to touch a file,
-      # so a reformatted file blocks the commit until it is re-staged.
       - id: warp-gofmt
         name: gofmt the coily exec warp module
         entry: bash -c 'cd warp && gofmt -w .'
@@ -135,21 +115,11 @@ repos:
         files: ^warp/.*\.go$
         pass_filenames: false
         stages: [pre-commit]
-  # No managed upstream-ref block here. This repo is the source; the rollout
-  # is expected to never run against agentic-os itself. The local block above
-  # dogfoods the validators via the in-checkout package.
-  # Third-party linters for the shell + Python surfaces that have no
-  # agentic-os validator. Pin via `pre-commit autoupdate` to refresh revs.
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.11.0.1
     hooks:
       - id: shellcheck
-        # shellcheck has no zsh support (SC2148/SC2296 on every zsh expansion),
-        # so skip the zsh-only entry + warp dispatcher. common.sh + bashrc stay in.
         exclude: ^shell/(zshrc|warp\.zsh)$
-        # Gate on error-level only. The bash scripts carry intentional
-        # patterns (literal \e passed to a later printf, ASCII-only tr) that
-        # trip info/warning checks but are correct by design.
         args: [--severity=error]
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.15.15
