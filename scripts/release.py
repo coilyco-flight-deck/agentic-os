@@ -1,22 +1,20 @@
 #!/usr/bin/env python3
 """Local release helper: bump version, sign tag, push.
 
-Parses conventional commits since the latest semver tag, computes the next
-version per semver rules, bumps `pyproject.toml` version and the
-`DEFAULT_REV` pointer in `scripts/apply-agentic-os-hooks.py`, commits the
-bump, creates a signed annotated tag, and pushes both.
+Bumps the latest semver tag (minor by default), rewrites `pyproject.toml`
+version and the `DEFAULT_REV` pointer in
+`scripts/apply-agentic-os-hooks.py`, commits the bump, creates a signed
+annotated tag, and pushes both.
 
-Local equivalent of the existing GitHub composite action at
-`actions/tag-bump/action.yml`, for the no-PR direct-to-main workflow.
+Local equivalent of the composite action at `actions/tag-bump/action.yml`,
+for the no-PR direct-to-main workflow.
 
 Usage:
     python3 scripts/release.py [--bump {major|minor|patch}] [--dry-run]
 
-Conventional-commits semantics:
-    BREAKING CHANGE / type!: => major
-    feat: / feat(...): => minor
-    fix: / fix(...): => patch
-    else => no bump (use --bump to force)
+Bump policy: every release is a minor bump unless --bump says otherwise.
+Major is hand-driven only (--bump major) - commit messages are never
+parsed to decide the bump.
 """
 from __future__ import annotations
 
@@ -34,7 +32,7 @@ TAG_PREFIX = "v"
 VERSION_RE = re.compile(rf"^{TAG_PREFIX}(\d+)\.(\d+)\.(\d+)$")
 PYPROJECT_VERSION_RE = re.compile(r'^version = "(\d+\.\d+\.\d+)"$', re.MULTILINE)
 DEFAULT_REV_RE = re.compile(r'^DEFAULT_REV = "v\d+\.\d+\.\d+"$', re.MULTILINE)
-CONVENTIONAL_RE = re.compile(r"^(?P<type>[a-zA-Z]+)(?:\([^)]+\))?(?P<bang>!)?:")
+DEFAULT_BUMP = "minor"
 
 
 def run(cmd: list[str], **kwargs) -> subprocess.CompletedProcess:
@@ -50,38 +48,12 @@ def latest_tag() -> str | None:
     return None
 
 
-def commits_since(tag: str | None) -> list[tuple[str, str]]:
-    """Return [(subject, body), ...] for commits since `tag` (or all if None)."""
+def commits_since(tag: str | None) -> list[str]:
+    """Return commit subjects since `tag` (or all if None), for the changelog
+    and the release-is-empty check. Subjects are not parsed for bump signals."""
     rng = f"{tag}..HEAD" if tag else "HEAD"
-    sep = "\x1e"
-    end = "\x1f"
-    out = run(["git", "log", rng, f"--pretty=format:%s{sep}%b{end}"])
-    entries = []
-    for chunk in out.stdout.split(end):
-        chunk = chunk.strip("\n")
-        if not chunk:
-            continue
-        subject, _, body = chunk.partition(sep)
-        entries.append((subject.strip(), body.strip()))
-    return entries
-
-
-def infer_bump(entries: list[tuple[str, str]]) -> str:
-    """Walk commits. Major > minor > patch > none."""
-    bump = "none"
-    for subject, body in entries:
-        m = CONVENTIONAL_RE.match(subject)
-        if m and m.group("bang"):
-            return "major"
-        if "BREAKING CHANGE:" in body:
-            return "major"
-        if m:
-            t = m.group("type").lower()
-            if t == "feat" and bump in ("none", "patch"):
-                bump = "minor"
-            elif t == "fix" and bump == "none":
-                bump = "patch"
-    return bump
+    out = run(["git", "log", rng, "--pretty=format:%s"])
+    return [line.strip() for line in out.stdout.splitlines() if line.strip()]
 
 
 def next_version(prev: str | None, bump: str) -> str:
@@ -148,7 +120,7 @@ def working_tree_clean() -> bool:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--bump", choices=("major", "minor", "patch"), help="Override the inferred bump.")
+    parser.add_argument("--bump", choices=("major", "minor", "patch"), help="Bump to apply. Defaults to minor; pass major for a hand-driven major bump.")
     parser.add_argument("--dry-run", action="store_true", help="Compute and report, do not write.")
     parser.add_argument("--allow-dirty", action="store_true", help="Allow uncommitted changes (risky).")
     args = parser.parse_args()
@@ -158,23 +130,19 @@ def main() -> int:
         return 1
 
     prev = latest_tag()
-    entries = commits_since(prev)
-    if not entries and not args.bump:
+    subjects = commits_since(prev)
+    if not subjects and not args.bump:
         print(f"No commits since {prev or 'beginning'}. Nothing to release.")
         return 0
 
-    inferred = infer_bump(entries)
-    bump = args.bump or (inferred if inferred != "none" else None)
-    if bump is None:
-        print(f"No conventional-commit bump signal in {len(entries)} commit(s) since {prev}. Pass --bump to force.")
-        return 0
+    bump = args.bump or DEFAULT_BUMP
 
     new_ver = next_version(prev, bump)
     new_tag = f"{TAG_PREFIX}{new_ver}"
 
     print(f"Previous tag: {prev or '(none)'}")
-    print(f"Commits since: {len(entries)}")
-    print(f"Inferred bump: {inferred} (using: {bump})")
+    print(f"Commits since: {len(subjects)}")
+    print(f"Bump: {bump}{'' if args.bump else ' (default)'}")
     print(f"Next version:  {new_tag}")
 
     if args.dry_run:
@@ -197,7 +165,7 @@ def main() -> int:
         run(["git", "commit", "-m", f"chore: bump version to {new_tag}"], env=env)
         print(f"Committed version bump touching: {', '.join(changed_files)}")
 
-    summary = entries[0][0] if entries else f"release {new_tag}"
+    summary = subjects[0] if subjects else f"release {new_tag}"
     tag_msg = f"Release {new_tag}: {summary}"
     run(["git", "tag", "-a", "-s", new_tag, "-m", tag_msg])
     print(f"Created signed tag {new_tag}")

@@ -1,10 +1,12 @@
-name: "Conventional-commits tag bump"
+name: "Semver tag bump"
 description: |
-  Parse conventional commits since the latest semver tag, compute the next
-  version (patch/minor/major), and create the tag on the forgejo repo via
-  the Releases API. Replaces mathieudutour/github-tag-action for the
-  forgejo-canonical release pipeline. Forgejo source of truth, no github
-  API calls.
+  Bump the latest semver tag by a fixed amount (minor by default) and
+  create the new tag on the forgejo repo via the Releases API. Does NOT
+  parse commit messages: every automated release is a minor bump, and
+  major is hand-driven only (pass bump: major, e.g. from a
+  workflow_dispatch). Nothing in commit history can escalate the bump.
+  Replaces mathieudutour/github-tag-action for the forgejo-canonical
+  release pipeline. Forgejo source of truth, no github API calls.
 
 inputs:
   forgejo_token:
@@ -19,10 +21,10 @@ inputs:
     description: "owner/name on forgejo."
     required: false
     default: ${{ github.repository }}
-  default_bump:
-    description: "Bump kind when no conventional-commit signals are present (patch|minor|major|none)."
+  bump:
+    description: "Bump to apply (minor|major|patch|none). Default minor. Major is hand-driven only - commit history never escalates it."
     required: false
-    default: "patch"
+    default: "minor"
   tag_prefix:
     description: "Tag prefix. Tags are <prefix><semver>."
     required: false
@@ -55,7 +57,7 @@ runs:
         FORGEJO_TOKEN: ${{ inputs.forgejo_token }}
         FORGEJO_BASE_URL: ${{ inputs.forgejo_base_url }}
         REPO: ${{ inputs.repo }}
-        DEFAULT_BUMP: ${{ inputs.default_bump }}
+        BUMP: ${{ inputs.bump }}
         TAG_PREFIX: ${{ inputs.tag_prefix }}
         RELEASE_SHA: ${{ inputs.release_sha }}
       run: |
@@ -73,40 +75,20 @@ runs:
           prev_ver="${prev_tag#"$TAG_PREFIX"}"
         fi
 
-        # Commits since prev_tag (or whole history if no prev).
+        # Commit range, for the changelog only. No message parsing: the
+        # bump is whatever the caller passed (default minor). Major is
+        # hand-driven, never inferred from a feat!: or BREAKING footer.
         if [ -n "$prev_tag" ]; then
           range="${prev_tag}..HEAD"
         else
           range="HEAD"
         fi
 
-        commits=$(git log --pretty=format:'%s' "$range" || true)
-
-        bump="none"
-        # Walk every commit subject. BREAKING wins over feat wins over fix
-        # wins over default.
-        while IFS= read -r line; do
-          [ -z "$line" ] && continue
-          if echo "$line" | grep -qE '^[a-zA-Z]+(\([^)]+\))?!:'; then
-            bump="major"; break
-          fi
-          case "$line" in
-            feat:*|feat\(*\):*) [ "$bump" != "major" ] && bump="minor" ;;
-            fix:*|fix\(*\):*) [ "$bump" = "none" ] && bump="patch" ;;
-          esac
-        done <<< "$commits"
-
-        # Body grep for BREAKING CHANGE: footer.
-        if [ "$bump" != "major" ]; then
-          if git log --pretty=format:'%B' "$range" 2>/dev/null \
-             | grep -qE '^BREAKING CHANGE:'; then
-            bump="major"
-          fi
-        fi
-
-        if [ "$bump" = "none" ]; then
-          bump="$DEFAULT_BUMP"
-        fi
+        bump="$BUMP"
+        case "$bump" in
+          major|minor|patch|none) ;;
+          *) echo "::error::bump must be major|minor|patch|none, got '$bump'"; exit 1 ;;
+        esac
 
         if [ "$bump" = "none" ]; then
           echo "no-bump signal; skipping tag creation"

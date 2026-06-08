@@ -109,16 +109,10 @@ repos:
         always_run: true
         pass_filenames: false
         stages: [pre-commit]
-      - id: closes-issue
-        name: commit references a Forgejo issue
-        entry: python -m agentic_os.check_commit_closes_issue
-        language: python
-        stages: [commit-msg]
-      - id: conventional-commit
-        name: commit message is conventional
-        entry: python -m agentic_os.check_conventional_commit
-        language: python
-        stages: [commit-msg]
+      # closes-issue + conventional-commit are no longer dogfooded here:
+      # they left the default suite when humans started hand-writing commits
+      # alongside agents. The validators still ship in the package and in
+      # .pre-commit-hooks.yaml for any repo that opts back in.
       # Guards the `coily exec warp` tool itself. Runs `go vet` (which
       # compiles the module) so broken Go never lands. It deliberately does
       # NOT run `warp doctor`: doctor inspects live host state, and the

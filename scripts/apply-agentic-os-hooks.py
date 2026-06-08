@@ -90,7 +90,8 @@ LEGACY_STAMPED_SCRIPTS = [
     "scripts/validate-skills.py",
 ]
 
-# Default hook IDs to enable per repo. Consumers can hand-edit later.
+# Default hook IDs per repo (hand-editable). closes-issue +
+# conventional-commit are intentionally off; opt back in by listing the id.
 DEFAULT_HOOK_IDS = [
     "catalog-doc-size",
     "catalog-trifecta",
@@ -105,8 +106,6 @@ DEFAULT_HOOK_IDS = [
     "merge-conflicts",
     "agent-compose-size",
     "agent-compose-dedup",
-    "closes-issue",
-    "conventional-commit",
     "trufflehog",
 ]
 
