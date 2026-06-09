@@ -15,6 +15,7 @@
 #       - id: repo-pointer-skills
 #       - id: agents-pointer
 #       - id: misplaced-skills
+#       - id: yaml-strict
 #       - id: merge-conflicts
 #       - id: seed-skills
 #       - id: closes-issue
@@ -169,6 +170,15 @@
   language: python
   always_run: true
   pass_filenames: false
+  stages: [pre-commit]
+
+- id: yaml-strict
+  name: strict canonical YAML
+  description: "Autofix YAML to a deterministic canonical form: recursive mapping-key alpha-sort, recursive sequence sort by canonical serialization, comment stripping, single trailing newline, explicit --- start, 2-space indent. Rejects (without fixing) duplicate keys and anchors/aliases/tags. Re-stage after a fix. Dials + opt-outs under [tool.agentic-os.yaml-strict] (sort_sequences, no_comments, order_significant, excludes). See coilysiren/agentic-os#59."
+  entry: check-yaml-strict
+  language: python
+  additional_dependencies: ["ruamel.yaml>=0.18"]
+  types: [yaml]
   stages: [pre-commit]
 
 - id: closes-issue

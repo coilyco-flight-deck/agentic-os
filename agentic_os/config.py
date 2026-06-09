@@ -170,6 +170,17 @@ def get_int_option(
     return value
 
 
+def get_bool_option(
+    hook_id: str, key: str, default: bool, repo_root: Path | None = None
+) -> bool:
+    """Return a bool option for a hook, or `default` if unset or non-bool."""
+    section = _load_hook_section(hook_id, repo_root)
+    value = section.get(key, default)
+    if not isinstance(value, bool):
+        return default
+    return value
+
+
 def _glob_to_regex(pattern: str) -> re.Pattern[str]:
     """Convert a gitignore-style glob to a regex.
 

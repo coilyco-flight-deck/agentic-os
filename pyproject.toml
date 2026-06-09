@@ -10,7 +10,11 @@ readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name = "Kai Siren" }]
 requires-python = ">=3.10"
-dependencies = ["PyYAML>=6.0", "tomli>=2.0; python_version < '3.11'"]
+dependencies = [
+    "PyYAML>=6.0",
+    "ruamel.yaml>=0.18",
+    "tomli>=2.0; python_version < '3.11'",
+]
 keywords = ["coilysiren", "pre-commit", "skill-discipline", "catalog", "validator"]
 classifiers = [
     "License :: OSI Approved :: MIT License",
@@ -43,6 +47,7 @@ check-documentation-layout = "agentic_os.check_documentation_layout:main"
 check-context-load-points = "agentic_os.check_context_load_points:main"
 check-aws-config = "agentic_os.check_aws_config:main"
 check-ssm-path = "agentic_os.check_ssm_path:main"
+check-yaml-strict = "agentic_os.check_yaml_strict:main"
 check-repo-pointer-skills = "agentic_os.check_repo_pointer_skills:main"
 check-agents-pointer = "agentic_os.check_agents_pointer:main"
 generate-agents-pointer = "agentic_os.generate_agents_pointer:main"
