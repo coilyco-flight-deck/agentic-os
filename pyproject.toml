@@ -93,6 +93,11 @@ excludes = [
     "warp/launch_configurations/**",
 ]
 
+[tool.agentic-os.repo-pointer-skills]
+# This repo migrated from the coilysiren org to coilyco-flight-deck, so its
+# repo-pointer skills point at ~/projects/coilyco-flight-deck/. See #560.
+org = "coilyco-flight-deck"
+
 [dependency-groups]
 dev = ["pytest>=8"]
 

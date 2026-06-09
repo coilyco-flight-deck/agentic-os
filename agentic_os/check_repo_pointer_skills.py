@@ -21,8 +21,12 @@ import sys
 from pathlib import Path
 from typing import NoReturn
 
-from agentic_os.config import is_enabled
-from agentic_os.generate_repo_pointer_skill import SKILL_PREFIX, check_drift
+from agentic_os.config import get_str_option, is_enabled
+from agentic_os.generate_repo_pointer_skill import (
+    DEFAULT_ORG,
+    SKILL_PREFIX,
+    check_drift,
+)
 
 HOOK_ID = "repo-pointer-skills"
 TRACKER = "coilysiren/agentic-os-kai#312"
@@ -60,6 +64,7 @@ def main() -> int:
     if skills_dir is None:
         return 0
 
+    org = get_str_option(HOOK_ID, "org", DEFAULT_ORG)
     failures: list[str] = []
     for d in sorted(skills_dir.glob(f"{SKILL_PREFIX}*")):
         if not d.is_dir() or d.is_symlink():
@@ -68,7 +73,7 @@ def main() -> int:
         if not skill_md.is_file():
             failures.append(f"{d.name} has no SKILL.md")
             continue
-        failures.extend(check_drift(d.name, skill_md.read_text()))
+        failures.extend(check_drift(d.name, skill_md.read_text(), org))
 
     if failures:
         fail(failures)

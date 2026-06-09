@@ -39,6 +39,20 @@ def test_check_drift_passes_clean_generated_file():
     assert check_drift("repo-website", text) == []
 
 
+def test_render_skill_org_overrides_pointer_path():
+    text = render_skill("deploy", "A monorepo. Triggers - deploy", "coilyco-bridge")
+    assert "Pointer to `~/projects/coilyco-bridge/deploy/`." in text
+    assert "coilysiren" not in text
+
+
+def test_check_drift_uses_org_for_byte_match():
+    desc = "A monorepo. Triggers - deploy"
+    migrated = render_skill("deploy", desc, "coilyco-bridge")
+    # Clean under the matching org, drifted when checked as the default org.
+    assert check_drift("repo-deploy", migrated, "coilyco-bridge") == []
+    assert any("drifted" in p for p in check_drift("repo-deploy", migrated))
+
+
 def test_check_drift_flags_hand_edited_body():
     text = render_skill("website", "A site. Triggers - website")
     tampered = text.replace("what ships today", "WHAT SHIPS TODAY")

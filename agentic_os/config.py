@@ -131,6 +131,15 @@ def load_excludes(hook_id: str, repo_root: Path | None = None) -> list[str]:
     return load_str_list(hook_id, "excludes", repo_root)
 
 
+def get_str_option(
+    hook_id: str, key: str, default: str, repo_root: Path | None = None
+) -> str:
+    """Return a string option for a hook, or `default` if unset or non-str."""
+    section = _load_hook_section(hook_id, repo_root)
+    value = section.get(key, default)
+    return value if isinstance(value, str) else default
+
+
 def is_enabled(hook_id: str, repo_root: Path | None = None) -> bool:
     """Return False only if `enabled = false` is set in the hook's config."""
     section = _load_hook_section(hook_id, repo_root)

@@ -32,6 +32,8 @@ import re
 import sys
 from pathlib import Path
 
+from agentic_os.config import get_str_option
+
 try:
     import yaml
 except ModuleNotFoundError:  # pragma: no cover
@@ -88,13 +90,21 @@ def build_description(raw_description: str, name: str, topics: list[str]) -> str
     return f"{desc}. {trigger_line}" if desc else trigger_line
 
 
-def render_skill(name: str, description: str) -> str:
+DEFAULT_ORG = "coilysiren"
+
+
+def render_skill(name: str, description: str, org: str = DEFAULT_ORG) -> str:
     """Render the full SKILL.md text for `repo-<name>` from a final description.
 
     Pure and deterministic: the validator re-renders from the committed file's
     own frontmatter and asserts a byte-identical match, so this is the one place
     the shape is defined. `name` is the bare repo name; the `repo-` prefix is
     applied here for the directory/frontmatter name and the H1.
+
+    `org` is the workspace org dir the repo lives under (`~/projects/<org>/`).
+    Defaults to `coilysiren`; repos migrated to another org (coilyco-bridge,
+    coilyco-flight-deck) set `[tool.agentic-os.repo-pointer-skills] org` so the
+    pointer path tracks the real checkout. See coilysiren/agentic-os-kai#560.
     """
     skill_name = f"{SKILL_PREFIX}{name}"
     frontmatter = yaml.safe_dump(
@@ -106,7 +116,7 @@ def render_skill(name: str, description: str) -> str:
     body = (
         f"# {skill_name}\n"
         "\n"
-        f"Pointer to `~/projects/coilysiren/{name}/`.\n"
+        f"Pointer to `~/projects/{org}/{name}/`.\n"
         "\n"
         "- [`README.md`](../../../README.md) - what it is, quickstart, layout.\n"
         "- [`AGENTS.md`](../../../AGENTS.md) - agent-facing operating context for the repo.\n"
@@ -134,7 +144,7 @@ def parse_frontmatter(text: str) -> dict:
     return data
 
 
-def check_drift(skill_dir_name: str, text: str) -> list[str]:
+def check_drift(skill_dir_name: str, text: str, org: str = DEFAULT_ORG) -> list[str]:
     """Return human-readable defects for a committed repo-pointer SKILL.md.
 
     Enforces the auto-generation guarantee offline (no network): the body and
@@ -173,7 +183,7 @@ def check_drift(skill_dir_name: str, text: str) -> list[str]:
             f"{skill_dir_name}/SKILL.md: description has no 'Triggers - ' line. Regenerate."
         )
 
-    expected = render_skill(bare, description)
+    expected = render_skill(bare, description, org)
     if text != expected:
         problems.append(
             f"{skill_dir_name}/SKILL.md: body or frontmatter drifted from generator "
@@ -252,8 +262,11 @@ def main(argv: list[str] | None = None) -> int:
         description = ns.description or ""
         topics = ns.topic
 
+    org = get_str_option(
+        "repo-pointer-skills", "org", DEFAULT_ORG, repo_root=Path(ns.repo_root)
+    )
     final_description = build_description(description, ns.name, topics)
-    content = render_skill(ns.name, final_description)
+    content = render_skill(ns.name, final_description, org)
 
     if ns.print:
         sys.stdout.write(content)
