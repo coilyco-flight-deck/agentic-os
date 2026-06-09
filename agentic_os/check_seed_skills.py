@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """pre-commit hook: assert a repo references the seed skills its code requires.
 
-OpenClaw ingests a small amount of language context from inside each target
+qwen-opencode ingests a small amount of language context from inside each target
 repo. A repo that contains code in language X should reference the matching
 ``coding-<lang>`` seed skill (and every always-on baseline skill, e.g.
 ``coding-git``) so that context is present for ingestion.
@@ -140,7 +140,7 @@ def fail(missing: list[str], detected: set[str]) -> NoReturn:
     )
     print(
         "  reference each skill by its canonical path in an agent-context doc "
-        "(AGENTS.md, README.md, etc.) so OpenClaw ingests it",
+        "(AGENTS.md, README.md, etc.) so qwen-opencode ingests it",
         file=sys.stderr,
     )
     print(f"  see {TRACKER}", file=sys.stderr)

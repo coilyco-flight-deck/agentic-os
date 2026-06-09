@@ -129,17 +129,17 @@ def test_install_symlink_replaces_existing_symlink(tmp_path: Path) -> None:
     assert not dst.with_name("CLAUDE.md.bak").exists()
 
 
-# ---------- load-point resolution: defaults + opt-in openclaw ----------
+# ---------- load-point resolution: defaults + opt-in opencode ----------
 
-def test_openclaw_skipped_when_unset() -> None:
+def test_opencode_skipped_when_unset() -> None:
     points = agent_compose.resolve_load_points({})
     assert set(points) == {"claude", "codex"}
 
 
-def test_openclaw_included_when_set(tmp_path: Path) -> None:
-    claw = tmp_path / "openclaw" / "AGENTS.md"
-    points = agent_compose.resolve_load_points({"load_points": {"openclaw": str(claw)}})
-    assert points["openclaw"] == claw
+def test_opencode_included_when_set(tmp_path: Path) -> None:
+    oc = tmp_path / "opencode" / "AGENTS.md"
+    points = agent_compose.resolve_load_points({"load_points": {"opencode": str(oc)}})
+    assert points["opencode"] == oc
 
 
 def test_load_point_override(tmp_path: Path) -> None:

@@ -8,7 +8,7 @@ Ships the canonical hook IDs that every `coilysiren/*` repo pins via `rev:`: cat
 
 ## Seed-skill propagation
 
-OpenClaw's per-repo context management wants a little language context living inside each target repo (for a Python repo, a pointer to how Kai writes Python). The `coding-<lang>` skills declare how they propagate with a `seed:` frontmatter block: `kind: always` (the `coding-git` baseline, seeded into every repo) or `kind: language` with `language` + `extensions` (seeded into repos containing those files). Target repos reference a seeded skill by its canonical path, e.g. `.agents/skills/coding-python/SKILL.md`.
+qwen-opencode's per-repo context management wants a little language context living inside each target repo (for a Python repo, a pointer to how Kai writes Python). The `coding-<lang>` skills declare how they propagate with a `seed:` frontmatter block: `kind: always` (the `coding-git` baseline, seeded into every repo) or `kind: language` with `language` + `extensions` (seeded into repos containing those files). Target repos reference a seeded skill by its canonical path, e.g. `.agents/skills/coding-python/SKILL.md`.
 
 The frontmatter is the source of truth. `generate-seed-skills` renders it into `agentic_os/seed_skills_data.py`, shipped in the package so consumer repos enforce the `seed-skills` hook offline, and `check-seed-skills-drift` (dogfooded in `agentic-os` only) fails if that table goes stale. This repo ships the validator half only: the actual copying of skills into target repos is Ansible's job.
 

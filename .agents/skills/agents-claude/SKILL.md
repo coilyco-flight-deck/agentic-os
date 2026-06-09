@@ -14,4 +14,4 @@ The **Claude** harness (she/her), and the capability axis's escalation target. B
 
 ## Related
 
-- `agents-codex`, `agents-openclaw` - sibling harnesses.
+- `agents-codex`, `agents-opencode` - sibling harnesses.

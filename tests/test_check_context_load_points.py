@@ -73,7 +73,7 @@ def test_forked_rung_in_subdir_fails(tmp_path: Path) -> None:
 
 def test_symlinked_rung_in_subdir_is_allowed(tmp_path: Path) -> None:
     canonical_repo(tmp_path)
-    workspace = tmp_path / "openclaw"
+    workspace = tmp_path / "opencode"
     workspace.mkdir()
     os.symlink(tmp_path / "AGENTS.md", workspace / "AGENTS.md")
     assert find_violations(tmp_path) == []

@@ -17,7 +17,7 @@ For each candidate from phase 1, fetch:
 Hydrate each into: `Org / Name / Url / Description (1 sentence)`. Keep
 the original bare name in a `bare_name` field for traceability.
 
-**Do not filter Codex/Claude/OpenClaw-only entries.** the user uses all three.
+**Do not filter Codex/Claude/OpenCode-only entries.** the user uses all three.
 
 If hydration fails (no match anywhere), keep the entry with
 `hydration: not_found`. Speculative entries from phase 1 stay

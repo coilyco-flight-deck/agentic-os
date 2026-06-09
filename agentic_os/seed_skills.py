@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Seed-skill definitions: which skills propagate into target repos.
 
-OpenClaw's per-repo context management wants a small amount of language context
+qwen-opencode's per-repo context management wants a small amount of language context
 living inside each target repo (for a Python repo, a pointer to how Kai writes
 Python). A skill opts into that propagation with a ``seed:`` block in its
 SKILL.md frontmatter:

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Enforce the agent context-loading load-point framework, per-repo.
 
-The three harnesses (Claude Code, Codex CLI, OpenClaw) each load context from
+The three harnesses (Claude Code, Codex CLI, OpenCode) each load context from
 the AGENTS.md / USER.md / CLAUDE.md tree. The framework (coilysiren/agentic-os-kai#505)
 says: one load point per harness, share by symlink never fork, and let Claude
 bridge to AGENTS.md through a one-line CLAUDE.md pointer. This hook enforces the
@@ -14,7 +14,7 @@ slice of that framework that is visible inside a single repository:
     2. No forked intermediate rungs. AGENTS.md and CLAUDE.md may live at the
        repo root only. A copy buried in a subdirectory is a forked rung that no
        harness loads cleanly. The exceptions are sharing and illustration: a
-       symlink (the cross-harness sharing mechanism, e.g. an OpenClaw workspace
+       symlink (the cross-harness sharing mechanism, e.g. an OpenCode workspace
        symlinking AGENTS.md to canonical) is fine, and load-point filenames that
        appear inside skill folders or examples/ trees are documentation, not
        loaded rungs.

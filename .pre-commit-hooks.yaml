@@ -136,7 +136,7 @@
 
 - id: seed-skills
   name: code present implies seed-skill references
-  description: "Assert a repo references the seed skills its code requires (always-set plus one per detected language) so OpenClaw ingests the right context. Opt in via [tool.agentic-os.seed-skills]; no-ops otherwise. Ansible enables it fleet-wide. See coilyco-flight-deck/agentic-os#176."
+  description: "Assert a repo references the seed skills its code requires (always-set plus one per detected language) so qwen-opencode ingests the right context. Opt in via [tool.agentic-os.seed-skills]; no-ops otherwise. Ansible enables it fleet-wide. See coilyco-flight-deck/agentic-os#176."
   entry: check-seed-skills
   language: python
   additional_dependencies: [pyyaml]

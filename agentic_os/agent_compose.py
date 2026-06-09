@@ -59,16 +59,17 @@ Config schema (YAML):
     roots:
       - ~/projects/coilysiren
       - ~/projects/coilyco-flight-deck
-    # Optional load-point overrides. Defaults shown; openclaw unset => skipped.
+    # Optional load-point overrides. Defaults shown; opencode unset => skipped.
     load_points:
       claude: ~/.claude/CLAUDE.md
       codex: ~/.codex/AGENTS.md
-      openclaw:
+      opencode: ~/.config/opencode/AGENTS.md
 
 Usage:
     agent-compose            # compose + (re)point symlinks
     agent-compose --dry-run  # print what would happen, touch nothing
 """
+
 from __future__ import annotations
 
 import argparse
@@ -81,8 +82,7 @@ CONFIG_DIR = HOME / ".config" / "agent-compose"
 CONFIG_PATH = CONFIG_DIR / "agent-compose.yaml"
 COMPOSED_PATH = CONFIG_DIR / "COMPOSED.md"
 
-# Built-in global load points. OpenClaw has no global load point yet (forgejo
-# #135 decision: defer), so it is symlinked only when set in config.
+# qwen-opencode harness has its global load point at ~/.config/opencode/AGENTS.md
 DEFAULT_LOAD_POINTS = {
     "claude": HOME / ".claude" / "CLAUDE.md",
     "codex": HOME / ".codex" / "AGENTS.md",
@@ -221,7 +221,7 @@ def apply_overrides(base_body: str, override_body: str) -> str:
             )
         if matches:
             start = matches[0]
-            lines[start:_section_end(lines, start)] = section
+            lines[start : _section_end(lines, start)] = section
         else:
             if lines and lines[-1].strip():
                 lines.append("")
@@ -288,6 +288,7 @@ def absolutize_links(body: str, base_dir: Path) -> str:
     link stays followable from anywhere. Global targets (see _is_global_target)
     are left untouched, and a trailing ``#fragment`` on a relative path is kept.
     """
+
     def repl(match: re.Match[str]) -> str:
         target, title = match.group(1), match.group(2) or ""
         if _is_global_target(target):
@@ -299,7 +300,9 @@ def absolutize_links(body: str, base_dir: Path) -> str:
     return _LINK_RE.sub(repl, body)
 
 
-def select_by_scope(sources: list[Path], machine_scopes: list[str] | None) -> list[Path]:
+def select_by_scope(
+    sources: list[Path], machine_scopes: list[str] | None
+) -> list[Path]:
     """Keep sources whose declared scopes intersect the machine scopes.
 
     machine_scopes None (no `scopes` in config) turns filtering off: every
@@ -346,9 +349,7 @@ def plan_outputs(
     overrides differ from the others, so a section override alone is enough to
     split COMPOSED.md into per-harness files.
     """
-    slices = {
-        harness: select_by_harness(sources, harness) for harness in load_points
-    }
+    slices = {harness: select_by_harness(sources, harness) for harness in load_points}
     overrides = {
         harness: {
             src: override
@@ -389,9 +390,7 @@ def stale_generated_outputs(
     """
     candidates = [composed_path]
     candidates.extend(
-        composed_path.parent.glob(
-            f"{composed_path.stem}.*{composed_path.suffix}"
-        )
+        composed_path.parent.glob(f"{composed_path.stem}.*{composed_path.suffix}")
     )
     stale: list[Path] = []
     for path in candidates:
@@ -457,9 +456,7 @@ def gather_sources(config: dict) -> tuple[list[Path], list[str]]:
     return ordered, errors
 
 
-def compose(
-    sources: list[Path], overrides: dict[Path, Path] | None = None
-) -> str:
+def compose(sources: list[Path], overrides: dict[Path, Path] | None = None) -> str:
     """Concatenate source files into the composed-context body.
 
     Deterministic (no timestamps) so the drift check (#140) can reproduce it.
@@ -522,7 +519,7 @@ def resolve_load_points(config: dict) -> dict[str, Path]:
     A truthy value sets (or adds) a harness's load point. An explicit falsy
     value (`null` / `false`) opts a harness out, including a default one - so a
     Claude-only machine sets `codex: null` and a Codex-only machine sets
-    `claude: null`. OpenClaw stays opt-in: it is wired only when given a path.
+    `claude: null`. OpenCode stays opt-in: it is wired only when given a path.
     """
     points = dict(DEFAULT_LOAD_POINTS)
     overrides = config.get("load_points") or {}
@@ -581,7 +578,9 @@ def run(config_path: Path, composed_path: Path, *, dry_run: bool = False) -> int
     stale = stale_generated_outputs(composed_path, set(planned))
 
     if dry_run:
-        for target, (selected, _ov) in sorted(planned.items(), key=lambda item: str(item[0])):
+        for target, (selected, _ov) in sorted(
+            planned.items(), key=lambda item: str(item[0])
+        ):
             print(f"would write {target} ({len(selected)} source(s)){tail}")
         for target in stale:
             print(f"would remove {target} (obsolete generated output)")
@@ -593,7 +592,9 @@ def run(config_path: Path, composed_path: Path, *, dry_run: bool = False) -> int
     for target in stale:
         target.unlink()
         print(f"removed {target} (obsolete generated output)")
-    for target, (selected, override_map) in sorted(planned.items(), key=lambda item: str(item[0])):
+    for target, (selected, override_map) in sorted(
+        planned.items(), key=lambda item: str(item[0])
+    ):
         target.write_text(compose(selected, override_map), encoding="utf-8")
         print(f"wrote   {target} ({len(selected)} source(s)){tail}")
     for harness, dst in sorted(load_points.items()):
@@ -647,7 +648,9 @@ def check(config_path: Path, composed_path: Path) -> int:
             f"agent-compose: drift - obsolete generated output remains at {target}. "
             "Run `agent-compose` to remove it.\n"
         )
-    for target, (selected, override_map) in sorted(planned.items(), key=lambda item: str(item[0])):
+    for target, (selected, override_map) in sorted(
+        planned.items(), key=lambda item: str(item[0])
+    ):
         expected = compose(selected, override_map)
         actual = target.read_text(encoding="utf-8") if target.exists() else ""
         if actual == expected:

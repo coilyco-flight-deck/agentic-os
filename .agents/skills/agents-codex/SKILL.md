@@ -16,5 +16,5 @@ Codex is bound to a capable GPT-family cloud model. As with Claude, you name the
 
 ## Related
 
-- `agents-claude`, `agents-openclaw` - sibling harnesses.
+- `agents-claude`, `agents-opencode` - sibling harnesses.
 - `models-qwen` - the floating-model capability axis.

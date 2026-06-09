@@ -31,7 +31,7 @@ local_name() {
   printf 'claude-%s-%s' "$os" "$host"
   [ -n "$tag" ] && printf -- '-%s' "$tag"
   # Pronoun slug. The local fallback is claude-only, so always she-her.
-  # coily emits he-him / they-them for codex / openclaw.
+  # coily emits he-him / they-them for codex / opencode.
   printf -- '-she-her'
 }
 
@@ -106,7 +106,7 @@ PY
 }
 
 # Human-readable pronouns parsed from the name's trailing slug, so this works
-# for coily-provided codex/openclaw names too, not just the claude fallback.
+# for coily-provided codex/opencode names too, not just the claude fallback.
 pronoun_display() {
   case "$1" in
     *-she-her)   printf 'she/her' ;;
