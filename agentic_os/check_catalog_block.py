@@ -8,7 +8,11 @@ and carry the block.
 Schema and rollout: coilysiren/agentic-os-kai#420. Two-file rollout: coilysiren/agentic-os-kai#480.
 
 Required keys inside `catalog:`:
-    kind, type, system, owner, lifecycle, description, dependsOn.
+    description, dependsOn.
+
+`kind`, `type`, `system`, `owner`, and `lifecycle` are no longer required
+(coilysiren/agentic-os-kai#420). They may still appear and are ignored by
+this hook; the catalog-graph builder reads them with defaults when present.
 
 `dependsOn` must be a list. Trivial repos (e.g. a single .gitignore) still
 declare it, using `[]` for empty rather than omitting the key. Empty is
@@ -44,11 +48,6 @@ except ImportError:  # pragma: no cover
 
 
 REQUIRED_KEYS = (
-    "kind",
-    "type",
-    "system",
-    "owner",
-    "lifecycle",
     "description",
     "dependsOn",
 )
