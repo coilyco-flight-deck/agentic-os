@@ -27,7 +27,7 @@ observability, o11y, monitoring, metrics, traces, logs, datadog, prometheus, gra
 - **Logs**: structured JSON. One event per line. Correlation IDs in every line.
 - **Dashboards**: Grafana for personal, vendor-native (Datadog/New Relic) when an employer pays for it.
 - **Alerting**: SLO-driven. Burn-rate alerts on multi-window, multi-burn-rate (Google SRE workbook).
-- **Errors**: Sentry. DSN per service in SSM (`/sentry-dsn/<project>` convention).
+- **Errors**: Sentry. DSN per service in SSM (`/sentry-dsn/<project>` convention). Static exception messages, dynamic context on attributes - never interpolate unbounded values into the message string.
 
 ## LLM consumers are first-class
 
@@ -42,6 +42,7 @@ When designing new observability surfaces, ask: how does an LLM agent consume th
 - Dashboards without alerts (read-only telemetry).
 - Alerts without runbooks (paging without action).
 - Per-employer vendor lock that doesn't transfer (favor OTel and standard exposition formats).
+- High-cardinality values (file paths, IDs, URLs, user input) in exception messages. Sentry groups and titles on the message, so a per-file message shatters one logical error into thousands of issues and breaks "group similar". Keep the message a closed-set string, push the dynamic data into structured exception attributes or Sentry `extra` / `fingerprint`. Low-cardinality enums (codec, status) are fine to inline.
 
 ## When this skill is active
 
