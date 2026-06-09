@@ -1,4 +1,4 @@
-"""Tests for agentic_os.check_misplaced_skills: foreign-skill guard."""
+"""Tests for agentic_os.pre_commit.check_misplaced_skills: foreign-skill guard."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from agentic_os import config
-from agentic_os.check_misplaced_skills import main, misplaced
+from agentic_os.pre_commit.check_misplaced_skills import main, misplaced
 
 
 def test_misplaced_matches_deny_minus_allow() -> None:

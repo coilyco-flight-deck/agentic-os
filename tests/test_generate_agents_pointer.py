@@ -1,4 +1,4 @@
-from agentic_os.generate_agents_pointer import (
+from agentic_os.generators.generate_agents_pointer import (
     BEGIN,
     END,
     KAI_OVERLAY_URL,

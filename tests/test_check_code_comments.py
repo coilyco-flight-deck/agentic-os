@@ -1,4 +1,4 @@
-"""Tests for agentic_os.check_code_comments comment discipline.
+"""Tests for agentic_os.pre_commit.check_code_comments comment discipline.
 
 Every file may carry a contiguous comment header block above the first
 content line. After content begins, code allows up to two contiguous comment
@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from agentic_os.check_code_comments import (
+from agentic_os.pre_commit.check_code_comments import (
     MAX_COMMENT_LINE_CHARS,
     scan_lines,
 )

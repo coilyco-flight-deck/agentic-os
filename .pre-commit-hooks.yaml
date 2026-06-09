@@ -10,7 +10,7 @@
 #       - id: context-load-points
 #       - id: code-comments
 #       - id: catalog-block-present
-#       - id: validate-skills
+#       - id: check-skills
 #       - id: dead-cross-links
 #       - id: repo-pointer-skills
 #       - id: agents-pointer
@@ -79,10 +79,10 @@
   pass_filenames: false
   stages: [pre-commit]
 
-- id: validate-skills
+- id: check-skills
   name: skill conventions
   description: Validate the structure of .agents/skills/ against .agents/skills/categories.yaml.
-  entry: validate-skills
+  entry: check-skills
   language: python
   additional_dependencies: [pyyaml]
   pass_filenames: false

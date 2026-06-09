@@ -11,7 +11,7 @@ For each repo checked out under ~/projects/<org>/<name> across every org dir
   1. Read or create `.pre-commit-config.yaml`.
   2. Strip legacy stamped `repo: local` blocks for the hooks now centralized
      here (catalog-block-present, catalog-doc-size, catalog-trifecta,
-     documentation-layout, code-comments, validate-skills, dead-cross-links,
+     documentation-layout, code-comments, check-skills, dead-cross-links,
      closes-issue, skill-discipline).
   3. Insert/refresh the managed agentic-os block with the full hook set.
   4. Run `pre-commit install --hook-type pre-commit --hook-type commit-msg
@@ -52,7 +52,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from agentic_os import config as cfg  # noqa: E402
 
-DEFAULT_REV = "v0.20.0"
+DEFAULT_REV = "v0.21.0"
 
 # A repo carrying this marker at its root opts out of all baseline
 # normalization, fail-closed. Remove the file to re-enroll.
@@ -87,7 +87,7 @@ LEGACY_STAMPED_SCRIPTS = [
     "scripts/check-catalog-trifecta.py",
     "scripts/check-commit-closes-issue.py",
     "scripts/check-dead-links.py",
-    "scripts/validate-skills.py",
+    "scripts/check-skills.py",
 ]
 
 # Default hook IDs per repo (hand-editable). closes-issue +
@@ -99,7 +99,7 @@ DEFAULT_HOOK_IDS = [
     "context-load-points",
     "code-comments",
     "catalog-block-present",
-    "validate-skills",
+    "check-skills",
     "dead-cross-links",
     "repo-pointer-skills",
     "misplaced-skills",

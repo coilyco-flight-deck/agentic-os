@@ -1,11 +1,11 @@
-"""Tests for agentic_os.check_seed_skills: per-repo seed-reference guard."""
+"""Tests for agentic_os.pre_commit.check_seed_skills: per-repo seed-reference guard."""
 from __future__ import annotations
 
 from pathlib import Path
 
 import pytest
 
-from agentic_os import check_seed_skills as csk
+from agentic_os.pre_commit import check_seed_skills as csk
 from agentic_os import config
 
 # A fixed table so tests do not depend on the shipped seed_skills_data.py.

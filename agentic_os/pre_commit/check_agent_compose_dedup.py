@@ -18,13 +18,14 @@ Tunables under [tool.agentic-os.agent-compose-dedup]:
     min_line_chars - shortest line considered significant (default 24)
 Opt out with `enabled = false` under the same section.
 """
+
 from __future__ import annotations
 
 import sys
 from pathlib import Path
 
-from agentic_os import agent_compose
-from agentic_os.check_documentation_layout import should_skip
+from agentic_os.generators import generate_agent_compose
+from agentic_os.pre_commit.check_documentation_layout import should_skip
 from agentic_os.config import get_int_option, is_enabled, is_excluded, load_excludes
 
 REPO_ROOT = Path.cwd()
@@ -65,13 +66,15 @@ def find_violations(root: Path) -> list[str]:
     # stripped, since source-selection directives are not composed content).
     line_to_files: dict[str, set[str]] = {}
     for rel in sources:
-        body = agent_compose.parse_source(root / rel)[1]
+        body = generate_agent_compose.parse_source(root / rel)[1]
         for line in _significant_lines(body, min_chars):
             line_to_files.setdefault(line, set()).add(str(rel))
 
     agents = root / "AGENTS.md"
     agents_lines = (
-        _significant_lines(agents.read_text(encoding="utf-8", errors="replace"), min_chars)
+        _significant_lines(
+            agents.read_text(encoding="utf-8", errors="replace"), min_chars
+        )
         if agents.is_file()
         else set()
     )

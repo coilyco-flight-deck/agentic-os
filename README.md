@@ -10,7 +10,7 @@ Cross-platform shell + terminal setup plus the cross-repo pre-commit hooks that 
 - `warp/` - Warp config (`settings.toml`, `tab_configs/`) plus the `coily exec warp` Go module.
 - `scripts/` - portable utilities (gpg-ssm wrapper, agent-name + session-pulse hooks, aws-config lint).
 - `.agents/skills/` - SKILL.md docs for the configs that live here. agentic-os-kai's skill mount walks this dir as a peer skill source.
-- `agentic_os/` - the catalog pre-commit hooks this repo ships.
+- `agentic_os/` - packaged hooks, generators, shared config/data.
 
 Full breakdown: [docs/repo-layout.md](docs/repo-layout.md).
 

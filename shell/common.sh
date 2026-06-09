@@ -103,6 +103,20 @@ git-pr-title() {
   PAGER="" gh pr view --json title --jq ".title"
 }
 
+pre-commit-hooks-used() {
+  yq -r '.repos[] | select(.repo | test("agentic-os$")) | .hooks[].id' \
+    "${HOME}/projects/coilyco-${1}/.pre-commit-config.yaml"
+}
+
+pre-commit-hooks-defined() {
+  yq -r '.[].id' \
+    "${HOME}/projects/coilyco-flight-deck/agentic-os/.pre-commit-hooks.yaml"
+}
+
+pre-commit-hooks-missing() {
+  comm -23 <(pre-commit-hooks-used "${1}"| sort) <(pre-commit-hooks-defined | sort)
+}
+
 git-merge-default-branch() {
   local default
   default=$(git-default-branch) || return 1

@@ -17,10 +17,9 @@ from __future__ import annotations
 
 import sys
 
-try:
-    from agentic_os.check_documentation_layout import main as documentation_layout_main
-except ModuleNotFoundError:
-    from check_documentation_layout import main as documentation_layout_main
+from agentic_os.pre_commit.check_documentation_layout import (
+    main as documentation_layout_main,
+)
 
 
 def main() -> int:

@@ -1,9 +1,9 @@
-"""Tests for agentic_os.check_ssm_path: the /<org>/<repo>/<tier>/<tail> schema."""
+"""Tests for agentic_os.pre_commit.check_ssm_path: the /<org>/<repo>/<tier>/<tail> schema."""
 from __future__ import annotations
 
 import pytest
 
-from agentic_os.check_ssm_path import main, validate_path
+from agentic_os.pre_commit.check_ssm_path import main, validate_path
 
 
 @pytest.mark.parametrize(

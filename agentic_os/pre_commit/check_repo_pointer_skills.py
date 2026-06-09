@@ -2,7 +2,7 @@
 """pre-commit hook: assert every `repo-<name>` pointer skill is auto-generated.
 
 Repo-pointer skills (`.agents/skills/repo-<name>/SKILL.md`) are fully generated
-by `agentic_os.generate_repo_pointer_skill` from a repo's GitHub description and
+by `agentic_os.generators.generate_repo_pointer_skill` from a repo's GitHub description and
 topics. They must never be hand-edited. This hook scans the current repo for any
 `repo-*` skill and regenerates it offline from its own frontmatter, failing on
 any drift in the pointer body or frontmatter and on a description that skipped
@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import NoReturn
 
 from agentic_os.config import get_str_option, is_enabled
-from agentic_os.generate_repo_pointer_skill import (
+from agentic_os.generators.generate_repo_pointer_skill import (
     DEFAULT_ORG,
     SKILL_PREFIX,
     check_drift,
@@ -35,7 +35,7 @@ SKILLS_DIR_CANDIDATES = (".agents/skills", ".claude/skills", "skills")
 
 REGEN_HINT = (
     "  regenerate: coily ops forgejo repo view --repo coilysiren/<name> --json "
-    "| python -m agentic_os.generate_repo_pointer_skill <name> --from-json - --repo-root <repo>"
+    "| python -m agentic_os.generators.generate_repo_pointer_skill <name> --from-json - --repo-root <repo>"
 )
 
 

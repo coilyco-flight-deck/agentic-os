@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agentic-os"
-version = "0.20.0"
-description = "Cross-repo pre-commit hooks and operating utilities for coilysiren/* repos: catalog-trifecta, catalog-doc-size, documentation-layout, code-comments, catalog-block, skill-conventions, dead-cross-links, commit-closes-issue."
+version = "0.21.0"
+description = "Cross-repo pre-commit hooks and operating utilities for coilysiren/* repos: catalog-trifecta, catalog-doc-size, documentation-layout, code-comments, catalog-block, check-skills, dead-cross-links, commit-closes-issue."
 readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name = "Kai Siren" }]
@@ -15,7 +15,13 @@ dependencies = [
     "ruamel.yaml>=0.18",
     "tomli>=2.0; python_version < '3.11'",
 ]
-keywords = ["coilysiren", "pre-commit", "skill-discipline", "catalog", "validator"]
+keywords = [
+    "coilysiren",
+    "pre-commit",
+    "skill-discipline",
+    "catalog",
+    "validator",
+]
 classifiers = [
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
@@ -31,32 +37,33 @@ Homepage = "https://github.com/coilyco-flight-deck/agentic-os"
 Issues = "https://github.com/coilyco-flight-deck/agentic-os/issues"
 
 [project.scripts]
-agent-compose = "agentic_os.agent_compose:main"
-check-agent-compose-size = "agentic_os.check_agent_compose_size:main"
-check-agent-compose-dedup = "agentic_os.check_agent_compose_dedup:main"
-check-agent-compose-drift = "agentic_os.agent_compose:check_main"
-validate-skills = "agentic_os.validate_skills:main"
-check-dead-links = "agentic_os.check_dead_links:main"
-check-commit-closes-issue = "agentic_os.check_commit_closes_issue:main"
-check-conventional-commit = "agentic_os.check_conventional_commit:main"
-check-catalog-block = "agentic_os.check_catalog_block:main"
-check-catalog-doc-size = "agentic_os.check_catalog_doc_size:main"
-check-catalog-trifecta = "agentic_os.check_catalog_trifecta:main"
-check-code-comments = "agentic_os.check_code_comments:main"
-check-documentation-layout = "agentic_os.check_documentation_layout:main"
-check-context-load-points = "agentic_os.check_context_load_points:main"
-check-aws-config = "agentic_os.check_aws_config:main"
-check-ssm-path = "agentic_os.check_ssm_path:main"
-check-yaml-strict = "agentic_os.check_yaml_strict:main"
-check-repo-pointer-skills = "agentic_os.check_repo_pointer_skills:main"
-check-agents-pointer = "agentic_os.check_agents_pointer:main"
-generate-agents-pointer = "agentic_os.generate_agents_pointer:main"
-check-misplaced-skills = "agentic_os.check_misplaced_skills:main"
-check-merge-conflicts = "agentic_os.check_merge_conflicts:main"
-check-seed-skills = "agentic_os.check_seed_skills:main"
-check-seed-skills-drift = "agentic_os.seed_skills:check_drift_main"
-generate-repo-pointer-skill = "agentic_os.generate_repo_pointer_skill:main"
-generate-seed-skills = "agentic_os.seed_skills:main"
+check-agent-compose-size = "agentic_os.pre_commit.check_agent_compose_size:main"
+check-agent-compose-dedup = "agentic_os.pre_commit.check_agent_compose_dedup:main"
+check-agent-compose-drift = "agentic_os.pre_commit.check_agent_compose_drift:main"
+check-skills = "agentic_os.pre_commit.check_skill:main"
+check-dead-links = "agentic_os.pre_commit.check_dead_links:main"
+check-commit-closes-issue = "agentic_os.pre_commit.check_commit_closes_issue:main"
+check-conventional-commit = "agentic_os.pre_commit.check_conventional_commit:main"
+check-catalog-block = "agentic_os.pre_commit.check_catalog_block:main"
+check-catalog-doc-size = "agentic_os.pre_commit.check_catalog_doc_size:main"
+check-catalog-trifecta = "agentic_os.pre_commit.check_catalog_trifecta:main"
+check-code-comments = "agentic_os.pre_commit.check_code_comments:main"
+check-documentation-layout = "agentic_os.pre_commit.check_documentation_layout:main"
+check-context-load-points = "agentic_os.pre_commit.check_context_load_points:main"
+check-aws-config = "agentic_os.pre_commit.check_aws_config:main"
+check-ssm-path = "agentic_os.pre_commit.check_ssm_path:main"
+check-yaml-strict = "agentic_os.pre_commit.check_yaml_strict:main"
+check-repo-pointer-skills = "agentic_os.pre_commit.check_repo_pointer_skills:main"
+check-agents-pointer = "agentic_os.pre_commit.check_agents_pointer:main"
+check-misplaced-skills = "agentic_os.pre_commit.check_misplaced_skills:main"
+check-merge-conflicts = "agentic_os.pre_commit.check_merge_conflicts:main"
+check-seed-skills = "agentic_os.pre_commit.check_seed_skills:main"
+check-seed-skills-drift = "agentic_os.pre_commit.check_seed_skills_drift:main"
+
+generate-agents-pointer = "agentic_os.generators.generate_agents_pointer:main"
+generate-agent-compose = "agentic_os.generators.generate_agent_compose:main"
+generate-repo-pointer-skill = "agentic_os.generators.generate_repo_pointer_skill:main"
+generate-seed-skills = "agentic_os.generators.generate_seed_skills:main"
 
 # Self-compliance config for the hooks this repo ships. See agentic-os#81,
 # #96, #22.

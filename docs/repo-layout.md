@@ -28,6 +28,13 @@ One shared core, two thin per-shell entries, so bash and zsh run identical env, 
 - `session-pulse.sh` - SessionStart hook that cats `~/.cache/agentic-os/session-pulse.yaml` when present, no-op when absent. Any producer writes to that path; the hook is provider-agnostic. YAML so secondary surfaces can reuse the same blob.
 - `install-session-pulse.py` - idempotently wire `session-pulse.sh` into `~/.claude/settings.json` as a SessionStart hook.
 
+## agentic_os
+
+- `agentic_os/pre_commit/` - Python entry points for the hook suite exposed through `.pre-commit-hooks.yaml` and `[project.scripts]`.
+- `agentic_os/generators/` - offline generators for managed blocks, repo-pointer skills, seed-skill data, and agent-compose output.
+- `agentic_os/config.py` - shared repo config loader for hook opt-outs, excludes, and workspace scans.
+- `agentic_os/seed_skills_data.py` - generated seed-skill table shipped with the package so consumer hooks run offline.
+
 ## skills
 
 `.agents/skills/` - SKILL.md docs for the configs that live here (`tooling-zsh`, `tooling-gpg-ssm`, and the cross-repo skills). agentic-os-kai's skill mount walks this dir as a peer skill source, symlinking each entry into `~/.claude/skills/`. Co-located with the configs they describe so they don't drift.

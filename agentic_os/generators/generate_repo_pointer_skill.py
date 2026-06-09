@@ -16,7 +16,7 @@ supply repo metadata however it likes. The canonical source is Forgejo, whose
 payload. The CLI reads that JSON from stdin:
 
     coily ops forgejo repo view --repo coilysiren/<name> --json \
-        | python -m agentic_os.generate_repo_pointer_skill <name> --from-json - --repo-root <repo>
+        | python -m agentic_os.generators.generate_repo_pointer_skill <name> --from-json - --repo-root <repo>
 
 `--from-json` also accepts the GitHub `gh repo view --json
 description,repositoryTopics` shape, so non-Forgejo callers still work.

@@ -21,7 +21,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from agentic_os.check_documentation_layout import should_skip
+from agentic_os.pre_commit.check_documentation_layout import should_skip
 from agentic_os.config import get_int_option, is_enabled, is_excluded, load_excludes
 
 REPO_ROOT = Path.cwd()

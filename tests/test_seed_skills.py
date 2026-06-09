@@ -1,11 +1,11 @@
-"""Tests for agentic_os.seed_skills: frontmatter scan, generate, drift."""
+"""Tests for agentic_os.generators.generate_seed_skills: frontmatter scan, generate, drift."""
 from __future__ import annotations
 
 from pathlib import Path
 
 import pytest
 
-from agentic_os import seed_skills
+from agentic_os.generators import generate_seed_skills as seed_skills
 
 
 def _make_skill(skills_dir: Path, name: str, seed_block: str | None) -> None:

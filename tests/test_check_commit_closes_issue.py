@@ -1,10 +1,10 @@
-"""Tests for agentic_os.check_commit_closes_issue: Forgejo-URL-only enforcement."""
+"""Tests for agentic_os.pre_commit.check_commit_closes_issue: Forgejo-URL-only enforcement."""
 from __future__ import annotations
 
 import pytest
 
-from agentic_os import check_commit_closes_issue as mod
-from agentic_os.check_commit_closes_issue import classify, this_repo
+from agentic_os.pre_commit import check_commit_closes_issue as mod
+from agentic_os.pre_commit.check_commit_closes_issue import classify, this_repo
 
 THIS = ("coilysiren", "backend")
 URL = "https://forgejo.coilysiren.me/coilysiren/backend/issues/27"

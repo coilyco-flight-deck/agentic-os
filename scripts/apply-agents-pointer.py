@@ -2,7 +2,7 @@
 """Inject or refresh the managed workspace-pointer block in each repo's AGENTS.md.
 
 Authored side of the AGENTS.md pointer convention. The pure renderer and the
-drift check live in `agentic_os.generate_agents_pointer`; this script is the
+drift check live in `agentic_os.generators.generate_agents_pointer`; this script is the
 applier that writes the block into a repo's `AGENTS.md` in place. Idempotent:
 re-runs replace the prior managed block and strip known legacy intro lines, so
 running it twice is a no-op.
@@ -35,7 +35,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from agentic_os import config as cfg  # noqa: E402
-from agentic_os.generate_agents_pointer import (  # noqa: E402
+from agentic_os.generators.generate_agents_pointer import (  # noqa: E402
     EXEMPT,
     apply_to_text,
     detect_org_repo,

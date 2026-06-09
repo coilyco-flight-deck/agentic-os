@@ -1,10 +1,10 @@
-"""Tests for agentic_os.check_context_load_points: the AGENTS/CLAUDE framework."""
+"""Tests for agentic_os.pre_commit.check_context_load_points: the AGENTS/CLAUDE framework."""
 from __future__ import annotations
 
 import os
 from pathlib import Path
 
-from agentic_os.check_context_load_points import (
+from agentic_os.pre_commit.check_context_load_points import (
     find_violations,
     imports_of,
     is_pure_pointer,

@@ -7,9 +7,9 @@ The consumer-facing handbook is shipped alongside this script in
 agentic-os/docs/skill-discipline-handbook.md.
 
 Usage (when run directly):
-    python3 scripts/validate-skills.py              # validate every skill
-    python3 scripts/validate-skills.py <name> ...   # validate only the named skills
-    python3 scripts/validate-skills.py --report-only  # exit 0 even on failures
+    check-skills              # validate every skill
+    check-skills <name> ...   # validate only the named skills
+    check-skills --report-only  # exit 0 even on failures
 
 Canonical copy lives in coilyco-flight-deck/agentic-os/scripts/. Each consumer
 repo gets a stamped copy via agentic-os-kai's apply-skill-discipline-hooks
@@ -29,13 +29,13 @@ try:
     import yaml
 except ModuleNotFoundError:
     sys.stderr.write(
-        "validate_skills.py: PyYAML is required. Install with: pip install pyyaml\n"
+        "check-skills: PyYAML is required. Install with: pip install pyyaml\n"
     )
     sys.exit(2)
 
 from agentic_os.config import is_enabled
 
-HOOK_ID = "validate-skills"
+HOOK_ID = "check-skills"
 
 # cwd is the consumer repo root under pre-commit, same as direct dev runs.
 REPO_ROOT = Path.cwd()
@@ -546,7 +546,7 @@ def main(argv: list[str] | None = None) -> int:
         argv = sys.argv
 
     parser = argparse.ArgumentParser(
-        prog="validate-skills",
+        prog="check-skills",
         description="Validate the structure of a repo's skill directory.",
     )
     parser.add_argument(

@@ -20,7 +20,7 @@ Route every dev command through coily, which reads [`.coily/coily.yaml`](.coily/
 
 ## Validation
 
-This repo ships and dogfoods the catalog pre-commit suite (catalog-trifecta, documentation-layout, code-comments, catalog-block, validate-skills, dead-cross-links, repo-pointer-skills, trufflehog). Run `pre-commit run --all-files` before committing. Per-repo opt-outs (excludes, cap overrides) live under `[tool.agentic-os.*]` in `pyproject.toml`. The `closes-issue` and `conventional-commit` hooks still ship in the suite but are off by default - a repo opts in by listing the id in its managed block.
+This repo ships and dogfoods the catalog pre-commit suite (catalog-trifecta, documentation-layout, code-comments, catalog-block, check-skills, dead-cross-links, repo-pointer-skills, trufflehog). Run `pre-commit run --all-files` before committing. Per-repo opt-outs (excludes, cap overrides) live under `[tool.agentic-os.*]` in `pyproject.toml`. The `closes-issue` and `conventional-commit` hooks still ship in the suite but are off by default - a repo opts in by listing the id in its managed block.
 
 ## Safety
 

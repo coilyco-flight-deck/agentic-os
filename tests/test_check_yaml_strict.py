@@ -1,9 +1,9 @@
-"""Tests for agentic_os.check_yaml_strict: the strict canonical YAML hook."""
+"""Tests for agentic_os.pre_commit.check_yaml_strict: the strict canonical YAML hook."""
 from __future__ import annotations
 
 from pathlib import Path
 
-from agentic_os.check_yaml_strict import Options, check_file
+from agentic_os.pre_commit.check_yaml_strict import Options, check_file
 
 
 def _run(tmp_path: Path, text: str, opts: Options | None = None) -> tuple[bool, list[str], str]:

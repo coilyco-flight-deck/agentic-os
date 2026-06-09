@@ -1,4 +1,4 @@
-"""Tests for agentic_os.check_documentation_layout skill flatness rule.
+"""Tests for agentic_os.pre_commit.check_documentation_layout skill flatness rule.
 
 The flatness rule targets nested sub-skills (a SKILL.md the loader can't see),
 not support material that legitimately sits beside SKILL.md.
@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from agentic_os.check_documentation_layout import (
+from agentic_os.pre_commit.check_documentation_layout import (
     ROOT_MARKDOWN_ALLOWLIST,
     check_skill_flatness,
     is_harness_override,

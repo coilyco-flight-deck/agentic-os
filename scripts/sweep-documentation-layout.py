@@ -18,7 +18,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO))
 
-from agentic_os import check_documentation_layout as chk  # noqa: E402
+from agentic_os.pre_commit import check_documentation_layout as chk  # noqa: E402
 from agentic_os import config as cfg  # noqa: E402
 
 

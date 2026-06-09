@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from agentic_os import check_agent_compose_size as size
+from agentic_os.pre_commit import check_agent_compose_size as size
 
 
 def write(path: Path, content: str) -> None:

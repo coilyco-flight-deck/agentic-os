@@ -3,15 +3,15 @@ repos:
     hooks:
       - id: catalog-block-present
         name: .coily/coily.yaml catalog block present
-        entry: python -m agentic_os.check_catalog_block
+        entry: python -m agentic_os.pre_commit.check_catalog_block
         language: python
         additional_dependencies: [pyyaml]
         always_run: true
         pass_filenames: false
         stages: [pre-commit]
-      - id: validate-skills
-        name: skill conventions (validate-skills)
-        entry: python -m agentic_os.validate_skills
+      - id: check-skills
+        name: skill conventions
+        entry: python -m agentic_os.pre_commit.check_skill
         language: python
         additional_dependencies: [pyyaml]
         pass_filenames: false
@@ -19,7 +19,7 @@ repos:
         stages: [pre-commit]
       - id: documentation-layout
         name: documentation layout
-        entry: python -m agentic_os.check_documentation_layout
+        entry: python -m agentic_os.pre_commit.check_documentation_layout
         language: python
         additional_dependencies: [pyyaml]
         always_run: true
@@ -27,28 +27,28 @@ repos:
         stages: [pre-commit]
       - id: catalog-trifecta
         name: catalog-trifecta cross-link convention
-        entry: python -m agentic_os.check_catalog_trifecta
+        entry: python -m agentic_os.pre_commit.check_catalog_trifecta
         language: python
         always_run: true
         pass_filenames: false
         stages: [pre-commit]
       - id: context-load-points
         name: agent context load-points
-        entry: python -m agentic_os.check_context_load_points
+        entry: python -m agentic_os.pre_commit.check_context_load_points
         language: python
         always_run: true
         pass_filenames: false
         stages: [pre-commit]
       - id: code-comments
         name: code comment discipline
-        entry: python -m agentic_os.check_code_comments
+        entry: python -m agentic_os.pre_commit.check_code_comments
         language: python
         pass_filenames: false
         always_run: true
         stages: [pre-commit]
       - id: dead-cross-links
         name: dead cross-links
-        entry: python -m agentic_os.check_dead_links
+        entry: python -m agentic_os.pre_commit.check_dead_links
         language: python
         additional_dependencies: [pyyaml]
         always_run: true
@@ -56,7 +56,7 @@ repos:
         stages: [pre-commit]
       - id: repo-pointer-skills
         name: repo-pointer skills auto-generated
-        entry: python -m agentic_os.check_repo_pointer_skills
+        entry: python -m agentic_os.pre_commit.check_repo_pointer_skills
         language: python
         additional_dependencies: [pyyaml]
         always_run: true
@@ -64,7 +64,7 @@ repos:
         stages: [pre-commit]
       - id: misplaced-skills
         name: no foreign repo-specific skills
-        entry: python -m agentic_os.check_misplaced_skills
+        entry: python -m agentic_os.pre_commit.check_misplaced_skills
         language: python
         additional_dependencies: [pyyaml]
         always_run: true
@@ -72,14 +72,14 @@ repos:
         stages: [pre-commit]
       - id: merge-conflicts
         name: no merge-conflict markers
-        entry: python -m agentic_os.check_merge_conflicts
+        entry: python -m agentic_os.pre_commit.check_merge_conflicts
         language: python
         always_run: true
         pass_filenames: false
         stages: [pre-commit]
       - id: seed-skills-drift
         name: seed_skills_data.py in sync with skill frontmatter
-        entry: python -m agentic_os.seed_skills --check
+        entry: python -m agentic_os.pre_commit.check_seed_skills_drift
         language: python
         additional_dependencies: [pyyaml]
         always_run: true
@@ -87,7 +87,7 @@ repos:
         stages: [pre-commit]
       - id: agent-compose-size
         name: agent-compose source size budget
-        entry: python -m agentic_os.check_agent_compose_size
+        entry: python -m agentic_os.pre_commit.check_agent_compose_size
         language: python
         additional_dependencies: [pyyaml]
         always_run: true
@@ -95,7 +95,7 @@ repos:
         stages: [pre-commit]
       - id: agent-compose-dedup
         name: agent-compose dedup
-        entry: python -m agentic_os.check_agent_compose_dedup
+        entry: python -m agentic_os.pre_commit.check_agent_compose_dedup
         language: python
         additional_dependencies: [pyyaml]
         always_run: true

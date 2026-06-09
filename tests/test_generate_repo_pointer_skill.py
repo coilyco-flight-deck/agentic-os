@@ -1,4 +1,4 @@
-from agentic_os.generate_repo_pointer_skill import (
+from agentic_os.generators.generate_repo_pointer_skill import (
     build_description,
     check_drift,
     clean_description,

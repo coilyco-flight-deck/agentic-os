@@ -35,13 +35,13 @@ import sys
 from pathlib import Path
 from typing import NoReturn
 
-from agentic_os.validate_skills import parse_frontmatter
+from agentic_os.pre_commit.check_skill import parse_frontmatter
 
 TRACKER = "coilyco-flight-deck/agentic-os#176"
 
-_REPO_ROOT = Path(__file__).resolve().parent.parent
+_REPO_ROOT = Path(__file__).resolve().parents[2]
 SKILLS_DIR = _REPO_ROOT / ".agents" / "skills"
-DATA_PATH = Path(__file__).resolve().parent / "seed_skills_data.py"
+DATA_PATH = Path(__file__).resolve().parents[1] / "seed_skills_data.py"
 
 # Path prefix every consumer reference shares. The presence check matches this
 # tail so a relative ref, a raw Forgejo URL, or a src/branch URL all satisfy it.

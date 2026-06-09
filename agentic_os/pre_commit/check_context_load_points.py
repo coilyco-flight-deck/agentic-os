@@ -33,7 +33,7 @@ import re
 import sys
 from pathlib import Path
 
-from agentic_os.check_documentation_layout import (
+from agentic_os.pre_commit.check_documentation_layout import (
     is_under_examples,
     is_under_skill_path,
     should_skip,

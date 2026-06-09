@@ -1,4 +1,4 @@
-"""Tests for agentic_os.check_merge_conflicts: conflict-marker guard."""
+"""Tests for agentic_os.pre_commit.check_merge_conflicts: conflict-marker guard."""
 from __future__ import annotations
 
 import subprocess
@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from agentic_os import check_merge_conflicts as mc
+from agentic_os.pre_commit import check_merge_conflicts as mc
 from agentic_os import config
 
 # Built at runtime so no source line in this file starts with a real marker
