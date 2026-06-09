@@ -13,7 +13,32 @@ Markdown documentation may live only in:
        carry any support subdirs (scripts/, assets/, references/, agents/,
        ...) - the only flatness rule is that no nested SKILL.md may hide below
        the top-level skill dir, since the loader only sees top-level dirs;
-    4. anywhere under an `examples/` directory at any depth, any .md filename.
+    4. anywhere under an `examples/` directory at any depth, any .md filename;
+    5. a co-located module README.md, but only in one of two tightly-capped
+       shapes (see below). Any other co-located Markdown is still a violation.
+
+Module README.md shapes
+-----------------------
+A README.md anywhere below the root (outside docs/, skill, examples) is the
+one co-located doc the layout permits, because deep docs are invisible to
+anyone not running `rg`. To keep substance in the central, browsable docs/
+index rather than scattered through the tree, the co-located README may only
+be one of two tightly-capped shapes - the cap is the forcing function, since
+nothing worth hiding fits in 3 lines:
+
+    * outpost  - a pure redirect into docs/. <= 3 non-blank lines: a heading,
+      an optional one-sentence summary, and exactly one link to a single
+      docs/*.md file. Reciprocal: that docs file must link back to this exact
+      README path (file-to-file). One docs file may be the target of many
+      outposts (each gets its own back-link); one outpost points at one doc.
+    * homestead - self-contained signage that points nowhere. <= 3 non-blank
+      lines (heading + up to 2 content lines), no docs/ pointer.
+
+Both cap prose lines at README_MAX_PROSE_CHARS. The pointer line of an
+outpost is exempt from that cap - a deep relative path is not prose. Blank
+lines never count toward the line ceiling. The discriminator is simple: a
+README that links a docs/*.md file is an outpost, otherwise it is a
+homestead.
 
 Every Markdown file shares one size cap: MAX_MARKDOWN_LINES /
 MAX_MARKDOWN_CHARS. SKILL.md is not special. CLAUDE.md is expected to be a
@@ -30,7 +55,7 @@ from __future__ import annotations
 
 import re
 import sys
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 from agentic_os.config import (
     get_int_option,
@@ -43,6 +68,15 @@ REPO_ROOT = Path.cwd()
 HOOK_ID = "documentation-layout"
 MAX_MARKDOWN_LINES = 80
 MAX_MARKDOWN_CHARS = 4_000
+
+# Co-located module README.md caps (outpost / homestead shapes; see docstring).
+# Non-blank lines per README, and prose chars per line (pointer line exempt).
+README_MAX_LINES = 3
+README_MAX_PROSE_CHARS = 90
+
+# Inline Markdown link: [text](target). Reference-style links are not matched -
+# outposts and back-links use inline links.
+MD_LINK_RE = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
 
 # Standard AGENTS.md cap by default. Repos opt into a larger one via config
 # keys agents_md_max_lines / agents_md_max_chars.
@@ -154,6 +188,123 @@ def is_under_examples(rel: Path) -> bool:
     return "examples" in rel.parts
 
 
+def _normalize_link_target(target: str, source_rel: Path) -> str | None:
+    """Resolve a Markdown link to a repo-root-relative POSIX path.
+
+    `source_rel` is the repo-relative path of the file the link lives in.
+    Anchors/queries are stripped, `..`/`.` are collapsed, and external or
+    in-page links (http(s):, mailto:, bare #anchor) return None. The result is
+    suitable for comparing two links for reciprocity regardless of whether
+    they were written root-absolute (/docs/x.md) or relative (../docs/x.md).
+    """
+    target = target.strip().split("#", 1)[0].split("?", 1)[0]
+    if not target:
+        return None
+    if target.startswith(("http://", "https://", "mailto:", "//")):
+        return None
+    if target.startswith("/"):
+        raw = PurePosixPath(target.lstrip("/"))
+    else:
+        raw = PurePosixPath(source_rel.parent.as_posix()) / target
+    parts: list[str] = []
+    for part in raw.parts:
+        if part in (".", ""):
+            continue
+        if part == "..":
+            if parts:
+                parts.pop()
+            continue
+        parts.append(part)
+    return "/".join(parts) if parts else None
+
+
+def _is_docs_md(norm: str) -> bool:
+    parts = norm.split("/")
+    return len(parts) == 2 and parts[0] == "docs" and parts[1].endswith(".md")
+
+
+def _check_reciprocity(
+    readme_rel: Path, docs_target: str, repo_root: Path
+) -> list[str]:
+    """The docs file an outpost points at must link back to that outpost."""
+    docs_path = repo_root / docs_target
+    if not docs_path.is_file():
+        return [
+            f"{readme_rel.as_posix()}: outpost points at {docs_target}, which "
+            f"does not exist."
+        ]
+    docs_rel = Path(docs_target)
+    readme_posix = readme_rel.as_posix()
+    text = docs_path.read_text(encoding="utf-8", errors="replace")
+    for match in MD_LINK_RE.finditer(text):
+        if _normalize_link_target(match.group(1), docs_rel) == readme_posix:
+            return []
+    return [
+        f"{readme_posix}: outpost <-> {docs_target} link is not reciprocal. "
+        f"{docs_target} must link back to {readme_posix} (file-to-file)."
+    ]
+
+
+def validate_module_readme(rel: Path, repo_root: Path) -> list[str]:
+    """Validate a co-located README.md as an outpost or a homestead.
+
+    Outpost: <= 3 non-blank lines, exactly one docs/*.md link, reciprocal.
+    Homestead: <= 3 non-blank lines, no docs/*.md link. Prose lines (every
+    non-blank line except an outpost's pointer line) cap at 90 chars; blank
+    lines do not count toward the line ceiling.
+    """
+    path = repo_root / rel
+    text = path.read_text(encoding="utf-8", errors="replace")
+    nonblank = [ln.strip() for ln in text.splitlines() if ln.strip()]
+    rel_posix = rel.as_posix()
+
+    docs_targets: list[str] = []
+    pointer_lines: set[int] = set()
+    for i, line in enumerate(nonblank):
+        for match in MD_LINK_RE.finditer(line):
+            norm = _normalize_link_target(match.group(1), rel)
+            if norm and _is_docs_md(norm):
+                docs_targets.append(norm)
+                pointer_lines.add(i)
+
+    shape = "outpost" if docs_targets else "homestead"
+    violations: list[str] = []
+
+    if len(nonblank) > README_MAX_LINES:
+        violations.append(
+            f"{rel_posix}: module README ({shape}) has {len(nonblank)} "
+            f"non-blank lines, max {README_MAX_LINES}. Move the body into a "
+            f"docs/*.md file and leave a pointer, or trim to signage."
+        )
+
+    if nonblank and not nonblank[0].startswith("#"):
+        violations.append(
+            f"{rel_posix}: module README ({shape}) first line must be a "
+            f"Markdown heading."
+        )
+
+    for i, line in enumerate(nonblank):
+        if i in pointer_lines:
+            continue
+        if len(line) > README_MAX_PROSE_CHARS:
+            violations.append(
+                f"{rel_posix}: prose line {i + 1} is {len(line)} chars, max "
+                f"{README_MAX_PROSE_CHARS}."
+            )
+
+    if docs_targets:
+        distinct = sorted(set(docs_targets))
+        if len(distinct) > 1:
+            violations.append(
+                f"{rel_posix}: outpost points at {len(distinct)} docs files "
+                f"({', '.join(distinct)}); it may point at exactly one."
+            )
+        for target in distinct:
+            violations += _check_reciprocity(rel, target, repo_root)
+
+    return violations
+
+
 def check_markdown_locations() -> list[str]:
     violations: list[str] = []
     for rel in markdown_files():
@@ -174,9 +325,14 @@ def check_markdown_locations() -> list[str]:
             continue
         if is_under_examples(rel):
             continue
+        if rel.name == "README.md":
+            # The one co-located doc the layout allows, held to the tight
+            # outpost / homestead shape instead of banned outright.
+            violations += validate_module_readme(rel, REPO_ROOT)
+            continue
         violations.append(
             f"{rel}: Markdown files may live only at repo root, docs/*.md, "
-            f"or inside a skill folder."
+            f"a skill folder, or a capped module README.md."
         )
     return violations
 
