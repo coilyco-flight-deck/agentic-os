@@ -16,7 +16,13 @@ Full breakdown: [docs/repo-layout.md](docs/repo-layout.md).
 
 ## Install
 
-Host config is converged by Ansible (the rollout lives in the infrastructure repo, per the authoring-vs-rollout split in [AGENTS.md](AGENTS.md)). Manual fallback:
+Host config is converged by Ansible (rollout lives in infrastructure, per [AGENTS.md](AGENTS.md)). Manual fallback:
+
+```bash
+coily exec apply-shell-links
+```
+
+Equivalent links:
 
 ```bash
 ln -sf "$PWD/shell/zshrc"  ~/.zshrc      # both source shell/common.sh

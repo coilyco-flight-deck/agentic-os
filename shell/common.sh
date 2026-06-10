@@ -83,16 +83,20 @@ alias ...='cd ../..'
 alias ....='cd ../../..'
 alias gt='git status'
 alias gush='git push -u origin HEAD'
-# Recompose the global agent-context files, then show both slices. coily exec is
-# cwd-scoped to agentic-os, so the subshell cds there (the shell stays put).
 alias agent-compose-bat='(cd ~/projects/coilyco-flight-deck/agentic-os && coily exec agent-compose) && bat ~/.config/agent-compose/COMPOSED.{claude,codex}.md'
 alias ll='ls -alF'
 alias la='ls -A'
 alias l='ls -CF'
 
 # --- Functions (per shell, always defined) ---
+unalias rg 2>/dev/null || true
 rg() {
   command rg --hidden --glob '!.git' --glob '!*.svg' --glob '!.vscode' "$@"
+}
+
+unalias bat 2>/dev/null || true
+bat() {
+  command bat --no-pager "$@"
 }
 
 git-default-branch() {
@@ -101,6 +105,22 @@ git-default-branch() {
 
 git-pr-title() {
   PAGER="" gh pr view --json title --jq ".title"
+}
+
+source-aos-common() {
+  # shellcheck disable=SC1091
+  source "$HOME/projects/coilyco-flight-deck/agentic-os/shell/common.sh"
+}
+
+pre-commit-aos-version-defined() {
+  local version
+  version=$(grep -E '^version = ' "$HOME/projects/coilyco-flight-deck/agentic-os/pyproject.toml" | head -1 | sed 's/^version = "\(.*\)"$/\1/')
+  echo "$version"
+}
+
+pre-commit-aos-version-used() {
+  yq -r '.repos[] | select(.repo | test("agentic-os$")) | .rev' \
+    "${HOME}/projects/coilyco-flight-deck/agentic-os/.pre-commit-hooks.yaml"
 }
 
 pre-commit-hooks-used() {

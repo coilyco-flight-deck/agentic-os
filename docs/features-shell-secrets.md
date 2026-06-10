@@ -22,4 +22,4 @@ Single Warp config tree rendered into the host's Warp config dir - `~/.warp-prev
 
 ## Install surface
 
-[README.md](../README.md) carries per-OS install steps. Mac/Linux use plain `ln -sf`. Windows uses symlinks via Git Bash, which requires Developer Mode + `MSYS=winsymlinks:nativestrict`.
+[README.md](../README.md) carries per-OS install steps. `coily exec apply-shell-links` repairs the local shell entry symlinks (`~/.zshrc`, `~/.bashrc`, `gpg-ssm`) when a host drifts from the ansible-owned layout. Mac/Linux can also use plain `ln -sf`. Windows uses symlinks via Git Bash, which requires Developer Mode + `MSYS=winsymlinks:nativestrict`.
