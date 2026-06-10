@@ -1,22 +1,23 @@
 # shellcheck shell=bash
 # Shared bash + zsh init (bash/zsh common subset). See docs/features-shell-secrets.md.
 
+export ANSIBLE_FORCE_COLOR=1
+export LANG=en_US.UTF-8
+export EDITOR=code
+export GIT_EDITOR=nano
+export SSH_KEY_PATH="$HOME/.ssh/id_rsa"
+export CLI_MFA=ykman
+export AWS_PROFILE=default
+export AWS_REGION=us-east-1
+export AWS_PAGER=""
+export BAT_PAGER=""
+export HISTSIZE=100000
+export SAVEHIST=100000
+
 # Env + PATH are inherited, so run once per terminal tree: the exported guard is
 # the "has this run in this terminal yet?" check. Aliases/functions always define.
 if [ -z "${_SIREN_SHELL_ENV:-}" ]; then
   export _SIREN_SHELL_ENV=1
-
-  export LANG=en_US.UTF-8
-  export EDITOR=code
-  export GIT_EDITOR=nano
-  export SSH_KEY_PATH="$HOME/.ssh/id_rsa"
-  export CLI_MFA=ykman
-  export AWS_PROFILE=default
-  export AWS_REGION=us-east-1
-  export AWS_PAGER=""
-  export BAT_PAGER=""
-  export HISTSIZE=100000
-  export SAVEHIST=100000
 
   # Org-migration: coily owns the bridge root, ward owns the flight-deck root.
   export COILY_LOCKDOWN_ROOT="$HOME/projects/coilyco-bridge"
@@ -77,23 +78,17 @@ if [ -z "${_SIREN_SHELL_ENV:-}" ]; then
 fi
 
 # --- Aliases (per shell, always defined) ---
-alias del='rm -r'
 alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
 alias gt='git status'
 alias gush='git push -u origin HEAD'
-alias agent-compose-bat='(cd ~/projects/coilyco-flight-deck/agentic-os && coily exec agent-compose) && bat ~/.config/agent-compose/COMPOSED.{claude,codex}.md'
 alias ll='ls -alF'
 alias la='ls -A'
 alias l='ls -CF'
+alias ansible="ANSIBLE_FORCE_COLOR=1 uv tool run --from ansible-core ansible"
 
 # --- Functions (per shell, always defined) ---
-unalias rg 2>/dev/null || true
-rg() {
-  command rg --hidden --glob '!.git' --glob '!*.svg' --glob '!.vscode' "$@"
-}
-
 unalias bat 2>/dev/null || true
 bat() {
   command bat --no-pager "$@"
