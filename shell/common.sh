@@ -87,6 +87,7 @@ alias ll='ls -alF'
 alias la='ls -A'
 alias l='ls -CF'
 alias ansible="ANSIBLE_FORCE_COLOR=1 uv tool run --from ansible-core ansible"
+alias ansible-playbook-sync="ANSIBLE_FORCE_COLOR=1 uv tool run --from ansible-core ansible-playbook ./ansible/playbooks/sync.yml"
 
 # --- Functions (per shell, always defined) ---
 unalias bat 2>/dev/null || true
@@ -96,6 +97,32 @@ bat() {
 
 git-default-branch() {
   git symbolic-ref --short refs/remotes/origin/HEAD | sed 's|^origin/||'
+}
+
+git-all-branches() {
+  local repo branch
+  for repo in */*/.git; do
+    [ -d "$repo" ] || continue
+    repo="${repo%/.git}"
+    git -C "$repo" for-each-ref --format='%(refname:short)' refs/heads |
+      while IFS= read -r branch; do
+        [ "$branch" = "main" ] && continue
+        printf '%s\t%s\n' "$repo" "$branch"
+      done
+  done
+}
+
+git-all-stashes() {
+  local repo stash
+  for repo in */*/.git; do
+    [ -d "$repo" ] || continue
+    repo="${repo%/.git}"
+    git -C "$repo" stash list |
+      while IFS= read -r stash; do
+        [ -z "$stash" ] && continue
+        printf '%s\t%s\n' "$repo" "$stash"
+      done
+  done
 }
 
 git-pr-title() {
