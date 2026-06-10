@@ -95,6 +95,44 @@ bat() {
   command bat --no-pager "$@"
 }
 
+pre-commit-aos-version-defined() {
+  local version
+  version=$(grep -E '^version = ' "$HOME/projects/coilyco-flight-deck/agentic-os/pyproject.toml" | head -1 | sed 's/^version = "\(.*\)"$/\1/')
+  echo "$version"
+}
+
+pre-commit-aos-version-used() {
+  yq -r '.repos[] | select(.repo | test("agentic-os$")) | .rev' \
+    "${HOME}/projects/coilyco-flight-deck/agentic-os/.pre-commit-hooks.yaml"
+}
+
+pre-commit-hooks-used() {
+  yq -r '.repos[] | select(.repo | test("agentic-os$")) | .hooks[].id' \
+    "${HOME}/projects/coilyco-${1}/.pre-commit-config.yaml"
+}
+
+pre-commit-hooks-defined() {
+  yq -r '.[].id' \
+    "${HOME}/projects/coilyco-flight-deck/agentic-os/.pre-commit-hooks.yaml"
+}
+
+pre-commit-hooks-missing() {
+  comm -23 <(pre-commit-hooks-used "${1}"| sort) <(pre-commit-hooks-defined | sort)
+}
+
+pre-commit-all-hooks-missing() {
+  local config repo missing
+  for config in */*/.pre-commit-config.yaml; do
+    [ -f "$config" ] || continue
+    repo="${config%/.pre-commit-config.yaml}"
+    missing=$(comm -23 \
+      <(yq -r '.repos[] | select(.repo | test("agentic-os$")) | .hooks[].id' "$config" | sort) \
+      <(pre-commit-hooks-defined | sort))
+    [ -z "$missing" ] && continue
+    printf '==> %s\n%s\n' "$repo" "$missing"
+  done
+}
+
 git-default-branch() {
   git symbolic-ref --short refs/remotes/origin/HEAD | sed 's|^origin/||'
 }
@@ -125,6 +163,45 @@ git-all-stashes() {
   done
 }
 
+git-all-pull-main() {
+  local repo branch status=0
+  for repo in */*/.git; do
+    [ -d "$repo" ] || continue
+    repo="${repo%/.git}"
+    printf '==> %s\n' "$repo"
+    branch=$(git -C "$repo" branch --show-current) || continue
+    if ! git -C "$repo" switch main; then
+      status=1
+      continue
+    fi
+    if ! git -C "$repo" pull --ff-only; then
+      status=1
+    fi
+    if [ -n "$branch" ] && [ "$branch" != "main" ]; then
+      git -C "$repo" switch "$branch" || status=1
+    fi
+  done
+  return "$status"
+}
+
+git-all-dirty() {
+  local limit="${1:-20}" repo uncommitted untracked
+  for repo in */*/.git; do
+    [ -d "$repo" ] || continue
+    repo="${repo%/.git}"
+    uncommitted=$(git -C "$repo" status --porcelain | awk '$1 != "??" { print }' | head -n "$limit")
+    untracked=$(git -C "$repo" status --porcelain | awk '$1 == "??" { print }' | head -n "$limit")
+    [ -z "$uncommitted" ] && [ -z "$untracked" ] && continue
+    printf '==> %s\n' "$repo"
+    if [ -n "$uncommitted" ]; then
+      printf 'uncommitted (first %s):\n%s\n' "$limit" "$uncommitted"
+    fi
+    if [ -n "$untracked" ]; then
+      printf 'untracked (first %s):\n%s\n' "$limit" "$untracked"
+    fi
+  done
+}
+
 git-pr-title() {
   PAGER="" gh pr view --json title --jq ".title"
 }
@@ -132,31 +209,6 @@ git-pr-title() {
 source-aos-common() {
   # shellcheck disable=SC1091
   source "$HOME/projects/coilyco-flight-deck/agentic-os/shell/common.sh"
-}
-
-pre-commit-aos-version-defined() {
-  local version
-  version=$(grep -E '^version = ' "$HOME/projects/coilyco-flight-deck/agentic-os/pyproject.toml" | head -1 | sed 's/^version = "\(.*\)"$/\1/')
-  echo "$version"
-}
-
-pre-commit-aos-version-used() {
-  yq -r '.repos[] | select(.repo | test("agentic-os$")) | .rev' \
-    "${HOME}/projects/coilyco-flight-deck/agentic-os/.pre-commit-hooks.yaml"
-}
-
-pre-commit-hooks-used() {
-  yq -r '.repos[] | select(.repo | test("agentic-os$")) | .hooks[].id' \
-    "${HOME}/projects/coilyco-${1}/.pre-commit-config.yaml"
-}
-
-pre-commit-hooks-defined() {
-  yq -r '.[].id' \
-    "${HOME}/projects/coilyco-flight-deck/agentic-os/.pre-commit-hooks.yaml"
-}
-
-pre-commit-hooks-missing() {
-  comm -23 <(pre-commit-hooks-used "${1}"| sort) <(pre-commit-hooks-defined | sort)
 }
 
 git-merge-default-branch() {
