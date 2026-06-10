@@ -2,12 +2,13 @@
 
 ![Sombra hacking skull](static/wallpaper.jpg)
 
-Cross-platform shell + terminal setup plus the cross-repo pre-commit hooks that keep coilysiren/* repos in shape. Zsh on Mac, Linux, and Windows (Git Bash). Warp on Mac and Windows; both configs (`warp/settings.toml`, `warp/tab_configs/startup_config.toml`) symlinked into `~/.warp/`.
+Cross-platform shell + terminal setup plus cross-repo pre-commit hooks for coilysiren/* repos. Zsh on Mac, Linux, and Windows (Git Bash). Warp on Mac and Windows; both configs symlink into `~/.warp/`.
 
 ## Layout
 
-- `shell/` - cross-platform shell config. Shared `common.sh` (env, per-host PATH, aliases, git helpers, SSM loader) sourced by thin `zshrc` + `bashrc`, so bash and zsh match. `warp.zsh` is the zsh-only Warp dispatcher.
+- `shell/` - shared `common.sh` plus thin `zshrc` + `bashrc`, so bash and zsh match. `warp.zsh` is the zsh-only Warp dispatcher.
 - `warp/` - Warp config (`settings.toml`, `tab_configs/`) plus the `coily exec warp` Go module.
+- `karabiner/` - Karabiner-Elements complex modification assets, symlinked into the local Karabiner config tree.
 - `scripts/` - portable utilities (gpg-ssm wrapper, agent-name + session-pulse hooks, aws-config lint).
 - `.agents/skills/` - SKILL.md docs for the configs that live here. agentic-os-kai's skill mount walks this dir as a peer skill source.
 - `agentic_os/` - packaged hooks, generators, shared config/data.

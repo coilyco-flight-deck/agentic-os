@@ -17,6 +17,10 @@ One shared core, two thin per-shell entries, so bash and zsh run identical env, 
 - `warp/settings.toml` - Warp config. Vertical tabs, theme, font, custom secret-regex list, AI/agent toggles. `[account] is_settings_sync_enabled = false` so the repo wins over cloud sync.
 - `warp/tab_configs/startup_config.toml` - default new-tab pane setup.
 
+## karabiner
+
+- `karabiner/control-escape-backtick.json` - Karabiner-Elements complex modification asset for the Control+Escape -> backtick rule. Symlink it into `~/.config/karabiner/assets/complex_modifications/` so Karabiner can import it.
+
 ## scripts
 
 - `verbatim-echo.sh` - wrap a command's output in a fenced block clipped to 20 lines / 100 chars per line. Chat-safe dumps for mobile.
