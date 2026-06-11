@@ -9,3 +9,6 @@ ln -sf "$HOME/projects/coilyco-flight-deck/agentic-os/shell/zshrc" "$HOME/.zshrc
 source "$HOME/projects/coilyco-flight-deck/agentic-os/shell/common.sh"
 source "$HOME/projects/coilyco-flight-deck/agentic-os/shell/warp.zsh"
 command -v direnv >/dev/null && eval "$(direnv hook zsh)"
+
+# Machine-local overrides (host-specific PATH, aliases, functions). Public-safe: the line is generic; the content lives outside this repo.
+[[ -f "$HOME/.zshrc.local" ]] && source "$HOME/.zshrc.local"
