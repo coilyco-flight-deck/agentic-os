@@ -1,7 +1,0 @@
-# silero-vad itself is pulled at runtime via torch.hub (cached after first run),
-# so it is not listed here.
-sounddevice>=0.4
-numpy>=1.24
-torch>=2.0
-torchaudio>=2.0  # silero-vad's torch.hub loader imports it at module load, even though we only run the model
-packaging       # ditto - silero's utils_vad imports packaging.version at load time

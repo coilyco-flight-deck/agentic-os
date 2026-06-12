@@ -8,7 +8,7 @@ The ansible `shell` role (in the infrastructure repo) symlinks, by `ansible_syst
 
 - `~/.zshrc` from `shell/zshrc` and `~/.bashrc` from `shell/bashrc` (all hosts)
 - `~/.local/bin/gpg-ssm` from `scripts/gpg-ssm` (Mac, Linux) or `scripts/gpg-ssm.cmd` (Windows)
-- the `~/.local/bin` PATH helpers, and `~/.hammerspoon/init.lua` on macOS
+- the `~/.local/bin` PATH helpers
 
 A pre-existing regular `~/.zshrc` / `~/.bashrc` is backed up to `<path>.bak` before linking. The `claude-hooks` role then runs `install-agent-name.py` (status line + SessionStart self-name hook) and `install-session-pulse.py` (SessionStart hook surfacing `~/.cache/agentic-os/session-pulse.yaml` if a producer wrote one). Both are idempotent and never clobber a status line you set yourself. The manual symlink fallback (no ansible) is in [the README](../README.md).
 

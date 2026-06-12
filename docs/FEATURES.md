@@ -8,7 +8,7 @@ This doc describes capabilities, not files. If you want a file inventory, run `l
 
 - [Shell and secret handling](features-shell-secrets.md) - cross-platform zsh, in-process SSM secret loader, Warp terminal config, GPG-without-disk-passphrases, install surface.
 - **Karabiner key binding asset** - `karabiner/control-escape-backtick.json` stores the Control+Escape -> backtick complex modification and is symlinked into Karabiner's local assets directory.
-- [Agents and sessions](features-agents-sessions.md) - agent self-name, session pulse, voice dictation auto-submit.
+- [Agents and sessions](features-agents-sessions.md) - agent self-name, session pulse.
 - [Cross-repo tooling and release](features-release-tooling.md) - pre-commit baseline, diagnostic helpers, Forgejo-canonical release actions.
 - [Managed AGENTS.md pointer block](features-agents-pointer.md) - org-aware, drift-checked workspace-base pointer rendered into each repo's AGENTS.md.
 
