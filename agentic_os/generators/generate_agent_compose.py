@@ -56,9 +56,11 @@ Config schema (YAML):
     sources:
       - ~/projects/foo/AGENTS.COMPOSE.md
     # Roots are walked for AGENTS.COMPOSE.md files, appended in sorted order.
+    # An out-of-repo root keeps host-local doctrine untracked yet composed.
     roots:
       - ~/projects/coilysiren
       - ~/projects/coilyco-flight-deck
+      - ~/.config/agent-compose/sources
     # Optional load-point overrides. Defaults shown; opencode unset => skipped.
     load_points:
       claude: ~/.claude/CLAUDE.md
