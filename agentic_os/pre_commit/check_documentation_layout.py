@@ -176,7 +176,7 @@ def check_docs_flatness() -> list[str]:
             continue
         if path.is_dir() and path != docs:
             violations.append(
-                f"{rel}: docs/ must stay flat. Use filename prefixes instead "
+                f"{rel.as_posix()}: docs/ must stay flat. Use filename prefixes instead "
                 f"of docs subdirectories."
             )
     return violations
@@ -314,7 +314,7 @@ def check_markdown_locations() -> list[str]:
             ):
                 allowed = ", ".join(sorted(ROOT_MARKDOWN_ALLOWLIST))
                 violations.append(
-                    f"{rel}: top-level Markdown filename is not allowed. "
+                    f"{rel.as_posix()}: top-level Markdown filename is not allowed. "
                     f"Allowed root Markdown files: {allowed}. Move one-off "
                     f"docs into docs/."
                 )
@@ -331,7 +331,7 @@ def check_markdown_locations() -> list[str]:
             violations += validate_module_readme(rel, REPO_ROOT)
             continue
         violations.append(
-            f"{rel}: Markdown files may live only at repo root, docs/*.md, "
+            f"{rel.as_posix()}: Markdown files may live only at repo root, docs/*.md, "
             f"a skill folder, or a capped module README.md."
         )
     return violations
@@ -366,7 +366,7 @@ def check_skill_flatness(repo_root: Path | None = None) -> list[str]:
                 if is_excluded(rel, excludes):
                     continue
                 violations.append(
-                    f"{rel}: nested SKILL.md must not hide below the top-level "
+                    f"{rel.as_posix()}: nested SKILL.md must not hide below the top-level "
                     f"skill dir - the loader only sees top-level dirs. Move "
                     f"this sub-skill up to sit beside the others."
                 )
@@ -397,12 +397,12 @@ def check_markdown_sizes() -> list[str]:
         max_lines, max_chars = caps_for(rel)
         if n_lines > max_lines:
             violations.append(
-                f"{rel}: {n_lines} lines exceeds the {max_lines}-line "
+                f"{rel.as_posix()}: {n_lines} lines exceeds the {max_lines}-line "
                 f"cap. Split large docs into smaller docs/*.md files."
             )
         if n_chars > max_chars:
             violations.append(
-                f"{rel}: {n_chars} chars exceeds the {max_chars}-char "
+                f"{rel.as_posix()}: {n_chars} chars exceeds the {max_chars}-char "
                 f"cap. Split large docs into smaller docs/*.md files."
             )
     return violations

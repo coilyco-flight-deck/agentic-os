@@ -40,7 +40,7 @@ def test_repoints_stale_symlink(tmp_path: Path) -> None:
     action, _ = script.apply_link(spec, dry_run=False)
 
     assert action == "repointed"
-    assert (home / ".zshrc").readlink() == repo / "shell" / "zshrc"
+    assert (home / ".zshrc").resolve() == (repo / "shell" / "zshrc").resolve()
 
 
 def test_backs_up_regular_file_before_linking(tmp_path: Path) -> None:
@@ -56,8 +56,22 @@ def test_backs_up_regular_file_before_linking(tmp_path: Path) -> None:
 
     assert action == "backed-up"
     assert (home / ".bashrc").is_symlink()
-    assert (home / ".bashrc").readlink() == repo / "shell" / "bashrc"
+    assert (home / ".bashrc").resolve() == (repo / "shell" / "bashrc").resolve()
     assert (home / ".bashrc.bak").read_text(encoding="utf-8") == "custom\n"
+
+
+def test_current_link_is_ok_on_second_apply(tmp_path: Path) -> None:
+    # Pins the Windows readlink() \\?\-prefix case: a current link must
+    # compare equal to its source, not get re-pointed on every run.
+    script = _load_script()
+    home = tmp_path / "home"
+    repo = tmp_path / "repo"
+    home.mkdir()
+    _make_repo(repo)
+
+    spec = script.LinkSpec("zshrc", repo / "shell" / "zshrc", home / ".zshrc")
+    assert script.apply_link(spec, dry_run=False)[0] == "linked"
+    assert script.apply_link(spec, dry_run=False)[0] == "ok"
 
 
 def test_check_reports_drift(tmp_path: Path) -> None:

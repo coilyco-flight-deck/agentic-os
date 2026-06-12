@@ -57,12 +57,22 @@ def _backup_path(path: Path) -> Path:
         n += 1
 
 
+def _link_target(dest: Path) -> Path:
+    # Windows readlink() can return a \\?\-prefixed extended-length path,
+    # which never compares equal to the plain source path.
+    target = dest.readlink()
+    text = os.fspath(target)
+    if text.startswith("\\\\?\\"):
+        return Path(text[4:])
+    return target
+
+
 def apply_link(spec: LinkSpec, *, dry_run: bool) -> tuple[str, str]:
     if not spec.source.exists():
         return "failed", f"missing source {spec.source}"
 
     if spec.dest.is_symlink():
-        current = spec.dest.readlink()
+        current = _link_target(spec.dest)
         if not current.is_absolute():
             current = (spec.dest.parent / current).resolve()
         if current == spec.source:

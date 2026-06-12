@@ -96,7 +96,7 @@ def check_pure_pointer(root: Path, rel: Path) -> list[str]:
     if is_pure_pointer(text):
         return []
     return [
-        f"{rel}: CLAUDE.md must be a pure @-import pointer (only `@<file>` lines "
+        f"{rel.as_posix()}: CLAUDE.md must be a pure @-import pointer (only `@<file>` lines "
         f"and blank lines), not forked doctrine. Move operating context into "
         f"AGENTS.md and leave CLAUDE.md as `@AGENTS.md`."
     ]
@@ -110,7 +110,7 @@ def check_no_forked_rung(root: Path, rel: Path) -> list[str]:
     if (root / rel).is_symlink():
         return []
     return [
-        f"{rel}: {rel.name} may live only at the repo root. A real copy in a "
+        f"{rel.as_posix()}: {rel.name} may live only at the repo root. A real copy in a "
         f"subdirectory is a forked load-point rung. Symlink it to the canonical "
         f"file (sharing) or remove it."
     ]
