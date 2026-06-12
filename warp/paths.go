@@ -10,7 +10,7 @@ import (
 // HostPaths is the resolved per-OS layout. See docs/warp.md.
 type HostPaths struct {
 	OS              string
-	Channel         string // macOS Warp channel ("preview"/"stable"); empty off darwin
+	Channel         string // Warp channel ("preview"/"stable"); empty on linux
 	RepoRoot        string
 	WorkspaceDir    string
 	StartupDir      string
@@ -29,8 +29,8 @@ type HostPaths struct {
 
 const themeFileName = "coilysiren-sombra-wallpaper.yaml"
 
-// resolveHostPaths builds the layout for the current OS. On darwin, channel
-// selects the Warp channel ("" auto-detects); ignored elsewhere. See docs/warp.md.
+// resolveHostPaths builds the layout for the current OS. On darwin and windows,
+// channel selects the Warp channel ("" auto-detects); ignored on linux. See docs/warp.md.
 func resolveHostPaths(channel string) (*HostPaths, error) {
 	repoRoot, err := findRepoRoot()
 	if err != nil {
@@ -54,14 +54,21 @@ func resolveHostPaths(channel string) (*HostPaths, error) {
 		if local == "" {
 			return nil, fmt.Errorf("LOCALAPPDATA is unset")
 		}
-		h.ConfigDir = filepath.Join(local, "warp", "Warp", "config")
-		h.SQLitePath = filepath.Join(local, "warp", "Warp", "data", "warp.sqlite")
+		// Two Warp channels coexist, same as darwin: Preview under warp\WarpPreview,
+		// Stable under warp\Warp. Config and DB are a matched pair. See docs/warp.md.
+		ch, cerr := resolveWindowsChannel(channel, local)
+		if cerr != nil {
+			return nil, cerr
+		}
+		h.Channel = ch.Name
+		h.ConfigDir = filepath.Join(local, "warp", ch.DirName, "config")
+		h.SQLitePath = filepath.Join(local, "warp", ch.DirName, "data", "warp.sqlite")
 		// Theme chooser scans %APPDATA% (Roaming), see coilysiren/agentic-os#137.
 		roaming := os.Getenv("APPDATA")
 		if roaming == "" {
 			return nil, fmt.Errorf("APPDATA is unset")
 		}
-		h.ThemeDir = filepath.Join(roaming, "warp", "Warp", "data", "themes")
+		h.ThemeDir = filepath.Join(roaming, "warp", ch.DirName, "data", "themes")
 	case "darwin":
 		// Two Warp channels coexist; pick config dir and DB as a matched pair.
 		// Preview (default) at ~/.warp-preview, Stable at ~/.warp. See docs/warp.md.

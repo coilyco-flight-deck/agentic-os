@@ -16,7 +16,7 @@ func main() {
 		return []cli.Flag{
 			&cli.StringFlag{
 				Name:    "channel",
-				Usage:   "macOS Warp channel: `preview` or `stable` (default: auto-detect, prefer Preview)",
+				Usage:   "Warp channel (macOS/Windows): `preview` or `stable` (default: auto-detect, prefer Preview)",
 				Sources: cli.EnvVars("WARP_CHANNEL"),
 			},
 		}
@@ -45,8 +45,8 @@ func main() {
 	}
 }
 
-// channelSuffix annotates the header with the resolved macOS Warp channel, so
-// apply/doctor show which config dir they target. Empty off darwin.
+// channelSuffix annotates the header with the resolved Warp channel, so
+// apply/doctor show which config dir they target. Empty on linux.
 func channelSuffix(h *HostPaths) string {
 	if h.Channel == "" {
 		return ""

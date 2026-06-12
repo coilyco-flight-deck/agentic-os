@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -48,6 +49,91 @@ func TestResolveDarwinChannelAutoDetect(t *testing.T) {
 	}
 	if _, ok := darwinChannels[ch.Name]; !ok {
 		t.Errorf("resolveDarwinChannel(\"\"): resolved to unknown channel %q", ch.Name)
+	}
+}
+
+func TestResolveWindowsChannelExplicit(t *testing.T) {
+	cases := []struct {
+		req     string
+		dirName string
+	}{
+		{"preview", "WarpPreview"},
+		{"stable", "Warp"},
+	}
+	for _, c := range cases {
+		ch, err := resolveWindowsChannel(c.req, t.TempDir())
+		if err != nil {
+			t.Fatalf("resolveWindowsChannel(%q): unexpected error %v", c.req, err)
+		}
+		if ch.Name != c.req {
+			t.Errorf("resolveWindowsChannel(%q): Name = %q", c.req, ch.Name)
+		}
+		if ch.DirName != c.dirName {
+			t.Errorf("resolveWindowsChannel(%q): DirName = %q, want %q", c.req, ch.DirName, c.dirName)
+		}
+	}
+}
+
+func TestResolveWindowsChannelUnknown(t *testing.T) {
+	if _, err := resolveWindowsChannel("nightly", t.TempDir()); err == nil {
+		t.Fatal("resolveWindowsChannel(\"nightly\"): expected error, got nil")
+	}
+}
+
+func TestResolveWindowsChannelAutoDetect(t *testing.T) {
+	// Nothing installed under Programs: default to Preview.
+	ch, err := resolveWindowsChannel("", t.TempDir())
+	if err != nil {
+		t.Fatalf("resolveWindowsChannel(\"\"): unexpected error %v", err)
+	}
+	if ch.Name != "preview" {
+		t.Errorf("resolveWindowsChannel(\"\") on empty host: Name = %q, want preview", ch.Name)
+	}
+
+	// Only Stable installed: detection must pick it over the Preview default.
+	local := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(local, "Programs", "Warp"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	ch, err = resolveWindowsChannel("", local)
+	if err != nil {
+		t.Fatalf("resolveWindowsChannel(\"\"): unexpected error %v", err)
+	}
+	if ch.Name != "stable" {
+		t.Errorf("resolveWindowsChannel(\"\") with only Stable installed: Name = %q, want stable", ch.Name)
+	}
+}
+
+func TestResolveHostPathsWindowsChannelPairing(t *testing.T) {
+	if runtime.GOOS != "windows" {
+		t.Skipf("windows-only path layout (GOOS=%s)", runtime.GOOS)
+	}
+	cases := []struct {
+		channel string
+		dirName string
+	}{
+		{"preview", "WarpPreview"},
+		{"stable", "Warp"},
+	}
+	for _, c := range cases {
+		h, err := resolveHostPaths(c.channel)
+		if err != nil {
+			t.Fatalf("resolveHostPaths(%q): %v", c.channel, err)
+		}
+		if h.Channel != c.channel {
+			t.Errorf("channel %q: HostPaths.Channel = %q", c.channel, h.Channel)
+		}
+		wantConfig := filepath.Join("warp", c.dirName, "config")
+		if !strings.HasSuffix(h.ConfigDir, wantConfig) {
+			t.Errorf("channel %q: ConfigDir = %q, want suffix %q", c.channel, h.ConfigDir, wantConfig)
+		}
+		wantSQLite := filepath.Join("warp", c.dirName, "data", "warp.sqlite")
+		if !strings.HasSuffix(h.SQLitePath, wantSQLite) {
+			t.Errorf("channel %q: SQLitePath = %q, want suffix %q", c.channel, h.SQLitePath, wantSQLite)
+		}
+		if filepath.Dir(h.SettingsPath) != h.ConfigDir {
+			t.Errorf("channel %q: SettingsPath %q not under ConfigDir %q", c.channel, h.SettingsPath, h.ConfigDir)
+		}
 	}
 }
 

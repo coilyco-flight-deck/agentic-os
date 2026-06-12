@@ -20,11 +20,11 @@ The repo is the source of truth. `apply` pushes the repo's intent onto the host,
 
 `paths.go` resolves the layout per OS. The config dir is:
 
-- **macOS** - channel-aware. Preview (default) at `~/.warp-preview/` with SQLite under `dev.warp.Warp-Preview`; Stable (fallback) at `~/.warp/` with SQLite under `dev.warp.Warp-Stable`. The config dir and SQLite bundle are always a matched pair (see below).
-- **Windows** - `%LOCALAPPDATA%\warp\Warp\config\`. Themes scan `%APPDATA%` (Roaming), a separate path.
+- **macOS** - channel-aware. Preview (default) at `~/.warp-preview/` with SQLite under `dev.warp.Warp-Preview`, Stable (fallback) at `~/.warp/` with SQLite under `dev.warp.Warp-Stable`. The config dir and SQLite bundle are always a matched pair (see below).
+- **Windows** - channel-aware: `%LOCALAPPDATA%\warp\WarpPreview\` or `...\warp\Warp\`, config in `<channel>\config\`, SQLite in `<channel>\data\`. Themes scan `%APPDATA%` (Roaming), same split.
 - **Linux** - `~/.config/warp-terminal/`.
 
-On macOS the two channels coexist, so `apply`/`doctor` pick one and target its config dir and SQLite together. Selection: `--channel preview|stable` (or `WARP_CHANNEL` env) wins; else auto-detect by which `/Applications` bundle exists, **preferring Preview**; else default to Preview. The resolved channel is echoed in the header line (`darwin host (warp preview)`). Windows and Linux are single-channel and ignore the flag.
+On macOS and Windows the two channels coexist, so `apply`/`doctor` pick one and target its config dir and SQLite together. Selection: `--channel preview|stable` (or `WARP_CHANNEL` env) wins, else auto-detect by installed app (macOS `/Applications`, Windows `%LOCALAPPDATA%\Programs`), **preferring Preview**. The resolved channel is echoed in the header line (`darwin host (warp preview)`). Linux is single-channel and ignores the flag.
 
 `WorkspaceDir` is the parent of the repo root. `StartupDir` (where a fresh tab opens) is one level above that on Mac/Linux, flat on Windows.
 

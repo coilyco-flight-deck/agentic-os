@@ -9,6 +9,8 @@ Two Warp channels coexist on the Mac daily driver with separate bundle ids, URL 
 - **Preview** (daily driver) - `/Applications/WarpPreview.app`, bundle `dev.warp.Warp-Preview`, scheme `warppreview://`, config dir `~/.warp-preview/`. Install: `ward pkg brew install --cask warp@preview --allow-untapped`.
 - **Stable** (fallback) - `/Applications/Warp.app`, bundle `dev.warp.Warp-Stable`, scheme `warp://`, config dir `~/.warp/`. Install: `ward pkg brew install --cask warp --allow-untapped`.
 
+Windows mirrors the split: Preview installs to `%LOCALAPPDATA%\Programs\WarpPreview` with config under `%LOCALAPPDATA%\warp\WarpPreview\`, Stable to `%LOCALAPPDATA%\Programs\Warp` with config under `%LOCALAPPDATA%\warp\Warp\`. `apply`/`doctor` auto-detect by install dir, preferring Preview, same as the Mac.
+
 URL schemes are channel-specific by design: `warp://` always lands in Stable, `warppreview://` in Preview. There is no LaunchServices "default Warp" toggle that flips this, so tooling picks the channel by scheme at the call site.
 
 Preview auto-symlinks `launch_configurations`, `tab_configs`, and `themes` into `~/.warp/` on first launch, so checked-in configs cover both channels for free. `settings.toml` is the one file that does not auto-share - the dual-channel install points Preview's `settings.toml` at the same source as Stable's.
