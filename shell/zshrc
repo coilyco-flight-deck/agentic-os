@@ -7,6 +7,8 @@ fi
 
 ln -sf "$HOME/projects/coilyco-flight-deck/agentic-os/shell/zshrc" "$HOME/.zshrc"
 source "$HOME/projects/coilyco-flight-deck/agentic-os/shell/common.sh"
+# compinit before warp.zsh: it registers a completion via compdef.
+autoload -Uz compinit && compinit
 source "$HOME/projects/coilyco-flight-deck/agentic-os/shell/warp.zsh"
 command -v direnv >/dev/null && eval "$(direnv hook zsh)"
 
