@@ -28,7 +28,7 @@ Applies to one-off commands, scripts, workflows, skills, and any code Kai will r
 Each step shows the `gh` way first, then the `git` + `curl` fallback for machines without `gh`. Detect which to use once up front (`gh auth status` succeeds -> `gh`, else extract `owner/repo` from the remote and use a token for REST calls).
 
 - [Branch creation and commits](references/branch-and-commit.md) - naming conventions and Conventional Commits messages.
-- [Conventional Commits](references/conventional-commits.md) - the commit-message contract enforced repo-wide.
+- [Conventional Commits](references/conventional-commits.md) - the encouraged commit-message house style (no longer hook-enforced).
 - [Pushing and creating a PR](references/push-and-create-pr.md) - push the branch, open the PR with gh or curl.
 - [Monitoring CI status](references/monitoring-ci.md) - one-shot checks, watch mode, and a curl polling loop.
 - [Auto-fixing CI failures](references/auto-fixing-ci.md) - diagnose, fix, push, recheck. Cap at 3 attempts before asking.

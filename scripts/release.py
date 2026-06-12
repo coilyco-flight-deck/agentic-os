@@ -19,7 +19,6 @@ parsed to decide the bump.
 from __future__ import annotations
 
 import argparse
-import os
 import re
 import subprocess
 import sys
@@ -159,10 +158,7 @@ def main() -> int:
 
     if changed_files:
         run(["git", "add", *changed_files])
-        # closes-issue is a working-code discipline. Bump commits are
-        # mechanical and have no upstream issue to close.
-        env = {**os.environ, "SKIP": "closes-issue"}
-        run(["git", "commit", "-m", f"chore: bump version to {new_tag}"], env=env)
+        run(["git", "commit", "-m", f"chore: bump version to {new_tag}"])
         print(f"Committed version bump touching: {', '.join(changed_files)}")
 
     summary = subjects[0] if subjects else f"release {new_tag}"

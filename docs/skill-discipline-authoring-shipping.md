@@ -19,7 +19,6 @@ Stage the new directory and commit. The pre-commit hooks run automatically:
 
 * `skill-conventions` re-runs the validator.
 * `dead-cross-links` re-runs the cross-link checker.
-* `commit-closes-issue` checks that the commit message references a same-repo issue.
 
 If any hook fails, fix the underlying issue and commit again. **Do not use `--no-verify`.** The hooks are the discipline; bypassing them defeats the point.
 

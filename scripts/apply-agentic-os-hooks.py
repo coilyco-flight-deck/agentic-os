@@ -12,7 +12,7 @@ For each repo checked out under ~/projects/<org>/<name> across every org dir
   2. Strip legacy stamped `repo: local` blocks for the hooks now centralized
      here (catalog-block-present, catalog-doc-size, catalog-trifecta,
      documentation-layout, code-comments, check-skills, dead-cross-links,
-     closes-issue, skill-discipline).
+     skill-discipline).
   3. Insert/refresh the managed agentic-os block with the full hook set.
   4. Run `pre-commit install --hook-type pre-commit --hook-type commit-msg
      --hook-type prepare-commit-msg`.
@@ -85,13 +85,11 @@ LEGACY_STAMPED_SCRIPTS = [
     "scripts/check-catalog-block.py",
     "scripts/check-catalog-doc-size.py",
     "scripts/check-catalog-trifecta.py",
-    "scripts/check-commit-closes-issue.py",
     "scripts/check-dead-links.py",
     "scripts/check-skills.py",
 ]
 
-# Default hook IDs per repo (hand-editable). closes-issue +
-# conventional-commit are intentionally off; opt back in by listing the id.
+# Default hook IDs per repo (hand-editable).
 DEFAULT_HOOK_IDS = [
     "catalog-doc-size",
     "catalog-trifecta",
