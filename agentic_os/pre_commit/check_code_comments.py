@@ -165,7 +165,7 @@ def is_comment_line(line: str, suffix: str, line_no: int) -> bool:
 
 def char_cap_violation(rel: Path, line_no: int, line: str) -> str:
     return (
-        f"{rel}:{line_no}: comment line is {len(line)} chars, over "
+        f"{rel.as_posix()}:{line_no}: comment line is {len(line)} chars, over "
         f"the {MAX_COMMENT_LINE_CHARS}-char cap. Move durable detail "
         f"to docs/."
     )
@@ -188,7 +188,7 @@ def scan_yaml(rel: Path, suffix: str, lines: list[str]) -> list[str]:
                 violations.append(char_cap_violation(rel, line_no, line))
             if seen_content:
                 violations.append(
-                    f"{rel}:{line_no}: YAML comment below the top header "
+                    f"{rel.as_posix()}:{line_no}: YAML comment below the top header "
                     f"block. A key-sorter would drift it away from its "
                     f"target. Keep YAML comments above the first content "
                     f"line; move the rest to docs/."
@@ -228,7 +228,7 @@ def scan_lines(rel: Path, suffix: str, lines: list[str]) -> list[str]:
             streak_len += 1
             if streak_len > MAX_CONTIGUOUS_COMMENT_LINES:
                 violations.append(
-                    f"{rel}:{line_no}: comment block of {streak_len} lines "
+                    f"{rel.as_posix()}:{line_no}: comment block of {streak_len} lines "
                     f"starting at {streak_start}. Keep contiguous comment "
                     f"blocks to {MAX_CONTIGUOUS_COMMENT_LINES} lines. Move "
                     f"longer explanations to docs/."

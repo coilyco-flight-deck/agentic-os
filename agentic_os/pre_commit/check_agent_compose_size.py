@@ -52,7 +52,7 @@ def find_violations(root: Path) -> list[str]:
         total += n_chars
         if n_chars > max_source:
             violations.append(
-                f"{rel}: {n_chars} chars exceeds the {max_source}-char per-source "
+                f"{rel.as_posix()}: {n_chars} chars exceeds the {max_source}-char per-source "
                 f"cap. Trim it or split doctrine across scopes."
             )
     if total > max_total:
