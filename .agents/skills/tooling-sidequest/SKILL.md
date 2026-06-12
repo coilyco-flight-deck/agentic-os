@@ -1,11 +1,11 @@
 ---
 name: tooling-sidequest
-description: Manual expansion of Kai's "start a sidequest" Wispr snippet when she can't dictate the full directive. Files a GitHub issue, then coily-dispatches it into its own session.
+description: Kai's "start a sidequest" command - file a GitHub issue from a described piece of work, then coily-dispatch it into its own session.
 ---
 
-# Sidequest (manual snippet expansion)
+# Sidequest
 
-Kai's normal flow is to dictate `$$start a sidequest$$` and let Wispr Flow expand the snippet. When she can't verbalize (workshop, public space, sick voice), she'll ask Claude to expand it manually. This skill is the canonical expansion plus the act-on-it loop.
+Kai triggers a sidequest with "start a sidequest" followed by a description of the work. This skill is the canonical directive plus the act-on-it loop.
 
 ## Triggers
 
@@ -17,11 +17,11 @@ Sidequest currently works only on Warp Preview - the `coily dispatch` spawn and 
 
 ## The expansion
 
-The snippet body Kai accepted ahead of time:
+The directive Kai accepted ahead of time:
 
 > Side quest. The next thing I say describes a piece of engineering work. Infer a sensible title from the description. File it as a GitHub issue against whichever coilysiren/* repo it most plausibly belongs to. Best guess from the content. Fall back to coilyco-bridge/agentic-os-kai if nothing fits. Then run `coily dispatch interactive` on the new issue so it spawns in its own session. If this interrupted other work, resume that work after the dispatch lands.
 
-Treat that as a $$...$$ Snippet expansion - a planned directive Kai accepted, not freshly dictated prose. Do not ask her to re-confirm the shape. The snippet text says "an issue" singular because that is the common case. The multi-repo fan-out below extends it. The snippet lives in Wispr Flow and is not edited here.
+Treat that as a planned directive Kai accepted, not a fresh ask. Do not ask her to re-confirm the shape. The directive says "an issue" singular because that is the common case. The multi-repo fan-out below extends it.
 
 ## Procedure and fan-out
 
@@ -39,5 +39,4 @@ Treat that as a $$...$$ Snippet expansion - a planned directive Kai accepted, no
 
 ## Out of scope
 
-* Editing the snippet itself - that's in Wispr Flow, not here.
 * Choosing dispatch mode - always `interactive`.

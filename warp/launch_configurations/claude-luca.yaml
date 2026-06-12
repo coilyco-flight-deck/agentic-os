@@ -18,7 +18,7 @@
 #     body, even empty ones, so each `exec:` is a one-line printf + chain. Edit
 #     scripts to change behavior, edit this file only for layout/structure.
 #
-# luca pulse stays a bare shell on purpose: on-demand dictation, not a watch loop.
+# luca pulse stays a bare shell on purpose: on-demand, not a watch loop.
 # session-lattice pulse runs `watch git log` until the MCP lands.
 #
 # See ./README.md for the Warp launch-config schema and sharp edges.

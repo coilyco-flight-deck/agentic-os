@@ -12,7 +12,7 @@ No `k=kubectl`, `gst=git status`, `kgp=kubectl get pods`, etc. Kai dislikes shor
 
 Pagers are a hard-no. `less`, `more`, `bat`'s default pager, `git`'s pager, anything that traps output behind a modal scroll surface gets configured off. The block-mode terminal already gives clean scrollback per command, so paging adds friction without adding value.
 
-**Why:** every paged output requires `q` to exit, which interrupts the flow of dictation-friendly terminal work and breaks Warp's block model. Surfaced as a hard preference during the Warp walkthrough (coilysiren/agentic-os#56) and the bat-workflow recon (coilysiren/agentic-os#57).
+**Why:** every paged output requires `q` to exit, which interrupts the flow of fast terminal work and breaks Warp's block model. Surfaced as a hard preference during the Warp walkthrough (coilysiren/agentic-os#56) and the bat-workflow recon (coilysiren/agentic-os#57).
 
 **How to apply:**
 - Any tool with a default pager gets configured off when wrapping or aliasing. `--no-pager` for git, `--paging=never` for bat, `PAGER=cat` for general escape, etc.

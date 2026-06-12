@@ -6,7 +6,7 @@ Three servers are **implicitly** in-scope and the agent should reach for them wh
 * **luca-staging** - natural-language consumer over repo-recall data. Use for cross-run synthesis and "what are the agents doing"-shaped questions.
 * **session-lattice-staging** - per-session detail and lattice navigation. Use when the question is about a specific session, agent run, or session-to-session links.
 
-When the agent uses any of these, it **tells Kai which one and which tool**, so she can document. Voice-dictation mangles: "vipo recall" / "viper call" / "repo call" -> `repo-recall-staging`; "lucas" / "lookah" -> `luca-staging`.
+When the agent uses any of these, it **tells Kai which one and which tool**, so she can document.
 
 Kai will say "prod" explicitly when she wants the prod variants (`repo-recall`, `luca`, `session-lattice`). Default is staging.
 

@@ -19,7 +19,7 @@ If the agent is about to reach for **anything** that smells like an MCP-shaped c
 
 ## Sections
 
-- [Auto-reach: the Luca stack (staging by default)](references/luca-stack.md) - the three implicitly in-scope servers, dictation mangles, prod-vs-staging, and the honeycomb note.
+- [Auto-reach: the Luca stack (staging by default)](references/luca-stack.md) - the three implicitly in-scope servers, fuzzy aliases, prod-vs-staging, and the honeycomb note.
 - [Inventorying and discovering servers](references/inventory-and-discovery.md) - inventory entry format plus `mcporter list` discovery commands and `.d.ts` regeneration.
 - [Calling workflow and adding servers](references/workflow.md) - pick / read `.d.ts` / `mcporter call` / output flags, plus the add-a-server checklist.
 - [Design notes](references/design-notes.md) - cross-cwd resolution, why no `.mcp.json`, and mobile / cloud MCP separation.

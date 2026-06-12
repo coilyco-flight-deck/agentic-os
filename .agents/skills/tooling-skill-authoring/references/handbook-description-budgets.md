@@ -22,13 +22,12 @@ What belongs in `description`:
 
 What belongs in the body instead:
 
-* Procedure, command sequences, examples, checklists, policy rationale, historical incidents, implementation details, path inventories, long voice-mangle lists, and "why this exists" context.
+* Procedure, command sequences, examples, checklists, policy rationale, historical incidents, implementation details, path inventories, and "why this exists" context.
 
 Alias discipline:
 
 * Lead with the canonical noun phrase, then 3-8 high-signal aliases.
 * Stop adding aliases when the next one is just a spelling variant, a synonym the model already knows, or a phrase Kai rarely says.
-* For voice dictation mangles, keep the common mangles in the description and move rare mangles into the body.
 * If a skill needs more than 8-12 aliases, rename the skill, add a router parent, or split the domain.
 
 Templates:

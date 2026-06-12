@@ -17,7 +17,7 @@ Usage:
     check-conventional-commit <commit-msg-file>
 
 Wired as a `commit-msg` pre-commit hook via .pre-commit-hooks.yaml.
-Exits 0 on accept, 1 on reject (with a dictation-friendly error).
+Exits 0 on accept, 1 on reject (with a clear error).
 """
 from __future__ import annotations
 

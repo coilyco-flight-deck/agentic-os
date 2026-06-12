@@ -9,7 +9,7 @@ How an agent-facing CLI command carries its own documentation. The motivating co
 
 ## The premise: these commands are agent-parsed, not human-read
 
-Markdown skills are the human-to-agent interface. They earn their keep on fuzzy matching - aliases, synonyms, dictation-miss tolerance. A command like `coily dispatch` is different. It is hard-triggered. The agent runs `coily dispatch`, not something it might confuse for another command, so there is no synonym work to do. A human never runs it directly either, because the privileged op is wrapped for a reason.
+Markdown skills are the human-to-agent interface. They earn their keep on fuzzy matching - aliases, synonyms, typo tolerance. A command like `coily dispatch` is different. It is hard-triggered. The agent runs `coily dispatch`, not something it might confuse for another command, so there is no synonym work to do. A human never runs it directly either, because the privileged op is wrapped for a reason.
 
 That means the documentation for the command is entirely agent-parsed. It does not need to read like a skill. It needs to reach the agent at the right moment, and a skill markdown can only deliver once, at trigger time.
 

@@ -32,7 +32,7 @@ Rejected:
 
 Exempt: Merge / Revert / fixup! / squash! commits.
 
-Exits 0 on accept, 1 on reject (with a dictation-friendly error that names
+Exits 0 on accept, 1 on reject (with a clear error that names
 the fix to apply from a phone).
 """
 

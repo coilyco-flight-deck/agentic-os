@@ -18,7 +18,7 @@ The validator enforces a hard byte cap, but the practical target should be lower
 * **Router/meta skills** - 250-400 chars normally. A router earns extra surface only when it prevents many child skills from carrying broad aliases.
 * **Rare exceptions** - 400-500 chars for public-safety, MCP routing, or cross-repo failure handling where false negatives are expensive.
 
-Put the main task shape, a few trigger phrases, and critical disambiguators in `description`. Put procedure, examples, policy rationale, command sequences, long voice-mangle lists, implementation details, and historical context in the body or `references/`.
+Put the main task shape, a few trigger phrases, and critical disambiguators in `description`. Put procedure, examples, policy rationale, command sequences, implementation details, and historical context in the body or `references/`.
 
 If a skill needs more than 8-12 aliases in the description, rename the skill, add a router parent, or split the domain.
 

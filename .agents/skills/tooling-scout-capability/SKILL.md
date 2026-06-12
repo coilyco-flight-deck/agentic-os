@@ -17,7 +17,7 @@ Same scouting instinct, inverted flow. See **Paired with** below.
 capability scout, scout capability, find me skills, find me mcps, gap analysis, missing capabilities.
 
 Six-phase routine. Each phase runs independently and checkpoints to a
-single-day vault inbox file, so the user can dictate "scout-capability phase 3"
+single-day vault inbox file, so the user can run "scout-capability phase 3"
 from the train and resume without re-running phase 1.
 
 **Why six phases:** the full pipeline is too large for one model run, and
