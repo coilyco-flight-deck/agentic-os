@@ -11,6 +11,7 @@ This doc describes capabilities, not files. If you want a file inventory, run `l
 - [Agents and sessions](features-agents-sessions.md) - agent self-name, session pulse.
 - [Cross-repo tooling and release](features-release-tooling.md) - pre-commit baseline, diagnostic helpers, Forgejo-canonical release actions.
 - [Managed AGENTS.md pointer block](features-agents-pointer.md) - org-aware, drift-checked workspace-base pointer rendered into each repo's AGENTS.md.
+- [Encoded leak guard](leak-guard.md) - pre-commit hook that rejects plaintext occurrences of awkward-leak terms (employer/partner names, private-to-public references, dependency-cycle back-references) held as hex and decoded only in memory, so the ruleset is not itself grep-bait.
 
 ## See also
 

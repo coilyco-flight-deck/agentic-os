@@ -59,6 +59,8 @@ check-misplaced-skills = "agentic_os.pre_commit.check_misplaced_skills:main"
 check-merge-conflicts = "agentic_os.pre_commit.check_merge_conflicts:main"
 check-seed-skills = "agentic_os.pre_commit.check_seed_skills:main"
 check-seed-skills-drift = "agentic_os.pre_commit.check_seed_skills_drift:main"
+check-leak-guard = "agentic_os.pre_commit.check_leak_guard:main"
+leak-guard-encode = "agentic_os.pre_commit.encode_leak_term:main"
 
 generate-agents-pointer = "agentic_os.generators.generate_agents_pointer:main"
 generate-agent-compose = "agentic_os.generators.generate_agent_compose:main"

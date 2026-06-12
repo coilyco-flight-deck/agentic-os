@@ -77,6 +77,13 @@ repos:
         always_run: true
         pass_filenames: false
         stages: [pre-commit]
+      - id: leak-guard
+        name: encoded leak guard
+        entry: python -m agentic_os.pre_commit.check_leak_guard
+        language: python
+        always_run: true
+        pass_filenames: false
+        stages: [pre-commit]
       - id: seed-skills-drift
         name: seed_skills_data.py in sync with skill frontmatter
         entry: python -m agentic_os.pre_commit.check_seed_skills_drift
