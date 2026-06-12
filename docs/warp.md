@@ -26,7 +26,7 @@ The repo is the source of truth. `apply` pushes the repo's intent onto the host,
 
 On macOS and Windows the two channels coexist, so `apply`/`doctor` pick one and target its config dir and SQLite together. Selection: `--channel preview|stable` (or `WARP_CHANNEL` env) wins, else auto-detect by installed app (macOS `/Applications`, Windows `%LOCALAPPDATA%\Programs`), **preferring Preview**. The resolved channel is echoed in the header line (`darwin host (warp preview)`). Linux is single-channel and ignores the flag.
 
-`WorkspaceDir` is the parent of the repo root. `StartupDir` (where a fresh tab opens) is one level above that on Mac/Linux, flat on Windows.
+`WorkspaceDir` is the parent of the repo root. `StartupDir` (where a fresh tab opens) is one level above that on every OS.
 
 ## Launch configs
 

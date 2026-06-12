@@ -100,12 +100,9 @@ func resolveHostPaths(channel string) (*HostPaths, error) {
 	h.LaunchSrcDir = filepath.Join(repoRoot, "warp", "launch_configurations")
 	h.LaunchDstDir = filepath.Join(h.ConfigDir, "launch_configurations")
 
-	// StartupDir is where a fresh tab opens: the projects root. On Mac/Linux that
-	// is one level above WorkspaceDir (coilysiren/ grouping). On Windows it is flat.
-	h.StartupDir = h.WorkspaceDir
-	if runtime.GOOS != "windows" {
-		h.StartupDir = filepath.Dir(h.WorkspaceDir)
-	}
+	// StartupDir is where a fresh tab opens: the projects root, one level above
+	// WorkspaceDir. Every OS now uses the <owner>/ grouping, Windows included.
+	h.StartupDir = filepath.Dir(h.WorkspaceDir)
 	return h, nil
 }
 
