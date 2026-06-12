@@ -12,8 +12,8 @@ For a Go CLI, `//go:embed` a markdown file per command. The file stays editable 
 
 After the move, the skill shrinks to tiers 1 and 2 - Description and Body. That is the part that is genuinely human-to-agent and genuinely fuzzy-matched. Everything past Body is agent-parsed reference that belongs next to the code.
 
-The Body ends with a one-liner: "for command behavior, run `coily X help`."
+The Body ends with a one-liner: "for command behavior, run `ward X help`."
 
-## Applying it to coily dispatch
+## Applying it to ward dispatch
 
-`coily dispatch` is the first command to take this shape. The current `coily-dispatch` skill body mixes the command-collision table (genuine tier-1/2 fuzzy-matching content, stays) with behavioral reference - headless vs interactive, detach mechanics, refusal conditions (tiers 3 to 5, moves into the CLI). The dispatch-side change is tracked on `coilyco-bridge/coily`. This skill is the general model that change is one instance of.
+`ward dispatch` is the first command to take this shape. The current `ward-dispatch` skill body mixes the command-collision table (genuine tier-1/2 fuzzy-matching content, stays) with behavioral reference - headless vs interactive, detach mechanics, refusal conditions (tiers 3 to 5, moves into the CLI). The dispatch-side change is tracked on `coilyco-bridge/ward`. This skill is the general model that change is one instance of.

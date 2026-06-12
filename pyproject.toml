@@ -74,10 +74,8 @@ agents_md_max_lines = 160
 agents_md_max_chars = 12000
 # Subsystem dirs carry idiomatic co-located READMEs and config docs that the
 # root/docs/skills location rule does not model. Excluded per the #22 escape
-# hatch: warp (Go module), visual (stream surfaces),
-# plus root CHANGELOG.
+# hatch: warp (Go module), visual (stream surfaces).
 excludes = [
-    "CHANGELOG.md",
     "visual/**",
     "warp/launch_configurations/**",
     "warp/tab_configs/**",
@@ -88,7 +86,7 @@ excludes = [
 # then relaxed to allow a contiguous comment block above the first content
 # line (the whole header stays put under a sort).
 # These pre-existing files carry rich teaching/config comment blocks
-# (skill-discipline examples, the skills registry, warp configs, the coily
+# (skill-discipline examples, the skills registry, warp configs, the ward
 # catalog header) and are grandfathered so the rule enforces net-new YAML.
 # Cleanup tracked in #160. Bash comments inside `run: |` block scalars are no
 # longer over-read (#181), so actions/** needs no exclude.
@@ -96,7 +94,7 @@ excludes = [
 excludes = [
     ".agents/skills/categories.yaml",
     ".agents/skills/tooling-issue-prioritization/references/p0-content-rules.yaml",
-    ".coily/coily.yaml",
+    ".ward/ward.yaml",
     ".pre-commit-config.yaml",
     ".pre-commit-hooks.yaml",
     "docs/skill-discipline-example-categories.yaml",

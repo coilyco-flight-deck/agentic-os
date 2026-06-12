@@ -1,13 +1,13 @@
 ---
 name: coding-git
-description: Git + GitHub umbrella. Hard rule - never use gh api graphql without double-confirming, REST is default. Owns the full PR lifecycle (branch, commit, open, monitor CI, auto-fix, merge) and routes to coily-passthrough and git-workflow siblings.
+description: Git + GitHub umbrella. Hard rule - never use gh api graphql without double-confirming, REST is default. Owns the full PR lifecycle (branch, commit, open, monitor CI, auto-fix, merge) and routes to ward-passthrough and git-workflow siblings.
 seed:
   kind: always
 ---
 
 # coding-git
 
-Umbrella skill for any work that touches git or GitHub. Owns the broad keyword surface, carries the hard rules that apply to every GitHub touch, holds the full pull-request lifecycle inline, and routes to the focused siblings for coily passthrough and the `coilysiren/*` commit rules.
+Umbrella skill for any work that touches git or GitHub. Owns the broad keyword surface, carries the hard rules that apply to every GitHub touch, holds the full pull-request lifecycle inline, and routes to the focused siblings for ward passthrough and the `coilysiren/*` commit rules.
 
 ## Triggers
 
@@ -44,7 +44,7 @@ Each step shows the `gh` way first, then the `git` + `curl` fallback for machine
 
 ## Routing
 
-- **Coily passthrough for `gh`** (audit-log binding, scope routing) - [`coily-ops-gh-meta`](../coily-ops-gh-meta/SKILL.md).
+- **Ward passthrough for `gh`** (audit-log binding, scope routing) - [`ward-ops-gh-meta`](../ward-ops-gh-meta/SKILL.md).
 - **Git workflow for `coilysiren/*` repos** (commit-to-main default, every-commit-closes-an-issue rule, readonly exceptions) - [`kai-git-workflow`](../kai-git-workflow/SKILL.md).
 - **Autonomous engineering across the backlog** - `autonomous-dispatch` in `~/projects/coilysiren/luca/skills/`.
 

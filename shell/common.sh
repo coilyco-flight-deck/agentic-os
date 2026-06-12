@@ -19,9 +19,8 @@ export SAVEHIST=100000
 if [ -z "${_SIREN_SHELL_ENV:-}" ]; then
   export _SIREN_SHELL_ENV=1
 
-  # Org-migration: coily owns the bridge root, ward owns the flight-deck root.
-  export COILY_LOCKDOWN_ROOT="$HOME/projects/coilyco-bridge"
-  export WARD_LOCKDOWN_ROOT="$HOME/projects/coilyco-flight-deck"
+  # ward owns the whole workspace root (the security boundary, all orgs).
+  export WARD_LOCKDOWN_ROOT="$HOME/projects"
 
   # Prepend $1 to PATH if it's a real dir and not already present.
   _siren_path_prepend() {

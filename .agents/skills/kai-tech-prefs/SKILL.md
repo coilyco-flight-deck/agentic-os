@@ -28,7 +28,7 @@ Kai is/was a maintainer of [urfave/cli](https://github.com/urfave/cli). **Defaul
 - mods (LLM CLI)
 - freeze, melt
 
-When a coily/repo-recall/eco tool needs interactive prompts, fancy output, or a TUI, bias toward this stack over hand-rolled ANSI or rivals like tview/promptui. Cotton-candy aesthetic, MIT-licensed, very actively maintained, plays nicely with urfave/cli for the imperative-CLI-with-occasional-TUI shape.
+When a ward/repo-recall/eco tool needs interactive prompts, fancy output, or a TUI, bias toward this stack over hand-rolled ANSI or rivals like tview/promptui. Cotton-candy aesthetic, MIT-licensed, very actively maintained, plays nicely with urfave/cli for the imperative-CLI-with-occasional-TUI shape.
 
 - [Don't suggest dead or dormant repos](references/dead-repos.md) - 12-month-commit bright line before recommending any OSS dependency.
 - [Aliases and pagers](references/aliases-and-pagers.md) - no renamed-command aliases, pagers configured off.
@@ -45,4 +45,4 @@ Three tiers by repo intent - MIT for shareable, AGPL-3.0 for deployment-of-one, 
 
 - [JSON-twin discoverability for dashboards](references/json-twin-discoverability.md) - three discovery mechanisms so cold-start agents find a JSON variant.
 - [Configs go in SSM, not in skills or code](references/configs-in-ssm.md) - stash rotatable config-shaped values in AWS SSM, never hardcode.
-- [Batch job rules](references/batch-job-rules.md) - no parallelism for rate-limited jobs, plus coily wrapper rules.
+- [Batch job rules](references/batch-job-rules.md) - no parallelism for rate-limited jobs, plus ward wrapper rules.

@@ -12,7 +12,7 @@ if ! command -v duti >/dev/null 2>&1; then
 fi
 
 if [ ! -d "$APP_PATH" ]; then
-  echo "$APP_PATH not found. Install with: coily pkg brew install --cask warp@preview --allow-untapped" >&2
+  echo "$APP_PATH not found. Install with: ward pkg brew install --cask warp@preview --allow-untapped" >&2
   exit 1
 fi
 

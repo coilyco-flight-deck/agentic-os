@@ -13,7 +13,7 @@ transcript="$(printf '%s' "$payload_flat" \
 model_id="$(printf '%s' "$payload_flat" \
   | sed -n 's/.*"model"[[:space:]]*:[[:space:]]*{[^}]*"id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)"
 
-# Fallback for hosts without coily.
+# Fallback for hosts without ward.
 local_name() {
   local os host tag
   case "$(uname -s)" in
@@ -31,18 +31,18 @@ local_name() {
   printf 'claude-%s-%s' "$os" "$host"
   [ -n "$tag" ] && printf -- '-%s' "$tag"
   # Pronoun slug. The local fallback is claude-only, so always she-her.
-  # coily emits he-him / they-them for codex / opencode.
+  # ward emits he-him / they-them for codex / opencode.
   printf -- '-she-her'
 }
 
-# Stable per session, cached to avoid spawning coily on every status-line refresh.
+# Stable per session, cached to avoid spawning ward on every status-line refresh.
 cache="${TMPDIR:-/tmp}/agent-name-${sid:-nosession}"
 if [ -s "$cache" ]; then
   name="$(cat "$cache")"
 else
   name=""
-  if command -v coily >/dev/null 2>&1; then
-    name="$(coily agent-name --session-id "$sid" 2>/dev/null | head -n1 || true)"
+  if command -v ward >/dev/null 2>&1; then
+    name="$(ward agent-name --session-id "$sid" 2>/dev/null | head -n1 || true)"
   fi
   # Accept only well-formed names; fall back to local compute otherwise.
   if [[ "$name" != claude-* || "$name" == *[^a-z0-9-]* ]]; then
@@ -106,7 +106,7 @@ PY
 }
 
 # Human-readable pronouns parsed from the name's trailing slug, so this works
-# for coily-provided codex/opencode names too, not just the claude fallback.
+# for ward-provided codex/opencode names too, not just the claude fallback.
 pronoun_display() {
   case "$1" in
     *-she-her)   printf 'she/her' ;;

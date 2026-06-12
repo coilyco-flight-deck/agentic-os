@@ -2,7 +2,7 @@
 
 Base: `https://skillsmp.com/api/v1/skills`
 
-Auth: handled by `coily skillsmp` (see [`workflow-search.md`](workflow-search.md) step 1). The bearer token lives in AWS SSM at `/skillsmp/api-key` (SecureString); the wrapper fetches it per call through the audited shell.Runner, so the key never ends up in a session env var or the audit log.
+Auth: handled by `ward skillsmp` (see [`workflow-search.md`](workflow-search.md) step 1). The bearer token lives in AWS SSM at `/skillsmp/api-key` (SecureString); the wrapper fetches it per call through the audited shell.Runner, so the key never ends up in a session env var or the audit log.
 
 Rate limits: **500 requests/day, 30 requests/min.** Budget accordingly.
 

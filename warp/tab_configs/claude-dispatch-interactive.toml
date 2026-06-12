@@ -1,12 +1,12 @@
 # claude-dispatch-interactive - tab-scoped sibling of
 # warp/launch_configurations/claude-dispatch-interactive.yaml. Fired by
-# `coily dispatch interactive <ref>` via warp(preview)://tab_config/<name>
+# `ward dispatch interactive <ref>` via warp(preview)://tab_config/<name>
 # so the dispatched claude lands in a new tab inside the active Warp
 # window rather than a fresh window.
 #
-# Coily <-> Warp seam (coilysiren/coily#270 split, coilysiren/coily#274
-# tab default): coily writes "Work on issue coilysiren/<repo>#<N>" to
-# /tmp/coily-dispatch-prompt.txt mode 0600, fires the URI, and this
+# Ward <-> Warp seam (coilysiren/ward#270 split, coilysiren/ward#274
+# tab default): ward writes "Work on issue coilysiren/<repo>#<N>" to
+# /tmp/ward-dispatch-prompt.txt mode 0600, fires the URI, and this
 # config execs the shared shim under launch_configurations/ which reads
 # the scratch file, derives the cwd, execs claude, and deletes the file.
 #

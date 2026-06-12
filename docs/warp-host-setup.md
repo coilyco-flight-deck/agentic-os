@@ -6,8 +6,8 @@ Per-host install and channel layout for Warp. The module model (apply/doctor, st
 
 Two Warp channels coexist on the Mac daily driver with separate bundle ids, URL schemes, and config dirs. Preview is the default-clicked terminal, Stable the named fallback.
 
-- **Preview** (daily driver) - `/Applications/WarpPreview.app`, bundle `dev.warp.Warp-Preview`, scheme `warppreview://`, config dir `~/.warp-preview/`. Install: `coily pkg brew install --cask warp@preview --allow-untapped`.
-- **Stable** (fallback) - `/Applications/Warp.app`, bundle `dev.warp.Warp-Stable`, scheme `warp://`, config dir `~/.warp/`. Install: `coily pkg brew install --cask warp --allow-untapped`.
+- **Preview** (daily driver) - `/Applications/WarpPreview.app`, bundle `dev.warp.Warp-Preview`, scheme `warppreview://`, config dir `~/.warp-preview/`. Install: `ward pkg brew install --cask warp@preview --allow-untapped`.
+- **Stable** (fallback) - `/Applications/Warp.app`, bundle `dev.warp.Warp-Stable`, scheme `warp://`, config dir `~/.warp/`. Install: `ward pkg brew install --cask warp --allow-untapped`.
 
 URL schemes are channel-specific by design: `warp://` always lands in Stable, `warppreview://` in Preview. There is no LaunchServices "default Warp" toggle that flips this, so tooling picks the channel by scheme at the call site.
 
@@ -15,7 +15,7 @@ Preview auto-symlinks `launch_configurations`, `tab_configs`, and `themes` into 
 
 ## Install playbook (Mac daily driver)
 
-1. `coily pkg brew install --cask warp@preview --allow-untapped` installs `/Applications/WarpPreview.app`.
+1. `ward pkg brew install --cask warp@preview --allow-untapped` installs `/Applications/WarpPreview.app`.
 2. Launch Preview once. It creates `~/.warp-preview/` and auto-symlinks the shared subdirs.
 3. Point Preview's `settings.toml` at this repo's copy:
    ```sh
@@ -25,7 +25,7 @@ Preview auto-symlinks `launch_configurations`, `tab_configs`, and `themes` into 
 4. Run `scripts/set-warp-default-editor.sh` to bind file-type defaults to Preview (markdown, python, go, the js/ts family, json, plain text, generic source UTI). It honors `WARP_DEFAULT_EDITOR_BUNDLE_ID` and `WARP_DEFAULT_EDITOR_APP_PATH` for per-host overrides.
 5. Pin WarpPreview in the Dock, unpin Warp. Reach for it via Spotlight by typing `warppreview`.
 
-Then `coily exec warp apply` reconciles the rest (settings, theme, launch configs, SQLite).
+Then `ward exec warp apply` reconciles the rest (settings, theme, launch configs, SQLite).
 
 ## Fallback to Stable
 
@@ -33,8 +33,8 @@ When a Preview regression breaks a workday:
 
 - `open -a Warp` opens Stable by bundle name.
 - `warp://` URIs always route to Stable - useful for known-good URI tests.
-- `coily exec warp apply --channel stable` reconciles Stable's `~/.warp/` config and `dev.warp.Warp-Stable` SQLite directly (or export `WARP_CHANNEL=stable`). Without it, apply/doctor auto-detect and prefer Preview.
-- `coily pkg brew upgrade --cask warp@preview --allow-untapped` picks up the next Preview release. Warp ships weekly.
+- `ward exec warp apply --channel stable` reconciles Stable's `~/.warp/` config and `dev.warp.Warp-Stable` SQLite directly (or export `WARP_CHANNEL=stable`). Without it, apply/doctor auto-detect and prefer Preview.
+- `ward pkg brew upgrade --cask warp@preview --allow-untapped` picks up the next Preview release. Warp ships weekly.
 
 ## Subdirs
 
@@ -48,5 +48,5 @@ When a Preview regression breaks a workday:
 
 - [warp.md](warp.md) - the Go module's model (apply/doctor, layers, paths).
 - [tooling-warp skill](../.agents/skills/tooling-warp/SKILL.md) - agent-facing usage.
-- coilysiren/coily#270 - `coily dispatch interactive`, which fires `warp://launch/...`.
+- coilysiren/ward#270 - `ward dispatch interactive`, which fires `warp://launch/...`.
 - warpdotdev/Warp#9379 - the merged tab_config URI handler that motivated the Preview move.

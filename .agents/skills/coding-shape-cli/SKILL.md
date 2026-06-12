@@ -29,7 +29,7 @@ So when a task involves contributing to or maintaining a CLI or an open-source p
 
 ## Design principles
 
-- **Wrapper APIs mirror the real CLI.** When wrapping a sub-tool (kubectl, gh, aws, etc), preserve verb names and flag shapes. Do not invent shorter or "friendlier" names. This is the load-bearing rule behind coily's whole design - see [`coily-discipline`](../../../../coily/skills/coily-discipline/SKILL.md).
+- **Wrapper APIs mirror the real CLI.** When wrapping a sub-tool (kubectl, gh, aws, etc), preserve verb names and flag shapes. Do not invent shorter or "friendlier" names. This is the load-bearing rule behind ward's whole design - see [`ward-discipline`](../../../../ward/skills/ward-discipline/SKILL.md).
 - **One verb, one job.** Don't pile orthogonal behavior into a single command.
 - **Subcommands are nouns or verbs, not adjectives.** `app deploy`, not `app fast-deploy`.
 - **Errors are structured.** Exit codes matter. Stderr is for humans, stdout for pipes.
@@ -49,5 +49,5 @@ Designing or building a new CLI, refactoring an existing one, or wrapping a sub-
 ## See also
 
 - [`coding-shape-tui`](../coding-shape-tui/SKILL.md) - if the CLI grows an interactive surface.
-- [`coily-discipline`](../../../../coily/skills/coily-discipline/SKILL.md) - the load-bearing case study.
+- [`ward-discipline`](../../../../ward/skills/ward-discipline/SKILL.md) - the load-bearing case study.
 - [`kai-tech-prefs`](../../../../agentic-os-kai/.agents/skills/kai-tech-prefs/SKILL.md) - urfave/cli + Charm + no-shortened-names rules.

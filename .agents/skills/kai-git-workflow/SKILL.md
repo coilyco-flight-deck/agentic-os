@@ -25,19 +25,19 @@ Below are the exceptions and details.
 
 ## Recovering a commit dropped by rebase
 
-`coily git pull --rebase` can silently drop a local commit when upstream `main` was force-pushed (release-please rewriting history). Git's default `--fork-point` heuristic reads the upstream reflog, decides the local commit is "already upstream," and drops it - no error, no conflict, just gone from `HEAD` and the working tree. The wrapper does **not** guard against this by design: it stays thin and security-focused, and the commit is only dangling, never lost. Recover it from reflog:
+`ward git pull --rebase` can silently drop a local commit when upstream `main` was force-pushed (release-please rewriting history). Git's default `--fork-point` heuristic reads the upstream reflog, decides the local commit is "already upstream," and drops it - no error, no conflict, just gone from `HEAD` and the working tree. The wrapper does **not** guard against this by design: it stays thin and security-focused, and the commit is only dangling, never lost. Recover it from reflog:
 
 ```
 git reflog                 # find the pre-rebase HEAD (the entry just before "rebase ...")
 git cherry-pick <sha>      # replay the dropped commit onto the rebased HEAD
 ```
 
-Use `git reset --hard <sha>` instead of cherry-pick only when nothing else has moved since. Decided in coily#4 (no default-behavior change, reflog is the documented solve).
+Use `git reset --hard <sha>` instead of cherry-pick only when nothing else has moved since. Decided in ward#4 (no default-behavior change, reflog is the documented solve).
 
 ## Repo-specific exceptions
 
-- **coily** - auto-push only when session's primary cwd is coily. Not if started in a sibling and cd'd in. Check env block, not live cwd.
-- **infrastructure** - auto-commit/push code/CI. Confirm before SSM/kubectl/cloud writes. Never print decrypted SSM values. Reach for `coily` before raw aws/kubectl.
+- **ward** - auto-push only when session's primary cwd is ward. Not if started in a sibling and cd'd in. Check env block, not live cwd.
+- **infrastructure** - auto-commit/push code/CI. Confirm before SSM/kubectl/cloud writes. Never print decrypted SSM values. Reach for `ward` before raw aws/kubectl.
 - **message-ops** - confirm before destructive social ops (archive, delete, block). Friends-list check before any archive pass.
 
 ## `gish`
@@ -64,5 +64,5 @@ Every repo has `.pre-commit-config.yaml` with offline trufflehog:
 ## More detail
 
 - [GitHub issues as work tracker](references/github-issue-tracker.md) - precedence, close-via-commit, tracker issues stay open, bot-attribution signature.
-- [Privileged ops via coily](references/coily-privileged-ops.md) - read vs write surface, thin pass-throughs, disabling PRs via GraphQL.
+- [Privileged ops via ward](references/ward-privileged-ops.md) - read vs write surface, thin pass-throughs, disabling PRs via GraphQL.
 - [Default TODO destination and flake discipline](references/default-todo-and-flake.md) - Forgejo as default tracker, never-ask-just-file, flaky-test rule.

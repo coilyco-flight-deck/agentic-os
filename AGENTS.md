@@ -16,7 +16,7 @@ Public hosts and work laptops import this base only. Personal machines may compo
 
 ## Commands
 
-Route every dev command through coily, which reads [`.coily/coily.yaml`](.coily/coily.yaml). Agents invoke `coily <verb>`, not bare `make` / `uv` / `python` / `npm` / `cargo` / `dotnet`. Add new verbs to that file before invoking them.
+Route every dev command through ward, which reads [`.ward/ward.yaml`](.ward/ward.yaml). Agents invoke `ward <verb>`, not bare `make` / `uv` / `python` / `npm` / `cargo` / `dotnet`. Add new verbs to that file before invoking them.
 
 ## Validation
 
@@ -30,7 +30,7 @@ Keep every artifact public-safe: messages, chat, code, commits, PRs, and public 
 
 ### Authoring vs rollout
 
-Anything that fits as a pre-commit validation is **authored** here in agentic-os (the `agentic_os/check_*.py` validator plus its `.pre-commit-hooks.yaml` entry). Its **fleet rollout** - the thing that fans it across every checkout - lives in infrastructure/ansible, never here. The same split applies to any fleet-wide mutation: the tool or logic is authored in its home repo, and an ansible role is the rollout. Install-time mass mutation never belongs in `coily setup` or a brew post-install. Homebrew installs the binary and stops. Ansible converges the fleet.
+Anything that fits as a pre-commit validation is **authored** here in agentic-os (the `agentic_os/check_*.py` validator plus its `.pre-commit-hooks.yaml` entry). Its **fleet rollout** - the thing that fans it across every checkout - lives in infrastructure/ansible, never here. The same split applies to any fleet-wide mutation: the tool or logic is authored in its home repo, and an ansible role is the rollout. Install-time mass mutation never belongs in `ward setup` or a brew post-install. Homebrew installs the binary and stops. Ansible converges the fleet.
 
 ### Skills
 
@@ -73,6 +73,6 @@ When a change adds, removes, or materially reshapes a feature, update that repo'
 
 - [README.md](README.md) - human-facing intro, per-OS install steps.
 - [docs/FEATURES.md](docs/FEATURES.md) - inventory of what ships today.
-- [.coily/coily.yaml](.coily/coily.yaml) - allowlisted commands. Agents route through coily, not bare `make` / `uv` / `python` / `npm` / `cargo` / `dotnet`.
+- [.ward/ward.yaml](.ward/ward.yaml) - allowlisted commands. Agents route through ward, not bare `make` / `uv` / `python` / `npm` / `cargo` / `dotnet`.
 
 Cross-reference convention from [coilysiren/agentic-os#59](https://github.com/coilysiren/agentic-os/issues/59).

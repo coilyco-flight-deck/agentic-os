@@ -1,13 +1,13 @@
 # Phase 4 - Security audit (🥈 and 🥇 only)
 
 **BLOCKED ON #185.** The audit rubric below is provisional. Phase 4 has
-been red-flagging third-party MCPs that overlap a coily wrapper (Cloudflare,
-GitHub, k8s, Tailscale, AWS, Discord-admin) on coily-bypass grounds, but
+been red-flagging third-party MCPs that overlap a ward wrapper (Cloudflare,
+GitHub, k8s, Tailscale, AWS, Discord-admin) on ward-bypass grounds, but
 mcporter is the actual execution path and may itself be the audit choke
 point. Once mcporter execution is verified (#185), revise this rubric:
 🔴 should narrow to real supply-chain audit failures (malicious code,
 abandoned projects, anonymous maintainers writing privileged tools),
-not "duplicates a coily wrapper." Until then, treat the coily-overlap
+not "duplicates a ward wrapper." Until then, treat the ward-overlap
 red flag with skepticism and surface the call to the user instead of
 auto-rejecting.
 

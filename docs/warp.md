@@ -1,9 +1,9 @@
 # Warp config module
 
-The `warp/` Go module establishes and verifies Kai's Warp terminal config across hosts. Run it through coily, never bare `go`:
+The `warp/` Go module establishes and verifies Kai's Warp terminal config across hosts. Run it through ward, never bare `go`:
 
-- `coily exec warp apply` - host-aware, idempotent: reconcile every state layer.
-- `coily exec warp doctor` - verify only: PASS/FAIL per check, no mutation.
+- `ward exec warp apply` - host-aware, idempotent: reconcile every state layer.
+- `ward exec warp doctor` - verify only: PASS/FAIL per check, no mutation.
 
 The repo is the source of truth. `apply` pushes the repo's intent onto the host, `doctor` reports drift without touching anything. Both resolve the repo root by walking up from cwd to the first `.git`, so they work from any subdir and adapt automatically when the checkout moves.
 

@@ -7,7 +7,7 @@ Cross-platform shell + terminal setup plus cross-repo pre-commit hooks for coily
 ## Layout
 
 - `shell/` - shared `common.sh` plus thin `zshrc` + `bashrc`, so bash and zsh match. `warp.zsh` is the zsh-only Warp dispatcher.
-- `warp/` - Warp config (`settings.toml`, `tab_configs/`) plus the `coily exec warp` Go module.
+- `warp/` - Warp config (`settings.toml`, `tab_configs/`) plus the `ward exec warp` Go module.
 - `karabiner/` - Karabiner-Elements complex modification assets, symlinked into the local Karabiner config tree.
 - `scripts/` - portable utilities (gpg-ssm wrapper, agent-name + session-pulse hooks, aws-config lint).
 - `.agents/skills/` - SKILL.md docs for the configs that live here. A private overlay repo's skill mount walks this dir as a peer skill source.
@@ -20,7 +20,7 @@ Full breakdown: [docs/repo-layout.md](docs/repo-layout.md).
 Host config is converged by Ansible (rollout lives in infrastructure, per [AGENTS.md](AGENTS.md)). Manual fallback:
 
 ```bash
-coily exec apply-shell-links
+ward exec apply-shell-links
 ```
 
 Equivalent links:
@@ -29,7 +29,7 @@ Equivalent links:
 ln -sf "$PWD/shell/zshrc"  ~/.zshrc      # both source shell/common.sh
 ln -sf "$PWD/shell/bashrc" ~/.bashrc
 ln -sf "$PWD/scripts/gpg-ssm" ~/.local/bin/gpg-ssm
-coily exec warp apply                     # warp config
+ward exec warp apply                     # warp config
 ```
 
 Agent self-name + session-pulse hooks, per-host steps, and gpg wiring: [docs/install.md](docs/install.md).
@@ -65,6 +65,6 @@ Opt-in tooling that composes global agent context and symlinks each harness load
 
 - [AGENTS.md](AGENTS.md) - public-safe agent operating conventions and the global load point.
 - [docs/FEATURES.md](docs/FEATURES.md) - inventory of what ships today.
-- [.coily/coily.yaml](.coily/coily.yaml) - allowlisted dev commands. Agents route through coily.
+- [.ward/ward.yaml](.ward/ward.yaml) - allowlisted dev commands. Agents route through ward.
 
 Cross-reference convention from [coilysiren/agentic-os#59](https://github.com/coilysiren/agentic-os/issues/59).

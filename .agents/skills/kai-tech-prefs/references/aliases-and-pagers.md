@@ -2,7 +2,7 @@
 
 ## Don't shorten common command names
 
-No `k=kubectl`, `gst=git status`, `kgp=kubectl get pods`, etc. Kai dislikes shortened-name aliases on principle: they make examples, screen recordings, and shared snippets inaccurate, and they break the "wrapper API mirrors the real CLI" instinct that drives coily's design.
+No `k=kubectl`, `gst=git status`, `kgp=kubectl get pods`, etc. Kai dislikes shortened-name aliases on principle: they make examples, screen recordings, and shared snippets inaccurate, and they break the "wrapper API mirrors the real CLI" instinct that drives ward's design.
 
 - Multi-word convenience functions (e.g. `git-merge-default-branch`) are fine.
 - Aliases that **flag** a command (`alias ls='ls -GFh'`) are fine.

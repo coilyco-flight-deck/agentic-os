@@ -6,7 +6,7 @@ Agent naming and session orientation.
 
 Every Claude Code session gets a stable, human-readable name: `claude-<os>-<hostname>-<tag>-<pronouns>`, where `<tag>` is the last four characters of the session id and `<pronouns>` is the agent's pronoun slug (`she-her` for Claude). The claude-hooks ansible role wires it into `~/.claude/settings.json` two ways - a persistent status line so the operator always sees which host and session they are talking to, and a SessionStart hook so the agent knows its own name from the first turn. Codex and OpenCode agents swap the `claude-` prefix and carry their own pronouns - Codex `he-him`, OpenCode (qwen-opencode) `they-them`. The wiring is idempotent and never clobbers a status line the operator set themselves.
 
-`coily agent-name` is the single source of truth for the name. The status line script defers to coily and only falls back to computing the scheme locally when coily is absent.
+`ward agent-name` is the single source of truth for the name. The status line script defers to ward and only falls back to computing the scheme locally when ward is absent.
 
 ## Session pulse
 

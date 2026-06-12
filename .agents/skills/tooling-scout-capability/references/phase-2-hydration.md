@@ -2,7 +2,7 @@
 
 For each candidate from phase 1, fetch:
 
-- Skills: `<skillsmp-search> <name>` and `coily pkg skillsmp
+- Skills: `<skillsmp-search> <name>` and `ward pkg skillsmp
   ai-search <name>`. Take the top result if it's a strong match; record
   multiple if ambiguous.
 - MCPs: `<glama-list-servers>` (paginate) and

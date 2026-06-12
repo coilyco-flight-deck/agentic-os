@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """pre-commit hook: assert this repo's catalog config has a top-level `catalog:` block.
 
-Looks at `.ward/ward.yaml` first (external-facing repos), then falls back
-to `.coily/coily.yaml` (Kai's personal repos). One of the two must exist
-and carry the block.
+Reads the repo's `.ward/ward.yaml` catalog config. It must exist and
+carry the block.
 
 Schema and rollout: coilysiren/agentic-os-kai#420. Two-file rollout: coilysiren/agentic-os-kai#480.
 
@@ -40,7 +39,7 @@ except ImportError:  # pragma: no cover
         "  for catalog-block-present to the uv-managed shape (`language: python` +\n"
         "  `additional_dependencies: [pyyaml]`). Canonical block:\n"
         "    agentic-os-kai/scripts/apply-catalog-block-hook.py (MANAGED_BLOCK).\n"
-        "  Refresh fleet-wide with: coily exec apply-catalog-block-hook\n"
+        "  Refresh fleet-wide with: ward exec apply-catalog-block-hook\n"
         "  Tracker: coilysiren/agentic-os-kai#488",
         file=sys.stderr,
     )
@@ -61,22 +60,16 @@ def fail(msg: str) -> NoReturn:
     sys.exit(1)
 
 
-CONFIG_PATHS = (
-    Path(".ward/ward.yaml"),
-    Path(".coily/coily.yaml"),
-)
+CONFIG_PATH = Path(".ward/ward.yaml")
 
 
 def main() -> int:
     if not is_enabled(HOOK_ID):
         print(f"{HOOK_ID}: disabled by repo config")
         return 0
-    path = next((p for p in CONFIG_PATHS if p.exists()), None)
+    path = CONFIG_PATH if CONFIG_PATH.exists() else None
     if path is None:
-        fail(
-            "no catalog config found. Every coilysiren/* repo needs either "
-            ".ward/ward.yaml (external-facing) or .coily/coily.yaml (personal)."
-        )
+        fail("no catalog config found. Every coilysiren/* repo needs .ward/ward.yaml.")
 
     try:
         data = yaml.safe_load(path.read_text())

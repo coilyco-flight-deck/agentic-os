@@ -1,8 +1,8 @@
 # Debugging gpg-ssm
 
 - **`user.signingkey is unset`** - run `git config --global user.signingkey <KEYID>`. The keyid comes from `gpg --list-secret-keys --keyid-format LONG`.
-- **`AWS credentials expired or missing`** - the message says it: `aws sso login` (or `coily ops aws sso login`), retry.
-- **`failed to fetch /coilysiren/gpg-passphrase/<keyid>`** - param doesn't exist or IAM denies. Check `coily ops aws ssm get-parameter --name /coilysiren/gpg-passphrase/<keyid> --with-decryption` directly. If 404, you skipped step 3 of adding a host.
+- **`AWS credentials expired or missing`** - the message says it: `aws sso login` (or `ward ops aws sso login`), retry.
+- **`failed to fetch /coilysiren/gpg-passphrase/<keyid>`** - param doesn't exist or IAM denies. Check `ward ops aws ssm get-parameter --name /coilysiren/gpg-passphrase/<keyid> --with-decryption` directly. If 404, you skipped step 3 of adding a host.
 - **Sign succeeds but GitHub shows "Unverified"** - public key not uploaded, or wrong email on the GPG uid vs `user.email`. Check `gpg --list-keys` against the GitHub signing-keys page.
 - **Hangs forever** - gpg-agent prompting for the passphrase via pinentry, meaning `--pinentry-mode loopback` got dropped or gpg-agent is in a weird state. Restart: `gpgconf --kill gpg-agent`.
 

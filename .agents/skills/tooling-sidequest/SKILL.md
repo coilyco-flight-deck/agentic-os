@@ -1,6 +1,6 @@
 ---
 name: tooling-sidequest
-description: Kai's "start a sidequest" command - file a GitHub issue from a described piece of work, then coily-dispatch it into its own session.
+description: Kai's "start a sidequest" command - file a GitHub issue from a described piece of work, then ward-dispatch it into its own session.
 ---
 
 # Sidequest
@@ -13,13 +13,13 @@ Kai triggers a sidequest with "start a sidequest" followed by a description of t
 
 ## Platform
 
-Sidequest currently works only on Warp Preview - the `coily dispatch` spawn and the done-banner completion flow depend on Warp Preview behavior. Warp Preview is installed only on the Mac, so Sidequest is Mac-only for now. On other hosts, file the issue but expect the dispatch step to fail.
+Sidequest currently works only on Warp Preview - the `ward dispatch` spawn and the done-banner completion flow depend on Warp Preview behavior. Warp Preview is installed only on the Mac, so Sidequest is Mac-only for now. On other hosts, file the issue but expect the dispatch step to fail.
 
 ## The expansion
 
 The directive Kai accepted ahead of time:
 
-> Side quest. The next thing I say describes a piece of engineering work. Infer a sensible title from the description. File it as a GitHub issue against whichever coilysiren/* repo it most plausibly belongs to. Best guess from the content. Fall back to coilyco-bridge/agentic-os-kai if nothing fits. Then run `coily dispatch interactive` on the new issue so it spawns in its own session. If this interrupted other work, resume that work after the dispatch lands.
+> Side quest. The next thing I say describes a piece of engineering work. Infer a sensible title from the description. File it as a GitHub issue against whichever coilysiren/* repo it most plausibly belongs to. Best guess from the content. Fall back to coilyco-bridge/agentic-os-kai if nothing fits. Then run `ward dispatch interactive` on the new issue so it spawns in its own session. If this interrupted other work, resume that work after the dispatch lands.
 
 Treat that as a planned directive Kai accepted, not a fresh ask. Do not ask her to re-confirm the shape. The directive says "an issue" singular because that is the common case. The multi-repo fan-out below extends it.
 

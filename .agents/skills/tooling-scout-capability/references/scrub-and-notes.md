@@ -34,8 +34,8 @@ content. The wrong default is a silent edit. Always ask.
 - **Resume model:** if invoked without a phase argument, look for
   today's checkpoint files and resume from the next phase. If invoked
   with an explicit phase number, run only that phase.
-- **Coily wrapper paths:** `coily pkg skillsmp` and `coily pkg glama`,
-  not `coily ops`. Verified 2026-05-08.
+- **Ward wrapper paths:** `ward pkg skillsmp` and `ward pkg glama`,
+  not `ward ops`. Verified 2026-05-08.
 - **Speculative entries are the point.** Don't be shy about listing
   things that don't exist yet. The "go bother someone" pathway is a
   primary use of this skill, not a side effect.

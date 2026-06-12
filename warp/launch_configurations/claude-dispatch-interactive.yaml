@@ -1,18 +1,18 @@
 ---
 # claude-dispatch-interactive - single-tab launch config fired by
-# `coily dispatch interactive <ref>`.
+# `ward dispatch interactive <ref>`.
 #
-# Coily <-> Warp seam (coilysiren/coily#270):
-#   * coily owns the URL fire. It writes the minimal prompt
+# Ward <-> Warp seam (coilysiren/ward#270):
+#   * ward owns the URL fire. It writes the minimal prompt
 #     "Work on issue coilysiren/<repo>#<N>" to
-#     /tmp/coily-dispatch-prompt.txt with mode 0600, then runs
+#     /tmp/ward-dispatch-prompt.txt with mode 0600, then runs
 #     `open warp://launch/claude-dispatch-interactive`.
 #   * agentic-os owns this launch config. The script below reads the
 #     scratch file, greps the ref out of it to derive the local repo
 #     path, cwd's in, exec's claude with the prompt body, then deletes
 #     the scratch file.
-#   * No bidirectional coupling. coily has no idea what's in this file.
-#     agentic-os has no idea coily exists. The two strings they agree on
+#   * No bidirectional coupling. ward has no idea what's in this file.
+#     agentic-os has no idea ward exists. The two strings they agree on
 #     are the scratch path and the launch name.
 #
 # Single tab on purpose: this is a focused human session, not a layout.

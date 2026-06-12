@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Tab script for coily dispatch interactive. See coily#280.
+# Tab script for ward dispatch interactive. See ward#280.
 
 set -u
 
-QUEUE_DIR=/tmp/coily-dispatch-queue
+QUEUE_DIR=/tmp/ward-dispatch-queue
 LOCK_DIR="${QUEUE_DIR}/.lock"
 PROJECTS_ROOT="${HOME}/projects/coilysiren"
 
@@ -35,7 +35,7 @@ JSON_FILE="$(find "${QUEUE_DIR}" -maxdepth 1 -name '*.json' -type f 2>/dev/null 
 
 if [[ -z "${JSON_FILE}" || ! -f "${JSON_FILE}" ]]; then
   rmdir "${LOCK_DIR}"
-  soft_fail "dispatch interactive: no pending dispatch in ${QUEUE_DIR}. Did 'coily dispatch interactive <ref>' write one?"
+  soft_fail "dispatch interactive: no pending dispatch in ${QUEUE_DIR}. Did 'ward dispatch interactive <ref>' write one?"
 fi
 
 PAYLOAD="$(cat "${JSON_FILE}")"

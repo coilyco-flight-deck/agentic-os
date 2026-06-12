@@ -12,7 +12,7 @@ The ansible `shell` role (in the infrastructure repo) symlinks, by `ansible_syst
 
 A pre-existing regular `~/.zshrc` / `~/.bashrc` is backed up to `<path>.bak` before linking. The `claude-hooks` role then runs `install-agent-name.py` (status line + SessionStart self-name hook) and `install-session-pulse.py` (SessionStart hook surfacing `~/.cache/agentic-os/session-pulse.yaml` if a producer wrote one). Both are idempotent and never clobber a status line you set yourself. The manual symlink fallback (no ansible) is in [the README](../README.md).
 
-`coily exec apply-shell-links` is the local repair path for the same shell links. It repoints stale symlinks, backs up pre-existing regular files, and supports `coily exec apply-shell-links -- --check` for drift detection.
+`ward exec apply-shell-links` is the local repair path for the same shell links. It repoints stale symlinks, backs up pre-existing regular files, and supports `ward exec apply-shell-links -- --check` for drift detection.
 
 ## Per-host notes
 

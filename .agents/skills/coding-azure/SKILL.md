@@ -10,7 +10,7 @@ Umbrella for any Azure work.
 ## Defaults
 
 - **Auth**: `az login` for local; service principals in CI.
-- **CLI**: `az`. No coily wrapper.
+- **CLI**: `az`. No ward wrapper.
 - **Region**: project-pinned.
 - **IaC**: Terraform (azurerm provider). Cross-link to [`coding-terraform`](../coding-terraform/SKILL.md).
 - **Secrets**: Key Vault (analogous to AWS SSM SecureString).

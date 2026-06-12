@@ -56,13 +56,13 @@ if [ -z "$keyid" ]; then
   exit 1
 fi
 
-if ! coily ops aws sts get-caller-identity >/dev/null 2>&1; then
+if ! ward ops aws sts get-caller-identity >/dev/null 2>&1; then
   echo "gpg-ssm: AWS credentials expired or missing. Run 'aws sso login' and retry." >&2
   exit 1
 fi
 
 ssm_name="/coilysiren/gpg-passphrase/$keyid"
-pass=$(coily ops aws ssm get-parameter \
+pass=$(ward ops aws ssm get-parameter \
   --name "$ssm_name" \
   --with-decryption \
   --query Parameter.Value \

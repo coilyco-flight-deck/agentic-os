@@ -19,7 +19,7 @@ inputs:
     required: false
     default: ${{ github.repository }}
   formula_path:
-    description: "Path to the Formula .rb file in the repo (e.g. Formula/coily.rb)."
+    description: "Path to the Formula .rb file in the repo (e.g. Formula/ward.rb)."
     required: true
   tag:
     description: "Git tag the Formula should pin (e.g. v2.37.0)."

@@ -6,7 +6,7 @@ Flow per query run:
 
 1. Fetch cookie from SSM:
    ```
-   coily ops aws ssm get-parameter --name /coilysiren/honeycomb/session-cookie --with-decryption --query Parameter.Value --output text
+   ward ops aws ssm get-parameter --name /coilysiren/honeycomb/session-cookie --with-decryption --query Parameter.Value --output text
    ```
 2. Open a Playwright browser context. Parse the cookie header into Playwright's array form: split on `; `, then split each pair on the first `=`. Domain `.honeycomb.io`, path `/`, `secure: true`. Inject all cookies before the first navigation.
 3. Navigate to the dataset query builder. URL shape:

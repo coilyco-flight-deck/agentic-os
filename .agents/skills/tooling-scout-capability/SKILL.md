@@ -52,4 +52,4 @@ Run scout-capability when the tooling surface feels too small. Run scout-displac
 
 ## See also
 
-- [Scrub-on-reject and notes](references/scrub-and-notes.md) - reject ordering, run cadence, resume model, coily wrapper paths, why speculative entries matter.
+- [Scrub-on-reject and notes](references/scrub-and-notes.md) - reject ordering, run cadence, resume model, ward wrapper paths, why speculative entries matter.

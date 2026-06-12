@@ -34,7 +34,7 @@
 
 - id: catalog-trifecta
   name: catalog-trifecta cross-link convention
-  description: Enforce that README + AGENTS + docs/FEATURES + .coily/coily.yaml cross-link. See coilysiren/agentic-os#59.
+  description: Enforce that README + AGENTS + docs/FEATURES + .ward/ward.yaml cross-link. See coilysiren/agentic-os#59.
   entry: check-catalog-trifecta
   language: python
   always_run: true
@@ -69,7 +69,7 @@
   stages: [pre-commit]
 
 - id: catalog-block-present
-  name: .coily/coily.yaml catalog block present
+  name: .ward/ward.yaml catalog block present
   description: Assert this repo declares its catalog metadata. See coilysiren/agentic-os-kai#420.
   entry: check-catalog-block
   language: python

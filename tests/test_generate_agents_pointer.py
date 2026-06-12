@@ -37,7 +37,7 @@ def test_unmanaged_org_renders_nothing():
 
 def test_is_managed_exempts_the_base_repos_themselves():
     assert is_managed(FLIGHT_DECK, "luca") is True
-    assert is_managed(BRIDGE, "coily") is True
+    assert is_managed(BRIDGE, "ward") is True
     assert is_managed(FLIGHT_DECK, "agentic-os") is False  # a base does not point at itself
     assert is_managed(BRIDGE, "agentic-os-kai") is False
     assert is_managed("coilysiren", "website") is False

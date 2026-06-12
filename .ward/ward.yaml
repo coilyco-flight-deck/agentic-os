@@ -3,7 +3,7 @@
 commands:
   warp:
     run: go run -C warp .
-    description: "Establish and verify Kai's Warp config across hosts. `coily exec warp apply` renders all three state layers (repo template, config-dir TOML, SQLite); `coily exec warp doctor` reports drift. See project-a-coily-exec-warp.md."
+    description: "Establish and verify Kai's Warp config across hosts. `ward exec warp apply` renders all three state layers (repo template, config-dir TOML, SQLite); `ward exec warp doctor` reports drift. See project-a-ward-exec-warp.md."
   apply-agentic-os-hooks:
     run: uv run python scripts/apply-agentic-os-hooks.py
     description: "Roll out the canonical pre-commit hook block to every consumer repo under ~/projects/<org>/* (all org dirs). Idempotent."
@@ -45,7 +45,7 @@ commands:
     description: "Run the agentic_os Python test suite (pytest)."
   gen-repo-pointer-skill:
     run: uv run python -m agentic_os.generators.generate_repo_pointer_skill
-    description: "Generate a repo-<name> pointer skill from GitHub metadata. Pipe `coily ops gh repo view coilysiren/<name>` into it with `<name> --from-json -`, or pass --description/--topic. See agentic-os-kai#312."
+    description: "Generate a repo-<name> pointer skill from GitHub metadata. Pipe `ward ops gh repo view coilysiren/<name>` into it with `<name> --from-json -`, or pass --description/--topic. See agentic-os-kai#312."
   gen-seed-skills:
     run: uv run python -m agentic_os.generators.generate_seed_skills
     description: "Regenerate agentic_os/seed_skills_data.py from the seed: frontmatter on the coding-<lang> skills. Run after editing a seed block; check-seed-skills-drift fails on staleness. See agentic-os#176."

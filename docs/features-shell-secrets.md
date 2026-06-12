@@ -4,7 +4,7 @@ Cross-platform shell, terminal, and secret-handling capabilities.
 
 ## Cross-platform shell
 
-One shared config core (`shell/common.sh`) sourced by both shells, so bash and zsh run identical setup. zsh (`shell/zshrc`) and bash (`shell/bashrc`) are thin entries that source the core and add only their own prompt + completion. Boots cleanly on Mac, Linux (kai-server), and Windows (Git Bash), picking the right per-OS PATH via `uname -s`. Carries identity, history, AWS defaults, git helpers, aliases, an `rg` wrapper, the SSM loader, and `COILY_LOCKDOWN_ROOT` for the coily security boundary.
+One shared config core (`shell/common.sh`) sourced by both shells, so bash and zsh run identical setup. zsh (`shell/zshrc`) and bash (`shell/bashrc`) are thin entries that source the core and add only their own prompt + completion. Boots cleanly on Mac, Linux (kai-server), and Windows (Git Bash), picking the right per-OS PATH via `uname -s`. Carries identity, history, AWS defaults, git helpers, aliases, an `rg` wrapper, the SSM loader, and `WARD_LOCKDOWN_ROOT` for the ward security boundary.
 
 The core's env + PATH block runs once per terminal tree, gated by an exported `_SIREN_SHELL_ENV` guard ("has this run in this terminal yet?"): a nested shell inherits the env and skips re-running brew/pyenv/PATH, while still defining aliases and functions (those are per-shell, never inherited). Env + PATH load for non-interactive shells too (scripts, ssh exec, the Claude Code Bash tool); prompt and completion are interactive-only. Both shells auto-cd a fresh interactive shell into `~/projects`. Host-specific lines live in untracked `~/.shellrc.local` (shared) or `~/.{bash,zsh}rc.local` (per shell).
 
@@ -22,4 +22,4 @@ Single Warp config tree rendered into the host's Warp config dir - `~/.warp-prev
 
 ## Install surface
 
-[README.md](../README.md) carries per-OS install steps. `coily exec apply-shell-links` repairs the local shell entry symlinks (`~/.zshrc`, `~/.bashrc`, `gpg-ssm`) when a host drifts from the ansible-owned layout. Mac/Linux can also use plain `ln -sf`. Windows uses symlinks via Git Bash, which requires Developer Mode + `MSYS=winsymlinks:nativestrict`.
+[README.md](../README.md) carries per-OS install steps. `ward exec apply-shell-links` repairs the local shell entry symlinks (`~/.zshrc`, `~/.bashrc`, `gpg-ssm`) when a host drifts from the ansible-owned layout. Mac/Linux can also use plain `ln -sf`. Windows uses symlinks via Git Bash, which requires Developer Mode + `MSYS=winsymlinks:nativestrict`.

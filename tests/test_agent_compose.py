@@ -669,14 +669,14 @@ def test_compose_rewrites_see_also_and_links(tmp_path: Path) -> None:
     src = tmp_path / "AGENTS.COMPOSE.md"
     write(
         src,
-        "# Doctrine\nRoute through [coily](.coily/coily.yaml).\n\n"
+        "# Doctrine\nRoute through [ward](.ward/ward.yaml).\n\n"
         "## See also\n- [README.md](README.md)\n",
     )
     out = generate_agent_compose.compose([src])
     assert "## See also" not in out
     assert "](README.md)" not in out
     # the inline relative link is absolutized against the source's own dir
-    assert f"]({tmp_path / '.coily' / 'coily.yaml'})" in out
+    assert f"]({tmp_path / '.ward' / 'ward.yaml'})" in out
 
 
 def test_compose_strips_see_also_from_overridden_base(tmp_path: Path) -> None:

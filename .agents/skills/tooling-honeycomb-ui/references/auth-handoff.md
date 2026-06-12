@@ -15,12 +15,12 @@ Honeycomb's login flow embeds Google SSO, so a logged-in reload of `ui.honeycomb
 3. Under **Request Headers**, find the `Cookie:` line. Copy the entire value (everything after `Cookie: `, no leading space, no trailing newline). Verify the copied string contains the substring `hny=`, that is Honeycomb's session cookie. If it doesn't, you're looking at a Google-SSO row. Go back to step 2 and re-filter.
 4. Drop the value into a temp file (avoids long-secret-in-argv hazards) and stash:
    ```
-   coily ops aws ssm put-parameter --overwrite --name /coilysiren/honeycomb/session-cookie --type SecureString --value file:///tmp/honeycomb-cookie.txt
+   ward ops aws ssm put-parameter --overwrite --name /coilysiren/honeycomb/session-cookie --type SecureString --value file:///tmp/honeycomb-cookie.txt
    shred -u /tmp/honeycomb-cookie.txt
    ```
 5. Rebuild the Playwright storage-state file from the new SSM value:
    ```
-   coily exec build-honeycomb-storage
+   ward exec build-honeycomb-storage
    ```
    (Once [agentic-os-kai#652](https://github.com/coilysiren/agentic-os-kai/issues/652) lands, this command will refuse to write the file if the cookie value lacks `hny=`, so a malformed handoff fails fast at build time rather than at navigation time.)
 6. Cookie has a finite lifetime (typically hours to days). When the skill detects a redirect to `/login`, prompt for a fresh copy.

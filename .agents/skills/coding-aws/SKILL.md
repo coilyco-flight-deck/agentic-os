@@ -13,11 +13,11 @@ Umbrella for any AWS work.
 - **Auth**: AWS SSO via the default profile. Refresh with `aws sso login` when expired.
 - **Python SDK**: `boto3`. Async via `aioboto3` only when concurrency is load-bearing.
 - **Secrets and config**: SSM Parameter Store, SecureString. Never hardcode opaque ids. See the configs-in-SSM rule in `agentic-os-kai/AGENTS.md`.
-- **CLI**: `coily ops aws ...` for privileged ops (audit-log binding, scope routing). Bare `aws ...` for read-only locals.
+- **CLI**: `ward ops aws ...` for privileged ops (audit-log binding, scope routing). Bare `aws ...` for read-only locals.
 
 ## Conventions
 
-- Parameter naming: vendor-scoped, kebab-case leaf, SecureString. `/<vendor>/<key>` (e.g. `/elevenlabs/api-key`, `/coily/discord-webhook-url`).
+- Parameter naming: vendor-scoped, kebab-case leaf, SecureString. `/<vendor>/<key>` (e.g. `/elevenlabs/api-key`, `/ward/discord-webhook-url`).
 - Region in code: read `AWS_REGION` env var, fall back to `us-east-1`. Don't hardcode in business logic.
 - IAM: prefer policies + roles over users. Inline policies for one-off, managed policies for shared.
 
@@ -32,5 +32,5 @@ aws, amazon web services, boto3, botocore, awscli, aws-cli, ec2, s3, iam, lambda
 ## See also
 
 - `agentic-os-kai/SSM.md` - parameter inventory.
-- `coily-ops-aws-meta` - coily wrapper rules.
+- `ward-ops-aws-meta` - ward wrapper rules.
 - `coding-terraform` - IaC umbrella for AWS infrastructure.

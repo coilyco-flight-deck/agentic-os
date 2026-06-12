@@ -1,13 +1,13 @@
 # `claude-dispatch-interactive`: spawn a Claude session in a new tab from a CLI
 
-A pattern for opening a new Warp tab whose payload is too dynamic, too large, or too structured to fit into a TOML literal. Used here to fire a `claude -p <multi-paragraph-prompt>` session in a new tab from a CLI invocation: `coily dispatch interactive <owner>/<repo>#<N>` (this repo's `coily` CLI lives at `github.com/coilyco-bridge/coily`).
+A pattern for opening a new Warp tab whose payload is too dynamic, too large, or too structured to fit into a TOML literal. Used here to fire a `claude -p <multi-paragraph-prompt>` session in a new tab from a CLI invocation: `ward dispatch interactive <owner>/<repo>#<N>` (this repo's `ward` CLI lives at `github.com/coilyco-bridge/ward`).
 
 This doc walks the design top to bottom. If you know Warp's `tab_configs/` directory and the `warp://tab_config/<name>` URI scheme, you have all the prerequisites. A sibling doc, `wtab.md`, covers the simpler case where the dynamic params fit as TOML literals. Read that first if you want the lighter pattern.
 
 ## What it does
 
 ```
-$ coily dispatch interactive coilysiren/repo-recall#88
+$ ward dispatch interactive coilysiren/repo-recall#88
 ```
 
 opens a new tab in the active Warp Preview window. The tab:
@@ -19,12 +19,12 @@ opens a new tab in the active Warp Preview window. The tab:
 The fan-out shape that justifies the design: queue up half a dozen issues from the couch, walk away, come back to six tabs each labelled with its issue. None of them races the others.
 
 ```
-$ coily dispatch interactive coilysiren/repo-recall#88
-$ coily dispatch interactive coilysiren/session-lattice#42
-$ coily dispatch interactive coilysiren/luca#17
-$ coily dispatch interactive coilysiren/eco-mods#203
-$ coily dispatch interactive coilysiren/agentic-os-kai#588
-$ coily dispatch interactive coilysiren/coily#274
+$ ward dispatch interactive coilysiren/repo-recall#88
+$ ward dispatch interactive coilysiren/session-lattice#42
+$ ward dispatch interactive coilysiren/luca#17
+$ ward dispatch interactive coilysiren/eco-mods#203
+$ ward dispatch interactive coilysiren/agentic-os-kai#588
+$ ward dispatch interactive coilysiren/ward#274
 # six tabs open, each cd'd into its repo, each in its own claude session
 ```
 
@@ -44,23 +44,23 @@ Other things from the Warp source that also apply here, same as for `wtab`:
 
 If the payload cannot ride in the URL and cannot fit as a TOML literal, it has to come from somewhere else on disk that the tab can read at open time. That somewhere is a scratch directory the CLI writes to and the tab reads from. The dispatch flow:
 
-**One.** `coily dispatch interactive <ref>` resolves the ref into a payload (ref, title, cwd, prompt body), serializes it as JSON, writes it to `/tmp/coily-dispatch-queue/<unix-nanos>-<8hex>.json` with mode 0600, then fires `open warppreview://tab_config/claude-dispatch-interactive`.
+**One.** `ward dispatch interactive <ref>` resolves the ref into a payload (ref, title, cwd, prompt body), serializes it as JSON, writes it to `/tmp/ward-dispatch-queue/<unix-nanos>-<8hex>.json` with mode 0600, then fires `open warppreview://tab_config/claude-dispatch-interactive`.
 
 **Two.** Warp opens the tab. The TOML's `commands` array invokes a fixed shim script (`claude-dispatch-interactive.sh`, lives in this repo under `warp/launch_configurations/`). The TOML itself is fixed: same color (none), same directory placeholder, same shim invocation. Nothing in the TOML changes per dispatch.
 
-**Three.** The shim acquires a mutex (`mkdir /tmp/coily-dispatch-queue/.lock`, since `flock` is not portable to stock macOS), pops the oldest `.json` file by lexicographic sort (unix-nanos prefix gives FIFO), parses out the fields with `jq`, releases the lock, cd's into the payload's cwd, prints the self-identifying header, and `exec`s `claude` with the prompt body.
+**Three.** The shim acquires a mutex (`mkdir /tmp/ward-dispatch-queue/.lock`, since `flock` is not portable to stock macOS), pops the oldest `.json` file by lexicographic sort (unix-nanos prefix gives FIFO), parses out the fields with `jq`, releases the lock, cd's into the payload's cwd, prints the self-identifying header, and `exec`s `claude` with the prompt body.
 
 **Four.** Soft-fail modes for every realistic failure: `jq` missing, lock unavailable for 10s, queue empty (someone opened the tab from the palette without a dispatch fire), cwd does not exist. Each prints a one-line hint then drops the user into a plain shell.
 
 ## Why the queue, not a single scratch file
 
-A single `/tmp/coily-dispatch-prompt.txt` file would work for one dispatch at a time. It does not work for the case where Kai runs `coily dispatch interactive <ref-A>` and `coily dispatch interactive <ref-B>` back to back. The second `open` arrives at Warp before the first tab has finished consuming its scratch file. Last-write-wins on the single file means one of the two dispatches sees the wrong payload.
+A single `/tmp/ward-dispatch-prompt.txt` file would work for one dispatch at a time. It does not work for the case where Kai runs `ward dispatch interactive <ref-A>` and `ward dispatch interactive <ref-B>` back to back. The second `open` arrives at Warp before the first tab has finished consuming its scratch file. Last-write-wins on the single file means one of the two dispatches sees the wrong payload.
 
 The unix-nanos-prefixed queue gives strict FIFO across concurrent dispatches. The mkdir-based mutex ensures atomic pop. Each tab consumes exactly one payload. Two dispatches fired in the same millisecond still get distinct filenames (the `-<8hex>` suffix is random) and serialize cleanly through the lock.
 
 ## Patterns considered and discarded
 
-**Single scratch file (`/tmp/coily-dispatch-prompt.txt`).** Fails under back-to-back dispatches as described above. The earliest version of the pattern used this and had to be rewritten to the FIFO queue once concurrent fires became routine.
+**Single scratch file (`/tmp/ward-dispatch-prompt.txt`).** Fails under back-to-back dispatches as described above. The earliest version of the pattern used this and had to be rewritten to the FIFO queue once concurrent fires became routine.
 
 **Environment variable threading.** No path. The tab's process starts from Warp's launch context, not from the dispatching shell.
 
@@ -70,20 +70,20 @@ The unix-nanos-prefixed queue gives strict FIFO across concurrent dispatches. Th
 
 ## Why this is nice
 
-The dispatch is fire and forget from the CLI side. `coily dispatch interactive` writes the JSON, fires the URI, and exits. The tab opens asynchronously. The caller can dispatch ten issues at once without coordination.
+The dispatch is fire and forget from the CLI side. `ward dispatch interactive` writes the JSON, fires the URI, and exits. The tab opens asynchronously. The caller can dispatch ten issues at once without coordination.
 
 Identification is automatic. The header line at the top of the tab tells you which issue is running there. With ten tabs open, the vertical tab sidebar is a list of human-readable session names without any work from the operator.
 
 The shim is forgiving. Every realistic failure mode prints a hint and leaves you in a shell rather than crashing the tab. `jq` not installed, queue mutex stuck, queue empty, cwd missing - all soft-fail with a recovery line.
 
-The TOML stays small. A pre-registered file plus a single command line, no per-dispatch state. The dynamic surface area lives in the JSON payload format, which is versioned by `coily` and easy to evolve.
+The TOML stays small. A pre-registered file plus a single command line, no per-dispatch state. The dynamic surface area lives in the JSON payload format, which is versioned by `ward` and easy to evolve.
 
 ## Files
 
 - `~/.warp/tab_configs/claude-dispatch-interactive.toml` - the pre-registered tab config. Static.
 - `warp/launch_configurations/claude-dispatch-interactive.sh` - the shim. Reused by the launch_configuration sibling (`claude-dispatch-interactive.yaml`) and by this tab config.
-- `warp/launch_configurations/claude-dispatch-interactive.yaml` - launch config variant that fires this same shim but as a new window. Used by `coily dispatch interactive --surface window`.
-- `coily dispatch interactive` source: `github.com/coilyco-bridge/coily`, see issues #270, #279, #280 for the design discussion.
+- `warp/launch_configurations/claude-dispatch-interactive.yaml` - launch config variant that fires this same shim but as a new window. Used by `ward dispatch interactive --surface window`.
+- `ward dispatch interactive` source: `github.com/coilyco-bridge/ward`, see issues #270, #279, #280 for the design discussion.
 
 ## See also
 

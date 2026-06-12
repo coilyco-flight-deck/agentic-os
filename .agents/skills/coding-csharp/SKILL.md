@@ -21,7 +21,7 @@ Eco-specific modding mechanics live in the `gaming-eco-*` skill family. This ski
 
 - **Runtime**: modern .NET (`net10.0` in the Eco repos). Use the `TargetFramework` the project pins.
 - **Project style**: SDK-style `.csproj`. `ImplicitUsings` enabled, `Nullable` enabled - both on in the Eco repos, keep them on for new projects.
-- **Build/run**: `dotnet build`, `dotnet run`, `dotnet test`. On Kai's hosts these route through `coily` (the lockdown denies bare `dotnet`).
+- **Build/run**: `dotnet build`, `dotnet run`, `dotnet test`. On Kai's hosts these route through `ward` (the lockdown denies bare `dotnet`).
 - **Packages**: NuGet via `<PackageReference>`. No `packages.config`.
 - **Format**: `dotnet format`. Don't impose a custom `.editorconfig` on a project that has one.
 

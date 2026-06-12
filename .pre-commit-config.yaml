@@ -2,7 +2,7 @@ repos:
   - repo: local
     hooks:
       - id: catalog-block-present
-        name: .coily/coily.yaml catalog block present
+        name: .ward/ward.yaml catalog block present
         entry: python -m agentic_os.pre_commit.check_catalog_block
         language: python
         additional_dependencies: [pyyaml]
@@ -109,14 +109,14 @@ repos:
         pass_filenames: false
         stages: [pre-commit]
       - id: warp-go-vet
-        name: vet the coily exec warp module
+        name: vet the ward exec warp module
         entry: bash -c 'cd warp && go vet ./...'
         language: system
         files: ^warp/.*\.go$
         pass_filenames: false
         stages: [pre-commit]
       - id: warp-gofmt
-        name: gofmt the coily exec warp module
+        name: gofmt the ward exec warp module
         entry: bash -c 'cd warp && gofmt -w .'
         language: system
         files: ^warp/.*\.go$

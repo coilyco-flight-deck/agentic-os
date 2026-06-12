@@ -23,7 +23,7 @@ services:
 Inject the auth key without writing it to disk:
 
 ```bash
-TS_AUTHKEY="$(coily ops aws ssm get-parameter \
+TS_AUTHKEY="$(ward ops aws ssm get-parameter \
   --name /coilysiren/mac-proxy/ts-authkey --with-decryption \
   --query 'Parameter.Value' --output text)" docker compose up -d
 ```
@@ -41,7 +41,7 @@ Host kai-server-proxied
 Resolve the peer IP at runtime rather than hardcoding it:
 
 ```bash
-coily ops aws ssm get-parameter --name /coilysiren/kai-server/tailnet-ip \
+ward ops aws ssm get-parameter --name /coilysiren/kai-server/tailnet-ip \
   --with-decryption --query 'Parameter.Value' --output text
 ```
 

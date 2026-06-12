@@ -10,13 +10,13 @@ from agentic_os.pre_commit.check_misplaced_skills import main, misplaced
 
 
 def test_misplaced_matches_deny_minus_allow() -> None:
-    names = ["coding-otel-a2a-relay", "coding-python", "repo-coily", "repo-self"]
+    names = ["coding-otel-a2a-relay", "coding-python", "repo-ward", "repo-self"]
     deny = ["coding-*", "repo-*"]
     allow = ["repo-self"]
     assert misplaced(names, deny, allow) == [
         "coding-otel-a2a-relay",
         "coding-python",
-        "repo-coily",
+        "repo-ward",
     ]
 
 

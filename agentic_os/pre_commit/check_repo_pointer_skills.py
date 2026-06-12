@@ -34,7 +34,7 @@ TRACKER = "coilysiren/agentic-os-kai#312"
 SKILLS_DIR_CANDIDATES = (".agents/skills", ".claude/skills", "skills")
 
 REGEN_HINT = (
-    "  regenerate: coily ops forgejo repo view --repo coilysiren/<name> --json "
+    "  regenerate: ward ops forgejo repo view --repo coilysiren/<name> --json "
     "| python -m agentic_os.generators.generate_repo_pointer_skill <name> --from-json - --repo-root <repo>"
 )
 

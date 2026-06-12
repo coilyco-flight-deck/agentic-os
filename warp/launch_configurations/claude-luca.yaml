@@ -7,7 +7,7 @@
 # cats README.md so paths render clickable in Warp's editor).
 #
 # Conventions:
-#   - All tabs cwd /Users/kai/projects/coilysiren; coily's ops verbs are
+#   - All tabs cwd /Users/kai/projects/coilysiren; ward's ops verbs are
 #     host-wide and don't bind to a repo, so no per-tab scope is set.
 #   - Titles use ` · ` separator and pre-pin with printf to resist auto-rename.
 #   - Each duo = working `claude` tab + pulse tab (watch loop or hint shell).

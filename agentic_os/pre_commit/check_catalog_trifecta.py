@@ -2,7 +2,7 @@
 """Enforce the catalog-trifecta cross-link convention.
 
 Every catalog repo carries three audience-distinct entry-point markdown
-files at the root plus the coily command spec. Each markdown file
+files at the root plus the ward command spec. Each markdown file
 cross-links to the other two plus to the YAML. This makes the entry
 point reachable from any one of them with a single click.
 
@@ -10,19 +10,19 @@ The four files:
     README.md           - pitch + quick start for human readers
     AGENTS.md           - per-repo agent operating rules
     docs/FEATURES.md    - flat inventory of what ships today
-    .coily/coily.yaml   - allowlisted dev commands
+    .ward/ward.yaml   - allowlisted dev commands
 
 This validator checks, per markdown file:
     1. The file exists.
     2. The file contains a "## See also" section header.
     3. The file contains markdown links resolving to each of the other
-       three canonical paths (the two peer .md files plus .coily/coily.yaml).
+       three canonical paths (the two peer .md files plus .ward/ward.yaml).
     4. The file cites the canonical convention doc - either the new home
        at coilysiren/agentic-os#59 or the legacy home at
        coilysiren/agentic-os-kai#313 (during the migration window).
     5. AGENTS.md contains the standard repo-local agent heading set.
 
-The .coily/coily.yaml file only needs to exist; no back-link required,
+The .ward/ward.yaml file only needs to exist; no back-link required,
 since YAML is machine-consumed and the prose home is the .md files.
 
 Usage (when run directly):
@@ -53,11 +53,8 @@ MD_FILES = [
     Path("docs/FEATURES.md"),
 ]
 
-# Existence-only fourth member; .coily for personal, .ward for external-facing.
-CATALOG_YAMLS = (
-    Path(".coily/coily.yaml"),
-    Path(".ward/ward.yaml"),
-)
+# Existence-only fourth member: the ward command spec.
+CATALOG_YAMLS = (Path(".ward/ward.yaml"),)
 
 SEE_ALSO_HEADER = re.compile(r"^##\s+See also\s*$", re.MULTILINE)
 
@@ -188,11 +185,7 @@ def check_agents_headings(body: str) -> list[str]:
 
 def check_catalog_yaml(catalog_yaml: Path | None) -> list[str]:
     if catalog_yaml is None:
-        return [
-            "catalog yaml missing. Every catalog repo needs one of "
-            ".coily/coily.yaml (personal) or .ward/ward.yaml "
-            "(external-facing)."
-        ]
+        return ["catalog yaml missing. Every catalog repo needs .ward/ward.yaml."]
     return []
 
 
@@ -202,7 +195,7 @@ def main() -> int:
         return 0
     catalog_yaml = resolve_catalog_yaml()
     all_violations: list[str] = []
-    # Fall back to .coily/coily.yaml so error messages always name a concrete file.
+    # Fall back to .ward/ward.yaml so error messages always name a concrete file.
     link_target = catalog_yaml or CATALOG_YAMLS[0]
     for md in MD_FILES:
         all_violations.extend(check_md_file(md, link_target))

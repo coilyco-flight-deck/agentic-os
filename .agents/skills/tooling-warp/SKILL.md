@@ -29,7 +29,7 @@ warp, Warp, WarpPreview, ~/.warp, ~/.warp-preview, warp settings, settings.toml,
 - [`docs/warp-host-setup.md`](../../../docs/warp-host-setup.md) - install playbook for the Mac daily driver (brew install Preview, swap `settings.toml` symlink, run `scripts/set-warp-default-editor.sh` to rebind file-type defaults via `duti` + `lsregister`, Dock/Spotlight discipline). The script honors `WARP_DEFAULT_EDITOR_BUNDLE_ID` and `WARP_DEFAULT_EDITOR_APP_PATH` for per-host overrides.
 - coilysiren/agentic-os#106 - automate the `warp/launch_configurations/*` and `warp/tab_configs/*` symlink walk into `~/.warp/`.
 - coilysiren/agentic-os#107 - dual-channel install (the Preview promotion).
-- coilysiren/coily#270 - `coily dispatch interactive`, the consumer of the Warp tab_config URI handler.
+- coilysiren/ward#270 - `ward dispatch interactive`, the consumer of the Warp tab_config URI handler.
 - warpdotdev/Warp#9379 - merged tab_config URI handler that motivated moving to Preview as the daily driver.
 - coilysiren/agentic-os#57 - terminal file-viewer wrapper functions (`bat`, `view`, `open`, etc.).
 - coilysiren/agentic-os#58 - Brewfile catalog of modern CLI tools.

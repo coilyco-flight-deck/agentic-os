@@ -3,7 +3,7 @@
 Fetch the voice id from SSM, then call the MCP:
 
 ```bash
-VOICE_ID=$(coily ops aws ssm get-parameter \
+VOICE_ID=$(ward ops aws ssm get-parameter \
   --name /elevenlabs/voice-id/default --with-decryption \
   --query Parameter.Value --output text)
 mcporter call "elevenlabs.text_to_speech(text: \"<persona-shaped line>\", voice_id: \"$VOICE_ID\", output_directory: \"/Users/kai/data/elevenlabs\")"

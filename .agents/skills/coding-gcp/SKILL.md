@@ -10,7 +10,7 @@ Umbrella for any GCP work.
 ## Defaults
 
 - **Auth**: `gcloud auth application-default login` for local dev; service accounts in CI.
-- **CLI**: `gcloud`, `gsutil`, `bq`. No coily wrapper yet (AWS has one because that's where the privileged surface is).
+- **CLI**: `gcloud`, `gsutil`, `bq`. No ward wrapper yet (AWS has one because that's where the privileged surface is).
 - **Region**: project-pinned, no default to guess.
 - **IaC**: Terraform (Google provider). Cross-link to [`coding-terraform`](../coding-terraform/SKILL.md).
 - **Secrets**: Secret Manager (analogous to AWS SSM SecureString).

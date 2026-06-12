@@ -18,5 +18,5 @@ Status: 🗺 Router | Last updated: YYYY-MM-DD
 Rules that apply to every routed-to investigation:
 
 * Pin versions before reasoning about behavior. The version-pin-first discipline lives in the ops-investigation meta-skill.
-* Privileged writes route through `coily`, never directly. See the git-workflow and command-passthroughs skills.
+* Privileged writes route through `ward`, never directly. See the git-workflow and command-passthroughs skills.
 * Read-only investigation tools first. Reach for writes only after the investigation has named the failure mechanism.

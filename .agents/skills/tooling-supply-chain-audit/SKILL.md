@@ -42,5 +42,5 @@ The full multi-step checklist (org reality, maintainer signals, repo health, cod
 
 ## More
 
-- [Invoking cargo / npm above board](references/coily-pkg-wrappers.md) - route package-manager actions through `coily pkg`.
+- [Invoking cargo / npm above board](references/ward-pkg-wrappers.md) - route package-manager actions through `ward pkg`.
 - [Output format](references/output-format.md) - the verdict shape to write to chat, plus what this skill is NOT.
