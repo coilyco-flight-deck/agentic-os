@@ -7,7 +7,7 @@ This doc describes capabilities, not files. If you want a file inventory, run `l
 ## Inventory
 
 - [Shell and secret handling](features-shell-secrets.md) - cross-platform zsh, in-process SSM secret loader, Warp terminal config, GPG-without-disk-passphrases, install surface.
-- **Karabiner key binding asset** - `karabiner/control-escape-backtick.json` stores the Control+Escape -> backtick complex modification and is symlinked into Karabiner's local assets directory.
+- **Karabiner key binding assets** - `karabiner/*.json` store complex modifications symlinked into Karabiner's local assets directory: Control+Escape -> backtick, plus a device-scoped left_option <-> left_command swap for the external keyboard. Install Karabiner with `brew install --cask karabiner-elements`; setup steps in [docs/repo-layout.md](repo-layout.md).
 - [Agents and sessions](features-agents-sessions.md) - agent self-name, session pulse.
 - [Cross-repo tooling and release](features-release-tooling.md) - pre-commit baseline, diagnostic helpers, Forgejo-canonical release actions.
 - [Managed AGENTS.md pointer block](features-agents-pointer.md) - org-aware, drift-checked workspace-base pointer rendered into each repo's AGENTS.md.

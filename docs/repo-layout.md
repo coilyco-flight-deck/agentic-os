@@ -19,7 +19,13 @@ One shared core, two thin per-shell entries, so bash and zsh run identical env, 
 
 ## karabiner
 
-- `karabiner/control-escape-backtick.json` - Karabiner-Elements complex modification asset for the Control+Escape -> backtick rule. Symlink it into `~/.config/karabiner/assets/complex_modifications/` so Karabiner can import it.
+- `karabiner/*.json` - Karabiner-Elements complex modification assets. `control-escape-backtick.json` maps Control+Escape -> backtick. `swap-option-command.json` swaps left_option <-> left_command on the external keyboard (device-scoped by `device_if`).
+
+Setup, after `brew install --cask karabiner-elements`:
+
+1. Symlink each asset into `~/.config/karabiner/assets/complex_modifications/` so Karabiner can find it.
+2. Open Karabiner-Elements once and approve the system prompts (driver extension, Input Monitoring).
+3. Complex Modifications -> Add rule, then enable the agentic-os rules.
 
 ## scripts
 
