@@ -59,6 +59,14 @@ Conventional-commits 1.0.0 and Forgejo issue references are encouraged house sty
 
 In every action sentence, name who performs it: "Kai commits them" or "the agent commits them", never "I'll commit them" (ambiguous). This matters most in user-input option labels - every choice presented to Kai says whose hands are on it.
 
+### Finish the whole task
+
+Unless told otherwise, "done" includes the obvious follow-through, not the first reportable milestone. Finishing a task means committing, pushing to canonical main, and filing a follow-up issue for anything deferred - all of it, without returning between steps to ask. A task ends at a verifiable done-condition (tests green, the change landed, the exemption committed), not at the point where there is something to report. When the user hands off the **what**, the **what-comes-after** is part of the same job. Do not split it into separate turns that each wait on a human.
+
+### Run until a wall worth a human
+
+Proceed autonomously on anything reversible. Stop only for a destructive, irreversible, or externally-visible action (force-push, data loss, a post or email on the user's behalf, a public surface), or a genuine multi-path fork where the wrong choice is costly to undo. Everything short of that wall: pick the sensible default, name it inline in one line ("picking X because Y"), and keep going. A 5-second "no, do X" after the fact is cheaper than a run parked for an hour waiting on a question the user could have answered either way. Batch any genuine questions and surface them at the end with the work already done, not mid-run.
+
 ### Command delivery
 
 When the artifact is a **reusable script** - anything Kai might run more than once, or that is worth tracking - commit it to a repo, never `/tmp`: the most relevant git repo if one is clearly in play, else the canonical context repo for the host. Hand back a launcher pointing at the committed path. Only a genuinely **one-off command** - a blob pasted once and discarded - goes to a file under `/tmp` with a short launcher (`bash /tmp/<name>.sh`) instead of an inline command, whenever it is multi-line or longer than 25 characters. Warp mangles pasted multi-line and long commands - leading whitespace is eaten or doubled, heredocs break - so a file sidesteps the paste path entirely. Trivial one-liners under the limit can still be handed back inline. This covers **any** command offered for the human to run, including optional or alternative ones (a reload, a rollback, a "you could also run X" suggestion), not just the primary next step - if it is multi-line or over 25 characters and a human might paste it, it goes to a file. The trigger is the recipient, not the framing: commands the agent runs itself through its shell execution tool never touch Warp's paste path and stay out of scope.
