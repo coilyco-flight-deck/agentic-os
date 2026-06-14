@@ -132,6 +132,21 @@ pre-commit-all-hooks-missing() {
   done
 }
 
+# Report every repo whose pinned agentic-os hook rev lags the version agentic-os
+# defines now. Tab columns: repo, pinned rev, current version.
+pre-commit-all-aos-version-outdated() {
+  local current config repo rev
+  current=$(pre-commit-aos-version-defined)
+  for config in */*/.pre-commit-config.yaml; do
+    [ -f "$config" ] || continue
+    repo="${config%/.pre-commit-config.yaml}"
+    rev=$(yq -r '.repos[] | select(.repo | test("agentic-os$")) | .rev' "$config")
+    [ -z "$rev" ] || [ "$rev" = "null" ] && continue
+    [ "${rev#v}" = "$current" ] && continue
+    printf '%s\t%s\t%s\n' "$repo" "$rev" "$current"
+  done
+}
+
 git-default-branch() {
   git symbolic-ref --short refs/remotes/origin/HEAD | sed 's|^origin/||'
 }
