@@ -1,0 +1,40 @@
+{
+  "title": "agentic-os Windows App (RDP) keyboard capture",
+  "rules": [
+    {
+      "description": "RDP frontmost: map command to control so macOS stops eating Cmd shortcuts and they reach Windows as Ctrl",
+      "manipulators": [
+        {
+          "from": { "key_code": "left_command", "modifiers": { "optional": ["any"] } },
+          "to": [{ "key_code": "left_control" }],
+          "conditions": [
+            {
+              "type": "frontmost_application_if",
+              "bundle_identifiers": [
+                "^com\\.microsoft\\.rdc\\.macos$",
+                "^com\\.microsoft\\.rdc\\.osx\\.beta$",
+                "^com\\.microsoft\\.windowsapp$"
+              ]
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "from": { "key_code": "right_command", "modifiers": { "optional": ["any"] } },
+          "to": [{ "key_code": "right_control" }],
+          "conditions": [
+            {
+              "type": "frontmost_application_if",
+              "bundle_identifiers": [
+                "^com\\.microsoft\\.rdc\\.macos$",
+                "^com\\.microsoft\\.rdc\\.osx\\.beta$",
+                "^com\\.microsoft\\.windowsapp$"
+              ]
+            }
+          ],
+          "type": "basic"
+        }
+      ]
+    }
+  ]
+}

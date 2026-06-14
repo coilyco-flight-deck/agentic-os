@@ -4,7 +4,7 @@ Full breakdown of what lives where. Summary in [the README](../README.md).
 
 ## shell
 
-One shared core, two thin per-shell entries, so bash and zsh run identical env, PATH, aliases, functions, and the SSM loader.
+One shared core, two thin per-shell entries, so bash and zsh run identical env, PATH, aliases, and functions.
 
 - `shell/common.sh` - shared core (bash/zsh common subset). Env + per-OS PATH (picked via `uname -s`), aliases, git helpers, `rg` wrapper, the SSM loader, auto-cd to `~/projects`. Env runs once per terminal tree via the `_SIREN_SHELL_ENV` guard.
 - `shell/zshrc` - zsh entry, symlinked to `~/.zshrc`. Sources `common.sh`, then zsh-only bits: `compinit`, the `vcs_info` siren prompt, `warp.zsh`.
@@ -19,17 +19,17 @@ One shared core, two thin per-shell entries, so bash and zsh run identical env, 
 
 ## karabiner
 
-- `karabiner/*.json` - Karabiner-Elements complex modification assets. `control-escape-backtick.json` maps Control+Escape -> backtick. `swap-option-command.json` swaps left_option <-> left_command on the external keyboard (device-scoped by `device_if`).
+- `karabiner/*.json` - Karabiner-Elements complex-modification assets. `control-escape-backtick.json`: Control+Escape -> backtick. `swap-option-command.json`: left_option <-> left_command on the external keyboard (`device_if`). `rdp-keyboard-capture.json`: command -> control while a Remote Desktop window is frontmost (`frontmost_application_if`), so Cmd shortcuts reach Windows as Ctrl.
 
 Setup, after `brew install --cask karabiner-elements`:
 
-1. Symlink each asset into `~/.config/karabiner/assets/complex_modifications/` so Karabiner can find it.
+1. Symlink each asset into `~/.config/karabiner/assets/complex_modifications/`.
 2. Open Karabiner-Elements once and approve the system prompts (driver extension, Input Monitoring).
 3. Complex Modifications -> Add rule, then enable the agentic-os rules.
 
 ## scripts
 
-- `verbatim-echo.sh` - wrap a command's output in a fenced block clipped to 20 lines / 100 chars per line. Chat-safe dumps for mobile.
+- `verbatim-echo.sh` - wrap a command's output in a fenced block clipped to 20 lines / 100 chars per line for chat-safe dumps.
 - `check-aws-config.py` - reject the `[profile default]` trap in `~/.aws/config` that surfaces later as a cryptic `NoRegion` from SSM/S3.
 - `gpg-ssm` / `gpg-ssm.cmd` - GPG signing wrapper that pulls the passphrase from AWS SSM at `/coilysiren/gpg-passphrase/<keyid>` instead of caching it on disk. The `.cmd` is a bash.exe shim Git for Windows needs because it can't invoke extensionless shebang scripts reliably.
 - `agent-name.sh` - decorate the agent self-name for the Claude Code status line or the SessionStart hook. The name comes from `ward agent-name` with a local fallback when ward is absent.
