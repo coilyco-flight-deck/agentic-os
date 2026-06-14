@@ -108,7 +108,17 @@ DEFAULT_HOOK_IDS = [
 ]
 
 # Per-repo hook opt-outs. eco-* repos skip code-comments (Unity / C# conventions).
-PER_REPO_HOOK_SKIPS: dict[str, set[str]] = {}
+# lore: docs-only / no-skills slice, subtracted set reproduces it. See #215.
+PER_REPO_HOOK_SKIPS: dict[str, set[str]] = {
+    "lore": {
+        "catalog-doc-size",
+        "check-skills",
+        "repo-pointer-skills",
+        "misplaced-skills",
+        "agent-compose-size",
+        "agent-compose-dedup",
+    },
+}
 ECO_HOOK_SKIPS = {"code-comments"}
 
 
