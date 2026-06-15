@@ -485,15 +485,19 @@ def compose(sources: list[Path], overrides: dict[Path, Path] | None = None) -> s
     return "\n\n".join(parts) + "\n"
 
 
-def install_symlink(dst: Path, target: Path) -> str:
+def install_symlink(dst: Path, target: Path) -> str | None:
     """Point dst at target, backing up a pre-existing real file to dst.bak.
 
-    Mirrors the shell role's ensure_link: an existing symlink is replaced, an existing
-    regular file is moved aside, parents are created. Returns a log line.
+    Mirrors the shell role's ensure_link: an existing symlink is replaced, an
+    existing regular file is moved aside, parents are created. Returns a log
+    line, or None when dst already points at target (a no-op) so the per-session
+    freshen hook stays silent when nothing changed.
     """
     dst.parent.mkdir(parents=True, exist_ok=True)
     note = ""
     if dst.is_symlink():
+        if dst.readlink() == target:
+            return None
         dst.unlink()
     elif dst.exists():
         backup = dst.with_name(dst.name + ".bak")
@@ -542,10 +546,10 @@ def run(config_path: Path, composed_path: Path, *, dry_run: bool = False) -> int
 
     config = load_config(config_path)
     gathered, errors = gather_sources(config)
-    if errors:
-        for err in errors:
-            sys.stderr.write(f"agent-compose: {err}\n")
-        return 1
+    # A missing source degrades (compose from the rest, empty still refused
+    # below); it must not freeze the whole load point. See features-agents-sessions.md.
+    for err in errors:
+        sys.stderr.write(f"agent-compose: warning: {err} (skipped)\n")
 
     machine_scopes = _normalize_scopes(config.get("scopes"))
     sources = select_by_scope(gathered, machine_scopes)
@@ -597,10 +601,18 @@ def run(config_path: Path, composed_path: Path, *, dry_run: bool = False) -> int
     for target, (selected, override_map) in sorted(
         planned.items(), key=lambda item: str(item[0])
     ):
-        target.write_text(compose(selected, override_map), encoding="utf-8")
+        # Write only on real change so the per-session freshen hook stays silent
+        # (no "wrote" line, no mtime churn) on a no-op recompose.
+        body = compose(selected, override_map)
+        current = target.read_text(encoding="utf-8") if target.exists() else None
+        if current == body:
+            continue
+        target.write_text(body, encoding="utf-8")
         print(f"wrote   {target} ({len(selected)} source(s)){tail}")
     for harness, dst in sorted(load_points.items()):
-        print(install_symlink(dst, outputs[harness]) + f"  [{harness}]")
+        line = install_symlink(dst, outputs[harness])
+        if line is not None:
+            print(f"{line}  [{harness}]")
     return 0
 
 

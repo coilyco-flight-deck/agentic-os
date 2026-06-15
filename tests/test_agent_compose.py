@@ -88,14 +88,59 @@ def test_compose_is_deterministic(tmp_path: Path) -> None:
     )
 
 
-# ---------- missing source is an error, not a silent skip ----------
+# ---------- a missing source degrades (warn + skip), it does not freeze ----------
 
 
-def test_missing_source_fails(paths: dict[str, Path], tmp_path: Path) -> None:
+def test_missing_source_degrades_when_others_survive(
+    paths: dict[str, Path], tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """One missing source must not freeze the whole load point.
+
+    A wrong host-class entry (e.g. a work overlay listed on a personal mac) once
+    aborted the entire compose, silently freezing COMPOSED.md for every harness.
+    Now the present sources still compose and the missing one is a loud warning.
+    """
+    ok = tmp_path / "AGENTS.COMPOSE.md"
+    write(ok, "# present\nstill here\n")
+    write(paths["config"], f"sources:\n  - {tmp_path / 'nope.md'}\n  - {ok}\n")
+    rc = generate_agent_compose.run(paths["config"], paths["composed"])
+    assert rc == 0
+    assert "still here" in paths["composed"].read_text(encoding="utf-8")
+    assert "nope.md" in capsys.readouterr().err  # surfaced, not swallowed
+
+
+def test_all_sources_missing_still_refuses(
+    paths: dict[str, Path], tmp_path: Path
+) -> None:
+    """With nothing left to compose, the empty-output guard still fires."""
     write(paths["config"], f"sources:\n  - {tmp_path / 'nope.md'}\n")
     rc = generate_agent_compose.run(paths["config"], paths["composed"])
     assert rc == 1
     assert not paths["composed"].exists()
+
+
+# ---------- a no-op recompose is silent and does not churn the file ----------
+
+
+def test_unchanged_recompose_is_silent(
+    paths: dict[str, Path], tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The freshen hook runs run() every session; a no-op must stay quiet.
+
+    No "wrote" line (so hook stdout is empty when nothing changed) and no rewrite
+    of unchanged content (so mtime does not churn each session).
+    """
+    src = tmp_path / "AGENTS.COMPOSE.md"
+    write(src, "# doctrine\nstable\n")
+    write(paths["config"], f"sources:\n  - {src}\n")
+
+    assert generate_agent_compose.run(paths["config"], paths["composed"]) == 0
+    capsys.readouterr()  # drain the first-write output
+    before = paths["composed"].stat().st_mtime_ns
+
+    assert generate_agent_compose.run(paths["config"], paths["composed"]) == 0
+    assert "wrote" not in capsys.readouterr().out
+    assert paths["composed"].stat().st_mtime_ns == before
 
 
 # ---------- dry-run touches nothing ----------
@@ -134,10 +179,22 @@ def test_install_symlink_replaces_existing_symlink(tmp_path: Path) -> None:
     dst = tmp_path / "CLAUDE.md"
     dst.symlink_to(old_target)
 
-    generate_agent_compose.install_symlink(dst, target)
+    line = generate_agent_compose.install_symlink(dst, target)
 
+    assert line is not None  # a real relink reports
     assert dst.resolve() == target.resolve()
     assert not dst.with_name("CLAUDE.md.bak").exists()
+
+
+def test_install_symlink_noop_is_silent(tmp_path: Path) -> None:
+    """An already-correct link returns None so the freshen hook stays quiet."""
+    target = tmp_path / "composed.md"
+    target.write_text("x", encoding="utf-8")
+    dst = tmp_path / "CLAUDE.md"
+    dst.symlink_to(target)
+
+    assert generate_agent_compose.install_symlink(dst, target) is None
+    assert dst.readlink() == target  # left intact
 
 
 # ---------- load-point resolution: defaults + opt-in opencode ----------
