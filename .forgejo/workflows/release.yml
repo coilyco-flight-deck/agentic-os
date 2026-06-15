@@ -46,13 +46,13 @@ jobs:
       FORGEJO_BASE_URL: https://forgejo.coilysiren.me
       REPO: coilyco-flight-deck/agentic-os
       PIN_PATH: scripts/apply-agentic-os-hooks.py
-      FORGEJO_TOKEN: ${{ secrets.FORGEJO_TOKEN }}
+      FORGEJO_TOKEN: ${{ secrets.CI_RELEASE_TOKEN }}
     steps:
       - name: Rewrite DEFAULT_REV via forgejo Contents API
         run: |
           set -euo pipefail
           if [ -z "${FORGEJO_TOKEN:-}" ]; then
-            echo "bump-pin: FORGEJO_TOKEN secret not set; skipping pin bump." >&2
+            echo "bump-pin: CI_RELEASE_TOKEN secret not set; skipping pin bump." >&2
             echo "DEFAULT_REV stays put until the secret is provisioned." >&2
             exit 0
           fi

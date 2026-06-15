@@ -36,7 +36,8 @@ repo inherits when `apply-agentic-os-hooks` rolls out the hook block. The
 `bump-pin` job rewrites it to the freshly cut tag via the Forgejo Contents API
 and pushes a `[skip ci]` commit, so the rollout always pins the latest release.
 This is the direct analog of ward's formula `url` bump. It needs the
-`FORGEJO_TOKEN` secret; without it the job logs and no-ops (the pin just stays
+`CI_RELEASE_TOKEN` Actions secret (the `write:repository` PAT set org-wide on
+`coilyco-flight-deck`); without it the job logs and no-ops (the pin just stays
 put until the secret is provisioned).
 
 pyproject `version` and `uv.lock` are NOT touched by the auto-pipeline - keeping
