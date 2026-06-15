@@ -106,3 +106,18 @@ def test_code_allows_long_top_header_block() -> None:
 def test_code_top_header_block_survives_a_shebang() -> None:
     lines = ["#!/usr/bin/env python3", "# h1", "# h2", "# h3", "x = 1"]
     assert scan_lines(Path("m.py"), ".py", lines) == []
+
+
+def test_kdl_allows_two_contiguous_line_comments_after_content() -> None:
+    lines = ["node 1", "// one", "// two", "node 2"]
+    assert scan_lines(Path("c.kdl"), ".kdl", lines) == []
+
+
+def test_kdl_rejects_three_contiguous_line_comments_after_content() -> None:
+    lines = ["node 1", "// one", "// two", "// three", "node 2"]
+    assert len(scan_lines(Path("c.kdl"), ".kdl", lines)) == 1
+
+
+def test_kdl_flags_block_comment_run_after_content() -> None:
+    lines = ["node 1", "/* one", " * two", " * three */", "node 2"]
+    assert len(scan_lines(Path("c.kdl"), ".kdl", lines)) == 1
