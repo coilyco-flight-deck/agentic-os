@@ -178,24 +178,24 @@ git-all-stashes() {
 }
 
 git-all-pull-main() {
-  local repo branch status=0
+  local repo branch rc=0
   for repo in */*/.git; do
     [ -d "$repo" ] || continue
     repo="${repo%/.git}"
     printf '==> %s\n' "$repo"
     branch=$(git -C "$repo" branch --show-current) || continue
     if ! git -C "$repo" switch main; then
-      status=1
+      rc=1
       continue
     fi
     if ! git -C "$repo" pull --ff-only; then
-      status=1
+      rc=1
     fi
     if [ -n "$branch" ] && [ "$branch" != "main" ]; then
-      git -C "$repo" switch "$branch" || status=1
+      git -C "$repo" switch "$branch" || rc=1
     fi
   done
-  return "$status"
+  return "$rc"
 }
 
 git-all-dirty() {
