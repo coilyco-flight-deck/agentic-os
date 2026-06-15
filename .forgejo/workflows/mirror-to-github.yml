@@ -1,0 +1,32 @@
+# Push Forgejo main+tags to the read-only GitHub mirror; no-ops without the PAT.
+# Forgejo (coilyco-flight-deck/agentic-os) is canonical; GitHub
+# (coilysiren/agentic-os) is the PR-gated downstream mirror that the fleet's
+# `uses: coilysiren/agentic-os/actions/*@main` references resolve against.
+
+name: mirror-to-github
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+
+jobs:
+  mirror:
+    runs-on: docker
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Mirror to GitHub
+        env:
+          PAT: ${{ secrets.GITHUB_MIRROR_PAT }}
+        run: |
+          set -euo pipefail
+          if [ -z "${PAT}" ]; then
+            echo "mirror-to-github: GITHUB_MIRROR_PAT secret not set; skipping." >&2
+            exit 0
+          fi
+          git remote add github "https://x-access-token:${PAT}@github.com/coilysiren/agentic-os.git"
+          git push --force github main
+          git push --force --tags github

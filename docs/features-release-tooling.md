@@ -29,3 +29,5 @@ Composite Forgejo Actions for the brew release pipeline now that `forgejo.coilys
 - `actions/bump-formula` - rewrite a Homebrew Formula's `url ".."` line to pin the new tag + revision and PUT via forgejo Contents API. Same-repo write only; cross-repo bumps live in the consuming repo.
 
 Consumed via `uses: coilyco-flight-deck/agentic-os/actions/<name>@main` from a `.forgejo/workflows/*.yml`. Auto-issued `${{ github.token }}` (forgejo's compatibility name for its per-job token) covers same-repo writes; no extra secret to provision.
+
+agentic-os dogfoods these actions for its own releases (`.forgejo/workflows/`), referencing them locally via `uses: ./actions/...` so the source repo never waits on its own mirror. Push to main cuts a minor tag + release, a `bump-pin` job advances `DEFAULT_REV` for consumer rollouts, and a mirror job force-pushes to the read-only `coilysiren/agentic-os` GitHub mirror. Major bumps stay hand-cut via `scripts/release.py`. Walkthrough: [docs/release.md](release.md).

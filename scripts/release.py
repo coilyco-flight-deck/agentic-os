@@ -6,8 +6,15 @@ version and the `DEFAULT_REV` pointer in
 `scripts/apply-agentic-os-hooks.py`, commits the bump, creates a signed
 annotated tag, and pushes both.
 
-Local equivalent of the composite action at `actions/tag-bump/action.yml`,
-for the no-PR direct-to-main workflow.
+This is the HAND-CUT path, primarily for major bumps and offline releases.
+Normal minor releases are automated by `.forgejo/workflows/release.yml`
+(tag-bump on every push to main). The version-bump commit here carries a
+`[skip ci]` marker so a local run does NOT double-fire that pipeline - the
+files are synced and the tag is cut here, and the auto-pipeline stays out
+of the way. Non-release pushes resume auto-minor from the tag this cut.
+Unlike the auto-pipeline (which advances only DEFAULT_REV via the Contents
+API), this path also reconciles pyproject `version` + `uv.lock`, so run it
+whenever those drift behind the tags.
 
 Usage:
     python3 scripts/release.py [--bump {major|minor|patch}] [--dry-run]
@@ -158,7 +165,9 @@ def main() -> int:
 
     if changed_files:
         run(["git", "add", *changed_files])
-        run(["git", "commit", "-m", f"chore: bump version to {new_tag}"])
+        # [skip ci] so this hand-cut bump does not double-fire the auto
+        # release pipeline (.forgejo/workflows/release.yml) on push.
+        run(["git", "commit", "-m", f"chore: bump version to {new_tag} [skip ci]"])
         print(f"Committed version bump touching: {', '.join(changed_files)}")
 
     summary = subjects[0] if subjects else f"release {new_tag}"
