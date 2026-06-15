@@ -153,7 +153,7 @@ git-default-branch() {
 
 git-all-branches() {
   local repo branch
-  for repo in */*/.git; do
+  for repo in coily*/*/.git; do
     [ -d "$repo" ] || continue
     repo="${repo%/.git}"
     git -C "$repo" for-each-ref --format='%(refname:short)' refs/heads |
@@ -166,7 +166,7 @@ git-all-branches() {
 
 git-all-stashes() {
   local repo stash
-  for repo in */*/.git; do
+  for repo in coily*/*/.git; do
     [ -d "$repo" ] || continue
     repo="${repo%/.git}"
     git -C "$repo" stash list |
@@ -179,7 +179,7 @@ git-all-stashes() {
 
 git-all-pull-main() {
   local repo branch rc=0
-  for repo in */*/.git; do
+  for repo in coily*/*/.git; do
     [ -d "$repo" ] || continue
     repo="${repo%/.git}"
     printf '==> %s\n' "$repo"
@@ -200,7 +200,7 @@ git-all-pull-main() {
 
 git-all-dirty() {
   local limit="${1:-20}" repo uncommitted untracked
-  for repo in */*/.git; do
+  for repo in coily*/*/.git; do
     [ -d "$repo" ] || continue
     repo="${repo%/.git}"
     uncommitted=$(git -C "$repo" status --porcelain | awk '$1 != "??" { print }' | head -n "$limit")
@@ -252,6 +252,10 @@ git-squash() {
   git add -A
   git commit . -m "$(git-pr-title)"
   git push -u origin HEAD -f
+}
+
+gm() {
+  git commit -a -m "$1"
 }
 
 gt-conflicts() {
