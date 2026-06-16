@@ -39,8 +39,9 @@ image are one version. A `:buildcache` tag holds the layer cache, not for pullin
 The `publish-image` job in [`.forgejo/workflows/release.yml`](../.forgejo/workflows/release.yml)
 runs after a release cuts a tag, on the DinD `docker` runner: install the docker
 CLI + buildx plugin, resolve the in-cluster daemon, `docker login` with the
-auto-issued Actions job token (the job requests `packages: write`, so no PAT is
-needed), stand up qemu + a `docker-container` builder, then
+`REGISTRY_TOKEN` secret (a forgejo PAT with `write:package`; the auto-issued
+Actions token can read but not write the registry), stand up qemu + a
+`docker-container` builder, then
 `buildx build --platform linux/amd64,linux/arm64 ... --push` with a registry
 layer cache, tagging `:vX.Y.Z` and `:latest`.
 
@@ -48,6 +49,9 @@ Multi-arch means arm64 Macs and amd64 Linux hosts each pull a native image. The
 layer cache keeps an unchanged Dockerfile's republish cheap even though every
 push to main cuts a release. If arm64 emulation turns flaky, drop `linux/arm64`
 from `PLATFORMS`; amd64 matches the runner.
+
+**One-time setup:** mint a forgejo PAT with `write:package` (User Settings ->
+Applications) and add it as the repo Actions secret `REGISTRY_TOKEN`.
 
 ## Pinning a tool
 
@@ -62,8 +66,7 @@ docker pull forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:latest
 ```
 
 Needs a one-time `docker login forgejo.coilysiren.me`. The `ward container
-up/exec` wrapper (ward#98) is the intended entry point; raw `docker run` is for
-poking at the image directly.
+up/exec` wrapper (ward#98) is the intended entry point.
 
 ## Not here
 
@@ -74,5 +77,4 @@ poking at the image directly.
 
 ## See also
 
-- [docs/release.md](release.md) - the release pipeline this rides on.
-- [docs/FEATURES.md](FEATURES.md) - capability inventory.
+- [docs/release.md](release.md) - the release pipeline this rides on. Inventory: [docs/FEATURES.md](FEATURES.md).

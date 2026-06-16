@@ -75,9 +75,6 @@ jobs:
     needs: release
     if: ${{ needs.release.outputs.tag != '' }}
     runs-on: docker
-    permissions:
-      contents: read
-      packages: write
     env:
       IMAGE: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os
       BUILDX_VERSION: v0.34.1
@@ -119,11 +116,14 @@ jobs:
 
       - name: Registry login
         env:
-          REGISTRY_TOKEN: ${{ github.token }}
-          REGISTRY_USER: ${{ github.actor }}
+          REGISTRY_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
         run: |
           set -euo pipefail
-          echo "${REGISTRY_TOKEN}" | docker login forgejo.coilysiren.me -u "${REGISTRY_USER}" --password-stdin
+          if [ -z "${REGISTRY_TOKEN:-}" ]; then
+            echo "::error::REGISTRY_TOKEN not set; mint a forgejo PAT with write:package and add it as an Actions secret. See docs/dev-base-image.md." >&2
+            exit 1
+          fi
+          echo "${REGISTRY_TOKEN}" | docker login forgejo.coilysiren.me -u coilysiren --password-stdin
 
       - name: Set up qemu + buildx builder
         run: |
