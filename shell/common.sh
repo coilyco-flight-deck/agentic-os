@@ -225,6 +225,25 @@ source-aos-common() {
   source "$HOME/projects/coilyco-flight-deck/agentic-os/shell/common.sh"
 }
 
+# Exec from a WSL shell into native Windows PowerShell: SSH-into-WSL sessions skip
+# the interop PATH injection, so re-add the Windows dirs, resolve pwsh, then exec.
+wsl_to_native() {
+  local d exe
+  for d in /mnt/c/Windows/System32 /mnt/c/Windows \
+    /mnt/c/Windows/System32/WindowsPowerShell/v1.0 \
+    /mnt/c/Users/*/AppData/Local/Microsoft/WindowsApps; do
+    case ":$PATH:" in
+      *":$d:"*) ;;
+      *) [ -d "$d" ] && PATH="$PATH:$d" ;;
+    esac
+  done
+  export PATH
+  exe=$(command -v pwsh.exe 2>/dev/null) \
+    || exe=$(command -v powershell.exe 2>/dev/null) \
+    || exe="/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
+  exec "$exe" "$@"
+}
+
 git-merge-default-branch() {
   local default
   default=$(git-default-branch) || return 1
