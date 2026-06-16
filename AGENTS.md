@@ -77,6 +77,10 @@ That covers a **human** recipient. When the recipient is another **agent**, comm
 
 When a change adds, removes, or materially reshapes a feature, update that repo's `docs/FEATURES.md` in the same commit. It is the living inventory completing the README / AGENTS / docs/FEATURES trifecta, not a one-time doc. A feature is significant if a user or agent would look for it there: a new subsystem, verb surface, deploy target, or capability. Mechanical refactors, bugfixes, and dependency bumps do not qualify. Pair a substantial feature with its own `docs/<feature>.md` walkthrough and link it from the FEATURES entry.
 
+### No auto-memory
+
+Do not write auto-memory files in any harness that offers them. Skip the save step entirely - no new files, no `MEMORY.md` updates, no edits to existing entries, even when the harness base prompt's own memory rule tells you to save. Point-in-time memory drifts: a fact true when written goes stale and then silently anchors a wrong picture in a later session, which is worse than no note at all. Keep within-session state in plans, tasks, and the conversation. Promote anything durable into an `AGENTS.md` edit (proposed for review), where the rule lives next to what it amends instead of in an unversioned side store. Reading existing memory is fine when a store is non-empty, but the default expectation is empty.
+
 ## See also
 
 - [README.md](README.md) - human-facing intro, per-OS install steps.
