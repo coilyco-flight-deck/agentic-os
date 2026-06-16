@@ -160,6 +160,15 @@ cli_agent_toolbar_chip_selection_setting = "default"
 
 [warpify]
 
+[warpify.ssh]
+# Warp auto-injects a POSIX bootstrap (`export ...`) into every ssh session
+# its command layer intercepts. That breaks non-POSIX remote shells: a
+# Windows OpenSSH cmd.exe host dies on the first `export`, closing the
+# session instantly. Disable the blanket auto-warpification and rely on the
+# explicit added_subshell_commands list below, which still warpifies the
+# hosts we curate (kai-server) without touching Windows boxes.
+enable_ssh_warpification = false
+
 [warpify.subshells]
 added_subshell_commands = [
   "docker compose .* run .*",
