@@ -6,7 +6,7 @@ commands:
     description: "Establish and verify Kai's Warp config across hosts. `ward exec warp apply` renders all three state layers (repo template, config-dir TOML, SQLite); `ward exec warp doctor` reports drift. See project-a-ward-exec-warp.md."
   goose-ask:
     run: bash scripts/goose-ask.sh
-    description: "Probe the Goose harness with one-shot questions. `ward exec goose-ask -- \"question\"` for one, `ward exec goose-ask -- -f scripts/goose-probe.txt` for the capability battery. Strips the banner, times each call, tees a raw transcript under ~/.cache/agentic-os/goose-ask/. See docs/goose-test-harness.md."
+    description: "Probe the Goose harness with one-shot questions. `ward exec goose-ask -- \"question\"` for one, `ward exec goose-ask -- -f scripts/goose-probe.txt` for the capability battery. Strips the banner, times each call, tees a raw transcript under ~/.cache/agentic-os/goose-ask/. See docs/test-harness-goose.md."
   apply-agentic-os-hooks:
     run: uv run python scripts/apply-agentic-os-hooks.py
     description: "Roll out the canonical pre-commit hook block to every consumer repo under ~/projects/<org>/* (all org dirs). Idempotent."

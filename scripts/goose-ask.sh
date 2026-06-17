@@ -2,7 +2,7 @@
 # goose-ask: minimal test harness for probing the Goose harness with one-shot
 # questions. Wraps `goose run --no-session`, strips the startup banner, times
 # each call, and tees a raw transcript under ~/.cache/agentic-os/goose-ask/.
-# See docs/goose-test-harness.md.
+# See docs/test-harness-goose.md.
 set -euo pipefail
 
 usage() {
