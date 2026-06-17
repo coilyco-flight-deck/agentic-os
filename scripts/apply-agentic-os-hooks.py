@@ -52,7 +52,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from agentic_os import config as cfg  # noqa: E402
 
-DEFAULT_REV = "v0.40.0"
+DEFAULT_REV = "v0.41.0"
 
 # A repo carrying this marker at its root opts out of all baseline
 # normalization, fail-closed. Remove the file to re-enroll.
