@@ -5,10 +5,10 @@ description: Harness profile for OpenCode - a TUI/CLI harness floating over swap
 
 # agents-opencode
 
-The **OpenCode** harness (they/them). It **floats over swappable models**, so the model is the real distinguisher and the ceiling is the active [`models-*`](../models-qwen/SKILL.md) profile, not "OpenCode". Today it runs a local Qwen quant via Ollama - the `qwen-opencode` agent.
+The **OpenCode** harness (they/them). It **floats over swappable models**, so the model is the ceiling, not "OpenCode" - the active [`models-*`](../models-qwen/SKILL.md) profile. **Reach for it when** you want a general interactive local-coding session - the default of the three floaters.
 
-Unlike [`agents-claude`](../agents-claude/SKILL.md) / [`agents-codex`](../agents-codex/SKILL.md) (fixed cloud models), OpenCode-on-Qwen is small and local: trivial-only, escalate by default ([`models-qwen`](../models-qwen/SKILL.md)). Its global context is the aos-public base alone - no private context, no skill catalog.
+Two tiers: on the capable coder ([`models-qwen-coder`](../models-qwen-coder/SKILL.md)) it does real in-repo work; as the confined `qwen-opencode` agent on the trivial tier ([`models-qwen`](../models-qwen/SKILL.md)) it is trivial-only, escalate by default, aos-public base alone.
 
 ## Related
 
-- `agents-claude`, `agents-codex` - sibling cloud harnesses, the escalation targets.
+- `agents-claude`, `agents-codex` - cloud escalation targets. `agents-aider`, `agents-goose` - sibling floaters.

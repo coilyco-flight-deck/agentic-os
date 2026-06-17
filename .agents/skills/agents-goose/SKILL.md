@@ -1,6 +1,6 @@
 ---
 name: agents-goose
-description: Harness profile for Goose, Block's extensible agent (MCP extensions, recipes) floating over swappable models, cloud or local Ollama. Triggers - goose, block goose.
+description: Harness profile for Goose, Block's extensible agent floating over swappable models, cloud or local Ollama. Triggers - goose, block goose.
 ---
 
 # agents-goose
@@ -9,9 +9,9 @@ The **Goose** harness - Block's open-source agent (`goose` CLI plus desktop app)
 
 ## Posture
 
-- Multi-step agentic loop with MCP-extension tool use, heavier than a pair-programmer. Provider plus model in `config.yaml`; env overrides it.
-- Ceiling is the bound model: a small local quant ([`models-qwen`](../models-qwen/SKILL.md)) or a capable cloud model.
+- **Reach for it when** the task is a multi-step loop needing tool use: MCP extensions and recipes, broader autonomy than a pair-programmer. Provider + model in `config.yaml`; env overrides it.
+- Ceiling is the bound model: capable local coder ([`models-qwen-coder`](../models-qwen-coder/SKILL.md)) or a cloud peer.
 
 ## Related
 
-- `agents-claude`, `agents-codex`, `agents-aider`, `agents-opencode` - sibling harnesses. `models-qwen` - capability axis.
+- `agents-claude`, `agents-codex`, `agents-aider`, `agents-opencode` - siblings. `models-qwen-coder` - capability axis.

@@ -9,9 +9,9 @@ The **Aider** harness - a git-native pair-programming CLI (`aider-chat`). Harnes
 
 ## Posture
 
-- Edit-by-diff in a git repo: reads files, makes targeted edits, commits each. Drive it from inside a repo.
-- Ceiling is the bound model: a small local quant ([`models-qwen`](../models-qwen/SKILL.md)) or a peer cloud model.
+- **Reach for it when** the edit is surgical and you can name the files: diff-by-diff in a git repo, one commit per change. The scalpel of the three floaters.
+- Ceiling is the bound model: capable local coder ([`models-qwen-coder`](../models-qwen-coder/SKILL.md)) or a cloud peer.
 
 ## Related
 
-- `agents-claude`, `agents-codex`, `agents-opencode`, `agents-goose` - sibling harnesses. `models-qwen` - capability axis.
+- `agents-claude`, `agents-codex`, `agents-opencode`, `agents-goose` - siblings. `models-qwen-coder` - capability axis.
