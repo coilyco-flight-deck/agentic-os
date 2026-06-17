@@ -110,6 +110,17 @@ claude()   { _siren_agent_gate claude   || return 1; command claude   "$@"; }
 codex()    { _siren_agent_gate codex    || return 1; command codex    "$@"; }
 opencode() { _siren_agent_gate opencode || return 1; command opencode "$@"; }
 
+# `ward-kdl agents <cli>` launchers exec the real agent binary directly, so they
+# skip the wrappers above. Re-apply the gate here, the same shell chokepoint.
+ward-kdl() {
+  if [ "$1" = "agents" ]; then
+    case "${2:-}" in
+      claude|codex|opencode|aider|goose) _siren_agent_gate "$2" || return 1 ;;
+    esac
+  fi
+  command ward-kdl "$@"
+}
+
 pre-commit-aos-version-defined() {
   local version
   version=$(grep -E '^version = ' "$HOME/projects/coilyco-flight-deck/agentic-os/pyproject.toml" | head -1 | sed 's/^version = "\(.*\)"$/\1/')
