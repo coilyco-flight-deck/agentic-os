@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agentic-os"
-version = "0.21.0"
+version = "0.62.0"
 description = "Cross-repo pre-commit hooks and operating utilities for coilysiren/* repos: catalog-trifecta, catalog-doc-size, documentation-layout, code-comments, catalog-block, check-skills, dead-cross-links."
 readme = "README.md"
 license = { text = "MIT" }

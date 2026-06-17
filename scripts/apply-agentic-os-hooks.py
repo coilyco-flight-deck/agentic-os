@@ -54,7 +54,7 @@ from agentic_os import config as cfg  # noqa: E402
 
 # Consumer pin is tag-derived at read time (see default_rev), not committed.
 # FALLBACK_REV is the floor for tag-less checkouts. See docs/release.md, #238.
-FALLBACK_REV = "v0.61.0"
+FALLBACK_REV = "v0.62.0"
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 VERSION_TAG_GLOB = "v[0-9]*.[0-9]*.[0-9]*"
