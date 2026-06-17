@@ -20,11 +20,11 @@ inner-loop toolchain on an `ubuntu:24.04` base:
 - **go** - builds the `warp/` module's hooks (and, later, ward + coily).
 - **aws cli v2** - the SSM secret loader and `~/.aws` passthrough.
 - **claude** - the agent, pinned.
+- **public substrate seed** - bare mirrors of the image-tier reference repos at `/opt/substrate-seed`, from [`substrate-image-repos.txt`](../docker/dev-base/substrate-image-repos.txt) (the image-tier subset of ward's `preclone-repos.txt`). A ward container on a cold gitcache hydrates from these with no network. Only public repos are baked, so the image stays shareable. ward warms, this image seeds.
 
 Every tool installs world-readable under `/usr/local` or `/opt` so the image
-runs as any uid. ward owns the run-as-uid, mount set, and `~/.aws` passthrough
-at run time, so the image bakes in no user and no repo source. lore / aos / aosk
-and task repos are bind-mounted by `ward container`, not copied in.
+runs as any uid. ward owns the run-as-uid, mount set, and `~/.aws` passthrough,
+so the image bakes in no user and no **target** repo (cloned fresh at run time).
 
 ## Naming and tags
 

@@ -81,5 +81,25 @@ RUN set -eux; \
     npm install -g "@anthropic-ai/claude-code@${CLAUDE_VERSION}"; \
     claude --version
 
+# Substrate seed: bare mirrors of the public (image-tier) reference repos a ward
+# container warms its gitcache from on a cold volume. List is a denormalized copy
+# of the image-tier subset of ward's cmd/ward/containerassets/preclone-repos.txt.
+# All public read (anonymous clone). Bridge/private repos are deliberately not
+# baked into this shareable image. Mirror dir name matches ward's owner__name.git.
+COPY substrate-image-repos.txt /tmp/substrate-image-repos.txt
+RUN set -eux; \
+    mkdir -p /opt/substrate-seed; \
+    while read -r ref; do \
+      case "$ref" in ''|\#*) continue ;; esac; \
+      owner="${ref%%/*}"; name="${ref##*/}"; \
+      case "$owner" in \
+        coilysiren) base="https://github.com" ;; \
+        *) base="https://forgejo.coilysiren.me" ;; \
+      esac; \
+      git clone --mirror "$base/$owner/$name.git" "/opt/substrate-seed/${owner}__${name}.git"; \
+    done < /tmp/substrate-image-repos.txt; \
+    rm /tmp/substrate-image-repos.txt; \
+    chmod -R a+rX /opt/substrate-seed
+
 WORKDIR /workspace
 CMD ["bash"]
