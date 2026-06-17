@@ -1,0 +1,15 @@
+# goose-probe.txt - capability/setup probe battery for the Goose harness.
+# Run: ward exec goose-ask -- -f scripts/goose-probe.txt
+# Blank lines and #-comments are skipped. Each line is an independent
+# --no-session run, so state does not carry between questions.
+#
+# These probe two things at once: what the model *claims* about itself (often
+# wrong, which is the point of asking), and what the developer extension can
+# *actually* do (shell + file tools exercised live).
+
+In one line, what model, provider, and inference host do you believe you are running on?
+List every tool and extension available to you right now, by name.
+Use your shell tool to run exactly `pwd && whoami && uname -sm` and report the verbatim output.
+Use your tools to list the files in your current working directory, then state how many there are.
+What is your maximum context window, in tokens?
+In one sentence, what kinds of tasks are you configured to perform?
