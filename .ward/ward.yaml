@@ -48,7 +48,7 @@ commands:
     description: "Run only the shellcheck hook across all shell files. Check-only."
   release:
     run: uv run python scripts/release.py
-    description: "Cut a release: parse conventional commits since latest tag, bump pyproject + DEFAULT_REV, create signed tag, push. --bump major|minor|patch to override; --dry-run to preview."
+    description: "Cut a release: bump pyproject + FALLBACK_REV floor, create signed tag, push (consumer pin is tag-derived). --bump major|minor|patch to override; --dry-run to preview."
   test:
     run: uv run pytest
     description: "Run the agentic_os Python test suite (pytest)."

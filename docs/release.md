@@ -29,23 +29,27 @@ pushes resume minor from there. The actions are referenced locally
 (`uses: ./actions/...`), so the source repo never waits on its own GitHub mirror
 being current to release.
 
-## Consumer pin (bump-pin job)
+## Consumer pin (derived from the tag)
 
-`DEFAULT_REV` in `scripts/apply-agentic-os-hooks.py` is the tag every consumer
-repo inherits when `apply-agentic-os-hooks` rolls out the hook block. The
-`bump-pin` job rewrites it to the freshly cut tag via the Forgejo Contents API
-and pushes a `[skip ci]` commit, so the rollout always pins the latest release.
-This is the direct analog of ward's formula `url` bump. It needs the
-`CI_RELEASE_TOKEN` Actions secret (the `write:repository` PAT set org-wide on
-`coilyco-flight-deck`); without it the job logs and no-ops (the pin just stays
-put until the secret is provisioned).
+The tag every consumer repo inherits when `apply-agentic-os-hooks` rolls out the
+hook block is resolved from the **latest git tag at read time**, not a committed
+constant. `default_rev()` in `scripts/apply-agentic-os-hooks.py` reads
+`git tag --list 'v*'` from the checkout and returns the highest version, falling
+back to the `FALLBACK_REV` floor only when no tag is fetched (a shallow clone).
 
-pyproject `version` and `uv.lock` are NOT touched by the auto-pipeline - keeping
-the job a single-file write avoids a `uv` dependency in the runner and any
-`uv.lock` drift. They are reconciled on hand-cut releases by
-`scripts/release.py`, so they track major bumps and may lag the tag between
-majors. That lag is cosmetic: consumers pin by git rev, not by the package
-version.
+Deriving the pin from the tag is the whole point of agentic-os#238: tags are
+refs, not tracked files, so cutting a release needs no followup bump commit.
+That removed the old `bump-pin` job (and its `CI_RELEASE_TOKEN` Contents-API
+push), which used to land a `chore: bump DEFAULT_REV to vX.Y.Z [skip ci]` commit
+on every push to main - the commit that left every local checkout "1 behind
+origin/main" and blocked ward's clean+synced gate. Now the release is just the
+tag.
+
+pyproject `version`, `uv.lock`, and the `FALLBACK_REV` floor are reconciled on
+hand-cut releases by `scripts/release.py`, so they track major bumps and may lag
+the tag between majors. That lag is cosmetic: consumers pin by git rev (now
+tag-derived), not by the package version, and `FALLBACK_REV` is only read when
+no tag is present.
 
 ## Mirror to GitHub
 
@@ -57,7 +61,9 @@ GitHub is the PR-gated downstream mirror.
 
 ## Skip markers
 
-Both the `bump-pin` pin commit and `scripts/release.py`'s version commit carry
-`[skip ci]` so the bump does not re-trigger the workflow. Shared composite
-actions live under `actions/*` in this repo. This replaces the deleted
-`.github/workflows` release; building moved off GitHub Actions onto Forgejo.
+`scripts/release.py`'s version commit carries `[skip ci]` so the hand-cut bump
+does not re-trigger the workflow. The auto-pipeline no longer pushes a pin
+commit at all (the consumer pin is tag-derived), so there is nothing per-push to
+skip. Shared composite actions live under `actions/*` in this repo. This
+replaces the deleted `.github/workflows` release; building moved off GitHub
+Actions onto Forgejo.

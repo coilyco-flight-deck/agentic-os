@@ -3,8 +3,9 @@
 # `./actions/*` refs, so the source repo never depends on its own GitHub
 # mirror being current to release. No bump input means every push-to-main
 # release is a minor bump; major is hand-driven via scripts/release.py. The
-# bump-pin job advances DEFAULT_REV (the consumer pin) the way ward bumps its
-# formula url. The publish-image job builds + pushes the dev-base container
+# consumer pin resolves from the latest git tag at read time (agentic-os#238),
+# so there is no pin-bump job and no per-push DEFAULT_REV commit - cutting the
+# tag is the whole release. The publish-image job builds + pushes the dev-base container
 # (docker/dev-base/Dockerfile) to the forgejo registry under the same release
 # tag, the analog of the brew bottle: build here, pull by tag in ward. Full
 # rationale + skip-ci notes in docs/release.md, image notes in docs/dev-base-image.md.
@@ -39,37 +40,6 @@ jobs:
           tag: ${{ steps.tag.outputs.new_tag }}
           name: ${{ steps.tag.outputs.new_tag }}
           body: ${{ steps.tag.outputs.changelog }}
-
-  bump-pin:
-    needs: release
-    if: ${{ needs.release.outputs.tag != '' }}
-    runs-on: docker
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: main
-          token: ${{ secrets.CI_RELEASE_TOKEN }}
-      - name: Bump DEFAULT_REV and push
-        env:
-          TAG: ${{ needs.release.outputs.tag }}
-          PIN_PATH: scripts/apply-agentic-os-hooks.py
-          FORGEJO_TOKEN: ${{ secrets.CI_RELEASE_TOKEN }}
-        run: |
-          set -euo pipefail
-          echo "::notice::bump-pin CI_RELEASE_TOKEN length=${#FORGEJO_TOKEN}"
-          if [ -z "${FORGEJO_TOKEN:-}" ]; then
-            echo "CI_RELEASE_TOKEN not set; skipping pin bump." >&2
-            exit 0
-          fi
-          sed -i -E "s|^DEFAULT_REV = \"v[0-9]+\.[0-9]+\.[0-9]+\"\$|DEFAULT_REV = \"${TAG}\"|" "$PIN_PATH"
-          if git diff --quiet -- "$PIN_PATH"; then
-            echo "DEFAULT_REV already at ${TAG}, nothing to push"
-            exit 0
-          fi
-          git config user.name "coilysiren"
-          git config user.email "coilysiren@noreply.forgejo.coilysiren.me"
-          git commit -m "chore: bump DEFAULT_REV to ${TAG} [skip ci]" -- "$PIN_PATH"
-          git push origin HEAD:main
 
   publish-image:
     needs: release

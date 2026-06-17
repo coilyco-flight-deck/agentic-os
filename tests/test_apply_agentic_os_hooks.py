@@ -76,20 +76,61 @@ def test_full_run_spans_env_root(monkeypatch, tmp_path: Path, capsys) -> None:
     assert "warp" in out
 
 
+def test_default_rev_resolves_from_latest_tag(monkeypatch) -> None:
+    """default_rev() picks the highest v* tag the checkout reports (agentic-os#238)."""
+    script = _load_script()
+
+    class _Out:
+        stdout = "v0.61.0\nv0.60.0\nv0.5.0\n"
+
+    monkeypatch.setattr(
+        script.subprocess, "run", lambda *a, **k: _Out(), raising=True
+    )
+    assert script.latest_release_tag() == "v0.61.0"
+    assert script.default_rev() == "v0.61.0"
+
+
+def test_default_rev_falls_back_without_tags(monkeypatch) -> None:
+    """A tag-less (shallow) checkout falls back to FALLBACK_REV, not a crash."""
+    script = _load_script()
+
+    class _Empty:
+        stdout = ""
+
+    monkeypatch.setattr(
+        script.subprocess, "run", lambda *a, **k: _Empty(), raising=True
+    )
+    assert script.latest_release_tag() is None
+    assert script.default_rev() == script.FALLBACK_REV
+
+
+def test_default_rev_falls_back_when_git_missing(monkeypatch) -> None:
+    """git unavailable (OSError) resolves to the floor rather than raising."""
+    script = _load_script()
+
+    def _boom(*a, **k):
+        raise OSError("git not found")
+
+    monkeypatch.setattr(script.subprocess, "run", _boom, raising=True)
+    assert script.latest_release_tag() is None
+    assert script.default_rev() == script.FALLBACK_REV
+
+
 def test_default_hook_ids_present_at_default_rev() -> None:
     """Regression cover for agentic-os#187: rollout drift between rev and hooks.
 
-    The rollout pins rev=DEFAULT_REV but hooks=DEFAULT_HOOK_IDS. Adding a hook
+    The rollout pins rev=default_rev() but hooks=DEFAULT_HOOK_IDS. Adding a hook
     to the default list before a release pins it makes every consumer's
     pre-commit init fail ("<id> is not present in repository ... rev <REV>").
-    Invariant: every default-rolled-out hook must exist at DEFAULT_REV.
+    Invariant: every default-rolled-out hook must exist at the resolved rev.
     """
     script = _load_script()
-    ids_at_rev = _hook_ids_at_ref(script.DEFAULT_REV)
+    rev = script.default_rev()
+    ids_at_rev = _hook_ids_at_ref(rev)
     if ids_at_rev is None:
-        pytest.skip(f"{script.DEFAULT_REV} tag not available locally (shallow clone)")
+        pytest.skip(f"{rev} tag not available locally (shallow clone)")
     missing = [h for h in script.DEFAULT_HOOK_IDS if h not in ids_at_rev]
     assert not missing, (
-        f"DEFAULT_HOOK_IDS reference hooks absent from {script.DEFAULT_REV}: {missing}. "
-        "Cut a release containing them, then bump DEFAULT_REV (agentic-os#187)."
+        f"DEFAULT_HOOK_IDS reference hooks absent from {rev}: {missing}. "
+        "Cut a release containing them, then ensure it is tagged (agentic-os#187)."
     )

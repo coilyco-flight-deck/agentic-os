@@ -31,8 +31,8 @@ so the image bakes in no user and no **target** repo (cloned fresh at run time).
 Published to the forgejo registry as
 `forgejo.coilysiren.me/coilyco-flight-deck/agentic-os`. Each release tags the
 image with the release version (`vX.Y.Z`) and moves `:latest`, so the version
-tracks the repo's release the way `DEFAULT_REV` does and a consumer pin plus its
-image are one version. A `:buildcache` tag holds the layer cache, not for pulling.
+tracks the repo's release the way the tag-derived consumer pin does and a pin
+plus its image are one version. A `:buildcache` tag holds the layer cache.
 
 ## How it publishes
 

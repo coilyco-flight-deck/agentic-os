@@ -2,7 +2,7 @@
 """Local release helper: bump version, sign tag, push.
 
 Bumps the latest semver tag (minor by default), rewrites `pyproject.toml`
-version and the `DEFAULT_REV` pointer in
+version and the `FALLBACK_REV` floor in
 `scripts/apply-agentic-os-hooks.py`, commits the bump, creates a signed
 annotated tag, and pushes both.
 
@@ -12,9 +12,10 @@ Normal minor releases are automated by `.forgejo/workflows/release.yml`
 `[skip ci]` marker so a local run does NOT double-fire that pipeline - the
 files are synced and the tag is cut here, and the auto-pipeline stays out
 of the way. Non-release pushes resume auto-minor from the tag this cut.
-Unlike the auto-pipeline (which advances only DEFAULT_REV via the Contents
-API), this path also reconciles pyproject `version` + `uv.lock`, so run it
-whenever those drift behind the tags.
+The consumer pin now resolves from git tags at read time (agentic-os#238),
+so the auto-pipeline cuts only a tag - no per-push pin commit. This path
+additionally reconciles pyproject `version` + `uv.lock` and refreshes the
+`FALLBACK_REV` floor, so run it whenever those drift behind the tags.
 
 Usage:
     python3 scripts/release.py [--bump {major|minor|patch}] [--dry-run]
@@ -37,7 +38,7 @@ APPLY_HOOKS = REPO_ROOT / "scripts" / "apply-agentic-os-hooks.py"
 TAG_PREFIX = "v"
 VERSION_RE = re.compile(rf"^{TAG_PREFIX}(\d+)\.(\d+)\.(\d+)$")
 PYPROJECT_VERSION_RE = re.compile(r'^version = "(\d+\.\d+\.\d+)"$', re.MULTILINE)
-DEFAULT_REV_RE = re.compile(r'^DEFAULT_REV = "v\d+\.\d+\.\d+"$', re.MULTILINE)
+FALLBACK_REV_RE = re.compile(r'^FALLBACK_REV = "v\d+\.\d+\.\d+"$', re.MULTILINE)
 DEFAULT_BUMP = "minor"
 
 
@@ -107,12 +108,18 @@ def relock() -> bool:
     return out.stdout.strip() != ""
 
 
-def bump_default_rev(new_tag: str) -> bool:
-    """Rewrite DEFAULT_REV in apply-agentic-os-hooks.py. Returns True if changed."""
+def bump_fallback_rev(new_tag: str) -> bool:
+    """Rewrite FALLBACK_REV in apply-agentic-os-hooks.py. Returns True if changed.
+
+    The consumer pin resolves from git tags at read time (agentic-os#238), so
+    no per-release bump commit is needed. FALLBACK_REV is just the floor for
+    tag-less checkouts; refreshing it on each hand-cut release keeps that floor
+    from drifting far behind the latest tag.
+    """
     text = APPLY_HOOKS.read_text(encoding="utf-8")
-    new_text, n = DEFAULT_REV_RE.subn(f'DEFAULT_REV = "{new_tag}"', text, count=1)
+    new_text, n = FALLBACK_REV_RE.subn(f'FALLBACK_REV = "{new_tag}"', text, count=1)
     if n == 0:
-        raise SystemExit("could not find DEFAULT_REV line in apply-agentic-os-hooks.py")
+        raise SystemExit("could not find FALLBACK_REV line in apply-agentic-os-hooks.py")
     if new_text == text:
         return False
     APPLY_HOOKS.write_text(new_text, encoding="utf-8")
@@ -158,7 +165,7 @@ def main() -> int:
     changed_files: list[str] = []
     if bump_pyproject(new_ver):
         changed_files.append("pyproject.toml")
-    if bump_default_rev(new_tag):
+    if bump_fallback_rev(new_tag):
         changed_files.append("scripts/apply-agentic-os-hooks.py")
     if relock():
         changed_files.append("uv.lock")

@@ -52,7 +52,48 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from agentic_os import config as cfg  # noqa: E402
 
-DEFAULT_REV = "v0.61.0"
+# Consumer pin is tag-derived at read time (see default_rev), not committed.
+# FALLBACK_REV is the floor for tag-less checkouts. See docs/release.md, #238.
+FALLBACK_REV = "v0.61.0"
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+VERSION_TAG_GLOB = "v[0-9]*.[0-9]*.[0-9]*"
+_VERSION_TAG_RE = re.compile(r"^v\d+\.\d+\.\d+$")
+
+
+def latest_release_tag() -> str | None:
+    """Most recent v<MAJOR>.<MINOR>.<PATCH> tag in this checkout, or None.
+
+    Reads git tags from the agentic-os checkout (REPO_ROOT), independent of the
+    caller's cwd. Returns None when git is unavailable or no release tag is
+    fetched (a shallow clone), letting default_rev() fall back to FALLBACK_REV.
+    """
+    try:
+        out = subprocess.run(
+            ["git", "tag", "--list", VERSION_TAG_GLOB, "--sort=-v:refname"],
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except (subprocess.CalledProcessError, OSError):
+        return None
+    for line in out.stdout.splitlines():
+        candidate = line.strip()
+        if _VERSION_TAG_RE.match(candidate):
+            return candidate
+    return None
+
+
+def default_rev() -> str:
+    """The release tag consumers pin, resolved from git at runtime.
+
+    Latest fetched tag, else the FALLBACK_REV floor. Derived rather than
+    committed so the auto release pipeline cuts only a tag, never a per-push
+    DEFAULT_REV bump commit (agentic-os#238).
+    """
+    return latest_release_tag() or FALLBACK_REV
+
 
 # A repo carrying this marker at its root opts out of all baseline
 # normalization, fail-closed. Remove the file to re-enroll.
@@ -295,10 +336,13 @@ def main(argv=None) -> int:
     ap.add_argument("--skip", nargs="*", default=[])
     ap.add_argument(
         "--rev",
-        default=DEFAULT_REV,
-        help=f"agentic-os release tag to pin (default: {DEFAULT_REV})",
+        default=None,
+        help="agentic-os release tag to pin (default: latest git tag, "
+        f"else {FALLBACK_REV})",
     )
     args = ap.parse_args(argv)
+    if args.rev is None:
+        args.rev = default_rev()
 
     all_dirs = list_local_repo_dirs()
     if args.repo:
