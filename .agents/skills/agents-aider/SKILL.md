@@ -5,7 +5,7 @@ description: Harness profile for Aider, a git-native pair-programming CLI floati
 
 # agents-aider
 
-The **Aider** harness - a git-native pair-programming CLI (`aider-chat`). Harness axis, orthogonal to the [`models-*`](../models-qwen/SKILL.md) capability axis: like [`agents-opencode`](../agents-opencode/SKILL.md) it floats over swappable models, so the active model is the ceiling, not "Aider". Binds to a cloud model or a local Ollama quant.
+The **Aider** harness (they/them) - a git-native pair-programming CLI (`aider-chat`). Harness axis, orthogonal to the [`models-*`](../models-qwen/SKILL.md) capability axis: like [`agents-opencode`](../agents-opencode/SKILL.md) it floats over swappable models, so the active model is the ceiling, not "Aider". Binds to a cloud model or a local Ollama quant.
 
 ## Posture
 
