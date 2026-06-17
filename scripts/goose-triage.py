@@ -28,6 +28,7 @@ import argparse
 import re
 import subprocess
 import sys
+import time
 from datetime import date
 from pathlib import Path
 
@@ -82,6 +83,19 @@ SCORE_SCHEMA = {"type": "object", "additionalProperties": False,
 RUNOFF_SCHEMA = {"type": "object", "additionalProperties": False,
                  "required": ["order"],
                  "properties": {"order": {"type": "array", "items": {"type": "integer"}}}}
+
+
+def _hms(secs: float) -> str:
+    s = int(secs)
+    return f"{s // 60}:{s % 60:02d}"
+
+
+def _bar(done: int, total: int, t0: float) -> str:
+    """Compact progress: done/total, percent, elapsed, ETA (calls are the unit)."""
+    elapsed = time.monotonic() - t0
+    pct = 100 * done / total if total else 100
+    eta = elapsed / done * (total - done) if done else 0
+    return f"[{done}/{total} {pct:.0f}% | {_hms(elapsed)} elapsed | eta {_hms(eta)}]"
 
 
 def _clamp_score(raw) -> float:
@@ -206,20 +220,26 @@ def run(repo: str, limit: int) -> dict:
 
     by_num = {it["num"]: it for it in issues}
     cands = p0_candidates(issues)
-    print(f"goose-triage: P0 net flagged {len(cands)} candidate(s); confirming ...",
-          file=sys.stderr)
+    # Stable progress denominator: confirm calls + 3 score passes per issue. A
+    # touch high if any candidate confirms P0 (those skip scoring) - negligible.
+    t0 = time.monotonic()
+    total = len(cands) + len(SCORE_RUBRICS) * n
+    done = 0
+    print(f"goose-triage: P0 net flagged {len(cands)} candidate(s); "
+          f"~{total} Goose calls to make; confirming ...", file=sys.stderr)
 
     confirmed_p0 = []
     for num in sorted(cands):
         it = by_num[num]
         res = ask(issue_prompt(P0_CONFIRM, it), CONFIRM_SCHEMA)
+        done += 1
         active = bool(res and res.get("active_incident"))
         if active:
             it["tier"] = "P0"
             it["reason"] = (res or {}).get("reason", "")
             confirmed_p0.append(it)
-        print(f"  P0 confirm #{num}: {'CONFIRMED' if active else 'rejected'}",
-              file=sys.stderr)
+        print(f"  P0 confirm #{num}: {'CONFIRMED' if active else 'rejected':9} "
+              f"{_bar(done, total, t0)}", file=sys.stderr)
 
     p0_nums = {it["num"] for it in confirmed_p0}
     pool = [it for it in issues if it["num"] not in p0_nums]
@@ -229,6 +249,7 @@ def run(repo: str, limit: int) -> dict:
         scores, reasons = [], []
         for rubric in SCORE_RUBRICS:
             res = ask(issue_prompt(rubric, it), SCORE_SCHEMA)
+            done += 1
             scores.append(_clamp_score((res or {}).get("score")))
             if res and res.get("reason"):
                 reasons.append(res["reason"])
@@ -236,7 +257,8 @@ def run(repo: str, limit: int) -> dict:
         it["passes"] = scores
         it["tiebreak"] = it["num"]  # default order within a tie
         it["reason"] = reasons[0] if reasons else "unscored -> default 30"
-        print(f"  score #{it['num']}: {it['score']:.1f}  {scores}", file=sys.stderr)
+        print(f"  score #{it['num']}: {it['score']:5.1f}  {_bar(done, total, t0)}",
+              file=sys.stderr)
 
     # Run-off any tie large enough to otherwise split arbitrarily across a tier.
     groups: dict[float, list[dict]] = {}
@@ -246,10 +268,12 @@ def run(repo: str, limit: int) -> dict:
         if len(members) >= RUNOFF_MIN_GROUP:
             ok = runoff(members)
             print(f"goose-triage: run-off on {len(members)} issues tied at "
-                  f"{score:.0f}: {'ranked' if ok else 'failed, kept issue order'}",
-                  file=sys.stderr)
+                  f"{score:.0f}: {'ranked' if ok else 'failed, kept issue order'} "
+                  f"[{_hms(time.monotonic() - t0)} elapsed]", file=sys.stderr)
 
     percentile_cut(pool)
+    print(f"goose-triage: judgment complete in {_hms(time.monotonic() - t0)}",
+          file=sys.stderr)
 
     tiers = {t: [] for t in ("P0", "P1", "P2", "P3", "P4")}
     for it in confirmed_p0:
