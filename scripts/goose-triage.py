@@ -310,13 +310,29 @@ def write_report(result: dict) -> tuple[Path, Path]:
     return md_path, yaml_path
 
 
+def _default_repo() -> str | None:
+    """Slug of the current git origin (owner/name), or None. Under `ward exec`
+    cwd is the agentic-os root, so a bare `ward exec goose-triage` targets it."""
+    url = sh(["git", "remote", "get-url", "origin"], timeout=10).strip()
+    if not url:
+        return None
+    u = url[:-4] if url.endswith(".git") else url
+    u = u.split("://", 1)[-1].split("@", 1)[-1].replace(":", "/", 1)
+    parts = [p for p in u.split("/") if p]
+    return "/".join(parts[-2:]) if len(parts) >= 2 else None
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Goose-driven issue triage (report-only).")
-    ap.add_argument("--repo", required=True, help="owner/name")
+    ap.add_argument("--repo", help="owner/name; default: the current git origin's slug")
     ap.add_argument("--limit", type=int, default=50, help="max issues to fetch (coily cap is 50)")
     args = ap.parse_args(argv)
 
-    result = run(args.repo, args.limit)
+    repo = args.repo or _default_repo()
+    if not repo:
+        ap.error("--repo not given and no git origin found in the current directory")
+
+    result = run(repo, args.limit)
     md_path, yaml_path = write_report(result)
 
     tiers = result["tiers"]

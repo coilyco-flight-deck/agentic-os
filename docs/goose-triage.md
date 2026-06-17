@@ -19,8 +19,8 @@ Every judgment call goes through the `goose-json` ward verb ([`scripts/goose_jso
 ## Usage
 
 ```
-ward exec goose-triage -- --repo coilyco-flight-deck/agentic-os
-ward exec goose-triage -- --repo <owner/name> --limit 50
+ward exec goose-triage                       # current git origin
+ward exec goose-triage -- --repo <owner/name>
 ```
 
 `coily`'s issue-list verb caps at 50 with no page flag, so larger repos are fetched partially and the script warns - the percentile math is only honest over a full backlog. Paginated fetch (raw Forgejo API + an `X-Total-Count` gate, per the `tooling-triage-cascade` skill) is the next build for those.
