@@ -8,6 +8,10 @@ One shared config core (`shell/common.sh`) sourced by both shells, so bash and z
 
 The core's env + PATH block runs once per terminal tree, gated by an exported `_SIREN_SHELL_ENV` guard ("has this run in this terminal yet?"): a nested shell inherits the env and skips re-running brew/pyenv/PATH, while still defining aliases and functions (those are per-shell, never inherited). Env + PATH load for non-interactive shells too (scripts, ssh exec, the Claude Code Bash tool); prompt and completion are interactive-only. Both shells auto-cd a fresh interactive shell into `~/projects`. Host-specific lines live in untracked `~/.shellrc.local` (shared) or `~/.{bash,zsh}rc.local` (per shell).
 
+## Agent-CLI repo gate
+
+`claude`, `codex`, and `opencode` are wrapped in shell functions that refuse to launch outside a git work tree. The gate lives in the shell - outside the agent - because a harness boundary can only be widened from outside the agent operating under it, never by the agent rewriting its own rules, and the shell is the one chokepoint shared by all three harnesses, so a single `git rev-parse --is-inside-work-tree` check covers them uniformly across the fleet. Override deliberately with `AOS_ALLOW_ANY=1` for the intentional elevated-cwd cases (a session launched from above the org dirs, or automation running from a non-repo path). Note the auto-cd lands a fresh interactive shell in `~/projects`, which is not itself a repo, so a same-shell launch there needs a `cd` into a repo first or the override.
+
 ## In-process AWS SSM secret loader
 
 Pull secrets directly into the shell environment, never to disk. `ssm-load` reads every SecureString under the configured prefix and `load-env`s them. `ssm-get <name>` fetches a single value to stdout. Replaces the older cleartext-dump-to-cache pattern with a memory-only path.

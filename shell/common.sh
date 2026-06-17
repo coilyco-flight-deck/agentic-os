@@ -96,6 +96,20 @@ bat() {
   command bat --no-pager "$@"
 }
 
+# Refuse to launch an agent CLI outside a git work tree (override: AOS_ALLOW_ANY=1).
+# Rationale and the cross-harness chokepoint argument: docs/features-shell-secrets.md.
+_siren_agent_gate() {
+  local cli="$1"
+  [ -n "${AOS_ALLOW_ANY:-}" ] && return 0
+  git rev-parse --is-inside-work-tree >/dev/null 2>&1 && return 0
+  printf '%s: refusing to start outside a git repo (cwd: %s)\n' "$cli" "$PWD" >&2
+  printf '  cd into a repo, or override with: AOS_ALLOW_ANY=1 %s\n' "$cli" >&2
+  return 1
+}
+claude()   { _siren_agent_gate claude   || return 1; command claude   "$@"; }
+codex()    { _siren_agent_gate codex    || return 1; command codex    "$@"; }
+opencode() { _siren_agent_gate opencode || return 1; command opencode "$@"; }
+
 pre-commit-aos-version-defined() {
   local version
   version=$(grep -E '^version = ' "$HOME/projects/coilyco-flight-deck/agentic-os/pyproject.toml" | head -1 | sed 's/^version = "\(.*\)"$/\1/')
