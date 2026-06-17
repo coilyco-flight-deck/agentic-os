@@ -4,13 +4,17 @@ Agent naming and session orientation.
 
 ## Agent self-name
 
-Every Claude Code session gets a stable, human-readable name: `claude-<os>-<hostname>-<tag>-<pronouns>`, where `<tag>` is the last four characters of the session id and `<pronouns>` is the agent's pronoun slug (`she-her` for Claude). The claude-hooks ansible role wires it into `~/.claude/settings.json` two ways - a persistent status line so the operator always sees which host and session they are talking to, and a SessionStart hook so the agent knows its own name from the first turn. Codex and OpenCode agents swap the `claude-` prefix and carry their own pronouns - Codex `he-him`, OpenCode (qwen-opencode) `they-them`. The wiring is idempotent and never clobbers a status line the operator set themselves.
+Every Claude Code session gets a stable, human-readable name: `claude-<os>-<hostname>-<tag>-<pronouns>`, where `<tag>` is the last four characters of the session id and `<pronouns>` is the agent's pronoun slug (`she-her` for Claude). The claude-hooks ansible role wires it into `~/.claude/settings.json` two ways - a persistent status line so the operator always sees which host and session they are talking to, and a SessionStart hook so the agent knows its own name from the first turn. Codex and OpenCode agents swap the `claude-` prefix and carry their own pronouns - Codex `he-him`, OpenCode (qwen-opencode) `they-them`. The wiring is idempotent and never clobbers an operator-set status line.
 
 `ward agent-name` is the single source of truth for the name. The status line script defers to ward and only falls back to computing the scheme locally when ward is absent.
 
+### Second status-line row
+
+Two hooks add optional rows: project-local `$project_dir/.agentic-os/statusline.sh` for per-project status, and `$AGENT_STATUSLINE_EXTRA` (an executable) for host-global. No producer ships here - a harness wires its own (e.g. a fleet line).
+
 ## Session pulse
 
-Generic SessionStart hook that cats `~/.cache/agentic-os/session-pulse.yaml` when present and no-ops otherwise. Zero compute at session start. Stale cache is acceptable signal - the file's mtime tells the operator how fresh the orientation is. The plugin point is "write to that path." Any consumer (a daily skill, a cron job, a one-off script) can hook in. YAML so secondary surfaces can reuse the same blob without re-parsing prose. The producer is out of scope here; it lives in consumer-specific tooling.
+Generic SessionStart hook that cats `~/.cache/agentic-os/session-pulse.yaml` when present and no-ops otherwise. Zero compute at session start. Stale cache is acceptable signal - the file's mtime tells the operator how fresh the orientation is. The plugin point is "write to that path." Any consumer can hook in. YAML so secondary surfaces can reuse the same blob without re-parsing prose. The producer lives in consumer-specific tooling.
 
 ## Composed cross-harness agent context
 

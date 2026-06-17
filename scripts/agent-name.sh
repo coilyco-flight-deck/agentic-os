@@ -59,7 +59,7 @@ else
 fi
 
 # Context-usage snippet from the transcript's last assistant message.
-# Format: " | ctx 132k/1M (13%) out 4.2k". Empty on any failure.
+# Format: "  ctx 132k/250k (13% ok)". Empty on any failure.
 ctx_snippet() {
   [ -n "$transcript" ] && [ -r "$transcript" ] || return 0
   python3 - "$transcript" <<'PY' 2>/dev/null || true
@@ -108,7 +108,7 @@ elif pct < 100:
 else:
     color, label = "\033[1;5;91m", "OVER"   # bold blink bright red
 reset = "\033[0m"
-print(f" | {color}ctx {k(ctx)}/250k ({pct:.0f}% {label}){reset}", end="")
+print(f"  {color}ctx {k(ctx)}/250k ({pct:.0f}% {label}){reset}", end="")
 PY
 }
 
@@ -129,10 +129,17 @@ case "$mode" in
     ;;
   statusline | *)
     printf '%s%s' "$name" "$(ctx_snippet)"
+    # Second row, project-local: $project_dir/.agentic-os/statusline.sh.
     project_hook="$project_dir/.agentic-os/statusline.sh"
     if [ -x "$project_hook" ]; then
       hook_out="$("$project_hook" 2>/dev/null)"
       [ -n "$hook_out" ] && printf '\n%s' "$hook_out"
+    fi
+    # Second row, host-global: $AGENT_STATUSLINE_EXTRA. See docs/features-agents-sessions.md.
+    extra_cmd="${AGENT_STATUSLINE_EXTRA:-}"
+    if [ -n "$extra_cmd" ] && [ -x "$extra_cmd" ]; then
+      extra="$("$extra_cmd" 2>/dev/null || true)"
+      [ -n "$extra" ] && printf '\n%s' "$extra"
     fi
     ;;
 esac
