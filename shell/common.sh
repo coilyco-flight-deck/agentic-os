@@ -377,11 +377,11 @@ ssm-get() {
     --query 'Parameter.Value' --output text
 }
 
-# Auto-cd a fresh interactive shell into the agentic-os repo (gate-accepted work
-# tree); work hosts opt out (AOS_HOST_CLASS=work). Both fall back to ~/projects.
+# Auto-cd a fresh interactive shell (landing at $HOME or the projects root, where
+# Warp opens tabs) into agentic-os; work hosts opt out (AOS_HOST_CLASS=work).
 case $- in
   *i*)
-    if [ "$PWD" = "$HOME" ]; then
+    if [ "$PWD" = "$HOME" ] || [ "$PWD" = "${WARD_LOCKDOWN_ROOT:-$HOME/projects}" ]; then
       if [ "${AOS_HOST_CLASS:-}" != "work" ] && [ -d "$HOME/projects/coilyco-flight-deck/agentic-os" ]; then
         cd "$HOME/projects/coilyco-flight-deck/agentic-os"
       elif [ -d "$HOME/projects" ]; then
