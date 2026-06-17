@@ -2,9 +2,10 @@
 # Source of truth: agentic-os/warp/templates/profile.ps1.tmpl
 # Rendered and symlinked to the pwsh 7 $PROFILE by `ward exec warp apply`.
 #
-# Auto-cd into the coilysiren workspace root on shell start. Warp on the
-# Windows host launches pwsh 7, so this is what lands new tabs in the repo.
-# Guarded so the shell still opens cleanly if the workspace is unmapped.
-if (Test-Path '{{ .WorkspaceDir }}') {
-    Set-Location -Path '{{ .WorkspaceDir }}'
+# Auto-cd into the projects root on shell start, matching Warp's StartupDir
+# (settings.toml / startup_config.toml). Warp on the Windows host launches
+# pwsh 7, so this is what lands new tabs. Guarded so the shell still opens
+# cleanly if the directory is unmapped.
+if (Test-Path '{{ .StartupDir }}') {
+    Set-Location -Path '{{ .StartupDir }}'
 }
