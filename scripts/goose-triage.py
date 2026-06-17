@@ -40,26 +40,27 @@ CACHE_DIR = Path.home() / ".cache" / "agentic-os" / "goose-triage"
 
 # Target shares of the non-P0 pool (centers 10/20/30/40, summing to 100).
 TARGET = {"P1": 0.10, "P2": 0.20, "P3": 0.30, "P4": 0.40}
-TIER_SCORE = {"P1": 3, "P2": 2, "P3": 1, "P4": 0}
+# P1 floors at zero: a top-band issue is only P1 if its mean clears this absolute
+# anchor floor (the P2/P1 boundary). See docs/goose-triage.md.
+P1_FLOOR = 70.0
+SCORE_DEFAULT = 30.0  # unsure -> low-middle (P3 territory)
+# Re-rank any tie this large against itself (run-off), so qwen's ceiling cluster
+# orders by judgment, not by issue number. See docs/goose-triage.md.
+RUNOFF_MIN_GROUP = 4
 
 P0_CONFIRM = """A keyword scan flagged this issue as a possible P0 (urgent incident). Your ONE job: decide if it describes an ACTIVE, LIVE incident or exposure happening NOW (a real outage, a real leaked credential, actual data loss, a live exploitable bypass, a currently-broken deploy) versus merely DISCUSSING, proposing, documenting, planning, or giving an example of such a topic (a design doc, a hardening proposal, a "set up X" task, a how-to). Output ONLY JSON, no prose, no code fence: {"active_incident":true|false,"reason":"<=12 words"}. When it is discussion / proposal / example / planning, active_incident=false."""
 
-# Two independent rubrics for the urgency pass - different framings give a more
-# robust signal than asking the same question twice.
+# Numeric urgency rubrics: three framings on a 0-100 scale, averaged, for spread
+# the percentile cut can land on. See docs/goose-triage.md.
+_ANCHOR = """Anchors: 80-100 = important AND clearly the next thing (P1-worthy). 50-79 = real backlog you genuinely intend to act on, not yet (P2). 20-49 = low but kept, or unsure - the default (P3). 0-19 = icebox: speculative / parked / won't-do-soon, hobby toys, "try X" / "fork Y" wishes, reading-list adds, vague vision, far-future, one-line stubs (P4).
+Use the FULL range and be decisive - spread your scores, do NOT cluster on round multiples of ten or default everything to the middle. Output ONLY JSON, no prose, no fence: {"score":<integer 0-100>,"reason":"<=12 words"}. If genuinely unsure, score 30."""
 SCORE_RUBRICS = [
-    """You are triaging a software backlog. This issue is NOT an active incident. Pick ONE tier by near-term value:
-P1 = important AND clearly the next thing to do, concrete committed-direction value.
-P2 = real backlog you genuinely intend to act on, just not yet.
-P3 = default - low but kept, or you are unsure.
-P4 = icebox: speculative / parked / won't-do-soon (hobby or hardware toys, "try X" / "fork Y" wishes, reading-list adds, vague vision, far-future plays, one-line idea stubs).
-Output ONLY JSON, no prose, no fence: {"tier":"P1|P2|P3|P4","reason":"<=12 words"}. If unsure, P3.""",
-    """Triage this backlog issue by how much NOT doing it soon would hurt. It is NOT an active incident. Pick ONE tier:
-P1 = real near-term pain or clearly the next committed step.
-P2 = genuinely intended work with a path to done, mid-term.
-P3 = minor or uncertain; the safe default.
-P4 = parked / speculative / nice-to-have-someday; nothing is lost by deferring indefinitely.
-Output ONLY JSON, no prose, no fence: {"tier":"P1|P2|P3|P4","reason":"<=12 words"}. If unsure, P3.""",
+    "Score this software-backlog issue's priority as an integer 0-100. It is NOT an active incident.\n" + _ANCHOR,
+    "Score this backlog issue by how much NOT doing it soon would hurt, as an integer 0-100. It is NOT an active incident. More near-term pain = higher.\n" + _ANCHOR,
+    "Score this backlog issue by near-term value and whether it is the clear next step, as an integer 0-100. It is NOT an active incident.\n" + _ANCHOR,
 ]
+
+RUNOFF = """These software-backlog issues all received a similar priority score, so break the tie. Rank them from MOST to LEAST important to do next - weigh real near-term impact, fleet-wide breakage, and whether each is the clear next step over mere cleanup or speculative work. Output ONLY JSON, no prose, no fence: {"order":[<issue numbers, most important first>]}. Include every issue number exactly once."""
 
 
 def sh(args: list[str], timeout: int = 60) -> str:
@@ -80,6 +81,15 @@ def goose(prompt: str, timeout: int = 90) -> dict | None:
         if obj is not None:
             return obj
     return None
+
+
+def _clamp_score(raw) -> float:
+    """Coerce a model 'score' to a float in [0, 100]; default on garbage."""
+    try:
+        v = float(raw)
+    except (TypeError, ValueError):
+        return SCORE_DEFAULT
+    return max(0.0, min(100.0, v))
 
 
 def _extract_json(text: str) -> dict | None:
@@ -128,10 +138,29 @@ def issue_prompt(base: str, it: dict) -> str:
     return f'{base}\nTitle: "{it["title"]}"\nBody: "{body}"'
 
 
+def runoff(members: list[dict]) -> bool:
+    """Ask Goose to rank a tied group against itself; write each member's
+    'tiebreak' to its rank position (0 = most important). Returns True on a
+    usable ranking, False on failure (caller keeps the issue-number fallback)."""
+    listing = "\n".join(f'#{it["num"]} {it["title"]}' for it in members)
+    res = goose(f"{RUNOFF}\nIssues:\n{listing}")
+    order = (res or {}).get("order")
+    if not isinstance(order, list):
+        return False
+    nums = [int(str(x).lstrip("#")) for x in order if str(x).lstrip("#").isdigit()]
+    if not nums:
+        return False
+    pos = {num: i for i, num in enumerate(nums)}
+    for it in members:
+        it["tiebreak"] = pos.get(it["num"], len(nums) + it["num"])
+    return True
+
+
 def percentile_cut(scored: list[dict]) -> None:
-    """Rank by summed score desc, assign tiers by target share, snap cuts to
-    natural score breaks, floor P1 at zero. Mutates each dict's 'tier'."""
-    pool = sorted(scored, key=lambda d: (-d["score"], d["num"]))
+    """Rank by mean score desc (run-off tiebreak, then issue number), assign
+    tiers by target share, snap cuts to nearby natural score breaks, floor P1 at
+    zero. Mutates each dict's 'tier'."""
+    pool = sorted(scored, key=lambda d: (-d["score"], d.get("tiebreak", d["num"]), d["num"]))
     n = len(pool)
     if n == 0:
         return
@@ -140,9 +169,11 @@ def percentile_cut(scored: list[dict]) -> None:
     b2 = b1 + round(TARGET["P2"] * n)
     b3 = b2 + round(TARGET["P3"] * n)
 
+    # Cap how far a boundary may snap, so an oversized quantized tie is split at
+    # the target percentile rather than swallowing a tier. See docs/goose-triage.md.
+    max_move = max(1, round(0.05 * n))
+
     def snap(idx: int) -> int:
-        # move boundary to the nearest rank where the score changes, so a run
-        # of equal scores is never split across a tier line
         if idx <= 0 or idx >= n:
             return idx
         if pool[idx - 1]["score"] == pool[idx]["score"]:
@@ -152,14 +183,17 @@ def percentile_cut(scored: list[dict]) -> None:
             up = idx
             while up < n and pool[up]["score"] == pool[idx]["score"]:
                 up += 1
-            return down if (idx - down) <= (up - idx) else up
+            best = down if (idx - down) <= (up - idx) else up
+            if abs(best - idx) > max_move:
+                return idx  # tie too wide to snap - accept the split
+            return best
         return idx
 
     b1, b2, b3 = snap(b1), snap(b2), snap(b3)
-    # P1 floors at zero: only keep a P1 band if its members actually read as P1
-    # in at least one scoring pass (sum >= 5 of 6).
+    # P1 floors at zero: a top-band issue is only P1 if its mean score clears the
+    # absolute P1 anchor floor; otherwise it falls through to P2.
     for i, it in enumerate(pool):
-        if i < b1 and it["score"] >= 5:
+        if i < b1 and it["score"] >= P1_FLOOR:
             it["tier"] = "P1"
         elif i < b2:
             it["tier"] = "P2"
@@ -199,21 +233,31 @@ def run(repo: str, limit: int) -> dict:
 
     p0_nums = {it["num"] for it in confirmed_p0}
     pool = [it for it in issues if it["num"] not in p0_nums]
-    print(f"goose-triage: scoring {len(pool)} non-P0 issues (2 passes) ...",
-          file=sys.stderr)
+    print(f"goose-triage: scoring {len(pool)} non-P0 issues "
+          f"({len(SCORE_RUBRICS)} numeric passes) ...", file=sys.stderr)
     for it in pool:
-        votes, reasons = [], []
+        scores, reasons = [], []
         for rubric in SCORE_RUBRICS:
             res = goose(issue_prompt(rubric, it))
-            tier = (res or {}).get("tier", "P3")
-            if tier not in TIER_SCORE:
-                tier = "P3"
-            votes.append(TIER_SCORE[tier])
+            scores.append(_clamp_score((res or {}).get("score")))
             if res and res.get("reason"):
                 reasons.append(res["reason"])
-        it["score"] = sum(votes)
-        it["reason"] = reasons[0] if reasons else "unscored -> default P3"
-        print(f"  score #{it['num']}: {it['score']}/6", file=sys.stderr)
+        it["score"] = round(sum(scores) / len(scores), 1)
+        it["passes"] = scores
+        it["tiebreak"] = it["num"]  # default order within a tie
+        it["reason"] = reasons[0] if reasons else "unscored -> default 30"
+        print(f"  score #{it['num']}: {it['score']:.1f}  {scores}", file=sys.stderr)
+
+    # Run-off any tie large enough to otherwise split arbitrarily across a tier.
+    groups: dict[float, list[dict]] = {}
+    for it in pool:
+        groups.setdefault(it["score"], []).append(it)
+    for score, members in sorted(groups.items(), reverse=True):
+        if len(members) >= RUNOFF_MIN_GROUP:
+            ok = runoff(members)
+            print(f"goose-triage: run-off on {len(members)} issues tied at "
+                  f"{score:.0f}: {'ranked' if ok else 'failed, kept issue order'}",
+                  file=sys.stderr)
 
     percentile_cut(pool)
 
@@ -258,7 +302,7 @@ def write_report(result: dict) -> tuple[Path, Path]:
         lines.append("")
         for it in sorted(tiers[t], key=lambda d: d["num"]):
             extra = f" - {it.get('reason','')}" if it.get("reason") else ""
-            score = f" [{it['score']}/6]" if "score" in it else ""
+            score = f" [{it['score']:.0f}]" if "score" in it else ""
             lines.append(f"- #{it['num']} {it['title']}{score}{extra}")
         lines.append("")
     md_path.write_text("\n".join(lines))
