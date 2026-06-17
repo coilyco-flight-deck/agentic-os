@@ -36,7 +36,7 @@ mkdir -p "$(dirname "$target")"
 cp -r "$dest/$subpath" "$target"
 rm -rf "$dest"
 
-# Refresh the ~/.claude/skills/ symlink so Claude Code picks it up globally
+# Refresh the harness skills-dir symlinks so the harness picks it up globally
 ( cd "$HOME/projects/<personal-os-repo>" && make refresh-symlinks )
 ```
 
@@ -46,6 +46,6 @@ Don't edit the installed skill's contents - if something needs changing, surface
 
 ## Step 6: Use the newly-installed skill to continue the work
 
-Immediately after install, read the new `.agents/skills/<skill-name>/SKILL.md` and apply its guidance to the task that prompted the search. That's the whole point - the user didn't ask to install a skill for its own sake, he asked for help with something.
+Immediately after install, read the new `.agents/skills/<skill-name>/SKILL.md` and apply its guidance to the task that prompted the search. That's the whole point - the user didn't ask to install a skill for its own sake, the ask was for help with something.
 
-Because the skill mount symlinks every skill into `~/.claude/skills/`, the skill is globally discoverable from that point on - future sessions pick it up without extra work.
+Because the skill mount symlinks every skill into the harness skills dir (`~/.claude/skills/`, `~/.codex/skills/`), the skill is globally discoverable from that point on - future sessions pick it up without extra work.

@@ -5,7 +5,7 @@ description: Kai's land-flow shorthands. `gish` lands one repo's current working
 
 # gish - one-word land flow
 
-`gish` is Kai's analog to a Warp alias: she says the single word `gish` (or `gish: <hint>`) in chat and Claude runs the whole land sequence so she never spells out "make an issue, commit, push." Claude does the judgment (issue text, commit message, new-vs-existing); Kai just says the word. It is an **in-chat shorthand**, not a binary.
+`gish` is Kai's analog to a Warp alias: she says the single word `gish` (or `gish: <hint>`) in chat and the agent runs the whole land sequence (issue text, commit message, new-vs-existing judgment included) so she never spells out "make an issue, commit, push." An **in-chat shorthand**, not a binary.
 
 For the heavier cross-repo "drain everything" sweep, see **`gulp`** below.
 
@@ -16,7 +16,7 @@ Run these in order, in the repo at cwd's git toplevel. Route git/forgejo calls t
 1. **Read the work.** `git status --short` + `git diff` (and untracked). Clean tree -> stop, nothing to land.
 2. **Resolve the repo.** `owner/name` from the forgejo remote (`git remote -v`; `origin` is usually forgejo directly). Issue base `https://forgejo.coilysiren.me/<owner>/<repo>`.
 3. **Find or create the issue.** Reuse an open issue that clearly matches the diff/`<hint>`, else create one Claude writes from the diff: `coily ops forgejo issue create --repo <owner/name> --title <t> --body-file <tmp.md>`. Capture the issue **number**; build `ISSUE_URL=<base>/issues/<N>`.
-4. **Commit dirty, minus lockdown files.** From `git status --porcelain` **drop** `.claude/settings.json` and `.claude/lockdown-deny.sh` (doctrine forbids staging them; the harness hard-blocks the former). Then `git commit -m "<type>(<scope>): <subject>" -m "closes <ISSUE_URL>" -- <paths...>`. Naming paths stages+commits atomically; untracked files land by being named.
+4. **Commit dirty, minus lockdown files.** From `git status --porcelain` **drop** the lockdown files `.claude/settings.json` and `.claude/lockdown-deny.sh` (doctrine forbids staging them, Claude Code hard-blocks the former, other harnesses do not). Then `git commit -m "<type>(<scope>): <subject>" -m "closes <ISSUE_URL>" -- <paths...>`. Naming paths stages+commits atomically; untracked files land by being named.
 5. **Push to canonical main.** `git push "$(git config --get-all remote.origin.pushurl | grep forgejo)" HEAD:main` (or `git push forgejo HEAD:main` with a named remote). Forgejo only, never the PR-gated GitHub mirror.
 6. **Report in one line:** issue (reused/created #N) + commit subject + push landed.
 

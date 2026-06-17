@@ -17,7 +17,7 @@ Vet a third-party package before it ships in your code. The output is a trust ve
 Run this skill BEFORE:
 
 - Adding a new direct dependency to `Cargo.toml`, `package.json`, `pyproject.toml`, `requirements.txt`, `go.mod`, `Pipfile`, `Brewfile`, or any other manifest.
-- Installing a new MCP server (`claude mcp add`, `~/.claude.json`, or a plugin marketplace install).
+- Installing a new MCP server (`claude mcp add` / `codex mcp add`, `~/.claude.json` / `~/.codex/config.toml`, or a plugin marketplace install).
 - Adding a new GitHub Action (`uses: org/action@vX`) or workflow that pulls a third-party container.
 - Pulling a new brew tap or formula.
 - Cloning and running an upstream repo the user found in a search result, blog post, or social link.
