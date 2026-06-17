@@ -377,8 +377,16 @@ ssm-get() {
     --query 'Parameter.Value' --output text
 }
 
-# Auto-cd a fresh interactive shell into the projects root (once; a subshell
-# already inside it won't re-cd). Guarded so a missing dir never breaks login.
+# Auto-cd a fresh interactive shell into the agentic-os repo (aos) so it lands in
+# a git work tree the agent-CLI gate accepts; fall back to the projects root.
 case $- in
-  *i*) [ -d "$HOME/projects" ] && [ "$PWD" = "$HOME" ] && cd "$HOME/projects" ;;
+  *i*)
+    if [ "$PWD" = "$HOME" ]; then
+      if [ -d "$HOME/projects/coilyco-flight-deck/agentic-os" ]; then
+        cd "$HOME/projects/coilyco-flight-deck/agentic-os"
+      elif [ -d "$HOME/projects" ]; then
+        cd "$HOME/projects"
+      fi
+    fi
+    ;;
 esac
