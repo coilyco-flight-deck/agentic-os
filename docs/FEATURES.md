@@ -13,6 +13,7 @@ This doc describes capabilities, not files. If you want a file inventory, run `l
 - [dev-base container image](dev-base-image.md) - the inner-loop toolchain (uv, pre-commit, node, go, aws cli, claude) published per release to the forgejo registry as `coilyco-flight-deck/agentic-os:<tag>`, multi-arch, pulled by tag in ward. Bakes a **public substrate seed** (bare mirrors of the image-tier reference repos at `/opt/substrate-seed`, from [`docker/dev-base/substrate-image-repos.txt`](../docker/dev-base/substrate-image-repos.txt)) so a ward container warms a cold gitcache with no network.
 - [Managed AGENTS.md pointer block](features-agents-pointer.md) - org-aware, drift-checked workspace-base pointer rendered into each repo's AGENTS.md.
 - [Encoded leak guard](leak-guard.md) - pre-commit hook that rejects plaintext occurrences of awkward-leak terms (employer/partner names, private-to-public references, dependency-cycle back-references) held as hex and decoded only in memory, so the ruleset is not itself grep-bait.
+- [Context-budget report](context-budget.md) - on-demand measure of the eager startup context each harness (claude/codex/opencode) loads vs a per-harness token budget, with per-source attribution, reusing the agent-compose resolution so the bytes match what each load point holds.
 
 ## See also
 
