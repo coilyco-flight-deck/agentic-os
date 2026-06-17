@@ -41,6 +41,8 @@ if [ -z "${_SIREN_SHELL_ENV:-}" ]; then
       [ -x /home/linuxbrew/.linuxbrew/bin/brew ] && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
       _siren_path_prepend "$HOME/.local/bin"
       _siren_path_prepend "$HOME/bin"
+      # npm global prefix (~/.npmrc sets prefix=~/.npm-global); holds the claude CLI.
+      _siren_path_prepend "$HOME/.npm-global/bin"
       export NVM_DIR="$HOME/.nvm"
       [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
       alias ls='ls --color=auto'
