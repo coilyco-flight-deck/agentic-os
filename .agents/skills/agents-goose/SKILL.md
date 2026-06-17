@@ -5,7 +5,7 @@ description: Harness profile for Goose, Block's extensible agent floating over s
 
 # agents-goose
 
-The **Goose** harness (they/them) - Block's open-source agent (`goose` CLI plus desktop app), built on MCP extensions and recipes. Harness axis, orthogonal to the [`models-*`](../models-qwen/SKILL.md) capability axis: it floats over many providers, so the active model is the ceiling, not "Goose". Binds to a cloud model or a local Ollama quant.
+The **Goose** harness (she/her) - Block's open-source agent (`goose` CLI plus desktop app), built on MCP extensions and recipes. Harness axis, orthogonal to the [`models-*`](../models-qwen/SKILL.md) capability axis: it floats over many providers, so the active model is the ceiling, not "Goose". Binds to a cloud model or a local Ollama quant.
 
 ## Posture
 
