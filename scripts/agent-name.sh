@@ -12,6 +12,13 @@ transcript="$(printf '%s' "$payload_flat" \
   | sed -n 's/.*"transcript_path"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)"
 model_id="$(printf '%s' "$payload_flat" \
   | sed -n 's/.*"model"[[:space:]]*:[[:space:]]*{[^}]*"id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)"
+# Claude Code passes the project root via workspace.project_dir (preferred) or
+# cwd. Fall back to $CLAUDE_PROJECT_DIR / $PWD only if both are absent.
+project_dir="$(printf '%s' "$payload_flat" \
+  | sed -n 's/.*"workspace"[[:space:]]*:[[:space:]]*{[^}]*"project_dir"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)"
+[ -z "$project_dir" ] && project_dir="$(printf '%s' "$payload_flat" \
+  | sed -n 's/.*"cwd"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)"
+[ -z "$project_dir" ] && project_dir="${CLAUDE_PROJECT_DIR:-$PWD}"
 
 # Fallback for hosts without ward.
 local_name() {
@@ -101,7 +108,7 @@ elif pct < 100:
 else:
     color, label = "\033[1;5;91m", "OVER"   # bold blink bright red
 reset = "\033[0m"
-print(f" | {color}ctx {k(ctx)}/250k ({pct:.0f}% {label}){reset} out {k(total_out)}", end="")
+print(f" | {color}ctx {k(ctx)}/250k ({pct:.0f}% {label}){reset}", end="")
 PY
 }
 
@@ -121,6 +128,11 @@ case "$mode" in
     printf '🐾 You are %s%s this session. When asked "who are you" or "what is your status", lead with this name.\n' "$name" "${pronouns:+ ($pronouns)}"
     ;;
   statusline | *)
-    printf '%s - your agent this session%s' "$name" "$(ctx_snippet)"
+    printf '%s%s' "$name" "$(ctx_snippet)"
+    project_hook="$project_dir/.agentic-os/statusline.sh"
+    if [ -x "$project_hook" ]; then
+      hook_out="$("$project_hook" 2>/dev/null)"
+      [ -n "$hook_out" ] && printf '\n%s' "$hook_out"
+    fi
     ;;
 esac
