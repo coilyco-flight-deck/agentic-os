@@ -11,7 +11,7 @@ mcp, mcporter, repo-recall, luca, session-lattice, recall_search.
 
 The lazy-loaded MCP layer. Configured servers live in `<personal-os-repo>/config/mcporter.json` (symlinked from the workspace root so `mcporter` finds them via its default `./config/mcporter.json` lookup). Typed headers per server live in `<personal-os-repo>/mcp-servers/*.d.ts`.
 
-The point of this layout: tool schemas do not load eagerly into Claude's context. Discovery is cheap (this skill + the per-server index). Schema is paid only for the one server the agent actually needs this turn.
+The point of this layout: discovery is cheap (this skill + the per-server index) and schema is paid only for the server actually needed. This is the **lazy** path - the only path on Codex, and the fallback anywhere. Note the harness split: on **Claude Code** the same merged inventory is *also* registered natively into user-scope (`mcp__<name>__*` tools) by `sync-claude-mcp.py`, since Claude's 1M window + on-demand schema deferral make native registration near-free. Both paths reach the same servers. See [Design notes](references/design-notes.md) ("Eager vs lazy is now a per-harness split").
 
 ## Hard-trigger rule
 
