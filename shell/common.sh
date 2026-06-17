@@ -115,7 +115,7 @@ opencode() { _siren_agent_gate opencode || return 1; command opencode "$@"; }
 ward-kdl() {
   if [ "$1" = "agents" ]; then
     case "${2:-}" in
-      claude|codex|opencode|aider|goose) _siren_agent_gate "$2" || return 1 ;;
+      claude|codex|opencode|aider|goose|ollama) _siren_agent_gate "$2" || return 1 ;;
     esac
   fi
   command ward-kdl "$@"
