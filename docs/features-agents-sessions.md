@@ -4,9 +4,9 @@ Agent naming and session orientation.
 
 ## Agent self-name
 
-Every Claude Code session gets a stable, human-readable name: `claude-<os>-<hostname>-<tag>-<pronouns>`, where `<tag>` is the last four characters of the session id and `<pronouns>` is the agent's pronoun slug (`she-her` for Claude). The claude-hooks ansible role wires it into `~/.claude/settings.json` two ways - a persistent status line so the operator always sees which host and session they are talking to, and a SessionStart hook so the agent knows its own name from the first turn. Codex and OpenCode agents swap the `claude-` prefix and carry their own pronouns - Codex `he-him`, OpenCode (qwen-opencode) `they-them`. The wiring is idempotent and never clobbers an operator-set status line.
+Every agent session gets a stable name: `<harness>-<os>-<hostname>-<tag>-<pronouns>`, `<tag>` the last four characters of the session id and `<pronouns>` the harness's slug. The five: Claude `she-her`, Codex `he-him`, OpenCode `they-them`, Aider `they-them`, Goose `she-her`. `scripts/agent-name.sh` holds the registry and picks the harness from `AOS_AGENT_HARNESS` (default `claude`).
 
-`ward agent-name` is the single source of truth for the name. The status line script defers to ward and only falls back to computing the scheme locally when ward is absent.
+For Claude Code the claude-hooks ansible role wires the script into `~/.claude/settings.json` as a status line and a SessionStart hook, idempotently, never clobbering an operator-set status line. Other harnesses export `AOS_AGENT_HARNESS=<harness>` and hook the script into whatever surface they expose; Aider and Goose lack Claude's hook points, so their wiring is bounded by what each offers. Local computation is authoritative - `ward agent-name` is not yet implemented.
 
 ### Second status-line row
 

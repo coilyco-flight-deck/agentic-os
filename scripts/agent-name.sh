@@ -20,7 +20,22 @@ project_dir="$(printf '%s' "$payload_flat" \
   | sed -n 's/.*"cwd"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)"
 [ -z "$project_dir" ] && project_dir="${CLAUDE_PROJECT_DIR:-$PWD}"
 
-# Fallback for hosts without ward.
+# Harness registry (prefix = harness name, value = pronoun slug). Pick the
+# harness via AOS_AGENT_HARNESS, default claude. See docs/features-agents-sessions.md.
+harness="${AOS_AGENT_HARNESS:-claude}"
+pronoun_slug_for() {
+  case "$1" in
+    claude)   printf 'she-her' ;;
+    codex)    printf 'he-him' ;;
+    opencode) printf 'they-them' ;;
+    aider)    printf 'they-them' ;;
+    goose)    printf 'she-her' ;;
+    *)        printf 'she-her' ;; # unknown harness: default she-her
+  esac
+}
+
+# Compute the name locally (harness-aware via the registry). Authoritative
+# today: the `ward agent-name` override below is not yet implemented.
 local_name() {
   local os host tag
   case "$(uname -s)" in
@@ -35,24 +50,24 @@ local_name() {
   letters="$(printf '%s' "$sid_lc" | tr -cd 'a-z' | cut -c1-2)"
   digits="$(printf '%s' "$sid_lc" | tr -cd '0-9' | cut -c1-2)"
   tag="${letters}${digits}"
-  printf 'claude-%s-%s' "$os" "$host"
+  printf '%s-%s-%s' "$harness" "$os" "$host"
   [ -n "$tag" ] && printf -- '-%s' "$tag"
-  # Pronoun slug. The local fallback is claude-only, so always she-her.
-  # ward emits he-him / they-them for codex / opencode.
-  printf -- '-she-her'
+  printf -- '-%s' "$(pronoun_slug_for "$harness")"
 }
 
-# Stable per session, cached to avoid spawning ward on every status-line refresh.
-cache="${TMPDIR:-/tmp}/agent-name-${sid:-nosession}"
+# Stable per session, cached to avoid spawning ward on every status-line
+# refresh. Key on harness too, so two harnesses never share a cached name.
+cache="${TMPDIR:-/tmp}/agent-name-${harness}-${sid:-nosession}"
 if [ -s "$cache" ]; then
   name="$(cat "$cache")"
 else
   name=""
+  # Optional future override: if ward ever ships `agent-name`, prefer it.
   if command -v ward >/dev/null 2>&1; then
     name="$(ward agent-name --session-id "$sid" 2>/dev/null | head -n1 || true)"
   fi
-  # Accept only well-formed names; fall back to local compute otherwise.
-  if [[ "$name" != claude-* || "$name" == *[^a-z0-9-]* ]]; then
+  # Accept only a well-formed name for this harness; else compute locally.
+  if [[ "$name" != "$harness"-* || "$name" == *[^a-z0-9-]* ]]; then
     name="$(local_name)"
   fi
   printf '%s' "$name" >"$cache"
