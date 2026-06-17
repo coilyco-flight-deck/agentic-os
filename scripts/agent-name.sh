@@ -135,7 +135,7 @@ case "$mode" in
       hook_out="$("$project_hook" 2>/dev/null)"
       [ -n "$hook_out" ] && printf '\n%s' "$hook_out"
     fi
-    # Second row, host-global: $AGENT_STATUSLINE_EXTRA. See docs/features-agents-sessions.md.
+    # Second row: $AGENT_STATUSLINE_EXTRA. See docs/features-agents-sessions.md.
     extra_cmd="${AGENT_STATUSLINE_EXTRA:-}"
     if [ -n "$extra_cmd" ] && [ -x "$extra_cmd" ]; then
       extra="$("$extra_cmd" 2>/dev/null || true)"
