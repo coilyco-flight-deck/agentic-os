@@ -7,6 +7,9 @@ commands:
   goose-ask:
     run: bash scripts/goose-ask.sh
     description: "Probe the Goose harness with one-shot questions. `ward exec goose-ask -- \"question\"` for one, `ward exec goose-ask -- -f scripts/goose-probe.txt` for the capability battery. Strips the banner, times each call, tees a raw transcript under ~/.cache/agentic-os/goose-ask/. See docs/test-harness-goose.md."
+  goose-json:
+    run: uv run python scripts/goose_json.py
+    description: "Run one Goose call with a provider-enforced JSON-schema response and print the parsed, validated object. `ward exec goose-json -- --schema <file> --text \"<prompt>\"` (or --prompt-file). Synthesizes a Goose recipe with the schema as response format, parses the JSON envelope, validates, prints clean JSON (non-zero exit on failure). The structured-output boundary goose-triage reuses. See docs/goose-triage.md."
   goose-triage:
     run: uv run python scripts/goose-triage.py
     description: "Goose-driven issue triage (report-only). `ward exec goose-triage -- --repo <owner/name>` fetches open issues, runs the P0 regex net + Goose confirm, scores the rest with two Goose urgency passes, percentile-cuts into P0-P4, and writes a report under ~/.cache/agentic-os/goose-triage/. Never writes to issues. See docs/test-harness-goose.md and the tooling-issue-prioritization skill."

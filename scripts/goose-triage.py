@@ -25,7 +25,6 @@ See docs/test-harness-goose.md and the tooling-issue-prioritization skill.
 from __future__ import annotations
 
 import argparse
-import json
 import re
 import subprocess
 import sys
@@ -33,6 +32,9 @@ from datetime import date
 from pathlib import Path
 
 import yaml
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from goose_json import ask  # enforced JSON-schema Goose calls (the ward goose-json verb)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 P0_RULES = REPO_ROOT / ".agents/skills/tooling-issue-prioritization/references/p0-content-rules.yaml"
@@ -67,20 +69,19 @@ def sh(args: list[str], timeout: int = 60) -> str:
     return subprocess.run(args, capture_output=True, text=True, timeout=timeout).stdout
 
 
-def goose(prompt: str, timeout: int = 90) -> dict | None:
-    """One tamed Goose call returning the parsed JSON object, or None."""
-    cmd = ["goose", "run", "--no-profile", "--quiet", "--no-session",
-           "--max-turns", "1", "-t", prompt]
-    for _ in range(2):  # one retry on parse/empty failure
-        try:
-            out = subprocess.run(cmd, capture_output=True, text=True,
-                                 timeout=timeout).stdout
-        except subprocess.TimeoutExpired:
-            continue
-        obj = _extract_json(out)
-        if obj is not None:
-            return obj
-    return None
+# Response schemas Goose is forced to conform to (via goose_json.ask), one per
+# judgment call. The provider constrains output to these - no regex scraping.
+CONFIRM_SCHEMA = {"type": "object", "additionalProperties": False,
+                  "required": ["active_incident", "reason"],
+                  "properties": {"active_incident": {"type": "boolean"},
+                                 "reason": {"type": "string"}}}
+SCORE_SCHEMA = {"type": "object", "additionalProperties": False,
+                "required": ["score", "reason"],
+                "properties": {"score": {"type": "integer"},
+                               "reason": {"type": "string"}}}
+RUNOFF_SCHEMA = {"type": "object", "additionalProperties": False,
+                 "required": ["order"],
+                 "properties": {"order": {"type": "array", "items": {"type": "integer"}}}}
 
 
 def _clamp_score(raw) -> float:
@@ -90,17 +91,6 @@ def _clamp_score(raw) -> float:
     except (TypeError, ValueError):
         return SCORE_DEFAULT
     return max(0.0, min(100.0, v))
-
-
-def _extract_json(text: str) -> dict | None:
-    """Pull the first {...} object out of Goose output (tolerates ``` fences)."""
-    m = re.search(r"\{.*?\}", text, re.DOTALL)
-    if not m:
-        return None
-    try:
-        return json.loads(m.group(0))
-    except json.JSONDecodeError:
-        return None
 
 
 def fetch_issues(repo: str, limit: int) -> list[dict]:
@@ -143,7 +133,7 @@ def runoff(members: list[dict]) -> bool:
     'tiebreak' to its rank position (0 = most important). Returns True on a
     usable ranking, False on failure (caller keeps the issue-number fallback)."""
     listing = "\n".join(f'#{it["num"]} {it["title"]}' for it in members)
-    res = goose(f"{RUNOFF}\nIssues:\n{listing}")
+    res = ask(f"{RUNOFF}\nIssues:\n{listing}", RUNOFF_SCHEMA)
     order = (res or {}).get("order")
     if not isinstance(order, list):
         return False
@@ -222,7 +212,7 @@ def run(repo: str, limit: int) -> dict:
     confirmed_p0 = []
     for num in sorted(cands):
         it = by_num[num]
-        res = goose(issue_prompt(P0_CONFIRM, it))
+        res = ask(issue_prompt(P0_CONFIRM, it), CONFIRM_SCHEMA)
         active = bool(res and res.get("active_incident"))
         if active:
             it["tier"] = "P0"
@@ -238,7 +228,7 @@ def run(repo: str, limit: int) -> dict:
     for it in pool:
         scores, reasons = [], []
         for rubric in SCORE_RUBRICS:
-            res = goose(issue_prompt(rubric, it))
+            res = ask(issue_prompt(rubric, it), SCORE_SCHEMA)
             scores.append(_clamp_score((res or {}).get("score")))
             if res and res.get("reason"):
                 reasons.append(res["reason"])
