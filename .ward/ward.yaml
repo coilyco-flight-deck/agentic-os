@@ -13,6 +13,9 @@ commands:
   goose-triage:
     run: uv run python scripts/goose-triage.py
     description: "Goose-driven issue triage; applies P0-P4 tier + headless/interactive/consult mode labels by default. `ward exec goose-triage` defaults to the current git origin's slug (agentic-os under ward); `-- --repo <owner/name>` targets another; `-- --report-only` (alias --dry-run) writes no labels. Fetches open issues, runs the P0 regex net + Goose confirm, scores the rest with numeric Goose urgency passes + a tie run-off, percentile-cuts into P0-P4, classifies a second orthogonal automation-mode axis (headless/interactive/consult, fail-closed to consult unless confident), writes a report under ~/.cache/agentic-os/goose-triage/, then applies both label axes (each converges independently; both label sets must exist in the repo). See docs/goose-triage.md."
+  agent-compat:
+    run: uv run python scripts/agent-compat.py
+    description: "Run daily unittest smoke checks for local agent harness compatibility. Checks Claude, Codex, Goose, Aider, OpenCode, and Qwen by default; narrow with `-- --harness codex`. Uses unittest's native ok/FAIL/ERROR output and exit code. See docs/test-harness.md."
   apply-agentic-os-hooks:
     run: uv run python scripts/apply-agentic-os-hooks.py
     description: "Roll out the canonical pre-commit hook block to every consumer repo under ~/projects/<org>/* (all org dirs). Idempotent."
