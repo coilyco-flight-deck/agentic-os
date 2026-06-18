@@ -12,13 +12,20 @@ engine and Python owning the deterministic parts:
      P3=1 P4=0), summed. Unsure -> P3.
   5. Percentile cut into the target shape (P1 10% / P2 20% / P3 30% / P4 40%),
      boundaries snapped to natural score breaks, P1 floored at zero.
-  6. Write a report (markdown + yaml) under ~/.cache/agentic-os/goose-triage/.
-  7. Apply the P0-P4 tier labels to the issues (default). Pass --report-only
-     to skip the write and just produce the report.
+  6. Classify the automation-mode axis: one Goose call per issue tags it
+     headless / interactive / consult - how much human involvement it needs
+     before an agent can land it. Orthogonal to P0-P4. Fail-closed: an unsure
+     or low-confidence call stays consult (the human-gated default).
+  7. Write a report (markdown + yaml) under ~/.cache/agentic-os/goose-triage/.
+  8. Apply both label axes to the issues (default): the P0-P4 tier and the
+     headless/interactive/consult mode. Pass --report-only to skip the write.
 
-Applies labels by default: the computed tier becomes a forgejo label, replacing
-any prior P0-P4 label so a re-run converges. The P0-P4 labels must exist in the
-repo. Use --report-only (alias --dry-run) to review before writing.
+Applies labels by default on two orthogonal axes: the computed tier (P0-P4) and
+the automation mode (headless/interactive/consult). Each converges independently -
+the new label is added and the others on that axis removed - so a re-run leaves
+exactly one tier and one mode label, and the two axes never clobber each other.
+Both label sets must exist in the repo. Use --report-only (alias --dry-run) to
+review before writing.
 
 The Goose calls use the anti-thrash config validated in the test harness:
 `goose run --no-profile --quiet --no-session --max-turns 1` - no extensions
@@ -51,6 +58,10 @@ TARGET = {"P1": 0.10, "P2": 0.20, "P3": 0.30, "P4": 0.40}
 # anchor floor (the P2/P1 boundary). See docs/goose-triage.md.
 P1_FLOOR = 70.0
 SCORE_DEFAULT = 30.0  # unsure -> low-middle (P3 territory)
+# Automation-mode axis (orthogonal to P0-P4), most to least agent autonomy.
+# consult is the fail-closed default (unsure, and unlabeled at the gate, -> consult).
+MODE_LABELS = ("headless", "interactive", "consult")
+MODE_DEFAULT = "consult"
 # Re-rank any tie this large against itself (run-off), so qwen's ceiling cluster
 # orders by judgment, not by issue number. See docs/goose-triage.md.
 RUNOFF_MIN_GROUP = 4
@@ -68,6 +79,14 @@ SCORE_RUBRICS = [
 ]
 
 RUNOFF = """These software-backlog issues all received a similar priority score, so break the tie. Rank them from MOST to LEAST important to do next - weigh real near-term impact, fleet-wide breakage, and whether each is the clear next step over mere cleanup or speculative work. Output ONLY JSON, no prose, no fence: {"order":[<issue numbers, most important first>]}. Include every issue number exactly once."""
+
+# Automation-mode axis: how much human involvement before an agent can land it,
+# read as a ceiling matching the dispatch surfaces. See docs/goose-triage.md.
+MODE = """Classify how much human involvement this software-backlog issue needs before an autonomous coding agent can land it. Choose ONE mode:
+- "headless": an agent can take it from open issue to merged change with NO human in the loop - self-contained code/docs/config work, clear enough to act on now, no pending design decision, no credentials or access the agent lacks, no destructive or externally-visible production step.
+- "interactive": an agent can do the work but must pause at a human checkpoint mid-flight - a real choice between design approaches, a destructive or irreversible step to approve, or a verification only a human can perform.
+- "consult": a human decision, design, or external action must happen FIRST - an ambiguous or underspecified ask, a product or strategy call, access the agent does not have, or a mostly-human task.
+Be conservative: when torn between two, pick the MORE human one and set confidence "low". Only set confidence "high" when the classification is clear. Output ONLY JSON, no prose, no fence: {"mode":"headless"|"interactive"|"consult","confidence":"high"|"low","reason":"<=12 words"}."""
 
 
 def sh(args: list[str], timeout: int = 60) -> str:
@@ -87,6 +106,11 @@ SCORE_SCHEMA = {"type": "object", "additionalProperties": False,
 RUNOFF_SCHEMA = {"type": "object", "additionalProperties": False,
                  "required": ["order"],
                  "properties": {"order": {"type": "array", "items": {"type": "integer"}}}}
+MODE_SCHEMA = {"type": "object", "additionalProperties": False,
+               "required": ["mode", "confidence", "reason"],
+               "properties": {"mode": {"type": "string", "enum": ["headless", "interactive", "consult"]},
+                              "confidence": {"type": "string", "enum": ["high", "low"]},
+                              "reason": {"type": "string"}}}
 
 
 def _hms(secs: float) -> str:
@@ -169,6 +193,19 @@ def runoff(members: list[dict]) -> bool:
     return True
 
 
+def classify_mode(it: dict) -> tuple[str, str]:
+    """Decide the automation-mode label for one issue. Returns (mode, reason).
+
+    Fail-closed: anything but a high-confidence headless/interactive falls back to
+    consult, matching how an unlabeled issue is treated at the dispatch gate, so a
+    promotion out of human-gated only happens when the model is sure."""
+    res = ask(issue_prompt(MODE, it), MODE_SCHEMA) or {}
+    mode = res.get("mode")
+    if mode in MODE_LABELS and res.get("confidence") == "high":
+        return mode, res.get("reason") or ""
+    return MODE_DEFAULT, res.get("reason") or "unsure -> consult"
+
+
 def percentile_cut(scored: list[dict]) -> None:
     """Rank by mean score desc (run-off tiebreak, then issue number), assign
     tiers by target share, snap cuts to nearby natural score breaks, floor P1 at
@@ -232,7 +269,8 @@ def run(repo: str, limit: int) -> dict:
     # Stable progress denominator: confirm calls + 3 score passes per issue. A
     # touch high if any candidate confirms P0 (those skip scoring) - negligible.
     t0 = time.monotonic()
-    total = len(cands) + len(SCORE_RUBRICS) * n
+    # confirm calls + 3 score passes + 1 mode pass per issue.
+    total = len(cands) + len(SCORE_RUBRICS) * n + n
     done = 0
     print(f"goose-triage: P0 net flagged {len(cands)} candidate(s); "
           f"~{total} Goose calls to make; confirming ...", file=sys.stderr)
@@ -281,6 +319,19 @@ def run(repo: str, limit: int) -> dict:
                   f"[{_hms(time.monotonic() - t0)} elapsed]", file=sys.stderr)
 
     percentile_cut(pool)
+
+    # Automation-mode axis - one pass over every issue (P0 included; mode is
+    # orthogonal to tier). Fail-closed to consult inside classify_mode.
+    print(f"goose-triage: classifying automation mode for {n} issue(s) ...",
+          file=sys.stderr)
+    for it in issues:
+        mode, mreason = classify_mode(it)
+        done += 1
+        it["mode"] = mode
+        it["mode_reason"] = mreason
+        print(f"  mode #{it['num']}: {mode:11} {_bar(done, total, t0)}",
+              file=sys.stderr)
+
     print(f"goose-triage: judgment complete in {_hms(time.monotonic() - t0)}",
           file=sys.stderr)
 
@@ -289,7 +340,7 @@ def run(repo: str, limit: int) -> dict:
         tiers["P0"].append(it)
     for it in pool:
         tiers[it["tier"]].append(it)
-    return {"repo": repo, "n": n, "capped": capped, "tiers": tiers}
+    return {"repo": repo, "n": n, "capped": capped, "tiers": tiers, "issues": issues}
 
 
 def write_report(result: dict) -> tuple[Path, Path]:
@@ -305,8 +356,12 @@ def write_report(result: dict) -> tuple[Path, Path]:
     if ap is None:
         applied_note = "Report-only - no issues were modified (--report-only)."
     else:
-        applied_note = (f"Tier labels (P0-P4) applied to {ap['ok']} issue(s)"
-                        + (f"; {ap['failed']} failed to apply" if ap["failed"] else "") + ".")
+        t_ap, m_ap = ap["tiers"], ap["modes"]
+        applied_note = (
+            f"Tier labels (P0-P4) applied to {t_ap['ok']} issue(s)"
+            + (f"; {t_ap['failed']} failed" if t_ap["failed"] else "")
+            + f"; mode labels (headless/interactive/consult) to {m_ap['ok']} issue(s)"
+            + (f"; {m_ap['failed']} failed" if m_ap["failed"] else "") + ".")
     lines = [f"# Triage report - {result['repo']} - {today}", ""]
     lines.append(f"{n} open issues triaged by Goose (qwen3-coder:30b). " + applied_note)
     if result["capped"]:
@@ -316,12 +371,22 @@ def write_report(result: dict) -> tuple[Path, Path]:
                      "over the true total. Re-run with full pagination before "
                      "trusting the shape.")
     lines.append("")
-    lines.append("## Distribution")
+    lines.append("## Tier distribution")
     lines.append("")
     for t in ("P0", "P1", "P2", "P3", "P4"):
         c = len(tiers[t])
         pct = (100 * c / n) if n else 0
         lines.append(f"- **{t}** - {c} ({pct:.0f}%)")
+    lines.append("")
+    lines.append("## Mode distribution")
+    lines.append("")
+    mode_counts = {m: 0 for m in MODE_LABELS}
+    for it in result.get("issues", []):
+        mode_counts[it.get("mode", MODE_DEFAULT)] += 1
+    for m in MODE_LABELS:
+        c = mode_counts[m]
+        pct = (100 * c / n) if n else 0
+        lines.append(f"- **{m}** - {c} ({pct:.0f}%)")
     lines.append("")
     for t in ("P0", "P1", "P2", "P3", "P4"):
         if not tiers[t]:
@@ -331,7 +396,8 @@ def write_report(result: dict) -> tuple[Path, Path]:
         for it in sorted(tiers[t], key=lambda d: d["num"]):
             extra = f" - {it.get('reason','')}" if it.get("reason") else ""
             score = f" [{it['score']:.0f}]" if "score" in it else ""
-            lines.append(f"- #{it['num']} {it['title']}{score}{extra}")
+            mode = f" `{it.get('mode', MODE_DEFAULT)}`"
+            lines.append(f"- #{it['num']} {it['title']}{score}{mode}{extra}")
         lines.append("")
     md_path.write_text("\n".join(lines))
 
@@ -340,7 +406,9 @@ def write_report(result: dict) -> tuple[Path, Path]:
         "applied": result.get("applied"),
         "tiers": {
             t: [{"num": it["num"], "title": it["title"],
-                 "score": it.get("score"), "reason": it.get("reason", "")}
+                 "score": it.get("score"), "reason": it.get("reason", ""),
+                 "mode": it.get("mode", MODE_DEFAULT),
+                 "mode_reason": it.get("mode_reason", "")}
                 for it in sorted(tiers[t], key=lambda d: d["num"])]
             for t in ("P0", "P1", "P2", "P3", "P4")
         },
@@ -388,6 +456,30 @@ def apply_tiers(repo: str, result: dict) -> dict:
     return {"ok": ok, "failed": failed}
 
 
+def apply_modes(repo: str, result: dict) -> dict:
+    """Write each issue's automation mode as a forgejo label (headless/interactive/
+    consult), converging like apply_tiers: add the computed mode, remove the other
+    two. A separate axis from P0-P4, so the two never clobber each other. The mode
+    labels must already exist in the repo - a failed add is reported, not dropped.
+    Returns {"ok", "failed"} counts."""
+    ok = failed = 0
+    for it in sorted(result["issues"], key=lambda d: d["num"]):
+        num = it["num"]
+        mode = it.get("mode", MODE_DEFAULT)
+        others = [m for m in MODE_LABELS if m != mode]
+        rc, err = _label(repo, num, "add", [mode])
+        for o in others:
+            _label(repo, num, "remove", [o])  # idempotent; absent label is a no-op
+        if rc == 0:
+            ok += 1
+            print(f"  mode #{num}: {mode}", file=sys.stderr)
+        else:
+            failed += 1
+            print(f"  mode #{num}: FAILED to add {mode}: {err.strip()[:100]}",
+                  file=sys.stderr)
+    return {"ok": ok, "failed": failed}
+
+
 def _default_repo() -> str | None:
     """Slug of the current git origin (owner/name), or None. Under `ward exec`
     cwd is the agentic-os root, so a bare `ward exec goose-triage` targets it."""
@@ -401,7 +493,7 @@ def _default_repo() -> str | None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(description="Goose-driven issue triage; applies P0-P4 labels by default.")
+    ap = argparse.ArgumentParser(description="Goose-driven issue triage; applies P0-P4 tier and headless/interactive/consult mode labels by default.")
     ap.add_argument("--repo", help="owner/name; default: the current git origin's slug")
     ap.add_argument("--limit", type=int, default=50, help="max issues to fetch (coily cap is 50)")
     ap.add_argument("--report-only", "--dry-run", dest="report_only", action="store_true",
@@ -421,8 +513,9 @@ def main(argv: list[str] | None = None) -> int:
             print("goose-triage: WARNING applying tier labels over a PARTIAL backlog "
                   "(fetch hit the cap) - the percentile shape is not over the true total.",
                   file=sys.stderr)
-        print(f"goose-triage: applying tier labels to {repo} ...", file=sys.stderr)
-        result["applied"] = apply_tiers(repo, result)
+        print(f"goose-triage: applying tier + mode labels to {repo} ...", file=sys.stderr)
+        result["applied"] = {"tiers": apply_tiers(repo, result),
+                             "modes": apply_modes(repo, result)}
 
     md_path, yaml_path = write_report(result)
 
@@ -431,14 +524,23 @@ def main(argv: list[str] | None = None) -> int:
     print(f"goose-triage: {result['repo']} - {result['n']} issues")
     for t in ("P0", "P1", "P2", "P3", "P4"):
         print(f"  {t}: {len(tiers[t])}")
+    mode_counts = {m: 0 for m in MODE_LABELS}
+    for it in result.get("issues", []):
+        mode_counts[it.get("mode", MODE_DEFAULT)] += 1
+    for m in MODE_LABELS:
+        print(f"  {m}: {mode_counts[m]}")
     ap_res = result["applied"]
     if ap_res is None:
         print("  labels: not applied (--report-only)")
     else:
-        print(f"  labels: applied to {ap_res['ok']} issue(s)"
-              + (f", {ap_res['failed']} FAILED" if ap_res["failed"] else ""))
+        t_ap, m_ap = ap_res["tiers"], ap_res["modes"]
+        print(f"  labels: tiers -> {t_ap['ok']} ok"
+              + (f"/{t_ap['failed']} FAILED" if t_ap["failed"] else "")
+              + f", modes -> {m_ap['ok']} ok"
+              + (f"/{m_ap['failed']} FAILED" if m_ap["failed"] else ""))
     print(f"\nreport -> {md_path}\n        {yaml_path}")
-    return 1 if (ap_res and ap_res["failed"]) else 0
+    failed = bool(ap_res) and (ap_res["tiers"]["failed"] or ap_res["modes"]["failed"])
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":
