@@ -8,6 +8,7 @@ ARG GO_VERSION=1.26.4
 ARG AWSCLI_VERSION=2.35.5
 ARG CLAUDE_VERSION=2.1.178
 ARG CODEX_VERSION=0.141.0
+ARG GOOSE_VERSION=1.38.0
 
 # buildx populates TARGETARCH (amd64|arm64) per platform in the manifest list.
 ARG TARGETARCH
@@ -30,11 +31,11 @@ RUN apt-get update \
 # Map Docker's TARGETARCH onto each upstream's arch spelling once.
 RUN set -eux; \
     case "${TARGETARCH}" in \
-      amd64) NODE_ARCH=x64;   GO_ARCH=amd64; AWS_ARCH=x86_64; CODEX_ARCH=x86_64 ;; \
-      arm64) NODE_ARCH=arm64; GO_ARCH=arm64; AWS_ARCH=aarch64; CODEX_ARCH=aarch64 ;; \
+      amd64) NODE_ARCH=x64;   GO_ARCH=amd64; AWS_ARCH=x86_64; CODEX_ARCH=x86_64; GOOSE_ARCH=x86_64 ;; \
+      arm64) NODE_ARCH=arm64; GO_ARCH=arm64; AWS_ARCH=aarch64; CODEX_ARCH=aarch64; GOOSE_ARCH=aarch64 ;; \
       *) echo "unsupported TARGETARCH: ${TARGETARCH}" >&2; exit 1 ;; \
     esac; \
-    echo "NODE_ARCH=${NODE_ARCH} GO_ARCH=${GO_ARCH} AWS_ARCH=${AWS_ARCH} CODEX_ARCH=${CODEX_ARCH}" > /tmp/arch.env
+    echo "NODE_ARCH=${NODE_ARCH} GO_ARCH=${GO_ARCH} AWS_ARCH=${AWS_ARCH} CODEX_ARCH=${CODEX_ARCH} GOOSE_ARCH=${GOOSE_ARCH}" > /tmp/arch.env
 
 # uv (Python project + tool manager).
 RUN set -eux; \
@@ -92,6 +93,20 @@ RUN set -eux; \
     chmod 0755 /usr/local/bin/codex; \
     rm /tmp/codex.tar.gz; \
     codex --version
+
+# Goose CLI (block/goose), pinned. Statically linked musl build, no runtime deps.
+# Unblocks the `ward agent goose work|headless|task|reply` surface the ward
+# entrypoint already wires (it dropped to a shell while the binary was absent).
+# goose floats over a model provider it reads from ~/.config/goose; wiring that
+# into the container is ward's concern (the adapter manifest's goose `auth` slot).
+RUN set -eux; \
+    . /tmp/arch.env; \
+    curl -fsSL "https://github.com/block/goose/releases/download/v${GOOSE_VERSION}/goose-${GOOSE_ARCH}-unknown-linux-musl.tar.gz" \
+      -o /tmp/goose.tar.gz; \
+    tar -xzf /tmp/goose.tar.gz -C /usr/local/bin ./goose; \
+    chmod 0755 /usr/local/bin/goose; \
+    rm /tmp/goose.tar.gz; \
+    goose --version
 
 # Substrate seed: bare mirrors of the public (image-tier) reference repos a ward
 # container warms its gitcache from on a cold volume. List is a denormalized copy
