@@ -14,6 +14,6 @@ After the move, the skill shrinks to tiers 1 and 2 - Description and Body. That 
 
 The Body ends with a one-liner: "for command behavior, run `ward X help`."
 
-## Applying it to ward dispatch
+## Applying it to ward agent
 
-`ward dispatch` is the first command to take this shape. The current `ward-dispatch` skill body mixes the command-collision table (genuine tier-1/2 fuzzy-matching content, stays) with behavioral reference - headless vs interactive, detach mechanics, refusal conditions (tiers 3 to 5, moves into the CLI). The dispatch-side change is tracked on `coilyco-bridge/ward`. This skill is the general model that change is one instance of.
+`ward agent` is the command that takes this shape. Its behavioral reference - work vs headless vs task, the pre-flight GO/NO-GO read, reservation, `--new-tab`, refusal conditions - lives in `docs/agent.md` next to the code (embedded and emitted), not in a skill. A skill would only hold tiers 1 and 2 - the Description and Body that are genuinely human-to-agent and fuzzy-matched - and end with "for command behavior, run `ward agent <mode> work --help`." The retired `ward dispatch` was the first command to motivate this split (ward#174).

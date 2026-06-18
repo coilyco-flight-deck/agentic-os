@@ -69,7 +69,7 @@ No commands array, no shim script, no scratch files. The tab opens directly into
 
 ## Patterns considered and discarded
 
-**OSC 0 title pinning in a `commands` array.** Idea: leave title field empty, run `printf '\033]0;...\007'` as the first tab command. This is how `claude-dispatch-interactive` sets its title and it works there. But there, the title is a literal string baked into the TOML command. With a dynamic title threaded through a scratch file ("`printf '\033]0;%s\007' "$(cat /tmp/wtab.title)"`"), the OSC 0 fires but Warp's tab title (as shown in the vertical tabs sidebar) ends up displaying the command text, not the OSC output. The `title` field in the TOML takes precedence and is what the rest of Warp looks at.
+**OSC 0 title pinning in a `commands` array.** Idea: leave title field empty, run `printf '\033]0;...\007'` as the first tab command. This is how `claude-agent-work` sets its title and it works there. But there, the title is a literal string baked into the TOML command. With a dynamic title threaded through a scratch file ("`printf '\033]0;%s\007' "$(cat /tmp/wtab.title)"`"), the OSC 0 fires but Warp's tab title (as shown in the vertical tabs sidebar) ends up displaying the command text, not the OSC output. The `title` field in the TOML takes precedence and is what the rest of Warp looks at.
 
 **Pre-registered per-color TOMLs plus a runtime scratch file for title and cwd.** Eight files (`wtabred.toml`, `wtabblue.toml`, etc), each with `color =` baked in, each running a shim script that reads `/tmp/wtab.title` and `/tmp/wtab.cwd`. Title pinning had the OSC problem above. The shim also `exec`'d a new login shell to drop the user into their normal environment, which double-ran `.zshrc` and lost Warp's first-shell startup hooks. The single-file runtime-write approach makes both problems disappear.
 
@@ -93,5 +93,5 @@ Failure modes are loud at the right layer. Invalid color is rejected in zsh befo
 
 ## See also
 
-- `claude-dispatch-interactive.md` next to this file - sibling pattern for the case where params are too dynamic, too large, or too structured to bake as TOML literals (a multi-line Claude prompt, in that case). Uses a pre-registered TOML plus a queue-of-JSON scratch file pattern instead.
+- `claude-agent-work.md` next to this file - sibling pattern that spawns a containerized agent into a new tab. Uses a pre-registered TOML plus a FIFO queue-of-JSON scratch pattern, justified by concurrency (back-to-back spawns) rather than payload size.
 - Warp source: `app/src/tab_configs/tab_config.rs` for the schema, `app/src/uri/mod.rs` for the URI handler.

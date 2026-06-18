@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
-# Tab script for ward dispatch interactive. See ward#280.
+# Tab script for `ward agent <mode> work <ref> --new-tab`. Pops a {ref,mode}
+# queue entry written by ward and runs the agent in this fresh tab. Successor to
+# the retired claude-dispatch-interactive shim (ward#174).
 
 set -u
 
-QUEUE_DIR=/tmp/ward-dispatch-queue
+QUEUE_DIR=/tmp/ward-agent-queue
 LOCK_DIR="${QUEUE_DIR}/.lock"
 PROJECTS_ROOT="${HOME}/projects/coilysiren"
 
@@ -14,7 +16,7 @@ soft_fail() {
 }
 
 if ! command -v jq >/dev/null 2>&1; then
-  soft_fail "dispatch interactive: jq not found. Install with 'brew install jq' and re-fire the dispatch."
+  soft_fail "agent work: jq not found. Install with 'brew install jq' and re-fire."
 fi
 
 # mkdir mutex: macOS has no flock. 50ms backoff, 10s timeout.
@@ -27,7 +29,7 @@ for _ in $(seq 1 200); do
   sleep 0.05
 done
 if [[ "${acquired}" -ne 1 ]]; then
-  soft_fail "dispatch interactive: could not acquire ${LOCK_DIR} within 10s. Stale lock? rm -rf ${LOCK_DIR} and retry."
+  soft_fail "agent work: could not acquire ${LOCK_DIR} within 10s. Stale lock? rm -rf ${LOCK_DIR} and retry."
 fi
 
 # Unix-nanos filename prefix gives FIFO under lexicographic sort.
@@ -35,7 +37,7 @@ JSON_FILE="$(find "${QUEUE_DIR}" -maxdepth 1 -name '*.json' -type f 2>/dev/null 
 
 if [[ -z "${JSON_FILE}" || ! -f "${JSON_FILE}" ]]; then
   rmdir "${LOCK_DIR}"
-  soft_fail "dispatch interactive: no pending dispatch in ${QUEUE_DIR}. Did 'ward dispatch interactive <ref>' write one?"
+  soft_fail "agent work: no pending spawn in ${QUEUE_DIR}. Did 'ward agent <mode> work <ref> --new-tab' write one?"
 fi
 
 PAYLOAD="$(cat "${JSON_FILE}")"
@@ -43,19 +45,16 @@ rm -f "${JSON_FILE}"
 rmdir "${LOCK_DIR}"
 
 REF="$(printf '%s' "${PAYLOAD}" | jq -r '.ref // empty')"
+MODE="$(printf '%s' "${PAYLOAD}" | jq -r '.mode // empty')"
 TITLE="$(printf '%s' "${PAYLOAD}" | jq -r '.title // empty')"
-CWD="$(printf '%s' "${PAYLOAD}" | jq -r '.cwd // empty')"
-PROMPT="$(printf '%s' "${PAYLOAD}" | jq -r '.prompt // empty')"
 
-if [[ -z "${REF}" || -z "${CWD}" || -z "${PROMPT}" ]]; then
-  soft_fail "dispatch interactive: queue entry ${JSON_FILE} was missing ref / cwd / prompt fields. Body was: ${PAYLOAD}"
+if [[ -z "${REF}" || -z "${MODE}" ]]; then
+  soft_fail "agent work: queue entry ${JSON_FILE} was missing ref / mode fields. Body was: ${PAYLOAD}"
 fi
 
-if [[ ! -d "${CWD}" ]]; then
-  soft_fail "dispatch interactive: cwd ${CWD} does not exist. Clone the repo first, then re-fire."
-fi
-
-cd "${CWD}" || soft_fail "dispatch interactive: cd ${CWD} failed."
+# The container clones the repo fresh, so cwd is irrelevant - start in the
+# projects root for a tidy prompt.
+cd "${PROJECTS_ROOT}" || true
 
 if [[ -n "${TITLE}" ]]; then
   printf '%s\n' "${REF}: ${TITLE}"
@@ -63,4 +62,4 @@ else
   printf '%s\n' "${REF}"
 fi
 
-exec claude "${PROMPT}"
+exec ward agent "${MODE}" work "${REF}"

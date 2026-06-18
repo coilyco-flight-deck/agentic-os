@@ -50,5 +50,5 @@ When a Preview regression breaks a workday:
 
 - [warp.md](warp.md) - the Go module's model (apply/doctor, layers, paths).
 - [tooling-warp skill](../.agents/skills/tooling-warp/SKILL.md) - agent-facing usage.
-- coilysiren/ward#270 - `ward dispatch interactive`, which fires `warp://launch/...`.
+- coilyco-flight-deck/ward#174 - `ward agent <mode> work <ref> --new-tab`, which fires `warp://launch/...` (formerly ward#270).
 - warpdotdev/Warp#9379 - the merged tab_config URI handler that motivated the Preview move.

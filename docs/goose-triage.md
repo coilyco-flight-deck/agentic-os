@@ -2,7 +2,7 @@
 
 `scripts/goose-triage.py` (ward verb `goose-triage`) runs real issue triage with the local [Goose](../.agents/skills/agents-goose/SKILL.md) + `qwen3-coder:30b` harness as the judgment engine, implementing the [tooling-issue-prioritization](../.agents/skills/tooling-issue-prioritization/SKILL.md) method: Python owns the deterministic parts, Goose the bounded per-issue judgment.
 
-**Applies labels by default on two orthogonal axes** - the **tier** (P0-P4, urgency) and the **automation mode** (headless/interactive/consult). Each axis converges independently so a re-run leaves exactly one tier and one mode label per issue. Both label sets must exist in the repo. It also writes one **verdict comment** per issue carrying Goose's reason for each axis (step 9). `--report-only` skips all writes; `--no-comment` skips just the comment. The mode axis is the eligibility filter for what `ward dispatch` may auto-run (step 7).
+**Applies labels by default on two orthogonal axes** - the **tier** (P0-P4, urgency) and the **automation mode** (headless/interactive/consult). Each axis converges independently so a re-run leaves exactly one tier and one mode label per issue. Both label sets must exist in the repo. It also writes one **verdict comment** per issue carrying Goose's reason for each axis (step 9). `--report-only` skips all writes; `--no-comment` skips just the comment. The mode axis is the eligibility filter for what `ward agent` may auto-run (step 7).
 
 ## Pipeline
 
