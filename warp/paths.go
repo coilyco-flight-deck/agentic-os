@@ -25,6 +25,7 @@ type HostPaths struct {
 	SQLitePath      string
 	WallpaperPath   string
 	PwshProfilePath string
+	DefaultShell    string // desired Warp default-shell pref; Windows-only, "" elsewhere
 }
 
 const themeFileName = "coilysiren-sombra-wallpaper.yaml"
@@ -69,6 +70,9 @@ func resolveHostPaths(channel string) (*HostPaths, error) {
 			return nil, fmt.Errorf("APPDATA is unset")
 		}
 		h.ThemeDir = filepath.Join(roaming, "warp", ch.DirName, "data", "themes")
+		// Default-shell pref lives only in warp.sqlite, resolved from disk.
+		// See shell.go and docs/warp-default-shell.md.
+		h.DefaultShell = resolveWindowsDefaultShell()
 	case "darwin":
 		// Two Warp channels coexist; pick config dir and DB as a matched pair.
 		// Preview (default) at ~/.warp-preview, Stable at ~/.warp. See docs/warp.md.

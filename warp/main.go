@@ -160,6 +160,31 @@ func applySQLite(h *HostPaths) error {
 		}
 		fmt.Printf("  sqlite %-30s WROTE %v\n", m.StorageKey, expected)
 	}
+	return applyShellPref(db, h)
+}
+
+// applyShellPref reconciles the Windows-only default-shell pref into warp.sqlite.
+// See shell.go and docs/warp-default-shell.md.
+func applyShellPref(db *warpDB, h *HostPaths) error {
+	if h.OS != "windows" {
+		return nil
+	}
+	if h.DefaultShell == "" {
+		fmt.Printf("  sqlite %-30s SKIP  (no PowerShell 7 found to set as default shell)\n", defaultShellStorageKey)
+		return nil
+	}
+	cur, err := db.get(defaultShellStorageKey)
+	if err != nil {
+		return err
+	}
+	if cur != nil && valuesEqual(cur.Value, h.DefaultShell) {
+		fmt.Printf("  sqlite %-30s ok\n", defaultShellStorageKey)
+		return nil
+	}
+	if err := db.set(defaultShellStorageKey, h.DefaultShell); err != nil {
+		return err
+	}
+	fmt.Printf("  sqlite %-30s WROTE %v\n", defaultShellStorageKey, h.DefaultShell)
 	return nil
 }
 
@@ -249,6 +274,32 @@ func doctorSQLite(r *report, h *HostPaths) {
 		default:
 			r.pass("sqlite " + m.StorageKey)
 		}
+	}
+	doctorShellPref(r, db, h)
+}
+
+// doctorShellPref reports drift on the Windows-only default-shell preference
+// against the desired shell resolved in HostPaths. See shell.go and #230.
+func doctorShellPref(r *report, db *warpDB, h *HostPaths) {
+	if h.OS != "windows" {
+		return
+	}
+	if h.DefaultShell == "" {
+		r.note("sqlite " + defaultShellStorageKey + " (skipped): no PowerShell 7 found to compare against")
+		return
+	}
+	cur, err := db.get(defaultShellStorageKey)
+	if err != nil {
+		r.fail("sqlite "+defaultShellStorageKey, err.Error())
+		return
+	}
+	switch {
+	case cur == nil:
+		r.fail("sqlite "+defaultShellStorageKey, fmt.Sprintf("absent; expected %v", h.DefaultShell))
+	case !valuesEqual(cur.Value, h.DefaultShell):
+		r.fail("sqlite "+defaultShellStorageKey, fmt.Sprintf("db=%v expected=%v", cur.Value, h.DefaultShell))
+	default:
+		r.pass("sqlite " + defaultShellStorageKey)
 	}
 }
 
