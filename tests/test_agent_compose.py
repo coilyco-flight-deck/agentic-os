@@ -155,6 +155,68 @@ def test_dry_run_writes_nothing(paths: dict[str, Path], tmp_path: Path) -> None:
     assert not paths["composed"].exists()
 
 
+def test_dry_run_on_converged_host_previews_no_change(
+    paths: dict[str, Path], tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A converged host must dry-run as a true no-op (forgejo #177).
+
+    The ansible role's check-mode preview keys changed_when on "would " markers;
+    once the host is composed and linked, a --dry-run must emit none of them, so
+    an idempotent re-check reports changed=0 rather than perpetual drift.
+    """
+    src = tmp_path / "AGENTS.COMPOSE.md"
+    write(src, "# doctrine\nstable\n")
+    write(
+        paths["config"],
+        f"sources:\n  - {src}\n"
+        f"load_points:\n  claude: {paths['claude']}\n  codex: {paths['codex']}\n",
+    )
+    assert generate_agent_compose.run(paths["config"], paths["composed"]) == 0
+    capsys.readouterr()  # drain the first real run
+
+    assert (
+        generate_agent_compose.run(paths["config"], paths["composed"], dry_run=True)
+        == 0
+    )
+    assert "would " not in capsys.readouterr().out
+
+
+def test_dry_run_previews_pending_write(
+    paths: dict[str, Path], tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """When the composed body would change, the preview still says so."""
+    src = tmp_path / "AGENTS.COMPOSE.md"
+    write(src, "# doctrine\nstable\n")
+    write(paths["config"], f"sources:\n  - {src}\n")
+    generate_agent_compose.run(paths["config"], paths["composed"])
+    capsys.readouterr()
+
+    write(src, "# doctrine\nedited\n")
+    generate_agent_compose.run(paths["config"], paths["composed"], dry_run=True)
+    out = capsys.readouterr().out
+    assert f"would write {paths['composed']}" in out
+
+
+def test_dry_run_previews_pending_link(
+    paths: dict[str, Path], tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A missing/wrong load-point link must still preview as "would link"."""
+    src = tmp_path / "AGENTS.COMPOSE.md"
+    write(src, "# doctrine\nstable\n")
+    write(
+        paths["config"],
+        f"sources:\n  - {src}\n"
+        f"load_points:\n  claude: {paths['claude']}\n  codex: {paths['codex']}\n",
+    )
+    # COMPOSED.md is already correct, but no link exists yet: write is a no-op,
+    # the link is not, so only "would link" fires.
+    write(paths["composed"], generate_agent_compose.compose([src]))
+    generate_agent_compose.run(paths["config"], paths["composed"], dry_run=True)
+    out = capsys.readouterr().out
+    assert "would write" not in out
+    assert f"would link  {paths['claude']}" in out
+
+
 # ---------- symlink backs up a pre-existing real file ----------
 
 

@@ -13,7 +13,8 @@ For each repo checked out under ~/projects/<org>/<name> across every org dir
      here (catalog-block-present, catalog-doc-size, catalog-trifecta,
      documentation-layout, code-comments, check-skills, dead-cross-links,
      skill-discipline).
-  3. Insert/refresh the managed agentic-os block with the full hook set.
+  3. Insert/refresh the managed block: the agentic-os hook set plus the
+     upstream pre-commit-hooks check-merge-conflict (displaced, agentic-os#229).
   4. Run `pre-commit install --hook-type pre-commit --hook-type commit-msg
      --hook-type prepare-commit-msg`.
 
@@ -106,6 +107,11 @@ END_MARKER = "# END managed by agentic-os/scripts/apply-agentic-os-hooks.py"
 # the source of truth and lands release tags first. See agentic-os#129.
 AGENTIC_OS_REPO_URL = "https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os"
 
+# Upstream check-merge-conflict, displaced from the agentic-os catalog
+# (agentic-os#229); --assume-in-merge keeps the old always-scan behavior.
+PRECOMMIT_HOOKS_REPO_URL = "https://github.com/pre-commit/pre-commit-hooks"
+PRECOMMIT_HOOKS_REV = "v6.0.0"
+
 # Legacy managed-block markers from the prior per-hook stamping rollouts.
 # Strip these when present so consumers end up with one upstream-ref block.
 LEGACY_BLOCK_MARKERS = [
@@ -142,7 +148,6 @@ DEFAULT_HOOK_IDS = [
     "dead-cross-links",
     "repo-pointer-skills",
     "misplaced-skills",
-    "merge-conflicts",
     "agent-compose-size",
     "agent-compose-dedup",
     "trufflehog",
@@ -179,6 +184,11 @@ def managed_block(rev: str, hook_ids: list[str] | None = None) -> str:
     rev: {rev}
     hooks:
 {hook_lines}
+  - repo: {PRECOMMIT_HOOKS_REPO_URL}
+    rev: {PRECOMMIT_HOOKS_REV}
+    hooks:
+      - id: check-merge-conflict
+        args: [--assume-in-merge]
   {END_MARKER}
 """
 
