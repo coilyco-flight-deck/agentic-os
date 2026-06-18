@@ -10,9 +10,25 @@ For each candidate from phase 1, fetch:
   exact matches.
 - **Backstop:** also `WebFetch` 2-3 well-known awesome-lists
   (travisvn/awesome-claude-skills, ComposioHQ/awesome-claude-skills,
-  claudefa.st's MCP list) as a sanity check that no obvious entry was
-  missed by the registries. This is a cheap regression net, not the
-  primary source.
+  claudefa.st's MCP list) plus the obvious first-party repo
+  (`<vendor>/mcp-server-<vendor>`, `<vendor>labs/mcp`, etc.) as a
+  sanity check that no established entry was missed by the registries.
+
+**Source order depends on the category - backstop-first for infra/vendor:**
+
+- **Well-trodden infra/vendor categories** (prometheus, grafana,
+  cloudflare, aws, chrome-devtools, and similar) - hit the awesome-list
+  and first-party repo backstop **FIRST**, glama second. Glama free-text
+  search is recency- and spam-polluted: queries for these categories
+  surface unrelated spam (SuiteCRM, DingTalk, ProposalCraft) and **miss
+  the established first-party servers** (grafana/mcp-grafana,
+  cloudflare/mcp-server-cloudflare, awslabs/mcp,
+  ChromeDevTools/chrome-devtools-mcp). For these, the backstop is the
+  primary source and glama is the supplement.
+- **Niche / long-tail servers** - glama first, backstop second. Glama is
+  better at surfacing the smaller, less-canonical servers that never make
+  it onto an awesome-list, and the spam noise matters less when there is
+  no obvious first-party answer to be drowned out.
 
 Hydrate each into: `Org / Name / Url / Description (1 sentence)`. Keep
 the original bare name in a `bare_name` field for traceability.
