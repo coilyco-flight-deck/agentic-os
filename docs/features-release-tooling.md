@@ -4,7 +4,7 @@ Pre-commit baseline, diagnostic helpers, and Forgejo-canonical release actions.
 
 ## Cross-repo pre-commit baseline
 
-Ships the canonical hook IDs every `coilysiren/*` repo pins via `rev:`: catalog doc-size enforcement, README/AGENTS/FEATURES trifecta presence, documentation layout, context load-point hygiene, code-comment discipline, `check-skills`, dead cross-link detection, `catalog-block-present`, `agents-pointer` ([details](features-agents-pointer.md)), `misplaced-skills`, `merge-conflicts`, `seed-skills`, and the agent-compose size/dedup/drift guards. Consumers don't stamp local copies of the validators; the `agentic-os` package is pip-installed into each pre-commit env. Hook modules live under `agentic_os/pre_commit/`; generators live under `agentic_os/generators/`. Rolled out and audited from `agentic-os-kai`.
+Ships the canonical hook IDs every `coilysiren/*` repo pins via `rev:` (the full set, including the `agents-pointer` block in [details](features-agents-pointer.md), lives in [`.pre-commit-hooks.yaml`](../.pre-commit-hooks.yaml)). Consumers don't stamp local copies of the validators; the `agentic-os` package is pip-installed into each pre-commit env. Hook and generator modules live under `agentic_os/`. Rolled out and audited from `agentic-os-kai`.
 
 ## Seed-skill propagation
 
@@ -14,11 +14,12 @@ The frontmatter is the source of truth. `generate-seed-skills` renders it into `
 
 ## Diagnostic + utility helpers
 
-Small, single-purpose scripts that exist because the failure modes they handle are cryptic by default:
+Single-purpose validators for cryptic failure modes. These plus [`ward context-budget`](context-budget.md) are CLI/on-demand tools, not repo-content hooks, so they ship as ward verbs (agentic-os#233):
 
-- AWS config linter that catches the `[profile default]` trap (SDKs read `[default]`, misplaced region surfaces later as a useless `NoRegion`).
+- `ward aws-config` - catches the `[profile default]` trap (SDKs read `[default]`; a misplaced region surfaces later as a useless `NoRegion`).
+- `ward ssm-path` - checks parameter paths against the `/<org>/<repo>/<tier>/<tail>` schema before IAM/KMS, where a malformed path silently misses every tier policy.
 - Verbatim-echo wrapper that fences command output and clips to mobile-readable size, for the `$$ <cmd>` chat convention.
-- GPG signing doctor that walks every check needed to diagnose `failed to sign the data` and names the most-likely fix per failure mode.
+- GPG signing doctor that walks every check needed to diagnose `failed to sign the data` and names the likely fix per failure mode.
 
 ## Forgejo-canonical release actions
 

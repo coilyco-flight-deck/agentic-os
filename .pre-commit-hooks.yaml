@@ -22,6 +22,18 @@
 #
 # See coilysiren/agentic-os#59 for the trifecta convention.
 # Rollout helper: agentic-os/scripts/apply-agentic-os-hooks.py.
+#
+# Intentionally NOT hooks (agentic-os#233 audit of check_*.py vs shipped ids).
+# Three authored validators are CLI/on-demand tools, not commit-path hooks, and
+# ship as ward verbs instead (cli-guard/ward fenced). Wiring them here would
+# need new file-discovery logic the issue forbids, and would falsely flag every
+# consumer as missing until a fleet rollout caught up:
+#   - check_ssm_path     -> ward ssm-path     (validates paths passed as args,
+#                           no repo-file trigger; no-arg invocation is an error)
+#   - check_aws_config   -> ward aws-config   (lints the ~/.aws/config machine
+#                           file, not repo content)
+#   - check_context_budget -> ward context-budget (on-demand by design; see
+#                           docs/context-budget.md)
 
 - id: catalog-doc-size
   name: Markdown size caps

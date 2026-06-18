@@ -61,6 +61,15 @@ commands:
   agent-compose:
     run: uv run python -m agentic_os.generators.generate_agent_compose
     description: "Recompose the global agent-context files (~/.config/agent-compose/COMPOSED.<harness>.md) from the declared sources and re-point each harness load-point symlink. No-op without ~/.config/agent-compose/agent-compose.yaml. --dry-run prints the plan; --check fails on drift."
+  ssm-path:
+    run: uv run python -m agentic_os.pre_commit.check_ssm_path
+    description: "Validate SSM parameter paths against the /<org>/<repo>/<tier>/<tail> schema. `ward exec ssm-path -- /coilysiren/backend/write/ts-authkey [more...]`, or `-- --stdin` for one path per line. A CLI validator (paths arrive as args, not repo files), so it is ward-fenced rather than a commit-path hook. See agentic-os#233."
+  aws-config:
+    run: uv run python -m agentic_os.pre_commit.check_aws_config
+    description: "Lint ~/.aws/config (or $AWS_CONFIG_FILE) for the [profile default] trap the AWS SDK silently ignores, which surfaces later as a cryptic NoRegion from SSM/S3. No-op when the file is absent. A machine-env check, not repo content, so it is ward-fenced rather than a commit-path hook. Origin: agentic-os-kai#416, wired agentic-os#233."
+  context-budget:
+    run: uv run python -m agentic_os.pre_commit.check_context_budget
+    description: "Report the eager startup-context budget each harness loads at session start vs a per-harness token budget, with per-source attribution. `-- --check` exits non-zero when any harness is over budget (for CI). On-demand by design, not a pre-commit hook. See docs/context-budget.md."
 
 # Catalog metadata for the cross-repo knowledge graph.
 # Schema: coilysiren/agentic-os-kai#420 (tracker).
