@@ -25,7 +25,7 @@ ward exec goose-triage -- --report-only          # produce the report, write not
 ward exec goose-triage -- --repo <owner/name>
 ```
 
-`coily`'s issue-list verb caps at 50 with no page flag, so no whole-backlog flag exists yet: larger repos are fetched partially and the script warns before applying that the percentile shape is over a partial set. Paginated fetch (raw Forgejo API + `X-Total-Count`) is the next build - agentic-os#241.
+`coily`'s issue-list verb caps at 50 with no page flag, so no whole-backlog flag exists yet: larger repos are fetched partially and the script warns that the percentile shape is over a partial set. Whole-backlog fetch arrives when this moves to `ward-kdl ops forgejo issue list-all` - ward#131.
 
 ## Production run (agentic-os, 2026-06-17)
 
