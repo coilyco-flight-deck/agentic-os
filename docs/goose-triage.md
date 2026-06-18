@@ -16,7 +16,7 @@
 8. **Report** - markdown + yaml under `~/.cache/agentic-os/goose-triage/<repo>-<date>.{md,yaml}`.
 9. **Apply** - write each issue's tier and mode as forgejo labels, then upsert one marked verdict comment (`<!-- goose-triage -->`) carrying both reasons, found by marker and edited in place so a re-run updates rather than appends. `--report-only` skips all writes, `--no-comment` skips just the comment. coily's `issue comment` is add-only, so the upsert calls the forgejo API directly (coily comment verbs are a tracked follow-up).
 
-Every judgment call goes through the `goose-json` ward verb ([`scripts/goose_json.py`](../scripts/goose_json.py)): a synthesized Goose recipe whose `response.json_schema` is the call's schema, so the provider enforces a conforming reply - no regex scraping. Calls use the anti-thrash config (`--no-profile --quiet --no-session --max-turns 1`).
+Every judgment call goes through the `goose-json` ward verb ([`scripts/goose_json.py`](../scripts/goose_json.py)): a synthesized Goose recipe whose `response.json_schema` is the call's schema, so the provider enforces a conforming reply - no regex scraping. Calls use the anti-thrash config (`--no-profile --quiet --no-session --max-turns 1`). Each `ask()` failure is classified and buffered - see [goose-failure-records.md](goose-failure-records.md).
 
 ## Usage
 

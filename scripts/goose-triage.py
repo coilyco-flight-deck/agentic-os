@@ -190,35 +190,40 @@ def issue_prompt(base: str, it: dict) -> str:
     return f'{base}\nTitle: "{it["title"]}"\nBody: "{body}"'
 
 
-def runoff(members: list[dict]) -> bool:
+def runoff(members: list[dict], repo: str) -> tuple[bool, bool]:
     """Ask Goose to rank a tied group against itself; write each member's
-    'tiebreak' to its rank position (0 = most important). Returns True on a
-    usable ranking, False on failure (caller keeps the issue-number fallback)."""
+    'tiebreak' to its rank position (0 = most important). Returns (ok, failed):
+    ok is True on a usable ranking (caller keeps the issue-number fallback when
+    False), failed is True only when the underlying Goose call itself failed (a
+    None return) so the caller can count it separately from a usable-but-empty order."""
     listing = "\n".join(f'#{it["num"]} {it["title"]}' for it in members)
-    res = ask(f"{RUNOFF}\nIssues:\n{listing}", RUNOFF_SCHEMA)
+    res = ask(f"{RUNOFF}\nIssues:\n{listing}", RUNOFF_SCHEMA, repo=repo, label="runoff")
+    failed = res is None
     order = (res or {}).get("order")
     if not isinstance(order, list):
-        return False
+        return False, failed
     nums = [int(str(x).lstrip("#")) for x in order if str(x).lstrip("#").isdigit()]
     if not nums:
-        return False
+        return False, failed
     pos = {num: i for i, num in enumerate(nums)}
     for it in members:
         it["tiebreak"] = pos.get(it["num"], len(nums) + it["num"])
-    return True
+    return True, failed
 
 
-def classify_mode(it: dict) -> tuple[str, str]:
-    """Decide the automation-mode label for one issue. Returns (mode, reason).
+def classify_mode(it: dict, repo: str) -> tuple[str, str, bool]:
+    """Decide the automation-mode label for one issue. Returns (mode, reason, failed).
 
     Fail-closed: anything but a high-confidence headless/interactive falls back to
     consult, matching how an unlabeled issue is treated at the dispatch gate, so a
-    promotion out of human-gated only happens when the model is sure."""
-    res = ask(issue_prompt(MODE, it), MODE_SCHEMA) or {}
+    promotion out of human-gated only happens when the model is sure. failed is True
+    when the Goose call itself failed (None), so the laundering into consult is counted."""
+    raw = ask(issue_prompt(MODE, it), MODE_SCHEMA, repo=repo, label="mode")
+    res = raw or {}
     mode = res.get("mode")
     if mode in MODE_LABELS and res.get("confidence") == "high":
-        return mode, res.get("reason") or ""
-    return MODE_DEFAULT, res.get("reason") or "unsure -> consult"
+        return mode, res.get("reason") or "", raw is None
+    return MODE_DEFAULT, res.get("reason") or "unsure -> consult", raw is None
 
 
 def percentile_cut(scored: list[dict]) -> None:
@@ -279,6 +284,10 @@ def run(repo: str, limit: int) -> dict:
              "percentile math is over a partial set" if capped else ""),
           file=sys.stderr)
 
+    # Goose-call failures per pass, separate from the label-write `failed`, so a
+    # failed call stops masquerading as a label. See docs/goose-failure-records.md.
+    goose_failures = {"p0_confirm": 0, "urgency": 0, "runoff": 0, "mode": 0}
+
     by_num = {it["num"]: it for it in issues}
     cands = p0_candidates(issues)
     # Stable progress denominator: confirm calls + 3 score passes per issue. A
@@ -293,8 +302,10 @@ def run(repo: str, limit: int) -> dict:
     confirmed_p0 = []
     for num in sorted(cands):
         it = by_num[num]
-        res = ask(issue_prompt(P0_CONFIRM, it), CONFIRM_SCHEMA)
+        res = ask(issue_prompt(P0_CONFIRM, it), CONFIRM_SCHEMA, repo=repo, label="p0_confirm")
         done += 1
+        if res is None:
+            goose_failures["p0_confirm"] += 1
         active = bool(res and res.get("active_incident"))
         if active:
             it["tier"] = "P0"
@@ -310,8 +321,10 @@ def run(repo: str, limit: int) -> dict:
     for it in pool:
         scores, reasons = [], []
         for rubric in SCORE_RUBRICS:
-            res = ask(issue_prompt(rubric, it), SCORE_SCHEMA)
+            res = ask(issue_prompt(rubric, it), SCORE_SCHEMA, repo=repo, label="urgency")
             done += 1
+            if res is None:
+                goose_failures["urgency"] += 1
             scores.append(_clamp_score((res or {}).get("score")))
             if res and res.get("reason"):
                 reasons.append(res["reason"])
@@ -328,7 +341,9 @@ def run(repo: str, limit: int) -> dict:
         groups.setdefault(it["score"], []).append(it)
     for score, members in sorted(groups.items(), reverse=True):
         if len(members) >= RUNOFF_MIN_GROUP:
-            ok = runoff(members)
+            ok, failed = runoff(members, repo)
+            if failed:
+                goose_failures["runoff"] += 1
             print(f"goose-triage: run-off on {len(members)} issues tied at "
                   f"{score:.0f}: {'ranked' if ok else 'failed, kept issue order'} "
                   f"[{_hms(time.monotonic() - t0)} elapsed]", file=sys.stderr)
@@ -340,8 +355,10 @@ def run(repo: str, limit: int) -> dict:
     print(f"goose-triage: classifying automation mode for {n} issue(s) ...",
           file=sys.stderr)
     for it in issues:
-        mode, mreason = classify_mode(it)
+        mode, mreason, mfailed = classify_mode(it, repo)
         done += 1
+        if mfailed:
+            goose_failures["mode"] += 1
         it["mode"] = mode
         it["mode_reason"] = mreason
         print(f"  mode #{it['num']}: {mode:11} {_bar(done, total, t0)}",
@@ -355,7 +372,8 @@ def run(repo: str, limit: int) -> dict:
         tiers["P0"].append(it)
     for it in pool:
         tiers[it["tier"]].append(it)
-    return {"repo": repo, "n": n, "capped": capped, "tiers": tiers, "issues": issues}
+    return {"repo": repo, "n": n, "capped": capped, "tiers": tiers,
+            "issues": issues, "goose_failures": goose_failures}
 
 
 def write_report(result: dict) -> tuple[Path, Path]:
@@ -409,6 +427,18 @@ def write_report(result: dict) -> tuple[Path, Path]:
         pct = (100 * c / n) if n else 0
         lines.append(f"- **{m}** - {c} ({pct:.0f}%)")
     lines.append("")
+    # Goose-call failures per pass: how many judgments fell back to a fail-soft
+    # default because the model call failed (distinct from the label-write `failed`).
+    gf = result.get("goose_failures") or {}
+    lines.append("## Goose call failures")
+    lines.append("")
+    lines.append(f"{sum(gf.values())} judgment call(s) failed and fell back to a "
+                 "default (counted per pass; classified records in "
+                 "`~/.cache/agentic-os/tool-failures/`):")
+    lines.append("")
+    for pass_name in ("p0_confirm", "urgency", "runoff", "mode"):
+        lines.append(f"- **{pass_name}** - {gf.get(pass_name, 0)}")
+    lines.append("")
     for t in ("P0", "P1", "P2", "P3", "P4"):
         if not tiers[t]:
             continue
@@ -425,6 +455,7 @@ def write_report(result: dict) -> tuple[Path, Path]:
     payload = {
         "repo": result["repo"], "date": today, "n": n, "capped": result["capped"],
         "applied": result.get("applied"),
+        "goose_failures": result.get("goose_failures") or {},
         "tiers": {
             t: [{"num": it["num"], "title": it["title"],
                  "score": it.get("score"), "reason": it.get("reason", ""),
@@ -643,6 +674,10 @@ def main(argv: list[str] | None = None) -> int:
         mode_counts[it.get("mode", MODE_DEFAULT)] += 1
     for m in MODE_LABELS:
         print(f"  {m}: {mode_counts[m]}")
+    gf = result.get("goose_failures") or {}
+    total_gf = sum(gf.values())
+    print(f"  goose call failures: {total_gf}"
+          + (f" ({', '.join(f'{k} {v}' for k, v in gf.items() if v)})" if total_gf else ""))
     ap_res = result["applied"]
     if ap_res is None:
         print("  labels: not applied (--report-only)")
