@@ -10,11 +10,22 @@ Config search order:
     2. .agentic-os.toml at REPO_ROOT, key path [<hook_id>]
 
 Schema per hook:
-    excludes = ["src/pages/", "src/pages/**", "**/generated/*.md"]
+    excludes = ["src/pages/", "src/pages/**", "*.guardfile.md"]
 
-Path semantics: directory prefix (trailing /), glob (** for recursive),
-or fnmatch pattern. Patterns are matched against repo-relative POSIX
-paths. Patterns and paths use forward slashes on every platform.
+Path semantics (gitignore-style globs over repo-relative POSIX paths):
+    "dir/"        directory prefix - excludes everything under dir/
+    "dir/**"      same, spelled as a recursive glob
+    "*"           any run of characters except "/"
+    "**"          any run of characters including "/" (crosses dirs)
+    "?"           a single character except "/"
+A pattern containing a "/" is anchored to the repo root ("docs/*.md"
+matches docs/x.md but not docs/sub/x.md). A pattern with no "/" matches
+the file's basename at any depth, so one wildcard covers a generated file
+wherever it lands - ward's specverb guardfiles, emitted both in docs/ and
+beside the .kdl under cmd/ward-kdl/, collapse to a single
+"ward-kdl.*.guardfile.md" instead of a line per generator
+(coilyco-flight-deck/agentic-os#243). Patterns and paths use forward
+slashes on every platform.
 """
 from __future__ import annotations
 
@@ -212,8 +223,15 @@ def _glob_to_regex(pattern: str) -> re.Pattern[str]:
 
 
 def is_excluded(rel_path: Path | str, patterns: Iterable[str]) -> bool:
-    """Match a repo-relative path against the exclude pattern list."""
+    """Match a repo-relative path against the exclude pattern list.
+
+    A pattern containing a "/" is anchored to the repo root; a slash-less
+    pattern matches the path's basename at any depth (the gitignore
+    convention), so one wildcard covers a generated file wherever it is
+    emitted. See the module docstring for the full glob grammar.
+    """
     s = str(PurePosixPath(str(rel_path).replace("\\", "/")))
+    basename = s.rsplit("/", 1)[-1]
     for raw in patterns:
         pattern = raw.replace("\\", "/")
         if pattern.endswith("/**"):
@@ -225,6 +243,7 @@ def is_excluded(rel_path: Path | str, patterns: Iterable[str]) -> bool:
             if s.startswith(pattern):
                 return True
             continue
-        if _glob_to_regex(pattern).match(s):
+        target = s if "/" in pattern else basename
+        if _glob_to_regex(pattern).match(target):
             return True
     return False
