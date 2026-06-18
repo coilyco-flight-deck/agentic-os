@@ -135,6 +135,16 @@ codex() {
     command codex exec "$@"
     return
   fi
+  if ! _siren_argv_has_flag --sandbox "$@" &&
+    ! _siren_argv_has_flag -s "$@" &&
+    ! _siren_argv_has_flag --dangerously-bypass-approvals-and-sandbox "$@"; then
+    set -- --sandbox danger-full-access "$@"
+  fi
+  if ! _siren_argv_has_flag --ask-for-approval "$@" &&
+    ! _siren_argv_has_flag -a "$@" &&
+    ! _siren_argv_has_flag --dangerously-bypass-approvals-and-sandbox "$@"; then
+    set -- --ask-for-approval on-request "$@"
+  fi
   command codex "$@"
 }
 opencode() { _siren_agent_gate opencode || return 1; command opencode "$@"; }
