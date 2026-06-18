@@ -162,11 +162,19 @@ agents_md_max_chars = 12000
     ("src/pages/foo.md", ["src/pages/**"], True),
     ("src/pages", ["src/pages/**"], True),
     ("other.md", ["src/pages/**"], False),
+    # A pattern with a slash is anchored to the repo root.
     ("docs/foo.md", ["docs/*.md"], True),
     ("docs/sub/foo.md", ["docs/*.md"], False),
-    ("README.md", ["*.md"], True),
-    ("nested/README.md", ["*.md"], False),
     ("a/b/c.md", ["**/c.md"], True),
+    # A slash-less pattern matches the basename at any depth (gitignore-style):
+    # one wildcard covers a generated file wherever it is emitted.
+    ("README.md", ["*.md"], True),
+    ("nested/README.md", ["*.md"], True),
+    ("docs/ward-kdl.aws.guardfile.md", ["ward-kdl.*.guardfile.md"], True),
+    ("cmd/ward-kdl/ward-kdl.aws.guardfile.md", ["ward-kdl.*.guardfile.md"], True),
+    ("docs/notes.md", ["ward-kdl.*.guardfile.md"], False),
+    # A slash-less exact filename matches its basename at any depth too.
+    ("a/b/.pre-commit-config.yaml", [".pre-commit-config.yaml"], True),
 ])
 def test_is_excluded(path: str, patterns: list[str], expected: bool) -> None:
     assert is_excluded(path, patterns) is expected

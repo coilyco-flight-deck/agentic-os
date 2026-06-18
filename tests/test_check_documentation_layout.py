@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import agentic_os.config as config
+import agentic_os.pre_commit.check_documentation_layout as docs_layout
 from agentic_os.pre_commit.check_documentation_layout import (
     ROOT_MARKDOWN_ALLOWLIST,
     check_skill_flatness,
@@ -186,3 +188,45 @@ def test_root_absolute_back_link_is_reciprocal(tmp_path: Path) -> None:
     )
     write(tmp_path / "docs" / "ansible.md", "# Ansible\n[home](/ansible/README.md)\n")
     assert validate_module_readme(Path("ansible/README.md"), tmp_path) == []
+
+
+# Generated-guardfile exclusion mirrors ward's specverb guardfiles: a wildcard
+# must reach both REPO_ROOT (the tree walk) and config.REPO_ROOT (the excludes).
+
+def _point_repo_root_at(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setattr(docs_layout, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(config, "REPO_ROOT", tmp_path)
+
+
+def _write_guardfiles(tmp_path: Path) -> None:
+    # Oversized (> 80-line cap) generated docs, emitted both at docs/ and beside
+    # the .kdl under cmd/ward-kdl/ - the two paths ward's driver writes to.
+    big = "# Guardfile\n" + "\n".join(f"verb {i}" for i in range(120))
+    for gen in ("aws", "open-webui", "forgejo"):
+        write(tmp_path / "docs" / f"ward-kdl.{gen}.guardfile.md", big)
+        write(tmp_path / "cmd" / "ward-kdl" / f"ward-kdl.{gen}.guardfile.md", big)
+
+
+def test_wildcard_exclude_clears_generated_guardfiles(tmp_path: Path, monkeypatch) -> None:
+    _write_guardfiles(tmp_path)
+    write(
+        tmp_path / "pyproject.toml",
+        "[tool.agentic-os.documentation-layout]\n"
+        'excludes = ["ward-kdl.*.guardfile.md"]\n',
+    )
+    _point_repo_root_at(tmp_path, monkeypatch)
+    # One slash-less wildcard silences both the location rule (for the cmd/
+    # copies) and the size cap (for every copy), with no per-generator lines.
+    assert docs_layout.check_markdown_locations() == []
+    assert docs_layout.check_markdown_sizes() == []
+
+
+def test_generated_guardfiles_flagged_without_exclude(tmp_path: Path, monkeypatch) -> None:
+    _write_guardfiles(tmp_path)
+    _point_repo_root_at(tmp_path, monkeypatch)
+    # Sanity check the exclude is doing the work: the cmd/ copies are mislocated
+    # and every copy is oversized when nothing is excluded.
+    locations = docs_layout.check_markdown_locations()
+    sizes = docs_layout.check_markdown_sizes()
+    assert any("cmd/ward-kdl/ward-kdl.aws.guardfile.md" in v for v in locations)
+    assert len(sizes) >= len(("aws", "open-webui", "forgejo")) * 2
