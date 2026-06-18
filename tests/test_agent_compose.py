@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -208,12 +209,12 @@ def test_dry_run_previews_pending_link(
         f"sources:\n  - {src}\n"
         f"load_points:\n  claude: {paths['claude']}\n  codex: {paths['codex']}\n",
     )
-    # COMPOSED.md is already correct, but no link exists yet: write is a no-op,
-    # the link is not, so only "would link" fires.
+    # COMPOSED.md is already correct, but no link exists yet: the composed write
+    # is a no-op, the link is not (the manifest is a separate artifact).
     write(paths["composed"], generate_agent_compose.compose([src]))
     generate_agent_compose.run(paths["config"], paths["composed"], dry_run=True)
     out = capsys.readouterr().out
-    assert "would write" not in out
+    assert f"would write {paths['composed']}" not in out
     assert f"would link  {paths['claude']}" in out
 
 
@@ -806,3 +807,134 @@ def test_compose_strips_see_also_from_overridden_base(tmp_path: Path) -> None:
     out = generate_agent_compose.compose([base], {base: override})
     assert "slices only" in out  # override applied
     assert "## See also" not in out  # nav stripped after the merge
+
+
+# ---------- mount-eligibility manifest (forgejo #222) ----------
+
+
+def _read_manifest(composed_path: Path) -> dict:
+    manifest_path = generate_agent_compose.manifest_path_for(composed_path)
+    return json.loads(manifest_path.read_text(encoding="utf-8"))
+
+
+def test_repo_for_source_maps_to_org_repo(tmp_path: Path) -> None:
+    projects = tmp_path / "projects"
+    src = projects / "coilysiren" / "repo-recall" / "sub" / "AGENTS.COMPOSE.md"
+    write(src, "x\n")
+    assert generate_agent_compose.repo_for_source(src, projects) == (
+        projects / "coilysiren" / "repo-recall"
+    )
+
+
+def test_repo_for_source_outside_projects_is_none(tmp_path: Path) -> None:
+    projects = tmp_path / "projects"
+    projects.mkdir()
+    outside = tmp_path / "elsewhere" / "AGENTS.COMPOSE.md"
+    write(outside, "x\n")
+    assert generate_agent_compose.repo_for_source(outside, projects) is None
+
+
+def test_repo_for_source_above_repo_root_is_none(tmp_path: Path) -> None:
+    # A loose source directly under an org dir backs no mountable repo.
+    projects = tmp_path / "projects"
+    src = projects / "coilysiren" / "AGENTS.COMPOSE.md"
+    write(src, "x\n")
+    assert generate_agent_compose.repo_for_source(src, projects) is None
+
+
+def test_run_emits_manifest_with_defaults(
+    paths: dict[str, Path], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    projects = tmp_path / "projects"
+    monkeypatch.setenv("PROJECTS_ROOT", str(projects))
+    src = projects / "coilysiren" / "repo-recall" / "AGENTS.COMPOSE.md"
+    write(src, "# doctrine\n")
+    write(
+        paths["config"],
+        f"sources:\n  - {src}\n"
+        f"load_points:\n  claude: {paths['claude']}\n  codex: {paths['codex']}\n",
+    )
+
+    rc = generate_agent_compose.run(paths["config"], paths["composed"])
+    assert rc == 0
+
+    manifest = _read_manifest(paths["composed"])
+    assert manifest["projects_root"] == str(projects)
+    defaults = [str(projects / slug) for slug in generate_agent_compose.DEFAULT_MOUNT_SET]
+    assert manifest["defaults"] == defaults
+    repo = str(projects / "coilysiren" / "repo-recall")
+    # every harness gets the default mount set plus the eligible repo
+    for harness in ("claude", "codex"):
+        assert set(manifest["harnesses"][harness]) == set(defaults) | {repo}
+        assert manifest["harnesses"][harness] == sorted(manifest["harnesses"][harness])
+
+
+def test_manifest_honors_harness_filtering(
+    paths: dict[str, Path], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # claude mounts everything; codex only the flight-deck repo.
+    projects = tmp_path / "projects"
+    monkeypatch.setenv("PROJECTS_ROOT", str(projects))
+    shared = projects / "coilyco-flight-deck" / "ward" / "AGENTS.COMPOSE.md"
+    write(shared, "# shared\n")
+    claude_only = projects / "coilysiren" / "repo-recall" / "AGENTS.COMPOSE.md"
+    write(claude_only, "---\nharnesses: [claude]\n---\n# claude only\n")
+    write(
+        paths["config"],
+        f"sources:\n  - {shared}\n  - {claude_only}\n"
+        f"load_points:\n  claude: {paths['claude']}\n  codex: {paths['codex']}\n",
+    )
+
+    rc = generate_agent_compose.run(paths["config"], paths["composed"])
+    assert rc == 0
+
+    manifest = _read_manifest(paths["composed"])
+    ward_repo = str(projects / "coilyco-flight-deck" / "ward")
+    recall_repo = str(projects / "coilysiren" / "repo-recall")
+    assert ward_repo in manifest["harnesses"]["claude"]
+    assert recall_repo in manifest["harnesses"]["claude"]
+    assert ward_repo in manifest["harnesses"]["codex"]
+    assert recall_repo not in manifest["harnesses"]["codex"]
+
+
+def test_manifest_drift_detected_and_passes_when_synced(
+    paths: dict[str, Path], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    projects = tmp_path / "projects"
+    monkeypatch.setenv("PROJECTS_ROOT", str(projects))
+    src = projects / "coilysiren" / "repo-recall" / "AGENTS.COMPOSE.md"
+    write(src, "# doctrine\n")
+    write(
+        paths["config"],
+        f"sources:\n  - {src}\n"
+        f"load_points:\n  claude: {paths['claude']}\n  codex: {paths['codex']}\n",
+    )
+
+    assert generate_agent_compose.run(paths["config"], paths["composed"]) == 0
+    assert generate_agent_compose.check(paths["config"], paths["composed"]) == 0
+
+    # Hand-edit the manifest: the drift check must fail.
+    manifest_path = generate_agent_compose.manifest_path_for(paths["composed"])
+    manifest_path.write_text("{}\n", encoding="utf-8")
+    assert generate_agent_compose.check(paths["config"], paths["composed"]) == 1
+
+
+def test_dry_run_announces_manifest_and_writes_nothing(
+    paths: dict[str, Path], tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    projects = tmp_path / "projects"
+    monkeypatch.setenv("PROJECTS_ROOT", str(projects))
+    src = projects / "coilysiren" / "repo-recall" / "AGENTS.COMPOSE.md"
+    write(src, "# doctrine\n")
+    write(
+        paths["config"],
+        f"sources:\n  - {src}\n"
+        f"load_points:\n  claude: {paths['claude']}\n",
+    )
+
+    rc = generate_agent_compose.run(paths["config"], paths["composed"], dry_run=True)
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "mount-eligibility manifest" in out
+    assert not generate_agent_compose.manifest_path_for(paths["composed"]).exists()
