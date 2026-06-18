@@ -22,12 +22,12 @@ Small, single-purpose scripts that exist because the failure modes they handle a
 
 ## Forgejo-canonical release actions
 
-Composite Forgejo Actions for the brew release pipeline now that `forgejo.coilysiren.me` is canonical source. Three actions, each a forgejo-API-only replacement for a github-coupled marketplace action:
+Composite Forgejo Actions for the brew release pipeline, each a forgejo-API-only replacement for a github-coupled marketplace action:
 
 - `actions/tag-bump` - bump the latest semver tag by a fixed amount (minor by default, major hand-driven via the `bump` input), create the tag via forgejo Tags API. Does not parse commit messages. Replaces `mathieudutour/github-tag-action`.
 - `actions/create-release` - POST to forgejo Releases API. Idempotent on tag collision. Replaces `softprops/action-gh-release` for the release-create step.
 - `actions/bump-formula` - rewrite a Homebrew Formula's `url ".."` line to pin the new tag + revision and PUT via forgejo Contents API. Same-repo write only; cross-repo bumps live in the consuming repo.
 
-Consumed via `uses: coilyco-flight-deck/agentic-os/actions/<name>@main` from a `.forgejo/workflows/*.yml`. Auto-issued `${{ github.token }}` (forgejo's compatibility name for its per-job token) covers same-repo writes; no extra secret to provision.
+Consumed via `uses: coilyco-flight-deck/agentic-os/actions/<name>@main` from a `.forgejo/workflows/*.yml`. The auto-issued `${{ github.token }}` per-job token covers same-repo writes; no extra secret to provision.
 
-agentic-os dogfoods these actions for its own releases (`.forgejo/workflows/`), referencing them locally via `uses: ./actions/...` so the source repo never waits on its own mirror. Push to main cuts a minor tag + release, and a mirror job force-pushes to the read-only `coilysiren/agentic-os` GitHub mirror. The consumer pin is tag-derived at read time (`default_rev()`), so there is no per-push pin-bump commit (agentic-os#238). Major bumps stay hand-cut via `scripts/release.py`. Walkthrough: [docs/release.md](release.md).
+agentic-os dogfoods these actions for its own releases (`.forgejo/workflows/`), referencing them locally via `uses: ./actions/...` so the source repo never waits on its own mirror. Push to main cuts a minor tag + release, and a mirror job force-pushes to the read-only `coilysiren/agentic-os` GitHub mirror. The consumer pin is tag-derived at read time (`default_rev()`), so there is no per-push pin-bump commit (agentic-os#238). Major bumps stay hand-cut via `scripts/release.py`. A `workflow_dispatch` trigger re-fires it by hand on a missed push enqueue, no dummy commit (agentic-os#240). Walkthrough: [docs/release.md](release.md).

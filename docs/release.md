@@ -29,6 +29,14 @@ pushes resume minor from there. The actions are referenced locally
 (`uses: ./actions/...`), so the source repo never waits on its own GitHub mirror
 being current to release.
 
+## Manual re-run (enqueue-miss recovery)
+
+A `workflow_dispatch` trigger re-fires the pipeline by hand from the Forgejo
+Actions tab, no dummy commit. It is the recovery lever for agentic-os#240, where
+Forgejo missed a push enqueue and `v0.62.0` was hand-cut: when a push lands but
+no run appears, dispatch against `main`. Its `bump` input defaults to `minor` and
+feeds `tag-bump` directly.
+
 ## Consumer pin (derived from the tag)
 
 The tag every consumer repo inherits when `apply-agentic-os-hooks` rolls out the
