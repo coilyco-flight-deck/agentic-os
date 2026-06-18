@@ -16,6 +16,9 @@ commands:
   agent-compat:
     run: uv run python scripts/agent-compat.py
     description: "Run daily unittest smoke checks for local agent harness compatibility. Checks Claude, Codex, Goose, Aider, OpenCode, and Qwen by default; narrow with `-- --harness codex`. Uses unittest's native ok/FAIL/ERROR output and exit code. See docs/test-harness.md."
+  dev-base-build:
+    run: docker build -t agentic-os:dev-base-local -f docker/dev-base/Dockerfile docker/dev-base
+    description: "Build the dev-base image locally as agentic-os:dev-base-local for validating docker/dev-base/Dockerfile changes before the release workflow publishes the multi-arch image."
   apply-agentic-os-hooks:
     run: uv run python scripts/apply-agentic-os-hooks.py
     description: "Roll out the canonical pre-commit hook block to every consumer repo under ~/projects/<org>/* (all org dirs). Idempotent."
