@@ -22,4 +22,4 @@ Unlike the tier, the mode cannot come from a percentile cut - it is a per-issue 
 
 ## The dispatch gate
 
-The enforcing half is a ceiling gate at the shared dispatch chokepoint: a surface runs an issue only when `surface <= mode` on the order `headless > interactive > consult`. A `headless` label permits any surface, `interactive` refuses headless, `consult` permits only consult. Until that gate lands, the labels are already useful as a selection filter for what to dispatch.
+The enforcing half is a ceiling gate at the shared dispatch chokepoint: a surface runs an issue only when `surface <= mode` on the order `headless > interactive > consult`. A `headless` label permits any surface, `interactive` refuses headless, `consult` permits only consult. The gate and the org-label rollout are tracked in agentic-os#246. Until the gate lands, the labels are already useful as a selection filter for what to dispatch.
