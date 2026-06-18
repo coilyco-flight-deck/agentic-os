@@ -2,7 +2,7 @@
 
 `scripts/goose-triage.py` (ward verb `goose-triage`) runs real issue triage with the local [Goose](../.agents/skills/agents-goose/SKILL.md) + `qwen3-coder:30b` harness as the judgment engine, implementing the [tooling-issue-prioritization](../.agents/skills/tooling-issue-prioritization/SKILL.md) method: Python owns the deterministic parts, Goose the bounded per-issue judgment.
 
-**Applies labels by default on two orthogonal axes** - the **tier** (P0-P4, urgency) and the **automation mode** (headless/interactive/consult). Each axis converges independently so a re-run leaves exactly one tier and one mode label per issue. Both label sets must exist in the repo. `--report-only` (alias `--dry-run`) skips the write. The mode axis - the eligibility filter for what `ward dispatch` may auto-run - is defined in [automation-mode-axis](../.agents/skills/tooling-issue-prioritization/references/automation-mode-axis.md).
+**Applies labels by default on two orthogonal axes** - the **tier** (P0-P4, urgency) and the **automation mode** (headless/interactive/consult). Each axis converges independently so a re-run leaves exactly one tier and one mode label per issue. Both label sets must exist in the repo. It also writes one **verdict comment** per issue carrying Goose's reason for each axis (step 9). `--report-only` skips all writes; `--no-comment` skips just the comment. The mode axis is the eligibility filter for what `ward dispatch` may auto-run (step 7).
 
 ## Pipeline
 
@@ -14,23 +14,20 @@
 6. **Percentile cut** into the target shape (P1 10% / P2 20% / P3 30% / P4 40%), the snap distance capped so a big tie splits at the target percentile, not swallow a tier. P1 floors at zero.
 7. **Mode classify** - one Goose call per issue (P0 included) tags the automation mode, fail-closed to `consult` unless a high-confidence `headless`/`interactive`. See [automation-mode-axis](../.agents/skills/tooling-issue-prioritization/references/automation-mode-axis.md).
 8. **Report** - markdown + yaml under `~/.cache/agentic-os/goose-triage/<repo>-<date>.{md,yaml}`.
-9. **Apply** - write each issue's tier and mode as forgejo labels (default; `--report-only` skips).
+9. **Apply** - write each issue's tier and mode as forgejo labels, then upsert one marked verdict comment (`<!-- goose-triage -->`) carrying both reasons, found by marker and edited in place so a re-run updates rather than appends. `--report-only` skips all writes, `--no-comment` skips just the comment. coily's `issue comment` is add-only, so the upsert calls the forgejo API directly (coily comment verbs are a tracked follow-up).
 
-Every judgment call goes through the `goose-json` ward verb ([`scripts/goose_json.py`](../scripts/goose_json.py)): a synthesized Goose recipe whose `response.json_schema` is the call's schema, so the provider enforces a conforming reply - no regex scraping. Calls use the anti-thrash config (`--no-profile --quiet --no-session --max-turns 1`): no extensions, one turn.
+Every judgment call goes through the `goose-json` ward verb ([`scripts/goose_json.py`](../scripts/goose_json.py)): a synthesized Goose recipe whose `response.json_schema` is the call's schema, so the provider enforces a conforming reply - no regex scraping. Calls use the anti-thrash config (`--no-profile --quiet --no-session --max-turns 1`).
 
 ## Usage
 
 ```
-ward exec goose-triage                          # current git origin; applies P0-P4 labels
+ward exec goose-triage                          # current git origin; applies labels + verdict comments
 ward exec goose-triage -- --report-only          # produce the report, write nothing
+ward exec goose-triage -- --no-comment           # apply labels but skip the verdict comments
 ward exec goose-triage -- --repo <owner/name>
 ```
 
-`coily`'s issue-list verb caps at 50, so larger repos are fetched partially and the script warns the percentile shape is over a partial set. Whole-backlog fetch arrives with `ward-kdl ops forgejo issue list-all` - ward#131.
-
-## Production run (agentic-os, 2026-06-17)
-
-Distribution: **P0 1, P1 3, P2 6, P3 9, P4 12** - the target shape. The tails are reliable (P0 caught the one active incident, P4 demoted the stubs). The 3-pass 0-100 scale fixed an earlier P3 collapse but left a ceiling cluster (13 issues tied at 85); the run-off re-ranked them so P1 became the three gpg-ssm fleet-wide breakages. Known limit: qwen's scores are coarse, so the run-off does the fine top ordering; chunked run-offs are the next lever for larger backlogs.
+`coily`'s issue-list verb caps at 50, so larger repos are fetched partially and the script warns the shape is over a partial set. Whole-backlog fetch arrives with `ward-kdl ops forgejo issue list-all` - ward#131.
 
 ## Related
 
