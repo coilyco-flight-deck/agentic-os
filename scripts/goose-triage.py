@@ -29,7 +29,7 @@ import re
 import subprocess
 import sys
 import time
-from datetime import date
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 import yaml
@@ -91,11 +91,16 @@ def _hms(secs: float) -> str:
 
 
 def _bar(done: int, total: int, t0: float) -> str:
-    """Compact progress: done/total, percent, elapsed, ETA (calls are the unit)."""
+    """Compact progress: done/total, percent, elapsed, ETA (calls are the unit).
+
+    ETA is shown both as a remaining duration and as the absolute clock time it
+    projects finishing at, so a glance answers "how long" and "when".
+    """
     elapsed = time.monotonic() - t0
     pct = 100 * done / total if total else 100
     eta = elapsed / done * (total - done) if done else 0
-    return f"[{done}/{total} {pct:.0f}% | {_hms(elapsed)} elapsed | eta {_hms(eta)}]"
+    target = (datetime.now() + timedelta(seconds=eta)).strftime("%H:%M:%S")
+    return f"[{done}/{total} {pct:.0f}% | {_hms(elapsed)} elapsed | eta {_hms(eta)} (done ~{target})]"
 
 
 def _clamp_score(raw) -> float:
