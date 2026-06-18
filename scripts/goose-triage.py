@@ -13,8 +13,12 @@ engine and Python owning the deterministic parts:
   5. Percentile cut into the target shape (P1 10% / P2 20% / P3 30% / P4 40%),
      boundaries snapped to natural score breaks, P1 floored at zero.
   6. Write a report (markdown + yaml) under ~/.cache/agentic-os/goose-triage/.
+  7. Apply the P0-P4 tier labels to the issues (default). Pass --report-only
+     to skip the write and just produce the report.
 
-Report-only: it never writes to issues. Apply labels yourself after review.
+Applies labels by default: the computed tier becomes a forgejo label, replacing
+any prior P0-P4 label so a re-run converges. The P0-P4 labels must exist in the
+repo. Use --report-only (alias --dry-run) to review before writing.
 
 The Goose calls use the anti-thrash config validated in the test harness:
 `goose run --no-profile --quiet --no-session --max-turns 1` - no extensions
@@ -297,9 +301,14 @@ def write_report(result: dict) -> tuple[Path, Path]:
 
     tiers = result["tiers"]
     n = result["n"]
+    ap = result.get("applied")
+    if ap is None:
+        applied_note = "Report-only - no issues were modified (--report-only)."
+    else:
+        applied_note = (f"Tier labels (P0-P4) applied to {ap['ok']} issue(s)"
+                        + (f"; {ap['failed']} failed to apply" if ap["failed"] else "") + ".")
     lines = [f"# Triage report - {result['repo']} - {today}", ""]
-    lines.append(f"{n} open issues triaged by Goose (qwen3-coder:30b). "
-                 "Report-only - no issues were modified.")
+    lines.append(f"{n} open issues triaged by Goose (qwen3-coder:30b). " + applied_note)
     if result["capped"]:
         lines.append("")
         lines.append("**WARNING:** the fetch hit the list cap, so this is a "
@@ -328,6 +337,7 @@ def write_report(result: dict) -> tuple[Path, Path]:
 
     payload = {
         "repo": result["repo"], "date": today, "n": n, "capped": result["capped"],
+        "applied": result.get("applied"),
         "tiers": {
             t: [{"num": it["num"], "title": it["title"],
                  "score": it.get("score"), "reason": it.get("reason", "")}
@@ -337,6 +347,45 @@ def write_report(result: dict) -> tuple[Path, Path]:
     }
     yaml_path.write_text(yaml.safe_dump(payload, sort_keys=False))
     return md_path, yaml_path
+
+
+TIER_LABELS = ("P0", "P1", "P2", "P3", "P4")
+
+
+def _label(repo: str, num: int, verb: str, labels: list[str]) -> tuple[int, str]:
+    """Run one `coily ops forgejo issue label <verb>` call. Returns (rc, stderr).
+    Unlike sh(), this surfaces the exit status so apply can report failures."""
+    args = ["coily", "ops", "forgejo", "issue", "label", verb,
+            "--repo", repo, "--index", str(num)]
+    for lb in labels:
+        args += ["--label", lb]
+    p = subprocess.run(args, capture_output=True, text=True, timeout=60)
+    return p.returncode, p.stderr
+
+
+def apply_tiers(repo: str, result: dict) -> dict:
+    """Write each issue's computed tier as a forgejo label (P0-P4). Adds the new
+    tier label and removes the other four so a re-run converges to exactly one
+    tier label; non-tier labels are left untouched. The P0-P4 labels must already
+    exist in the repo - a failed add (e.g. label not defined) is reported, not
+    silently dropped. Returns {"ok", "failed"} counts."""
+    tiers = result["tiers"]
+    ok = failed = 0
+    for tier in TIER_LABELS:
+        others = [t for t in TIER_LABELS if t != tier]
+        for it in sorted(tiers[tier], key=lambda d: d["num"]):
+            num = it["num"]
+            rc, err = _label(repo, num, "add", [tier])
+            for o in others:
+                _label(repo, num, "remove", [o])  # idempotent; absent label is a no-op
+            if rc == 0:
+                ok += 1
+                print(f"  apply #{num}: {tier}", file=sys.stderr)
+            else:
+                failed += 1
+                print(f"  apply #{num}: FAILED to add {tier}: {err.strip()[:100]}",
+                      file=sys.stderr)
+    return {"ok": ok, "failed": failed}
 
 
 def _default_repo() -> str | None:
@@ -352,9 +401,11 @@ def _default_repo() -> str | None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(description="Goose-driven issue triage (report-only).")
+    ap = argparse.ArgumentParser(description="Goose-driven issue triage; applies P0-P4 labels by default.")
     ap.add_argument("--repo", help="owner/name; default: the current git origin's slug")
     ap.add_argument("--limit", type=int, default=50, help="max issues to fetch (coily cap is 50)")
+    ap.add_argument("--report-only", "--dry-run", dest="report_only", action="store_true",
+                    help="skip writing labels to issues; just produce the report")
     args = ap.parse_args(argv)
 
     repo = args.repo or _default_repo()
@@ -362,6 +413,17 @@ def main(argv: list[str] | None = None) -> int:
         ap.error("--repo not given and no git origin found in the current directory")
 
     result = run(repo, args.limit)
+
+    if args.report_only:
+        result["applied"] = None
+    else:
+        if result["capped"]:
+            print("goose-triage: WARNING applying tier labels over a PARTIAL backlog "
+                  "(fetch hit the cap) - the percentile shape is not over the true total.",
+                  file=sys.stderr)
+        print(f"goose-triage: applying tier labels to {repo} ...", file=sys.stderr)
+        result["applied"] = apply_tiers(repo, result)
+
     md_path, yaml_path = write_report(result)
 
     tiers = result["tiers"]
@@ -369,8 +431,14 @@ def main(argv: list[str] | None = None) -> int:
     print(f"goose-triage: {result['repo']} - {result['n']} issues")
     for t in ("P0", "P1", "P2", "P3", "P4"):
         print(f"  {t}: {len(tiers[t])}")
+    ap_res = result["applied"]
+    if ap_res is None:
+        print("  labels: not applied (--report-only)")
+    else:
+        print(f"  labels: applied to {ap_res['ok']} issue(s)"
+              + (f", {ap_res['failed']} FAILED" if ap_res["failed"] else ""))
     print(f"\nreport -> {md_path}\n        {yaml_path}")
-    return 0
+    return 1 if (ap_res and ap_res["failed"]) else 0
 
 
 if __name__ == "__main__":
