@@ -19,7 +19,7 @@ inner-loop toolchain on an `ubuntu:24.04` base:
 - **node + npm** - Claude Code's runtime.
 - **go** - builds the `warp/` module's hooks (and, later, ward + coily).
 - **aws cli v2** - the SSM secret loader and `~/.aws` passthrough.
-- **claude + codex** - pinned agent CLIs.
+- **claude + codex + goose** - pinned agent CLIs.
 - **public substrate seed** - bare mirrors of the image-tier reference repos at `/opt/substrate-seed`, from [`substrate-image-repos.txt`](../docker/dev-base/substrate-image-repos.txt) (the image-tier subset of ward's `preclone-repos.txt`). A ward container on a cold gitcache hydrates from these with no network. Only public repos are baked, so the image stays shareable. ward warms, this image seeds.
 
 Every tool installs world-readable under `/usr/local` or `/opt` so the image
