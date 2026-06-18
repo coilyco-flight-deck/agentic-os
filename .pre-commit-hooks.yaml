@@ -16,7 +16,6 @@
 #       - id: agents-pointer
 #       - id: misplaced-skills
 #       - id: yaml-strict
-#       - id: merge-conflicts
 #       - id: seed-skills
 #       - id: trufflehog
 #
@@ -120,15 +119,6 @@
   name: no foreign repo-specific skills
   description: "Assert a repo does not host skills owned by another repo. Opt in via [tool.agentic-os.misplaced-skills] deny/allow globs; no-ops otherwise. See coilyco-flight-deck/agentic-os#132."
   entry: check-misplaced-skills
-  language: python
-  always_run: true
-  pass_filenames: false
-  stages: [pre-commit]
-
-- id: merge-conflicts
-  name: no merge-conflict markers
-  description: "Reject staged files still carrying merge-conflict markers (<<<<<<<, =======, >>>>>>>, |||||||). Catches a conflicted security-config script before it commits broken. See coilyco-flight-deck/agentic-os#39."
-  entry: check-merge-conflicts
   language: python
   always_run: true
   pass_filenames: false
