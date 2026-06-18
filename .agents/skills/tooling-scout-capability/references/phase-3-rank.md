@@ -14,6 +14,14 @@ Ranking criteria, in priority order:
 4. Speculative entries the user has personal leverage on (someone they know)
    rank higher than ones they don't.
 
+**Do not rank skills by skillsmp `stars`.** The star count reflects the
+**host repo**, not the individual skill. Aggregator collections (eg.
+antigravity-awesome-skills at ~40k stars) inflate every contained skill's
+star count equally, so a skill bundled into a popular collection looks far
+more endorsed than it is. Judge skills by **author reputation + description
+fit** instead, and treat stars as host-repo signal only, never per-skill
+endorsement.
+
 Prepend the medal emoji to each entry. Output:
 `YYYY-MM-DD-capability-scout-3-ranked.yaml`. Group by category, but
 keep the global rank labels intact.

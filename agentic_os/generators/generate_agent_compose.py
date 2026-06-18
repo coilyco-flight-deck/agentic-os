@@ -590,6 +590,16 @@ def compose(sources: list[Path], overrides: dict[Path, Path] | None = None) -> s
     return "\n\n".join(parts) + "\n"
 
 
+def symlink_up_to_date(dst: Path, target: Path) -> bool:
+    """True when dst is already a symlink resolving to target (a relink no-op).
+
+    The single predicate both install_symlink and the --dry-run preview consult,
+    so "do nothing" and "would do nothing" can never disagree about whether a
+    link needs rewriting (forgejo #177).
+    """
+    return dst.is_symlink() and dst.readlink() == target
+
+
 def install_symlink(dst: Path, target: Path) -> str | None:
     """Point dst at target, backing up a pre-existing real file to dst.bak.
 
@@ -598,11 +608,11 @@ def install_symlink(dst: Path, target: Path) -> str | None:
     line, or None when dst already points at target (a no-op) so the per-session
     freshen hook stays silent when nothing changed.
     """
+    if symlink_up_to_date(dst, target):
+        return None
     dst.parent.mkdir(parents=True, exist_ok=True)
     note = ""
     if dst.is_symlink():
-        if dst.readlink() == target:
-            return None
         dst.unlink()
     elif dst.exists():
         backup = dst.with_name(dst.name + ".bak")
@@ -692,14 +702,28 @@ def run(config_path: Path, composed_path: Path, *, dry_run: bool = False) -> int
     manifest = render_manifest(slices, projects_root())
 
     if dry_run:
-        for target, (selected, _ov) in sorted(
+        # A true preview: emit "would write"/"would link" only on a real change,
+        # so a converged host previews as a no-op for downstream changed_when (#177).
+        for target, (selected, override_map) in sorted(
             planned.items(), key=lambda item: str(item[0])
         ):
+            body = compose(selected, override_map)
+            current = target.read_text(encoding="utf-8") if target.exists() else None
+            if current == body:
+                continue
             print(f"would write {target} ({len(selected)} source(s)){tail}")
-        print(f"would write {manifest_path} (mount-eligibility manifest)")
+        current_manifest = (
+            manifest_path.read_text(encoding="utf-8")
+            if manifest_path.exists()
+            else None
+        )
+        if current_manifest != manifest:
+            print(f"would write {manifest_path} (mount-eligibility manifest)")
         for target in stale:
             print(f"would remove {target} (obsolete generated output)")
         for harness, dst in sorted(load_points.items()):
+            if symlink_up_to_date(dst, outputs[harness]):
+                continue
             print(f"would link  {dst} -> {outputs[harness]}  [{harness}]")
         return 0
 
