@@ -13,7 +13,7 @@ The repo is the source of truth. `apply` pushes the repo's intent onto the host,
 
 - **Rendered files** - `settings.toml`, the theme YAML, `tab_configs/startup_config.toml`. Embedded templates rendered to real files (not symlinks) in the Warp config dir. Drift = content mismatch.
 - **Launch-config symlinks** - every `warp/launch_configurations/*.yaml` is symlinked into the config dir's `launch_configurations/`, and dangling links are swept. See [launch configs](#launch-configs) below.
-- **SQLite settings** - keys in Warp's `warp.sqlite` that have no TOML surface (see `mapping.go`). Skipped until Warp has initialized the DB once.
+- **SQLite settings** - keys in Warp's `warp.sqlite` with no TOML surface (see `mapping.go`), plus a Windows-only [default-shell pref](warp-default-shell.md). Skipped until Warp inits the DB.
 - **Wallpaper** - existence check only.
 
 ## Per-OS config dir
@@ -32,7 +32,7 @@ On macOS and Windows the two channels coexist, so `apply`/`doctor` pick one and 
 
 Launch configs are mirrored, not rendered: the repo dir is the source, the config dir holds a symlink per `*.yaml`. `apply` creates any missing link, repoints a stale one, and sweeps links that no longer resolve. It is idempotent - a link already pointing at the right source is left alone - and it never touches real files or healthy unrelated links. A pre-existing real file at a target is backed up to `<name>.bak` before linking.
 
-This walk exists because the links used to be hand-made and orphaned, so a new launch config (or a moved checkout) stayed invisible to Warp until someone ran `ln -s` by hand. Implementation in `launch.go`.
+The walk exists because hand-made links went orphaned: a new launch config or a moved checkout stayed invisible to Warp until someone ran `ln -s` by hand. Implementation in `launch.go`.
 
 `tab_configs/` entries beyond the rendered `startup_config.toml` remain hand-placed real files, not part of this walk.
 
