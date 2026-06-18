@@ -127,7 +127,8 @@ def _bar(done: int, total: int, t0: float) -> str:
     elapsed = time.monotonic() - t0
     pct = 100 * done / total if total else 100
     eta = elapsed / done * (total - done) if done else 0
-    target = (datetime.now() + timedelta(seconds=eta)).strftime("%H:%M:%S")
+    # 12-hour clock, no seconds, no leading zero: "10:59 PM", "1:05 AM".
+    target = (datetime.now() + timedelta(seconds=eta)).strftime("%I:%M %p").lstrip("0")
     return f"[{done}/{total} {pct:.0f}% | {_hms(elapsed)} elapsed | eta {_hms(eta)} (done ~{target})]"
 
 
