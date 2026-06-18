@@ -114,8 +114,14 @@ MODE_SCHEMA = {"type": "object", "additionalProperties": False,
 
 
 def _hms(secs: float) -> str:
+    """Human duration: "17s", "1m 50s", "1h 1m 40s" - largest unit down."""
     s = int(secs)
-    return f"{s // 60}:{s % 60:02d}"
+    h, m, sec = s // 3600, (s % 3600) // 60, s % 60
+    if h:
+        return f"{h}h {m}m {sec}s"
+    if m:
+        return f"{m}m {sec}s"
+    return f"{sec}s"
 
 
 def _bar(done: int, total: int, t0: float) -> str:
