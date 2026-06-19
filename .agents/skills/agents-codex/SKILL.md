@@ -5,7 +5,7 @@ description: Agent/harness profile for Codex (OpenAI's coding agent on GPT-famil
 
 # agents-codex
 
-Profile for the **Codex** agent harness (OpenAI), he/him. This is the harness axis - orthogonal to the [`models-*`](../models-qwen/SKILL.md) capability axis.
+Profile for the **Codex** agent harness (OpenAI), he/him. This is the harness axis - orthogonal to the `models-*` capability axis.
 
 Codex is bound to a capable GPT-family cloud model. As with Claude, you name the harness ("codex") and the underlying model is implied.
 

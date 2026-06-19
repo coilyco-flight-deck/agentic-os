@@ -5,9 +5,9 @@ description: Harness profile for OpenCode - a TUI/CLI harness floating over swap
 
 # agents-opencode
 
-The **OpenCode** harness (they/them). It **floats over swappable models**, so the model is the ceiling, not "OpenCode" - the active [`models-*`](../models-qwen/SKILL.md) profile. **Reach for it when** you want a general interactive local-coding session - the default of the three floaters.
+The **OpenCode** harness (they/them). It **floats over swappable models**, so the model is the ceiling, not "OpenCode" - the active `models-*` profile. **Reach for it when** you want a general interactive local-coding session - the default of the three floaters.
 
-Two tiers: on the capable coder ([`models-qwen-coder`](../models-qwen-coder/SKILL.md)) it does real in-repo work; as the confined `qwen-opencode` agent on the trivial tier ([`models-qwen`](../models-qwen/SKILL.md)) it is trivial-only, escalate by default, aos-public base alone.
+Two tiers: on the capable coder (`models-qwen-coder`) it does real in-repo work; as the confined `qwen-opencode` agent on the trivial tier (`models-qwen`) it is trivial-only, escalate by default, aos-public base alone.
 
 ## Related
 

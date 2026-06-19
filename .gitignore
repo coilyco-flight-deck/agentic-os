@@ -55,6 +55,7 @@ node_modules/
 .openclaw/devices
 .openclaw/completions
 .openclaw/plugins
+.openclaw/plugin-skills
 .openclaw/canvas
 .openclaw/service-env/
 .openclaw/.gateway*

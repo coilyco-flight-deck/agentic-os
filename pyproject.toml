@@ -78,6 +78,8 @@ agents_md_max_chars = 12000
 excludes = [
     "warp/launch_configurations/**",
     "warp/tab_configs/**",
+    # Runtime-generated openclaw plugin skills (gitignored, not authored docs).
+    ".openclaw/plugin-skills/**",
 ]
 
 # code-comments extended to YAML (#159), then tightened to one top-of-file
