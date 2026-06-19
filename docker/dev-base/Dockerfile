@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # Canonical agent dev environment, published per release as the dev-base image. See docs/dev-base-image.md.
 FROM ubuntu:24.04
 
@@ -9,6 +10,8 @@ ARG AWSCLI_VERSION=2.35.5
 ARG CLAUDE_VERSION=2.1.178
 ARG CODEX_VERSION=0.141.0
 ARG GOOSE_VERSION=1.38.0
+# ward CLI, baked so the container bootstrap runs without an in-container download (ward#181).
+ARG WARD_VERSION=v0.94.0
 
 # buildx populates TARGETARCH (amd64|arm64) per platform in the manifest list.
 ARG TARGETARCH
@@ -107,6 +110,19 @@ RUN set -eux; \
     chmod 0755 /usr/local/bin/goose; \
     rm /tmp/goose.tar.gz; \
     goose --version
+
+# ward CLI, pinned. Baked so the container bootstrap (ward#181) runs as the image
+# entrypoint with no in-container download. ward is a private Forgejo repo, so the
+# release asset rides a buildx --secret (id=forgejo_token), never a baked layer.
+# See docs/dev-base-image.md.
+RUN --mount=type=secret,id=forgejo_token set -eux; \
+    . /tmp/arch.env; \
+    tok="$(cat /run/secrets/forgejo_token)"; \
+    curl -fsSL -H "Authorization: token ${tok}" \
+      "https://forgejo.coilysiren.me/coilyco-flight-deck/ward/releases/download/${WARD_VERSION}/ward-linux-${GO_ARCH}" \
+      -o /usr/local/bin/ward; \
+    chmod 0755 /usr/local/bin/ward; \
+    ward version
 
 # Substrate seed: bare mirrors of the public (image-tier) reference repos a ward
 # container warms its gitcache from on a cold volume. List is a denormalized copy

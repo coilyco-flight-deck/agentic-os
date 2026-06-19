@@ -107,10 +107,10 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "${REGISTRY_TOKEN:-}" ]; then
-            echo "::error::REGISTRY_TOKEN not set; mint a forgejo PAT with write:package and add it as an Actions secret. See docs/dev-base-image.md." >&2
+            echo "::error::REGISTRY_TOKEN not set; mint a coilyco-ops bot PAT with write:package (push) + repo read (ward bake, agentic-os#223) and add it as an Actions secret. See docs/dev-base-image.md." >&2
             exit 1
           fi
-          echo "${REGISTRY_TOKEN}" | docker login forgejo.coilysiren.me -u coilysiren --password-stdin
+          echo "${REGISTRY_TOKEN}" | docker login forgejo.coilysiren.me -u coilyco-ops --password-stdin
 
       - name: Set up qemu + buildx builder
         run: |
@@ -123,12 +123,14 @@ jobs:
       - name: Build and push (multi-arch)
         env:
           TAG: ${{ needs.release.outputs.tag }}
+          REGISTRY_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
         run: |
           set -euo pipefail
           docker buildx build \
             --platform "${PLATFORMS}" \
             --tag "${IMAGE}:${TAG}" \
             --tag "${IMAGE}:latest" \
+            --secret id=forgejo_token,env=REGISTRY_TOKEN \
             --cache-from "type=registry,ref=${IMAGE}:buildcache" \
             --cache-to "type=registry,ref=${IMAGE}:buildcache,mode=max" \
             --push \
