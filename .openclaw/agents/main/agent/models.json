@@ -1,0 +1,13 @@
+{
+  "ollama": {
+    "api": "ollama",
+    "baseUrl": "http://kai-tower-3026.tail09a41b.ts.net:11434",
+    "apiKey": "ollama",
+    "models": [
+      {
+        "name": "qwen",
+        "id": "qwen3-coder:30b"
+      }
+    ]
+  }
+}

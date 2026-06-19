@@ -24,3 +24,100 @@ static/wallpaper-factorio.jpg
 
 # Rendered output of the warp/ template engine. Templates are tracked, output is not.
 warp/settings.toml
+
+# Runtime / machine-local state
+*.log
+logs/
+*.pid
+*.sock
+.openclaw/tmp_start.sh
+.openclaw/tmp_msg.sh
+
+# Secrets and resolved config (these belong in SSM, never the repo)
+.env
+.env.*
+*.secret
+
+# Crush agent state
+.crush/
+
+# Node modules
+node_modules/
+**/node_modules/
+
+# OpenClaw specific
+.openclaw/node_modules
+.openclaw/tmp
+.openclaw/openclaw.json.*
+.openclaw/logs
+.openclaw/workspace-attestations
+.openclaw/identity
+.openclaw/devices
+.openclaw/completions
+.openclaw/plugins
+.openclaw/canvas
+.openclaw/service-env/
+.openclaw/.gateway*
+.openclaw/update-check.json
+
+*.sqlite*
+
+# System files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+.*.swo
+.*.swp
+
+# Temporary files
+*~
+*.tmp
+*.temp
+*.bak
+*.old
+
+# Build outputs
+/dist
+/build
+/out
+*.bundle.js
+*.min.js
+*.min.css
+
+# Python specific
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.pytest_cache/
+.coverage
+.pylintrc
+.pylint-cache/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Screenshots or test images
+screenshots/
+test-images/
+
+# Personal files
+*.local
+*~.local
+
+# Test files
+*.test.js
+*.spec.js

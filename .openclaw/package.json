@@ -1,0 +1,13 @@
+{
+  "name": "coilyco-openclaw",
+  "private": true,
+  "scripts": {
+    "start": "bash start.sh",
+    "msg": "bash msg.sh"
+  },
+  "devDependencies": {
+    "concurrently": "latest",
+    "openclaw": "^2026.6.8",
+    "wait-on": "latest"
+  }
+}
