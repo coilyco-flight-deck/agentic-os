@@ -114,13 +114,15 @@ RUN set -eux; \
 # ward CLI, pinned. Baked so the container bootstrap (ward#181) runs as the image
 # entrypoint with no in-container download. ward is a private Forgejo repo, so the
 # release asset rides a buildx --secret (id=forgejo_token), never a baked layer.
-# See docs/dev-base-image.md.
-RUN --mount=type=secret,id=forgejo_token set -eux; \
+# NO `set -x` here and the token never enters argv: a trace/argv would leak the
+# secret into the build log. The auth header goes through a curlrc removed in-layer.
+RUN --mount=type=secret,id=forgejo_token set -eu; \
     . /tmp/arch.env; \
-    tok="$(cat /run/secrets/forgejo_token)"; \
-    curl -fsSL -H "Authorization: token ${tok}" \
+    printf 'header = "Authorization: token %s"\n' "$(cat /run/secrets/forgejo_token)" > /tmp/curlrc; \
+    curl -fsSL -K /tmp/curlrc \
       "https://forgejo.coilysiren.me/coilyco-flight-deck/ward/releases/download/${WARD_VERSION}/ward-linux-${GO_ARCH}" \
       -o /usr/local/bin/ward; \
+    rm -f /tmp/curlrc; \
     chmod 0755 /usr/local/bin/ward; \
     ward version
 
