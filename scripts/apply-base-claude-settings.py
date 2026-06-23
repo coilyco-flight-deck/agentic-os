@@ -8,7 +8,7 @@ auto-memory rule in AGENTS.md), so a host that never checks out the bridge repo
 still converges with auto-memory disabled.
 
 Additive and key-scoped: it sets only the keys it owns and preserves every
-other key verbatim, so the harness, coily, and the bridge merge can all keep
+other key verbatim, so the harness, ward, and the bridge merge can all keep
 touching the same file. Idempotent, stdlib only, atomic write. Run by the
 claude-hooks ansible role on every host.
 

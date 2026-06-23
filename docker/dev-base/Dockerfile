@@ -59,7 +59,7 @@ RUN set -eux; \
     rm /tmp/node.tar.xz; \
     node --version; npm --version
 
-# Go (builds the warp module's pre-commit hooks and, later, ward + coily).
+# Go (builds the warp module's pre-commit hooks and, later, ward).
 RUN set -eux; \
     . /tmp/arch.env; \
     curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-${GO_ARCH}.tar.gz" \

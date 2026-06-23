@@ -11,11 +11,11 @@ For the heavier cross-repo "drain everything" sweep, see **`gulp`** below.
 
 ## What "gish" means
 
-Run these in order, in the repo at cwd's git toplevel. Route git/forgejo calls through the repo's normal guard (`coily ops forgejo` for issues; bare `git` where no verb exists - this repo's `ward` is the cli-guard, not a git passthrough).
+Run these in order, in the repo at cwd's git toplevel. Route git/forgejo calls through the repo's normal guard (`ward ops forgejo` for issues; bare `git` where no verb exists - this repo's `ward` is the cli-guard, not a git passthrough).
 
 1. **Read the work.** `git status --short` + `git diff` (and untracked). Clean tree -> stop, nothing to land.
 2. **Resolve the repo.** `owner/name` from the forgejo remote (`git remote -v`; `origin` is usually forgejo directly). Issue base `https://forgejo.coilysiren.me/<owner>/<repo>`.
-3. **Find or create the issue.** Reuse an open issue that clearly matches the diff/`<hint>`, else create one Claude writes from the diff: `coily ops forgejo issue create --repo <owner/name> --title <t> --body-file <tmp.md>`. Capture the issue **number**; build `ISSUE_URL=<base>/issues/<N>`.
+3. **Find or create the issue.** Reuse an open issue that clearly matches the diff/`<hint>`, else create one Claude writes from the diff: `ward ops forgejo issue create <owner> <name> --title <t> --body-file <tmp.md>`. Capture the issue **number**; build `ISSUE_URL=<base>/issues/<N>`.
 4. **Commit dirty, minus lockdown files.** From `git status --porcelain` **drop** the lockdown files `.claude/settings.json` and `.claude/lockdown-deny.sh` (doctrine forbids staging them, Claude Code hard-blocks the former, other harnesses do not). Then `git commit -m "<type>(<scope>): <subject>" -m "closes <ISSUE_URL>" -- <paths...>`. Naming paths stages+commits atomically; untracked files land by being named.
 5. **Push to canonical main.** `git push "$(git config --get-all remote.origin.pushurl | grep forgejo)" HEAD:main` (or `git push forgejo HEAD:main` with a named remote). Forgejo only, never the PR-gated GitHub mirror.
 6. **Report in one line:** issue (reused/created #N) + commit subject + push landed.

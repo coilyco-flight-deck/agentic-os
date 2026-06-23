@@ -4,7 +4,7 @@
 Implements the tooling-issue-prioritization method with Goose as the judgment
 engine and Python owning the deterministic parts:
 
-  1. Fetch open issues for a repo (coily forgejo issue list + view).
+  1. Fetch open issues for a repo (one forgejo REST list call, body included).
   2. P0 net: regex content rules (p0-content-rules.yaml) flag candidates.
   3. P0 confirm: an isolated yes/no Goose call per candidate - "active
      incident, or just discussing the topic?" - the over-match filter.
@@ -37,6 +37,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -68,8 +69,9 @@ MODE_DEFAULT = "consult"
 # Verdict comment: one marked comment per issue carrying Goose's per-axis reason,
 # upserted (find-by-marker, PATCH or POST) so re-runs edit in place. See docs.
 COMMENT_MARKER = "<!-- goose-triage -->"
-FORGEJO_BASE = "https://forgejo.coilysiren.me"  # meaningful host, already public in AGENTS.md
-FORGEJO_TOKEN_SSM = "/forgejo/api-token"  # general-purpose PAT; read at runtime, never hardcoded
+# Canonical forgejo host: the WARD_FORGEJO_BASE env (set by ward / the dev
+# container), falling back to the public default already named in AGENTS.md.
+FORGEJO_BASE = os.environ.get("WARD_FORGEJO_BASE") or "https://forgejo.coilysiren.me"
 # Re-rank any tie this large against itself (run-off), so qwen's ceiling cluster
 # orders by judgment, not by issue number. See docs/goose-triage.md.
 RUNOFF_MIN_GROUP = 4
@@ -156,21 +158,19 @@ def _clamp_score(raw) -> float:
 
 
 def fetch_issues(repo: str, limit: int) -> list[dict]:
-    raw = sh(["coily", "ops", "forgejo", "issue", "list",
-              "--repo", repo, "--state", "open", "--limit", str(limit)])
+    """Open issues (not PRs) for a repo, via one forgejo REST list call. The list
+    endpoint already returns each issue's body, so no per-issue follow-up is
+    needed. `type=issues` drops pull requests at the API; the pull_request guard
+    is the belt-and-suspenders for older forgejo that ignores the filter."""
+    data = _api("GET", f"/repos/{repo}/issues"
+                f"?state=open&type=issues&limit={limit}")
     issues = []
-    for line in raw.splitlines():
-        parts = line.split("\t")
-        if len(parts) < 4 or "[open]" not in line:
+    for it in data if isinstance(data, list) else []:
+        if it.get("pull_request") is not None:
             continue
-        num = int(parts[1].lstrip("#"))
-        title = parts[3].strip()
-        issues.append({"num": num, "title": title, "body": ""})
-    for it in issues:
-        view = sh(["coily", "ops", "forgejo", "issue", "view",
-                   "--repo", repo, "--index", str(it["num"])])
-        lines = view.splitlines()
-        it["body"] = "\n".join(lines[1:]).strip() if len(lines) > 1 else ""
+        issues.append({"num": it["number"],
+                       "title": (it.get("title") or "").strip(),
+                       "body": (it.get("body") or "").strip()})
     return issues
 
 
@@ -472,15 +472,40 @@ def write_report(result: dict) -> tuple[Path, Path]:
 TIER_LABELS = ("P0", "P1", "P2", "P3", "P4")
 
 
+_LABEL_ID_CACHE: dict[str, dict[str, int]] = {}
+
+
+def _repo_label_ids(repo: str) -> dict[str, int]:
+    """Map of label name -> id for a repo (cached per process). Forgejo's
+    remove-label endpoint keys on the numeric id, so a name has to be resolved
+    first; an absent name simply has no id and its remove is a no-op."""
+    if repo not in _LABEL_ID_CACHE:
+        data = _api("GET", f"/repos/{repo}/labels?limit=100")
+        _LABEL_ID_CACHE[repo] = {lb["name"]: lb["id"]
+                                 for lb in (data if isinstance(data, list) else [])}
+    return _LABEL_ID_CACHE[repo]
+
+
 def _label(repo: str, num: int, verb: str, labels: list[str]) -> tuple[int, str]:
-    """Run one `coily ops forgejo issue label <verb>` call. Returns (rc, stderr).
-    Unlike sh(), this surfaces the exit status so apply can report failures."""
-    args = ["coily", "ops", "forgejo", "issue", "label", verb,
-            "--repo", repo, "--index", str(num)]
-    for lb in labels:
-        args += ["--label", lb]
-    p = subprocess.run(args, capture_output=True, text=True, timeout=60)
-    return p.returncode, p.stderr
+    """Add or remove forgejo labels on an issue via the REST API. Returns
+    (rc, err) - rc 0 on success, 1 with a message otherwise - so apply can report
+    failures the way it did when this shelled out to a guarded CLI. `add` POSTs
+    the label names; `remove` DELETEs each by resolved id (an unknown name is a
+    silent no-op, matching the old idempotent remove)."""
+    try:
+        if verb == "add":
+            _api("POST", f"/repos/{repo}/issues/{num}/labels", {"labels": labels})
+        elif verb == "remove":
+            ids = _repo_label_ids(repo)
+            for lb in labels:
+                lid = ids.get(lb)
+                if lid is not None:
+                    _api("DELETE", f"/repos/{repo}/issues/{num}/labels/{lid}")
+        else:
+            return 1, f"unknown label verb {verb!r}"
+        return 0, ""
+    except (urllib.error.URLError, urllib.error.HTTPError, OSError, ValueError) as e:
+        return 1, str(e)
 
 
 def apply_tiers(repo: str, result: dict) -> dict:
@@ -532,20 +557,14 @@ def apply_modes(repo: str, result: dict) -> dict:
     return {"ok": ok, "failed": failed}
 
 
-_TOKEN_CACHE: list[str] = []
-
-
 def _forgejo_token() -> str:
-    """Resolve the forgejo write PAT once from SSM (cached for the process). Read
-    at runtime via coily so no secret is ever hardcoded in this public repo."""
-    if not _TOKEN_CACHE:
-        tok = sh(["coily", "ops", "aws", "ssm", "get-parameter",
-                  "--name", FORGEJO_TOKEN_SSM, "--with-decryption",
-                  "--query", "Parameter.Value", "--output", "text"]).strip()
-        if not tok:
-            raise RuntimeError(f"empty forgejo token from SSM {FORGEJO_TOKEN_SSM}")
-        _TOKEN_CACHE.append(tok)
-    return _TOKEN_CACHE[0]
+    """Resolve the forgejo write PAT from the FORGEJO_TOKEN env var - the same
+    secret every CI action in this repo authenticates with, supplied at runtime
+    by ward / the dev container so nothing is hardcoded in this public repo."""
+    tok = (os.environ.get("FORGEJO_TOKEN") or "").strip()
+    if not tok:
+        raise RuntimeError("FORGEJO_TOKEN is not set; cannot authenticate to forgejo")
+    return tok
 
 
 def _api(method: str, path: str, body: dict | None = None) -> object:
@@ -635,7 +654,7 @@ def _default_repo() -> str | None:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Goose-driven issue triage; applies P0-P4 tier and headless/interactive/consult mode labels by default.")
     ap.add_argument("--repo", help="owner/name; default: the current git origin's slug")
-    ap.add_argument("--limit", type=int, default=50, help="max issues to fetch (coily cap is 50)")
+    ap.add_argument("--limit", type=int, default=50, help="max issues to fetch (forgejo page size)")
     ap.add_argument("--report-only", "--dry-run", dest="report_only", action="store_true",
                     help="skip writing labels to issues; just produce the report")
     ap.add_argument("--no-comment", dest="comment", action="store_false",

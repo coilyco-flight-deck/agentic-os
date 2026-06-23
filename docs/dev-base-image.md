@@ -1,7 +1,7 @@
 # dev-base container image
 
 aos owns the agent dev environment as a published artifact, the analog of the
-ward / coily brew binaries: a thing you pull, not build-from-source on demand.
+ward brew binary: a thing you pull, not build-from-source on demand.
 ward consumes it by tag and never touches the Dockerfile, so no repo needs
 cloning to know how to run its container and config cannot drift across repos.
 
@@ -17,7 +17,7 @@ inner-loop toolchain on an `ubuntu:24.04` base:
 - **pre-commit** - the catalog hook driver (a uv tool).
 - **python3 + shellcheck + git + build-essential** - direct needs and what the catalog hooks shell out to.
 - **node + npm** - Claude Code's runtime.
-- **go** - builds the `warp/` module's hooks (and, later, ward + coily).
+- **go** - builds the `warp/` module's hooks (and, later, ward).
 - **aws cli v2** - the SSM secret loader and `~/.aws` passthrough.
 - **claude + codex + goose** - pinned agent CLIs.
 - **public substrate seed** - bare mirrors of the image-tier reference repos at `/opt/substrate-seed`, from [`substrate-image-repos.txt`](../docker/dev-base/substrate-image-repos.txt) (the image-tier subset of ward's `preclone-repos.txt`). A ward container on a cold gitcache hydrates from these with no network. Only public repos are baked, so the image stays shareable. ward warms, this image seeds.
@@ -72,7 +72,7 @@ up/exec` wrapper (ward#98) is the intended entry point.
 
 - Mount / compose logic and the `ward container` verbs - ward#98.
 - The mount-eligibility manifest - aos #222.
-- ward + coily in the image - a fast follow (needs a cross-repo build token).
+- ward in the image - a fast follow (needs a cross-repo build token).
 - Running services in containers - a later effort.
 
 ## See also
