@@ -13,8 +13,8 @@ In the menu bar, between the app menus and the status icons:
 ship release / fix flaky tests / write docs
 ```
 
-Click it for the full descriptions (one line each, no repeated label) and an
-"Edit prios" shortcut:
+Click it for the full descriptions (one line each, no repeated label), plus
+actions to **Edit prios** (opens the file), open this **Guide**, and **Refresh**:
 
 ```
 1. cut the 2.0 release and announce it

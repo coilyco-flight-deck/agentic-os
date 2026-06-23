@@ -26,4 +26,9 @@ echo "---"
 awk -F ' :: ' 'NF && c<3 {c++; printf "%d. %s\n", c, ($2 != "" ? $2 : $1)}' "$PRIOS_FILE"
 echo "---"
 echo "Edit prios | bash=/usr/bin/open param1=-t param2=$PRIOS_FILE terminal=false"
+
+# Resolve the guide doc next to this plugin's real location (follow the symlink).
+SELF="$(readlink "$0" 2>/dev/null)"; [[ -z "$SELF" ]] && SELF="$0"
+GUIDE="$(cd "$(dirname "$SELF")/.." 2>/dev/null && pwd)/docs/swiftbar-prios.md"
+[[ -f "$GUIDE" ]] && echo "Guide | bash=/usr/bin/open param1=$GUIDE terminal=false"
 echo "Refresh | refresh=true"
