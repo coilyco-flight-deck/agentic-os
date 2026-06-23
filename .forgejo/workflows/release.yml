@@ -110,7 +110,7 @@ jobs:
             echo "::error::REGISTRY_TOKEN not set; mint a forgejo PAT with write:package and add it as an Actions secret. See docs/dev-base-image.md." >&2
             exit 1
           fi
-          echo "${REGISTRY_TOKEN}" | docker login forgejo.coilysiren.me -u coilysiren --password-stdin
+          echo "${REGISTRY_TOKEN}" | docker login forgejo.coilysiren.me -u coilyco-ops --password-stdin
 
       - name: Set up qemu + buildx builder
         run: |

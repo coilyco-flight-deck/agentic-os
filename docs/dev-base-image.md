@@ -50,8 +50,8 @@ layer cache keeps an unchanged Dockerfile's republish cheap even though every
 push to main cuts a release. If arm64 emulation turns flaky, drop `linux/arm64`
 from `PLATFORMS`; amd64 matches the runner.
 
-**One-time setup:** mint a forgejo PAT with `write:package` (User Settings ->
-Applications) and add it as the repo Actions secret `REGISTRY_TOKEN`.
+**Token / rotation:** `REGISTRY_TOKEN` is a `coilyco-ops`-owned `write:package`
+PAT; [`scripts/rotate-registry-token.sh`](../scripts/rotate-registry-token.sh) re-mints + re-sets it.
 
 ## Pinning a tool
 
