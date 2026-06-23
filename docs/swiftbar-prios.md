@@ -13,16 +13,13 @@ In the menu bar, between the app menus and the status icons:
 ship release / fix flaky tests / write docs
 ```
 
-Click it for the full numbered list (each label with its description dimmed
-below) and an "Edit prios" shortcut:
+Click it for the full descriptions (one line each, no repeated label) and an
+"Edit prios" shortcut:
 
 ```
-1. ship release
-   cut the 2.0 release and announce it
-2. fix flaky tests
-   track down and fix the three flaky CI tests
-3. write docs
-   write the getting-started guide
+1. cut the 2.0 release and announce it
+2. track down and fix the three flaky CI tests
+3. write the getting-started guide
 ```
 
 (Those are illustrative - your actual priorities come from your own file.)

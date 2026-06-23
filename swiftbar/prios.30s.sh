@@ -21,13 +21,9 @@ title=$(awk -F ' :: ' 'NF && c<3 {c++; split($1,w," "); printf "%s%s", sep, w[1]
 echo "${title:-empty}"
 echo "---"
 
-# Dropdown (real menu, renders unicode fine): numbered label, then the full
-# description below it in dimmed text.
-awk -F ' :: ' 'NF && c<3 {
-  c++
-  printf "%d. %s\n", c, $1
-  if ($2 != "") printf "%s | size=12 color=#8e8e93\n", $2
-}' "$PRIOS_FILE"
+# Dropdown (real menu): one line per priority - the description (or the label if
+# none). The short label already appears in the menu-bar title, so it is not repeated.
+awk -F ' :: ' 'NF && c<3 {c++; printf "%d. %s\n", c, ($2 != "" ? $2 : $1)}' "$PRIOS_FILE"
 echo "---"
 echo "Edit prios | bash=/usr/bin/open param1=-t param2=$PRIOS_FILE terminal=false"
 echo "Refresh | refresh=true"
