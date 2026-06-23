@@ -4,7 +4,7 @@
 Implements the tooling-issue-prioritization method with Goose as the judgment
 engine and Python owning the deterministic parts:
 
-  1. Fetch open issues for a repo (one forgejo REST list call, body included).
+  1. Fetch open issues for a repo (one `ward ops forgejo issue list`, body included).
   2. P0 net: regex content rules (p0-content-rules.yaml) flag candidates.
   3. P0 confirm: an isolated yes/no Goose call per candidate - "active
      incident, or just discussing the topic?" - the over-match filter.
@@ -31,6 +31,13 @@ The Goose calls use the anti-thrash config validated in the test harness:
 `goose run --no-profile --quiet --no-session --max-turns 1` - no extensions
 loaded (so no tool-call looping), banner suppressed, single turn.
 
+All forgejo I/O goes through the `ward ops forgejo` (ward-kdl) surface, which
+authenticates as the `coilyco-ops` bot from SSM `/forgejo/coilyco-ops/api-token`,
+so this script holds no token and needs no `FORGEJO_TOKEN` in its environment
+(coilyco-flight-deck/agentic-os#267). The ward-kdl forgejo guardfile exposes no
+issue-comment edit verb, so the verdict comment is create-if-absent: a re-run
+refreshes the labels but leaves an existing marked comment untouched.
+
 See docs/test-harness-goose.md and the tooling-issue-prioritization skill.
 """
 from __future__ import annotations
@@ -42,8 +49,6 @@ import re
 import subprocess
 import sys
 import time
-import urllib.error
-import urllib.request
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
@@ -66,12 +71,9 @@ SCORE_DEFAULT = 30.0  # unsure -> low-middle (P3 territory)
 # consult is the fail-closed default (unsure, and unlabeled at the gate, -> consult).
 MODE_LABELS = ("headless", "interactive", "consult")
 MODE_DEFAULT = "consult"
-# Verdict comment: one marked comment per issue carrying Goose's per-axis reason,
-# upserted (find-by-marker, PATCH or POST) so re-runs edit in place. See docs.
+# Verdict comment: one marked comment per issue with Goose's per-axis reason,
+# created-if-absent (ward-kdl has no comment-edit verb), so re-runs never append.
 COMMENT_MARKER = "<!-- goose-triage -->"
-# Canonical forgejo host: the WARD_FORGEJO_BASE env (set by ward / the dev
-# container), falling back to the public default already named in AGENTS.md.
-FORGEJO_BASE = os.environ.get("WARD_FORGEJO_BASE") or "https://forgejo.coilysiren.me"
 # Re-rank any tie this large against itself (run-off), so qwen's ceiling cluster
 # orders by judgment, not by issue number. See docs/goose-triage.md.
 RUNOFF_MIN_GROUP = 4
@@ -158,12 +160,13 @@ def _clamp_score(raw) -> float:
 
 
 def fetch_issues(repo: str, limit: int) -> list[dict]:
-    """Open issues (not PRs) for a repo, via one forgejo REST list call. The list
-    endpoint already returns each issue's body, so no per-issue follow-up is
-    needed. `type=issues` drops pull requests at the API; the pull_request guard
+    """Open issues (not PRs) for a repo, via one `ward ops forgejo issue list`. The
+    list verb returns each issue's body inline, so no per-issue follow-up is
+    needed. `--type issues` drops pull requests at the API; the pull_request guard
     is the belt-and-suspenders for older forgejo that ignores the filter."""
-    data = _api("GET", f"/repos/{repo}/issues"
-                f"?state=open&type=issues&limit={limit}")
+    owner, name = _split_repo(repo)
+    data = _fj(["issue", "list", owner, name,
+                "--state", "open", "--type", "issues", "--limit", str(limit)])
     issues = []
     for it in data if isinstance(data, list) else []:
         if it.get("pull_request") is not None:
@@ -398,8 +401,8 @@ def write_report(result: dict) -> tuple[Path, Path]:
             + (f"; {m_ap['failed']} failed" if m_ap["failed"] else "") + ".")
         if c_ap is not None:
             applied_note += (
-                f" Verdict comments: {c_ap['created']} created, {c_ap['updated']} updated, "
-                f"{c_ap['unchanged']} unchanged"
+                f" Verdict comments: {c_ap['created']} created, "
+                f"{c_ap['skipped']} skipped (already present)"
                 + (f", {c_ap['failed']} failed" if c_ap["failed"] else "") + ".")
     lines = [f"# Triage report - {result['repo']} - {today}", ""]
     lines.append(f"{n} open issues triaged by Goose (qwen3-coder:30b). " + applied_note)
@@ -472,39 +475,26 @@ def write_report(result: dict) -> tuple[Path, Path]:
 TIER_LABELS = ("P0", "P1", "P2", "P3", "P4")
 
 
-_LABEL_ID_CACHE: dict[str, dict[str, int]] = {}
-
-
-def _repo_label_ids(repo: str) -> dict[str, int]:
-    """Map of label name -> id for a repo (cached per process). Forgejo's
-    remove-label endpoint keys on the numeric id, so a name has to be resolved
-    first; an absent name simply has no id and its remove is a no-op."""
-    if repo not in _LABEL_ID_CACHE:
-        data = _api("GET", f"/repos/{repo}/labels?limit=100")
-        _LABEL_ID_CACHE[repo] = {lb["name"]: lb["id"]
-                                 for lb in (data if isinstance(data, list) else [])}
-    return _LABEL_ID_CACHE[repo]
-
-
 def _label(repo: str, num: int, verb: str, labels: list[str]) -> tuple[int, str]:
-    """Add or remove forgejo labels on an issue via the REST API. Returns
-    (rc, err) - rc 0 on success, 1 with a message otherwise - so apply can report
-    failures the way it did when this shelled out to a guarded CLI. `add` POSTs
-    the label names; `remove` DELETEs each by resolved id (an unknown name is a
-    silent no-op, matching the old idempotent remove)."""
+    """Add or remove forgejo labels on an issue via `ward ops forgejo issue-label`.
+    Returns (rc, err) - rc 0 on success, 1 with a message otherwise - so apply can
+    report failures rather than silently drop them. `add` POSTs the label names in
+    one call; `remove` DELETEs each by name (ward-kdl's remove identifier accepts
+    a name, so no id resolution is needed; an unknown name is a no-op)."""
+    owner, name = _split_repo(repo)
     try:
         if verb == "add":
-            _api("POST", f"/repos/{repo}/issues/{num}/labels", {"labels": labels})
-        elif verb == "remove":
-            ids = _repo_label_ids(repo)
+            args = ["issue-label", "add", owner, name, str(num)]
             for lb in labels:
-                lid = ids.get(lb)
-                if lid is not None:
-                    _api("DELETE", f"/repos/{repo}/issues/{num}/labels/{lid}")
+                args += ["--labels", lb]
+            _fj(args, parse=False)
+        elif verb == "remove":
+            for lb in labels:
+                _fj(["issue-label", "remove", owner, name, str(num), lb], parse=False)
         else:
             return 1, f"unknown label verb {verb!r}"
         return 0, ""
-    except (urllib.error.URLError, urllib.error.HTTPError, OSError, ValueError) as e:
+    except (WardForgejoError, OSError, ValueError) as e:
         return 1, str(e)
 
 
@@ -557,26 +547,44 @@ def apply_modes(repo: str, result: dict) -> dict:
     return {"ok": ok, "failed": failed}
 
 
-def _forgejo_token() -> str:
-    """Resolve the forgejo write PAT from the FORGEJO_TOKEN env var - the same
-    secret every CI action in this repo authenticates with, supplied at runtime
-    by ward / the dev container so nothing is hardcoded in this public repo."""
-    tok = (os.environ.get("FORGEJO_TOKEN") or "").strip()
-    if not tok:
-        raise RuntimeError("FORGEJO_TOKEN is not set; cannot authenticate to forgejo")
-    return tok
+# ward-kdl ops forgejo binary. Overridable for tests; defaults to the ward CLI on
+# PATH, which dispatches the spec-driven ward-kdl forgejo surface.
+WARD = os.environ.get("WARD_BIN") or "ward"
 
 
-def _api(method: str, path: str, body: dict | None = None) -> object:
-    """One forgejo API call. Returns parsed JSON (or None on 204). Raises on HTTP
-    error so the caller can count the failure rather than silently drop it."""
-    data = json.dumps(body).encode() if body is not None else None
-    req = urllib.request.Request(f"{FORGEJO_BASE}/api/v1{path}", data=data, method=method)
-    req.add_header("Authorization", f"token {_forgejo_token()}")
-    req.add_header("Content-Type", "application/json")
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        raw = resp.read()
-        return json.loads(raw) if raw else None
+class WardForgejoError(RuntimeError):
+    """A `ward ops forgejo` call exited non-zero. Carries the captured stderr so
+    callers count and surface the failure the way the old REST layer raised."""
+
+
+def _split_repo(repo: str) -> tuple[str, str]:
+    """Split an "owner/name" slug into (owner, name) for ward-kdl's positional
+    path args. ward-kdl's `restrict owner matches coily*` gate still applies."""
+    owner, _, name = repo.partition("/")
+    if not owner or not name:
+        raise ValueError(f"repo must be 'owner/name', got {repo!r}")
+    return owner, name
+
+
+def _fj(args: list[str], parse: bool = True, timeout: int = 60) -> object:
+    """One `ward ops forgejo <args>` call, the auth boundary for all forgejo I/O.
+
+    ward-kdl authenticates as the coilyco-ops bot from SSM, so nothing here needs
+    FORGEJO_TOKEN (agentic-os#267). `--output json` is appended for read verbs
+    (parse=True) and the stdout JSON is parsed and returned; an empty body returns
+    None. A non-zero exit raises WardForgejoError(stderr) so callers can count the
+    failure rather than silently drop it, matching the old REST layer's raise."""
+    cmd = [WARD, "ops", "forgejo", *args]
+    if parse:
+        cmd += ["--output", "json"]
+    proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    if proc.returncode != 0:
+        raise WardForgejoError((proc.stderr or proc.stdout or "").strip()
+                               or f"ward ops forgejo {' '.join(args)} failed")
+    out = (proc.stdout or "").strip()
+    if not parse or not out:
+        return None
+    return json.loads(out)
 
 
 def render_comment(it: dict, today: str) -> str:
@@ -601,32 +609,33 @@ def render_comment(it: dict, today: str) -> str:
 
 
 def upsert_comment(repo: str, it: dict, today: str) -> str:
-    """Write one marked verdict comment per issue, converging like the labels: find
-    the prior goose-triage comment by marker and PATCH it, else POST a new one. An
-    unchanged body (same day, same verdict) is a no-op. Returns the outcome string
-    ("created" / "updated" / "unchanged" / "FAILED: ...")."""
+    """Write one marked verdict comment per issue: find the prior goose-triage
+    comment by marker and, if absent, POST a new one. The ward-kdl forgejo surface
+    exposes no comment edit/delete verb, so this is create-if-absent rather than
+    edit-in-place: an existing marked comment is left untouched ("skipped"), still
+    converging to exactly one verdict comment so re-runs never spam. The labels are
+    refreshed every run; only the comment "why" can go stale. Returns the outcome
+    string ("created" / "skipped" / "FAILED: ...")."""
+    owner, name = _split_repo(repo)
     num = it["num"]
     body = render_comment(it, today)
     try:
-        existing = _api("GET", f"/repos/{repo}/issues/{num}/comments")
+        existing = _fj(["issue-comment", "list", owner, name, str(num)])
         comments = existing if isinstance(existing, list) else []
         mine = next((c for c in comments if COMMENT_MARKER in (c.get("body") or "")), None)
-        if mine is None:
-            _api("POST", f"/repos/{repo}/issues/{num}/comments", {"body": body})
-            return "created"
-        if (mine.get("body") or "").strip() == body.strip():
-            return "unchanged"
-        _api("PATCH", f"/repos/{repo}/issues/comments/{mine['id']}", {"body": body})
-        return "updated"
-    except (urllib.error.URLError, urllib.error.HTTPError, OSError, ValueError) as e:
+        if mine is not None:
+            return "skipped"
+        _fj(["issue", "comment", owner, name, str(num), "--body", body], parse=False)
+        return "created"
+    except (WardForgejoError, OSError, ValueError) as e:
         return f"FAILED: {e}"
 
 
 def apply_comments(repo: str, result: dict) -> dict:
-    """Upsert the verdict comment on every triaged issue. Converges like the labels
-    (exactly one marked comment, edited in place) so re-runs never spam. Returns
-    {"created", "updated", "unchanged", "failed"} counts."""
-    counts = {"created": 0, "updated": 0, "unchanged": 0, "failed": 0}
+    """Write the verdict comment on every triaged issue, create-if-absent so re-runs
+    never spam (ward-kdl has no comment edit verb). Returns {"created", "skipped",
+    "failed"} counts."""
+    counts = {"created": 0, "skipped": 0, "failed": 0}
     today = date.today().isoformat()
     for it in sorted(result["issues"], key=lambda d: d["num"]):
         outcome = upsert_comment(repo, it, today)
@@ -708,8 +717,7 @@ def main(argv: list[str] | None = None) -> int:
               + (f"/{m_ap['failed']} FAILED" if m_ap["failed"] else ""))
         c_ap = ap_res.get("comments")
         if c_ap is not None:
-            print(f"  comments: {c_ap['created']} created, {c_ap['updated']} updated, "
-                  f"{c_ap['unchanged']} unchanged"
+            print(f"  comments: {c_ap['created']} created, {c_ap['skipped']} skipped"
                   + (f", {c_ap['failed']} FAILED" if c_ap["failed"] else ""))
     print(f"\nreport -> {md_path}\n        {yaml_path}")
     failed = bool(ap_res) and (ap_res["tiers"]["failed"] or ap_res["modes"]["failed"]
