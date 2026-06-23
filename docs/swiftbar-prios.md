@@ -13,20 +13,31 @@ In the menu bar, between the app menus and the status icons:
 ship release / fix flaky tests / write docs
 ```
 
-Click it for the full numbered list and an "Edit prios" shortcut:
+Click it for the full numbered list (each label with its description dimmed
+below) and an "Edit prios" shortcut:
 
 ```
 1. ship release
+   cut the 2.0 release and announce it
 2. fix flaky tests
+   track down and fix the three flaky CI tests
 3. write docs
+   write the getting-started guide
 ```
 
 (Those are illustrative - your actual priorities come from your own file.)
 
 ## Editing the priorities
 
-The priorities are a plain file, one per line; the first three non-empty lines
-are shown (the menu-bar title uses each line's first word):
+The priorities are a plain file, one per line, in `label :: description` form -
+the short label drives the menu-bar title (its first word), the description fills
+the dropdown. The description is optional. The first three non-empty lines show:
+
+```
+ship release :: cut the 2.0 release and announce it
+fix flaky tests :: track down and fix the three flaky CI tests
+write docs :: write the getting-started guide
+```
 
 ```sh
 $EDITOR ~/.config/prios.txt
@@ -48,11 +59,8 @@ The plugin folder must contain only plugin files - point SwiftBar at a dedicated
 `~/.config/swiftbar`, never at a docs or source directory, or it will try to run
 every file there as a plugin.
 
-## Title is ASCII-only
-
-The macOS menu bar font renders emoji and some punctuation (for example the
-middle dot) as missing-glyph boxes, so the menu-bar title is plain ASCII with
-`/` separators. The dropdown is a real menu and renders unicode fine.
+The menu-bar title is plain ASCII with `/` separators because the macOS menu bar
+font renders emoji and some punctuation as missing-glyph boxes (the dropdown is a real menu and renders unicode fine).
 
 ## Install (per host)
 
