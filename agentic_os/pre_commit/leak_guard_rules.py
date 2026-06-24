@@ -20,9 +20,9 @@ Rule fields:
     case_sensitive- default False.
     message       - remediation, printed on a hit. Never name the term here.
 
-The three rules below cover the three leak/coupling classes (sensitive data,
-private->public reference, dependency cycle), one each. See coilysiren/inbox#95
-and docs/leak-guard.md.
+The rules below cover the three leak/coupling classes (sensitive data,
+private->public reference, dependency cycle); the dependency-cycle class carries
+more than one edge. See coilysiren/inbox#95 and docs/leak-guard.md.
 """
 from __future__ import annotations
 
@@ -56,6 +56,21 @@ RULES: list[dict] = [
             "public README front-page names a private bridge repo. Describe the "
             "overlay generically (a private overlay repo); internal tooling/docs "
             "may still enumerate siblings."
+        ),
+    },
+    # Dependency cycle: a public skill naming LUCA (private substrate consuming
+    # this repo's hooks) closes the cycle. See coilyco-flight-deck/agentic-os#77.
+    {
+        "id": "luca-in-public-skills",
+        "term_hex": "6c756361",
+        "repos": ["agentic-os"],
+        "only_globs": [".agents/skills/**"],
+        "allow_globs": [],
+        "message": (
+            "public agentic-os skill names LUCA, a private observability "
+            "substrate that consumes this repo's hooks - a dependency cycle. "
+            "Keep OTel/observability content generic here and move LUCA-specific "
+            "detail into a private overlay surface."
         ),
     },
     # Dependency cycle: cli-guard and ward reference each other. Break the cycle

@@ -20,3 +20,7 @@
 4. Add a one-line entry to the inventory.
 5. Re-run the personal-OS repo's host-config convergence (ansible freshen) so the home-layer config picks up the new server (otherwise it only resolves when cwd is inside the source repo's tree).
 6. Commit (closes the same-repo issue per repo baseline).
+
+### Example: a streamable-HTTP OAuth server
+
+`honeycomb` is the Honeycomb Intelligence MCP server at `https://mcp.honeycomb.io/mcp` (OAuth, streamable HTTP). Available on Free / Pro / Enterprise via Honeycomb Intelligence. The Enterprise gate is on the REST `/1/query_results` endpoint, not on MCP. First-time auth: `mcporter auth honeycomb`.
