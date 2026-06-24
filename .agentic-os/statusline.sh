@@ -1,19 +1,23 @@
 #!/usr/bin/env bash
-# Second status-line row for this repo: the git checkouts currently on disk, as
-# org/repo, plus the ones that have appeared since a persisted baseline. Repos
-# quietly re-clone themselves back during dev work; this surfaces the set on
-# disk and names the ones that snuck back, so the drift stops going unnoticed.
+# Second status-line row for this repo: git checkouts on disk that are NOT on
+# the expected-repos list, i.e. the strays to remove. Repos quietly re-clone
+# themselves back during dev work; this names the ones that should not be here.
 #
-# scripts/agent-name.sh runs $project_dir/.agentic-os/statusline.sh and appends
-# its stdout as a second row. See docs/repo-tracker.md.
+# Expected list: a file of repos that SHOULD be on disk, one per line, each
+# "owner/name" or bare "name" ('#' comments and blank lines ignored). Resolved
+# from $AOS_REPOS_EXPECTED, else ~/.config/agentic-os/repos-on-disk.txt. Matching
+# is by repo name, so the list may use either form. With no list, just the count
+# shows. See docs/repo-tracker.md.
+#
+# scripts/agent-name.sh runs this and appends its stdout as a second row.
 set -euo pipefail
 
 # Scan root: the org dirs live at <root>/<org>/<repo>. Env-overridable.
 repos_root="${AOS_REPOS_ROOT:-$HOME/projects}"
 [ -d "$repos_root" ] || exit 0
 
-# Current org/repo set: every <root>/<org>/<repo> that is a git checkout. .git
-# is a dir for normal clones, a file for worktrees/submodules, so test -e.
+# Current org/repo checkouts: <root>/<org>/<repo> with a .git (dir for clones,
+# file for worktrees/submodules, so test -e).
 current="$(
   for org in "$repos_root"/*/; do
     org_name="$(basename "$org")"
@@ -26,34 +30,40 @@ current="$(
 [ -n "$current" ] || exit 0
 count="$(printf '%s\n' "$current" | wc -l | tr -d ' ')"
 
-# Baseline set persists across sessions; delete it to re-anchor once you accept
-# the current checkouts. First run seeds it from current (nothing is new yet).
-state_dir="${XDG_CACHE_HOME:-$HOME/.cache}/agentic-os/repos"
-mkdir -p "$state_dir"
-key="$(printf '%s' "$repos_root" | shasum 2>/dev/null | cut -c1-12)"
-[ -n "$key" ] || key="default"
-base_file="$state_dir/$key.baseline"
-[ -s "$base_file" ] || printf '%s\n' "$current" >"$base_file"
-
-# New = on disk now but absent from the baseline (the ones that snuck back).
-new="$(comm -23 <(printf '%s\n' "$current") <(sort -u "$base_file") 2>/dev/null || true)"
-
 reset="\033[0m"
-if [ -z "$new" ]; then
-  printf '  📦 \033[32m%s repos%b' "$count" "$reset"   # green: matches baseline
+
+# Expected list. Without a readable one, just show the count (nothing to flag).
+expected_file="${AOS_REPOS_EXPECTED:-${XDG_CONFIG_HOME:-$HOME/.config}/agentic-os/repos-on-disk.txt}"
+if [ ! -r "$expected_file" ]; then
+  printf '  📦 \033[32m%s repos%b' "$count" "$reset"
   exit 0
 fi
 
-new_count="$(printf '%s\n' "$new" | wc -l | tr -d ' ')"
-# Join the first few new names with ", "; collapse the rest into "+N more".
+# Expected repo names: strip comments/whitespace, drop any owner/ prefix, dedup.
+exp_names="$(sed 's/#.*//' "$expected_file" | tr -d '[:blank:]' | sed 's#.*/##' | grep -v '^$' | sort -u)"
+
+# Stray = on disk but its repo name is not expected.
+stray=""
+while IFS= read -r r; do
+  printf '%s\n' "$exp_names" | grep -qxF "${r##*/}" || stray="${stray:+$stray
+}$r"
+done < <(printf '%s\n' "$current")
+
+if [ -z "$stray" ]; then
+  printf '  📦 \033[32m%s repos, none stray%b' "$count" "$reset"
+  exit 0
+fi
+
+s_count="$(printf '%s\n' "$stray" | wc -l | tr -d ' ')"
+# Join the first few stray names with ", "; collapse the rest into "+N more".
 show=""; shown=0
 while IFS= read -r r; do
   [ -n "$r" ] || continue
   show="${show:+$show, }$r"; shown=$((shown + 1))
   [ "$shown" -ge 4 ] && break
-done < <(printf '%s\n' "$new")
-[ "$new_count" -gt "$shown" ] && show="$show, +$((new_count - shown)) more"
+done < <(printf '%s\n' "$stray")
+[ "$s_count" -gt "$shown" ] && show="$show, +$((s_count - shown)) more"
 
-# Yellow for a little drift, orange once a lot has piled back on.
-if [ "$new_count" -ge 4 ]; then color="\033[38;5;208m"; else color="\033[33m"; fi
-printf '  📦 %b%s repos  +%s: %s%b' "$color" "$count" "$new_count" "$show" "$reset"
+# Orange for a few strays, bold red once a lot have piled back on.
+if [ "$s_count" -ge 4 ]; then color="\033[1;91m"; else color="\033[38;5;208m"; fi
+printf '  📦 %b%s to remove: %s%b' "$color" "$s_count" "$show" "$reset"
