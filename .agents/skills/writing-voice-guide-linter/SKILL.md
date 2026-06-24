@@ -27,8 +27,6 @@ violation, suitable for pre-commit hook integration.
   outside code fences.
 - **prose-semicolon** - `;` outside code fences.
 - **prose-table** - markdown `|`-delimited table rows in narrative text.
-- **load-bearing-metaphor** - phrase "load-bearing" not adjacent to a
-  physical noun (wall, beam, structure, column, support).
 - **wrong-pronoun-he / wrong-pronoun-they** - `he`, `him`, `his`,
   `they`, `them`, `their`. Flagged for human review since pronouns
   may legitimately refer to someone else; the linter cannot resolve

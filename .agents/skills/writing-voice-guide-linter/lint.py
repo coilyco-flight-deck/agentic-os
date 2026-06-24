@@ -9,7 +9,6 @@ RULES = [
     ("italics-asterisk", re.compile(r"(?<![\\\w*])\*[^\*\n]{1,200}\*(?!\*)"), "italics not allowed; bold sparingly"),
     ("italics-underscore", re.compile(r"(?<!\w)_[^_\n]{1,200}_(?!\w)"), "italics not allowed"),
     ("prose-semicolon", re.compile(r";"), "split into two sentences"),
-    ("load-bearing-metaphor", re.compile(r"\bload[- ]bearing\b(?!\s+(wall|beam|structure|column|support|member|element))", re.IGNORECASE), "physical-only metaphor per voice guide"),
     ("wrong-pronoun-he", re.compile(r"\b(he|him|his)\b", re.IGNORECASE), "if referring to Kai, use she/her/her"),
     ("wrong-pronoun-they", re.compile(r"\b(they|them|their)\b", re.IGNORECASE), "if referring to Kai, use she/her/her"),
     ("email-leak", re.compile(r"coilysiren@gmail\.com"), "leakable; allowed only in resume + website"),

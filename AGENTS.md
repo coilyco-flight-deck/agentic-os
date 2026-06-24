@@ -54,8 +54,6 @@ Conventional-commits 1.0.0 and Forgejo issue references are encouraged house sty
 * No italics - bold only, for structural anchors.
 * No semicolons in prose.
 * No prose tables - flat bullets `* <anchor> - <cats> - <details>`.
-* "load-bearing" is physical-only, never metaphor.
-* No signature in drafts - Kai appends herself.
 
 ### Name the actor
 
