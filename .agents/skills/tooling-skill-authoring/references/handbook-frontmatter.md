@@ -30,6 +30,6 @@ Hard validator limits:
 
 * **Normal skills** - 500 by default. Override to 200 for a Codex-optimized catalog.
 * **Router/meta skills** - 2x the cap when the matched category declares `role: router` or `role: meta`. At the default cap, that means 1000 bytes.
-* **SKILL.md bodies** - cap in [`check_documentation_layout.py`](../../../../agentic_os/check_documentation_layout.py), same as all Markdown. SKILL.md is not exempt. Move detail into a sibling `<topic>.md`, `scripts/`, or `assets/`.
+* **SKILL.md bodies** - cap in [`check_documentation_layout.py`](../../../../agentic_os/pre_commit/check_documentation_layout.py), same as all Markdown. SKILL.md is not exempt. Move detail into a sibling `<topic>.md`, `scripts/`, or `assets/`.
 
 Target bands, what belongs in `description` vs the body, alias discipline, description templates, and the 2026-05-21 audit baseline live in [`handbook-description-budgets.md`](handbook-description-budgets.md).

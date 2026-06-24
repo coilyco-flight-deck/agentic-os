@@ -10,7 +10,7 @@ Runs `check-skills`. Checks frontmatter, prefix/exact match, status (where enfor
 
 ### dead-cross-links (pre-commit, pre-push)
 
-Runs `check-dead-links`. Walks every Markdown file under `.agents/skills/`, extracts inline `[text](target)` links, fails on any local-relative target that does not resolve to a real file. External URLs, anchors, placeholders (`...`, `TBD`, `TODO`), and paths escaping the repo are skipped.
+Runs `check-dead-links`. Walks every Markdown file in the repo (root `README.md`/`AGENTS.md`, `docs/`, co-located module READMEs, the skill tree), extracts inline `[text](target)` links, fails on any local-relative target that does not resolve to a real file. A link that resolves outside the repo root is a hard violation, not a skip - an internal `../` link is validated for existence like any other, while one that escapes the repo fails. External URLs, anchors, and placeholders (`...`, `TBD`, `TODO`) are skipped. Directory skipping mirrors `documentation-layout` (`.git`, `node_modules`, build/cache dirs); per-repo `excludes` live under `[tool.agentic-os.dead-cross-links]`.
 
 ### catalog-trifecta (pre-commit, pre-push)
 

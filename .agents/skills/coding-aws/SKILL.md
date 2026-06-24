@@ -9,7 +9,7 @@ Umbrella for any AWS work.
 
 ## Defaults
 
-- **Region**: `us-east-1`. Pinned in `~/.aws/config` under `[default]` (NOT `[profile default]`). Region trap explained in [`SSM.md`](../../../../agentic-os-kai/SSM.md).
+- **Region**: `us-east-1`. Pinned in `~/.aws/config` under `[default]` (NOT `[profile default]`). Region trap explained in `SSM.md` (in agentic-os-kai).
 - **Auth**: AWS SSO via the default profile. Refresh with `aws sso login` when expired.
 - **Python SDK**: `boto3`. Async via `aioboto3` only when concurrency is load-bearing.
 - **Secrets and config**: SSM Parameter Store, SecureString. Never hardcode opaque ids. See the configs-in-SSM rule in `agentic-os-kai/AGENTS.md`.

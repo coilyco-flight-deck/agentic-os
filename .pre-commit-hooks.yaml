@@ -101,7 +101,7 @@
 
 - id: dead-cross-links
   name: dead cross-links
-  description: Validate that inline markdown links inside .agents/skills/ resolve to real files.
+  description: Validate that inline markdown links anywhere in the repo resolve to real files and never escape the repo root.
   entry: check-dead-links
   language: python
   pass_filenames: false

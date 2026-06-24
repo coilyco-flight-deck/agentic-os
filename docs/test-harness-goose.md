@@ -35,5 +35,5 @@ Run against `qwen3-coder:30b` via Ollama on `kai-tower-3026` over tailnet, Goose
 
 - [test-harness](test-harness.md) - the parent doc family and authoring convention.
 - [agents-goose](../.agents/skills/agents-goose/SKILL.md) - the harness profile.
-- [models-qwen-coder](../.agents/skills/models-qwen-coder/SKILL.md) - the bound model tier.
+- `models-qwen-coder` - the bound model tier.
 - [harness-selection.md](harness-selection.md) - picking a harness and model tier.

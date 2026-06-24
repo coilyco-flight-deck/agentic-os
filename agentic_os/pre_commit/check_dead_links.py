@@ -1,21 +1,28 @@
 #!/usr/bin/env python3
 """
-Find dead cross-links inside the skill directory.
+Find dead cross-links anywhere in the repo.
 
-Scans every Markdown file under the skill directory, extracts inline markdown
-links (`[text](target)` and `[text](target#anchor)`), and reports any
-local-relative target that doesn't resolve to a real file or directory.
+Scans every Markdown file in the repo (root README/AGENTS, docs/, co-located
+module READMEs, the skill tree, etc.), extracts inline markdown links
+(`[text](target)` and `[text](target#anchor)`), and reports any local-relative
+target that doesn't resolve to a real file or directory. A link that resolves
+**outside the repo root** is a hard violation, not a skip - an internal `../`
+link is validated for existence like any other, while one that escapes the repo
+fails.
 
 Out of scope:
 - External URLs (anything with a scheme, e.g. http://, mailto:).
 - Bare anchors (`#section`) - no anchor index is maintained.
-- Paths that escape the repo via leading `../`.
 - Reference-style links (`[text][ref]` definitions).
 - Image links (`![alt](src)`).
 - Bare skill-name mentions in prose.
 
+Directory skipping mirrors documentation-layout (`SKIP_DIR_NAMES`: `.git`,
+`node_modules`, build outputs, caches), plus per-repo `excludes` from
+`[tool.agentic-os.dead-cross-links]`.
+
 Usage (when run directly):
-    python3 scripts/check-dead-links.py            # scan everything
+    python3 scripts/check-dead-links.py            # scan the whole repo
     python3 scripts/check-dead-links.py path ...   # scan only the given files
 
 Canonical copy lives in coilyco-flight-deck/agentic-os/scripts/. Each consumer repo
@@ -36,17 +43,6 @@ HOOK_ID = "dead-cross-links"
 
 # Pre-commit runs the hook with the consumer repo as cwd.
 REPO_ROOT = Path.cwd()
-SKILLS_DIR = REPO_ROOT / ".claude" / "skills"
-
-# Skill directory layout, canonical first. .agents/skills is the current home.
-SKILLS_DIR_CANDIDATES = (".agents/skills", ".claude/skills", "skills")
-
-
-def detect_skills_dir() -> str:
-    for candidate in SKILLS_DIR_CANDIDATES:
-        if (REPO_ROOT / candidate).is_dir():
-            return candidate
-    return SKILLS_DIR_CANDIDATES[0]
 
 LINK_RE = re.compile(
     r"(?<!\!)\[(?P<text>[^\]\n]+)\]\((?P<target>[^)\s]+)(?:\s+\"[^\"]*\")?\)"
@@ -62,7 +58,24 @@ EXTERNAL_PREFIXES = (
     "javascript:",
 )
 
-SKIP_PATH_PARTS = {"node_modules"}
+# Directory names never worth walking. Mirrors documentation-layout so the two
+# repo-wide Markdown walks agree on what counts as repo content.
+SKIP_DIR_NAMES = {
+    ".claude",
+    ".git",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".terraform",
+    ".tox",
+    ".venv",
+    "__pycache__",
+    "build",
+    "dist",
+    "node_modules",
+    "target",
+    "vendor",
+}
 SKIP_FILE_BASENAMES = {"TEMPLATE.md"}
 PLACEHOLDER_TARGETS = {"...", "TBD", "TODO"}
 
@@ -76,9 +89,8 @@ def is_external(target: str) -> bool:
         return True
     if "://" in target.split("/")[0]:
         return True
-    # Anything that escapes the repo via `..` is external.
-    if target.startswith("../") or "/../" in target:
-        return True
+    # A `../` link is NOT external. It is resolved and validated like any other
+    # internal link; if it escapes the repo root, check_file() flags it.
     return False
 
 
@@ -86,35 +98,37 @@ def strip_anchor(target: str) -> str:
     return target.split("#", 1)[0]
 
 
+def should_skip(rel: Path) -> bool:
+    return any(part in SKIP_DIR_NAMES for part in rel.parts)
+
+
+def _rel_or_none(path: Path) -> Path | None:
+    try:
+        return path.relative_to(REPO_ROOT)
+    except ValueError:
+        return None
+
+
 def iter_markdown_files(roots: list[Path]):
     excludes = load_excludes(HOOK_ID)
+
+    def keep(path: Path) -> bool:
+        if path.name in SKIP_FILE_BASENAMES:
+            return False
+        rel = _rel_or_none(path)
+        if rel is not None and (should_skip(rel) or is_excluded(rel, excludes)):
+            return False
+        return True
+
     for root in roots:
         if root.is_file() and root.suffix == ".md":
-            if root.name in SKIP_FILE_BASENAMES:
-                continue
-            if SKIP_PATH_PARTS & set(root.parts):
-                continue
-            try:
-                rel = root.relative_to(REPO_ROOT)
-                if is_excluded(rel, excludes):
-                    continue
-            except ValueError:
-                pass
-            yield root
+            if keep(root):
+                yield root
             continue
         if root.is_dir():
             for p in sorted(root.rglob("*.md")):
-                if p.name in SKIP_FILE_BASENAMES:
-                    continue
-                if SKIP_PATH_PARTS & set(p.parts):
-                    continue
-                try:
-                    rel = p.relative_to(REPO_ROOT)
-                    if is_excluded(rel, excludes):
-                        continue
-                except ValueError:
-                    pass
-                yield p
+                if keep(p):
+                    yield p
 
 
 def strip_fenced_code(text: str) -> str:
@@ -140,6 +154,7 @@ def check_file(md_path: Path) -> list[str]:
     violations = []
     raw = md_path.read_text(errors="replace")
     text = strip_inline_code(strip_fenced_code(raw))
+    rel_src = _rel_or_none(md_path) or md_path
     for m in LINK_RE.finditer(text):
         target_raw = m.group("target")
         if is_external(target_raw):
@@ -147,20 +162,20 @@ def check_file(md_path: Path) -> list[str]:
         target = strip_anchor(target_raw).strip()
         if not target:
             continue
+        line_no = text.count("\n", 0, m.start()) + 1
         resolved = (md_path.parent / target).resolve()
-        try:
-            resolved.relative_to(REPO_ROOT)
-        except ValueError:
+        rel_resolved = _rel_or_none(resolved)
+        if rel_resolved is None:
             violations.append(
-                f"{md_path.relative_to(REPO_ROOT)}: link [{m.group('text')}]({target_raw}) "
-                f"-> resolves outside repo: {resolved}"
+                f"{rel_src}:{line_no}: repo-escaping link "
+                f"[{m.group('text')}]({target_raw}) -> resolves outside "
+                f"repo: {resolved}"
             )
             continue
         if not resolved.exists():
-            line_no = text.count("\n", 0, m.start()) + 1
             violations.append(
-                f"{md_path.relative_to(REPO_ROOT)}:{line_no}: dead link "
-                f"[{m.group('text')}]({target_raw}) -> {resolved.relative_to(REPO_ROOT)}"
+                f"{rel_src}:{line_no}: dead link "
+                f"[{m.group('text')}]({target_raw}) -> {rel_resolved}"
             )
     return violations
 
@@ -174,33 +189,20 @@ def main(argv: list[str] | None = None) -> int:
 
     parser = argparse.ArgumentParser(
         prog="check-dead-links",
-        description="Find dead cross-links inside the skills directory.",
-    )
-    parser.add_argument(
-        "--skills-dir",
-        default=None,
-        help="Path to the skills directory (relative to the repo root). "
-        "Default: autodetect .agents/skills, .claude/skills, skills. "
-        "Ignored when positional paths are given.",
+        description="Find dead cross-links anywhere in the repo.",
     )
     parser.add_argument(
         "paths",
         nargs="*",
         help="Optional list of paths to scope the dead-link check to. "
-        "When empty, the entire --skills-dir is walked.",
+        "When empty, the entire repo is walked.",
     )
     ns = parser.parse_args(argv[1:])
-
-    global SKILLS_DIR
-    SKILLS_DIR = (REPO_ROOT / (ns.skills_dir or detect_skills_dir())).resolve()
 
     if ns.paths:
         roots = [Path(a).resolve() for a in ns.paths]
     else:
-        if not SKILLS_DIR.is_dir():
-            # No-op for repos without a skills surface.
-            return 0
-        roots = [SKILLS_DIR]
+        roots = [REPO_ROOT]
 
     all_violations: list[str] = []
     for md in iter_markdown_files(roots):

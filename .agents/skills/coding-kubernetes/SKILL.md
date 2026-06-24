@@ -14,22 +14,22 @@ kubernetes, k8s, k3s, kubectl, helm, manifest, deployment, statefulset, daemonse
 ## Defaults
 
 - **Cluster**: K3s on `kai-server` (homelab). Single-node by design. Tailscale-fronted.
-- **kubectl**: route through `ward ops kubectl` (audit binding, context routing). See [`ward-ops-kubectl-meta`](../ward-ops-kubectl-meta/SKILL.md) and `ward-ops-kubectl-usage` for verbs.
+- **kubectl**: route through `ward ops kubectl` (audit binding, context routing). See `ward-ops-kubectl-meta` (in ward) and `ward-ops-kubectl-usage` for verbs.
 - **Packaging**: Helm for upstream apps with charts. Plain YAML manifests for Kai's own services. Kustomize is fine when it earns its complexity, not by default.
 - **Secrets**: ExternalSecrets operator + AWS SSM. No raw `Secret` resources committed to git, ever.
 - **Ingress**: Traefik (k3s default).
-- **Cert**: cert-manager + Route53 DNS-01 via [`/coilysiren/route53/zone-id`](../../../../agentic-os-kai/SSM.md).
+- **Cert**: cert-manager + Route53 DNS-01 via `/coilysiren/route53/zone-id` (see `SSM.md` in agentic-os-kai).
 
 ## Conventions
 
 - Manifests in [`coilyco-flight-deck/infrastructure`](https://github.com/coilyco-flight-deck/infrastructure). Apply via the repo's deploy scripts, not ad-hoc `kubectl apply`.
 - Namespaces match the service name. One service, one namespace, when reasonable.
-- Resource limits set explicitly (cluster is small, OOM evictions are real - see [`ops-investigation-k3s-pod-eviction`](../../../../agentic-os-kai/.agents/skills/ops-investigation-k3s-pod-eviction/SKILL.md)).
+- Resource limits set explicitly (cluster is small, OOM evictions are real - see `ops-investigation-k3s-pod-eviction` (in agentic-os-kai)).
 
 ## Investigation playbooks
 
-- Pod evictions → [`ops-investigation-k3s-pod-eviction`](../../../../agentic-os-kai/.agents/skills/ops-investigation-k3s-pod-eviction/SKILL.md).
-- Cluster upgrades → [`ops-investigation-k3s-upgrade-homelab`](../../../../agentic-os-kai/.agents/skills/ops-investigation-k3s-upgrade-homelab/SKILL.md).
+- Pod evictions → `ops-investigation-k3s-pod-eviction` (in agentic-os-kai).
+- Cluster upgrades → `ops-investigation-k3s-upgrade-homelab` (in agentic-os-kai).
 
 ## When this skill is active
 

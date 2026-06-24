@@ -33,7 +33,7 @@ Status line (where enforced - currently `ops-investigation-*` and `ops-investiga
 
 Required H2 sections per category: see handbook §5.
 
-Body length: hard cap in [`check_documentation_layout.py`](../../../../agentic_os/check_documentation_layout.py). SKILL.md is not exempt. If it's growing past that, split into sibling reference files alongside SKILL.md and link from the SKILL.md.
+Body length: hard cap in [`check_documentation_layout.py`](../../../../agentic_os/pre_commit/check_documentation_layout.py). SKILL.md is not exempt. If it's growing past that, split into sibling reference files alongside SKILL.md and link from the SKILL.md.
 
 ## Structure, style, validate, wrap-up
 

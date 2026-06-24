@@ -31,4 +31,4 @@ These five properties together produce the archetype. Drop one and the shape bec
 
 ## See also
 
-- [`tooling-elevenlabs-persona`](../../../../agentic-os-kai/.agents/skills/tooling-elevenlabs-persona/SKILL.md) - one Cortana-coded instance of this archetype, deployed as Kai's ElevenLabs voice.
+- `tooling-elevenlabs-persona` (in agentic-os-kai) - one Cortana-coded instance of this archetype, deployed as Kai's ElevenLabs voice.

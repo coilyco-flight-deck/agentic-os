@@ -6,8 +6,8 @@ Kai runs five agent harnesses. Picking one is two decisions, not one: the **mode
 
 The ceiling, lowest to highest:
 
-- **Trivial local** ([`models-qwen`](../.agents/skills/models-qwen/SKILL.md)) - small Qwen3 4B/8B quant, ~25k context, exact-string-match skill pick. Closed slot-filling only, escalate by default. This is the confined `qwen-opencode` agent.
-- **Capable local** ([`models-qwen-coder`](../.agents/skills/models-qwen-coder/SKILL.md)) - Qwen3 30B-A3B (`qwen3-coder:30b`), 32k context, tool use, real in-repo coding on a 24GB-class GPU. Escalate only for cloud-grade judgment.
+- **Trivial local** (`models-qwen`) - small Qwen3 4B/8B quant, ~25k context, exact-string-match skill pick. Closed slot-filling only, escalate by default. This is the confined `qwen-opencode` agent.
+- **Capable local** (`models-qwen-coder`) - Qwen3 30B-A3B (`qwen3-coder:30b`), 32k context, tool use, real in-repo coding on a 24GB-class GPU. Escalate only for cloud-grade judgment.
 - **Cloud** ([`agents-claude`](../.agents/skills/agents-claude/SKILL.md) / [`agents-codex`](../.agents/skills/agents-codex/SKILL.md)) - large context, semantic skill pick, multi-step judgment. The escalation target the local tiers hand up to.
 
 Rule of thumb: stay as low as the task allows. Local keeps the work on Kai's own hardware. Escalate when the task needs judgment, large context, or a privileged op the local tier cannot reach.
@@ -36,4 +36,4 @@ Three float over a swappable model (cloud or local Ollama). On Kai's stack they 
 ## See also
 
 - [features-agents-sessions.md](features-agents-sessions.md) - self-name and pronoun slug per harness.
-- Model tiers: [`models-qwen`](../.agents/skills/models-qwen/SKILL.md), [`models-qwen-coder`](../.agents/skills/models-qwen-coder/SKILL.md).
+- Model tiers: `models-qwen`, `models-qwen-coder`.

@@ -8,7 +8,7 @@ The structural validator and dead-link checker ship from [`coilyco-flight-deck/a
 
 `catalog-trifecta`, `catalog-doc-size`, `documentation-layout`, and `code-comments` apply beyond skills. Together they enforce the doc surface shape:
 
-* `README.md`, `AGENTS.md`, and `docs/FEATURES.md` exist, cross-link, and stay under the size caps in [`check_documentation_layout.py`](../../../../agentic_os/check_documentation_layout.py).
+* `README.md`, `AGENTS.md`, and `docs/FEATURES.md` exist, cross-link, and stay under the size caps in [`check_documentation_layout.py`](../../../../agentic_os/pre_commit/check_documentation_layout.py).
 * `AGENTS.md` uses the standard repo-local H2 set.
 * Markdown lives only at repo root, flat `docs/*.md`, or flat skill folders, and every Markdown file stays under the cap in `check_documentation_layout.py` (single cap, no per-basename exception).
 * Code comments are up to two contiguous lines, max 90 chars each, with long explanation moved to docs. YAML allows just one comment line, only as the first line, so a key-sorter cannot drift it off its target.
@@ -30,7 +30,7 @@ What it checks:
 9. **Required H2 sections** (when enforced). Dispatched by Status kind.
 10. **Section lead lines** (when enforced).
 11. **Stale skill-name backtick references.** Catches `` `<prefix>-<topic>` `` references whose target skill doesn't exist.
-12. **SKILL.md size caps.** Cap in [`check_documentation_layout.py`](../../../../agentic_os/check_documentation_layout.py), same as all Markdown. Push detail into a sibling `<topic>.md` file.
+12. **SKILL.md size caps.** Cap in [`check_documentation_layout.py`](../../../../agentic_os/pre_commit/check_documentation_layout.py), same as all Markdown. Push detail into a sibling `<topic>.md` file.
 13. **Symlinks under `.agents/skills/`.** Symlink dirs are skipped, not validated. The loader follows them; the validator walks the canonical target.
 
 ### `dead-cross-links` (upstream) - cross-link check

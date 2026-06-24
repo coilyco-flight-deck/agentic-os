@@ -49,9 +49,9 @@ Music, sound effects, and voice-design prompts (`compose_music`, `text_to_sound_
 ## See also
 
 - `writing-observer-narrator` (in agentic-os) - the persona archetype this instance implements.
-- [mcp-servers/INDEX.md](../../../mcp-servers/INDEX.md) - elevenlabs MCP server inventory.
-- [mcp-servers/elevenlabs.d.ts](../../../mcp-servers/elevenlabs.d.ts) - tool schemas.
-- [SSM.md](../../../SSM.md) - `/elevenlabs/api-key` and `/elevenlabs/voice-id/default` provenance.
+- `mcp-servers/INDEX.md` (in agentic-os-kai) - elevenlabs MCP server inventory.
+- `mcp-servers/elevenlabs.d.ts` (in agentic-os-kai) - tool schemas.
+- `SSM.md` (in agentic-os-kai) - `/elevenlabs/api-key` and `/elevenlabs/voice-id/default` provenance.
 - agentic-os-kai#547 - MCP wiring.
 - agentic-os-kai#550 - persona pin.
 - agentic-os-kai#569 - observer-narrator rewrite.

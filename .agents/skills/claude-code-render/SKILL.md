@@ -5,7 +5,7 @@ description: Color and visual output for the Claude Code Desktop client by explo
 
 # Claude Code Desktop Render Tricks
 
-Empirically-mapped rendering capabilities of the Claude Code Desktop client. **Claude-Code-Desktop-specific - on another harness (e.g. the Codex TUI) these tricks do not apply, so skip this skill there.** Theme-specific, your palette may differ. Other clients (Chrome web, Android, terminal) likely differ too. Methodology in the repo [README](../../README.md). Worked examples in [references/examples.md](references/examples.md).
+Empirically-mapped rendering capabilities of the Claude Code Desktop client. **Claude-Code-Desktop-specific - on another harness (e.g. the Codex TUI) these tricks do not apply, so skip this skill there.** Theme-specific, your palette may differ. Other clients (Chrome web, Android, terminal) likely differ too. Methodology in the repo [README](../../../README.md). Worked examples in [references/examples.md](references/examples.md).
 
 ## What renders, what doesn't
 

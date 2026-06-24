@@ -44,7 +44,7 @@ Each step shows the `gh` way first, then the `git` + `curl` fallback for machine
 
 ## Routing
 
-- **Ward passthrough for `gh`** (audit-log binding, scope routing) - [`ward-ops-gh-meta`](../ward-ops-gh-meta/SKILL.md).
+- **Ward passthrough for `gh`** (audit-log binding, scope routing) - `ward-ops-gh-meta` (in ward).
 - **Git workflow for `coilysiren/*` repos** (commit-to-main default, every-commit-closes-an-issue rule, readonly exceptions) - [`kai-git-workflow`](../kai-git-workflow/SKILL.md).
 - **Autonomous engineering across the backlog** - `autonomous-dispatch` in `~/projects/coilysiren/luca/skills/`.
 
