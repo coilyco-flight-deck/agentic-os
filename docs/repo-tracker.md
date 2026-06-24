@@ -33,6 +33,10 @@ The hook stays generic and carries no repo names of its own. Point the conventio
 ln -sf /path/to/your/repos-on-disk.txt ~/.config/agentic-os/repos-on-disk.txt
 ```
 
+## Fleet-org scope
+
+Only checkouts under **your own orgs** are considered, so third-party upstreams (an external repo you cloned for reference) never read as strays. The fleet orgs come from a list of org names, one per line, resolved from `$AOS_FLEET_ORGS`, else `~/.config/agentic-os/fleet-orgs.txt`. A `<root>/<org>` whose `org` is not on that list is skipped entirely. With no fleet-orgs list, every org is in scope.
+
 ## How it scans
 
 - Scan root is `~/projects` (override with `AOS_REPOS_ROOT`), where the org dirs live at `<root>/<org>/<repo>`.
@@ -41,4 +45,4 @@ ln -sf /path/to/your/repos-on-disk.txt ~/.config/agentic-os/repos-on-disk.txt
 
 ## Reuse in another repo
 
-The hook is self-contained and reads no repo-specific state, so any repo can adopt it: copy `.agentic-os/statusline.sh` into the target repo (or symlink it), mark it executable, point `AOS_REPOS_EXPECTED` (or the conventional config path) at an expected-repos list, and `scripts/agent-name.sh` picks it up for sessions rooted there.
+The hook is self-contained and reads no repo-specific state, so any repo can adopt it: copy `.agentic-os/statusline.sh` into the target repo (or symlink it), mark it executable, point `AOS_REPOS_EXPECTED` and `AOS_FLEET_ORGS` (or the conventional config paths) at your expected-repos and fleet-orgs lists, and `scripts/agent-name.sh` picks it up for sessions rooted there.

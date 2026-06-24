@@ -16,11 +16,18 @@ set -euo pipefail
 repos_root="${AOS_REPOS_ROOT:-$HOME/projects}"
 [ -d "$repos_root" ] || exit 0
 
+# Fleet orgs (the orgs you own): only checkouts under these are considered, so
+# third-party upstreams never read as strays. Empty list -> every org in scope.
+fleet_file="${AOS_FLEET_ORGS:-${XDG_CONFIG_HOME:-$HOME/.config}/agentic-os/fleet-orgs.txt}"
+fleet_orgs=""
+[ -r "$fleet_file" ] && fleet_orgs="$(sed 's/#.*//' "$fleet_file" | tr -d '[:blank:]' | grep -v '^$' | sort -u)"
+
 # Current org/repo checkouts: <root>/<org>/<repo> with a .git (dir for clones,
-# file for worktrees/submodules, so test -e).
+# file for worktrees/submodules, so test -e), restricted to the fleet orgs.
 current="$(
   for org in "$repos_root"/*/; do
     org_name="$(basename "$org")"
+    [ -z "$fleet_orgs" ] || printf '%s\n' "$fleet_orgs" | grep -qxF "$org_name" || continue
     for repo in "$org"*/; do
       [ -e "$repo/.git" ] || continue
       printf '%s/%s\n' "$org_name" "$(basename "$repo")"
