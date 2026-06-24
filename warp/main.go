@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
+	"strings"
 
 	"github.com/urfave/cli/v3"
 )
@@ -59,13 +61,23 @@ type renderedFile struct {
 	label    string
 	template string
 	dest     string
+	// volatileKeys are TOML keys Warp rewrites from live state, neutralized
+	// before doctor's content comparison so their drift never FAILs. See #224.
+	volatileKeys []string
+}
+
+// volatileSettingsKeys are settings.toml keys Warp rewrites from live UI or
+// cloud-account state, so doctor skips their values. See docs/warp.md, #224.
+var volatileSettingsKeys = []string{
+	"zoom_level",
+	"cloud_conversation_storage_enabled",
 }
 
 func layer2Files(h *HostPaths) []renderedFile {
 	return []renderedFile{
-		{"settings.toml", "settings.toml.tmpl", h.SettingsPath},
-		{"theme yaml", "theme.yaml.tmpl", h.ThemePath},
-		{"startup_config.toml", "startup_config.toml.tmpl", h.TabConfigPath},
+		{"settings.toml", "settings.toml.tmpl", h.SettingsPath, volatileSettingsKeys},
+		{"theme yaml", "theme.yaml.tmpl", h.ThemePath, nil},
+		{"startup_config.toml", "startup_config.toml.tmpl", h.TabConfigPath, nil},
 	}
 }
 
@@ -202,7 +214,7 @@ func runDoctor(channel string) error {
 		if err != nil {
 			return err
 		}
-		checkRendered(r, f.label, f.dest, want)
+		checkRendered(r, f.label, f.dest, want, f.volatileKeys)
 	}
 	if runtime.GOOS == "windows" {
 		if profile, perr := resolvePwshProfile(); perr != nil {
@@ -212,7 +224,7 @@ func runDoctor(channel string) error {
 			if err != nil {
 				return err
 			}
-			checkRendered(r, "pwsh profile", profile, want)
+			checkRendered(r, "pwsh profile", profile, want, nil)
 		}
 	}
 
@@ -303,8 +315,9 @@ func doctorShellPref(r *report, db *warpDB, h *HostPaths) {
 	}
 }
 
-// checkRendered: dest must match content byte-for-byte and not be a symlink.
-func checkRendered(r *report, label, dest string, want []byte) {
+// checkRendered: dest must match content byte-for-byte (modulo Warp-owned
+// volatileKeys, whose values are neutralized first) and not be a symlink.
+func checkRendered(r *report, label, dest string, want []byte, volatileKeys []string) {
 	info, err := os.Lstat(dest)
 	if err != nil {
 		r.fail(label, "missing: "+dest)
@@ -319,11 +332,53 @@ func checkRendered(r *report, label, dest string, want []byte) {
 		r.fail(label, err.Error())
 		return
 	}
-	if string(got) != string(want) {
+	notes, wantCmp, gotCmp := reconcileVolatile(label, string(want), string(got), volatileKeys)
+	for _, n := range notes {
+		r.note(n)
+	}
+	if wantCmp != gotCmp {
 		r.fail(label, "content drifted from canonical template: "+dest)
 		return
 	}
 	r.pass(label)
+}
+
+// reconcileVolatile neutralizes each volatile key's value in want and got (so a
+// Warp-rewritten value is not drift) and returns a NOTE per diverged key.
+func reconcileVolatile(label, want, got string, volatileKeys []string) (notes []string, wantOut, gotOut string) {
+	wantOut, gotOut = want, got
+	for _, key := range volatileKeys {
+		wv, wok := tomlScalarValue(wantOut, key)
+		gv, gok := tomlScalarValue(gotOut, key)
+		if wok && gok && wv != gv {
+			notes = append(notes, fmt.Sprintf("%s %s (Warp-owned, skipped): template=%s live=%s", label, key, wv, gv))
+		}
+		wantOut = neutralizeKey(wantOut, key)
+		gotOut = neutralizeKey(gotOut, key)
+	}
+	return notes, wantOut, gotOut
+}
+
+// volatileKeyPattern matches a `key = value` line, capturing the prefix (1) and
+// value (2). Anchored + optional indent so `zoom_level` never hits a longer key.
+func volatileKeyPattern(key string) *regexp.Regexp {
+	return regexp.MustCompile(`(?m)^([ \t]*` + regexp.QuoteMeta(key) + `[ \t]*=[ \t]*)(.*)$`)
+}
+
+// tomlScalarValue returns the trimmed value of the first `key = value` line, or
+// false if the key is absent.
+func tomlScalarValue(content, key string) (string, bool) {
+	m := volatileKeyPattern(key).FindStringSubmatch(content)
+	if m == nil {
+		return "", false
+	}
+	return strings.TrimSpace(m[2]), true
+}
+
+// neutralizeKey replaces every `key = value` line's value with a fixed sentinel
+// so the value drops out of the content comparison while the key line stays.
+func neutralizeKey(content, key string) string {
+	return volatileKeyPattern(key).ReplaceAllString(content, "${1}<volatile>")
 }
 
 func checkExists(r *report, label, path string) {
