@@ -21,9 +21,14 @@ title=$(awk -F ' :: ' 'NF && c<3 {c++; split($1,w," "); printf "%s%s", sep, w[1]
 echo "${title:-empty}"
 echo "---"
 
-# Dropdown (real menu): one line per priority - the description (or the label if
-# none). The short label already appears in the menu-bar title, so it is not repeated.
-awk -F ' :: ' 'NF && c<3 {c++; printf "%d. %s\n", c, ($2 != "" ? $2 : $1)}' "$PRIOS_FILE"
+# Dropdown (real menu): one description line per priority (no repeated label). An
+# optional third field " :: owner/repo" makes the line an href into that Forgejo repo.
+awk -F ' :: ' -v base='https://forgejo.coilysiren.me' '
+  NF && c<3 {
+    c++; text = ($2 != "" ? $2 : $1); gsub(/[[:space:]]+$/, "", $3)
+    if ($3 != "") printf "%d. %s | href=%s/%s\n", c, text, base, $3
+    else          printf "%d. %s\n", c, text
+  }' "$PRIOS_FILE"
 echo "---"
 echo "Edit prios | bash=/usr/bin/open param1=-t param2=$PRIOS_FILE terminal=false"
 

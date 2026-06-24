@@ -24,15 +24,19 @@ actions to **Edit prios** (opens the file), open this **Guide**, and **Refresh**
 
 (Those are illustrative - your actual priorities come from your own file.)
 
+A priority line naming a repo (the optional third field, below) is clickable - it opens `https://forgejo.coilysiren.me/<owner>/<repo>`.
+
 ## Editing the priorities
 
-The priorities are a plain file, one per line, in `label :: description` form -
-the short label drives the menu-bar title (its first word), the description fills
-the dropdown. The description is optional. The first three non-empty lines show:
+The priorities are a plain file, one per line, in
+`label :: description :: owner/repo` form - the short label drives the menu-bar
+title (its first word), the description fills the dropdown, and the optional
+third field links the line to that Forgejo repo. The last two fields are
+optional. The first three non-empty lines show:
 
 ```
-ship release :: cut the 2.0 release and announce it
-fix flaky tests :: track down and fix the three flaky CI tests
+ship release :: cut the 2.0 release and announce it :: coilyco-flight-deck/agentic-os
+fix flaky tests :: track down and fix the three flaky CI tests :: coilyco-flight-deck/infrastructure
 write docs :: write the getting-started guide
 ```
 
