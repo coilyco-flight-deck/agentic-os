@@ -129,7 +129,9 @@ show_global_workflows_in_universal_search = true
 # To actually disable, toggle the corresponding option in Warp's UI; Warp
 # will then write false here. PENDING: still true because the UI toggle
 # has not been flipped post-Preview-swap. Flip it in WarpPreview Settings
-# next time settings.toml gets opened.
+# next time settings.toml gets opened. Because Warp owns this value, `warp
+# doctor` treats it as volatile (see volatileSettingsKeys in main.go): its
+# drift is a NOTE, not a FAIL. Same for zoom_level under [appearance.window].
 cloud_conversation_storage_enabled = true
 
 [agents.mcp_servers]
