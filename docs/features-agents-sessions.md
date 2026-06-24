@@ -10,7 +10,7 @@ For Claude Code the claude-hooks ansible role wires the script into `~/.claude/s
 
 ### Second status-line row
 
-Two hooks add optional rows: project-local `$project_dir/.agentic-os/statusline.sh` for per-project status, and `$AGENT_STATUSLINE_EXTRA` (an executable) for host-global. No producer ships here - a harness wires its own (e.g. a fleet line).
+Two hooks add optional rows: project-local `$project_dir/.agentic-os/statusline.sh` for per-project status, and `$AGENT_STATUSLINE_EXTRA` (an executable) for host-global. A harness wires its own; this repo ships a [disk tracker](disk-tracker.md).
 
 ## Session pulse
 
