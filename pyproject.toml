@@ -83,6 +83,10 @@ excludes = [
     # WIP knowledge-base action scratch; over-cap by design until productized.
     # Tracked in agentic-os#262 (classify/split into the freshness program).
     "docs/knowledge-base-meta-improvement.md",
+    # Generated render of `ward ops forgejo describe` (scripts/gen-ward-ops-reference.sh).
+    # Over-cap by design: the full operator-verb surface, committed so the names
+    # stay greppable off-disk. Regenerate, do not hand-trim. See agentic-os#261.
+    "docs/ward-ops-forgejo-reference.md",
 ]
 
 # code-comments extended to YAML (#159), then tightened to one top-of-file

@@ -6,7 +6,7 @@
 4. **Infer a title.** Short, imperative, matches the repo's existing issue style. No emojis unless the repo's own issues use them.
 5. **File the issue.**
    ```bash
-   coily ops forgejo issue create --repo coilysiren/<repo> --title "<inferred title>" --body-file /tmp/sidequest-body.md
+   ward ops forgejo issue create --repo coilysiren/<repo> --title "<inferred title>" --body-file /tmp/sidequest-body.md
    ```
    Forgejo, not GitHub - `ward agent work` resolves Forgejo refs, and the GitHub queue is for external contributors. Body in Kai's voice rules (no em-dashes, no italics, no semicolons in prose). Quote her description, then add any obvious next-action bullets. End the body with the **completion contract** block (see [completion-contract](completion-contract.md)) so the spawned session inherits it. Use `--body-file` - issue bodies routinely contain parens and other shell metacharacters the policy gate rejects in inline `--body`.
 6. **Echo the issue.** Use the issue echo format (`[title](url)` + blockquote snippet) so the audit trail lands in chat.

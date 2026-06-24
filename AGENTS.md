@@ -18,6 +18,8 @@ Public hosts and work laptops import this base only. Personal machines may compo
 
 Route every dev command through ward, which reads [`.ward/ward.yaml`](.ward/ward.yaml). Agents invoke `ward <verb>`, not bare `make` / `uv` / `python` / `npm` / `cargo` / `dotnet`. Add new verbs to that file before invoking them.
 
+**Operator verbs** (forgejo, aws/ssm, tailscale, kubectl, ...) live in **ward-kdl**, surfaced as `ward ops <area> ...`. Enumerate them with `ward ops <area> describe` or `--help`, or read the committed render at [`docs/ward-ops-forgejo-reference.md`](docs/ward-ops-forgejo-reference.md) - never guess an operator-verb name from prior. The old `coily ops` spelling is retired (agentic-os#261); `coily` is gone.
+
 ## Validation
 
 This repo ships and dogfoods the catalog pre-commit suite (catalog-trifecta, documentation-layout, code-comments, catalog-block, check-skills, dead-cross-links, repo-pointer-skills, trufflehog). Run `pre-commit run --all-files` before committing. Per-repo opt-outs (excludes, cap overrides) live under `[tool.agentic-os.*]` in `pyproject.toml`.
