@@ -10,11 +10,38 @@ from pathlib import Path
 import agentic_os.config as config
 import agentic_os.pre_commit.check_documentation_layout as docs_layout
 from agentic_os.pre_commit.check_documentation_layout import (
+    MAX_MARKDOWN_CHARS,
+    MAX_MARKDOWN_LINES,
     ROOT_MARKDOWN_ALLOWLIST,
+    TRIFECTA_MAX_CHARS,
+    TRIFECTA_MAX_LINES,
+    caps_for,
     check_skill_flatness,
     is_harness_override,
     validate_module_readme,
 )
+
+
+def test_trifecta_gets_the_larger_cap() -> None:
+    # The living-overview trifecta breathes past the standard markdown cap.
+    # README/FEATURES take the trifecta cap directly (no per-repo config path).
+    assert caps_for(Path("README.md")) == (TRIFECTA_MAX_LINES, TRIFECTA_MAX_CHARS)
+    assert caps_for(Path("docs/FEATURES.md")) == (TRIFECTA_MAX_LINES, TRIFECTA_MAX_CHARS)
+    # AGENTS.md is at least the trifecta cap (its default); a per-repo config
+    # override may lift it further, so assert the floor rather than equality.
+    agents_lines, agents_chars = caps_for(Path("AGENTS.md"))
+    assert agents_lines >= TRIFECTA_MAX_LINES
+    assert agents_chars >= MAX_MARKDOWN_CHARS
+
+
+def test_non_trifecta_markdown_keeps_the_standard_cap() -> None:
+    # Only the root README breathes; a co-located module README and ordinary
+    # docs/*.md stay on the tight cap.
+    assert caps_for(Path("docs/o11y.md")) == (MAX_MARKDOWN_LINES, MAX_MARKDOWN_CHARS)
+    assert caps_for(Path("services/x/README.md")) == (
+        MAX_MARKDOWN_LINES,
+        MAX_MARKDOWN_CHARS,
+    )
 
 
 def test_agents_compose_md_is_an_allowed_root_file() -> None:

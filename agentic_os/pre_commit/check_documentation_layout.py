@@ -40,16 +40,23 @@ lines never count toward the line ceiling. The discriminator is simple: a
 README that links a docs/*.md file is an outpost, otherwise it is a
 homestead.
 
-Every Markdown file shares one size cap: MAX_MARKDOWN_LINES /
-MAX_MARKDOWN_CHARS. SKILL.md is not special. CLAUDE.md is expected to be a
-one-line `@AGENTS.md` pointer.
+Most Markdown shares one size cap: MAX_MARKDOWN_LINES / MAX_MARKDOWN_CHARS.
+SKILL.md is not special. CLAUDE.md is expected to be a one-line `@AGENTS.md`
+pointer.
 
-AGENTS.md may opt into a larger cap, per-repo, via config keys
+The trifecta - the root README.md, docs/FEATURES.md, and AGENTS.md - carries
+each project's living overview (intro, feature inventory, operating doctrine),
+so it gets a larger cap, TRIFECTA_MAX_LINES / TRIFECTA_MAX_CHARS. Bounded, not
+infinite: room to breathe, not license to sprawl - durable detail still belongs
+in docs/*.md. README.md only at repo root; a co-located module README stays on
+the tight outpost / homestead shape.
+
+AGENTS.md may opt past the trifecta cap, per-repo, via config keys
 `agents_md_max_lines` / `agents_md_max_chars` under the documentation-layout
-hook section. Repos that don't set them get the standard cap for AGENTS.md
-too. The canonical agentic-os-kai AGENTS.md is loader-bound (read on every
-session) and holds universal-fire doctrine that can't split into docs/*.md
-without losing unconditional firing, so that repo opts in; nothing else does.
+hook section. Repos that don't set them get the trifecta cap for AGENTS.md.
+The canonical agentic-os-kai AGENTS.md is loader-bound (read on every session)
+and holds universal-fire doctrine that can't split into docs/*.md without
+losing unconditional firing, so that repo opts higher.
 """
 from __future__ import annotations
 
@@ -78,10 +85,19 @@ README_MAX_PROSE_CHARS = 90
 # outposts and back-links use inline links.
 MD_LINK_RE = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
 
-# Standard AGENTS.md cap by default. Repos opt into a larger one via config
-# keys agents_md_max_lines / agents_md_max_chars.
-AGENTS_DEFAULT_MAX_LINES = MAX_MARKDOWN_LINES
-AGENTS_DEFAULT_MAX_CHARS = MAX_MARKDOWN_CHARS
+# The living-overview trifecta gets more room than a focused docs/ page -
+# bounded, not infinite. See the module docstring.
+TRIFECTA_MAX_LINES = 160
+TRIFECTA_MAX_CHARS = 12_500
+
+# Larger-cap paths (root README only; AGENTS.md is matched by name in caps_for).
+# Co-located module READMEs keep the outpost/homestead shape, not this cap.
+TRIFECTA_PATHS = frozenset({"README.md", "docs/FEATURES.md"})
+
+# AGENTS.md defaults to the trifecta cap; repos opt higher via config keys
+# agents_md_max_lines / agents_md_max_chars.
+AGENTS_DEFAULT_MAX_LINES = TRIFECTA_MAX_LINES
+AGENTS_DEFAULT_MAX_CHARS = TRIFECTA_MAX_CHARS
 
 # Verbatim upstream files; exempt from size cap, matched by basename.
 SIZE_CAP_EXEMPT_BASENAMES = {
@@ -382,6 +398,8 @@ def caps_for(rel: Path) -> tuple[int, int]:
             HOOK_ID, "agents_md_max_chars", AGENTS_DEFAULT_MAX_CHARS
         )
         return max_lines, max_chars
+    if rel.as_posix() in TRIFECTA_PATHS:
+        return TRIFECTA_MAX_LINES, TRIFECTA_MAX_CHARS
     return MAX_MARKDOWN_LINES, MAX_MARKDOWN_CHARS
 
 
