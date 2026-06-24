@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Decorate this agent's self-name. See docs/agent-name.md.
+# Decorate this agent's self-name. See docs/features-agents-sessions.md.
 set -euo pipefail
 
 mode="${1:-statusline}"
