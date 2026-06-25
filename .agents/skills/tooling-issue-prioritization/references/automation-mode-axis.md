@@ -12,6 +12,10 @@ Read each as a **ceiling** - the highest agent autonomy the task supports. Name 
 
 The `interactive` vs `consult` split earns its keep on a heavy backlog: an agent can chew on an interactive issue and leave it at the checkpoint, while a consult issue should not be dispatched at all yet. Collapsing the two back to "not auto" loses exactly that signal.
 
+## A third property: readiness
+
+Mode is the autonomy ceiling. It does not say whether a correctly-scoped issue can run **now** or is parked on an upstream that has not landed. That is **readiness**, orthogonal to both tier and mode. One blocked state earns a name: `blocked-on-dependency` - settled, `headless`-eligible work waiting on another repo's release, not on a human, and so distinct from `consult`. It should auto-resume into the `headless` queue when its blocker closes. See [readiness-axis](readiness-axis.md).
+
 ## Fail-closed default
 
 An unlabeled issue is treated as `consult`, and an automated classifier falls back to `consult` whenever it is not confident. Nothing auto-runs headless until a deliberate, confident promotion - automation is opt-in, not opt-out, matching the fleet lockdown posture. Like the tier, exactly one mode label per open issue, defined once at org scope.
