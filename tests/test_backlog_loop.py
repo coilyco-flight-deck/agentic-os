@@ -5,6 +5,7 @@ round-trip, WARD-OUTCOME parsing, and the docker-poll classification - with all
 ward/forgejo/docker subprocess calls stubbed. No live ward, no containers.
 """
 import importlib.util
+import json
 import sys
 import types
 from pathlib import Path
@@ -259,3 +260,116 @@ def test_fj_nonzero_raises(monkeypatch):
 def test_split_repo_rejects_non_slug():
     with pytest.raises(ValueError):
         bl._split_repo("ward")
+
+
+# --- scope: parsing the repo set -------------------------------------------
+
+def test_parse_repos_splits_comma_list_and_dedupes():
+    assert bl.parse_repos("o/a, o/b ,o/a", None) == ["o/a", "o/b"]
+
+
+def test_parse_repos_single_repo():
+    assert bl.parse_repos("o/r", None) == ["o/r"]
+
+
+def test_parse_repos_falls_back_to_default_origin():
+    assert bl.parse_repos(None, "o/origin") == ["o/origin"]
+    assert bl.parse_repos(None, None) == []
+
+
+# --- scope: resolving a per-issue verb's target ----------------------------
+
+def test_resolve_ref_bare_num_in_single_repo_scope():
+    assert bl.resolve_ref(["o/r"], "42") == ("o/r", 42)
+
+
+def test_resolve_ref_explicit_repo_qualifier():
+    assert bl.resolve_ref(["o/a", "o/b"], "o/b#7") == ("o/b", 7)
+
+
+def test_resolve_ref_bare_num_resolves_when_one_repo_tracks_it(tmp_path, monkeypatch):
+    monkeypatch.setattr(bl, "CACHE_DIR", tmp_path)
+    bl.save_ledger({"repo": "o/a", "issues": {"5": {"num": 5, "lane": "headless"}}})
+    bl.save_ledger({"repo": "o/b", "issues": {"9": {"num": 9, "lane": "headless"}}})
+    assert bl.resolve_ref(["o/a", "o/b"], "5") == ("o/a", 5)
+
+
+def test_resolve_ref_ambiguous_bare_num_raises(tmp_path, monkeypatch):
+    monkeypatch.setattr(bl, "CACHE_DIR", tmp_path)
+    bl.save_ledger({"repo": "o/a", "issues": {"5": {"num": 5, "lane": "headless"}}})
+    bl.save_ledger({"repo": "o/b", "issues": {"5": {"num": 5, "lane": "headless"}}})
+    with pytest.raises(ValueError, match="ambiguous"):
+        bl.resolve_ref(["o/a", "o/b"], "5")
+
+
+def test_resolve_ref_untracked_bare_num_raises(tmp_path, monkeypatch):
+    monkeypatch.setattr(bl, "CACHE_DIR", tmp_path)
+    bl.save_ledger({"repo": "o/a", "issues": {}})
+    bl.save_ledger({"repo": "o/b", "issues": {}})
+    with pytest.raises(ValueError, match="not tracked"):
+        bl.resolve_ref(["o/a", "o/b"], "5")
+
+
+def test_resolve_ref_rejects_garbage():
+    with pytest.raises(ValueError):
+        bl.resolve_ref(["o/r"], "not-a-num")
+
+
+# --- scope: aggregate select / next / poll ---------------------------------
+
+def _scope_setup(monkeypatch, tmp_path, per_repo_issues):
+    """Stub fetch + triage so each scope repo selects its own backlog into its ledger."""
+    monkeypatch.setattr(bl, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(bl, "fetch_open_issues",
+                        lambda repo, limit: per_repo_issues.get(repo, []))
+    monkeypatch.setattr(bl, "_latest_triage_scores", lambda repo: {})
+
+
+def test_scope_select_refreshes_each_repo_ledger(tmp_path, monkeypatch):
+    _scope_setup(monkeypatch, tmp_path, {
+        "o/a": [_issue(1, labels=["headless", "P1"])],
+        "o/b": [_issue(2, labels=["headless", "P2"])],
+    })
+    bl.cmd_select_scope(["o/a", "o/b"], 50)
+    assert bl.load_ledger("o/a")["issues"]["1"]["state"] == "queued"
+    assert bl.load_ledger("o/b")["issues"]["2"]["state"] == "queued"
+
+
+def test_scope_next_merges_and_ranks_across_repos(tmp_path, monkeypatch, capsys):
+    # Combined headless lane spans both repos; P1 outranks P2 regardless of repo.
+    _scope_setup(monkeypatch, tmp_path, {
+        "o/a": [_issue(1, labels=["headless", "P2"])],
+        "o/b": [_issue(2, labels=["headless", "P1"])],
+    })
+    bl.cmd_select_scope(["o/a", "o/b"], 50)
+    capsys.readouterr()
+    bl.cmd_next_scope(["o/a", "o/b"], "headless", 5)
+    picks = json.loads(capsys.readouterr().out)
+    assert [(p["repo"], p["num"]) for p in picks] == [("o/b", 2), ("o/a", 1)]
+
+
+def test_scope_next_puts_blocked_first(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(bl, "CACHE_DIR", tmp_path)
+    bl.save_ledger({"repo": "o/a", "issues": {
+        "1": {"num": 1, "lane": "headless", "tier": "P0", "state": "queued"}}})
+    bl.save_ledger({"repo": "o/b", "issues": {
+        "2": {"num": 2, "lane": "headless", "tier": "P3", "state": "blocked"}}})
+    bl.cmd_next_scope(["o/a", "o/b"], "headless", 5)
+    picks = json.loads(capsys.readouterr().out)
+    # #2 is blocked (a human waits) so it leads, even though #1 is a higher tier.
+    assert [(p["repo"], p["num"]) for p in picks] == [("o/b", 2), ("o/a", 1)]
+
+
+def test_scope_poll_aggregates_repos(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(bl, "CACHE_DIR", tmp_path)
+    bl.save_ledger({"repo": "o/a", "issues": {
+        "1": {"num": 1, "state": "dispatched", "lane": "headless"}}})
+    bl.save_ledger({"repo": "o/b", "issues": {
+        "2": {"num": 2, "state": "dispatched", "lane": "headless"}}})
+    monkeypatch.setattr(bl, "_container_for_issue", lambda num, repo: None)
+    monkeypatch.setattr(bl, "read_outcome", lambda repo, num: {"status": "done", "text": ""})
+    bl.cmd_poll_scope(["o/a", "o/b"])
+    out = capsys.readouterr().out
+    assert "o/a#1 -> done" in out and "o/b#2 -> done" in out
+    assert bl.load_ledger("o/a")["issues"]["1"]["state"] == "done"
+    assert bl.load_ledger("o/b")["issues"]["2"]["state"] == "done"

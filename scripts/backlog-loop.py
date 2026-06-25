@@ -18,6 +18,15 @@ these verbs. The loop is:
   4. unblock  - record the human's guidance as a comment and re-queue the issue.
   Repeat dispatch -> poll -> unblock until the headless lane is drained.
 
+A scope spans more than one repo. `--repo a/b,c/d` (comma-separated, the scope)
+runs select / next / poll across the whole set in one invocation: each repo keeps
+its own durable ledger, but the scope-aware verbs aggregate them into one ranked
+view and poll every dispatched container together, instead of one `--repo` at a
+time (agentic-os#279). Per-issue verbs (dispatch / outcome / unblock / mark) take
+a `<num>` or, to disambiguate across a multi-repo scope, an `<owner/name>#<num>`
+ref. Named scopes graduate into ward as a first-class type (`ward agent backlog
+<scope>`); here the scope is just its repo list.
+
 This is the supervised, foreground form of the heartbeat loop (agentic-os#237)
 and it consumes the automation-mode axis the dispatch ceiling gate (agentic-os#246)
 defines. The triage that writes those labels is `ward exec goose-triage`; this
@@ -138,6 +147,48 @@ def _default_repo() -> str | None:
     u = u.split("://", 1)[-1].split("@", 1)[-1].replace(":", "/", 1)
     parts = [p for p in u.split("/") if p]
     return "/".join(parts[-2:]) if len(parts) >= 2 else None
+
+
+def parse_repos(repo_arg: str | None, default: str | None) -> list[str]:
+    """Resolve the scope: a comma-separated `--repo` list, or the git-origin default.
+
+    Splits on commas, trims blanks, and de-dupes while preserving order so the
+    scope is stable. One repo is a scope of one; the verbs treat both the same."""
+    raw = repo_arg if repo_arg is not None else default
+    if not raw:
+        return []
+    seen: list[str] = []
+    for slug in raw.split(","):
+        slug = slug.strip()
+        if slug and slug not in seen:
+            seen.append(slug)
+    return seen
+
+
+def resolve_ref(repos: list[str], token: str) -> tuple[str, int]:
+    """Resolve a per-issue verb's target to (repo, num) within the scope.
+
+    `token` is either a bare `<num>` or an `<owner/name>#<num>` ref. A bare num
+    needs no qualifier in a single-repo scope; across a multi-repo scope it must
+    resolve to exactly one repo that tracks it (via the ledgers), else the caller
+    is told to qualify with `<owner/name>#<num>`."""
+    if "#" in token:
+        repo, _, num = token.partition("#")
+        repo, num = repo.strip(), num.strip()
+        if not repo or not num.isdigit():
+            raise ValueError(f"ref must be '<owner/name>#<num>', got {token!r}")
+        return repo, int(num)
+    if not token.strip().isdigit():
+        raise ValueError(f"issue must be a number or '<owner/name>#<num>', got {token!r}")
+    num = int(token)
+    if len(repos) == 1:
+        return repos[0], num
+    holders = [r for r in repos if str(num) in load_ledger(r).get("issues", {})]
+    if len(holders) == 1:
+        return holders[0], num
+    if not holders:
+        raise ValueError(f"#{num} is not tracked in this scope - qualify it as '<owner/name>#{num}'")
+    raise ValueError(f"#{num} is ambiguous across {', '.join(holders)} - qualify it as '<owner/name>#{num}'")
 
 
 # --- ledger persistence ----------------------------------------------------
@@ -269,8 +320,8 @@ def rank(issues: list[dict], scores: dict[int, float]) -> list[dict]:
     return out
 
 
-def cmd_select(repo: str, limit: int) -> int:
-    """Build/refresh the ledger from the live backlog. Preserves in-flight state.
+def refresh_ledger(repo: str, limit: int) -> dict:
+    """Build/refresh one repo's ledger from its live backlog; save and return it.
 
     A new issue lands as queued (headless), surfaced (interactive), or skipped
     (consult/untriaged). An issue already dispatched/blocked/done keeps its state
@@ -303,7 +354,12 @@ def cmd_select(repo: str, limit: int) -> int:
         if int(key) not in seen and led["issues"][key].get("state") in ("done", "skipped", "surfaced"):
             del led["issues"][key]
     save_ledger(led)
-    _print_status(led)
+    return led
+
+
+def cmd_select(repo: str, limit: int) -> int:
+    """Single-repo select: refresh the ledger and print its lanes."""
+    _print_status(refresh_ledger(repo, limit))
     return 0
 
 
@@ -337,14 +393,18 @@ def cmd_status(repo: str) -> int:
     return 0
 
 
+def _actionable_picks(led: dict, lane: str) -> list[dict]:
+    """The lane's entries that need action: queued/surfaced to start, blocked to unblock."""
+    want = {"headless": ("queued", "blocked"), "interactive": ("surfaced", "blocked")}.get(lane, ("queued",))
+    return [e for e in _by_lane(led).get(lane, []) if e.get("state") in want]
+
+
 def cmd_next(repo: str, lane: str, count: int) -> int:
     """Emit the next actionable issues in a lane as JSON, for the supervisor.
 
     headless -> queued issues ready to dispatch; interactive -> surfaced issues
     for a human to drive. Blocked issues are returned too (they need a human)."""
-    led = load_ledger(repo)
-    want = {"headless": ("queued", "blocked"), "interactive": ("surfaced", "blocked")}.get(lane, ("queued",))
-    picks = [e for e in _by_lane(led).get(lane, []) if e.get("state") in want]
+    picks = _actionable_picks(load_ledger(repo), lane)
     picks.sort(key=lambda d: (0 if d["state"] == "blocked" else 1, d["num"]))
     print(json.dumps(picks[:count], indent=2))
     return 0
@@ -467,8 +527,8 @@ def cmd_outcome(repo: str, num: int) -> int:
     return 0
 
 
-def cmd_poll(repo: str) -> int:
-    """Reconcile every dispatched issue against reality and report transitions.
+def poll_repo(repo: str) -> list[tuple]:
+    """Reconcile one repo's dispatched issues against reality; save and return transitions.
 
     For each dispatched entry: if its container is gone, read the WARD-OUTCOME
     comment and move it to blocked / done / failed. A still-running container stays
@@ -494,6 +554,12 @@ def cmd_poll(repo: str) -> int:
         led["issues"][key] = e
         transitions.append((num, new, outcome.get("text", "")[:120]))
     save_ledger(led)
+    return transitions
+
+
+def cmd_poll(repo: str) -> int:
+    """Single-repo poll: reconcile dispatched issues and report transitions."""
+    transitions = poll_repo(repo)
     if not transitions:
         print("backlog-loop: no transitions (nothing exited since last poll)")
     for num, st, txt in transitions:
@@ -535,11 +601,100 @@ def cmd_mark(repo: str, num: int, state: str) -> int:
     return 0
 
 
+# --- scope: one ranked view across many repos ------------------------------
+
+def scope_name(repos: list[str]) -> str:
+    """A stable display name for a scope: the single slug, or the joined set."""
+    return repos[0] if len(repos) == 1 else ", ".join(repos)
+
+
+def _scope_entries(repos: list[str]) -> list[dict]:
+    """Every tracked entry across the scope's repos, each tagged with its repo."""
+    out: list[dict] = []
+    for repo in repos:
+        for e in load_ledger(repo)["issues"].values():
+            out.append({**e, "repo": repo})
+    return out
+
+
+def _scope_sort_key(e: dict) -> tuple:
+    """Rank one entry within its lane across repos: tier, score desc, repo, num."""
+    tier_rank = {t: i for i, t in enumerate(TIER_ORDER)}
+    return (
+        tier_rank.get(e.get("tier"), 9),
+        -(e["score"] if e.get("score") is not None else -1.0),
+        e.get("repo", ""),
+        e.get("num", 0),
+    )
+
+
+def _print_scope_status(repos: list[str]) -> None:
+    """Print one combined, lane-grouped, cross-repo-ranked view of the scope."""
+    entries = _scope_entries(repos)
+    print(f"backlog-loop scope: {scope_name(repos)} "
+          f"({len(repos)} repos, {len(entries)} tracked)")
+    by_lane: dict[str, list[dict]] = {ln: [] for ln in LANES}
+    for e in entries:
+        by_lane.setdefault(e.get("lane", "untriaged"), []).append(e)
+    for ln in LANES:
+        items = by_lane.get(ln) or []
+        if not items:
+            continue
+        items.sort(key=_scope_sort_key)
+        print(f"\n  {ln} lane ({len(items)}):")
+        for e in items:
+            tier = e.get("tier") or "--"
+            sc = f" {e['score']:.0f}" if e.get("score") is not None else ""
+            ref = f"{e['repo']}#{e['num']}"
+            print(f"    {ref:<28} [{tier}{sc}] {e.get('state','?'):<10} {e['title'][:60]}")
+
+
+def cmd_select_scope(repos: list[str], limit: int) -> int:
+    """Refresh every repo's ledger in the scope, then print one combined view."""
+    for repo in repos:
+        refresh_ledger(repo, limit)
+    _print_scope_status(repos)
+    return 0
+
+
+def cmd_status_scope(repos: list[str]) -> int:
+    _print_scope_status(repos)
+    return 0
+
+
+def cmd_next_scope(repos: list[str], lane: str, count: int) -> int:
+    """Emit the next actionable issues across the whole scope as JSON (ref-tagged).
+
+    Merges each repo's lane picks into one ranked list - blocked first (a human is
+    waiting), then the cross-repo lane order - so the supervisor pulls the single
+    most-actionable issue regardless of which repo it lives in."""
+    merged: list[dict] = []
+    for repo in repos:
+        for e in _actionable_picks(load_ledger(repo), lane):
+            merged.append({**e, "repo": repo})
+    merged.sort(key=lambda d: (0 if d["state"] == "blocked" else 1, _scope_sort_key(d)))
+    print(json.dumps(merged[:count], indent=2))
+    return 0
+
+
+def cmd_poll_scope(repos: list[str]) -> int:
+    """Poll every dispatched container across the scope in one pass."""
+    any_trans = False
+    for repo in repos:
+        for num, st, txt in poll_repo(repo):
+            any_trans = True
+            print(f"  {repo}#{num} -> {st}" + (f": {txt}" if txt else ""))
+    if not any_trans:
+        print("backlog-loop: no transitions (nothing exited since last poll)")
+    return 0
+
+
 # --- cli -------------------------------------------------------------------
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Supervised ralph-loop backbone over a repo backlog.")
-    ap.add_argument("--repo", help="owner/name; default: the current git origin's slug")
+    ap.add_argument("--repo", help="owner/name, or a comma-separated scope 'a/b,c/d'; "
+                                    "default: the current git origin's slug")
     sub = ap.add_subparsers(dest="verb", required=True)
 
     p = sub.add_parser("select", help="build/refresh the ledger from the live backlog")
@@ -551,7 +706,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--count", type=int, default=3)
 
     p = sub.add_parser("dispatch", help="launch a headless agent on one issue")
-    p.add_argument("num", type=int)
+    p.add_argument("num", help="<num>, or '<owner/name>#<num>' to pick a repo in a multi-repo scope")
     p.add_argument("--no-preflight", action="store_true")
     p.add_argument("--force", action="store_true")
     p.add_argument("--dry-run", action="store_true")
@@ -559,37 +714,45 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("poll", help="reconcile dispatched issues against docker + outcomes")
 
     p = sub.add_parser("outcome", help="parse one issue's WARD-OUTCOME comment")
-    p.add_argument("num", type=int)
+    p.add_argument("num", help="<num>, or '<owner/name>#<num>'")
 
     p = sub.add_parser("unblock", help="post unblock guidance + re-queue an issue")
-    p.add_argument("num", type=int)
+    p.add_argument("num", help="<num>, or '<owner/name>#<num>'")
     p.add_argument("--note", required=True)
 
     p = sub.add_parser("mark", help="manually set an issue's ledger state")
-    p.add_argument("num", type=int)
+    p.add_argument("num", help="<num>, or '<owner/name>#<num>'")
     p.add_argument("--state", required=True)
 
     args = ap.parse_args(argv)
-    repo = args.repo or _default_repo()
-    if not repo:
+    repos = parse_repos(args.repo, _default_repo())
+    if not repos:
         ap.error("--repo not given and no git origin found in the current directory")
 
+    # Scope-aware verbs aggregate the whole repo set; per-issue verbs resolve to
+    # a single (repo, num) ref - bare num in a one-repo scope, qualified across many.
     if args.verb == "select":
-        return cmd_select(repo, args.limit)
+        return cmd_select_scope(repos, args.limit) if len(repos) > 1 else cmd_select(repos[0], args.limit)
     if args.verb == "status":
-        return cmd_status(repo)
+        return cmd_status_scope(repos) if len(repos) > 1 else cmd_status(repos[0])
     if args.verb == "next":
-        return cmd_next(repo, args.lane, args.count)
-    if args.verb == "dispatch":
-        return cmd_dispatch(repo, args.num, args.no_preflight, args.force, args.dry_run)
+        return cmd_next_scope(repos, args.lane, args.count) if len(repos) > 1 else cmd_next(repos[0], args.lane, args.count)
     if args.verb == "poll":
-        return cmd_poll(repo)
-    if args.verb == "outcome":
-        return cmd_outcome(repo, args.num)
-    if args.verb == "unblock":
-        return cmd_unblock(repo, args.num, args.note)
-    if args.verb == "mark":
-        return cmd_mark(repo, args.num, args.state)
+        return cmd_poll_scope(repos) if len(repos) > 1 else cmd_poll(repos[0])
+
+    if args.verb in ("dispatch", "outcome", "unblock", "mark"):
+        try:
+            repo, num = resolve_ref(repos, args.num)
+        except ValueError as e:
+            ap.error(str(e))
+        if args.verb == "dispatch":
+            return cmd_dispatch(repo, num, args.no_preflight, args.force, args.dry_run)
+        if args.verb == "outcome":
+            return cmd_outcome(repo, num)
+        if args.verb == "unblock":
+            return cmd_unblock(repo, num, args.note)
+        if args.verb == "mark":
+            return cmd_mark(repo, num, args.state)
     ap.error(f"unknown verb {args.verb}")
 
 
