@@ -508,7 +508,6 @@ alias openclaw-msg="npm run --prefix .openclaw msg  "
 # `warded explore` takes --repo as the primary, with repeatable --with-repo extras
 alias warded-explore-ward="\
   warded explore \
-    --host-net \
     --repo coilyco-flight-deck/ward \
     --with-repo coilysiren/coilysiren \
     --with-repo coilyco-flight-deck/agentic-os \
@@ -516,6 +515,15 @@ alias warded-explore-ward="\
 "
 alias warded-explore-aosk="\
   warded explore \
+    --repo coilyco-bridge/agentic-os-kai \
+    --with-repo coilysiren/coilysiren \
+    --with-repo coilyco-flight-deck/agentic-os \
+    --with-repo coilyco-bridge/agentic-os-hardware \
+    --with-repo coilyco-bridge/lore \
+"
+alias warded-explore-aosh="\
+  warded explore \
+    --aws \
     --host-net \
     --repo coilyco-bridge/agentic-os-kai \
     --with-repo coilysiren/coilysiren \
@@ -525,6 +533,7 @@ alias warded-explore-aosk="\
 "
 alias warded-explore-ser8="\
   warded explore \
+    --aws \
     --host-net \
     --repo coilyco-bridge/deploy \
     --with-repo coilysiren/coilysiren \
@@ -535,6 +544,7 @@ alias warded-explore-ser8="\
 "
 alias warded-explore-agent-proxy="\
   warded explore \
+    --aws \
     --host-net \
     --repo coilyco-flight-deck/agent-proxy \
     --with-repo coilysiren/coilysiren \
