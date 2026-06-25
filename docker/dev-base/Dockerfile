@@ -11,6 +11,7 @@ ARG CLAUDE_VERSION=2.1.187
 ARG CODEX_VERSION=0.141.0
 ARG GOOSE_VERSION=1.38.0
 ARG DOCKER_VERSION=28.5.1
+ARG TAILSCALE_VERSION=1.98.4
 
 # buildx populates TARGETARCH (amd64|arm64) per platform in the manifest list.
 ARG TARGETARCH
@@ -20,7 +21,9 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PATH=/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin \
     UV_TOOL_DIR=/opt/uv/tools \
     UV_TOOL_BIN_DIR=/usr/local/bin \
-    UV_PYTHON_INSTALL_DIR=/opt/uv/python
+    UV_PYTHON_INSTALL_DIR=/opt/uv/python \
+    AWS_DEFAULT_REGION=us-east-1 \
+    AWS_REGION=us-east-1
 
 # Base packages: catalog-hook deps (shellcheck, python3, git) plus the inner loop's fetch/build tools.
 RUN apt-get update \
@@ -33,11 +36,11 @@ RUN apt-get update \
 # Map Docker's TARGETARCH onto each upstream's arch spelling once.
 RUN set -eux; \
     case "${TARGETARCH}" in \
-      amd64) NODE_ARCH=x64;   GO_ARCH=amd64; AWS_ARCH=x86_64; CODEX_ARCH=x86_64; GOOSE_ARCH=x86_64; DOCKER_ARCH=x86_64 ;; \
-      arm64) NODE_ARCH=arm64; GO_ARCH=arm64; AWS_ARCH=aarch64; CODEX_ARCH=aarch64; GOOSE_ARCH=aarch64; DOCKER_ARCH=aarch64 ;; \
+      amd64) NODE_ARCH=x64;   GO_ARCH=amd64; AWS_ARCH=x86_64; CODEX_ARCH=x86_64; GOOSE_ARCH=x86_64; DOCKER_ARCH=x86_64; TS_ARCH=amd64 ;; \
+      arm64) NODE_ARCH=arm64; GO_ARCH=arm64; AWS_ARCH=aarch64; CODEX_ARCH=aarch64; GOOSE_ARCH=aarch64; DOCKER_ARCH=aarch64; TS_ARCH=arm64 ;; \
       *) echo "unsupported TARGETARCH: ${TARGETARCH}" >&2; exit 1 ;; \
     esac; \
-    echo "NODE_ARCH=${NODE_ARCH} GO_ARCH=${GO_ARCH} AWS_ARCH=${AWS_ARCH} CODEX_ARCH=${CODEX_ARCH} GOOSE_ARCH=${GOOSE_ARCH} DOCKER_ARCH=${DOCKER_ARCH}" > /tmp/arch.env
+    echo "NODE_ARCH=${NODE_ARCH} GO_ARCH=${GO_ARCH} AWS_ARCH=${AWS_ARCH} CODEX_ARCH=${CODEX_ARCH} GOOSE_ARCH=${GOOSE_ARCH} DOCKER_ARCH=${DOCKER_ARCH} TS_ARCH=${TS_ARCH}" > /tmp/arch.env
 
 # uv (Python project + tool manager).
 RUN set -eux; \
@@ -122,6 +125,22 @@ RUN set -eux; \
     chmod 0755 /usr/local/bin/docker; \
     rm /tmp/docker.tgz; \
     docker --version
+
+# Tailscale CLI (client only, no daemon). ward containers reach the tower
+# (kai-tower-3026 ollama on the tailnet) over the tailnet; the image shipped no
+# tailnet client, so an agent could not query tailnet status or route to the
+# tower (agentic-os#286). The static tarball ships the full engine - extract only
+# the `tailscale` client binary. This makes the CLI *exist*; bringing up the
+# tailnet (auth) is a separate axis ward owns, not baked into the image.
+RUN set -eux; \
+    . /tmp/arch.env; \
+    curl -fsSL "https://pkgs.tailscale.com/stable/tailscale_${TAILSCALE_VERSION}_${TS_ARCH}.tgz" \
+      -o /tmp/tailscale.tgz; \
+    tar -xzf /tmp/tailscale.tgz -C /usr/local/bin --strip-components=1 \
+      "tailscale_${TAILSCALE_VERSION}_${TS_ARCH}/tailscale"; \
+    chmod 0755 /usr/local/bin/tailscale; \
+    rm /tmp/tailscale.tgz; \
+    tailscale version
 
 # Agent self-name (agentic-os#281). Warded explorers / headless agents run in
 # this image and otherwise get no name - host sessions self-name via a Claude

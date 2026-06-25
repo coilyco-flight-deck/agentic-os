@@ -166,6 +166,13 @@ def _resolve_docker() -> str | None:
     return _gh_tag("moby/moby", re.compile(r"^v(\d+\.\d+\.\d+)$"))
 
 
+def _resolve_tailscale() -> str | None:
+    # Track the stable feed, not github tags (which interleave unstable odd-minor
+    # releases); TarballsVersion is the version baked into the static tarball URL.
+    data = _get_json("https://pkgs.tailscale.com/stable/?mode=json")
+    return data.get("TarballsVersion")  # type: ignore[union-attr]
+
+
 # Resolver per ARG. `needs_current` resolvers (node) get the pinned value so they
 # can constrain the bump to its current major line.
 RESOLVERS: dict[str, Callable[..., str | None]] = {
@@ -177,6 +184,7 @@ RESOLVERS: dict[str, Callable[..., str | None]] = {
     "CODEX_VERSION": _resolve_codex,
     "GOOSE_VERSION": _resolve_goose,
     "DOCKER_VERSION": _resolve_docker,
+    "TAILSCALE_VERSION": _resolve_tailscale,
 }
 _NEEDS_CURRENT = {"NODE_VERSION"}
 

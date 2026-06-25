@@ -25,8 +25,10 @@ Fleet rollout is not its concern.
   (`chore(dev-base): bump UV_VERSION 0.11.21 -> 0.11.24`), so history shows every
   bump and a bad one bisects to its own commit.
 - **Conservative bumps.** Node tracks the latest release of its currently-pinned
-  major (no surprise major jump); uv, go, aws-cli, claude, codex, and goose track
-  the latest stable upstream release. A hand-edited `ARG` wins until upstream
+  major (no surprise major jump); uv, go, aws-cli, claude, codex, goose, docker,
+  and tailscale track the latest stable upstream release. Tailscale resolves
+  against its `pkgs.tailscale.com/stable` feed (not GitHub tags, which interleave
+  the unstable odd-minor releases). A hand-edited `ARG` wins until upstream
   passes it.
 - **Fail-soft.** A resolver whose upstream is unreachable or has reshaped its API
   drops from that run with a warning; it never blocks the other bumps.
