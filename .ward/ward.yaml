@@ -58,6 +58,12 @@ commands:
   pre-commit-autoupdate:
     run: pre-commit autoupdate
     description: "Bump every third-party hook repo in .pre-commit-config.yaml to its latest tagged rev. Local hooks are unaffected (no rev)."
+  pre-commit-code-comments:
+    run: pre-commit run code-comments --all-files
+    description: "Run only the code-comments hook across all files. Check comment-cap discipline at author time instead of waiting for the full commit gate."
+  pre-commit-documentation-layout:
+    run: pre-commit run documentation-layout --all-files
+    description: "Run only the documentation-layout hook across all files. Check doc placement/size at author time instead of waiting for the full commit gate."
   pre-commit-ruff:
     run: pre-commit run ruff-check --all-files
     description: "Run only the ruff-check hook across all files. Check-only (no --fix)."
