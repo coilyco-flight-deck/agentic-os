@@ -1,7 +1,7 @@
 {
   "ollama": {
     "api": "ollama",
-    "baseUrl": "http://kai-tower-3026.tail09a41b.ts.net:11434",
+    "baseUrl": "${OLLAMA_BASE_URL}",
     "apiKey": "ollama",
     "models": [
       {
