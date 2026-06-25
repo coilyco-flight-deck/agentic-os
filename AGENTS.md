@@ -40,7 +40,7 @@ Anything that fits as a pre-commit validation is **authored** here in agentic-os
 
 ## Release
 
-Conventional-commits 1.0.0 and Forgejo issue references are encouraged house style but unenforced - the `conventional-commit` and `closes-issue` commit-msg hooks have been retired from the suite, so hand-written commits flow freely. Releases bump the minor version automatically on every push to main; the major version is hand-driven only (`scripts/release.py --bump major`), never inferred from commit messages. Canonical history lives on Forgejo; the GitHub mirror stays PR-gated. Land work on the merged branch, never `--no-verify`.
+Conventional-commits 1.0.0 and Forgejo issue references are encouraged house style but unenforced - the `conventional-commit` and `closes-issue` commit-msg hooks have been retired from the suite, so hand-written commits flow freely. Releases bump the minor version automatically on every push to main; the major version is hand-driven only (`scripts/release.py --bump major`), never inferred from commit messages. Canonical history lives on Forgejo; the GitHub mirror stays PR-gated. Land work on the merged branch, never `--no-verify`. Work lands by pushing straight to canonical Forgejo `main`, `ward agent` headless dispatch included - a headless run pushes its branch to `main` and closes its issue, it never opens a Forgejo pull request. So do not hunt for a Forgejo PR to track a run. Track it by issue state and the commits on `main`. `ward ops forgejo pr list` is denied by policy (PRs are read through the web UI), and the GitHub mirror is the only PR-gated surface.
 
 ## Agent rules
 
