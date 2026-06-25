@@ -1,7 +1,8 @@
 # Canonical agent dev environment, published per release as the dev-base image. See docs/dev-base-image.md.
 FROM ubuntu:24.04
 
-# Pinned toolchain. Resolved against upstream on 2026-06-15; bump in place.
+# Pinned toolchain. Auto-bumped against upstream by .forgejo/workflows/dep-bump.yml
+# (one commit per tool); edit an ARG by hand to pin or roll back. See docs/dev-base-image.md.
 ARG UV_VERSION=0.11.21
 ARG NODE_VERSION=22.22.3
 ARG GO_VERSION=1.26.4

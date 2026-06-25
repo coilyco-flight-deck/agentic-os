@@ -1,0 +1,69 @@
+# Scheduled dev-base dependency auto-bump. Resolves each pinned tool in
+# docker/dev-base/Dockerfile against its upstream latest release and, for every
+# pin that drifted, commits one ARG bump and pushes to main. The push to main
+# republishes the image through release.yml's existing publish-image job, so the
+# published dev-base stops lagging upstream with no human editing an ARG by hand
+# (agentic-os#272, the ward#288/#301 staleness incident). The resolve+rewrite
+# logic is scripts/dep-bump.py; this repo owns the publish pipeline per AGENTS.md
+# and fleet rollout stays in infrastructure/ansible. One commit per tool keeps
+# the bump auditable and bisectable.
+#
+# Runs daily at 09:17 UTC (off the hour, to dodge cron rush) and on dispatch.
+# DEP_BUMP_TOKEN, when set, is a write:repository PAT so the bump push is
+# attributed to a real user and reliably enqueues release.yml; the auto-issued
+# job token still pushes without it, but some Forgejo versions suppress workflow
+# runs from bot-token pushes. UPSTREAM_GH_TOKEN is optional and only lifts
+# github.com's anonymous API rate limit. Full walkthrough: docs/dev-base-auto-bump.md.
+
+name: dep-bump
+
+on:
+  schedule:
+    - cron: "17 9 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    runs-on: docker
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: main
+          token: ${{ secrets.DEP_BUMP_TOKEN || github.token }}
+
+      - name: Resolve, commit, and push upstream bumps
+        env:
+          UPSTREAM_GH_TOKEN: ${{ secrets.UPSTREAM_GH_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          # The Forgejo runner image is minimal; self-install python3 if absent.
+          if ! command -v python3 >/dev/null 2>&1; then
+            apt-get update -qq && apt-get install -y -qq python3
+          fi
+
+          python3 scripts/dep-bump.py plan > /tmp/dep-bump-plan.tsv
+          if [ ! -s /tmp/dep-bump-plan.tsv ]; then
+            echo "dev-base pins are current with upstream; nothing to bump."
+            exit 0
+          fi
+          echo "Bumping:"
+          cat /tmp/dep-bump-plan.tsv
+
+          git config user.name "coilyco-ops"
+          git config user.email "coilyco-ops@coilysiren.me"
+
+          # One commit per tool: auditable history, and a bad bump bisects to its
+          # own commit instead of a single batched rewrite.
+          while IFS="$(printf '\t')" read -r name current latest; do
+            [ -z "$name" ] && continue
+            python3 scripts/dep-bump.py apply --arg "$name" --version "$latest"
+            git add docker/dev-base/Dockerfile
+            git commit -m "chore(dev-base): auto-bump ${name} ${current} -> ${latest} (agentic-os#272)"
+          done < /tmp/dep-bump-plan.tsv
+
+          git push origin HEAD:main

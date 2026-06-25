@@ -55,9 +55,9 @@ PAT; [`scripts/rotate-registry-token.sh`](../scripts/rotate-registry-token.sh) r
 
 ## Pinning a tool
 
-Versions are pinned as `ARG`s atop the Dockerfile. To bump one, edit its `ARG`
-default and push to main; the next release republishes the tag. Current pins
-were resolved against upstream on 2026-06-15.
+Versions are pinned as `ARG`s. Edit one by hand and push to main to pin or roll it
+back. A scheduled **auto-bump** otherwise refreshes stale pins
+([docs/dev-base-auto-bump.md](dev-base-auto-bump.md)).
 
 ## Pulling it
 
