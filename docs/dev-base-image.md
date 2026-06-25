@@ -19,8 +19,9 @@ inner-loop toolchain on an `ubuntu:24.04` base:
 - **node + npm** - Claude Code's runtime.
 - **go** - builds the `warp/` module's hooks (and, later, ward).
 - **aws cli v2** - the SSM secret loader and `~/.aws` passthrough.
-- **claude + codex + goose** - pinned agent CLIs; plus the **docker cli + socat** (client + a root socket bridge) for `explore`'s sibling `warded #N` dispatch (ward#315), inert elsewhere.
-- **public substrate seed** - bare mirrors of the image-tier reference repos at `/opt/substrate-seed`, from [`substrate-image-repos.txt`](../docker/dev-base/substrate-image-repos.txt) (the image-tier subset of ward's `preclone-repos.txt`). A ward container on a cold gitcache hydrates from these with no network. Only public repos are baked.
+- **claude + codex + goose** - pinned agent CLIs; plus the **docker cli + socat** for `explore`'s sibling `warded #N` dispatch (ward#315), inert elsewhere.
+- **public substrate seed** - bare mirrors of the image-tier reference repos at `/opt/substrate-seed`, from [`substrate-image-repos.txt`](../docker/dev-base/substrate-image-repos.txt). A ward container on a cold gitcache hydrates from these with no network. Only public repos are baked.
+- **in-container agent self-name** - a baked `agent-name.sh` + policy `managed-settings.json` so warded agents self-name like host sessions ([dev-base-self-name.md](dev-base-self-name.md), agentic-os#281).
 
 Every tool installs world-readable under `/usr/local` or `/opt` so the image
 runs as any uid. ward owns the run-as-uid, mount set, and `~/.aws` passthrough,
@@ -38,16 +39,14 @@ image share one version. A `:buildcache` tag holds the layer cache.
 The `publish-image` job in [`.forgejo/workflows/release.yml`](../.forgejo/workflows/release.yml)
 runs after a release cuts a tag, on the DinD `docker` runner: install the docker
 CLI + buildx plugin, resolve the in-cluster daemon, `docker login` with the
-`REGISTRY_TOKEN` secret (a forgejo PAT with `write:package`; the auto-issued
-Actions token can read but not write the registry), stand up qemu + a
-`docker-container` builder, then
+`REGISTRY_TOKEN` secret, stand up qemu + a `docker-container` builder, then
 `buildx build --platform linux/amd64,linux/arm64 ... --push` with a registry
 layer cache, tagging `:vX.Y.Z` and `:latest`.
 
 Multi-arch means arm64 Macs and amd64 Linux hosts each pull a native image. The
 layer cache keeps an unchanged Dockerfile's republish cheap even though every
-push to main cuts a release. If arm64 emulation turns flaky, drop `linux/arm64`
-from `PLATFORMS`; amd64 matches the runner.
+push to main cuts a release. If arm64 emulation turns flaky, drop it from
+`PLATFORMS`; amd64 matches the runner.
 
 **Token / rotation:** `REGISTRY_TOKEN` is a `coilyco-ops`-owned `write:package`
 PAT; [`scripts/rotate-registry-token.sh`](../scripts/rotate-registry-token.sh) re-mints + re-sets it.

@@ -123,6 +123,24 @@ RUN set -eux; \
     rm /tmp/docker.tgz; \
     docker --version
 
+# Agent self-name (agentic-os#281). Warded explorers / headless agents run in
+# this image and otherwise get no name - host sessions self-name via a Claude
+# Code SessionStart + statusLine hook the claude-hooks ansible role wires into
+# ~/.claude/settings.json, but that role never runs in a container. Bake the
+# slice in instead: the trimmed agent-name.sh under /opt (world-readable, so it
+# runs as any uid like every other tool here) plus a policy-tier
+# managed-settings.json at the fixed /etc/claude-code path. Policy settings are
+# the one Claude Code surface whose location does not depend on the run-as-uid,
+# HOME, or CLAUDE_CONFIG_DIR ward picks - exactly right for an image that bakes
+# in no user. It only adds statusLine + the SessionStart self-name hook, so it
+# layers cleanly over whatever ward injects into user settings. See
+# docs/dev-base-self-name.md.
+COPY agent-name.sh /opt/agentic-os/agent-name.sh
+COPY claude-managed-settings.json /etc/claude-code/managed-settings.json
+RUN set -eux; \
+    chmod 0755 /opt/agentic-os/agent-name.sh; \
+    chmod 0644 /etc/claude-code/managed-settings.json
+
 # Substrate seed: bare mirrors of the public (image-tier) reference repos a ward
 # container warms its gitcache from on a cold volume. List is a denormalized copy
 # of the image-tier subset of ward's cmd/ward/containerassets/preclone-repos.txt.
