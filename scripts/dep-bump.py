@@ -160,6 +160,12 @@ def _resolve_goose() -> str | None:
     return _gh_release("block/goose", re.compile(r"^v(\d+\.\d+\.\d+)$"))
 
 
+def _resolve_docker() -> str | None:
+    # The static client tarball tracks the moby engine release; moby/moby tags as
+    # vX.Y.Z. The strict regex drops the -rc/-beta prereleases _gh_tag would see.
+    return _gh_tag("moby/moby", re.compile(r"^v(\d+\.\d+\.\d+)$"))
+
+
 # Resolver per ARG. `needs_current` resolvers (node) get the pinned value so they
 # can constrain the bump to its current major line.
 RESOLVERS: dict[str, Callable[..., str | None]] = {
@@ -170,6 +176,7 @@ RESOLVERS: dict[str, Callable[..., str | None]] = {
     "CLAUDE_VERSION": _resolve_claude,
     "CODEX_VERSION": _resolve_codex,
     "GOOSE_VERSION": _resolve_goose,
+    "DOCKER_VERSION": _resolve_docker,
 }
 _NEEDS_CURRENT = {"NODE_VERSION"}
 

@@ -19,8 +19,8 @@ inner-loop toolchain on an `ubuntu:24.04` base:
 - **node + npm** - Claude Code's runtime.
 - **go** - builds the `warp/` module's hooks (and, later, ward).
 - **aws cli v2** - the SSM secret loader and `~/.aws` passthrough.
-- **claude + codex + goose** - pinned agent CLIs.
-- **public substrate seed** - bare mirrors of the image-tier reference repos at `/opt/substrate-seed`, from [`substrate-image-repos.txt`](../docker/dev-base/substrate-image-repos.txt) (the image-tier subset of ward's `preclone-repos.txt`). A ward container on a cold gitcache hydrates from these with no network. Only public repos are baked, so the image stays shareable. ward warms, this image seeds.
+- **claude + codex + goose** - pinned agent CLIs; plus the **docker cli + socat** (client + a root socket bridge) for `explore`'s sibling `warded #N` dispatch (ward#315), inert elsewhere.
+- **public substrate seed** - bare mirrors of the image-tier reference repos at `/opt/substrate-seed`, from [`substrate-image-repos.txt`](../docker/dev-base/substrate-image-repos.txt) (the image-tier subset of ward's `preclone-repos.txt`). A ward container on a cold gitcache hydrates from these with no network. Only public repos are baked.
 
 Every tool installs world-readable under `/usr/local` or `/opt` so the image
 runs as any uid. ward owns the run-as-uid, mount set, and `~/.aws` passthrough,
@@ -30,9 +30,8 @@ so the image bakes in no user and no **target** repo (cloned fresh at run time).
 
 Published to the forgejo registry as
 `forgejo.coilysiren.me/coilyco-flight-deck/agentic-os`. Each release tags the
-image with the release version (`vX.Y.Z`) and moves `:latest`, so the version
-tracks the repo's release the way the tag-derived consumer pin does and a pin
-plus its image are one version. A `:buildcache` tag holds the layer cache.
+image with the release version (`vX.Y.Z`) and moves `:latest`, so a pin and its
+image share one version. A `:buildcache` tag holds the layer cache.
 
 ## How it publishes
 

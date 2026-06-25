@@ -10,6 +10,7 @@ ARG AWSCLI_VERSION=2.35.5
 ARG CLAUDE_VERSION=2.1.187
 ARG CODEX_VERSION=0.141.0
 ARG GOOSE_VERSION=1.38.0
+ARG DOCKER_VERSION=28.5.1
 
 # buildx populates TARGETARCH (amd64|arm64) per platform in the manifest list.
 ARG TARGETARCH
@@ -24,7 +25,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 # Base packages: catalog-hook deps (shellcheck, python3, git) plus the inner loop's fetch/build tools.
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
-      ca-certificates curl wget git gnupg jq ripgrep less unzip xz-utils \
+      ca-certificates curl wget git gnupg jq ripgrep less unzip xz-utils socat \
       build-essential openssh-client procps shellcheck \
       python3 python3-pip python3-venv \
  && rm -rf /var/lib/apt/lists/*
@@ -32,11 +33,11 @@ RUN apt-get update \
 # Map Docker's TARGETARCH onto each upstream's arch spelling once.
 RUN set -eux; \
     case "${TARGETARCH}" in \
-      amd64) NODE_ARCH=x64;   GO_ARCH=amd64; AWS_ARCH=x86_64; CODEX_ARCH=x86_64; GOOSE_ARCH=x86_64 ;; \
-      arm64) NODE_ARCH=arm64; GO_ARCH=arm64; AWS_ARCH=aarch64; CODEX_ARCH=aarch64; GOOSE_ARCH=aarch64 ;; \
+      amd64) NODE_ARCH=x64;   GO_ARCH=amd64; AWS_ARCH=x86_64; CODEX_ARCH=x86_64; GOOSE_ARCH=x86_64; DOCKER_ARCH=x86_64 ;; \
+      arm64) NODE_ARCH=arm64; GO_ARCH=arm64; AWS_ARCH=aarch64; CODEX_ARCH=aarch64; GOOSE_ARCH=aarch64; DOCKER_ARCH=aarch64 ;; \
       *) echo "unsupported TARGETARCH: ${TARGETARCH}" >&2; exit 1 ;; \
     esac; \
-    echo "NODE_ARCH=${NODE_ARCH} GO_ARCH=${GO_ARCH} AWS_ARCH=${AWS_ARCH} CODEX_ARCH=${CODEX_ARCH} GOOSE_ARCH=${GOOSE_ARCH}" > /tmp/arch.env
+    echo "NODE_ARCH=${NODE_ARCH} GO_ARCH=${GO_ARCH} AWS_ARCH=${AWS_ARCH} CODEX_ARCH=${CODEX_ARCH} GOOSE_ARCH=${GOOSE_ARCH} DOCKER_ARCH=${DOCKER_ARCH}" > /tmp/arch.env
 
 # uv (Python project + tool manager).
 RUN set -eux; \
@@ -108,6 +109,19 @@ RUN set -eux; \
     chmod 0755 /usr/local/bin/goose; \
     rm /tmp/goose.tar.gz; \
     goose --version
+
+# Docker CLI (client only, no daemon). ward's read-only `explore` session binds the
+# host docker socket so the in-container agent can dispatch a sibling `warded #N`
+# headless run; that needs a `docker` client in the image (ward#315). The static
+# tarball ships the full engine - extract only the client binary.
+RUN set -eux; \
+    . /tmp/arch.env; \
+    curl -fsSL "https://download.docker.com/linux/static/stable/${DOCKER_ARCH}/docker-${DOCKER_VERSION}.tgz" \
+      -o /tmp/docker.tgz; \
+    tar -xzf /tmp/docker.tgz -C /usr/local/bin --strip-components=1 docker/docker; \
+    chmod 0755 /usr/local/bin/docker; \
+    rm /tmp/docker.tgz; \
+    docker --version
 
 # Substrate seed: bare mirrors of the public (image-tier) reference repos a ward
 # container warms its gitcache from on a cold volume. List is a denormalized copy
