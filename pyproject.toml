@@ -81,8 +81,6 @@ agents_md_max_chars = 12000
 excludes = [
     "warp/launch_configurations/**",
     "warp/tab_configs/**",
-    # Runtime-generated openclaw plugin skills (gitignored, not authored docs).
-    ".openclaw/plugin-skills/**",
     # Captured design/research log for the freshness program; over-cap by
     # design. The productized program now lives in docs/knowledge-base-freshness.md
     # (agentic-os#262); this stays as the raw thread record it was recovered from.

@@ -117,18 +117,6 @@ _siren_argv_has_flag() {
   return 1
 }
 
-_siren_openclaw_secret() {
-  local f="${OPENCLAW_STATE_DIR:-$HOME/.openclaw}/.gateway-token"
-  [ -s "$f" ] || ( umask 077; openssl rand -hex 32 >"$f" )
-  cat "$f"
-}
-openclaw() {
-  : "${OPENCLAW_GATEWAY_TOKEN:=$(_siren_openclaw_secret)}"
-  export OPENCLAW_GATEWAY_TOKEN
-  export OLLAMA_API_KEY=$OPENCLAW_GATEWAY_TOKEN # this is just being cute, we don't need a token
-  command openclaw "$@"
-}
-
 claude() { _siren_agent_gate claude || return 1; command claude "$@"; }
 codex() {
   _siren_agent_gate codex || return 1
@@ -170,54 +158,6 @@ ward-kdl() {
     esac
   fi
   command ward-kdl "$@"
-}
-
-openclaw-settings-merger() {
-  _openclaw-merge-json  "openclaw.json"
-  _openclaw-merge-json  "package.json"
-  _openclaw-merge-shell "start.sh"
-  _openclaw-merge-shell "msg.sh"
-}
-
-_openclaw-merge-json() {
-  local name="$1"
-  local home="$HOME/.openclaw/$name"
-  local deck="$HOME/projects/coilyco-flight-deck/agentic-os/.openclaw/$name"
-  local dest="$HOME/projects/coilyco-bridge/agentic-os-hardware/.openclaw/$name"
-  local tmp="$dest.tmp"
-
-  local files=()
-  for f in "$home" "$deck" "$dest"; do
-    [[ -f "$f" ]] && files+=("$f")
-  done
-  if (( ${#files[@]} == 0 )); then
-    echo "skip $name: no source files" >&2
-    return 0
-  fi
-
-  if jq -s 'reduce .[] as $x ({}; . * $x)' "${files[@]}" > "$tmp"; then
-    mv "$tmp" "$dest"
-  else
-    echo "merge failed: $name" >&2
-    rm -f "$tmp"
-    return 1
-  fi
-}
-
-_openclaw-merge-shell() {
-  local name="$1"
-  local home="$HOME/.openclaw/$name"
-  local deck="$HOME/projects/coilyco-flight-deck/agentic-os/.openclaw/$name"
-  local dest="$HOME/projects/coilyco-bridge/agentic-os-hardware/.openclaw/$name"
-
-  local pick=""
-  for f in "$home" "$deck" "$dest"; do
-    [[ -f "$f" ]] && pick="$f"
-  done
-  if [[ -n "$pick" && "$pick" != "$dest" ]]; then
-    cp "$pick" "$dest"
-  fi
-  return 0
 }
 
 pre-commit-aos-version-defined() {
@@ -500,10 +440,6 @@ case $- in
     fi
     ;;
 esac
-
-alias openclaw="npm run --prefix .openclaw start"
-alias openclaw-cmd="unset openclaw || true && unalias openclaw || true && unfunction openclaw || true && command openclaw "
-alias openclaw-msg="npm run --prefix .openclaw msg  "
 
 # `warded explore` takes --repo as the primary, with repeatable --with-repo extras
 alias warded-explore-ward="\
