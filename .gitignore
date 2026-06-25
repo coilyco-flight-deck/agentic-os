@@ -33,8 +33,6 @@ warp/warp
 logs/
 *.pid
 *.sock
-.openclaw/tmp_start.sh
-.openclaw/tmp_msg.sh
 
 # Secrets and resolved config (these belong in SSM, never the repo)
 .env
@@ -47,22 +45,6 @@ logs/
 # Node modules
 node_modules/
 **/node_modules/
-
-# OpenClaw specific
-.openclaw/node_modules
-.openclaw/tmp
-.openclaw/openclaw.json.*
-.openclaw/logs
-.openclaw/workspace-attestations
-.openclaw/identity
-.openclaw/devices
-.openclaw/completions
-.openclaw/plugins
-.openclaw/plugin-skills
-.openclaw/canvas
-.openclaw/service-env/
-.openclaw/.gateway*
-.openclaw/update-check.json
 
 *.sqlite*
 
