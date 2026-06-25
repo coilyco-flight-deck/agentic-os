@@ -57,6 +57,7 @@ check-agents-pointer = "agentic_os.pre_commit.check_agents_pointer:main"
 check-misplaced-skills = "agentic_os.pre_commit.check_misplaced_skills:main"
 check-seed-skills = "agentic_os.pre_commit.check_seed_skills:main"
 check-seed-skills-drift = "agentic_os.pre_commit.check_seed_skills_drift:main"
+check-caps-reference-drift = "agentic_os.pre_commit.check_caps_reference_drift:main"
 check-leak-guard = "agentic_os.pre_commit.check_leak_guard:main"
 leak-guard-encode = "agentic_os.pre_commit.encode_leak_term:main"
 freshness = "agentic_os.freshness:main"
@@ -65,6 +66,7 @@ generate-agents-pointer = "agentic_os.generators.generate_agents_pointer:main"
 generate-agent-compose = "agentic_os.generators.generate_agent_compose:main"
 generate-repo-pointer-skill = "agentic_os.generators.generate_repo_pointer_skill:main"
 generate-seed-skills = "agentic_os.generators.generate_seed_skills:main"
+generate-caps-reference = "agentic_os.generators.generate_caps_reference:main"
 
 # Self-compliance config for the hooks this repo ships. See agentic-os#81,
 # #96, #22.

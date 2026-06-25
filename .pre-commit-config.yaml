@@ -85,6 +85,13 @@ repos:
         always_run: true
         pass_filenames: false
         stages: [pre-commit]
+      - id: caps-reference-drift
+        name: catalog-caps-reference.md in sync with validator constants
+        entry: python -m agentic_os.pre_commit.check_caps_reference_drift
+        language: python
+        always_run: true
+        pass_filenames: false
+        stages: [pre-commit]
       - id: agent-compose-size
         name: agent-compose source size budget
         entry: python -m agentic_os.pre_commit.check_agent_compose_size

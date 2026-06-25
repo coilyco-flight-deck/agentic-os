@@ -76,6 +76,9 @@ commands:
   gen-seed-skills:
     run: uv run python -m agentic_os.generators.generate_seed_skills
     description: "Regenerate agentic_os/seed_skills_data.py from the seed: frontmatter on the coding-<lang> skills. Run after editing a seed block; check-seed-skills-drift fails on staleness. See agentic-os#176."
+  gen-caps-reference:
+    run: uv run python -m agentic_os.generators.generate_caps_reference
+    description: "Regenerate docs/catalog-caps-reference.md from the code-comments / documentation-layout validator constants. Run after changing a cap constant; check-caps-reference-drift fails on staleness. Docs and skills point at this render instead of restating a number. See agentic-os#284."
   agent-compose:
     run: uv run python -m agentic_os.generators.generate_agent_compose
     description: "Recompose the global agent-context files (~/.config/agent-compose/COMPOSED.<harness>.md) from the declared sources and re-point each harness load-point symlink. No-op without ~/.config/agent-compose/agent-compose.yaml. --dry-run prints the plan; --check fails on drift."
