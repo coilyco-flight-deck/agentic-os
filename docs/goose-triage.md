@@ -6,7 +6,7 @@
 
 ## Pipeline
 
-1. **Fetch** open issues via one `ward ops forgejo issue list` call (bodies inline).
+1. **Fetch** open issues via one `ward ops forgejo issue list-all` call (auto-paginates the whole backlog, bodies inline).
 2. **P0 net** - the regex content rules in [p0-content-rules.yaml](../.agents/skills/tooling-issue-prioritization/references/p0-content-rules.yaml) flag candidates (wide recall, over-match).
 3. **P0 confirm** - one judgment call per candidate: "active incident, or just discussing it?" The precision filter (a design doc is not P0).
 4. **Score the rest** - three independent urgency passes on a 0-100 scale (different framings), averaged so the percentile cut has spread to land on. Unsure -> 30.
@@ -34,7 +34,7 @@ ward exec goose-triage -- --repo <owner/name>
 ward exec goose-triage -- --engine claude  # re-triage with the stronger Claude judge
 ```
 
-The list verb caps at 50 per page, so larger repos fetch partially and the script warns the shape is over a partial set. Auto-pagination is tracked in ward#131.
+`issue list-all` removes the 50-per-page cap, so large repos no longer triage a truncated set. The consumer half of ward#131 (agentic-os#270).
 
 ## Related
 

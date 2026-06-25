@@ -2,12 +2,12 @@
 
 For each candidate from phase 1, fetch:
 
-- Skills: `<skillsmp-search> <name>` and `coily pkg skillsmp
-  ai-search <name>`. Take the top result if it's a strong match; record
-  multiple if ambiguous.
-- MCPs: `<glama-list-servers>` (paginate) and
-  `<glama-list-servers>-by-namespace-by-slug` for
-  exact matches.
+- Skills: `ward-kdl pkg skillsmp skills search --q <name>` and
+  `ward-kdl pkg skillsmp skills ai-search --q <name>`. Take the top
+  result if it's a strong match; record multiple if ambiguous.
+- MCPs: `ward-kdl pkg glama server list` (paginate with
+  `--after`/`--first`) and `ward-kdl pkg glama server get <namespace>
+  <slug>` for exact matches.
 - **Backstop:** also `WebFetch` 2-3 well-known awesome-lists
   (travisvn/awesome-claude-skills, ComposioHQ/awesome-claude-skills,
   claudefa.st's MCP list) plus the obvious first-party repo
