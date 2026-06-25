@@ -292,6 +292,10 @@ def cmd_select(repo: str, limit: int) -> int:
             else:
                 entry["state"] = "skipped"
             entry["unblock_history"] = []
+        elif r["lane"] == "headless" and entry.get("state") in ("skipped", "surfaced"):
+            # A re-triage promoted this issue into headless from a non-in-flight
+            # holding state - re-queue so `next` sees it, not strand it (#277).
+            entry["state"] = "queued"
         led["issues"][key] = entry
     # Drop issues that closed since the last select (gone from the open set),
     # unless they are still mid-flight and worth keeping visible.

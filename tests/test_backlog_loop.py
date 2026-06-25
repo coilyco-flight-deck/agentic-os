@@ -98,6 +98,65 @@ def test_load_ledger_fresh_when_absent(tmp_path, monkeypatch):
     assert led["repo"] == "o/missing"
 
 
+# --- select: re-queue on lane promotion ------------------------------------
+
+def _select_with(monkeypatch, tmp_path, issues, prior_ledger=None):
+    """Run cmd_select with the backlog + triage stubbed and an optional prior ledger."""
+    monkeypatch.setattr(bl, "CACHE_DIR", tmp_path)
+    if prior_ledger is not None:
+        bl.save_ledger(prior_ledger)
+    monkeypatch.setattr(bl, "fetch_open_issues", lambda repo, limit: issues)
+    monkeypatch.setattr(bl, "_latest_triage_scores", lambda repo: {})
+    bl.cmd_select("o/r", 50)
+    return bl.load_ledger("o/r")
+
+
+def test_select_requeues_issue_newly_promoted_to_headless(tmp_path, monkeypatch):
+    # #79 was a consult-lane issue parked at `skipped`; a re-triage relabelled it
+    # headless. Select must reset it to queued so `next --lane headless` sees it.
+    prior = {"repo": "o/r", "issues": {
+        "79": {"num": 79, "state": "skipped", "lane": "consult", "unblock_history": []},
+    }}
+    after = _select_with(monkeypatch, tmp_path,
+                         [_issue(79, labels=["headless", "P1"])], prior)
+    assert after["issues"]["79"]["lane"] == "headless"
+    assert after["issues"]["79"]["state"] == "queued"
+    # And `next --lane headless` now surfaces it.
+    picks = [e["num"] for e in bl._by_lane(after).get("headless", []) if e["state"] == "queued"]
+    assert 79 in picks
+
+
+def test_select_requeues_surfaced_interactive_promoted_to_headless(tmp_path, monkeypatch):
+    prior = {"repo": "o/r", "issues": {
+        "80": {"num": 80, "state": "surfaced", "lane": "interactive", "unblock_history": []},
+    }}
+    after = _select_with(monkeypatch, tmp_path,
+                         [_issue(80, labels=["headless", "P2"])], prior)
+    assert after["issues"]["80"]["state"] == "queued"
+
+
+@pytest.mark.parametrize("state", ["dispatched", "blocked", "done", "failed"])
+def test_select_preserves_in_flight_state_on_promotion(tmp_path, monkeypatch, state):
+    # A live/terminal state must survive a re-select - never clobber a running
+    # container or finished work just because the lane was recomputed.
+    prior = {"repo": "o/r", "issues": {
+        "81": {"num": 81, "state": state, "lane": "headless", "unblock_history": []},
+    }}
+    after = _select_with(monkeypatch, tmp_path,
+                         [_issue(81, labels=["headless", "P1"])], prior)
+    assert after["issues"]["81"]["state"] == state
+
+
+def test_select_leaves_consult_issue_skipped(tmp_path, monkeypatch):
+    # An issue that stays in consult is not promoted, so it keeps `skipped`.
+    prior = {"repo": "o/r", "issues": {
+        "82": {"num": 82, "state": "skipped", "lane": "consult", "unblock_history": []},
+    }}
+    after = _select_with(monkeypatch, tmp_path,
+                         [_issue(82, labels=["consult", "P3"])], prior)
+    assert after["issues"]["82"]["state"] == "skipped"
+
+
 # --- WARD-OUTCOME parsing --------------------------------------------------
 
 def test_parse_outcome_none_when_no_marker():
