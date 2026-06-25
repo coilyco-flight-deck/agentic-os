@@ -504,3 +504,39 @@ esac
 alias openclaw="npm run --prefix .openclaw start"
 alias openclaw-cmd="unset openclaw || true && unalias openclaw || true && unfunction openclaw || true && command openclaw "
 alias openclaw-msg="npm run --prefix .openclaw msg  "
+
+# `warded explore` takes --repo as the primary, with repeatable --with-repo extras
+alias warded-explore-ward="\
+  warded explore \
+    --repo coilyco-flight-deck/ward \
+    --with-repo coilysiren/coilysiren \
+    --with-repo coilyco-flight-deck/agentic-os \
+    --with-repo coilyco-flight-deck/cli-guard \
+"
+alias warded-explore-aosk="\
+  warded explore \
+    --repo coilyco-bridge/agentic-os-kai \
+    --with-repo coilysiren/coilysiren \
+    --with-repo coilyco-flight-deck/agentic-os \
+    --with-repo coilyco-bridge/agentic-os-hardware \
+    --with-repo coilyco-bridge/lore \
+"
+alias warded-explore-ser8="\
+  warded explore \
+    --repo coilyco-bridge/deploy \
+    --with-repo coilysiren/coilysiren \
+    --with-repo coilyco-flight-deck/agentic-os \
+    --with-repo coilyco-flight-deck/infrastructure \
+    --with-repo coilyco-bridge/agentic-os-hardware \
+    --with-repo coilyco-bridge/agentic-os-kai \
+"
+alias warded-explore-agent-proxy="\
+  warded explore \
+    --repo coilyco-flight-deck/agent-proxy \
+    --with-repo coilysiren/coilysiren \
+    --with-repo coilyco-flight-deck/agentic-os \
+    --with-repo coilyco-flight-deck/infrastructure \
+    --with-repo coilyco-bridge/agentic-os-hardware \
+    --with-repo coilyco-bridge/agentic-os-kai \
+    --with-repo coilyco-bridge/deploy \
+"
