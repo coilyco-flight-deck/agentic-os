@@ -17,6 +17,10 @@ SECRET_FILE="$STATE_DIR/.gateway-token"
 export OPENCLAW_GATEWAY_TOKEN="$(cat "$SECRET_FILE")"
 export OLLAMA_API_KEY=$OPENCLAW_GATEWAY_TOKEN
 
+# Ollama's tailnet FQDN must never be tracked (leak-guard bans the suffix).
+# Resolve at run time: honor preset OLLAMA_BASE_URL, else SSM, soft-fail.
+export OLLAMA_BASE_URL="${OLLAMA_BASE_URL:-$(aws ssm get-parameter --name /coilysiren/agentic-os/read/ollama-base-url --with-decryption --query Parameter.Value --output text 2>/dev/null || true)}"
+
 # Stop any prior gateway, then wait for the port to actually free. --force kills a
 # live listener but cannot evict a TIME_WAIT socket, so wait the kernel out here.
 npx -y openclaw@latest gateway stop >/dev/null 2>&1 || true

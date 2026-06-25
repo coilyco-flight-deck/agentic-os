@@ -45,6 +45,20 @@ RULES: list[dict] = [
             "bio surface migrate to the decode-at-build step and allowlist it."
         ),
     },
+    # Sensitive data: an opaque tailnet suffix identifies a private host and is
+    # grep-bait in tracked config - dial via a run-time env var. See agentic-os#263.
+    {
+        "id": "tailnet-suffix-tower",
+        "term_hex": "7461696c303961343162",
+        "repos": None,
+        "allow_globs": [],
+        "message": (
+            "an opaque tailnet suffix is grep-bait in tracked content. Dial the "
+            "host through a run-time env var (e.g. ${OLLAMA_BASE_URL}) resolved "
+            "from SSM (/coilysiren/<repo>/read/<tail>), or use a <PLACEHOLDER> in "
+            "docs - never the literal tailnet FQDN."
+        ),
+    },
     # Private -> public leak: the public front-page README must not name the
     # private bridge repo (internal tooling may enumerate siblings everywhere).
     {

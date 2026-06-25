@@ -107,3 +107,36 @@ def test_out_of_scope_repo_passes(monkeypatch, tmp_path) -> None:
     _git(repo, "add", "-A")
     rule = _rule(repos=["cli-guard"])  # not this repo
     assert _run(monkeypatch, repo, [rule]) == 0
+
+
+# --- the shipped tailnet-suffix rule (agentic-os#263) -----------------------
+
+def _shipped(rule_id: str) -> dict:
+    from agentic_os.pre_commit.leak_guard_rules import RULES
+
+    return next(r for r in RULES if r["id"] == rule_id)
+
+
+def test_tailnet_suffix_rule_fires_on_leaked_fqdn(monkeypatch, tmp_path, capsys) -> None:
+    # The opaque suffix inside a full tailnet FQDN must trip the guard, the way
+    # the openclaw baseUrl leaked it before this rule landed.
+    rule = _shipped("tailnet-suffix-tower")
+    suffix = bytes.fromhex(rule["term_hex"]).decode("utf-8")
+    repo = _repo(tmp_path)
+    (repo / "openclaw.json").write_text(
+        f'{{"baseUrl": "http://kai-tower-3026.{suffix}.ts.net:11434"}}\n'
+    )
+    _git(repo, "add", "-A")
+    assert _run(monkeypatch, repo, [rule]) == 1
+    err = capsys.readouterr().err
+    assert "openclaw.json" in err
+    assert suffix not in err  # the guard's own output must not re-leak the term
+
+
+def test_tailnet_suffix_rule_passes_on_env_placeholder(monkeypatch, tmp_path) -> None:
+    # The de-leaked form: a run-time env var, no opaque suffix in tracked config.
+    rule = _shipped("tailnet-suffix-tower")
+    repo = _repo(tmp_path)
+    (repo / "openclaw.json").write_text('{"baseUrl": "${OLLAMA_BASE_URL}"}\n')
+    _git(repo, "add", "-A")
+    assert _run(monkeypatch, repo, [rule]) == 0
