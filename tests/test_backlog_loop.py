@@ -158,6 +158,55 @@ def test_select_leaves_consult_issue_skipped(tmp_path, monkeypatch):
     assert after["issues"]["82"]["state"] == "skipped"
 
 
+# --- select: untriaged hint + inline triage (#278) -------------------------
+
+def test_select_prints_untriaged_hint_when_lane_nonempty(tmp_path, monkeypatch, capsys):
+    # An issue missing the mode label lands in the untriaged lane, so select nudges.
+    _select_with(monkeypatch, tmp_path, [_issue(1, labels=["P1"])])
+    out = capsys.readouterr().out
+    assert "1 untriaged" in out
+    assert "ward exec goose-triage" in out
+    assert "select --triage" in out
+
+
+def test_select_no_hint_when_nothing_untriaged(tmp_path, monkeypatch, capsys):
+    _select_with(monkeypatch, tmp_path, [_issue(1, labels=["headless", "P1"])])
+    out = capsys.readouterr().out
+    # No untriaged lane, so no goose-triage nudge.
+    assert "ward exec goose-triage" not in out
+
+
+def test_select_triage_runs_goose_triage_then_selects(tmp_path, monkeypatch):
+    monkeypatch.setattr(bl, "CACHE_DIR", tmp_path)
+    calls = []
+    monkeypatch.setattr(bl, "run_triage", lambda repos: calls.append(list(repos)))
+    monkeypatch.setattr(bl, "fetch_open_issues",
+                        lambda repo, limit: [_issue(1, labels=["headless", "P1"])])
+    monkeypatch.setattr(bl, "_latest_triage_scores", lambda repo: {})
+    bl.cmd_select("o/r", 50, triage=True)
+    # Triage runs for the repo first, then the ledger is refreshed from it.
+    assert calls == [["o/r"]]
+    assert bl.load_ledger("o/r")["issues"]["1"]["state"] == "queued"
+
+
+def test_select_without_triage_does_not_run_goose(tmp_path, monkeypatch):
+    monkeypatch.setattr(bl, "CACHE_DIR", tmp_path)
+    calls = []
+    monkeypatch.setattr(bl, "run_triage", lambda repos: calls.append(list(repos)))
+    monkeypatch.setattr(bl, "fetch_open_issues", lambda repo, limit: [])
+    monkeypatch.setattr(bl, "_latest_triage_scores", lambda repo: {})
+    bl.cmd_select("o/r", 50, triage=False)
+    assert calls == []
+
+
+def test_run_triage_shells_goose_triage_per_repo(monkeypatch):
+    cap = []
+    monkeypatch.setattr(bl.subprocess, "run", _fake_run(cap, stdout=""))
+    bl.run_triage(["o/a", "o/b"])
+    assert cap[0][:4] == [bl.WARD, "exec", "goose-triage", "--"]
+    assert "o/a" in cap[0] and "o/b" in cap[1]
+
+
 # --- WARD-OUTCOME parsing --------------------------------------------------
 
 def test_parse_outcome_none_when_no_marker():
@@ -333,6 +382,29 @@ def test_scope_select_refreshes_each_repo_ledger(tmp_path, monkeypatch):
     bl.cmd_select_scope(["o/a", "o/b"], 50)
     assert bl.load_ledger("o/a")["issues"]["1"]["state"] == "queued"
     assert bl.load_ledger("o/b")["issues"]["2"]["state"] == "queued"
+
+
+def test_scope_select_triage_runs_every_repo_in_one_pass(tmp_path, monkeypatch):
+    _scope_setup(monkeypatch, tmp_path, {
+        "o/a": [_issue(1, labels=["headless", "P1"])],
+        "o/b": [_issue(2, labels=["headless", "P2"])],
+    })
+    calls = []
+    monkeypatch.setattr(bl, "run_triage", lambda repos: calls.append(list(repos)))
+    bl.cmd_select_scope(["o/a", "o/b"], 50, triage=True)
+    # A scope triages and selects together: one run_triage call over the whole set.
+    assert calls == [["o/a", "o/b"]]
+    assert bl.load_ledger("o/a")["issues"]["1"]["state"] == "queued"
+
+
+def test_scope_select_prints_untriaged_hint_across_repos(tmp_path, monkeypatch, capsys):
+    _scope_setup(monkeypatch, tmp_path, {
+        "o/a": [_issue(1, labels=["P1"])],            # untriaged (no mode)
+        "o/b": [_issue(2, labels=["headless", "P2"])],  # headless
+    })
+    bl.cmd_select_scope(["o/a", "o/b"], 50)
+    out = capsys.readouterr().out
+    assert "1 untriaged" in out
 
 
 def test_scope_next_merges_and_ranks_across_repos(tmp_path, monkeypatch, capsys):

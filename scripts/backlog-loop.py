@@ -8,7 +8,10 @@ these verbs. The loop is:
 
   1. select   - read open issues + their tier/mode labels, rank into two lanes
                 (headless = auto-burndown, interactive = human-driven), persist a
-                durable ledger so the loop survives a restart.
+                durable ledger so the loop survives a restart. A non-empty untriaged
+                lane prints a one-line nudge to run triage; `select --triage` folds
+                `ward exec goose-triage` in first so the loop owns its own inputs
+                (#278), across the whole scope when one is given.
   2. dispatch - launch a headless agent on a queued issue (`ward agent headless`),
                 first posting a structured-outcome protocol comment so the agent
                 knows to end with a machine-readable WARD-OUTCOME line.
@@ -60,6 +63,10 @@ TRIAGE_CACHE = Path.home() / ".cache" / "agentic-os" / "goose-triage"
 
 # ward-kdl ops forgejo + ward agent binary. Overridable for tests.
 WARD = os.environ.get("WARD_BIN") or "ward"
+
+# `select --triage` shells `ward exec goose-triage`, which runs several LLM passes
+# per open issue, so it needs far more room than a forgejo read. Overridable.
+TRIAGE_TIMEOUT = int(os.environ.get("BACKLOG_LOOP_TRIAGE_TIMEOUT") or "3600")
 
 # Tier and mode label vocabularies, mirroring tooling-issue-prioritization. Order
 # matters: TIER_ORDER ranks high-to-low, MODE_LANE maps a mode to a loop lane.
@@ -357,9 +364,41 @@ def refresh_ledger(repo: str, limit: int) -> dict:
     return led
 
 
-def cmd_select(repo: str, limit: int) -> int:
-    """Single-repo select: refresh the ledger and print its lanes."""
-    _print_status(refresh_ledger(repo, limit))
+def run_triage(repos: list[str]) -> None:
+    """Run `ward exec goose-triage` across the scope so the loop owns its own inputs.
+
+    Triage writes the tier + mode labels `select` reads. Running it inline (via
+    `select --triage`) before the re-select populates the headless lane in one hop,
+    instead of the separate manual `ward exec goose-triage` hop the loop used to
+    need - an empty headless lane that was really just an un-run triage (#278). Each
+    repo is triaged on its own, mirroring how the scope keeps one ledger per repo."""
+    for repo in repos:
+        print(f"backlog-loop: triaging {repo} (ward exec goose-triage) ...", file=sys.stderr)
+        sh([WARD, "exec", "goose-triage", "--", "--repo", repo], timeout=TRIAGE_TIMEOUT)
+
+
+def _untriaged_hint(leds: list[dict]) -> None:
+    """Print a one-line nudge when any tracked issue across `leds` is still untriaged.
+
+    The untriaged lane stays empty until `ward exec goose-triage` writes the tier +
+    mode labels, so an empty headless lane is often just an un-run triage. Naming the
+    count and the command (plus the inline `--triage` flag that does both) means the
+    loop surfaces its own missing input rather than leaving the gap unexplained."""
+    n = sum(1 for led in leds for e in led["issues"].values()
+            if e.get("lane") == "untriaged")
+    if not n:
+        return
+    print(f"\n  {n} untriaged - run `ward exec goose-triage` to label them, "
+          f"or re-run `select --triage` to triage + re-select in one hop.")
+
+
+def cmd_select(repo: str, limit: int, triage: bool = False) -> int:
+    """Single-repo select: optionally triage inline, refresh the ledger, print lanes."""
+    if triage:
+        run_triage([repo])
+    led = refresh_ledger(repo, limit)
+    _print_status(led)
+    _untriaged_hint([led])
     return 0
 
 
@@ -649,11 +688,16 @@ def _print_scope_status(repos: list[str]) -> None:
             print(f"    {ref:<28} [{tier}{sc}] {e.get('state','?'):<10} {e['title'][:60]}")
 
 
-def cmd_select_scope(repos: list[str], limit: int) -> int:
-    """Refresh every repo's ledger in the scope, then print one combined view."""
-    for repo in repos:
-        refresh_ledger(repo, limit)
+def cmd_select_scope(repos: list[str], limit: int, triage: bool = False) -> int:
+    """Refresh every repo's ledger in the scope, then print one combined view.
+
+    With --triage the whole scope is triaged first (one `ward exec goose-triage` per
+    repo) so a scope triages and selects together in one invocation (#278)."""
+    if triage:
+        run_triage(repos)
+    leds = [refresh_ledger(repo, limit) for repo in repos]
     _print_scope_status(repos)
+    _untriaged_hint(leds)
     return 0
 
 
@@ -699,6 +743,8 @@ def main(argv: list[str] | None = None) -> int:
 
     p = sub.add_parser("select", help="build/refresh the ledger from the live backlog")
     p.add_argument("--limit", type=int, default=50)
+    p.add_argument("--triage", action="store_true",
+                   help="run `ward exec goose-triage` across the scope first, then select")
     sub.add_parser("status", help="show the ledger")
 
     p = sub.add_parser("next", help="emit the next actionable issues in a lane (JSON)")
@@ -732,7 +778,8 @@ def main(argv: list[str] | None = None) -> int:
     # Scope-aware verbs aggregate the whole repo set; per-issue verbs resolve to
     # a single (repo, num) ref - bare num in a one-repo scope, qualified across many.
     if args.verb == "select":
-        return cmd_select_scope(repos, args.limit) if len(repos) > 1 else cmd_select(repos[0], args.limit)
+        return (cmd_select_scope(repos, args.limit, args.triage) if len(repos) > 1
+                else cmd_select(repos[0], args.limit, args.triage))
     if args.verb == "status":
         return cmd_status_scope(repos) if len(repos) > 1 else cmd_status(repos[0])
     if args.verb == "next":

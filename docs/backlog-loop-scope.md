@@ -16,7 +16,7 @@ One slug is a scope of one (the existing single-repo behavior, unchanged). The s
 
 The lane-level verbs span the whole set in one invocation:
 
-- **select** refreshes every repo's ledger, then prints one combined, lane-grouped, cross-repo-ranked view (each issue shown as `<owner/name>#<num>`).
+- **select** refreshes every repo's ledger, then prints one combined, lane-grouped, cross-repo-ranked view (each issue shown as `<owner/name>#<num>`); `select --triage` triages the whole scope (one `ward exec goose-triage` per repo) before the re-select, so a scope triages and selects together (agentic-os#278).
 - **next** merges each repo's lane picks into one ranked list - blocked first (a human is waiting), then the cross-repo lane order (tier, then triage score, then repo, then number) - so you pull the single most-actionable issue regardless of which repo it lives in.
 - **poll** reconciles every dispatched container across the scope in one pass.
 
