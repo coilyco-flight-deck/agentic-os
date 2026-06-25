@@ -421,20 +421,29 @@ def cmd_dispatch(repo: str, num: int, no_preflight: bool, force: bool, dry_run: 
 # --- outcome parsing + poll ------------------------------------------------
 
 def parse_outcome(comments: list[dict]) -> dict | None:
-    """Find the latest WARD-OUTCOME marker across comments and parse it.
+    """Find the latest agent WARD-OUTCOME across comments and parse it.
 
-    Returns {"status": done|blocked|failed|unknown, "text": "..."} for the most
-    recent matching comment, or None if no agent has posted an outcome yet."""
+    The agent's final comment leads a line with the marker; match only at line
+    start (after markdown bullet/quote chars), and skip the loop's own injected
+    comments, whose examples embed the marker. Returns {"status":
+    done|blocked|failed|unknown, "text": ...} for the latest match, else None."""
     hits = []
     for c in comments:
         body = c.get("body") or ""
-        idx = body.find(OUTCOME_MARKER)
-        if idx == -1:
+        if DISPATCH_MARKER in body or UNBLOCK_MARKER in body:
             continue
-        rest = body[idx + len(OUTCOME_MARKER):].strip()
-        m = re.match(r"(done|blocked|failed)\b[\s:.-]*(.*)", rest, re.IGNORECASE | re.DOTALL)
+        line = None
+        for ln in body.splitlines():
+            stripped = ln.strip().lstrip(">*-• ").strip()
+            if stripped.upper().startswith(OUTCOME_MARKER):
+                line = stripped
+                break
+        if line is None:
+            continue
+        rest = line[len(OUTCOME_MARKER):].strip()
+        m = re.match(r"(done|blocked|failed)\b[\s:.-]*(.*)", rest, re.IGNORECASE)
         status = m.group(1).lower() if m else "unknown"
-        text = (m.group(2).strip() if m else rest).split("\n\n")[0].strip()
+        text = (m.group(2).strip() if m else rest)
         hits.append((c.get("created_at") or "", {"status": status, "text": text[:500]}))
     if not hits:
         return None

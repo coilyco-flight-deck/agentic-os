@@ -105,8 +105,20 @@ def test_parse_outcome_none_when_no_marker():
 
 
 def test_parse_outcome_done():
+    # The reason/retro lives below the marker line; the outcome text is same-line.
     out = bl.parse_outcome([{"body": "WARD-OUTCOME: done\nfelt smooth", "created_at": "1"}])
-    assert out == {"status": "done", "text": "felt smooth"}
+    assert out == {"status": "done", "text": ""}
+
+
+def test_parse_outcome_ignores_dispatch_protocol_comment():
+    # The protocol comment embeds the marker as examples; never read it as an outcome.
+    assert bl.parse_outcome([{"body": bl.DISPATCH_PROTOCOL, "created_at": "1"}]) is None
+
+
+def test_parse_outcome_marker_must_lead_a_line():
+    # A marker buried mid-prose (e.g. quoted in a discussion) is not an outcome.
+    body = "I think the agent should post `WARD-OUTCOME: done` when finished."
+    assert bl.parse_outcome([{"body": body, "created_at": "1"}]) is None
 
 
 def test_parse_outcome_blocked_captures_question():
