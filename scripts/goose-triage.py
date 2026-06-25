@@ -4,7 +4,8 @@
 Implements the tooling-issue-prioritization method with Goose as the judgment
 engine and Python owning the deterministic parts:
 
-  1. Fetch open issues for a repo (one `ward ops forgejo issue list`, body included).
+  1. Fetch open issues for a repo (one `ward ops forgejo issue list-all`,
+     whole backlog auto-paginated, body included).
   2. P0 net: regex content rules (p0-content-rules.yaml) flag candidates.
   3. P0 confirm: an isolated yes/no Goose call per candidate - "active
      incident, or just discussing the topic?" - the over-match filter.
@@ -159,14 +160,17 @@ def _clamp_score(raw) -> float:
     return max(0.0, min(100.0, v))
 
 
-def fetch_issues(repo: str, limit: int) -> list[dict]:
-    """Open issues (not PRs) for a repo, via one `ward ops forgejo issue list`. The
-    list verb returns each issue's body inline, so no per-issue follow-up is
-    needed. `--type issues` drops pull requests at the API; the pull_request guard
-    is the belt-and-suspenders for older forgejo that ignores the filter."""
+def fetch_issues(repo: str) -> list[dict]:
+    """Open issues (not PRs) for a repo, via one `ward ops forgejo issue list-all`.
+    list-all auto-paginates the whole backlog (no page cap), so the percentile cut
+    is always over the true total, never a silently-truncated set (agentic-os#270,
+    the consumer half of ward#131). The verb returns each issue's body inline, so
+    no per-issue follow-up is needed. `--type issues` drops pull requests at the
+    API; the pull_request guard is the belt-and-suspenders for older forgejo that
+    ignores the filter."""
     owner, name = _split_repo(repo)
-    data = _fj(["issue", "list", owner, name,
-                "--state", "open", "--type", "issues", "--limit", str(limit)])
+    data = _fj(["issue", "list-all", owner, name,
+                "--state", "open", "--type", "issues"])
     issues = []
     for it in data if isinstance(data, list) else []:
         if it.get("pull_request") is not None:
@@ -276,15 +280,11 @@ def percentile_cut(scored: list[dict]) -> None:
             it["tier"] = "P4"
 
 
-def run(repo: str, limit: int) -> dict:
-    print(f"goose-triage: fetching open issues for {repo} (limit {limit}) ...",
-          file=sys.stderr)
-    issues = fetch_issues(repo, limit)
+def run(repo: str) -> dict:
+    print(f"goose-triage: fetching open issues for {repo} ...", file=sys.stderr)
+    issues = fetch_issues(repo)
     n = len(issues)
-    capped = n >= limit
-    print(f"goose-triage: {n} issues fetched"
-          + (f"  WARNING: hit the {limit} cap, backlog is larger - "
-             "percentile math is over a partial set" if capped else ""),
+    print(f"goose-triage: {n} issues fetched (whole backlog via issue list-all)",
           file=sys.stderr)
 
     # Goose-call failures per pass, separate from the label-write `failed`, so a
@@ -375,7 +375,7 @@ def run(repo: str, limit: int) -> dict:
         tiers["P0"].append(it)
     for it in pool:
         tiers[it["tier"]].append(it)
-    return {"repo": repo, "n": n, "capped": capped, "tiers": tiers,
+    return {"repo": repo, "n": n, "tiers": tiers,
             "issues": issues, "goose_failures": goose_failures}
 
 
@@ -406,12 +406,6 @@ def write_report(result: dict) -> tuple[Path, Path]:
                 + (f", {c_ap['failed']} failed" if c_ap["failed"] else "") + ".")
     lines = [f"# Triage report - {result['repo']} - {today}", ""]
     lines.append(f"{n} open issues triaged by Goose (qwen3-coder:30b). " + applied_note)
-    if result["capped"]:
-        lines.append("")
-        lines.append("**WARNING:** the fetch hit the list cap, so this is a "
-                     "partial backlog and the percentile distribution is not "
-                     "over the true total. Re-run with full pagination before "
-                     "trusting the shape.")
     lines.append("")
     lines.append("## Tier distribution")
     lines.append("")
@@ -456,7 +450,7 @@ def write_report(result: dict) -> tuple[Path, Path]:
     md_path.write_text("\n".join(lines))
 
     payload = {
-        "repo": result["repo"], "date": today, "n": n, "capped": result["capped"],
+        "repo": result["repo"], "date": today, "n": n,
         "applied": result.get("applied"),
         "goose_failures": result.get("goose_failures") or {},
         "tiers": {
@@ -663,7 +657,6 @@ def _default_repo() -> str | None:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Goose-driven issue triage; applies P0-P4 tier and headless/interactive/consult mode labels by default.")
     ap.add_argument("--repo", help="owner/name; default: the current git origin's slug")
-    ap.add_argument("--limit", type=int, default=50, help="max issues to fetch (forgejo page size)")
     ap.add_argument("--report-only", "--dry-run", dest="report_only", action="store_true",
                     help="skip writing labels to issues; just produce the report")
     ap.add_argument("--no-comment", dest="comment", action="store_false",
@@ -674,15 +667,11 @@ def main(argv: list[str] | None = None) -> int:
     if not repo:
         ap.error("--repo not given and no git origin found in the current directory")
 
-    result = run(repo, args.limit)
+    result = run(repo)
 
     if args.report_only:
         result["applied"] = None
     else:
-        if result["capped"]:
-            print("goose-triage: WARNING applying tier labels over a PARTIAL backlog "
-                  "(fetch hit the cap) - the percentile shape is not over the true total.",
-                  file=sys.stderr)
         print(f"goose-triage: applying tier + mode labels to {repo} ...", file=sys.stderr)
         result["applied"] = {"tiers": apply_tiers(repo, result),
                              "modes": apply_modes(repo, result)}
