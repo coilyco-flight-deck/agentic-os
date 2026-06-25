@@ -1,0 +1,48 @@
+# Scheduled knowledge-base freshness probe. Code drift is caught loud by CI;
+# knowledge rot is silent - a hand-written fact (a verb name, a model id, a
+# price) goes stale without any commit, and a cold agent reads it confidently
+# wrong. This is the loud trigger for that rot (agentic-os#262, action item 1):
+# it parses the `<!-- freshness: as-of= half-life= -->` provenance markers across
+# tracked docs, grades each fact by age against its half-life horizon, and fails
+# the run when any fast-decay fact is past its horizon. A failing run is the
+# signal to re-verify the flagged fact against its source and bump its as-of (or
+# regenerate it, for a derived render like docs/ward-ops-forgejo-reference.md).
+#
+# The probe is hermetic - stdlib only, no network, no ward binary - so it runs
+# with just python3 and the checkout on PYTHONPATH. Time-based, not change-based,
+# which is why it is a scheduled job and not a commit-path hook. The logic and
+# horizons live in agentic_os/freshness.py and [tool.agentic-os.freshness];
+# fleet rollout of the same probe across repos stays in infrastructure/ansible
+# per AGENTS.md. Walkthrough: docs/knowledge-base-freshness.md.
+#
+# Runs daily at 09:41 UTC (off the hour, and off dep-bump's :17, to dodge cron
+# rush) and on dispatch.
+
+name: freshness
+
+on:
+  schedule:
+    - cron: "41 9 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: docker
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Probe knowledge-base freshness
+        run: |
+          set -euo pipefail
+
+          # The Forgejo runner image is minimal; self-install python3 if absent.
+          if ! command -v python3 >/dev/null 2>&1; then
+            apt-get update -qq && apt-get install -y -qq python3
+          fi
+
+          # Hermetic: the probe imports only stdlib + agentic_os.config, so the
+          # checkout on PYTHONPATH is enough - no pip install, no network.
+          PYTHONPATH=. python3 -m agentic_os.freshness --check

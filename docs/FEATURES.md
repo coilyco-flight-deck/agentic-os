@@ -20,6 +20,7 @@ This doc describes capabilities, not files. If you want a file inventory, run `l
 - [Context-budget report](context-budget.md) - on-demand measure of the eager startup context each harness (claude/codex/opencode) loads vs a per-harness token budget, with per-source attribution, reusing the agent-compose resolution.
 - [Mount-eligibility manifest](mount-eligibility-manifest.md) - agent-compose emits `mount-eligibility.json`: per harness, the repos it may mount on this host (`~/projects/<org>/<repo>` paths plus an always-on default set), reusing the composer's scope/harness selection so ward reads the mount decision instead of re-deriving it. Drift-checked.
 - [Committed ward-ops reference](ward-ops-forgejo-reference.md) - checked-in `ward ops forgejo describe` render so operator-verb names stay greppable. `ward exec gen-ward-ops-reference` regenerates it. See agentic-os#261.
+- [Knowledge-base freshness program](knowledge-base-freshness.md) - grades knowledge by **decay-class** (asserted/pointer/derived) and **half-life** (fast/slow), carried inline as `<!-- freshness: as-of= half-life= -->` provenance markers. `ward freshness` parses them across tracked docs and flags any fact aged past its horizon (`-- --check`), the loud trigger a scheduled probe (`.forgejo/workflows/freshness.yml`) fails on, since knowledge rot is silent where code drift is loud. Hermetic, time-based, not a commit-path hook. See agentic-os#262.
 
 ## See also
 

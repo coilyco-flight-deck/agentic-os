@@ -59,6 +59,7 @@ check-seed-skills = "agentic_os.pre_commit.check_seed_skills:main"
 check-seed-skills-drift = "agentic_os.pre_commit.check_seed_skills_drift:main"
 check-leak-guard = "agentic_os.pre_commit.check_leak_guard:main"
 leak-guard-encode = "agentic_os.pre_commit.encode_leak_term:main"
+freshness = "agentic_os.freshness:main"
 
 generate-agents-pointer = "agentic_os.generators.generate_agents_pointer:main"
 generate-agent-compose = "agentic_os.generators.generate_agent_compose:main"
@@ -80,8 +81,9 @@ excludes = [
     "warp/tab_configs/**",
     # Runtime-generated openclaw plugin skills (gitignored, not authored docs).
     ".openclaw/plugin-skills/**",
-    # WIP knowledge-base action scratch; over-cap by design until productized.
-    # Tracked in agentic-os#262 (classify/split into the freshness program).
+    # Captured design/research log for the freshness program; over-cap by
+    # design. The productized program now lives in docs/knowledge-base-freshness.md
+    # (agentic-os#262); this stays as the raw thread record it was recovered from.
     "docs/knowledge-base-meta-improvement.md",
     # Generated render of `ward ops forgejo describe` (scripts/gen-ward-ops-reference.sh).
     # Over-cap by design: the full operator-verb surface, committed so the names
@@ -114,6 +116,15 @@ excludes = [
 # This repo migrated from the coilysiren org to coilyco-flight-deck, so its
 # repo-pointer skills point at ~/projects/coilyco-flight-deck/. See #560.
 org = "coilyco-flight-deck"
+
+# Knowledge-base freshness probe (agentic-os#262). Half-life horizons in days:
+# a fast-decay fact (verbs, model ids, pricing) goes stale after fast_days, a
+# slow-decay one (doctrine, voice) after slow_days. The probe is on-demand /
+# scheduled (`ward freshness --check`), not a commit-path hook, since rot is
+# time-based, not change-based. See docs/knowledge-base-freshness.md.
+[tool.agentic-os.freshness]
+fast_days = 30
+slow_days = 365
 
 [dependency-groups]
 dev = ["pytest>=8"]
