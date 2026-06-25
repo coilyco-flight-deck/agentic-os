@@ -179,6 +179,14 @@ def test_strip_fenced_code_preserves_line_count() -> None:
     assert freshness.strip_fenced_code(text).count("\n") == text.count("\n")
 
 
+def test_marker_in_inline_code_is_ignored(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # FEATURES.md shows the marker shape inline in backticks - not a live fact.
+    _write(tmp_path, "docs/a.md", "Carried as `<!-- freshness: as-of= half-life= -->` markers.\n")
+    assert _run(monkeypatch, tmp_path, "--check") == 0
+
+
 def test_report_lists_markers(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:

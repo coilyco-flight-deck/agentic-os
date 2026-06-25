@@ -61,15 +61,16 @@ DECAY_CLASSES = ("asserted", "pointer", "derived")
 
 # A provenance marker, tolerant of internal newlines so an editor can wrap it.
 MARKER_RE = re.compile(r"<!--\s*freshness:\s*(.*?)\s*-->", re.DOTALL)
+INLINE_CODE_RE = re.compile(r"`[^`\n]+`")
 
 
 def strip_fenced_code(text: str) -> str:
-    """Blank out fenced code blocks, preserving line count.
+    """Blank out fenced and inline code, preserving line count.
 
-    A marker shown inside a ``` fence is documentation of the format, not a
-    live provenance claim - the program doc has to be able to show the marker
-    shape without the probe grading it. Lines are replaced with empty lines so
-    reported line numbers still point at the source.
+    A marker shown inside a ``` fence or an inline `code` span is documentation
+    of the format (FEATURES.md, the program doc), not a live provenance claim,
+    so the probe must not grade it. Fenced lines and inline spans are blanked
+    without removing newlines, so reported line numbers still point at source.
     """
     out: list[str] = []
     in_fence = False
@@ -78,7 +79,7 @@ def strip_fenced_code(text: str) -> str:
             in_fence = not in_fence
             out.append("")
             continue
-        out.append("" if in_fence else line)
+        out.append("" if in_fence else INLINE_CODE_RE.sub("", line))
     return "\n".join(out)
 
 
