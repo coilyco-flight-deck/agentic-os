@@ -61,16 +61,17 @@ def test_fj_nonzero_raises_with_stderr(monkeypatch):
         gt._fj(["issue", "list", "o", "r"])
 
 
-def test_fetch_issues_builds_list_call_and_drops_prs(monkeypatch):
+def test_fetch_issues_builds_list_all_call_and_drops_prs(monkeypatch):
     cap = []
     payload = ('[{"number": 1, "title": "a", "body": "b"},'
                ' {"number": 2, "title": "pr", "body": "", "pull_request": {"url": "x"}}]')
     monkeypatch.setattr(gt.subprocess, "run", _fake_run(cap, stdout=payload))
-    issues = gt.fetch_issues("coilyco-flight-deck/ward", 50)
+    issues = gt.fetch_issues("coilyco-flight-deck/ward")
     assert [it["num"] for it in issues] == [1]  # the PR is filtered out
-    assert cap[0] == [gt.WARD, "ops", "forgejo", "issue", "list",
+    # list-all auto-paginates the whole backlog: no --limit cap (agentic-os#270).
+    assert cap[0] == [gt.WARD, "ops", "forgejo", "issue", "list-all",
                       "coilyco-flight-deck", "ward",
-                      "--state", "open", "--type", "issues", "--limit", "50",
+                      "--state", "open", "--type", "issues",
                       "--output", "json"]
 
 
