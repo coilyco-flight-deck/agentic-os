@@ -22,7 +22,8 @@ The image bakes the self-name slice in directly.
   issue-comment signoffs, and o2r channel traffic.
 - [`managed-settings.json`](../docker/dev-base/claude-managed-settings.json) -
   landed at the fixed `/etc/claude-code/managed-settings.json`. It adds only a
-  `statusLine` and a `SessionStart` self-name hook, both pointing at the baked
+  `statusLine` and two `SessionStart` hooks (the self-name banner and the
+  [git-identity stamp](dev-base-git-identity.md)), all pointing at the baked
   script.
 
 ## Why policy-tier settings
@@ -43,6 +44,7 @@ the matching name is the contract this feature exists to honor.
 
 ## See also
 
+- [docs/dev-base-git-identity.md](dev-base-git-identity.md) - the git-identity stamp built on this self-name.
 - [docs/dev-base-image.md](dev-base-image.md) - the image this rides in.
 - [docs/features-agents-sessions.md](features-agents-sessions.md) - the host self-name feature.
 - [docs/FEATURES.md](FEATURES.md) - feature inventory.
