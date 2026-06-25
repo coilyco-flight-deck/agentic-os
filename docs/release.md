@@ -16,7 +16,7 @@ release-please is PR-driven, and `coilysiren/agentic-os` has
 `hasPullRequestsEnabled = false` on GitHub (the no-PR-on-GitHub stance). Rather
 than port release-please to Forgejo, agentic-os reuses the forgejo-API-only
 composite actions it already ships for the rest of the fleet (ward, cli-guard,
-coily, ...). No PR, no manifest config, no GitHub API calls. The decision and
+ward-kdl, ...). No PR, no manifest config, no GitHub API calls. The decision and
 its alternatives are recorded in the issue this pipeline closed.
 
 ## Version bump
