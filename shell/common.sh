@@ -440,39 +440,3 @@ case $- in
     fi
     ;;
 esac
-
-# `warded director` takes --repo as the primary, with repeatable --repo extras
-alias warded-director-ward="\
-  warded director \
-    --repo coilyco-flight-deck/ward \
-    --repo coilysiren/coilysiren \
-    --repo coilyco-flight-deck/agentic-os \
-    --repo coilyco-flight-deck/cli-guard \
-"
-alias warded-director-aosk="\
-  warded director \
-    --repo coilyco-bridge/agentic-os-kai \
-    --repo coilysiren/coilysiren \
-    --repo coilyco-flight-deck/agentic-os \
-    --repo coilyco-bridge/agentic-os-hardware \
-    --repo coilyco-bridge/lore \
-"
-alias warded-director-deploy="\
-  warded director \
-    --repo coilyco-bridge/deploy \
-    --repo coilysiren/coilysiren \
-    --repo coilyco-flight-deck/agentic-os \
-    --repo coilyco-flight-deck/infrastructure \
-    --repo coilyco-bridge/agentic-os-hardware \
-    --repo coilyco-bridge/agentic-os-kai \
-"
-alias warded-director-agent-proxy="\
-  warded director \
-    --repo coilyco-flight-deck/agent-proxy \
-    --repo coilysiren/coilysiren \
-    --repo coilyco-flight-deck/agentic-os \
-    --repo coilyco-flight-deck/infrastructure \
-    --repo coilyco-bridge/agentic-os-hardware \
-    --repo coilyco-bridge/agentic-os-kai \
-    --repo coilyco-bridge/deploy \
-"
