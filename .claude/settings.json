@@ -16,18 +16,6 @@
       "Bash(ward:*)",
       "Bash(wc:*)",
       "Bash(yq:*)"
-    ],
-    "deny": [
-      "Bash(flyctl:*)",
-      "Bash(gcloud:*)",
-      "Bash(git clean -fd:*)",
-      "Bash(git push --force:*)",
-      "Bash(git push -f:*)",
-      "Bash(git reset --hard:*)",
-      "Bash(mcporter:*)",
-      "Bash(ssh:*)",
-      "Read(/Users/kai/projects/coilysiren/coilyco-vault/**)",
-      "Read(~/projects/coilysiren/coilyco-vault/**)"
     ]
   },
   "tui": "fullscreen"
