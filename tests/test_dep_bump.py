@@ -94,6 +94,15 @@ def test_compute_plan_reports_only_drifted_pins(monkeypatch) -> None:
     assert plan == [{"arg": "UV_VERSION", "current": "0.11.21", "latest": "0.12.0"}]
 
 
+def test_version_sensitive_pins_are_excluded_from_auto_bump() -> None:
+    # golangci-lint / kdlfmt pin to consumer CI versions, not upstream latest, so
+    # they get no resolver; trufflehog tracks latest, so it gets one (agentic-os#292).
+    script = _load_script()
+    assert "GOLANGCI_LINT_VERSION" not in script.RESOLVERS
+    assert "KDLFMT_VERSION" not in script.RESOLVERS
+    assert "TRUFFLEHOG_VERSION" in script.RESOLVERS
+
+
 def test_compute_plan_skips_unresolved_pins(monkeypatch) -> None:
     script = _load_script()
     monkeypatch.setitem(script.RESOLVERS, "UV_VERSION", lambda: None)

@@ -173,8 +173,12 @@ def _resolve_tailscale() -> str | None:
     return data.get("TarballsVersion")  # type: ignore[union-attr]
 
 
-# Resolver per ARG. `needs_current` resolvers (node) get the pinned value so they
-# can constrain the bump to its current major line.
+def _resolve_trufflehog() -> str | None:
+    return _gh_release("trufflesecurity/trufflehog", re.compile(r"^v(\d+\.\d+\.\d+)$"))
+
+
+# Resolver per ARG (node's gets the pinned value, to stay on its major). No
+# resolver = never auto-bumped: the golangci-lint / kdlfmt opt-out (auto-bump doc).
 RESOLVERS: dict[str, Callable[..., str | None]] = {
     "UV_VERSION": _resolve_uv,
     "NODE_VERSION": _resolve_node,
@@ -185,6 +189,7 @@ RESOLVERS: dict[str, Callable[..., str | None]] = {
     "GOOSE_VERSION": _resolve_goose,
     "DOCKER_VERSION": _resolve_docker,
     "TAILSCALE_VERSION": _resolve_tailscale,
+    "TRUFFLEHOG_VERSION": _resolve_trufflehog,
 }
 _NEEDS_CURRENT = {"NODE_VERSION"}
 

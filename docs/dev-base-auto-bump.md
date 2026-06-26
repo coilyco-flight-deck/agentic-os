@@ -26,10 +26,17 @@ Fleet rollout is not its concern.
   bump and a bad one bisects to its own commit.
 - **Conservative bumps.** Node tracks the latest release of its currently-pinned
   major (no surprise major jump); uv, go, aws-cli, claude, codex, goose, docker,
-  and tailscale track the latest stable upstream release. Tailscale resolves
-  against its `pkgs.tailscale.com/stable` feed (not GitHub tags, which interleave
-  the unstable odd-minor releases). A hand-edited `ARG` wins until upstream
-  passes it.
+  tailscale, and trufflehog track the latest stable upstream release. Tailscale
+  resolves against its `pkgs.tailscale.com/stable` feed (not GitHub tags, which
+  interleave the unstable odd-minor releases). A hand-edited `ARG` wins until
+  upstream passes it.
+- **Two deliberate opt-outs.** `GOLANGCI_LINT_VERSION` and `KDLFMT_VERSION` have
+  no resolver, so the auto-bump never touches them (agentic-os#292). Their lint /
+  format output is version-sensitive, and the in-container gate has to match the
+  version the consuming repos' CI pins (cli-guard + ward pin golangci-lint
+  v2.12.2; ward pins kdlfmt v0.1.7). Auto-bumping them to upstream latest would
+  re-drift the container gate from CI - the exact failure the bake-in closed.
+  Bump them by hand when the consumers move.
 - **Fail-soft.** A resolver whose upstream is unreachable or has reshaped its API
   drops from that run with a warning; it never blocks the other bumps.
 

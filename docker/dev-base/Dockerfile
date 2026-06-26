@@ -13,6 +13,19 @@ ARG GOOSE_VERSION=1.38.0
 ARG DOCKER_VERSION=28.5.1
 ARG TAILSCALE_VERSION=1.98.4
 
+# Pre-commit / CI gate tools (agentic-os#292). golangci-lint and kdlfmt are
+# hand-pinned to the versions the consuming repos' CI pins - cli-guard and ward
+# both pin golangci-lint v2.12.2, ward pins kdlfmt v0.1.7 - because their lint /
+# format output is version-sensitive: an image bumping them independently would
+# re-drift the in-container gate from CI, the exact failure this closes. They are
+# deliberately left out of dep-bump's auto-bump for that reason (no resolver in
+# scripts/dep-bump.py). trufflehog tracks upstream latest, since CI installs it
+# unpinned (cli-guard's secrets job curls trufflehog's `main` install.sh), so
+# latest is the match - it stays in the auto-bump set.
+ARG GOLANGCI_LINT_VERSION=2.12.2
+ARG TRUFFLEHOG_VERSION=3.95.6
+ARG KDLFMT_VERSION=0.1.7
+
 # buildx populates TARGETARCH (amd64|arm64) per platform in the manifest list.
 ARG TARGETARCH
 
@@ -36,11 +49,11 @@ RUN apt-get update \
 # Map Docker's TARGETARCH onto each upstream's arch spelling once.
 RUN set -eux; \
     case "${TARGETARCH}" in \
-      amd64) NODE_ARCH=x64;   GO_ARCH=amd64; AWS_ARCH=x86_64; CODEX_ARCH=x86_64; GOOSE_ARCH=x86_64; DOCKER_ARCH=x86_64; TS_ARCH=amd64 ;; \
-      arm64) NODE_ARCH=arm64; GO_ARCH=arm64; AWS_ARCH=aarch64; CODEX_ARCH=aarch64; GOOSE_ARCH=aarch64; DOCKER_ARCH=aarch64; TS_ARCH=arm64 ;; \
+      amd64) NODE_ARCH=x64;   GO_ARCH=amd64; AWS_ARCH=x86_64; CODEX_ARCH=x86_64; GOOSE_ARCH=x86_64; DOCKER_ARCH=x86_64; TS_ARCH=amd64; GOLANGCI_ARCH=amd64; TRUFFLEHOG_ARCH=amd64; KDL_ARCH=x86_64 ;; \
+      arm64) NODE_ARCH=arm64; GO_ARCH=arm64; AWS_ARCH=aarch64; CODEX_ARCH=aarch64; GOOSE_ARCH=aarch64; DOCKER_ARCH=aarch64; TS_ARCH=arm64; GOLANGCI_ARCH=arm64; TRUFFLEHOG_ARCH=arm64; KDL_ARCH=aarch64 ;; \
       *) echo "unsupported TARGETARCH: ${TARGETARCH}" >&2; exit 1 ;; \
     esac; \
-    echo "NODE_ARCH=${NODE_ARCH} GO_ARCH=${GO_ARCH} AWS_ARCH=${AWS_ARCH} CODEX_ARCH=${CODEX_ARCH} GOOSE_ARCH=${GOOSE_ARCH} DOCKER_ARCH=${DOCKER_ARCH} TS_ARCH=${TS_ARCH}" > /tmp/arch.env
+    echo "NODE_ARCH=${NODE_ARCH} GO_ARCH=${GO_ARCH} AWS_ARCH=${AWS_ARCH} CODEX_ARCH=${CODEX_ARCH} GOOSE_ARCH=${GOOSE_ARCH} DOCKER_ARCH=${DOCKER_ARCH} TS_ARCH=${TS_ARCH} GOLANGCI_ARCH=${GOLANGCI_ARCH} TRUFFLEHOG_ARCH=${TRUFFLEHOG_ARCH} KDL_ARCH=${KDL_ARCH}" > /tmp/arch.env
 
 # uv (Python project + tool manager).
 RUN set -eux; \
@@ -72,6 +85,44 @@ RUN set -eux; \
     tar -xzf /tmp/go.tar.gz -C /usr/local; \
     rm /tmp/go.tar.gz; \
     go version
+
+# golangci-lint (Go linter for ward + cli-guard). Closes the missing-binary gap
+# that made the in-container `pre-commit run --all-files` / CI lint job unrunnable
+# for agents (agentic-os#292). Release tag is v-prefixed; the tarball name and its
+# top-level dir are not. Pinned to the consuming repos' CI version (see the ARG).
+RUN set -eux; \
+    . /tmp/arch.env; \
+    curl -fsSL "https://github.com/golangci/golangci-lint/releases/download/v${GOLANGCI_LINT_VERSION}/golangci-lint-${GOLANGCI_LINT_VERSION}-linux-${GOLANGCI_ARCH}.tar.gz" \
+      -o /tmp/golangci-lint.tar.gz; \
+    tar -xzf /tmp/golangci-lint.tar.gz -C /usr/local/bin --strip-components=1 \
+      "golangci-lint-${GOLANGCI_LINT_VERSION}-linux-${GOLANGCI_ARCH}/golangci-lint"; \
+    chmod 0755 /usr/local/bin/golangci-lint; \
+    rm /tmp/golangci-lint.tar.gz; \
+    golangci-lint --version
+
+# trufflehog (secret scanner for the catalog suite's offline trufflehog hook).
+# The static Go binary sits at the tarball root; extract just it.
+RUN set -eux; \
+    . /tmp/arch.env; \
+    curl -fsSL "https://github.com/trufflesecurity/trufflehog/releases/download/v${TRUFFLEHOG_VERSION}/trufflehog_${TRUFFLEHOG_VERSION}_linux_${TRUFFLEHOG_ARCH}.tar.gz" \
+      -o /tmp/trufflehog.tar.gz; \
+    tar -xzf /tmp/trufflehog.tar.gz -C /usr/local/bin trufflehog; \
+    chmod 0755 /usr/local/bin/trufflehog; \
+    rm /tmp/trufflehog.tar.gz; \
+    trufflehog --version
+
+# kdlfmt (KDL formatter for ward-kdl guardfiles, via ward's language:system hook).
+# cargo-dist ships a .tar.xz with the binary under a target-triple dir; only the
+# gnu build covers both arches (no aarch64 musl), and ubuntu's glibc runs it.
+RUN set -eux; \
+    . /tmp/arch.env; \
+    curl -fsSL "https://github.com/hougesen/kdlfmt/releases/download/v${KDLFMT_VERSION}/kdlfmt-${KDL_ARCH}-unknown-linux-gnu.tar.xz" \
+      -o /tmp/kdlfmt.tar.xz; \
+    tar -xJf /tmp/kdlfmt.tar.xz -C /usr/local/bin --strip-components=1 \
+      "kdlfmt-${KDL_ARCH}-unknown-linux-gnu/kdlfmt"; \
+    chmod 0755 /usr/local/bin/kdlfmt; \
+    rm /tmp/kdlfmt.tar.xz; \
+    kdlfmt --version
 
 # AWS CLI v2 (SSM secret loader + ~/.aws passthrough).
 RUN set -eux; \
