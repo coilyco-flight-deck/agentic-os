@@ -5,7 +5,7 @@ description: Build leg of the scout family - what novel software to BUILD on you
 
 # scout-autonomy
 
-The **build** leg of the scout family. Its two siblings move *tooling* in and out:
+The **build** leg of the scout family. Its two siblings move _tooling_ in and out:
 [tooling-scout-capability](../tooling-scout-capability/SKILL.md) finds what to **add**
 (external catalog in), [tooling-scout-displacement](../tooling-scout-displacement/SKILL.md)
 finds what to **shed** (your custom code out). This leg answers the third question:
@@ -58,5 +58,5 @@ The scout family is one portfolio activity in three directions:
 ## See also
 
 - [references/scoring-and-config.md](references/scoring-and-config.md) - scoring weights, run-config schema, cadence and resume.
-- [tooling-issue-prioritization](../tooling-issue-prioritization/SKILL.md) - the triage spine phase 1 ingests.
+- ⚠️ TODO: write a new issue prioritization skill
 - [tooling-scout-capability](../tooling-scout-capability/SKILL.md) / [tooling-scout-displacement](../tooling-scout-displacement/SKILL.md) - the add / shed siblings.
