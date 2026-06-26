@@ -286,7 +286,7 @@ git-pr-title() {
   PAGER="" gh pr view --json title --jq ".title"
 }
 
-source-aos-common() {
+apply-aos-common() {
   # shellcheck disable=SC1091
   source "$HOME/projects/coilyco-flight-deck/agentic-os/shell/common.sh"
 }
@@ -441,38 +441,38 @@ case $- in
     ;;
 esac
 
-# `warded explore` takes --repo as the primary, with repeatable --with-repo extras
-alias warded-explore-ward="\
-  warded explore \
+# `warded director` takes --repo as the primary, with repeatable --repo extras
+alias warded-director-ward="\
+  warded director \
     --repo coilyco-flight-deck/ward \
-    --with-repo coilysiren/coilysiren \
-    --with-repo coilyco-flight-deck/agentic-os \
-    --with-repo coilyco-flight-deck/cli-guard \
+    --repo coilysiren/coilysiren \
+    --repo coilyco-flight-deck/agentic-os \
+    --repo coilyco-flight-deck/cli-guard \
 "
-alias warded-explore-aosk="\
-  warded explore \
+alias warded-director-aosk="\
+  warded director \
     --repo coilyco-bridge/agentic-os-kai \
-    --with-repo coilysiren/coilysiren \
-    --with-repo coilyco-flight-deck/agentic-os \
-    --with-repo coilyco-bridge/agentic-os-hardware \
-    --with-repo coilyco-bridge/lore \
+    --repo coilysiren/coilysiren \
+    --repo coilyco-flight-deck/agentic-os \
+    --repo coilyco-bridge/agentic-os-hardware \
+    --repo coilyco-bridge/lore \
 "
-alias warded-explore-ser8="\
-  warded explore \
+alias warded-director-deploy="\
+  warded director \
     --repo coilyco-bridge/deploy \
-    --with-repo coilysiren/coilysiren \
-    --with-repo coilyco-flight-deck/agentic-os \
-    --with-repo coilyco-flight-deck/infrastructure \
-    --with-repo coilyco-bridge/agentic-os-hardware \
-    --with-repo coilyco-bridge/agentic-os-kai \
+    --repo coilysiren/coilysiren \
+    --repo coilyco-flight-deck/agentic-os \
+    --repo coilyco-flight-deck/infrastructure \
+    --repo coilyco-bridge/agentic-os-hardware \
+    --repo coilyco-bridge/agentic-os-kai \
 "
-alias warded-explore-agent-proxy="\
-  warded explore \
+alias warded-director-agent-proxy="\
+  warded director \
     --repo coilyco-flight-deck/agent-proxy \
-    --with-repo coilysiren/coilysiren \
-    --with-repo coilyco-flight-deck/agentic-os \
-    --with-repo coilyco-flight-deck/infrastructure \
-    --with-repo coilyco-bridge/agentic-os-hardware \
-    --with-repo coilyco-bridge/agentic-os-kai \
-    --with-repo coilyco-bridge/deploy \
+    --repo coilysiren/coilysiren \
+    --repo coilyco-flight-deck/agentic-os \
+    --repo coilyco-flight-deck/infrastructure \
+    --repo coilyco-bridge/agentic-os-hardware \
+    --repo coilyco-bridge/agentic-os-kai \
+    --repo coilyco-bridge/deploy \
 "
