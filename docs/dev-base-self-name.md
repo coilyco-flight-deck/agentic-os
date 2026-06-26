@@ -21,10 +21,11 @@ The image bakes the self-name slice in directly.
   explorer is which - useful for telling concurrent warded agents apart in logs,
   issue-comment signoffs, and o2r channel traffic.
 - [`managed-settings.json`](../docker/dev-base/claude-managed-settings.json) -
-  landed at the fixed `/etc/claude-code/managed-settings.json`. It adds only a
-  `statusLine` and two `SessionStart` hooks (the self-name banner and the
-  [git-identity stamp](dev-base-git-identity.md)), all pointing at the baked
-  script.
+  landed at the fixed `/etc/claude-code/managed-settings.json`. It adds a
+  `statusLine` pointing at the [status-line composer](statusline.md) (which runs
+  `agent-name.sh` as its `10-agent-name` provider) and two `SessionStart` hooks
+  (the self-name banner and the [git-identity stamp](dev-base-git-identity.md))
+  pointing at the baked script.
 
 ## Why policy-tier settings
 
@@ -44,6 +45,7 @@ the matching name is the contract this feature exists to honor.
 
 ## See also
 
+- [docs/statusline.md](statusline.md) - the composer that mounts this segment plus the rest of the line into every container.
 - [docs/dev-base-git-identity.md](dev-base-git-identity.md) - the git-identity stamp built on this self-name.
 - [docs/dev-base-image.md](dev-base-image.md) - the image this rides in.
 - [docs/features-agents-sessions.md](features-agents-sessions.md) - the host self-name feature.

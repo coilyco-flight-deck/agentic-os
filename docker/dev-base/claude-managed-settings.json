@@ -1,7 +1,7 @@
 {
   "statusLine": {
     "type": "command",
-    "command": "/opt/agentic-os/agent-name.sh statusline",
+    "command": "/opt/agentic-os/statusline.sh",
     "padding": 2
   },
   "hooks": {

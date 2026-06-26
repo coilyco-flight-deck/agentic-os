@@ -2,7 +2,7 @@
 
 A project-local status-line row that names the git checkouts on disk that are **not** on an expected-repos list, i.e. the strays to remove. Repos quietly re-clone themselves back during dev work; this surfaces the ones that should not be there so they stop piling up.
 
-This repo dogfoods the [second status-line row](features-agents-sessions.md) hook with [`.agentic-os/statusline.sh`](../.agentic-os/statusline.sh). `scripts/agent-name.sh` runs that hook when present and appends its stdout as a second row under the agent name.
+This repo dogfoods the [second status-line row](features-agents-sessions.md) hook with [`.agentic-os/statusline.sh`](../.agentic-os/statusline.sh). `scripts/agent-name.sh` runs that hook when present and appends its stdout as a second row under the agent name. The same logic is baked into the [dev-base image](dev-base-image.md) as the `20-repos` provider of the [status-line composer](statusline.md) (a format-identical port - keep the two in lockstep), so a warded container shows this row too, and self-suppresses where there is nothing to scan.
 
 ## What it shows
 
