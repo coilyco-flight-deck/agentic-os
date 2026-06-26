@@ -81,10 +81,6 @@ agents_md_max_chars = 12000
 excludes = [
     "warp/launch_configurations/**",
     "warp/tab_configs/**",
-    # Captured design/research log for the freshness program; over-cap by
-    # design. The productized program now lives in docs/knowledge-base-freshness.md
-    # (agentic-os#262); this stays as the raw thread record it was recovered from.
-    "docs/knowledge-base-meta-improvement.md",
     # Generated render of `ward ops forgejo describe` (scripts/gen-ward-ops-reference.sh).
     # Over-cap by design: the full operator-verb surface, committed so the names
     # stay greppable off-disk. Regenerate, do not hand-trim. See agentic-os#261.

@@ -4,7 +4,7 @@ Code drift is caught loud by CI. Knowledge rot is silent: a hand-written fact (a
 verb name, a model id, a price) goes stale with no commit, and a cold agent
 reads it confidently wrong. Stale-and-confident is strictly worse than absent.
 This program is the positive discipline for that, productized from the recovered
-[design thread](knowledge-base-meta-improvement.md) (agentic-os#262).
+design thread (coilysiren/inbox#123, agentic-os#262).
 
 ## Two axes
 
@@ -76,5 +76,5 @@ the full ecosystem survey are in the linked design thread.
 
 ## See also
 
-- [knowledge-base-meta-improvement.md](knowledge-base-meta-improvement.md) - the recovered design/research thread.
+- [coilysiren/inbox#123](https://forgejo.coilysiren.me/coilysiren/inbox/issues/123) - the recovered design/research thread.
 - [context-budget.md](context-budget.md) - the metered budget that makes derive-vs-point an optimization, not a blanket rule.
