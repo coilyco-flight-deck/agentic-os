@@ -23,7 +23,7 @@ ARG TAILSCALE_VERSION=1.98.8
 # unpinned (cli-guard's secrets job curls trufflehog's `main` install.sh), so
 # latest is the match - it stays in the auto-bump set.
 ARG GOLANGCI_LINT_VERSION=2.12.2
-ARG TRUFFLEHOG_VERSION=3.95.6
+ARG TRUFFLEHOG_VERSION=3.95.7
 ARG KDLFMT_VERSION=0.1.7
 
 # buildx populates TARGETARCH (amd64|arm64) per platform in the manifest list.
