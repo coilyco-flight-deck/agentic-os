@@ -1,8 +1,18 @@
 #!/usr/bin/env python3
-"""Daily unittest smoke checks for local agent harness compatibility."""
+"""Daily unittest smoke checks for local agent harness compatibility.
+
+The roster - which harnesses exist and what they are named - is **ward's**, not
+this script's. aos is the consumer here: it reads ward's embedded fleet roster
+from `ward agents list --json` (ward#417) and never maintains a parallel copy.
+`HARNESS_CASES` below holds only the per-harness probe *logic* (how to smoke-test
+each), keyed by ward's agent name; `tests/test_agent_compat.py` pins its key set
+to `ward agents list --json` so the two can never drift (aos#310 issue 5, the
+leak aos#308 flagged). The runtime default set is read live from ward.
+"""
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import shutil
 import subprocess
@@ -23,6 +33,10 @@ AGENT_COMPOSE_DIR = HOME / ".config" / "agent-compose"
 GOOSE_CONFIG = HOME / ".config" / "goose" / "config.yaml"
 
 
+class WardRosterUnavailable(RuntimeError):
+    """`ward agents list --json` could not be read (ward missing, too old, or non-JSON)."""
+
+
 def run_command(args: list[str], env: dict[str, str] | None = None) -> subprocess.CompletedProcess:
     return subprocess.run(
         args,
@@ -31,6 +45,40 @@ def run_command(args: list[str], env: dict[str, str] | None = None) -> subproces
         text=True,
         timeout=TIMEOUT_SECONDS,
     )
+
+
+def ward_roster() -> dict:
+    """Return ward's embedded fleet roster from `ward agents list --json` (ward#417).
+
+    This is the single source of truth for which harnesses exist. Raises
+    WardRosterUnavailable when the ward binary is absent or predates the
+    `agents list --json` surface, so callers can skip or fall back deliberately
+    rather than silently shadow a roster.
+    """
+    if command_path("ward") is None:
+        raise WardRosterUnavailable("ward is not on PATH")
+    try:
+        proc = run_command(["ward", "agents", "list", "--json"])
+    except subprocess.TimeoutExpired as exc:  # pragma: no cover - defensive.
+        raise WardRosterUnavailable(f"ward agents list --json timed out after {exc.timeout}s") from exc
+    if proc.returncode != 0:
+        detail = (proc.stderr or proc.stdout).strip().splitlines()
+        raise WardRosterUnavailable(
+            "ward agents list --json exited "
+            f"{proc.returncode}: {detail[0] if detail else 'no output'}"
+        )
+    try:
+        data = json.loads(proc.stdout)
+    except json.JSONDecodeError as exc:
+        raise WardRosterUnavailable(f"ward agents list --json emitted non-JSON: {exc}") from exc
+    if not isinstance(data, dict) or not isinstance(data.get("agents"), list):
+        raise WardRosterUnavailable("ward agents list --json lacks an agents[] array")
+    return data
+
+
+def ward_roster_names() -> list[str]:
+    """The agent names ward embeds, in fleet-KDL source order."""
+    return [str(agent.get("name", "")) for agent in ward_roster()["agents"] if agent.get("name")]
 
 
 def merged_env(updates: dict[str, str]) -> dict[str, str]:
@@ -51,12 +99,22 @@ def load_yaml(path: Path) -> dict:
     return data if isinstance(data, dict) else {}
 
 
-def goose_env() -> dict[str, str]:
+def ollama_env() -> dict[str, str]:
+    """Ambient ollama route: env first, then Goose's configured host/model.
+
+    Goose's config doubles as the host-local ollama route on these machines, so
+    it is the route source for any harness that talks to ollama (Goose itself and
+    opencode, whose backing model is qwen3-coder on the same ollama endpoint).
+    """
     config = load_yaml(GOOSE_CONFIG)
     return {
         "OLLAMA_HOST": os.environ.get("OLLAMA_HOST") or str(config.get("OLLAMA_HOST", "")),
         "GOOSE_MODEL": os.environ.get("GOOSE_MODEL") or str(config.get("GOOSE_MODEL", "")),
     }
+
+
+# Back-compat alias: goose_env() was the pre-repoint name for ollama_env().
+goose_env = ollama_env
 
 
 def load_point_for(harness: str) -> tuple[Path, Path]:
@@ -134,14 +192,18 @@ class OpenCodeCompat(AgentComposeCase):
         self.assert_cli_available()
         self.assert_version_succeeds()
 
-
-class AiderCompat(CompatCase):
-    command = "aider"
-    version_args = ["--version"]
-
-    def test_cli_version_runs(self) -> None:
-        self.assert_cli_available()
-        self.assert_version_succeeds()
+    def test_backing_model_inventory_is_reachable(self) -> None:
+        # opencode's backing model is qwen3-coder on ollama, so its inventory
+        # probe rides opencode - not a shadow "qwen" entry (see docs/agent-compat.md).
+        if command_path("ollama") is None:
+            self.skipTest("ollama is not on PATH")
+        env = merged_env(ollama_env())
+        try:
+            proc = run_command(["ollama", "list"], env=env)
+        except subprocess.TimeoutExpired as exc:
+            self.fail(f"ollama list timed out after {exc.timeout}s")
+        self.assertEqual(proc.returncode, 0, "ollama model inventory is not reachable")
+        self.assertIn("qwen", proc.stdout.lower(), "ollama model inventory has no qwen model")
 
 
 class GooseCompat(CompatCase):
@@ -158,33 +220,41 @@ class GooseCompat(CompatCase):
         self.assertTrue(model, "GOOSE_MODEL is not set in env or Goose config")
 
 
-class QwenCompat(CompatCase):
-    command = "ollama"
-    version_args = ["--version"]
-
-    def test_ollama_cli_version_runs(self) -> None:
-        self.assert_cli_available()
-        self.assert_version_succeeds()
-
-    def test_qwen_model_inventory_is_reachable(self) -> None:
-        self.assert_cli_available()
-        env = merged_env(goose_env())
-        try:
-            proc = run_command(["ollama", "list"], env=env)
-        except subprocess.TimeoutExpired as exc:
-            self.fail(f"ollama list timed out after {exc.timeout}s")
-        self.assertEqual(proc.returncode, 0, "ollama model inventory is not reachable")
-        self.assertIn("qwen", proc.stdout.lower(), "ollama model inventory has no qwen model")
-
-
+# Per-harness probe logic keyed by ward's agent name (aos's own code). Its key
+# set is NOT a private roster: tests/ pins it to `ward agents list --json`.
 HARNESS_CASES: dict[str, type[unittest.TestCase]] = {
     "claude": ClaudeCompat,
     "codex": CodexCompat,
-    "goose": GooseCompat,
-    "aider": AiderCompat,
     "opencode": OpenCodeCompat,
-    "qwen": QwenCompat,
+    "goose": GooseCompat,
 }
+
+
+def resolve_default_roster() -> list[str]:
+    """The harnesses to run by default: ward's live roster, filtered to probes we ship.
+
+    Reads `ward agents list --json` so the default set is ward's, not ours. Falls
+    back to the shipped probe keys (pinned == ward by test) when ward is absent or
+    too old, and warns to stderr for any ward agent lacking a probe here instead
+    of silently dropping it.
+    """
+    try:
+        names = ward_roster_names()
+    except WardRosterUnavailable as exc:
+        print(
+            f"agent-compat: ward roster unavailable ({exc}); using built-in probe set",
+            file=sys.stderr,
+        )
+        return sorted(HARNESS_CASES)
+    known = [name for name in names if name in HARNESS_CASES]
+    missing = [name for name in names if name not in HARNESS_CASES]
+    if missing:
+        print(
+            "agent-compat: no probe for ward agent(s) "
+            f"{', '.join(missing)}; add one to HARNESS_CASES in scripts/agent-compat.py",
+            file=sys.stderr,
+        )
+    return known
 
 
 def build_suite(harnesses: list[str]) -> unittest.TestSuite:
@@ -201,7 +271,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         "--harness",
         action="append",
         choices=sorted(HARNESS_CASES),
-        help="Run one harness check. Repeat to select several. Defaults to all.",
+        help="Run one harness check. Repeat to select several. Defaults to ward's roster.",
     )
     parser.add_argument("--list", action="store_true", help="List harness names and exit.")
     return parser.parse_args(argv)
@@ -214,7 +284,7 @@ def main(argv: list[str] | None = None) -> int:
             print(name)
         return 0
 
-    harnesses = args.harness or sorted(HARNESS_CASES)
+    harnesses = args.harness or resolve_default_roster()
     suite = build_suite(harnesses)
     result = unittest.TextTestRunner(verbosity=2).run(suite)
     return 0 if result.wasSuccessful() else 1
