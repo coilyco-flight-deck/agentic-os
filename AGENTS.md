@@ -36,6 +36,16 @@ Anything that fits as a pre-commit validation is **authored** here in agentic-os
 
 The **trigger** for a rollout is a push, not a hand-run publish, keeping it in agent scope. When work needs the `dev-base :latest` image rebuilt (a Dockerfile, entrypoint, or pinned-`ARG` edit), the agent authors it and pushes to main - the `publish-image` job in [`release.yml`](.forgejo/workflows/release.yml) rebuilds and pushes `:latest` under the release tag. It holds no registry creds, runs no `buildx --push`: the publish is a CI consequence of the landed commit, like the tag. So "needs the image republished" is **in** scope (author, push, let CI publish), not a NO-GO wall - reserve it for a deliverable that cannot reduce to a push.
 
+### Config placement
+
+**Config lives at the lowest layer that fully determines it**, is consumed only by that layer or higher, and is **never fetched downward**. A shipped product never reaches up into a reference/docs repo for its own runtime config. This is the config sibling of the authoring-vs-rollout law above: logic is authored in its home layer and flows down, and so is the config that logic reads.
+
+**Corollary** - a reference-implementation repo authors zero config that a shipped tool consumes at runtime. Fleet config that every user of the tool melds to their own values belongs down in the tool's build-time authoring layer (authored, compiled, embedded), not up in the reference repo. The reference repo may hold a clearly-marked reference copy of a config file as documentation, never a thing the tool fetches.
+
+The layer gradient this keys off (churn and host-awareness rising together, a clone/use breakpoint at each): cli-guard (engine, external contributors, no upstream knowledge), then ward-kdl (the meld layer - every ward user rewrites this to their own config), then ward (the product, shipped coherent to external users), then aos (reference impl + public docs - only Kai clones it, others copy-paste from it), then infra (nobody clones it but Kai).
+
+Config splits on three axes, each a distinct owner: **permission/surface** (ward-kdl guardfiles, dialect 1), **fleet tuning** (identity, model, endpoint, attribution, roster defaults - ward-kdl dialect 2, embedded), and **operator-local preference** (per-host, hand-edited, not embedded, parsed from a local source). One parser may serve two sources. The axes stay distinct owners.
+
 ### Skills
 
 `.agents/skills/` ships the generalizable, public-safe skills - tooling docs for the configs that live here, plus cross-repo skills that help any agentic-os user, not just Kai. These directories are the canonical sources; harness-specific setup owns installation and discovery. Edit the SKILL.md here, not an installed copy.
