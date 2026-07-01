@@ -48,10 +48,12 @@ Left in on purpose. Revisit if real dictation error rates justify it.
 
 ## Reference implementation
 
-The `agent-channel` coordination protocol uses this alphabet for its 4-character
-channel IDs. A channel ID is created once and then dictated between hosts, so
-spoken clarity is the whole point. The protocol's ID generator and validator
-both draw from the set above.
+The `agent-channel` coordination protocol (`otel-a2a-relay`) used this alphabet
+for its 4-character channel IDs. A channel ID was created once and then dictated
+between hosts, so spoken clarity was the whole point. The protocol's ID
+generator and validator both drew from the set above. That channel was archived
+in the June 2026 surface reduction (revival and absorption tracked at
+`ward#104`); the alphabet stays here for any successor that revives it.
 
 ## See also
 

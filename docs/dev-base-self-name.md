@@ -18,8 +18,10 @@ The image bakes the self-name slice in directly.
   context-usage snippet, the project-local second row, `$AGENT_STATUSLINE_EXTRA`,
   and the `ward agent-name` override probe. In a container `<os>` resolves to
   `linux` and `<host>` to the container hostname, so the name encodes *which*
-  explorer is which - useful for telling concurrent warded agents apart in logs,
-  issue-comment signoffs, and o2r channel traffic.
+  explorer is which - useful for telling concurrent warded agents apart in logs
+  and issue-comment signoffs. (The o2r agent channel that once carried such
+  traffic was archived in the June 2026 surface reduction, revival tracked at
+  `ward#104`.)
 - [`managed-settings.json`](../docker/dev-base/claude-managed-settings.json) -
   landed at the fixed `/etc/claude-code/managed-settings.json`. It adds a
   `statusLine` pointing at the [status-line composer](statusline.md) (which runs
