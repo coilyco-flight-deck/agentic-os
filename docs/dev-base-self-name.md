@@ -21,7 +21,12 @@ The image bakes the self-name slice in directly.
   explorer is which - useful for telling concurrent warded agents apart in logs
   and issue-comment signoffs. (The o2r agent channel that once carried such
   traffic was archived in the June 2026 surface reduction, revival tracked at
-  `ward#104`.)
+  `ward#104`.) In statusline mode it also appends the **container name** in
+  brackets when ward exports `WARD_CONTAINER_NAME` - e.g. `claude-linux-...-she-her
+  [engineer-claude-ward-338]` - since inside the container `<host>` is only the
+  opaque container ID. It self-suppresses (no brackets) when the var is unset, so
+  a native-host session renders identically
+  ([agentic-os#296](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/issues/296)).
 - [`managed-settings.json`](../docker/dev-base/claude-managed-settings.json) -
   landed at the fixed `/etc/claude-code/managed-settings.json`. It adds a
   `statusLine` pointing at the [status-line composer](statusline.md) (which runs

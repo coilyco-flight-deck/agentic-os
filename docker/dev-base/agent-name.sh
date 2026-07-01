@@ -65,6 +65,11 @@ pronoun_display() {
 }
 pronouns="$(pronoun_display "$name")"
 
+# Container-name suffix from ward's WARD_CONTAINER_NAME (the friendly docker
+# name; inside, HOSTNAME is only the opaque ID). See docs/dev-base-self-name.md.
+container_suffix=""
+[ -n "${WARD_CONTAINER_NAME:-}" ] && container_suffix="  [${WARD_CONTAINER_NAME}]"
+
 case "$mode" in
   sessionstart)
     printf '🐾 You are %s%s this session. When asked "who are you" or "what is your status", lead with this name.\n' "$name" "${pronouns:+ ($pronouns)}"
@@ -75,6 +80,6 @@ case "$mode" in
     git config --global user.name "$name" 2>/dev/null || true
     ;;
   statusline | *)
-    printf '%s' "$name"
+    printf '%s%s' "$name" "$container_suffix"
     ;;
 esac

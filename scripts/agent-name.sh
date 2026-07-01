@@ -138,12 +138,17 @@ pronoun_display() {
 }
 pronouns="$(pronoun_display "$name")"
 
+# Container-name suffix from ward's WARD_CONTAINER_NAME (unset on a native host,
+# so it self-suppresses here). See docs/dev-base-self-name.md.
+container_suffix=""
+[ -n "${WARD_CONTAINER_NAME:-}" ] && container_suffix="  [${WARD_CONTAINER_NAME}]"
+
 case "$mode" in
   sessionstart)
     printf '🐾 You are %s%s this session. When asked "who are you" or "what is your status", lead with this name.\n' "$name" "${pronouns:+ ($pronouns)}"
     ;;
   statusline | *)
-    printf '%s%s' "$name" "$(ctx_snippet)"
+    printf '%s%s%s' "$name" "$container_suffix" "$(ctx_snippet)"
     # Second row, project-local: $project_dir/.agentic-os/statusline.sh.
     project_hook="$project_dir/.agentic-os/statusline.sh"
     if [ -x "$project_hook" ]; then

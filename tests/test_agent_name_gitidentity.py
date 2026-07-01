@@ -14,16 +14,21 @@ SCRIPT = Path(__file__).resolve().parent.parent / "docker" / "dev-base" / "agent
 PAYLOAD = '{"session_id":"AbC123xyz"}'
 
 
-def _run(mode: str, home: Path) -> str:
+def _run(mode: str, home: Path, container: str | None = None) -> str:
     # A fresh HOME isolates --global writes/reads to this test's gitconfig, and
     # TMPDIR isolates the per-session name cache so runs never cross-talk.
+    env = {"HOME": str(home), "TMPDIR": str(home), "PATH": "/usr/bin:/bin"}
+    # WARD_CONTAINER_NAME drives the container-name suffix; leave it unset to
+    # exercise the native-host / self-suppress path (agentic-os#296).
+    if container is not None:
+        env["WARD_CONTAINER_NAME"] = container
     proc = subprocess.run(
         [str(SCRIPT), mode],
         input=PAYLOAD,
         capture_output=True,
         text=True,
         check=True,
-        env={"HOME": str(home), "TMPDIR": str(home), "PATH": "/usr/bin:/bin"},
+        env=env,
     )
     return proc.stdout.strip()
 
@@ -58,3 +63,18 @@ def test_gitidentity_is_idempotent(tmp_path: Path) -> None:
     first = _git_global("user.name", tmp_path)
     _run("gitidentity", tmp_path)
     assert _git_global("user.name", tmp_path) == first
+
+
+def test_statusline_appends_container_name(tmp_path: Path) -> None:
+    # In a warded container ward exports WARD_CONTAINER_NAME; the status line
+    # shows it in brackets next to the agent name (agentic-os#296).
+    out = _run("statusline", tmp_path, container="engineer-claude-ward-338")
+    assert out.startswith("claude-")
+    assert out.endswith("[engineer-claude-ward-338]")
+
+
+def test_statusline_suppresses_container_name_when_unset(tmp_path: Path) -> None:
+    # Native host / before ward ships the env var: no brackets, no error.
+    out = _run("statusline", tmp_path)
+    assert out.startswith("claude-")
+    assert "[" not in out and "]" not in out
