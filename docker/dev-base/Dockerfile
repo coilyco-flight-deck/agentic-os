@@ -11,7 +11,7 @@ ARG CLAUDE_VERSION=2.1.197
 ARG CODEX_VERSION=0.142.5
 ARG GOOSE_VERSION=1.39.0
 ARG DOCKER_VERSION=28.5.2
-ARG TAILSCALE_VERSION=1.98.4
+ARG TAILSCALE_VERSION=1.98.8
 
 # Pre-commit / CI gate tools (agentic-os#292). golangci-lint and kdlfmt are
 # hand-pinned to the versions the consuming repos' CI pins - cli-guard and ward
