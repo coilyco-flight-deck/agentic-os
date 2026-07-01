@@ -184,9 +184,9 @@
 
 - id: trufflehog
   name: trufflehog (secret scan, offline)
-  description: Detect secrets in staged changes via local trufflehog binary (no API verification). Requires the trufflehog binary on PATH (shipped in the agentic-os Brewfile).
-  entry: trufflehog git file://. --since-commit HEAD --no-verification --no-update --fail
-  language: system
+  description: Detect secrets in staged changes via local trufflehog binary (no API verification). Excludes gitignored build/cache dirs (target/, .venv/, node_modules/, ...) so a trufflehog build that walks untracked working-tree files does not block commits with artifact false positives (agentic-os#288). Requires the trufflehog binary on PATH (shipped in the agentic-os Brewfile).
+  entry: scripts/trufflehog-scan.sh
+  language: script
   pass_filenames: false
   stages: [pre-commit, pre-push]
 
