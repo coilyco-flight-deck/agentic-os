@@ -28,6 +28,4 @@ This doc describes capabilities, not files. If you want a file inventory, run `l
 - [AGENTS.md](../AGENTS.md) - public-safe agent operating rules.
 - [.ward/ward.yaml](../.ward/ward.yaml) - allowlisted commands.
 
-Engineer-dispatch smoke test confirmed the implement -> commit -> merge -> push path end to end on 2026-07-01 ([agentic-os#304](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/issues/304)).
-
 Cross-reference convention from [coilysiren/agentic-os-kai#313](https://github.com/coilysiren/agentic-os-kai/issues/313).
