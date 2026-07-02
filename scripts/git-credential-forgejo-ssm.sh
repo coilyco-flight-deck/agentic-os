@@ -25,7 +25,7 @@ done
 # Only answer for the Forgejo host; let git fall through for anything else.
 [ "$host" = "forgejo.coilysiren.me" ] || exit 0
 
-token="$(ward-kdl ops aws ssm get-parameter \
+token="$(ward ops aws ssm get-parameter \
   --name /forgejo/api-token --with-decryption \
   --query Parameter.Value --output text 2>/dev/null)" || exit 0
 [ -n "$token" ] || exit 0
