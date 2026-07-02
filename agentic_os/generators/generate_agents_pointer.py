@@ -21,7 +21,13 @@ Each org points at its own base, on the host appropriate to its trust tier:
     agentic-os-kai overlay (Forgejo) layered on top, expressing that aos-pub is
     the foundation and aos-kai layers Kai-specific context over it.
 The canonical base repos themselves (agentic-os, agentic-os-kai) are exempt:
-a base does not point at itself. coilysiren/* is unmanaged for now.
+a base does not point at itself. coilysiren/* stays deliberately unmanaged: it
+is Kai's public personal org, outside the coilyco-* fleet, and its handful of
+repos are `.agentic-os-ignore`-exempt and hand-authored (the profile repo
+coilysiren/coilysiren carries a bespoke bootstrap, not a one-line pointer). So
+those repos are hand-maintained per-repo rather than templated - extending
+generator management over a public org would fire the drift hook across it for
+little gain. Decision recorded in coilyco-flight-deck/agentic-os#206.
 
 Schema and rollout: coilyco-flight-deck/agentic-os#196.
 """

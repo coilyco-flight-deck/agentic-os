@@ -14,9 +14,11 @@ Org-aware (each org points at its own base, on the host fitting its trust tier):
 Unmanaged orgs (coilysiren/*, non-coilyco remotes) and the canonical base repos
 themselves (agentic-os, agentic-os-kai) are skipped.
 
-This is the AUTHORED tool. The fleet rollout that fans it across every checkout
-is an ansible role in infrastructure, per the authoring-vs-rollout split - not
-this script run by hand across the fleet.
+This is the AUTHORED tool. The fleet rollout that lands the block on each
+managed repo's canonical `main` is `scripts/agents-pointer-migrate.py` in
+infrastructure (`ward exec agents-pointer-migrate`), per the authoring-vs-rollout
+split - not this script run by hand across the fleet. (The earlier report-only
+ansible `agents-pointer` role was retired in infrastructure#362.)
 
 Usage:
     python3 scripts/apply-agents-pointer.py --dry-run   # show the plan

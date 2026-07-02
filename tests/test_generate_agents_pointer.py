@@ -35,6 +35,14 @@ def test_unmanaged_org_renders_nothing():
     assert render_block("coilysiren") is None
 
 
+def test_coilysiren_is_deliberately_unmanaged():
+    # Decision agentic-os#206: coilysiren/* stays unmanaged on purpose (see the
+    # generator docstring). Pins the intent so a refactor cannot quietly manage it.
+    assert render_body("coilysiren") is None
+    assert is_managed("coilysiren", "website") is False
+    assert is_managed("coilysiren", "coilysiren") is False
+
+
 def test_is_managed_exempts_the_base_repos_themselves():
     assert is_managed(FLIGHT_DECK, "luca") is True
     assert is_managed(BRIDGE, "ward") is True
