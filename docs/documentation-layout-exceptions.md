@@ -15,6 +15,7 @@ These ship in the shared validator for other repos in the family but match nothi
 
 - **`SIZE_CAP_EXEMPT_BASENAMES`** - `CODE_OF_CONDUCT.md` is exempt from the size cap by basename (verbatim-upstream file). Not present.
 - **`examples/` carve-out** - any `*.md` under an `examples/` dir is allowed at any depth (Go/Rust idiom). No such file here.
+- **README.md size opt-up** - config keys `readme_max_lines` / `readme_max_chars` lift the root `README.md` past the trifecta default (160 / 12500), the same mechanism as the AGENTS.md override. Unset here, so this repo's README rides the trifecta cap. Used by a release repo whose README is the launch-grade front page (ward#427).
 
 ## Suppressed wholesale
 

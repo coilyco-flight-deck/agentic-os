@@ -99,6 +99,20 @@ def _caps() -> list[tuple[str, str, str, str]]:
         ),
         (
             "documentation-layout",
+            "README.md lines (default)",
+            str(dl.README_DEFAULT_MAX_LINES),
+            "the root README.md defaults to the trifecta line cap "
+            "(override per-repo with `readme_max_lines`)",
+        ),
+        (
+            "documentation-layout",
+            "README.md chars (default)",
+            str(dl.README_DEFAULT_MAX_CHARS),
+            "the root README.md defaults to the trifecta char cap "
+            "(override per-repo with `readme_max_chars`)",
+        ),
+        (
+            "documentation-layout",
             "module README lines",
             str(dl.README_MAX_LINES),
             "non-blank lines for a co-located module README "

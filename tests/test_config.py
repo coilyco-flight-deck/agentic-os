@@ -129,6 +129,17 @@ agents_md_max_chars = 12000
     assert get_int_option("documentation-layout", "agents_md_max_chars", 4000, repo) == 12000
 
 
+def test_int_option_reads_readme_opt_up(repo: Path) -> None:
+    # The root README opts past the trifecta cap the same way AGENTS.md does.
+    write(repo / "pyproject.toml", """
+[tool.agentic-os.documentation-layout]
+readme_max_lines = 400
+readme_max_chars = 30000
+""")
+    assert get_int_option("documentation-layout", "readme_max_lines", 160, repo) == 400
+    assert get_int_option("documentation-layout", "readme_max_chars", 12500, repo) == 30000
+
+
 def test_int_option_rejects_non_int(repo: Path) -> None:
     write(repo / "pyproject.toml", """
 [tool.agentic-os.documentation-layout]

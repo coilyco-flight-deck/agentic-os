@@ -20,6 +20,8 @@ Constants live in [`agentic_os/pre_commit/check_code_comments.py`](../agentic_os
 * **trifecta chars** - 12500 - characters for the trifecta files.
 * **AGENTS.md lines (default)** - 160 - AGENTS.md defaults to the trifecta line cap (override per-repo with `agents_md_max_lines`).
 * **AGENTS.md chars (default)** - 12500 - AGENTS.md defaults to the trifecta char cap (override per-repo with `agents_md_max_chars`).
+* **README.md lines (default)** - 160 - the root README.md defaults to the trifecta line cap (override per-repo with `readme_max_lines`).
+* **README.md chars (default)** - 12500 - the root README.md defaults to the trifecta char cap (override per-repo with `readme_max_chars`).
 * **module README lines** - 3 - non-blank lines for a co-located module README (outpost or homestead shape).
 * **module README prose chars** - 90 - characters per prose line in a module README (the pointer line is exempt).
 

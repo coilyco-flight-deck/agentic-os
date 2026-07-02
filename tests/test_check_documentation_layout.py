@@ -23,10 +23,13 @@ from agentic_os.pre_commit.check_documentation_layout import (
 
 
 def test_trifecta_gets_the_larger_cap() -> None:
-    # The living-overview trifecta breathes past the standard markdown cap.
-    # README/FEATURES take the trifecta cap directly (no per-repo config path).
-    assert caps_for(Path("README.md")) == (TRIFECTA_MAX_LINES, TRIFECTA_MAX_CHARS)
+    # docs/FEATURES.md rides the flat trifecta cap.
     assert caps_for(Path("docs/FEATURES.md")) == (TRIFECTA_MAX_LINES, TRIFECTA_MAX_CHARS)
+    # README.md and AGENTS.md default to the trifecta cap but carry a per-repo
+    # opt-up, so with no config set they resolve to at least the trifecta cap.
+    readme_lines, readme_chars = caps_for(Path("README.md"))
+    assert readme_lines >= TRIFECTA_MAX_LINES
+    assert readme_chars >= TRIFECTA_MAX_CHARS
     # AGENTS.md is at least the trifecta cap (its default); a per-repo config
     # override may lift it further, so assert the floor rather than equality.
     agents_lines, agents_chars = caps_for(Path("AGENTS.md"))

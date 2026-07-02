@@ -57,6 +57,14 @@ hook section. Repos that don't set them get the trifecta cap for AGENTS.md.
 The canonical agentic-os-kai AGENTS.md is loader-bound (read on every session)
 and holds universal-fire doctrine that can't split into docs/*.md without
 losing unconditional firing, so that repo opts higher.
+
+The root README.md gets the same per-repo opt-up, via `readme_max_lines` /
+`readme_max_chars`. It is the launch-grade front page a cold visitor (human or
+agent) reads to decide in under a minute whether the tool is for them, so a
+release repo may need room to say who it's for and what it requires, show a
+denial, and route into docs/ - more than the trifecta default gives. Repos
+that don't set the keys keep the trifecta cap. Only the root README.md opts up;
+a co-located module README stays on the tight outpost / homestead shape.
 """
 from __future__ import annotations
 
@@ -90,14 +98,19 @@ MD_LINK_RE = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
 TRIFECTA_MAX_LINES = 160
 TRIFECTA_MAX_CHARS = 12_500
 
-# Larger-cap paths (root README only; AGENTS.md is matched by name in caps_for).
-# Co-located module READMEs keep the outpost/homestead shape, not this cap.
-TRIFECTA_PATHS = frozenset({"README.md", "docs/FEATURES.md"})
+# Trifecta paths matched by exact path. README.md and AGENTS.md are matched by
+# name in caps_for (each has a per-repo opt-up); only FEATURES rides this cap.
+TRIFECTA_PATHS = frozenset({"docs/FEATURES.md"})
 
 # AGENTS.md defaults to the trifecta cap; repos opt higher via config keys
 # agents_md_max_lines / agents_md_max_chars.
 AGENTS_DEFAULT_MAX_LINES = TRIFECTA_MAX_LINES
 AGENTS_DEFAULT_MAX_CHARS = TRIFECTA_MAX_CHARS
+
+# The root README.md - the launch-grade front page - defaults to the trifecta
+# cap and opts higher per-repo via readme_max_lines / readme_max_chars.
+README_DEFAULT_MAX_LINES = TRIFECTA_MAX_LINES
+README_DEFAULT_MAX_CHARS = TRIFECTA_MAX_CHARS
 
 # Verbatim upstream files; exempt from size cap, matched by basename.
 SIZE_CAP_EXEMPT_BASENAMES = {
@@ -396,6 +409,14 @@ def caps_for(rel: Path) -> tuple[int, int]:
         )
         max_chars = get_int_option(
             HOOK_ID, "agents_md_max_chars", AGENTS_DEFAULT_MAX_CHARS
+        )
+        return max_lines, max_chars
+    if rel.as_posix() == "README.md":
+        max_lines = get_int_option(
+            HOOK_ID, "readme_max_lines", README_DEFAULT_MAX_LINES
+        )
+        max_chars = get_int_option(
+            HOOK_ID, "readme_max_chars", README_DEFAULT_MAX_CHARS
         )
         return max_lines, max_chars
     if rel.as_posix() in TRIFECTA_PATHS:
