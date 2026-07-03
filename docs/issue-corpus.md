@@ -5,6 +5,12 @@ container can answer "which issue *anywhere* mentions this phrase" offline
 (agentic-os#297). It is a **discovery index, not a source of truth**: grep it to
 locate an issue, then confirm live state with `ward ops forgejo issue view`.
 
+The corpus lives in `coilysiren/inbox` under `corpus/` (ward#575): inbox does
+**double duty** as both a corpus *source* and the *output host*, so no separate
+mirror repo is provisioned. inbox is already private (the sole reason the corpus
+must stay private) and empty but for a 4-byte `README.md`, which `corpus/` leaves
+untouched.
+
 ## The gap it closes
 
 A critical fact lived in a Forgejo issue and could not be found, because
@@ -21,7 +27,7 @@ same warm-cache path that seeds `/substrate/<name>`.
   (`docker/dev-base/substrate-image-repos.txt`): it adds the private
   `coilysiren/inbox`, which must never land in the public substrate image.
 - **Layout** - `<owner>/<name>/<index>-<slug>.md`, one file per issue, plus
-  `manifest.json` at the mirror root.
+  `manifest.json`, rooted at `--mirror-dir` (`corpus/` in the inbox clone).
 - **Header** - repo, issue number, state, title, author, labels, source
   `updated_at`, this render's `rendered-at`, and the index disclaimer pointing
   back at `ward ops forgejo issue view <owner> <name> <N>`. Then the body and the
@@ -33,8 +39,8 @@ The render+scan logic is [`scripts/render-issue-corpus.py`](../scripts/render-is
 (`ward exec render-issue-corpus -- --mirror-dir <clone>`). It is hermetic and
 git-free so it unit-tests cleanly; the hourly cron
 [`.forgejo/workflows/issue-corpus.yml`](../.forgejo/workflows/issue-corpus.yml)
-owns the git side (clone the private mirror, run the renderer, commit, push), the
-same split as `dep-bump.yml`.
+owns the git side (clone inbox, render into `corpus/`, commit, push), the same
+split as `dep-bump.yml`.
 
 - **Token boundary** - all Forgejo I/O routes through `ward ops forgejo`
   (ward-kdl, coilyco-ops from SSM), so the script holds no `FORGEJO_TOKEN`, like
@@ -43,10 +49,10 @@ same split as `dep-bump.yml`.
   unchanged since the last run (recorded in `manifest.json`) is skipped without
   the per-issue comment fetch. `--force` re-renders everything. A title edit moves
   the slug path and the stale file is removed.
-- **Privacy** - the mirror is private (it carries `coilysiren/inbox`). The
-  renderer runs trufflehog over the corpus and exits non-zero on any finding (or a
-  missing scanner) **before** the cron pushes, so a leaky corpus never lands.
-  `--no-scan` is for local dry runs only.
+- **Privacy** - inbox is private. The renderer runs trufflehog over the rendered
+  `corpus/` tree and exits non-zero on any finding (or a missing scanner)
+  **before** the cron pushes, so a leaky corpus never lands. `--no-scan` is for
+  local dry runs only.
 
 ## Rollout (not authored here)
 
@@ -54,11 +60,11 @@ Per the AGENTS.md authoring-vs-rollout split, this repo authors the renderer and
 the cron. These prerequisites are fleet rollout and land in
 `infrastructure/ansible`, not here:
 
-- the private mirror repo (default `coilysiren/issue-corpus`) and its
-  `ISSUE_CORPUS_PUSH_TOKEN` workflow secret,
+- the `ISSUE_CORPUS_PUSH_TOKEN` workflow secret, wired with **write access to
+  `coilysiren/inbox`** (no separate mirror repo to provision),
 - the `ward` binary plus AWS/SSM on the Forgejo runner (the I/O boundary),
-- the container mount that hydrates this mirror into `/substrate` - a separate
-  **ward** sibling issue, blocked on this one.
+- the container mount that hydrates `inbox/corpus` into `/substrate` - a separate
+  **ward** sibling issue (ward#575), blocked on this one.
 
 The cron no-ops cleanly while the push token is unset, so it does not red-fail
 every hour until the rollout lands.
