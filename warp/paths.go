@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 )
 
 // HostPaths is the resolved per-OS layout. See docs/warp.md.
@@ -105,8 +106,13 @@ func resolveHostPaths(channel string) (*HostPaths, error) {
 	h.LaunchDstDir = filepath.Join(h.ConfigDir, "launch_configurations")
 
 	// StartupDir is where a fresh tab opens: the projects root, one level above
-	// WorkspaceDir. Every OS now uses the <owner>/ grouping, Windows included.
+	// WorkspaceDir. Every OS uses the <owner>/ grouping, Windows included.
 	h.StartupDir = filepath.Dir(h.WorkspaceDir)
+	// Operator-local override: WARP_STARTUP_DIR pins the landing dir per host
+	// (e.g. a specific repo, not the projects root). See the tooling-warp skill.
+	if override := strings.TrimSpace(os.Getenv("WARP_STARTUP_DIR")); override != "" {
+		h.StartupDir = filepath.Clean(override)
+	}
 	return h, nil
 }
 

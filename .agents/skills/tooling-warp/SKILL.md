@@ -24,6 +24,10 @@ warp, Warp, WarpPreview, ~/.warp, ~/.warp-preview, warp settings, settings.toml,
 - [internals](references/internals.md) - AI noise-cut, `settings.toml` <-> SQLite model, schema-enum debugging, inline rendering.
 - [internals-debug](references/internals-debug.md) - SQLite peeking, enum-source trust order, schema gotchas.
 
+## Start dir override
+
+`StartupDir` (where a fresh tab opens) defaults to the projects root, one level above the repo's workspace dir. Set `WARP_STARTUP_DIR` to an absolute path in the env before `ward exec warp apply` to pin it per host - e.g. a specific repo instead of the root. It is operator-local preference, read from the local env and never embedded in the tracked templates. One override feeds every surface at once: the pwsh profile auto-cd, Warp's `settings.toml` `custom_dir` (global/new_tab/new_window), and `startup_config.toml`. `doctor` reads the same env, so a host with the override set still passes clean. On Windows, `setx WARP_STARTUP_DIR <path>` persists it across sessions.
+
 ## See also
 
 - [`docs/warp-host-setup.md`](../../../docs/warp-host-setup.md) - install playbook for the Mac daily driver (brew install Preview, swap `settings.toml` symlink, run `scripts/set-warp-default-editor.sh` to rebind file-type defaults via `duti` + `lsregister`, Dock/Spotlight discipline). The script honors `WARP_DEFAULT_EDITOR_BUNDLE_ID` and `WARP_DEFAULT_EDITOR_APP_PATH` for per-host overrides.
