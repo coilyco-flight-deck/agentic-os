@@ -10,3 +10,19 @@
 if (Test-Path '{{ .StartupDir }}') {
     Set-Location -Path '{{ .StartupDir }}'
 }
+
+# Defuse stuck xterm mouse-tracking modes (1000 click / 1002 drag / 1003
+# any-motion / 1006 SGR encoding) that a TUI child can leave enabled when it
+# exits or crashes without restoring them. A poisoned PTY then echoes every
+# pointer move as a raw `^[[<35;X;YM` motion report, flooding the pane. The
+# `35` button byte is 32 (motion) + 3 (no button), which only mode 1003 emits,
+# so a TUI (a Linux tool under WSL, an Ink CLI) turned 1003 on and died dirty.
+# Chain any existing prompt rather than replace it, so Warp's shell-integration
+# prompt (OSC 133 block markers) is preserved. Worst case this is inert; it
+# never clobbers Warp's prompt.
+$script:__warpPriorPrompt = $function:prompt
+function prompt {
+    [Console]::Write("`e[?1000l`e[?1002l`e[?1003l`e[?1006l")
+    if ($script:__warpPriorPrompt) { & $script:__warpPriorPrompt }
+    else { "PS $($executionContext.SessionState.Path.CurrentLocation)> " }
+}
