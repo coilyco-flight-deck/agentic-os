@@ -42,6 +42,17 @@ if [ -z "${_SIREN_SHELL_ENV:-}" ]; then
       # first to stop a poisoned HOMEBREW_* (inherited value) perpetuating.
       unset HOMEBREW_PREFIX HOMEBREW_CELLAR HOMEBREW_REPOSITORY
       [ -x /home/linuxbrew/.linuxbrew/bin/brew ] && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+      # A stray empty $HOMEBREW_REPOSITORY/Cellar hijacks HOMEBREW_CELLAR box-wide,
+      # so rmdir it and recompute shellenv from the real prefix (agentic-os#325).
+      if [ -n "${HOMEBREW_PREFIX:-}" ] && [ -n "${HOMEBREW_REPOSITORY:-}" ] && \
+        [ "$HOMEBREW_PREFIX" != "$HOMEBREW_REPOSITORY" ] && \
+        [ -d "$HOMEBREW_REPOSITORY/Cellar" ] && \
+        [ -z "$(ls -A "$HOMEBREW_REPOSITORY/Cellar" 2>/dev/null)" ] && \
+        [ -d "$HOMEBREW_PREFIX/Cellar" ]; then
+        rmdir "$HOMEBREW_REPOSITORY/Cellar" 2>/dev/null
+        unset HOMEBREW_PREFIX HOMEBREW_CELLAR HOMEBREW_REPOSITORY
+        [ -x /home/linuxbrew/.linuxbrew/bin/brew ] && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+      fi
       _siren_path_prepend "$HOME/.local/bin"
       _siren_path_prepend "$HOME/bin"
       # npm global prefix (~/.npmrc sets prefix=~/.npm-global); holds the claude CLI.
