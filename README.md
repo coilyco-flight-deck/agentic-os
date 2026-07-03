@@ -1,3 +1,4 @@
+<!-- maintained under agentic-os -->
 # agentic-os
 
 ![Sombra hacking skull](static/wallpaper.jpg)
