@@ -1,26 +1,35 @@
 # Scheduled issue-corpus renderer. Renders the Forgejo issue corpus (every
 # tracked source repo in scripts/issue-corpus-repos.txt, open AND closed, bodies
-# plus every comment) to one markdown file per issue and pushes it to the private
-# discovery-index mirror, so a warded container can grep the corpus offline to
+# plus every comment) to one markdown file per issue and pushes it under corpus/
+# in coilysiren/inbox, so a warded container can grep the corpus offline to
 # *locate* an issue, then confirm its live state via `ward ops forgejo issue
 # view`. A discovery index, not an offline source of truth (agentic-os#297).
 #
+# inbox does double duty (ward#575): it is both a corpus *source* repo and the
+# corpus *output host*. It already carries the only private reason the corpus must
+# stay private, its git tree is empty but for a 4-byte README.md, and the renderer
+# reads *issues* while writing *git files* - different planes, so indexing inbox
+# into itself never bumps an issue updated_at and the incremental manifest stays
+# stable. The corpus lands under corpus/ so the README.md at the root is untouched.
+# This deletes a whole rollout prerequisite: no separate private mirror repo to
+# provision, only write access to inbox.
+#
 # The render+scan logic is scripts/render-issue-corpus.py; this job owns the git
-# side (clone the private mirror, commit, push) the same way dep-bump.yml owns the
-# bump push - keeping the renderer hermetic and unit-testable. The mount wiring
-# that hydrates this mirror into containers is a separate ward issue, blocked on
+# side (clone inbox, commit, push) the same way dep-bump.yml owns the bump push -
+# keeping the renderer hermetic and unit-testable. The mount wiring that hydrates
+# inbox/corpus into containers is a separate ward issue (ward#575), blocked on
 # this. Runner provisioning (the `ward` binary, AWS/SSM for ward-kdl's coilyco-ops
-# token, the private mirror repo, and the ISSUE_CORPUS_PUSH_TOKEN secret) is fleet
-# rollout and lands in infrastructure/ansible per AGENTS.md, not here.
+# token, and the ISSUE_CORPUS_PUSH_TOKEN secret with write access to inbox) is
+# fleet rollout and lands in infrastructure/ansible per AGENTS.md, not here.
 #
-# Privacy: the mirror is private (it carries coilysiren/inbox). The renderer runs
-# trufflehog over the corpus and exits non-zero on any finding BEFORE this job
-# pushes, so a leaky corpus never lands. No-ops cleanly when the push token is
-# unset (a runner without the secret), like mirror-to-github.yml, so it does not
-# red-fail every hour until the rollout completes.
+# Privacy: inbox is private. The renderer runs trufflehog over the rendered
+# corpus/ tree and exits non-zero on any finding BEFORE this job pushes, so a leaky
+# corpus never lands. No-ops cleanly when the push token is unset (a runner without
+# the secret), like mirror-to-github.yml, so it does not red-fail every hour until
+# the rollout completes.
 #
-# MIRROR_REPO is the owner/name of the private discovery-index mirror on this
-# Forgejo instance (FORGEJO_HOST); the job clones it with ISSUE_CORPUS_PUSH_TOKEN.
+# MIRROR_REPO is the owner/name of the corpus output host on this Forgejo instance
+# (FORGEJO_HOST); the job clones it with ISSUE_CORPUS_PUSH_TOKEN.
 #
 # Hourly at :23 (off the hour, and off dep-bump's :17 / freshness's :41, to dodge
 # cron rush). Tight cadence bounds staleness; the renderer is incremental, so a
@@ -37,7 +46,7 @@ permissions:
   contents: read
 
 env:
-  MIRROR_REPO: coilysiren/issue-corpus
+  MIRROR_REPO: coilysiren/inbox
   FORGEJO_HOST: forgejo.coilysiren.me
 
 jobs:
@@ -46,7 +55,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Render the issue corpus and push to the private mirror
+      - name: Render the issue corpus and push to inbox
         env:
           ISSUE_CORPUS_PUSH_TOKEN: ${{ secrets.ISSUE_CORPUS_PUSH_TOKEN }}
         run: |
@@ -73,9 +82,15 @@ jobs:
           CLONE_URL="https://x-access-token:${ISSUE_CORPUS_PUSH_TOKEN}@${FORGEJO_HOST}/${MIRROR_REPO}.git"
           git clone --depth 1 "${CLONE_URL}" "${MIRROR_DIR}"
 
-          # Renders into MIRROR_DIR and runs trufflehog over the corpus; a finding
-          # or a missing scanner exits non-zero here, before any commit or push.
-          python3 scripts/render-issue-corpus.py --mirror-dir "${MIRROR_DIR}"
+          # inbox does double duty: the corpus lands under corpus/ so the repo's own
+          # README.md at the clone root stays untouched. The renderer's whole output
+          # layout (issue files + manifest.json) is --mirror-dir-rooted, so pointing
+          # it at corpus/ scopes everything - including the trufflehog scan - there.
+          mkdir -p "${MIRROR_DIR}/corpus"
+
+          # Renders into corpus/ and runs trufflehog over that tree; a finding or a
+          # missing scanner exits non-zero here, before any commit or push.
+          python3 scripts/render-issue-corpus.py --mirror-dir "${MIRROR_DIR}/corpus"
 
           cd "${MIRROR_DIR}"
           git config user.name "coilyco-ops"
