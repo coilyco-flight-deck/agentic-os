@@ -1,5 +1,4 @@
 # Per-repo command allowlist. Add verbs here as they emerge.
-# warded-run smoke test 2026-07-03 - safe to revert
 
 commands:
   warp:
