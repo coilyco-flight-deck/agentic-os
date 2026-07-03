@@ -3,7 +3,7 @@
 Regression cover for agentic-os#102: the workspace root must be driven by
 $PROJECTS_ROOT, not a hardcoded ~/projects/coilysiren. On Windows the default
 home/projects path is wrong (the workspace lives on another drive, e.g.
-X:/projects-x), so a `--repo <name>` run there reported "not checked out
+X:/projects), so a `--repo <name>` run there reported "not checked out
 locally" and a full run skipped every repo. Setting PROJECTS_ROOT must fix it
 end to end through the script's own main(), not just the config helpers.
 """

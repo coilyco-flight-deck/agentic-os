@@ -35,7 +35,7 @@ Drives off the on-disk checkout set via agentic_os.config.iter_workspace_repos
 (every git working tree under ~/projects/<org>/*), so it is owner-agnostic:
 the org migration of active repos to coilyco-bridge / coilyco-flight-deck no
 longer strands them the way a single hardcoded root did. Override the root
-with $PROJECTS_ROOT (e.g. PROJECTS_ROOT=X:/projects-x on Windows, where the
+with $PROJECTS_ROOT (e.g. PROJECTS_ROOT=X:/projects on Windows, where the
 workspace lives off the home drive). See coilysiren/agentic-os-kai#553 and
 #560 and coilysiren/agentic-os#102.
 
