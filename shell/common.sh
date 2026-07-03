@@ -38,6 +38,9 @@ if [ -z "${_SIREN_SHELL_ENV:-}" ]; then
         command -v pyenv >/dev/null && { eval "$(pyenv init --path)"; eval "$(pyenv init -)"; }
       fi
       [ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
+      # brew shellenv echoes a pre-set prefix rather than recomputing, so unset
+      # first to stop a poisoned HOMEBREW_* (inherited value) perpetuating.
+      unset HOMEBREW_PREFIX HOMEBREW_CELLAR HOMEBREW_REPOSITORY
       [ -x /home/linuxbrew/.linuxbrew/bin/brew ] && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
       _siren_path_prepend "$HOME/.local/bin"
       _siren_path_prepend "$HOME/bin"
@@ -49,6 +52,8 @@ if [ -z "${_SIREN_SHELL_ENV:-}" ]; then
       alias grep='grep --color=auto'
       ;;
     Darwin)
+      # Unset first so brew recomputes rather than echoing a poisoned prefix.
+      unset HOMEBREW_PREFIX HOMEBREW_CELLAR HOMEBREW_REPOSITORY
       [ -x /opt/homebrew/bin/brew ] && eval "$(/opt/homebrew/bin/brew shellenv)"
       for _d in /usr/local/share/dotnet "$HOME/.fabro/bin" /opt/homebrew/opt/gradle@7/bin \
         /opt/homebrew/opt/openjdk@17/bin "$HOME/.gem/ruby/3.4.0/bin" /opt/homebrew/opt/ruby/bin \
