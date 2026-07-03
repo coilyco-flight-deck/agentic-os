@@ -29,7 +29,7 @@ TOKEN_NAME="dep-bump-push-$(date +%Y%m%d%H%M%S)"
 
 api="https://${HOST}/api/v1"
 
-ward_ssm() { ward-kdl ops aws ssm "$@"; }
+ward_ssm() { ward ops aws ssm "$@"; }
 
 admin_token="$(ward_ssm get-parameter --name /forgejo/api-token \
   --with-decryption --query Parameter.Value --output text)"
