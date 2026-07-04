@@ -17,6 +17,24 @@ lever:
              the eager figure is near-0; reported as a server-count note, not a
              token sum, until a non-lazy path needs measuring.
 
+The three axes above are the *proactive* tier - eager prompt bytes, per harness.
+Two further tiers are cheap-to-provide context a driver can reach one tool call
+away, measured per working-dir/reference clone rather than per harness:
+
+  * immediate  - a working-dir clone (`/workspace/<name>`): a grep surface, not
+                 in the prompt. `immediate_walk` reports tracked-file count,
+                 bytes, and the chars/4 token proxy over `git ls-files` (tracked
+                 only, so build/vendor/untracked trees do not inflate it).
+  * peripheral - the reference repos (`/substrate/<name>`): the same walker
+                 applied per-repo across a set, plus a total. `peripheral_walk`
+                 takes the repo set from its caller and stays role-agnostic.
+
+`immediate_walk` / `peripheral_walk` are reusable primitives behind the same
+`count_tokens` proxy, for ward's role-aware three-tier probe (ward#373) to call
+for tiers 2/3 while reusing the doc/skill accounting above for tier 1. This
+layer measures; it does not model ward roles, containers, or substrate sets -
+those stay in ward, which owns them and passes the repo paths in.
+
 Skill scope is cwd-dependent: `~/.claude/skills` is emptied by mount-skills.sh
 and skills are symlinked into each repo's `.claude/skills`, so the eager set is
 the global plugin skills plus the scoped skills discoverable from the cwd. The
@@ -40,8 +58,10 @@ from __future__ import annotations
 
 import argparse
 import os
+import subprocess
 import sys
 from pathlib import Path
+from typing import Iterable, NamedTuple
 
 from agentic_os.config import iter_workspace_repos
 from agentic_os.generators.generate_agent_compose import (
@@ -79,6 +99,79 @@ DEFAULT_SKILL_ROOTS = {
 def count_tokens(text: str) -> int:
     """Estimate tokens for text. v1: deterministic chars/4 (ceil)."""
     return -(-len(text) // CHARS_PER_TOKEN)
+
+
+class TierWalk(NamedTuple):
+    """One clone's measured init-load context: file count, bytes, token proxy.
+
+    `tokens` is the same chars/4 proxy as the proactive axes (via `count_tokens`),
+    so tiers compare on one scale. For a whole-repo walk the number implies a full
+    ingest that never happens - a driver greps, it does not read every tracked
+    file - so file count and bytes carry the honest signal and tokens is the
+    upper-bound proxy (ward#373 open fork 4).
+    """
+
+    files: int
+    bytes: int
+    tokens: int
+
+
+def _git_tracked_files(repo: Path) -> list[str]:
+    """Tracked, repo-relative paths in a working-dir clone via `git ls-files`.
+
+    Tracked-only is deliberate: an untracked build/vendor/node_modules tree must
+    not inflate the walk. Returns [] for a non-repo or when git is unavailable,
+    so the walk degrades to zero rather than raising.
+    """
+    try:
+        proc = subprocess.run(
+            ["git", "-C", str(repo), "ls-files", "-z"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return []
+    return [name for name in proc.stdout.split("\0") if name]
+
+
+def immediate_walk(repo: Path) -> TierWalk:
+    """Measure a working-dir clone (tier 2, `immediate`).
+
+    Sums tracked-file count, on-disk bytes, and the chars/4 token proxy over
+    `git ls-files`. A tracked path that no longer reads (deleted-but-staged,
+    a submodule gitlink dir) is skipped so the three figures stay coherent -
+    every counted file contributes its bytes and tokens.
+    """
+    files = 0
+    total_bytes = 0
+    total_tokens = 0
+    for name in _git_tracked_files(repo):
+        try:
+            data = (repo / name).read_bytes()
+        except OSError:
+            continue
+        files += 1
+        total_bytes += len(data)
+        total_tokens += count_tokens(data.decode("utf-8", errors="replace"))
+    return TierWalk(files, total_bytes, total_tokens)
+
+
+def peripheral_walk(repos: Iterable[Path]) -> tuple[TierWalk, list[tuple[str, TierWalk]]]:
+    """Measure a set of reference repos (tier 3, `peripheral`).
+
+    Applies `immediate_walk` per repo and returns (total, per-repo) where each
+    per-repo entry is (repo name, walk). The caller supplies the repo set - ward
+    passes its `/substrate` mirrors - so this layer never enumerates or names a
+    substrate set of its own.
+    """
+    per_repo = [(repo.name, immediate_walk(repo)) for repo in repos]
+    total = TierWalk(
+        files=sum(w.files for _n, w in per_repo),
+        bytes=sum(w.bytes for _n, w in per_repo),
+        tokens=sum(w.tokens for _n, w in per_repo),
+    )
+    return total, per_repo
 
 
 def _banner_tokens() -> int:
@@ -203,6 +296,44 @@ def skill_roots_from_config(config_path: Path) -> dict[str, list[str]]:
     return roots
 
 
+def _human_bytes(n: int) -> str:
+    """Compact byte size (e.g. 12.3M) for the tier walk lines."""
+    size = float(n)
+    for unit in ("B", "K", "M", "G"):
+        if size < 1024 or unit == "G":
+            return f"{size:.0f}{unit}" if unit == "B" else f"{size:.1f}{unit}"
+        size /= 1024
+    return f"{size:.1f}G"
+
+
+def _tier_line(label: str, walk: TierWalk) -> str:
+    """One aligned `label  N files  bytes  ~tok` row for a tier walk."""
+    return (
+        f"  {label:22} {walk.files:6} files  {_human_bytes(walk.bytes):>8}  "
+        f"~{walk.tokens} tok"
+    )
+
+
+def tier_section(immediate: list[Path], peripheral: list[Path]) -> list[str]:
+    """Render the immediate (working-dir) + peripheral (reference) tier walks.
+
+    Only emitted when the caller passes paths; the aos CLI stays role-agnostic
+    and never names a substrate set. tokens is the chars/4 upper-bound proxy -
+    file count and bytes carry the honest cheap-to-provide signal.
+    """
+    if not immediate and not peripheral:
+        return []
+    lines = ["", "role-reachable tiers (working clone + reference repos, not eager prompt)"]
+    for repo in immediate:
+        lines.append(_tier_line(f"immediate  {repo.name}", immediate_walk(repo)))
+    if peripheral:
+        total, per_repo = peripheral_walk(peripheral)
+        for name, walk in per_repo:
+            lines.append(_tier_line(f"peripheral {name}", walk))
+        lines.append(_tier_line("peripheral TOTAL", total))
+    return lines
+
+
 def _bar(tokens: int, budget: int, width: int = 24) -> str:
     """A small filled/empty bar showing tokens against budget."""
     if budget <= 0:
@@ -264,6 +395,8 @@ def run(
     cwd: Path,
     *,
     check: bool,
+    immediate: list[Path] | None = None,
+    peripheral: list[Path] | None = None,
 ) -> int:
     plan = plan_from_config(config_path, composed_path)
     skill_roots = skill_roots_from_config(config_path)
@@ -314,6 +447,7 @@ def run(
         "mcp eager surface is ~0: mcporter loads schemas on demand and ToolSearch "
         "defers them. A non-lazy harness would carry the full schemas here."
     )
+    lines.extend(tier_section(immediate or [], peripheral or []))
 
     out = "\n".join(lines)
     if check and over:
@@ -338,6 +472,22 @@ def main() -> int:
         default=Path.home() / ".mcporter" / "mcporter.json",
         help="merged mcporter config to read codex's exposed server inventory from",
     )
+    parser.add_argument(
+        "--immediate",
+        type=Path,
+        action="append",
+        default=[],
+        metavar="REPO",
+        help="working-dir clone to walk as tier 2 (immediate); repeatable",
+    )
+    parser.add_argument(
+        "--peripheral",
+        type=Path,
+        action="append",
+        default=[],
+        metavar="REPO",
+        help="reference repo to walk as tier 3 (peripheral), with a total; repeatable",
+    )
     for harness in DEFAULT_BUDGETS:
         parser.add_argument(
             f"--{harness}-budget", type=int, default=None, help=f"override the {harness} token budget"
@@ -350,7 +500,14 @@ def main() -> int:
     }
     try:
         return run(
-            args.config, COMPOSED_PATH, cli_budgets, args.mcporter, Path.cwd(), check=args.check
+            args.config,
+            COMPOSED_PATH,
+            cli_budgets,
+            args.mcporter,
+            Path.cwd(),
+            check=args.check,
+            immediate=args.immediate,
+            peripheral=args.peripheral,
         )
     except RuntimeError as exc:
         sys.stderr.write(f"context-budget: {exc}\n")
