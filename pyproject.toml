@@ -61,6 +61,7 @@ check-caps-reference-drift = "agentic_os.pre_commit.check_caps_reference_drift:m
 check-leak-guard = "agentic_os.pre_commit.check_leak_guard:main"
 leak-guard-encode = "agentic_os.pre_commit.encode_leak_term:main"
 freshness = "agentic_os.freshness:main"
+ship-tool-failures = "agentic_os.tool_failures.ship:main"
 
 generate-agents-pointer = "agentic_os.generators.generate_agents_pointer:main"
 generate-agent-compose = "agentic_os.generators.generate_agent_compose:main"
@@ -93,6 +94,9 @@ excludes = [
     # Over-cap by design: the full operator-verb surface, committed so the names
     # stay greppable off-disk. Regenerate, do not hand-trim. See agentic-os#261.
     "docs/ward-ops-forgejo-reference.md",
+    # Root SSM.md is a focused pointer to the SSM params aos code consumes,
+    # mirroring the canonical agentic-os-kai/SSM.md placement. See agentic-os#250.
+    "SSM.md",
 ]
 
 # code-comments extended to YAML (#159), then tightened to one top-of-file

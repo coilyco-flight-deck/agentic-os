@@ -88,6 +88,9 @@ commands:
   freshness:
     run: uv run python -m agentic_os.freshness
     description: "Knowledge-base freshness probe: parse `<!-- freshness: as-of= half-life= -->` provenance markers across tracked docs and grade each fact by age against its half-life horizon. `-- --check` exits non-zero when any fast-decay fact is past its horizon (the loud trigger a scheduled CI job fails on), `-- --lint` checks markers are well-formed. Hermetic, on-demand/scheduled, not a commit-path hook since rot is time-based. See docs/knowledge-base-freshness.md, agentic-os#262."
+  ship-tool-failures:
+    run: uv run python -m agentic_os.tool_failures.ship
+    description: "Drain the tool-use failure-record buffer (~/.cache/agentic-os/tool-failures/<repo>.jsonl) to GlitchTip: gate on genuine failures, fingerprint-group, and emit one Sentry-protocol envelope per failure past a per-file watermark (idempotent). DSN from SSM (/sentry-dsn/tool-failures), fail-soft when absent so the buffer keeps accumulating. Producer-agnostic, out-of-band (timer / SessionEnd hook), never a hot path. `-- --dry-run` previews counts without a DSN or POST, `-- --repo <slug>` narrows. See docs/tool-failures-shipper.md, SSM.md, agentic-os#250."
 
 # Catalog metadata for the cross-repo knowledge graph.
 # Schema: coilysiren/agentic-os-kai#420 (tracker).
