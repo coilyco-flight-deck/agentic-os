@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61"]
+requires = ["setuptools>=80"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -11,9 +11,9 @@ license = { text = "MIT" }
 authors = [{ name = "Kai Siren" }]
 requires-python = ">=3.10"
 dependencies = [
-    "PyYAML>=6.0",
-    "ruamel.yaml>=0.18",
-    "tomli>=2.0; python_version < '3.11'",
+    "PyYAML>=6.0.3",
+    "ruamel.yaml>=0.19",
+    "tomli>=2.4; python_version < '3.11'",
 ]
 keywords = [
     "coilysiren",
@@ -61,6 +61,7 @@ check-caps-reference-drift = "agentic_os.pre_commit.check_caps_reference_drift:m
 check-leak-guard = "agentic_os.pre_commit.check_leak_guard:main"
 leak-guard-encode = "agentic_os.pre_commit.encode_leak_term:main"
 freshness = "agentic_os.freshness:main"
+agent-id = "agentic_os.agent_id:main"
 
 generate-agents-pointer = "agentic_os.generators.generate_agents_pointer:main"
 generate-agent-compose = "agentic_os.generators.generate_agent_compose:main"
@@ -131,7 +132,12 @@ fast_days = 30
 slow_days = 365
 
 [dependency-groups]
-dev = ["pytest>=8"]
+dev = ["pytest>=9"]
 
 [tool.setuptools.packages.find]
 include = ["agentic_os*"]
+
+[tool.setuptools.package-data]
+# Ship the agent-id cross-language contract files so an importing consumer
+# (not just a source checkout) can read them. See agentic-os#302.
+agentic_os = ["agent_id_vectors.json", "org_shortnames.json"]

@@ -2,20 +2,24 @@ import pathlib
 
 
 SPEC_DIR = pathlib.Path(__file__).resolve().parents[1] / "ward-specs"
-TOKENS = ("coilysiren", "coilyco")
 
 
-def test_ward_specs_bundle_has_no_coilyco_values() -> None:
-    seen = 0
-    for path in SPEC_DIR.iterdir():
-        if path.suffix not in {".kdl", ".json"}:
-            continue
-        seen += 1
-        body = path.read_text()
-        lower = body.lower()
-        for token in TOKENS:
-            assert token not in lower, f"{path.name} carries {token}"
-    assert seen > 0
+def test_ward_specs_bundle_carries_deployment_anchors() -> None:
+    # This is the coilyco deployment bundle (ward#453), so it must carry the
+    # deployment anchors ward compiles in. See docs/ward-specs.md.
+    forgejo = (SPEC_DIR / "ward-kdl.forgejo.guardfile.kdl").read_text()
+    assert "forgejo.coilysiren.me" in forgejo
+    assert '/forgejo/coilyco-ops/api-token' in forgejo
+    assert "restrict owner matches coily*" in forgejo
+
+    signoz = (SPEC_DIR / "ward-kdl.signoz.guardfile.kdl").read_text()
+    assert "/coilysiren/signoz-ser8/api-token" in signoz
+
+    ollama = (SPEC_DIR / "ward-kdl.ollama.guardfile.kdl").read_text()
+    assert "/coilysiren/ollama/host" in ollama
+
+    fleet = (SPEC_DIR / "ward-kdl.fleet.kdl").read_text()
+    assert "attribution name=coilyco-ops" in fleet
 
 
 def test_ward_specs_fleet_parses() -> None:

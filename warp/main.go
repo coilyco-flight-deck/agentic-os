@@ -76,6 +76,7 @@ var volatileSettingsKeys = []string{
 func layer2Files(h *HostPaths) []renderedFile {
 	return []renderedFile{
 		{"settings.toml", "settings.toml.tmpl", h.SettingsPath, volatileSettingsKeys},
+		{"keybindings.yaml", "keybindings.yaml.tmpl", h.KeybindingsPath, nil},
 		{"theme yaml", "theme.yaml.tmpl", h.ThemePath, nil},
 		{"startup_config.toml", "startup_config.toml.tmpl", h.TabConfigPath, nil},
 	}

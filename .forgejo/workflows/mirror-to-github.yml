@@ -1,7 +1,14 @@
-# Push Forgejo main+tags to the read-only GitHub mirror; no-ops without the PAT.
-# Forgejo (coilyco-flight-deck/agentic-os) is canonical; GitHub
+# Fast-forward Forgejo main+tags onto the read-only GitHub mirror; no-ops
+# without the PAT. Forgejo (coilyco-flight-deck/agentic-os) is canonical; GitHub
 # (coilysiren/agentic-os) is the PR-gated downstream mirror that the fleet's
 # `uses: coilysiren/agentic-os/actions/*@main` references resolve against.
+#
+# The push is fast-forward-only, never --force: GitHub main carries a
+# "cannot force-push" branch-protection rule (the PR gate), so a --force push is
+# rejected outright (GH013) and the mirror silently stalls (agentic-os#309).
+# Forgejo main is append-only, so a fast-forward always suffices in steady
+# state. A rejected FF push means the two mains have diverged and need a
+# one-time human reconcile -- see docs/mirror-to-github.md.
 
 name: mirror-to-github
 
@@ -28,5 +35,12 @@ jobs:
             exit 0
           fi
           git remote add github "https://x-access-token:${PAT}@github.com/coilysiren/agentic-os.git"
-          git push --force github main
-          git push --force --tags github
+          if ! git push github main; then
+            echo "::error::mirror-to-github: fast-forward push to GitHub main rejected." >&2
+            echo "GitHub main has diverged from Forgejo main (or the PAT lost push access)." >&2
+            echo "GitHub main is branch-protected (cannot force-push), so this needs a" >&2
+            echo "one-time human reconcile -- see docs/mirror-to-github.md." >&2
+            exit 1
+          fi
+          # Tags are append-only; never force-update an existing tag.
+          git push --tags github

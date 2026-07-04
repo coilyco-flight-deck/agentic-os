@@ -61,11 +61,11 @@ no tag is present.
 
 ## Mirror to GitHub
 
-`.forgejo/workflows/mirror-to-github.yml` force-pushes Forgejo `main` + `v*` tags
-to the read-only GitHub mirror (`coilysiren/agentic-os`), which is where the
-fleet's `uses: coilysiren/agentic-os/actions/*@main` references resolve. It
-no-ops without the `GITHUB_MIRROR_PAT` secret. Forgejo is upstream-of-record;
-GitHub is the PR-gated downstream mirror.
+`.forgejo/workflows/mirror-to-github.yml` fast-forwards Forgejo `main` + `v*`
+tags onto the read-only GitHub mirror (`coilysiren/agentic-os`) where the
+fleet's `uses:` refs resolve. It is fast-forward-only (never `--force`, which
+GitHub branch protection rejects) and no-ops without the PAT. See
+[mirror-to-github.md](mirror-to-github.md) for details.
 
 ## Skip markers
 
