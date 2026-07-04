@@ -103,6 +103,25 @@ def test_version_sensitive_pins_are_excluded_from_auto_bump() -> None:
     assert "TRUFFLEHOG_VERSION" in script.RESOLVERS
 
 
+def test_ward_binary_is_auto_bumped() -> None:
+    # ward builds from source at a pinned WARD_VERSION and tracks its own Forgejo
+    # releases, so it carries a resolver instead of opting out (agentic-os#223).
+    script = _load_script()
+    assert "WARD_VERSION" in script.RESOLVERS
+
+
+def test_ward_resolver_picks_highest_v_prefixed_tag(monkeypatch) -> None:
+    # The Forgejo tags endpoint returns v-prefixed names; the resolver must strip
+    # the `v` (the Dockerfile ARG is v-less) and order numerically, not lexically.
+    script = _load_script()
+    monkeypatch.setattr(
+        script,
+        "_get_json",
+        lambda url: [{"name": "v0.9.0"}, {"name": "v0.396.0"}, {"name": "v0.40.0"}],
+    )
+    assert script._resolve_ward() == "0.396.0"
+
+
 def test_compute_plan_skips_unresolved_pins(monkeypatch) -> None:
     script = _load_script()
     monkeypatch.setitem(script.RESOLVERS, "UV_VERSION", lambda: None)

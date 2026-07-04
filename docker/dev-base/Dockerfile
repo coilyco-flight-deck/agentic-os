@@ -12,6 +12,7 @@ ARG CODEX_VERSION=0.142.5
 ARG GOOSE_VERSION=1.41.0
 ARG DOCKER_VERSION=28.5.2
 ARG TAILSCALE_VERSION=1.98.8
+ARG WARD_VERSION=0.396.0
 
 # Pre-commit / CI gate tools (agentic-os#292). golangci-lint and kdlfmt are
 # hand-pinned to the versions the consuming repos' CI pins - cli-guard and ward
@@ -192,6 +193,46 @@ RUN set -eux; \
     chmod 0755 /usr/local/bin/tailscale; \
     rm /tmp/tailscale.tgz; \
     tailscale version
+
+# ward, built from source at a pinned tag (agentic-os#223). ward is the whole
+# dev-command surface agents route through (`ward <verb>`); baking it in makes the
+# image batteries-included instead of leaving every warded run to `go install` it.
+# Go is already in the base, so this compiles in place - one RUN, source and build
+# caches cleaned in the same layer like every other tool here.
+#
+# NO build token. #223 deferred ward because it was assumed to need a cross-repo
+# clone secret, but coilyco-flight-deck/ward and its one private-domain module
+# dep (coilyco-flight-deck/cli-guard) are both public now, so an anonymous clone
+# plus GOPROXY=direct resolves everything. GOPRIVATE keeps the cli-guard fetch off
+# the public proxy (it lives on forgejo, not proxy.golang.org); GOSUMDB=off since
+# that domain has no sumdb entry. The only network-flaky step is the direct git
+# fetch of cli-guard's module, so `go mod download` gets ward's own bounded retry
+# (its release.yml does the same) to keep a transient hang from shipping a
+# ward-less image. -X main.Version stamps the tag so `ward --version` is truthful.
+#
+# coily is deliberately NOT shipped. The #223 title paired ward + coily, but coily
+# was retired (agentic-os#261): its `coily ops` surface moved into ward-kdl (`ward
+# ops <area>`) and coilyco-bridge/coily is archived. Baking a dead binary in would
+# reintroduce a retired command, so ward is the whole deliverable. Pinned as an
+# ARG like the other agent CLIs and auto-bumped against ward's latest release by
+# scripts/dep-bump.py (see docs/dev-base-auto-bump.md).
+RUN set -eux; \
+    export GOPATH=/tmp/gobuild GOCACHE=/tmp/gocache \
+      GOPROXY=direct GOSUMDB=off GOPRIVATE=forgejo.coilysiren.me CGO_ENABLED=0; \
+    git clone --depth 1 --branch "v${WARD_VERSION}" \
+      https://forgejo.coilysiren.me/coilyco-flight-deck/ward.git /tmp/ward-src; \
+    cd /tmp/ward-src; \
+    for attempt in 1 2 3; do \
+      if timeout 240 go mod download; then break; fi; \
+      [ "$attempt" -eq 3 ] && { echo "go mod download failed after 3 attempts" >&2; exit 1; }; \
+      echo "go mod download attempt ${attempt} failed/timed out; retrying in 5s" >&2; \
+      sleep 5; \
+    done; \
+    go build -trimpath -ldflags "-s -w -X main.Version=v${WARD_VERSION}" \
+      -o /usr/local/bin/ward ./cmd/ward; \
+    chmod 0755 /usr/local/bin/ward; \
+    cd /; rm -rf /tmp/ward-src /tmp/gobuild /tmp/gocache; \
+    ward --version
 
 # Agent self-name + status-line composer (agentic-os#281, #294). Warded
 # explorers / headless agents run in this image and otherwise get no name - host

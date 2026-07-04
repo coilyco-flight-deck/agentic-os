@@ -26,9 +26,11 @@ Fleet rollout is not its concern.
   bump and a bad one bisects to its own commit.
 - **Conservative bumps.** Node tracks the latest release of its currently-pinned
   major (no surprise major jump); uv, go, aws-cli, claude, codex, goose, docker,
-  tailscale, and trufflehog track the latest stable upstream release. Tailscale
-  resolves against its `pkgs.tailscale.com/stable` feed (not GitHub tags, which
-  interleave the unstable odd-minor releases). A hand-edited `ARG` wins until
+  tailscale, trufflehog, and ward track the latest stable upstream release.
+  Tailscale resolves against its `pkgs.tailscale.com/stable` feed (not GitHub
+  tags, which interleave the unstable odd-minor releases); ward resolves against
+  its Forgejo tags list (it lives on Forgejo, not GitHub, and the image builds it
+  from source at that pinned tag - agentic-os#223). A hand-edited `ARG` wins until
   upstream passes it.
 - **Two deliberate opt-outs.** `GOLANGCI_LINT_VERSION` and `KDLFMT_VERSION` have
   no resolver, so the auto-bump never touches them (agentic-os#292). Their lint /

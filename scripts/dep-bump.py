@@ -19,7 +19,8 @@ API drops that one tool from the plan, it never blocks the others.
 
 Version policy: bumps stay on the pinned line where crossing it is risky. Node
 tracks the latest release of its currently-pinned major (no surprise major jump);
-uv/go/aws-cli/claude/codex/goose track the latest stable upstream release.
+uv/go/aws-cli/claude/codex/goose/ward track the latest stable upstream release
+(ward off its Forgejo tags, everything else off a GitHub Releases/tags feed).
 
 Usage:
     python3 scripts/dep-bump.py plan            # TSV: NAME<TAB>CURRENT<TAB>LATEST
@@ -177,6 +178,21 @@ def _resolve_trufflehog() -> str | None:
     return _gh_release("trufflesecurity/trufflehog", re.compile(r"^v(\d+\.\d+\.\d+)$"))
 
 
+def _resolve_ward() -> str | None:
+    # ward lives on Forgejo (not GitHub), so its tags list is the version source.
+    # Return the bare X.Y.Z - the Dockerfile ARG is v-less; the build re-prefixes.
+    data = _get_json(
+        "https://forgejo.coilysiren.me/api/v1/repos/coilyco-flight-deck/ward/tags?limit=100"
+    )
+    tag_re = re.compile(r"^v(\d+\.\d+\.\d+)$")
+    cands = []
+    for tag in data:  # type: ignore[union-attr]
+        match = tag_re.match(tag.get("name", ""))
+        if match:
+            cands.append(match.group(1))
+    return pick_highest(cands)
+
+
 # Resolver per ARG (node's gets the pinned value, to stay on its major). No
 # resolver = never auto-bumped: the golangci-lint / kdlfmt opt-out (auto-bump doc).
 RESOLVERS: dict[str, Callable[..., str | None]] = {
@@ -190,6 +206,7 @@ RESOLVERS: dict[str, Callable[..., str | None]] = {
     "DOCKER_VERSION": _resolve_docker,
     "TAILSCALE_VERSION": _resolve_tailscale,
     "TRUFFLEHOG_VERSION": _resolve_trufflehog,
+    "WARD_VERSION": _resolve_ward,
 }
 _NEEDS_CURRENT = {"NODE_VERSION"}
 
