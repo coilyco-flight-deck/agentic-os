@@ -11,7 +11,7 @@ The repo is the source of truth. `apply` pushes the repo's intent onto the host,
 
 `apply` reconciles four kinds of state, each with a matching `doctor` check:
 
-- **Rendered files** - `settings.toml`, the theme YAML, `tab_configs/startup_config.toml`. Embedded templates rendered to real files (not symlinks) in the Warp config dir. Drift = content mismatch, except [volatile keys](warp-volatile-settings.md) doctor skips.
+- **Rendered files** - `settings.toml`, `keybindings.yaml`, the theme YAML, `tab_configs/startup_config.toml`. Embedded templates rendered to real files (not symlinks) in the Warp config dir. Drift = content mismatch, except [volatile keys](warp-volatile-settings.md) doctor skips.
 - **Launch-config symlinks** - every `warp/launch_configurations/*.yaml` is symlinked into the config dir's `launch_configurations/`, and dangling links are swept. See [launch configs](#launch-configs) below.
 - **SQLite settings** - keys in Warp's `warp.sqlite` with no TOML surface (see `mapping.go`), plus a Windows-only [default-shell pref](warp-default-shell.md). Skipped until Warp inits the DB.
 - **Wallpaper** - existence check only.
@@ -20,11 +20,11 @@ The repo is the source of truth. `apply` pushes the repo's intent onto the host,
 
 `paths.go` resolves the layout per OS. The config dir is:
 
-- **macOS** - channel-aware. Preview (default) at `~/.warp-preview/` with SQLite under `dev.warp.Warp-Preview`, Stable (fallback) at `~/.warp/` with SQLite under `dev.warp.Warp-Stable`. The config dir and SQLite bundle are always a matched pair (see below).
-- **Windows** - channel-aware: `%LOCALAPPDATA%\warp\WarpPreview\` or `...\warp\Warp\`, config in `<channel>\config\`, SQLite in `<channel>\data\`. Themes scan `%APPDATA%` (Roaming), same split.
+- **macOS** - channel-aware. Preview (default) at `~/.warp-preview/` with SQLite under `dev.warp.Warp-Preview`, Stable (fallback) at `~/.warp/` with SQLite under `dev.warp.Warp-Stable`.
+- **Windows** - channel-aware: `%LOCALAPPDATA%\warp\WarpPreview\` or `...\warp\Warp\`, config in `<channel>\config\`, SQLite in `<channel>\data\`. Themes scan `%APPDATA%` (Roaming).
 - **Linux** - `~/.config/warp-terminal/`.
 
-On macOS and Windows the two channels coexist, so `apply`/`doctor` pick one and target its config dir and SQLite together. Selection: `--channel preview|stable` (or `WARP_CHANNEL` env) wins, else auto-detect by installed app (macOS `/Applications`, Windows `%LOCALAPPDATA%\Programs`), **preferring Preview**. The resolved channel is echoed in the header line (`darwin host (warp preview)`). Linux is single-channel and ignores the flag.
+On macOS and Windows the two channels coexist, so `apply`/`doctor` pick one and target its config dir and SQLite together. Selection: `--channel preview|stable` (or `WARP_CHANNEL` env) wins, else auto-detect by installed app (macOS `/Applications`, Windows `%LOCALAPPDATA%\Programs`), **preferring Preview**. The resolved channel is echoed in the header line. Linux is single-channel and ignores the flag.
 
 `WorkspaceDir` is the parent of the repo root. `StartupDir` (where a fresh tab opens) is one level above that on every OS.
 
@@ -38,12 +38,13 @@ The walk exists because hand-made links went orphaned: a new or moved launch con
 
 ## Sharp edges
 
-- **Preview vs Stable** - two channels coexist with separate config dirs and URL schemes. `warppreview://` always lands in Preview, `warp://` in Stable. See [warp-host-setup.md](warp-host-setup.md) for the channel split and install playbook.
+- **Preview vs Stable** - two channels coexist with separate config dirs and URL schemes. `warppreview://` always lands in Preview, `warp://` in Stable.
+- **Stuck mouse-tracking flood** - a child that dirties DECSET 1003 floods the pane. `ctrl-shift-m` clears it mid-director, no TUI kill. See [warp-mouse-tracking.md](warp-mouse-tracking.md).
 - **SQLite needs init** - the SQLite layer skips until Warp has launched once and created `warp.sqlite`. A fresh host shows SKIP, not FAIL.
 - **Windows symlinks** - need Developer Mode or elevation for the launch-config walk, same caveat as the skills sweep.
 
 ## See also
 
-- [warp-host-setup.md](warp-host-setup.md) - channel split, install playbook, URI scheme, subdir reference.
+- [warp-host-setup.md](warp-host-setup.md) - channel split, install playbook, URI scheme.
 - [tooling-warp skill](../.agents/skills/tooling-warp/SKILL.md) - agent-facing usage.
 - [README.md](../README.md) - repo intro.

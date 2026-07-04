@@ -17,6 +17,7 @@ type HostPaths struct {
 	StartupDir      string
 	ConfigDir       string
 	SettingsPath    string
+	KeybindingsPath string
 	ThemeDir        string
 	ThemePath       string
 	TabConfigDir    string
@@ -93,6 +94,9 @@ func resolveHostPaths(channel string) (*HostPaths, error) {
 	}
 
 	h.SettingsPath = filepath.Join(h.ConfigDir, "settings.toml")
+	// Warp reads custom keybindings from keybindings.yaml, a sibling of
+	// settings.toml in the config dir. See docs/warp.md and #320.
+	h.KeybindingsPath = filepath.Join(h.ConfigDir, "keybindings.yaml")
 	if h.ThemeDir == "" {
 		h.ThemeDir = filepath.Join(h.ConfigDir, "themes")
 	}
