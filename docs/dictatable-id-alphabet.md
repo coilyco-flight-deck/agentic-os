@@ -48,12 +48,27 @@ Left in on purpose. Revisit if real dictation error rates justify it.
 
 ## Reference implementation
 
-The `agent-channel` coordination protocol (`otel-a2a-relay`) used this alphabet
-for its 4-character channel IDs. A channel ID was created once and then dictated
-between hosts, so spoken clarity was the whole point. The protocol's ID
+<!-- freshness: as-of=2026-07-04 decay-class=derived half-life=slow source="agentic_os/agent_id.py" -->
+
+The canonical generator now lives in aos at
+[`agentic_os/agent_id.py`](../agentic_os/agent_id.py): `secrets`-backed `new_id`,
+a `normalize`/`is_valid` validator, and a seedable `seeded_id` used only to pin
+the cross-language contract. The lowercase form (`ab85`, `hj59`) is the one
+intentional divergence from the o2r source, which stored uppercase. Two
+committed data files sit beside it - `agent_id_vectors.json` (the alphabets plus
+a fixed seed->id map a port asserts against byte-for-byte) and
+`org_shortnames.json` (long Forgejo org -> short container token, last-`-`-segment
+fallback). A drift test regenerates the vector and fails CI if the committed file
+falls behind the module, so the ward naming rewrite (#387) and the cli-guard Go
+port (#177) build against a file that cannot silently rot. Regenerate the vector
+with `python -m agentic_os.agent_id --emit-vectors`.
+
+The `agent-channel` coordination protocol (`otel-a2a-relay`) first used this
+alphabet for its 4-character channel IDs. A channel ID was created once and then
+dictated between hosts, so spoken clarity was the whole point. The protocol's ID
 generator and validator both drew from the set above. That channel was archived
 in the June 2026 surface reduction (revival and absorption tracked at
-`ward#104`); the alphabet stays here for any successor that revives it.
+`ward#104`); the alphabet and its generator stay here for any successor.
 
 ## See also
 
