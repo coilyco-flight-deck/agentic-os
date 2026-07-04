@@ -5,4 +5,14 @@
 *.nu   text eol=lf
 *.py   text eol=lf
 *.md   text eol=lf
+*.go   text eol=lf
 Makefile text eol=lf
+
+# Extensionless shell entrypoints and other shell/ sources (bashrc, zshrc,
+# warp.zsh, ...) match only `* text=auto` otherwise, so a Windows checkout with
+# core.autocrlf=true lands them as CRLF and shellcheck trips SC1017 (agentic-os#317).
+shell/** text eol=lf
+
+# Extensionless bash scripts under scripts/ hit the same CRLF drift.
+scripts/docker-credential-forgejo-ssm text eol=lf
+scripts/gpg-ssm text eol=lf
