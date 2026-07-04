@@ -55,6 +55,7 @@ import os
 import re
 import subprocess
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -73,6 +74,17 @@ class WardForgejoError(RuntimeError):
     callers can surface the failure rather than silently drop it."""
 
 
+# Bounded exponential backoff for the transient `ward` not-found window (#280);
+# rationale in `_fj`. Attempts total, base seconds for the first retry's sleep.
+_FJ_MAX_ATTEMPTS = 5
+_FJ_BACKOFF_BASE = 1.0
+
+
+def _sleep(seconds: float) -> None:
+    """Backoff wait between `_fj` retries, isolated so tests override it (no real sleep)."""
+    time.sleep(seconds)
+
+
 def _split_repo(repo: str) -> tuple[str, str]:
     """Split an "owner/name" slug into (owner, name). ward-kdl's `restrict owner
     matches coily*` gate still applies downstream (both source orgs match)."""
@@ -88,11 +100,24 @@ def _fj(args: list[str], parse: bool = True, timeout: int = 120) -> object:
     ward-kdl authenticates as the coilyco-ops bot from SSM, so nothing here needs
     FORGEJO_TOKEN (agentic-os#267). `--output json` is appended for read verbs and
     the stdout JSON parsed; an empty body returns None. A non-zero exit raises
-    WardForgejoError(stderr) so a repo's failure is surfaced, not silently empty."""
+    WardForgejoError(stderr) so a repo's failure is surfaced, not silently empty.
+
+    A transient `ward` not-found (agentic-os#280) surfaces as an OSError from
+    subprocess.run before ward ever runs, so nothing was written - the whole call is
+    safe to retry. Bounded exponential backoff rides out the momentary window; the
+    OSError is re-raised once attempts are exhausted, so a genuinely-missing ward
+    still fails loudly rather than the retry masking it as an empty render."""
     cmd = [WARD, "ops", "forgejo", *args]
     if parse:
         cmd += ["--output", "json"]
-    proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    for attempt in range(_FJ_MAX_ATTEMPTS):
+        try:
+            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+            break
+        except OSError:
+            if attempt + 1 >= _FJ_MAX_ATTEMPTS:
+                raise
+            _sleep(_FJ_BACKOFF_BASE * (2 ** attempt))
     if proc.returncode != 0:
         raise WardForgejoError((proc.stderr or proc.stdout or "").strip()
                                or f"ward ops forgejo {' '.join(args)} failed")
