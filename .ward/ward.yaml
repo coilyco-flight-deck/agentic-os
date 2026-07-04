@@ -88,6 +88,9 @@ commands:
   freshness:
     run: uv run python -m agentic_os.freshness
     description: "Knowledge-base freshness probe: parse `<!-- freshness: as-of= half-life= -->` provenance markers across tracked docs and grade each fact by age against its half-life horizon. `-- --check` exits non-zero when any fast-decay fact is past its horizon (the loud trigger a scheduled CI job fails on), `-- --lint` checks markers are well-formed. Hermetic, on-demand/scheduled, not a commit-path hook since rot is time-based. See docs/knowledge-base-freshness.md, agentic-os#262."
+  agent-id:
+    run: uv run python -m agentic_os.agent_id
+    description: "Canonical short agent-id generator over the dictatable alphabet (lowercase 2-letter+2-digit, e.g. `ab85`). Bare invocation prints a fresh `secrets`-backed id (`-- -n 5` for more); `-- --seed <s>` prints the deterministic contract id for a seed, `-- --org <forgejo-org>` prints the short container token, `-- --emit-vectors` regenerates agent_id_vectors.json. The cross-repo naming primitive ward (#387) and cli-guard's Go port (#177) build against. See docs/dictatable-id-alphabet.md, agentic-os#302."
 
 # Catalog metadata for the cross-repo knowledge graph.
 # Schema: coilysiren/agentic-os-kai#420 (tracker).
