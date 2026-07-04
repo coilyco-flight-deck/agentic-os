@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61"]
+requires = ["setuptools>=80"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -11,9 +11,9 @@ license = { text = "MIT" }
 authors = [{ name = "Kai Siren" }]
 requires-python = ">=3.10"
 dependencies = [
-    "PyYAML>=6.0",
-    "ruamel.yaml>=0.18",
-    "tomli>=2.0; python_version < '3.11'",
+    "PyYAML>=6.0.3",
+    "ruamel.yaml>=0.19",
+    "tomli>=2.4; python_version < '3.11'",
 ]
 keywords = [
     "coilysiren",
@@ -131,7 +131,7 @@ fast_days = 30
 slow_days = 365
 
 [dependency-groups]
-dev = ["pytest>=8"]
+dev = ["pytest>=9"]
 
 [tool.setuptools.packages.find]
 include = ["agentic_os*"]
