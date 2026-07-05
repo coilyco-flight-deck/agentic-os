@@ -118,6 +118,7 @@ excludes = [
     ".pre-commit-hooks.yaml",
     "docs/skill-discipline-example-categories.yaml",
     "docs/skill-discipline-example-pre-commit-config.yaml",
+    "docs/ci-in-dev-base-example.yml",
     "warp/launch_configurations/**",
 ]
 
