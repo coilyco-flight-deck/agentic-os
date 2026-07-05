@@ -122,6 +122,30 @@ def test_ward_resolver_picks_highest_v_prefixed_tag(monkeypatch) -> None:
     assert script._resolve_ward() == "0.396.0"
 
 
+def test_dotnet_is_auto_bumped_and_stays_on_its_channel() -> None:
+    # Like NODE_VERSION, the .NET SDK carries a resolver AND needs the current pin
+    # to hold its major (eco-app's mods build against .NET 10) - agentic-os#329.
+    script = _load_script()
+    assert "DOTNET_VERSION" in script.RESOLVERS
+    assert "DOTNET_VERSION" in script._NEEDS_CURRENT
+
+
+def test_dotnet_resolver_reads_latest_sdk_for_the_pinned_channel(monkeypatch) -> None:
+    # The resolver derives the channel from the current pin's major and returns the
+    # channel metadata's `latest-sdk`, staying on 10.x for a 10.x pin.
+    script = _load_script()
+    seen: dict[str, str] = {}
+
+    def fake_get_json(url: str) -> object:
+        seen["url"] = url
+        return {"channel-version": "10.0", "latest-sdk": "10.0.305"}
+
+    monkeypatch.setattr(script, "_get_json", fake_get_json)
+    assert script._resolve_dotnet("10.0.301") == "10.0.305"
+    # Channel is keyed off the pinned major, so a 10.x pin never reaches into 11.0.
+    assert "/10.0/" in seen["url"]
+
+
 def test_compute_plan_skips_unresolved_pins(monkeypatch) -> None:
     script = _load_script()
     monkeypatch.setitem(script.RESOLVERS, "UV_VERSION", lambda: None)

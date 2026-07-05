@@ -10,17 +10,18 @@ Dockerfile, so config cannot drift. Part of the dockerized-dev epic
 [`docker/dev-base/Dockerfile`](../docker/dev-base/Dockerfile) layers the
 inner-loop toolchain on `ubuntu:24.04`:
 
-- **uv + managed Pythons** - Python project/tool manager; 3.13 + 3.12 pre-installed under a world-writable `UV_PYTHON_INSTALL_DIR` so a non-root agent finds them present or downloads others on demand, not `Permission denied` at first `uv run` (agentic-os#327).
+- **uv + managed Pythons** - Python project/tool manager; 3.13 + 3.12 pre-installed under a world-writable `UV_PYTHON_INSTALL_DIR` so a non-root agent never hits `Permission denied` on `uv run` (agentic-os#327).
 - **pre-commit** - the catalog hook driver (a uv tool).
 - **python3 + shellcheck + git + build-essential** - direct needs and catalog-hook shell-outs.
 - **node + npm** - Claude Code's runtime.
 - **go** - builds the `warp/` hooks and the ward binary below.
-- **aws cli v2** - SSM secret loader + `~/.aws` passthrough; `AWS_DEFAULT_REGION` / `AWS_REGION` default to `us-east-1` (agentic-os#286).
+- **.NET SDK 10 + ICU** - C# mods compile in-container with no per-run install, full ICU globalization (`libicu74`) not invariant mode (agentic-os#329).
+- **aws cli v2** - SSM secret loader + `~/.aws` passthrough; `AWS_DEFAULT_REGION` / `AWS_REGION` default `us-east-1` (agentic-os#286).
 - **claude + codex + goose** - pinned agent CLIs; plus **docker cli + socat** for `explore`'s sibling `warded #N` dispatch (ward#315).
-- **ward** - the dev-command surface agents route through (`ward <verb>`), built from source at the pinned `WARD_VERSION` tag, baked in not `go install`-ed per run. Source + `cli-guard` dep are public, so it clones with **no build token** (agentic-os#223).
-- **golangci-lint + trufflehog + kdlfmt** - lint / secret-scan / format binaries the gate shells out to, so an agent self-runs it in-container (agentic-os#292).
-- **tailscale cli** - tailnet client (no daemon) so a credentialed container reaches the tower; tailnet auth stays ward's axis (agentic-os#286).
-- **public substrate seed** - bare mirrors of the image-tier reference repos at `/opt/substrate-seed`, so a cold gitcache hydrates offline ([list](../docker/dev-base/substrate-image-repos.txt)).
+- **ward** - the dev-command surface agents route through (`ward <verb>`), built from source at the pinned `WARD_VERSION` tag, baked in not `go install`-ed per run - public source clones with **no build token** (agentic-os#223).
+- **golangci-lint + trufflehog + kdlfmt** - lint / secret-scan / format binaries the gate shells out to, self-run in-container (agentic-os#292).
+- **tailscale cli** - tailnet client (no daemon) so a credentialed container reaches the tower; auth stays ward's axis (agentic-os#286).
+- **public substrate seed** - bare mirrors of the image-tier reference repos at `/opt/substrate-seed`, so a cold gitcache hydrates offline.
 - **in-container agent self-name** - baked `agent-name.sh` + policy `managed-settings.json` so warded agents self-name ([doc](dev-base-self-name.md)).
 
 Every tool installs world-readable under `/usr/local` or `/opt`, so the image runs

@@ -24,9 +24,11 @@ Fleet rollout is not its concern.
 - **Auditable, not silent.** One commit per tool
   (`chore(dev-base): bump UV_VERSION 0.11.21 -> 0.11.24`), so history shows every
   bump and a bad one bisects to its own commit.
-- **Conservative bumps.** Node tracks the latest release of its currently-pinned
-  major (no surprise major jump); uv, go, aws-cli, claude, codex, goose, docker,
-  tailscale, trufflehog, and ward track the latest stable upstream release.
+- **Conservative bumps.** Node and the .NET SDK track the latest release of their
+  currently-pinned major (no surprise major jump - the SDK stays on the .NET 10
+  channel eco-app's mods build against, agentic-os#329); uv, go, aws-cli, claude,
+  codex, goose, docker, tailscale, trufflehog, and ward track the latest stable
+  upstream release.
   Tailscale resolves against its `pkgs.tailscale.com/stable` feed (not GitHub
   tags, which interleave the unstable odd-minor releases); ward resolves against
   its Forgejo tags list (it lives on Forgejo, not GitHub, and the image builds it

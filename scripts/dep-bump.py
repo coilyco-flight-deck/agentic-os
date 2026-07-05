@@ -178,6 +178,16 @@ def _resolve_trufflehog() -> str | None:
     return _gh_release("trufflesecurity/trufflehog", re.compile(r"^v(\d+\.\d+\.\d+)$"))
 
 
+def _resolve_dotnet(current: str) -> str | None:
+    # Stay on the pinned .NET major (like NODE_VERSION): the per-channel release
+    # metadata carries `latest-sdk`, so an auto major jump never blindsides a consumer.
+    major = current.split(".")[0]
+    data = _get_json(
+        f"https://builds.dotnet.microsoft.com/dotnet/release-metadata/{major}.0/releases.json"
+    )
+    return data.get("latest-sdk")  # type: ignore[union-attr]
+
+
 def _resolve_ward() -> str | None:
     # ward lives on Forgejo (not GitHub), so its tags list is the version source.
     # Return the bare X.Y.Z - the Dockerfile ARG is v-less; the build re-prefixes.
@@ -207,8 +217,9 @@ RESOLVERS: dict[str, Callable[..., str | None]] = {
     "TAILSCALE_VERSION": _resolve_tailscale,
     "TRUFFLEHOG_VERSION": _resolve_trufflehog,
     "WARD_VERSION": _resolve_ward,
+    "DOTNET_VERSION": _resolve_dotnet,
 }
-_NEEDS_CURRENT = {"NODE_VERSION"}
+_NEEDS_CURRENT = {"NODE_VERSION", "DOTNET_VERSION"}
 
 
 def compute_plan(text: str) -> list[dict[str, str]]:

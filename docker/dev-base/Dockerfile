@@ -13,6 +13,10 @@ ARG GOOSE_VERSION=1.41.0
 ARG DOCKER_VERSION=28.5.2
 ARG TAILSCALE_VERSION=1.98.8
 ARG WARD_VERSION=0.396.0
+# .NET SDK for in-container C# compilation (agentic-os#329). Pinned to the .NET 10
+# LTS line eco-app's Eco mods build against; auto-bump stays on the 10.x channel
+# (like NODE_VERSION stays on its major) so a mod never faces a surprise major jump.
+ARG DOTNET_VERSION=10.0.301
 
 # Pre-commit / CI gate tools (agentic-os#292). golangci-lint and kdlfmt are
 # hand-pinned to the versions the consuming repos' CI pins - cli-guard and ward
@@ -32,29 +36,37 @@ ARG TARGETARCH
 
 # uv tools land on the global PATH so any run-as-uid finds pre-commit.
 ENV DEBIAN_FRONTEND=noninteractive \
-    PATH=/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin \
+    PATH=/usr/local/go/bin:/usr/local/dotnet:/usr/local/bin:/usr/bin:/bin \
     UV_TOOL_DIR=/opt/uv/tools \
     UV_TOOL_BIN_DIR=/usr/local/bin \
     UV_PYTHON_INSTALL_DIR=/opt/uv/python \
     AWS_DEFAULT_REGION=us-east-1 \
-    AWS_REGION=us-east-1
+    AWS_REGION=us-east-1 \
+    DOTNET_ROOT=/usr/local/dotnet \
+    DOTNET_CLI_TELEMETRY_OPTOUT=1 \
+    DOTNET_NOLOGO=1
 
 # Base packages: catalog-hook deps (shellcheck, python3, git) plus the inner loop's fetch/build tools.
+# libicu74 is the .NET globalization backend (agentic-os#329): the SDK below runs
+# with full ICU-backed globalization, NOT invariant mode, so C# string/culture
+# behaviour in-container matches a normal host. Ubuntu 24.04 (the pinned base)
+# ships ICU as libicu74; a base bump re-pins this to that release's libicuNN.
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
       ca-certificates curl wget git gnupg jq ripgrep less unzip xz-utils socat \
       build-essential openssh-client procps shellcheck \
       python3 python3-pip python3-venv \
+      libicu74 \
  && rm -rf /var/lib/apt/lists/*
 
 # Map Docker's TARGETARCH onto each upstream's arch spelling once.
 RUN set -eux; \
     case "${TARGETARCH}" in \
-      amd64) NODE_ARCH=x64;   GO_ARCH=amd64; AWS_ARCH=x86_64; CODEX_ARCH=x86_64; GOOSE_ARCH=x86_64; DOCKER_ARCH=x86_64; TS_ARCH=amd64; GOLANGCI_ARCH=amd64; TRUFFLEHOG_ARCH=amd64; KDL_ARCH=x86_64 ;; \
-      arm64) NODE_ARCH=arm64; GO_ARCH=arm64; AWS_ARCH=aarch64; CODEX_ARCH=aarch64; GOOSE_ARCH=aarch64; DOCKER_ARCH=aarch64; TS_ARCH=arm64; GOLANGCI_ARCH=arm64; TRUFFLEHOG_ARCH=arm64; KDL_ARCH=aarch64 ;; \
+      amd64) NODE_ARCH=x64;   GO_ARCH=amd64; AWS_ARCH=x86_64; CODEX_ARCH=x86_64; GOOSE_ARCH=x86_64; DOCKER_ARCH=x86_64; TS_ARCH=amd64; GOLANGCI_ARCH=amd64; TRUFFLEHOG_ARCH=amd64; KDL_ARCH=x86_64; DOTNET_ARCH=x64 ;; \
+      arm64) NODE_ARCH=arm64; GO_ARCH=arm64; AWS_ARCH=aarch64; CODEX_ARCH=aarch64; GOOSE_ARCH=aarch64; DOCKER_ARCH=aarch64; TS_ARCH=arm64; GOLANGCI_ARCH=arm64; TRUFFLEHOG_ARCH=arm64; KDL_ARCH=aarch64; DOTNET_ARCH=arm64 ;; \
       *) echo "unsupported TARGETARCH: ${TARGETARCH}" >&2; exit 1 ;; \
     esac; \
-    echo "NODE_ARCH=${NODE_ARCH} GO_ARCH=${GO_ARCH} AWS_ARCH=${AWS_ARCH} CODEX_ARCH=${CODEX_ARCH} GOOSE_ARCH=${GOOSE_ARCH} DOCKER_ARCH=${DOCKER_ARCH} TS_ARCH=${TS_ARCH} GOLANGCI_ARCH=${GOLANGCI_ARCH} TRUFFLEHOG_ARCH=${TRUFFLEHOG_ARCH} KDL_ARCH=${KDL_ARCH}" > /tmp/arch.env
+    echo "NODE_ARCH=${NODE_ARCH} GO_ARCH=${GO_ARCH} AWS_ARCH=${AWS_ARCH} CODEX_ARCH=${CODEX_ARCH} GOOSE_ARCH=${GOOSE_ARCH} DOCKER_ARCH=${DOCKER_ARCH} TS_ARCH=${TS_ARCH} GOLANGCI_ARCH=${GOLANGCI_ARCH} TRUFFLEHOG_ARCH=${TRUFFLEHOG_ARCH} KDL_ARCH=${KDL_ARCH} DOTNET_ARCH=${DOTNET_ARCH}" > /tmp/arch.env
 
 # uv (Python project + tool manager).
 RUN set -eux; \
@@ -101,6 +113,24 @@ RUN set -eux; \
     tar -xzf /tmp/go.tar.gz -C /usr/local; \
     rm /tmp/go.tar.gz; \
     go version
+
+# .NET SDK, pinned (agentic-os#329). dev-base shipped no C# toolchain, so any repo
+# with C# to compile (eco-app's Eco mods, `dotnet build mods/*`) had to hand-install
+# the SDK mid-run - the same absent-toolchain class as the uv/Python fix (#327). Bake
+# it in with Microsoft's official dotnet-install.sh at the exact pinned SDK version so
+# `dotnet build` just works, no per-run install. --no-path since ENV owns DOTNET_ROOT
+# and PATH; chmod a+rX so any run-as-uid runs it like every other tool here.
+# Globalization: full ICU (libicu74 in the base apt block above), NOT invariant mode,
+# so C# culture/string behaviour matches a normal host - no DOTNET_SYSTEM_GLOBALIZATION_INVARIANT.
+RUN set -eux; \
+    . /tmp/arch.env; \
+    curl -fsSL "https://dot.net/v1/dotnet-install.sh" -o /tmp/dotnet-install.sh; \
+    chmod 0755 /tmp/dotnet-install.sh; \
+    /tmp/dotnet-install.sh --version "${DOTNET_VERSION}" --architecture "${DOTNET_ARCH}" \
+      --install-dir /usr/local/dotnet --no-path; \
+    rm /tmp/dotnet-install.sh; \
+    chmod -R a+rX /usr/local/dotnet; \
+    dotnet --version; dotnet --list-sdks
 
 # golangci-lint (Go linter for ward + cli-guard). Closes the missing-binary gap
 # that made the in-container `pre-commit run --all-files` / CI lint job unrunnable
