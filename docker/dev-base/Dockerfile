@@ -68,6 +68,21 @@ RUN set -eux; \
     chmod -R a+rX /opt/uv; \
     pre-commit --version
 
+# Managed Pythons for the fleet's required versions (agentic-os#327). The env
+# above points UV_PYTHON_INSTALL_DIR at /opt/uv/python, and the a+rX above grants
+# read+traverse but NOT write - so a non-root agent whose repo needs a Python
+# other than the system 3.12 (e.g. eco-app's requires-python >=3.13) hit
+# `Permission denied` creating /opt/uv/python at its first `uv run`, killing the
+# test/smoke gate before any commit could land. Fix both ways: pre-install the
+# common versions here as root (clean ownership, no run-time download, offline-
+# safe) AND leave the install dir world-writable so an agent can still download
+# any version its repo requires on demand. This a+rwX runs after the pre-commit
+# a+rX above so the write bit survives; add versions here as the fleet adopts them.
+RUN set -eux; \
+    uv python install 3.13 3.12; \
+    chmod -R a+rwX "${UV_PYTHON_INSTALL_DIR}"; \
+    uv python list
+
 # Node + npm (Claude Code's runtime).
 RUN set -eux; \
     . /tmp/arch.env; \
