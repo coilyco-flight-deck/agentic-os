@@ -28,9 +28,12 @@ checkout. An earlier attempt wired ward's `make build-ward-kdl` to copy a siblin
 `WARD_SPEC_BUNDLE_DIR` overlay) because it broke bare-clone builds and overlaid a
 stale copy. The bundle travels as a pinned release asset instead.
 
-The exact overlay mechanism on the ward side - whether the build regenerates the
-embedded guardfiles from this source bundle at build time, or ward ships
-pre-generated embeds that the asset overlays directly - is the open decision
-tracked in ward#503. Either way this asset is the pinned source of truth.
+The overlay mechanism on the ward side is decided (ward#503): each of ward's
+build sites pins this asset by tag + `sha256`, verifies the checksum, extracts
+it, and **copies the bundle's source guardfiles over ward's neutral tracked
+tree before the build** - the same file-copy `make sync-*-assets` uses to derive
+ward's committed embeds. So the embeds are re-derived from this source bundle at
+build time (no pre-generated embeds committed in ward, no live spec re-fetch or
+install-time generator). This asset is the pinned source of truth.
 
 See [../ward-specs/README.md](../ward-specs/README.md).
