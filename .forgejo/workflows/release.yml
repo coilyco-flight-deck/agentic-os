@@ -58,6 +58,59 @@ jobs:
           name: ${{ steps.tag.outputs.new_tag }}
           body: ${{ steps.tag.outputs.changelog }}
 
+      - name: Publish the ward-specs bundle as a pinned, checksummed release asset
+        if: ${{ steps.tag.outputs.new_tag != '' }}
+        env:
+          FORGEJO_TOKEN: ${{ github.token }}
+          FORGEJO_API: https://forgejo.coilysiren.me/api/v1/repos/${{ github.repository }}
+          REL_ID: ${{ steps.create.outputs.release_id }}
+          TAG: ${{ steps.tag.outputs.new_tag }}
+        run: |
+          set -euo pipefail
+          # FORGEJO_TOKEN is the auto-issued job token that just created the
+          # release (contents: write) - the same token create-release used, so
+          # asset upload needs no extra secret. If this instance ever denies the
+          # built-in token asset scope, this step fails loud and the fix is a PAT
+          # secret, mirroring ward's publish-binaries CI_RELEASE_TOKEN.
+          # ward's build input is homed here (ward-specs/, aos#315); ward's build
+          # sites pin + overlay THIS asset so ward's own tree can go neutral
+          # without breaking the fleet's brew-from-source install. Pinning to a
+          # dedicated tarball asset (not a raw tracked path) gives ward a stable,
+          # checksummable URL. See docs/ward-specs.md and ward#503.
+          if [ -z "${REL_ID:-}" ]; then
+            echo "::error::no release_id from create-release; cannot attach ward-specs asset" >&2
+            exit 1
+          fi
+          asset="ward-specs-${TAG}.tar.gz"
+          # Deterministic tarball: sort entries, zero mtime/owner, no gzip name/time
+          # header, so the checksum a downstream pins is reproducible from the tag.
+          tar --sort=name --mtime='UTC 1970-01-01' --owner=0 --group=0 --numeric-owner \
+            -C ward-specs -cf ward-specs.tar .
+          gzip -n -9 -c ward-specs.tar > "${asset}"
+          sha256sum "${asset}" | awk '{print $1}' > "${asset}.sha256"
+          echo "ward-specs asset sha256: $(cat "${asset}.sha256")"
+          # Delete same-named assets first so a workflow_dispatch re-run for an
+          # existing tag replaces rather than 400s on a duplicate (ward release.yml
+          # convention).
+          existing=$(curl -fsSL -H "Authorization: token ${FORGEJO_TOKEN}" \
+            "${FORGEJO_API}/releases/${REL_ID}/assets" || echo '[]')
+          for name in "${asset}" "${asset}.sha256"; do
+            old=$(printf '%s' "$existing" | ASSET="$name" node -e '
+              const a = JSON.parse(require("fs").readFileSync(0, "utf8") || "[]");
+              const m = (a || []).find(x => x.name === process.env.ASSET);
+              if (m) process.stdout.write(String(m.id));
+            ')
+            if [ -n "$old" ]; then
+              curl -fsSL -X DELETE -H "Authorization: token ${FORGEJO_TOKEN}" \
+                "${FORGEJO_API}/releases/${REL_ID}/assets/${old}" || true
+            fi
+            curl -fsSL -X POST -H "Authorization: token ${FORGEJO_TOKEN}" \
+              -H "Content-Type: application/octet-stream" \
+              --data-binary @"${name}" \
+              "${FORGEJO_API}/releases/${REL_ID}/assets?name=${name}"
+            echo "uploaded ${name}"
+          done
+
   publish-image:
     needs: release
     if: ${{ needs.release.outputs.tag != '' }}
