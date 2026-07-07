@@ -12,15 +12,15 @@ $ ward agent claude work coilysiren/inbox#88 --new-tab
 
 opens a new tab in the active Warp Preview window. The tab:
 
-- prints a one-line header like `coilysiren/inbox#88: rotate session-lattice token format` so the tab is identifiable at a glance from the vertical tabs sidebar
+- prints a one-line header like `coilysiren/inbox#88: triage new inbox items` so the tab is identifiable at a glance from the vertical tabs sidebar
 - execs `ward agent claude work coilysiren/inbox#88`, which spins an ephemeral container, fresh-clones the repo inside it, and drops you into the agent session carrying that issue
 
 The fan-out shape that justifies the design: queue up half a dozen issues from the couch, walk away, come back to six tabs each labelled with its issue. None of them races the others, and each runs in its own isolated container.
 
 ```
 $ ward agent claude work coilysiren/inbox#88 --new-tab
-$ ward agent claude work coilysiren/session-lattice#42 --new-tab
-$ ward agent claude work coilysiren/luca#17 --new-tab
+$ ward agent claude work coilysiren/inbox#42 --new-tab
+$ ward agent claude work coilysiren/inbox#17 --new-tab
 $ ward agent claude work coilysiren/eco-mods#203 --new-tab
 $ ward agent claude work coilysiren/agentic-os-kai#588 --new-tab
 $ ward agent claude work coilysiren/ward#274 --new-tab
