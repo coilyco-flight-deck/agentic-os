@@ -98,10 +98,5 @@ commands:
 # Catalog metadata for the cross-repo knowledge graph.
 # Schema: coilysiren/agentic-os-kai#420 (tracker).
 catalog:
-  kind: Component
-  type: configuration
-  system: ops
-  owner: kai
-  lifecycle: production
   description: "Personal agentic OS: shell config, terminal config, GPG/SSM tooling, Claude skills, and shared utility scripts symlinked into sibling coilysiren/* repos. Growing beyond just dotfiles into broader personal-OS scope."
   dependsOn: []

@@ -7,11 +7,15 @@ carry the block.
 Schema and rollout: coilysiren/agentic-os-kai#420. Two-file rollout: coilysiren/agentic-os-kai#480.
 
 Required keys inside `catalog:`:
-    description, dependsOn.
+    dependsOn.
 
-`kind`, `type`, `system`, `owner`, and `lifecycle` are no longer required
-(coilysiren/agentic-os-kai#420). They may still appear and are ignored by
-this hook; the catalog-graph builder reads them with defaults when present.
+`dependsOn` is the only load-bearing key - it is the substrate auto-mount
+manifest ward reads at agent launch (`ward/cmd/ward/agent_context.go`).
+Everything else in the block is optional graph-metadata: `description` is an
+optional label, and `kind`, `type`, `system`, `owner`, `lifecycle` are the
+Backstage-vocab keys retired fleet-wide (coilyco-bridge/agentic-os-kai#714,
+following #420). They may still appear and are ignored by this hook; the
+catalog-graph builder no longer reads them.
 
 `dependsOn` must be a list. Trivial repos (e.g. a single .gitignore) still
 declare it, using `[]` for empty rather than omitting the key. Empty is
@@ -46,10 +50,7 @@ except ImportError:  # pragma: no cover
     sys.exit(1)
 
 
-REQUIRED_KEYS = (
-    "description",
-    "dependsOn",
-)
+REQUIRED_KEYS = ("dependsOn",)
 LIST_KEYS = ("dependsOn",)
 TRACKER = "coilysiren/agentic-os-kai#420"
 
