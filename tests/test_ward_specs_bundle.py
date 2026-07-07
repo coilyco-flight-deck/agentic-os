@@ -1,7 +1,7 @@
 import pathlib
 
 
-SPEC_DIR = pathlib.Path(__file__).resolve().parents[1] / "ward-specs"
+SPEC_DIR = pathlib.Path(__file__).resolve().parents[1] / ".ward"
 
 
 def test_ward_specs_bundle_carries_deployment_anchors() -> None:

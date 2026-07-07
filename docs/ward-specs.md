@@ -1,8 +1,10 @@
 # Ward Spec Bundle
 
-`ward-specs/` is the aos-hosted deployment bundle for ward's coilyco build
-input. It carries the forgejo guardfile, the signoz and ollama guardfiles, the
-fleet manifest, and the spec locks the ward build consumes (aos#315).
+The aos-hosted deployment bundle for ward's coilyco build input lives directly
+in [`.ward/`](../.ward/), flattened alongside `.ward/ward.yaml` (aos#330 - aos#315
+first homed it at top-level `ward-specs/`). It carries the forgejo guardfile, the
+signoz and ollama guardfiles, the fleet manifest, and the spec locks the ward
+build consumes.
 
 ## Published as a pinned, checksummed release asset
 
@@ -12,7 +14,10 @@ Every aos release attaches the bundle as `ward-specs-<tag>.tar.gz` (plus a
 tarball is deterministic (sorted entries, zeroed mtime/owner, `gzip -n`), so the
 checksum a downstream pins is reproducible from the tag. Ward's build sites pin
 that URL + `sha256` rather than a raw tracked path, giving them a stable,
-verifiable input.
+verifiable input. The packaging step enumerates the bundle files explicitly (not
+a whole-directory tar) so `.ward/ward.yaml` never leaks into ward's overlay input,
+while the tarball's internal entries stay flat and layout-identical to the
+pre-move asset - so ward#503's overlay extract needs no change.
 
 ## How ward consumes it
 
@@ -35,5 +40,3 @@ tree before the build** - the same file-copy `make sync-*-assets` uses to derive
 ward's committed embeds. So the embeds are re-derived from this source bundle at
 build time (no pre-generated embeds committed in ward, no live spec re-fetch or
 install-time generator). This asset is the pinned source of truth.
-
-See [../ward-specs/README.md](../ward-specs/README.md).
