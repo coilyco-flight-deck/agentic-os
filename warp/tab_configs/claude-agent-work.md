@@ -7,18 +7,18 @@ This doc walks the design top to bottom. If you know Warp's `tab_configs/` direc
 ## What it does
 
 ```
-$ ward agent claude work coilysiren/repo-recall#88 --new-tab
+$ ward agent claude work coilysiren/inbox#88 --new-tab
 ```
 
 opens a new tab in the active Warp Preview window. The tab:
 
-- prints a one-line header like `coilysiren/repo-recall#88: rotate session-lattice token format` so the tab is identifiable at a glance from the vertical tabs sidebar
-- execs `ward agent claude work coilysiren/repo-recall#88`, which spins an ephemeral container, fresh-clones the repo inside it, and drops you into the agent session carrying that issue
+- prints a one-line header like `coilysiren/inbox#88: rotate session-lattice token format` so the tab is identifiable at a glance from the vertical tabs sidebar
+- execs `ward agent claude work coilysiren/inbox#88`, which spins an ephemeral container, fresh-clones the repo inside it, and drops you into the agent session carrying that issue
 
 The fan-out shape that justifies the design: queue up half a dozen issues from the couch, walk away, come back to six tabs each labelled with its issue. None of them races the others, and each runs in its own isolated container.
 
 ```
-$ ward agent claude work coilysiren/repo-recall#88 --new-tab
+$ ward agent claude work coilysiren/inbox#88 --new-tab
 $ ward agent claude work coilysiren/session-lattice#42 --new-tab
 $ ward agent claude work coilysiren/luca#17 --new-tab
 $ ward agent claude work coilysiren/eco-mods#203 --new-tab

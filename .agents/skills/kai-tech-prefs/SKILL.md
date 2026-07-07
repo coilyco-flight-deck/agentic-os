@@ -28,7 +28,7 @@ Kai is/was a maintainer of [urfave/cli](https://github.com/urfave/cli). **Defaul
 - mods (LLM CLI)
 - freeze, melt
 
-When a ward/repo-recall/eco tool needs interactive prompts, fancy output, or a TUI, bias toward this stack over hand-rolled ANSI or rivals like tview/promptui. Cotton-candy aesthetic, MIT-licensed, very actively maintained, plays nicely with urfave/cli for the imperative-CLI-with-occasional-TUI shape.
+When a ward/eco tool needs interactive prompts, fancy output, or a TUI, bias toward this stack over hand-rolled ANSI or rivals like tview/promptui. Cotton-candy aesthetic, MIT-licensed, very actively maintained, plays nicely with urfave/cli for the imperative-CLI-with-occasional-TUI shape.
 
 - [Don't suggest dead or dormant repos](references/dead-repos.md) - 12-month-commit bright line before recommending any OSS dependency.
 - [Aliases and pagers](references/aliases-and-pagers.md) - no renamed-command aliases, pagers configured off.

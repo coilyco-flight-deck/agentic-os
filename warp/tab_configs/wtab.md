@@ -7,15 +7,15 @@ This doc walks the design top to bottom. If you know Warp's `tab_configs/` direc
 ## What it does
 
 ```
-$ cd ~/projects/coilysiren/repo-recall
-$ warp tab cyan "🧜 repo-recall · scratch"
+$ cd ~/projects/coilysiren/luca
+$ warp tab cyan "🐬 luca · scratch"
 ```
 
 opens a new tab in the active Warp Preview window:
 
-- Tab title: `🧜 repo-recall · scratch`
+- Tab title: `🐬 luca · scratch`
 - Tab color: cyan (the ANSI cyan from your theme)
-- cwd: `~/projects/coilysiren/repo-recall` (whatever `$PWD` was when you ran the command)
+- cwd: `~/projects/coilysiren/luca` (whatever `$PWD` was when you ran the command)
 - Otherwise indistinguishable from a plus-button new tab: your normal shell, your normal startup, no extra processes
 
 A few more in the wild:

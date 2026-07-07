@@ -9,7 +9,7 @@ How to pick a license for a `coilysiren/*` repo. Choose by **what the repo is fo
 
 ## Tier 1 - MIT (things meant to be shared)
 
-Anything Kai wants other people to pick up, reuse, fork, and build on. Generic tools, libraries, helper and derivative scripts, substrate tooling like `repo-recall` that is published for reuse.
+Anything Kai wants other people to pick up, reuse, fork, and build on. Generic tools, libraries, helper and derivative scripts, substrate tooling that is published for reuse.
 
 - **License:** MIT.
 - **SPDX:** `MIT`.
