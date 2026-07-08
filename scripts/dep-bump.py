@@ -19,8 +19,9 @@ API drops that one tool from the plan, it never blocks the others.
 
 Version policy: bumps stay on the pinned line where crossing it is risky. Node
 tracks the latest release of its currently-pinned major (no surprise major jump);
-uv/go/aws-cli/claude/codex/goose/ward track the latest stable upstream release
-(ward off its Forgejo tags, everything else off a GitHub Releases/tags feed).
+uv/go/aws-cli/claude/mcporter/codex/goose/ward track the latest stable upstream
+release (ward off its Forgejo tags, mcporter off npm, everything else off a
+GitHub Releases/tags feed).
 
 Usage:
     python3 scripts/dep-bump.py plan            # TSV: NAME<TAB>CURRENT<TAB>LATEST
@@ -152,6 +153,11 @@ def _resolve_claude() -> str | None:
     return data.get("version")  # type: ignore[union-attr]
 
 
+def _resolve_mcporter() -> str | None:
+    data = _get_json("https://registry.npmjs.org/mcporter/latest")
+    return data.get("version")  # type: ignore[union-attr]
+
+
 def _resolve_codex() -> str | None:
     # Tags are rust-vX.Y.Z with rust-vX.Y.Z-alpha.N prereleases interleaved.
     return _gh_release("openai/codex", re.compile(r"^rust-v(\d+\.\d+\.\d+)$"))
@@ -211,6 +217,7 @@ RESOLVERS: dict[str, Callable[..., str | None]] = {
     "GO_VERSION": _resolve_go,
     "AWSCLI_VERSION": _resolve_awscli,
     "CLAUDE_VERSION": _resolve_claude,
+    "MCPORTER_VERSION": _resolve_mcporter,
     "CODEX_VERSION": _resolve_codex,
     "GOOSE_VERSION": _resolve_goose,
     "DOCKER_VERSION": _resolve_docker,

@@ -15,6 +15,7 @@ FROM ubuntu:24.04
 ARG UV_VERSION=0.11.21
 ARG NODE_VERSION=22.22.3
 ARG GO_VERSION=1.26.4
+ARG MCPORTER_VERSION=0.12.2
 
 ARG TARGETARCH
 
@@ -37,6 +38,7 @@ def test_parse_args_block_collects_only_arg_defaults() -> None:
         "UV_VERSION": "0.11.21",
         "NODE_VERSION": "22.22.3",
         "GO_VERSION": "1.26.4",
+        "MCPORTER_VERSION": "0.12.2",
     }
     # `ARG TARGETARCH` has no default, so it must not appear at all.
     assert "TARGETARCH" not in pins
@@ -101,6 +103,28 @@ def test_version_sensitive_pins_are_excluded_from_auto_bump() -> None:
     assert "GOLANGCI_LINT_VERSION" not in script.RESOLVERS
     assert "KDLFMT_VERSION" not in script.RESOLVERS
     assert "TRUFFLEHOG_VERSION" in script.RESOLVERS
+
+
+def test_mcporter_is_auto_bumped_from_npm_registry() -> None:
+    # MCPorter is installed from npm, so the auto-bump tracks the npm registry's
+    # latest published version like Claude does.
+    script = _load_script()
+    assert "MCPORTER_VERSION" in script.RESOLVERS
+
+
+def test_mcporter_resolver_reads_npm_latest(monkeypatch) -> None:
+    # The resolver should read the npm registry's latest metadata and return its
+    # published version directly.
+    script = _load_script()
+    seen: dict[str, str] = {}
+
+    def fake_get_json(url: str) -> object:
+        seen["url"] = url
+        return {"version": "0.12.3"}
+
+    monkeypatch.setattr(script, "_get_json", fake_get_json)
+    assert script._resolve_mcporter() == "0.12.3"
+    assert seen["url"] == "https://registry.npmjs.org/mcporter/latest"
 
 
 def test_ward_binary_is_auto_bumped() -> None:

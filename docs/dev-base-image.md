@@ -17,7 +17,7 @@ inner-loop toolchain on `ubuntu:24.04`:
 - **go** - builds the `warp/` hooks and the ward binary below.
 - **.NET SDK 10 + ICU** - C# mods compile in-container with no per-run install, full ICU globalization (`libicu74`) not invariant mode (agentic-os#329).
 - **aws cli v2** - SSM secret loader + `~/.aws` passthrough; `AWS_DEFAULT_REGION` / `AWS_REGION` default `us-east-1` (agentic-os#286).
-- **claude + codex + goose** - pinned agent CLIs; plus **docker cli + socat** for `explore`'s sibling `warded #N` dispatch (ward#315).
+- **claude + mcporter + codex + goose** - pinned agent CLIs and MCP runtime; plus **docker cli + socat** for `explore`'s sibling `warded #N` dispatch (ward#315).
 - **ward** - the dev-command surface agents route through (`ward <verb>`), built from source at the pinned `WARD_VERSION` tag, baked in not `go install`-ed per run - public source clones with **no build token** (agentic-os#223).
 - **golangci-lint + trufflehog + kdlfmt** - lint / secret-scan / format binaries the gate shells out to, self-run in-container (agentic-os#292).
 - **tailscale cli** - tailnet client (no daemon) so a credentialed container reaches the tower; auth stays ward's axis (agentic-os#286).

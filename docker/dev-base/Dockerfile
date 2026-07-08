@@ -8,6 +8,7 @@ ARG NODE_VERSION=22.23.1
 ARG GO_VERSION=1.26.4
 ARG AWSCLI_VERSION=2.35.15
 ARG CLAUDE_VERSION=2.1.200
+ARG MCPORTER_VERSION=0.12.3
 ARG CODEX_VERSION=0.142.5
 ARG GOOSE_VERSION=1.41.0
 ARG DOCKER_VERSION=28.5.2
@@ -184,6 +185,13 @@ RUN set -eux; \
 RUN set -eux; \
     npm install -g "@anthropic-ai/claude-code@${CLAUDE_VERSION}"; \
     claude --version
+
+# MCPorter, pinned. Warded Codex containers shell out to this on demand for
+# one-off MCP calls and schema refreshes, so it has to be baked into the image
+# rather than pulled ad hoc at runtime.
+RUN set -eux; \
+    npm install -g "mcporter@${MCPORTER_VERSION}"; \
+    mcporter --help >/dev/null
 
 # Codex CLI, pinned. ward injects host ~/.codex/auth.json at container launch.
 RUN set -eux; \

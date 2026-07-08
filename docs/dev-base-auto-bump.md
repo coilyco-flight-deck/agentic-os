@@ -27,8 +27,8 @@ Fleet rollout is not its concern.
 - **Conservative bumps.** Node and the .NET SDK track the latest release of their
   currently-pinned major (no surprise major jump - the SDK stays on the .NET 10
   channel eco-app's mods build against, agentic-os#329); uv, go, aws-cli, claude,
-  codex, goose, docker, tailscale, trufflehog, and ward track the latest stable
-  upstream release.
+  mcporter, codex, goose, docker, tailscale, trufflehog, and ward track the
+  latest stable upstream release.
   Tailscale resolves against its `pkgs.tailscale.com/stable` feed (not GitHub
   tags, which interleave the unstable odd-minor releases); ward resolves against
   its Forgejo tags list (it lives on Forgejo, not GitHub, and the image builds it
