@@ -24,4 +24,3 @@ Constants live in [`agentic_os/pre_commit/check_code_comments.py`](../agentic_os
 * **README.md chars (default)** - 12500 - the root README.md defaults to the trifecta char cap (override per-repo with `readme_max_chars`).
 * **module README lines** - 3 - non-blank lines for a co-located module README (outpost or homestead shape).
 * **module README prose chars** - 90 - characters per prose line in a module README (the pointer line is exempt).
-

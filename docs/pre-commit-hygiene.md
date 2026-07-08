@@ -1,0 +1,55 @@
+# Pre-commit hygiene
+
+This repo ships the baseline cleanliness hooks plus a few staged opt-ins for
+text hygiene that are too disruptive to flip on everywhere at once.
+
+## Active hooks
+
+- `trailing-whitespace`
+- `end-of-file-fixer`
+- `check-added-large-files` with a 2048 KB ceiling
+- `check-merge-conflict`
+- `check-case-conflict`
+- `check-illegal-windows-names`
+- `mixed-line-ending`
+- `check-json`
+- `check-toml`
+- `actionlint` on `.forgejo/workflows/*.yml` and `.yaml`; `.github/actionlint.yaml` teaches it the Forgejo runner label `docker`
+- `shellcheck` on shell scripts
+- `typos` with repo-specific words in [`.typos.toml`](../.typos.toml)
+
+## Manual opt-ins
+
+- `shfmt` - manual stage only. Shellcheck is the default gate because it is
+  lower drama for the current shell style.
+- `unresolved-placeholder-guard` - manual stage only. Use it once the repo has
+  enough allowlists for examples and quoted snippets.
+- `issue-reference-guard` - manual stage only. Use it once the repo has a
+  staged rollout plan and local allowlists for historical references.
+
+## Opting in
+
+Add the hook at `stages: [manual]` and supply repo-local config.
+
+```toml
+[tool.agentic-os.unresolved-placeholder-guard]
+enabled = true
+excludes = [
+  "docs/feature-examples/**",
+]
+allow_globs = [
+  "docs/quoted-examples.md",
+]
+
+[tool.agentic-os.issue-reference-guard]
+enabled = true
+excludes = [
+  "docs/skill-discipline-handbook-hooks.md",
+]
+allow_globs = [
+  "docs/issue-corpus.md",
+]
+```
+
+The manual-only hooks are intentionally excluded from the fleet coverage audit
+until they are rolled out as active checks.

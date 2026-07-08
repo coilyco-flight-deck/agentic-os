@@ -14,7 +14,7 @@ For each repo checked out under ~/projects/<org>/<name> across every org dir
      documentation-layout, code-comments, check-skills, dead-cross-links,
      skill-discipline).
   3. Insert/refresh the managed block: the agentic-os hook set plus the
-     upstream pre-commit-hooks check-merge-conflict (displaced, agentic-os#229).
+     standard hygiene hooks, actionlint, shellcheck, and typos.
   4. Run `pre-commit install --hook-type pre-commit --hook-type commit-msg
      --hook-type prepare-commit-msg`.
 
@@ -112,6 +112,36 @@ AGENTIC_OS_REPO_URL = "https://forgejo.coilysiren.me/coilyco-flight-deck/agentic
 PRECOMMIT_HOOKS_REPO_URL = "https://github.com/pre-commit/pre-commit-hooks"
 PRECOMMIT_HOOKS_REV = "v6.0.0"
 
+PRECOMMIT_HOOKS = [
+    {"id": "trailing-whitespace"},
+    {"id": "end-of-file-fixer"},
+    {"id": "check-added-large-files", "args": ["--maxkb=2048"]},
+    {"id": "check-merge-conflict", "args": ["--assume-in-merge"]},
+    {"id": "check-case-conflict"},
+    {"id": "check-illegal-windows-names"},
+    {"id": "mixed-line-ending"},
+    {"id": "check-json"},
+    {"id": "check-toml"},
+]
+
+ACTIONLINT_REPO_URL = "https://github.com/rhysd/actionlint"
+ACTIONLINT_REV = "v1.7.12"
+ACTIONLINT_FILES = r"^\.forgejo/workflows/.*\.(ya?ml)$"
+
+SHELLCHECK_REPO_URL = "https://github.com/shellcheck-py/shellcheck-py"
+SHELLCHECK_REV = "v0.11.0.1"
+SHELLCHECK_EXCLUDE = r"^shell/(zshrc|warp\.zsh)$"
+
+TYPOS_REPO_URL = "https://github.com/crate-ci/typos"
+TYPOS_REV = "v1.48.0"
+
+MANAGED_REPO_URLS = [
+    PRECOMMIT_HOOKS_REPO_URL,
+    ACTIONLINT_REPO_URL,
+    SHELLCHECK_REPO_URL,
+    TYPOS_REPO_URL,
+]
+
 # Legacy managed-block markers from the prior per-hook stamping rollouts.
 # Strip these when present so consumers end up with one upstream-ref block.
 LEGACY_BLOCK_MARKERS = [
@@ -178,6 +208,17 @@ def hook_ids_for(repo: str) -> list[str]:
 def managed_block(rev: str, hook_ids: list[str] | None = None) -> str:
     ids = hook_ids if hook_ids is not None else DEFAULT_HOOK_IDS
     hook_lines = "\n".join(f"      - id: {h}" for h in ids)
+    precommit_hook_lines = "\n".join(
+        "      - id: {id}{args}".format(
+            id=hook["id"],
+            args=(
+                f"\n        args: [{', '.join(hook['args'])}]"
+                if "args" in hook
+                else ""
+            ),
+        )
+        for hook in PRECOMMIT_HOOKS
+    )
     return f"""\
   {BEGIN_MARKER}
   - repo: {AGENTIC_OS_REPO_URL}
@@ -187,8 +228,24 @@ def managed_block(rev: str, hook_ids: list[str] | None = None) -> str:
   - repo: {PRECOMMIT_HOOKS_REPO_URL}
     rev: {PRECOMMIT_HOOKS_REV}
     hooks:
-      - id: check-merge-conflict
-        args: [--assume-in-merge]
+{precommit_hook_lines}
+  - repo: {ACTIONLINT_REPO_URL}
+    rev: {ACTIONLINT_REV}
+    hooks:
+      # Forgejo workflows use GitHub Actions syntax; no exclude split is needed yet.
+      - id: actionlint
+        files: {ACTIONLINT_FILES}
+  - repo: {SHELLCHECK_REPO_URL}
+    rev: {SHELLCHECK_REV}
+    hooks:
+      - id: shellcheck
+        exclude: {SHELLCHECK_EXCLUDE}
+        args: [--severity=error]
+  - repo: {TYPOS_REPO_URL}
+    rev: {TYPOS_REV}
+    hooks:
+      - id: typos
+        args: []
   {END_MARKER}
 """
 
@@ -226,6 +283,26 @@ def strip_legacy_blocks(text: str) -> tuple[str, int]:
         if n:
             removed += n
             text = new_text
+    for repo_url in MANAGED_REPO_URLS:
+        lines = text.splitlines(keepends=True)
+        new_lines: list[str] = []
+        skipping = False
+        stripped_here = 0
+        for line in lines:
+            if skipping:
+                if re.match(r"^\s{2}-\s+repo:\s+", line):
+                    skipping = False
+                else:
+                    continue
+            if re.match(rf"^\s{{2}}-\s+repo:\s+{re.escape(repo_url)}\s*$", line):
+                skipping = True
+                stripped_here += 1
+                continue
+            new_lines.append(line)
+        if stripped_here:
+            removed += stripped_here
+            text = "".join(new_lines)
+    text = re.sub(r"\n{3,}", "\n\n", text)
     return text, removed
 
 

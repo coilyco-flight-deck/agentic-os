@@ -34,6 +34,19 @@ fleet {
         }
     }
 
+    agent opencode {
+        binary opencode
+        context-level 0
+        stream none
+        auth none
+        model qwen3-coder:30b
+        endpoint "http://localhost:11434/v1"
+        argv {
+            headless opencode run
+            interactive opencode
+        }
+    }
+
     agent goose {
         binary goose
         context-level 1

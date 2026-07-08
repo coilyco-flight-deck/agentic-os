@@ -122,17 +122,59 @@ repos:
         files: ^warp/.*\.go$
         pass_filenames: false
         stages: [pre-commit]
+      - id: unresolved-placeholder-guard
+        name: unresolved placeholder guard
+        entry: python -m agentic_os.pre_commit.check_unresolved_placeholders
+        language: python
+        always_run: true
+        pass_filenames: false
+        stages: [manual]
+      - id: issue-reference-guard
+        name: issue reference guard
+        entry: python -m agentic_os.pre_commit.check_issue_references
+        language: python
+        always_run: true
+        pass_filenames: false
+        stages: [manual]
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-added-large-files
+        args: [--maxkb=2048]
       - id: check-merge-conflict
         args: [--assume-in-merge]
+      - id: check-case-conflict
+      - id: check-illegal-windows-names
+      - id: mixed-line-ending
+      - id: check-json
+      - id: check-toml
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.12
+    hooks:
+      # Forgejo workflows use GitHub Actions syntax; no exclude split is needed yet.
+      - id: actionlint
+        args:
+          - -config-file
+          - .github/actionlint.yaml
+        files: ^\.forgejo/workflows/.*\.(ya?ml)$
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.11.0.1
     hooks:
       - id: shellcheck
         exclude: ^shell/(zshrc|warp\.zsh)$
         args: [--severity=error]
+  - repo: https://github.com/scop/pre-commit-shfmt
+    rev: v3.13.1-1
+    hooks:
+      - id: shfmt
+        stages: [manual]
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.48.0
+    hooks:
+      - id: typos
+        args: []
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.15.20
     hooks:

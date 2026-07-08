@@ -1,0 +1,29 @@
+[files]
+extend-exclude = [
+  "*.json",
+  "*.lock",
+  "docs/ward-ops-forgejo-reference.md",
+]
+
+[default.extend-words]
+aos = "aos"
+coilyco = "coilyco"
+forgejo = "forgejo"
+glitchtip = "glitchtip"
+hashi = "hashi"
+karabiner = "karabiner"
+mcporter = "mcporter"
+mis = "mis"
+opencode = "opencode"
+qwen = "qwen"
+reqests = "reqests"
+requets = "requets"
+ser = "ser"
+SOM = "SOM"
+unparseable = "unparseable"
+Iz = "Iz"
+aks = "aks"
+embeded = "embeded"
+signoz = "signoz"
+ward = "ward"
+warp = "warp"

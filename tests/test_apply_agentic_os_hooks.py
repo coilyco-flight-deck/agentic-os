@@ -134,3 +134,25 @@ def test_default_hook_ids_present_at_default_rev() -> None:
         f"DEFAULT_HOOK_IDS reference hooks absent from {rev}: {missing}. "
         "Cut a release containing them, then ensure it is tagged (agentic-os#187)."
     )
+
+
+def test_managed_block_includes_standard_hygiene_hooks() -> None:
+    """The managed rollout block keeps the expanded hygiene suite together."""
+    script = _load_script()
+    block = script.managed_block("v9.9.9")
+    for needle in (
+        "trailing-whitespace",
+        "end-of-file-fixer",
+        "check-added-large-files",
+        "check-case-conflict",
+        "check-illegal-windows-names",
+        "mixed-line-ending",
+        "check-json",
+        "check-toml",
+        "https://github.com/rhysd/actionlint",
+        "files: ^\\.forgejo/workflows/.*\\.(ya?ml)$",
+        "https://github.com/shellcheck-py/shellcheck-py",
+        "https://github.com/crate-ci/typos",
+        "args: []",
+    ):
+        assert needle in block

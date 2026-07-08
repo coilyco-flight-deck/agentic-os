@@ -42,4 +42,3 @@ Missing one or two is fine. Missing all of them on a 5,000-LOC dep is a yellow f
 ### Steps 4-10
 
 Build scripts and proc macros, the dependency-tree check, adoption, advisory databases, external engagement, the hijack commit-pattern check, and license sanity continue in [`audit-checklist-adoption.md`](audit-checklist-adoption.md).
-

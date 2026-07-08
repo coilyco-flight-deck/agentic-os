@@ -1,10 +1,10 @@
 # Features: cross-repo tooling and release
 
-Pre-commit baseline, diagnostic helpers, and Forgejo-canonical release actions.
+Pre-commit baseline, diagnostics, and Forgejo-canonical release actions.
 
 ## Cross-repo pre-commit baseline
 
-Ships the canonical hook IDs every `coilysiren/*` repo pins via `rev:` (the full set, including the `agents-pointer` block in [details](features-agents-pointer.md), lives in [`.pre-commit-hooks.yaml`](../.pre-commit-hooks.yaml)). Consumers don't stamp local copies of the validators; the `agentic-os` package is pip-installed into each pre-commit env. Hook and generator modules live under `agentic_os/`. Rolled out and audited from `agentic-os-kai`.
+Ships the canonical hook IDs each `coilysiren/*` repo pins via `rev:`. The active set covers standard hygiene hooks, `actionlint`, `shellcheck`, and `typos`. `shfmt`, unresolved placeholders, and issue references stay opt-in in [pre-commit hygiene](pre-commit-hygiene.md); the manual guards live in [`.pre-commit-hooks.yaml`](../.pre-commit-hooks.yaml). Consumers don't vendor the validators. Package is pip-installed for pre-commit. Hooks and generators live in `agentic_os`.
 
 ## Seed-skill propagation
 

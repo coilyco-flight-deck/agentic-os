@@ -12,7 +12,7 @@ from agentic_os.check_commit_closes_issue import main
 def test_commit_message_accepts_same_repo_url():
     """Test that a commit message with a same-repo Forgejo URL is accepted."""
     # This should pass - using a real forgejo URL for the same repo
-    commit_msg = "fix: resolve issue with commit validation\n\ncloses https://forgejo.coilysiren.me/coilysiren/agentic-os/issues/123"
+    commit_msg = "fix: resolve issue with commit validation\n\ncloses https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/issues/123"
     assert main(['-'], commit_msg) == 0
 
 
@@ -53,7 +53,7 @@ def test_exempt_commits():
         "fixup! abc123",
         "squash! abc123"
     ]
-    
+
     for commit_msg in exempt_commits:
         assert main(['-'], commit_msg) == 0
 
@@ -63,22 +63,22 @@ if __name__ == "__main__":
     try:
         test_commit_message_accepts_same_repo_url()
         print("✓ test_commit_message_accepts_same_repo_url passed")
-        
+
         test_commit_message_rejects_cross_repo_url()
         print("✓ test_commit_message_rejects_cross_repo_url passed")
-        
+
         test_commit_message_rejects_bare_short_form()
         print("✓ test_commit_message_rejects_bare_short_form passed")
-        
+
         test_commit_message_rejects_owner_repo_short_form()
         print("✓ test_commit_message_rejects_owner_repo_short_form passed")
-        
+
         test_commit_message_rejects_no_closing_reference()
         print("✓ test_commit_message_rejects_no_closing_reference passed")
-        
+
         test_exempt_commits()
         print("✓ test_exempt_commits passed")
-        
+
         print("\nAll tests passed! ✅")
     except Exception as e:
         print(f"❌ Test failed: {e}")

@@ -9,8 +9,9 @@ which expected hook IDs are missing. Override the local root with
 $PROJECTS_ROOT. See coilysiren/agentic-os-kai#560.
 
 The expected set is the hook IDs declared in this repo's
-`.pre-commit-hooks.yaml`. Run this after a `apply-agentic-os-hooks.py`
-sweep to verify every consumer landed the managed block.
+`.pre-commit-hooks.yaml`, excluding hooks that are manual-only opt-ins. Run
+this after a `apply-agentic-os-hooks.py` sweep to verify every consumer landed
+the managed block.
 
 Usage:
     python3 scripts/audit-pre-commit-coverage.py            # local fleet
@@ -52,7 +53,13 @@ AGENTIC_OS_URL = "https://github.com/coilysiren/agentic-os"
 
 def expected_hook_ids() -> list[str]:
     data = yaml.safe_load(HOOKS_FILE.read_text())
-    return [h["id"] for h in data]
+    out = []
+    for hook in data:
+        stages = set(hook.get("stages") or [])
+        if stages and stages <= {"manual"}:
+            continue
+        out.append(hook["id"])
+    return out
 
 
 def gh(*args: str) -> str:

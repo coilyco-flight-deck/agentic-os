@@ -18,6 +18,8 @@
 #       - id: yaml-strict
 #       - id: seed-skills
 #       - id: trufflehog
+#       - id: unresolved-placeholder-guard  # manual opt-in
+#       - id: issue-reference-guard         # manual opt-in
 #
 # See coilysiren/agentic-os#59 for the trifecta convention.
 # Rollout helper: agentic-os/scripts/apply-agentic-os-hooks.py.
@@ -198,3 +200,21 @@
   always_run: true
   pass_filenames: false
   stages: [pre-commit]
+
+- id: unresolved-placeholder-guard
+  name: unresolved placeholder guard
+  description: "Reject unresolved placeholder prose like TODO implement, stub, placeholder, lorem, and generated apology/provenance phrases. Ships manual-only so repos can opt in once they have allowlists."
+  entry: check-unresolved-placeholders
+  language: python
+  always_run: true
+  pass_filenames: false
+  stages: [manual]
+
+- id: issue-reference-guard
+  name: issue reference guard
+  description: "Reject direct issue references in tracked prose/code so durable docs, not issue-thread anchors, carry long-lived meaning. Ships manual-only pending repo-specific rollout and allowlists."
+  entry: check-issue-references
+  language: python
+  always_run: true
+  pass_filenames: false
+  stages: [manual]

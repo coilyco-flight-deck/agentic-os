@@ -62,4 +62,3 @@ When asked to auto-fix CI, follow this loop:
 4. `git add . && git commit -m "fix: ..." && git push`
 5. Wait for CI → re-check status
 6. Repeat if still failing (up to 3 attempts, then ask the user)
-

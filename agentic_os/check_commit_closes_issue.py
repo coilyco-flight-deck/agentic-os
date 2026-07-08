@@ -120,12 +120,12 @@ def classify(body: str, this: tuple[str, str] | None) -> str:
     return "none"
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(argv: list[str] | None = None, body: str | None = None) -> int:
     argv = argv or sys.argv[1:]
-    if not argv:
+    if body is None and not argv:
         # Read from stdin (the commit message)
         body = sys.stdin.read()
-    else:
+    elif body is None:
         # Read from the file path provided as first arg
         with open(argv[0]) as f:
             body = f.read()

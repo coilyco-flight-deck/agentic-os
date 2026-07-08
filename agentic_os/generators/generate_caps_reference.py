@@ -157,7 +157,6 @@ def render_doc() -> str:
             lines.append("")
             last_hook = hook
         lines.append(f"* **{name}** - {value} - {note}.")
-    lines.append("")
     return "\n".join(lines) + "\n"
 
 
