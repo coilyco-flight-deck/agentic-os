@@ -166,7 +166,7 @@ jobs:
               echo "docker daemon reachable at $h"
               echo "DOCKER_HOST=$h" >> "$GITHUB_ENV"
               echo "selected DOCKER_HOST=$h"
-              docker version
+              docker -H "$h" version
               exit 0
             fi
             echo "no docker daemon at $h"
