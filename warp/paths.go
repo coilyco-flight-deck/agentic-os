@@ -66,7 +66,7 @@ func resolveHostPaths(channel string) (*HostPaths, error) {
 		h.Channel = ch.Name
 		h.ConfigDir = filepath.Join(local, "warp", ch.DirName, "config")
 		h.SQLitePath = filepath.Join(local, "warp", ch.DirName, "data", "warp.sqlite")
-		// Theme chooser scans %APPDATA% (Roaming), see coilysiren/agentic-os#137.
+		// Theme chooser scans %APPDATA% (Roaming), see the Warp config docs.
 		roaming := os.Getenv("APPDATA")
 		if roaming == "" {
 			return nil, fmt.Errorf("APPDATA is unset")
@@ -95,7 +95,7 @@ func resolveHostPaths(channel string) (*HostPaths, error) {
 
 	h.SettingsPath = filepath.Join(h.ConfigDir, "settings.toml")
 	// Warp reads custom keybindings from keybindings.yaml, a sibling of
-	// settings.toml in the config dir. See docs/warp.md and #320.
+	// settings.toml in the config dir. See docs/warp.md.
 	h.KeybindingsPath = filepath.Join(h.ConfigDir, "keybindings.yaml")
 	if h.ThemeDir == "" {
 		h.ThemeDir = filepath.Join(h.ConfigDir, "themes")
@@ -105,7 +105,7 @@ func resolveHostPaths(channel string) (*HostPaths, error) {
 	h.TabConfigPath = filepath.Join(h.TabConfigDir, "startup_config.toml")
 
 	// Launch configs are symlinked (not rendered): the repo dir is the source,
-	// the Warp config dir is the mirror. See launch.go and #10.
+	// the Warp config dir is the mirror. See launch.go.
 	h.LaunchSrcDir = filepath.Join(repoRoot, "warp", "launch_configurations")
 	h.LaunchDstDir = filepath.Join(h.ConfigDir, "launch_configurations")
 

@@ -26,7 +26,7 @@ Downstream repos reference a seeded skill by its canonical path,
 builds the path tail used for the presence check; ``suggested_url`` builds the
 full Forgejo URL shown in guidance.
 
-Schema and rollout: coilyco-flight-deck/agentic-os#176.
+Schema and rollout: see docs/skill-discipline-authoring-shipping.md.
 """
 from __future__ import annotations
 
@@ -37,7 +37,7 @@ from typing import NoReturn
 
 from agentic_os.pre_commit.check_skill import parse_frontmatter
 
-TRACKER = "coilyco-flight-deck/agentic-os#176"
+TRACKER = "docs/skill-discipline-authoring-shipping.md"
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 SKILLS_DIR = _REPO_ROOT / ".agents" / "skills"

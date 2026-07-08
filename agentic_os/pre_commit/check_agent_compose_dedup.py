@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Reject content duplicated across AGENTS.COMPOSE.md sources or with AGENTS.md.
 
-agent-compose (forgejo #134) pulls AGENTS.COMPOSE.md doctrine into global
+agent-compose pulls AGENTS.COMPOSE.md doctrine into global
 composed context, shared across harnesses by default. Two failure modes waste a
 session's context budget:
 

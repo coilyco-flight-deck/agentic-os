@@ -23,7 +23,7 @@ is in flight, every tracked file on `pre-commit run --all-files`. Per-repo opt
 paths out via `[tool.agentic-os.leak-guard] excludes = [...]`; per-rule
 allowlists (`allow_globs`) live with the rule. Rule scope is matched against the
 current repo resolved from `origin`, so a rule fires only where it should.
-See coilysiren/inbox#95.
+See docs/leak-guard.md.
 """
 from __future__ import annotations
 

@@ -19,8 +19,8 @@ A `consult` issue waits for a person. A blocked-headless issue should wake on up
 
 Because readiness is orthogonal to mode, `blocked-on-dependency` does **not** replace a mode label - it rides alongside one. The common case is `headless` + `blocked-on-dependency`: settled headless work, parked on an upstream, due to wake on its own.
 
-The triggering case is [ward#124](https://forgejo.coilysiren.me/coilyco-flight-deck/ward/issues/124), blocked only on cli-guard exporting `ParseIssueRef`/`IssueRef` and cutting a release. Its `ward agent headless` pre-flight NO-GO'd it as a cross-repo release-sequencing **fork** - reading a defer-and-wake as a needs-a-human consult, exactly the misread this state removes.
+The triggering case is a ward issue, blocked only on cli-guard exporting `ParseIssueRef`/`IssueRef` and cutting a release. Its `ward agent headless` pre-flight NO-GO'd it as a cross-repo release-sequencing **fork** - reading a defer-and-wake as a needs-a-human consult, exactly the misread this state removes.
 
 ## What is named here vs built later
 
-This doc names the state and fixes its semantics. The enforcing half - teaching the `ward agent headless` pre-flight to detect it, plus the auto-resume **wake mechanism** that re-enters a dependent issue into the dispatch queue when its blocker closes - is the cross-repo build tracked in [agentic-os#282](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/issues/282).
+This doc names the state and fixes its semantics. The enforcing half - teaching the `ward agent headless` pre-flight to detect it, plus the auto-resume **wake mechanism** that re-enters a dependent issue into the dispatch queue when its blocker closes - is the cross-repo build tracked in the release-sequencing work.

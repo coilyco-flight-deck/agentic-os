@@ -1,6 +1,6 @@
 # Warp mid-director mouse-tracking escape hatch
 
-A recovery for a stuck xterm mouse-tracking flood inside a running warded director, without killing the director. See [warp.md](warp.md) for the config module this rides on, and #320 for the investigation.
+A recovery for a stuck xterm mouse-tracking flood inside a running warded director, without killing the director. See [warp.md](warp.md) for the config module this rides on, and the investigation notes in this doc.
 
 ## The failure
 
@@ -34,4 +34,4 @@ The binding rides `warp apply` / `warp doctor` to every host, the same as `setti
 
 The genuinely correct fix is upstream: the director TUI (Claude Code) re-asserting mouse state on redraw. That is not ours to patch. This keybinding is a mitigation.
 
-A second lever was investigated and deferred: a dev-base `BASH_ENV`/EXIT-trap self-heal that emits DECRST on each `bash -c` teardown. It is mechanically easy but risky - a naive `printf` to stdout would inject escapes into Claude Code's captured command output fleet-wide, so it must emit to `/dev/tty` guarded by `[ -t 1 ]`, and that guard may mean it never fires for pipe-backed children (exactly the ones that matter). Blast radius vs uncertain payoff, so it needs an empirical spike of a live director session before it lands. Tracked as follow-up to #320.
+A second lever was investigated and deferred: a dev-base `BASH_ENV`/EXIT-trap self-heal that emits DECRST on each `bash -c` teardown. It is mechanically easy but risky - a naive `printf` to stdout would inject escapes into Claude Code's captured command output fleet-wide, so it must emit to `/dev/tty` guarded by `[ -t 1 ]`, and that guard may mean it never fires for pipe-backed children (exactly the ones that matter). Blast radius vs uncertain payoff, so it needs an empirical spike of a live director session before it lands.

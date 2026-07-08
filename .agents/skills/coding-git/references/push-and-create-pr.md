@@ -22,7 +22,7 @@ gh pr create \
 ## Test Plan
 - [ ] Unit tests pass
 
-Closes #42"
+Closes issue"
 ```
 
 Options: `--draft`, `--reviewer user1,user2`, `--label "enhancement"`, `--base develop`
@@ -38,7 +38,7 @@ curl -s -X POST \
   https://api.github.com/repos/$OWNER/$REPO/pulls \
   -d "{
     \"title\": \"feat: add JWT-based user authentication\",
-    \"body\": \"## Summary\nAdds login and register API endpoints.\n\nCloses #42\",
+    \"body\": \"## Summary\nAdds login and register API endpoints.\n\nCloses issue\",
     \"head\": \"$BRANCH\",
     \"base\": \"main\"
   }"

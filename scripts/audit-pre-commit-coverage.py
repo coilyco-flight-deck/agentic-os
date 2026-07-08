@@ -6,7 +6,7 @@ Walks every git working tree under ~/projects/<org>/* via
 agentic_os.config.iter_workspace_repos (or `--source github` to query the
 contents API), reads each repo's `.pre-commit-config.yaml`, and reports
 which expected hook IDs are missing. Override the local root with
-$PROJECTS_ROOT. See coilysiren/agentic-os-kai#560.
+$PROJECTS_ROOT. See scripts/sweep-precommit.py.
 
 The expected set is the hook IDs declared in this repo's
 `.pre-commit-hooks.yaml`, excluding hooks that are manual-only opt-ins. Run

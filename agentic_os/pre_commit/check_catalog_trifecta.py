@@ -17,9 +17,8 @@ This validator checks, per markdown file:
     2. The file contains a "## See also" section header.
     3. The file contains markdown links resolving to each of the other
        three canonical paths (the two peer .md files plus .ward/ward.yaml).
-    4. The file cites the canonical convention doc - either the new home
-       at coilysiren/agentic-os#59 or the legacy home at
-       coilysiren/agentic-os-kai#313 (during the migration window).
+    4. The file cites the canonical convention doc at
+       docs/features-release-tooling.md.
     5. AGENTS.md contains the standard repo-local agent heading set.
 
 The .ward/ward.yaml file only needs to exist; no back-link required,
@@ -33,7 +32,7 @@ repo gets a stamped copy via agentic-os-kai's apply-catalog-trifecta-hook
 rollout. Exits 0 on clean, 1 on any violation with a per-file report on
 stderr.
 
-See coilysiren/agentic-os#59 for the convention design.
+See docs/features-release-tooling.md for the convention design.
 """
 from __future__ import annotations
 
@@ -77,10 +76,7 @@ LINK_RE = re.compile(
     r"(?<!\!)\[(?P<text>[^\]\n]+)\]\((?P<target>[^)\s]+)(?:\s+\"[^\"]*\")?\)"
 )
 
-CONVENTION_CITATIONS = (
-    "coilysiren/agentic-os#59",
-    "coilysiren/agentic-os-kai#313",
-)
+CONVENTION_CITATIONS = ("features-release-tooling.md",)
 
 
 def link_targets(text: str) -> set[str]:
@@ -146,8 +142,7 @@ def check_md_file(md_path: Path, catalog_yaml: Path) -> list[str]:
     if not any(c in body for c in CONVENTION_CITATIONS):
         violations.append(
             f"{md_path}: convention citation missing. Include "
-            f"'coilysiren/agentic-os#59' (or the legacy "
-            f"'coilysiren/agentic-os-kai#313') in the See also footer."
+            f"a link to features-release-tooling.md in the See also footer."
         )
 
     if md_path == Path("AGENTS.md"):
@@ -207,7 +202,9 @@ def main() -> int:
 
     for v in all_violations:
         sys.stderr.write(f"FAIL: {v}\n")
-    sys.stderr.write(f"\n{len(all_violations)} violation(s). See coilysiren/agentic-os#59.\n")
+    sys.stderr.write(
+        f"\n{len(all_violations)} violation(s). See docs/features-release-tooling.md.\n"
+    )
     return 1
 
 

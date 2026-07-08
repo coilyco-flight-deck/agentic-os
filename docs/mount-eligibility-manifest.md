@@ -54,7 +54,7 @@ legitimately point at - backs no mountable repo and is skipped.
 ## Default mount set
 
 Three repos mount **regardless of task or harness** (epic
-[#220](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/issues/220)):
+the mount-eligibility manifest):
 
 - `coilyco-bridge/lore` - agent knowledge.
 - `coilyco-flight-deck/agentic-os` (aos) - doctrine plus the repo the harness

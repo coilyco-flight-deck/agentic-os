@@ -1,4 +1,4 @@
-"""Retry behavior for render-issue-corpus's `_fj` ward shell-out (agentic-os#280).
+"""Retry behavior for render-issue-corpus's `_fj` ward shell-out.
 
 A transient `ward` not-found mid-run (a brew symlink-swap window, PATH churn) used
 to drop the shell-out with no retry, stranding whatever the call was reading or
@@ -8,7 +8,7 @@ contract: recovery on a transient miss, loud failure on a persistent one, and no
 retry on an ordinary non-zero exit (a real API error must surface immediately).
 
 The whole render-issue-corpus test suite was removed with the exec'd-command era
-(03d1525); this file re-adds only the coverage the #280 fix needs, not that suite.
+(03d1525); this file re-adds only the coverage the fix needs, not that suite.
 """
 import importlib.util
 import sys
@@ -35,7 +35,7 @@ def _capture_sleeps(monkeypatch):
 
 def test_fj_retries_transient_not_found_then_succeeds(monkeypatch):
     """A `ward` not-found on the first attempts, resolving before the cap, recovers
-    the call - the exact brew symlink-swap window agentic-os#280 documents."""
+    the call - the exact brew symlink-swap window documented by the retry fix."""
     slept = _capture_sleeps(monkeypatch)
     calls = {"n": 0}
 

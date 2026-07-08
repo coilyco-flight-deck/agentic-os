@@ -22,5 +22,5 @@ Honeycomb's login flow embeds Google SSO, so a logged-in reload of `ui.honeycomb
    ```
    ward exec build-honeycomb-storage
    ```
-   (Once [agentic-os-kai#652](https://github.com/coilysiren/agentic-os-kai/issues/652) lands, this command will refuse to write the file if the cookie value lacks `hny=`, so a malformed handoff fails fast at build time rather than at navigation time.)
+   (Once the cookie-validation change lands, this command will refuse to write the file if the cookie value lacks `hny=`, so a malformed handoff fails fast at build time rather than at navigation time.)
 6. Cookie has a finite lifetime (typically hours to days). When the skill detects a redirect to `/login`, prompt for a fresh copy.

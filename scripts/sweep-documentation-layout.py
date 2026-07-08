@@ -8,7 +8,7 @@ disabled, plus per-repo violation detail. Honours each repo's own
 Spans every git working tree under ~/projects/<org>/* via
 agentic_os.config.iter_workspace_repos, not just the org dir the running
 agentic-os checkout sits in. Override the root with $PROJECTS_ROOT.
-See coilysiren/agentic-os-kai#560.
+See scripts/sweep-precommit.py.
 """
 from __future__ import annotations
 

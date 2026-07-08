@@ -3,7 +3,7 @@
 A provider-discovery framework that auto-mounts the **full segment-composed
 status line** into every warded container, so an in-container agent session
 shows the same multi-row line a host session does - not just the agent-name row
-([agentic-os#294](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/issues/294)).
+See docs/dev-base-self-name.md.
 
 ## The problem it replaces
 

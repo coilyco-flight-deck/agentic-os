@@ -27,7 +27,7 @@ The one knob that resists file edits is `[agents] cloud_conversation_storage_ena
 
 Cmd+I (open Warp Agent panel): no documented file-level disable. Empirically the master kill switch is enough - the panel opens but is inert. If a hard rebind is needed, Warp's keybindings live in Settings > Keybindings, or in the rendered `keybindings.yaml`.
 
-`apply` renders `keybindings.yaml` (a layer-2 file, sibling of `settings.toml`) with one managed binding, `"workspace:toggle_mouse_reporting": "ctrl-shift-m"` - a mid-director escape hatch that clears a stuck xterm mouse-tracking (1003) flood at the Warp emulator layer without killing the TUI. See [warp-mouse-tracking.md](../../../../docs/warp-mouse-tracking.md) and #320.
+`apply` renders `keybindings.yaml` (a layer-2 file, sibling of `settings.toml`) with one managed binding, `"workspace:toggle_mouse_reporting": "ctrl-shift-m"` - a mid-director escape hatch that clears a stuck xterm mouse-tracking (1003) flood at the Warp emulator layer without killing the TUI. See [warp-mouse-tracking.md](../../../../docs/warp-mouse-tracking.md).
 
 ## How settings.toml interacts with SQLite
 

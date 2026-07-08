@@ -16,7 +16,7 @@ The desired shell is the path to the first PowerShell 7 binary found among the s
 
 Warp does not document the `generic_string_objects` `storage_key` for this preference, and it can only be confirmed against a live Windows `warp.sqlite`. The key is set from a single constant (`defaultShellStorageKey`) in `warp/shell.go`. A wrong key is harmless - Warp ignores unknown rows - but it makes the layer a silent no-op rather than truly converging the UI setting. If a host ever shows the shell drifting in the Warp UI despite a green `apply`, dump the DB's `generic_string_objects` keys and reconcile the constant (and the value shape, if Warp stores more than a bare path).
 
-See [agentic-os#230](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/issues/230) for the original request.
+See docs/warp.md for the original request.
 
 ## See also
 

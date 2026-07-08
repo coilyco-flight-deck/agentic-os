@@ -3,7 +3,7 @@
 #
 # Wraps `trufflehog git file://.` with a path-exclude list so a trufflehog build
 # that walks untracked working-tree files (its git source reads gitignored dirs
-# like Rust `target/`, upstream trufflesecurity/trufflehog#3356) cannot drown the
+# like Rust `target/`, upstream trufflesecurity/trufflehog) cannot drown the
 # scan in build-artifact false positives and block every commit fleet-wide.
 #
 # --exclude-paths (a regex file) is load-bearing over the inline --exclude-globs:

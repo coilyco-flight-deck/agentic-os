@@ -21,11 +21,11 @@ Until Kai installs on Windows or removes Stable, leave the Mac/Stable-shaped pat
 Two URI-addressable spawn primitives, checked into `agentic-os/warp/`:
 
 - **`launch_configurations/*.yaml`** - one window with one or more tabs per file. Window-scoped, opens a fresh window each fire. URI: `warp://launch/<name>` or `warppreview://launch/<name>`.
-- **`tab_configs/*.toml`** - one tab per file, opens in the active window. URI: `warp://tab_config/<name>` or `warppreview://tab_config/<name>`. The tab_config URI handler landed in warpdotdev/Warp#9379, shipped to Preview 2026-05-13+ and Stable 2026-05-15+. This is the load-bearing capability that motivated promoting Preview to the daily driver, since `ward agent <mode> work <ref> --new-tab` (ward#174, formerly `ward dispatch interactive`, ward#270) consumes the URI.
+- **`tab_configs/*.toml`** - one tab per file, opens in the active window. URI: `warp://tab_config/<name>` or `warppreview://tab_config/<name>`. The tab_config URI handler shipped to Preview 2026-05-13+ and Stable 2026-05-15+. This is the load-bearing capability that motivated promoting Preview to the daily driver, since `ward agent <mode> work <ref> --new-tab` consumes the URI.
 
 URI scheme picks the channel. `warp://` always opens Stable, `warppreview://` always opens Preview. Tooling that fires Warp URIs picks at call site.
 
-Symlink walk: `agentic-os/warp/{launch_configurations,tab_configs}/*` need to land in `~/.warp/{launch_configurations,tab_configs}/` (Preview's auto-symlink picks them up from there). Currently manual per-file - see coilysiren/agentic-os#106 for the automation gap.
+Symlink walk: `agentic-os/warp/{launch_configurations,tab_configs}/*` need to land in `~/.warp/{launch_configurations,tab_configs}/` (Preview's auto-symlink picks them up from there). Currently manual per-file - see the automation gap in the Warp config docs.
 
 ## Common edits
 

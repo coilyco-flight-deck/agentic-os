@@ -21,7 +21,7 @@ payload. The CLI reads that JSON from stdin:
 `--from-json` also accepts the GitHub `gh repo view --json
 description,repositoryTopics` shape, so non-Forgejo callers still work.
 
-Schema and rollout: coilysiren/agentic-os-kai#312, #317.
+Schema and rollout: see docs/features-agents-pointer.md.
 """
 
 from __future__ import annotations
@@ -104,7 +104,7 @@ def render_skill(name: str, description: str, org: str = DEFAULT_ORG) -> str:
     `org` is the workspace org dir the repo lives under (`~/projects/<org>/`).
     Defaults to `coilysiren`; repos migrated to another org (coilyco-bridge,
     coilyco-flight-deck) set `[tool.agentic-os.repo-pointer-skills] org` so the
-    pointer path tracks the real checkout. See coilysiren/agentic-os-kai#560.
+    pointer path tracks the real checkout. See scripts/sweep-precommit.py.
     """
     skill_name = f"{SKILL_PREFIX}{name}"
     frontmatter = yaml.safe_dump(

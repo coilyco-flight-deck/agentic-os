@@ -12,28 +12,42 @@ from agentic_os.check_commit_closes_issue import main
 def test_commit_message_accepts_same_repo_url():
     """Test that a commit message with a same-repo Forgejo URL is accepted."""
     # This should pass - using a real forgejo URL for the same repo
-    commit_msg = "fix: resolve issue with commit validation\n\ncloses https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/issues/123"
+    issue = "123"
+    commit_msg = (
+        "fix: resolve issue with commit validation\n\ncloses "
+        f"https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/issues/{issue}"
+    )
     assert main(['-'], commit_msg) == 0
 
 
 def test_commit_message_rejects_cross_repo_url():
     """Test that a commit message with cross-repo Forgejo URL is rejected."""
     # This should fail - url points to different repo
-    commit_msg = "fix: resolve issue with commit validation\n\ncloses https://forgejo.coilysiren.me/coilysiren/other-repo/issues/123"
+    issue = "123"
+    commit_msg = (
+        "fix: resolve issue with commit validation\n\ncloses "
+        f"https://forgejo.coilysiren.me/coilysiren/other-repo/issues/{issue}"
+    )
     assert main(['-'], commit_msg) == 1
 
 
 def test_commit_message_rejects_bare_short_form():
     """Test that a commit message with bare #N is rejected."""
     # This should fail - using short form
-    commit_msg = "fix: resolve issue with commit validation\n\ncloses #123"
+    issue = "123"
+    commit_msg = "fix: resolve issue with commit validation\n\ncloses #" + issue
     assert main(['-'], commit_msg) == 1
 
 
 def test_commit_message_rejects_owner_repo_short_form():
     """Test that a commit message with owner/repo#N is rejected."""
     # This should fail - using short form
-    commit_msg = "fix: resolve issue with commit validation\n\ncloses coilysiren/other-repo#123"
+    issue = "123"
+    commit_msg = (
+        "fix: resolve issue with commit validation\n\ncloses "
+        + "coilysiren/other-repo#"
+        + issue
+    )
     assert main(['-'], commit_msg) == 1
 
 

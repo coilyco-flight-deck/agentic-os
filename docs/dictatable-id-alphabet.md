@@ -59,16 +59,16 @@ committed data files sit beside it - `agent_id_vectors.json` (the alphabets plus
 a fixed seed->id map a port asserts against byte-for-byte) and
 `org_shortnames.json` (long Forgejo org -> short container token, last-`-`-segment
 fallback). A drift test regenerates the vector and fails CI if the committed file
-falls behind the module, so the ward naming rewrite (#387) and the cli-guard Go
-port (#177) build against a file that cannot silently rot. Regenerate the vector
+falls behind the module, so the ward naming rewrite and the cli-guard Go port
+build against a file that cannot silently rot. Regenerate the vector
 with `python -m agentic_os.agent_id --emit-vectors`.
 
 The `agent-channel` coordination protocol (`otel-a2a-relay`) first used this
 alphabet for its 4-character channel IDs. A channel ID was created once and then
 dictated between hosts, so spoken clarity was the whole point. The protocol's ID
 generator and validator both drew from the set above. That channel was archived
-in the June 2026 surface reduction (revival and absorption tracked at
-`ward#104`); the alphabet and its generator stay here for any successor.
+in the June 2026 surface reduction; the alphabet and its generator stay here for
+any successor.
 
 ## See also
 

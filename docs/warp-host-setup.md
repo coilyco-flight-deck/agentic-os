@@ -41,7 +41,7 @@ When a Preview regression breaks a workday:
 ## Subdirs
 
 - `launch_configurations/` - one window, one-or-more tabs per YAML. URI `warppreview://launch/<name>`. `apply` symlinks each into the config dir and sweeps dangling links.
-- `tab_configs/` - one tab per TOML, opens in the active window. URI `warppreview://tab_config/<name>`. Handler landed in warpdotdev/Warp#9379 (Warp builds dated 2026-05-15 or later).
+- `tab_configs/` - one tab per TOML, opens in the active window. URI `warppreview://tab_config/<name>`. The tab_config URI handler landed in Warp builds dated 2026-05-15 or later.
 - `themes/` - color theme YAML files.
 - `scripts/` - host-side helpers (`set-warp-default-editor.sh`).
 - `settings.toml` - top-level settings, symlinked into both channels' config dirs.
@@ -50,5 +50,5 @@ When a Preview regression breaks a workday:
 
 - [warp.md](warp.md) - the Go module's model (apply/doctor, layers, paths).
 - [tooling-warp skill](../.agents/skills/tooling-warp/SKILL.md) - agent-facing usage.
-- coilyco-flight-deck/ward#174 - `ward agent <mode> work <ref> --new-tab`, which fires `warp://launch/...` (formerly ward#270).
-- warpdotdev/Warp#9379 - the merged tab_config URI handler that motivated the Preview move.
+- the `ward agent <mode> work <ref> --new-tab` flow, which fires `warp://launch/...` from the CLI.
+- the merged tab_config URI handler that motivated the Preview move.

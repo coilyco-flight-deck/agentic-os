@@ -2,9 +2,9 @@
 """Enforce the agent context-loading load-point framework, per-repo.
 
 The three harnesses (Claude Code, Codex CLI, OpenCode) each load context from
-the AGENTS.md / USER.md / CLAUDE.md tree. The framework (coilysiren/agentic-os-kai#505)
-says: one load point per harness, share by symlink never fork, and let Claude
-bridge to AGENTS.md through a one-line CLAUDE.md pointer. This hook enforces the
+the AGENTS.md / USER.md / CLAUDE.md tree. The framework says: one load point per
+harness, share by symlink never fork, and let Claude bridge to AGENTS.md
+through a one-line CLAUDE.md pointer. This hook enforces the
 slice of that framework that is visible inside a single repository:
 
     1. Pure-pointer CLAUDE.md. A real (non-symlink) CLAUDE.md may contain only
@@ -25,7 +25,8 @@ slice of that framework that is visible inside a single repository:
 
 Opt out per-repo via config: set `enabled = false` under the
 [tool.agentic-os.context-load-points] section (e.g. an Obsidian vault whose
-CLAUDE.md is deliberately a memory file, not a pointer).
+CLAUDE.md is deliberately a memory file, not a pointer). See
+docs/features-agents-pointer.md for the load-point overview.
 """
 from __future__ import annotations
 

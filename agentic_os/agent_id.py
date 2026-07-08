@@ -5,7 +5,7 @@ lowercase letters then two digits (`ab81`, `cd92`). The alphabet drops the
 visually and phonetically ambiguous characters - the same set documented in
 `docs/dictatable-id-alphabet.md` and first used by the archived o2r channel
 protocol (`coilyco-flight-deck/otel-a2a-relay`). This module is the canonical
-home the ward naming rewrite (#387) and the cli-guard Go port (#177) build
+home the ward naming rewrite and the cli-guard Go port build
 against, so the alphabet, shape, and the seeded variant here are a cross-language
 contract, mirrored byte-for-byte in `agent_id_vectors.json`.
 
@@ -113,15 +113,15 @@ def build_vectors() -> dict:
     """
     seeds = [str(n) for n in range(20)] + [
         "kai-server",
-        "coilyco-flight-deck#302",
+        "seed-contract",
         "the-quick-brown-fox",
         "",
     ]
     return {
         "note": (
             "Cross-language contract for the canonical agent-id generator. "
-            "Ports (cli-guard Go #177) must reproduce every seed->id below and "
-            "the alphabets above, byte-for-byte. Regenerate with "
+            "Ports must reproduce every seed->id below and the alphabets above, byte-for-byte. "
+            "Regenerate with "
             "`python -m agentic_os.agent_id --emit-vectors`."
         ),
         "id_letters": ID_LETTERS,

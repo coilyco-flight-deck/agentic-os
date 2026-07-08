@@ -36,10 +36,8 @@ Drives off the on-disk checkout set via agentic_os.config.iter_workspace_repos
 the org migration of active repos to coilyco-bridge / coilyco-flight-deck no
 longer strands them the way a single hardcoded root did. Override the root
 with $PROJECTS_ROOT (e.g. PROJECTS_ROOT=X:/projects on Windows, where the
-workspace lives off the home drive). See coilysiren/agentic-os-kai#553 and
-#560 and coilysiren/agentic-os#102.
-
-See coilysiren/agentic-os#59 for the convention design.
+workspace lives off the home drive). See the workspace-root rollout notes and
+the convention design in docs/features-release-tooling.md.
 """
 from __future__ import annotations
 
@@ -54,7 +52,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from agentic_os import config as cfg  # noqa: E402
 
 # Consumer pin is tag-derived at read time (see default_rev), not committed.
-# FALLBACK_REV is the floor for tag-less checkouts. See docs/release.md, #238.
+# FALLBACK_REV is the floor for tag-less checkouts. See docs/release.md.
 FALLBACK_REV = "v0.62.0"
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -91,7 +89,7 @@ def default_rev() -> str:
 
     Latest fetched tag, else the FALLBACK_REV floor. Derived rather than
     committed so the auto release pipeline cuts only a tag, never a per-push
-    DEFAULT_REV bump commit (agentic-os#238).
+    DEFAULT_REV bump commit.
     """
     return latest_release_tag() or FALLBACK_REV
 
@@ -104,11 +102,11 @@ BEGIN_MARKER = "# BEGIN managed by agentic-os/scripts/apply-agentic-os-hooks.py"
 END_MARKER = "# END managed by agentic-os/scripts/apply-agentic-os-hooks.py"
 
 # Canonical source for the hook suite. Forgejo, not the GitHub mirror: it is
-# the source of truth and lands release tags first. See agentic-os#129.
+# the source of truth and lands release tags first.
 AGENTIC_OS_REPO_URL = "https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os"
 
 # Upstream check-merge-conflict, displaced from the agentic-os catalog
-# (agentic-os#229); --assume-in-merge keeps the old always-scan behavior.
+# ; --assume-in-merge keeps the old always-scan behavior.
 PRECOMMIT_HOOKS_REPO_URL = "https://github.com/pre-commit/pre-commit-hooks"
 PRECOMMIT_HOOKS_REV = "v6.0.0"
 
@@ -184,7 +182,7 @@ DEFAULT_HOOK_IDS = [
 ]
 
 # Per-repo hook opt-outs. eco-* repos skip code-comments (Unity / C# conventions).
-# lore: docs-only / no-skills slice, subtracted set reproduces it. See #215.
+# lore: docs-only / no-skills slice, subtracted set reproduces it.
 PER_REPO_HOOK_SKIPS: dict[str, set[str]] = {
     "lore": {
         "catalog-doc-size",

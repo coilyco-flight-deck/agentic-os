@@ -5,7 +5,7 @@ that should not be grep-bait. It exists because most leaks are not secrets, they
 are *awkward*: an employer name hardcoded in a config path, a partner's name in
 a comment, a private repo named in a public README. None of these trip a secret
 scanner, but any of them turns `rg <term>` into a harvesting tool. See
-[coilysiren/inbox#95](https://forgejo.coilysiren.me/coilysiren/inbox/issues/95).
+the recovered inbox corpus.
 
 ## The one primitive
 

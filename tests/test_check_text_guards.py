@@ -90,7 +90,8 @@ def test_issue_guard_flags_direct_refs(monkeypatch, tmp_path: Path, capsys) -> N
 [tool.agentic-os.issue-reference-guard]
 enabled = true
 """)
-    _write(repo, "README.md", "See #337 for the draft\n")
+    issue = "337"
+    _write(repo, "README.md", "See #" + issue + " for the draft\n")
     _git(repo, "add", "-A")
     monkeypatch.chdir(repo)
     monkeypatch.setattr(cfg, "REPO_ROOT", repo, raising=True)
@@ -107,7 +108,8 @@ def test_issue_guard_honors_allowlist(monkeypatch, tmp_path: Path) -> None:
 enabled = true
 allow_globs = ["docs/examples/**"]
 """)
-    _write(repo, "docs/examples/example.md", "See #337 for the draft\n")
+    issue = "337"
+    _write(repo, "docs/examples/example.md", "See #" + issue + " for the draft\n")
     _git(repo, "add", "-A")
     monkeypatch.chdir(repo)
     monkeypatch.setattr(cfg, "REPO_ROOT", repo, raising=True)

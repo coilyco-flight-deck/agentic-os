@@ -18,7 +18,7 @@ Per `tooling-skill-authoring`, each substantive section follows the same shape s
 - **Lead with the rule.** One short imperative or claim.
 - **`**Why:**` line.** The incident, constraint, or prior failure mode that produced the rule. Cite the originating commit / issue / dated finding so future readers can judge whether the why is still load-bearing.
 - **`**How to apply:**` line.** When the rule fires, what to reach for, what to ignore.
-- **Date-stamp where the why is empirical.** "Flagged 2026-05-05 during ward #49" beats an undated assertion.
+- **Date-stamp where the why is empirical.** "Flagged 2026-05-05 during a ward issue" beats an undated assertion.
 
 Sections that are catalogues (anti-signals, references) can be lists; sections that are rules use the three-part shape above.
 
@@ -35,6 +35,6 @@ When a future fill needs structured data (diff SECURITY.md claims against `TestS
 
 ## Status
 
-Shell only, deferred. Originating thread is ward issue #49 (closed); the durable artifacts this skill will reference are already in place: the anti-signals section in `ward/SECURITY.md`, the four security commits (`1270bb5`, `6cf5eeb`, `57a0144`, `b29e503`), and the `TestSecurityClaim_*` family at `ward/cmd/ward/security_claims_test.go`. Fill happens in a separate session.
+Shell only, deferred. The originating thread is closed; the durable artifacts this skill will reference are already in place: the anti-signals section in `ward/SECURITY.md`, the four security commits (`1270bb5`, `6cf5eeb`, `57a0144`, `b29e503`), and the `TestSecurityClaim_*` family at `ward/cmd/ward/security_claims_test.go`. Fill happens in a separate session.
 
 Flagged 2026-05-05.

@@ -4,7 +4,7 @@ A host session self-names through a Claude Code SessionStart + statusLine hook
 the claude-hooks ansible role wires into `~/.claude/settings.json`. That role
 never runs inside a `ward agent` container, so a warded explorer / headless
 agent in the [dev-base image](dev-base-image.md) used to stay nameless
-([agentic-os#281](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/issues/281)).
+see [statusline.md](statusline.md).
 The image bakes the self-name slice in directly.
 
 ## What the image bakes
@@ -26,7 +26,7 @@ The image bakes the self-name slice in directly.
   [engineer-claude-ward-338]` - since inside the container `<host>` is only the
   opaque container ID. It self-suppresses (no brackets) when the var is unset, so
   a native-host session renders identically
-  ([agentic-os#296](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/issues/296)).
+see [statusline.md](statusline.md).
 - [`managed-settings.json`](../docker/dev-base/claude-managed-settings.json) -
   landed at the fixed `/etc/claude-code/managed-settings.json`. It adds a
   `statusLine` pointing at the [status-line composer](statusline.md) (which runs

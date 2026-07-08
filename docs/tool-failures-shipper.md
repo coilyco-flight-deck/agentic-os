@@ -3,7 +3,7 @@
 `ward exec ship-tool-failures` drains the local tool-use failure-record buffer
 to GlitchTip so the tool-use error rate becomes a visible, grouped, counted
 feed. It is the shipper half of the o11y chain: producers write failure-records,
-this drains them. See coilyco-flight-deck/agentic-os#250.
+this drains them. See docs/tool-failures-shipper.md.
 
 ## The buffer it drains
 
@@ -49,5 +49,5 @@ POST.
 
 The buffer-and-classify half lands DSN-pluggable and is tested now. Creating the
 GlitchTip project and populating `/sentry-dsn/tool-failures` is the one
-externally-visible step, confirmed by Kai (agentic-os#250); until then the
+externally-visible step, confirmed by the tool-failures shipper design; until then the
 shipper fail-softs.

@@ -72,20 +72,19 @@ generate-repo-pointer-skill = "agentic_os.generators.generate_repo_pointer_skill
 generate-seed-skills = "agentic_os.generators.generate_seed_skills:main"
 generate-caps-reference = "agentic_os.generators.generate_caps_reference:main"
 
-# Self-compliance config for the hooks this repo ships. See agentic-os#81,
-# #96, #22.
+# Self-compliance config for the hooks this repo ships. See docs/features-release-tooling.md.
 [tool.agentic-os.documentation-layout]
 # AGENTS.md here is the canonical operating-doctrine base, so it opts into
-# the larger cap. Raised from 12000 in #303: the Command-delivery split into
+# the larger cap. Raised from 12000 for the Command-delivery split into
 # execution-model-aware (container/surface vs host-harness) guidance grew the
 # always-composed base past the old cap, and moving it to a docs/*.md file
 # would drop it out of in-context load - defeating the point. agentic-os-kai's
 # private overlay carries the parallel split and needs the matching bump.
-# Raised again from 12600 in #311: the config-placement law (config lives at
+# Raised again from 12600 for the config-placement law (config lives at
 # the lowest determining layer, never fetched downward) lands beside the
 # authoring-vs-rollout contract as always-composed doctrine, same in-context
-# rationale as #303 - a docs/*.md split would drop the law out of load.
-# Raised again from 14200 in #332: the config-placement law gains a carved
+# rationale as the earlier bump - a docs/*.md split would drop the law out of load.
+# Raised again from 14200 when the config-placement law gained a carved
 # exception (aos authors the coilyco ward-specs bundle ward consumes at build
 # time), which must ride beside the law it amends as always-composed doctrine -
 # same in-context rationale. The full reasoning lives in docs/ward-specs.md; the
@@ -93,29 +92,29 @@ generate-caps-reference = "agentic_os.generators.generate_caps_reference:main"
 agents_md_max_lines = 160
 agents_md_max_chars = 14500
 # Subsystem dirs carry idiomatic co-located READMEs and config docs that the
-# root/docs/skills location rule does not model. Excluded per the #22 escape
+# root/docs/skills location rule does not model. Excluded per the root layout
 # hatch: warp (Go module).
 excludes = [
     "warp/launch_configurations/**",
     "warp/tab_configs/**",
     # Generated render of `ward ops forgejo describe` (scripts/gen-ward-ops-reference.sh).
     # Over-cap by design: the full operator-verb surface, committed so the names
-    # stay greppable off-disk. Regenerate, do not hand-trim. See agentic-os#261.
+    # stay greppable off-disk. Regenerate, do not hand-trim. See docs/ward-ops-forgejo-reference.md.
     "docs/ward-ops-forgejo-reference.md",
     # Root SSM.md is a focused pointer to the SSM params aos code consumes,
-    # mirroring the canonical agentic-os-kai/SSM.md placement. See agentic-os#250.
+    # mirroring the canonical SSM.md placement. See SSM.md.
     "SSM.md",
 ]
 
-# code-comments extended to YAML (#159), then tightened to one top-of-file
-# comment (#160) since a key-sorter drifts any lower comment off its target,
+# code-comments extended to YAML, then tightened to one top-of-file comment
+# since a key-sorter drifts any lower comment off its target,
 # then relaxed to allow a contiguous comment block above the first content
 # line (the whole header stays put under a sort).
 # These pre-existing files carry rich teaching/config comment blocks
 # (skill-discipline examples, the skills registry, warp configs, the ward
 # catalog header) and are grandfathered so the rule enforces net-new YAML.
-# Cleanup tracked in #160. Bash comments inside `run: |` block scalars are no
-# longer over-read (#181), so actions/** needs no exclude.
+# Cleanup tracked in the code-comments docs. Bash comments inside `run: |`
+# block scalars are no longer over-read, so actions/** needs no exclude.
 [tool.agentic-os.code-comments]
 excludes = [
     ".agents/skills/categories.yaml",
@@ -131,10 +130,10 @@ excludes = [
 
 [tool.agentic-os.repo-pointer-skills]
 # This repo migrated from the coilysiren org to coilyco-flight-deck, so its
-# repo-pointer skills point at ~/projects/coilyco-flight-deck/. See #560.
+# repo-pointer skills point at ~/projects/coilyco-flight-deck/.
 org = "coilyco-flight-deck"
 
-# Knowledge-base freshness probe (agentic-os#262). Half-life horizons in days:
+# Knowledge-base freshness probe. Half-life horizons in days:
 # a fast-decay fact (verbs, model ids, pricing) goes stale after fast_days, a
 # slow-decay one (doctrine, voice) after slow_days. The probe is on-demand /
 # scheduled (`ward freshness --check`), not a commit-path hook, since rot is
@@ -142,6 +141,14 @@ org = "coilyco-flight-deck"
 [tool.agentic-os.freshness]
 fast_days = 30
 slow_days = 365
+
+[tool.agentic-os.issue-reference-guard]
+enabled = true
+excludes = [
+    ".ward/*.guardfile.kdl",
+    ".ward/*.lock.json",
+    "agentic_os.egg-info/**",
+]
 
 [dependency-groups]
 dev = ["pytest>=9"]

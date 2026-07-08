@@ -22,12 +22,12 @@ than per harness, behind the same `count_tokens` chars/4 proxy.
 
 For a whole-repo walk the token figure is an upper-bound proxy: a driver greps,
 it does not ingest every tracked file. So file count and bytes carry the honest
-cheap-to-provide signal, and tokens is the ceiling (ward#373 open fork 4).
+cheap-to-provide signal, and tokens is the ceiling.
 
 ## The aos/ward split
 
 These are measurement primitives for ward's role-aware three-tier probe
-([ward#373](https://forgejo.coilysiren.me/coilyco-flight-deck/ward/issues/373),
+(
 `docs/context-probe.md`), which calls them for tiers 2/3 and reuses the doc/skill
 accounting for tier 1, then adds its container overlays. Per the
 authoring-vs-rollout split, aos owns the generic **measurement** and ward owns

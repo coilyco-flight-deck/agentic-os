@@ -2,7 +2,7 @@
 """Render host-specific absolute paths into the tracked Warp config.
 
 Warp does not expand `~` or env vars in `theme.custom.path` or
-`background_image.path` (see coilysiren/agentic-os#81). The repo holds the Mac
+`background_image.path` (see docs/warp.md). The repo holds the Mac
 form as the tracked default. On non-Mac hosts, run this script after every
 pull to overwrite the two path lines with the local host's absolute paths.
 

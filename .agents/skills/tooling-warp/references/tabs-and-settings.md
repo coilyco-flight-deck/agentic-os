@@ -14,7 +14,7 @@ The unit of work is a block, the unit of context is a tab.
 Kai's typical Warp session is 4-7 tabs, one shell per tab, no splitting:
 
 - 1 plain shell (true blank canvas).
-- 1 file viewer (running `bat`-wrapped reflexes, see coilysiren/agentic-os#57).
+- 1 file viewer (running `bat`-wrapped reflexes, see the file-viewer wrappers).
 - 1 status watcher (running `watch -n 5 '<command>'` for health checks).
 - 4 cloud agents (typically Claude Code sessions).
 - Optional: 1 persistent `ssh kai-server` tab if homelab work is hot.

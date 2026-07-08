@@ -6,8 +6,8 @@ via `scripts/apply-agentic-os-hooks.py`. Canonical copy lives here in
 agentic-os; consumers reference this repo at a pinned `rev:` in their
 `.pre-commit-config.yaml` and pre-commit pip-installs the package.
 
-Why URL-only (coilysiren/agentic-os-kai#496): a bare `closes #N` (or the short
-`owner/repo#N`) is a GitHub closing keyword too. Repos that mirror to GitHub
+Why URL-only: a bare `closes #N` (or the short `owner/repo#N`) is a GitHub
+closing keyword too. Repos that mirror to GitHub
 have those refs re-interpreted on the GitHub side at push time, silently
 closing whatever GitHub issue happens to hold number N - a different tracker
 than the canonical Forgejo one. The full Forgejo URL is the only form GitHub
@@ -66,7 +66,7 @@ ERROR_SHORT_FORM = (
     "ERROR: bare 'closes #N' / 'owner/repo#N' is rejected.\n"
     "  Those are GitHub closing keywords too: on a repo that mirrors to\n"
     "  GitHub they silently close whatever GitHub issue holds number N,\n"
-    "  a different tracker than canonical Forgejo (agentic-os-kai#496).\n"
+    "  a different tracker than canonical Forgejo.\n"
     "  Use the full Forgejo URL instead:\n"
     "  closes https://forgejo.coilysiren.me/<owner>/<repo>/issues/N\n"
 )

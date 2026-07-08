@@ -12,5 +12,5 @@ The shipper is producer-agnostic and DSN-pluggable: it reads whatever schema-v1
 records exist and fail-softs (leaving the buffer to accumulate) when the DSN is
 absent, so it lands and is testable before any GlitchTip project exists.
 
-See docs/tool-failures-shipper.md, coilyco-flight-deck/agentic-os#250.
+See docs/tool-failures-shipper.md.
 """

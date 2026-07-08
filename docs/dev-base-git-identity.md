@@ -1,6 +1,6 @@
 # Warded-agent git identity
 
-Per [agentic-os#244](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/issues/244)
+Per the self-name git-identity stamp documented in [docs/dev-base-self-name.md](dev-base-self-name.md)
 a warded aos bot stamps its [self-name](dev-base-self-name.md) as the git
 author/committer **name**, so a commit records *which* agent made it instead of
 a generic bot string. The commit name matches the name on the status line and in
@@ -27,7 +27,7 @@ before the agent starts - it can only set a generic name at bring-up. The
 ward sets `user.email` at `--system` to the `coilyco-ops` bot address. That
 email is the **load-bearing** match Forgejo links a commit to an account (and
 its avatar) on
-([ward#245](https://forgejo.coilysiren.me/coilyco-flight-deck/ward/issues/245),
+([docs/dev-base-self-name.md](dev-base-self-name.md),
 ward `docs/agent-attribution.md`). Swapping in a per-agent email prefix - the
 literal reading of the issue title - would break that link. So `gitidentity`
 writes only `user.name` and lets `user.email` fall through to the bot: a commit

@@ -27,9 +27,9 @@ repos are `.agentic-os-ignore`-exempt and hand-authored (the profile repo
 coilysiren/coilysiren carries a bespoke bootstrap, not a one-line pointer). So
 those repos are hand-maintained per-repo rather than templated - extending
 generator management over a public org would fire the drift hook across it for
-little gain. Decision recorded in coilyco-flight-deck/agentic-os#206.
+    little gain.
 
-Schema and rollout: coilyco-flight-deck/agentic-os#196.
+Schema and rollout: see docs/features-agents-pointer.md.
 """
 
 from __future__ import annotations

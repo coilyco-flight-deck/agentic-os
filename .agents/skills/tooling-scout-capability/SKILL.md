@@ -37,7 +37,7 @@ final per-install commits land in the personal-OS repo. Inbox path:
 - [Phase 1 - Grounded sweep + speculative ideation](references/phase-1-sweep.md) - walk the working surface, build a candidate list, brainstorm what doesn't exist yet.
 - [Phase 2 - Hydration](references/phase-2-hydration.md) - resolve bare names against skillsmp/glama plus an awesome-list backstop, dedup against installs.
 - [Phase 3 - Categorize and rank](references/phase-3-rank.md) - semantic categories, global 3:2:1 medal ranking.
-- [Phase 4 - Security audit](references/phase-4-audit.md) - 🥈/🥇 only, supply-chain-audit skill, 🟢🟡🔴 safety prefix (blocked on #185).
+- [Phase 4 - Security audit](references/phase-4-audit.md) - 🥈/🥇 only, supply-chain-audit skill, 🟢🟡🔴 safety prefix (blocked on execution verification).
 - [Phase 5 - Present 🥇🟢 inline](references/phase-5-present.md) - flatten the top tier to chat, explicit-deny approval.
 - [Phase 6 - Install approved entries](references/phase-6-install.md) - one issue + one commit + one push per entry, defense-in-depth re-check.
 

@@ -25,7 +25,7 @@ Usage:
     python3 scripts/apply-agents-pointer.py             # apply to all managed repos
     python3 scripts/apply-agents-pointer.py --repo luca # one repo by name
 
-See coilyco-flight-deck/agentic-os#196.
+See docs/features-agents-pointer.md.
 """
 
 from __future__ import annotations

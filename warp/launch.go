@@ -31,7 +31,7 @@ func expectedLaunchLinks(srcDir string) ([]string, error) {
 }
 
 // applyLaunchConfigs symlinks every warp/launch_configurations/*.yaml into the
-// host Warp config dir and sweeps dangling links. Idempotent. See #10.
+// host Warp config dir and sweeps dangling links. Idempotent.
 func applyLaunchConfigs(h *HostPaths) error {
 	names, err := expectedLaunchLinks(h.LaunchSrcDir)
 	if err != nil {

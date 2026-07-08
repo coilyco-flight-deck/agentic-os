@@ -27,9 +27,9 @@ Profile-specific design notes live as a comment block at the top of the YAML its
 
 ## Sharp edges
 
-- **No per-tab `env:` field.** Workaround: prepend `VAR=value` or `export VAR=value && cmd` to the exec string. Upstream asks: [warpdotdev/Warp#2579](https://github.com/warpdotdev/Warp/issues/2579), [#5771](https://github.com/warpdotdev/Warp/issues/5771), [#5872](https://github.com/warpdotdev/Warp/issues/5872).
+- **No per-tab `env:` field.** Workaround: prepend `VAR=value` or `export VAR=value && cmd` to the exec string.
 - **A tab cannot launch a GUI app as the tab itself.** `open -a Foo ...` spawns a side window; the tab stays a shell.
-- **No CLI hook for Warp's built-in editor / markdown viewer.** [warpdotdev/Warp#8741](https://github.com/warpdotdev/Warp/issues/8741). Workaround: print clickable file paths and click them.
+- **No CLI hook for Warp's built-in editor / markdown viewer.** Workaround: print clickable file paths and click them.
 - **Commands chain with `&&`.** Anything after an `ssh` may not execute.
 - **`cwd` must be absolute.** No `~`.
 - **`color:` values are lowercase.** Capitalized values silently reject the entire config with no error.

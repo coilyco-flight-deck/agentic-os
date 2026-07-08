@@ -68,4 +68,4 @@ Opt-in tooling that composes global agent context and symlinks each harness load
 - [docs/FEATURES.md](docs/FEATURES.md) - inventory of what ships today.
 - [.ward/ward.yaml](.ward/ward.yaml) - allowlisted dev commands. Agents route through ward.
 
-Cross-reference convention from [coilysiren/agentic-os#59](https://github.com/coilysiren/agentic-os/issues/59).
+Cross-reference convention from [features-release-tooling.md](docs/features-release-tooling.md).

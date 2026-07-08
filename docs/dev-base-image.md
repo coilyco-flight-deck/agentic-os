@@ -3,7 +3,7 @@
 aos owns the agent dev environment as a published artifact - the analog of the
 ward brew binary, pulled not built. ward consumes it by tag and never touches the
 Dockerfile, so config cannot drift. Part of the dockerized-dev epic
-([agentic-os#220](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/issues/220)).
+(see docs/features-release-tooling.md for the release-tooling background).
 
 ## What ships
 

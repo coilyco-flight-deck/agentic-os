@@ -62,12 +62,12 @@ type renderedFile struct {
 	template string
 	dest     string
 	// volatileKeys are TOML keys Warp rewrites from live state, neutralized
-	// before doctor's content comparison so their drift never FAILs. See #224.
+	// before doctor's content comparison so their drift never FAILs.
 	volatileKeys []string
 }
 
 // volatileSettingsKeys are settings.toml keys Warp rewrites from live UI or
-// cloud-account state, so doctor skips their values. See docs/warp.md, #224.
+// cloud-account state, so doctor skips their values. See docs/warp.md.
 var volatileSettingsKeys = []string{
 	"zoom_level",
 	"cloud_conversation_storage_enabled",
@@ -291,8 +291,8 @@ func doctorSQLite(r *report, h *HostPaths) {
 	doctorShellPref(r, db, h)
 }
 
-// doctorShellPref reports drift on the Windows-only default-shell preference
-// against the desired shell resolved in HostPaths. See shell.go and #230.
+// doctorShellPref reports drift on the Windows-only default-shell preference.
+// See docs/warp-default-shell.md.
 func doctorShellPref(r *report, db *warpDB, h *HostPaths) {
 	if h.OS != "windows" {
 		return

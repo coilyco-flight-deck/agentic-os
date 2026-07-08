@@ -23,8 +23,7 @@ matches docs/x.md but not docs/sub/x.md). A pattern with no "/" matches
 the file's basename at any depth, so one wildcard covers a generated file
 wherever it lands - ward's specverb guardfiles, emitted both in docs/ and
 beside the .kdl under cmd/ward-kdl/, collapse to a single
-"ward-kdl.*.guardfile.md" instead of a line per generator
-(coilyco-flight-deck/agentic-os#243). Patterns and paths use forward
+"ward-kdl.*.guardfile.md" instead of a line per generator. Patterns and paths use forward
 slashes on every platform.
 """
 from __future__ import annotations
@@ -44,7 +43,7 @@ REPO_ROOT = Path.cwd()
 
 
 # Workspace enumeration: one shared walk of ~/projects/<org>/* git trees, so
-# cross-repo tooling spans every org dir. See coilysiren/agentic-os-kai#560.
+# cross-repo tooling spans every org dir. See scripts/sweep-precommit.py.
 
 
 def projects_root(root: Path | None = None) -> Path:

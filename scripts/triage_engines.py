@@ -11,7 +11,7 @@ idempotent labels, the create-if-absent verdict comment) is engine-agnostic
 deterministic scaffolding. This module makes the seam swappable so the same
 audited scaffolding can run behind a judge stronger than the default local
 Goose + qwen3-coder:30b - without hand-rolling the pipeline (the motivating
-papercut in coilyco-flight-deck/agentic-os#271).
+papercut in the engine-triage flow).
 
 Built-in engines:
 

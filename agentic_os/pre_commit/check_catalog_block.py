@@ -4,7 +4,7 @@
 Reads the repo's `.ward/ward.yaml` catalog config. It must exist and
 carry the block.
 
-Schema and rollout: coilysiren/agentic-os-kai#420. Two-file rollout: coilysiren/agentic-os-kai#480.
+Schema and rollout: see docs/ward-specs.md and docs/features-release-tooling.md.
 
 Required keys inside `catalog:`:
     dependsOn.
@@ -13,9 +13,8 @@ Required keys inside `catalog:`:
 manifest ward reads at agent launch (`ward/cmd/ward/agent_context.go`).
 Everything else in the block is optional graph-metadata: `description` is an
 optional label, and `kind`, `type`, `system`, `owner`, `lifecycle` are the
-Backstage-vocab keys retired fleet-wide (coilyco-bridge/agentic-os-kai#714,
-following #420). They may still appear and are ignored by this hook; the
-catalog-graph builder no longer reads them.
+Backstage-vocab keys retired fleet-wide. They may still appear and are ignored
+by this hook; the catalog-graph builder no longer reads them.
 
 `dependsOn` must be a list. Trivial repos (e.g. a single .gitignore) still
 declare it, using `[]` for empty rather than omitting the key. Empty is
@@ -44,7 +43,7 @@ except ImportError:  # pragma: no cover
         "  `additional_dependencies: [pyyaml]`). Canonical block:\n"
         "    agentic-os-kai/scripts/apply-catalog-block-hook.py (MANAGED_BLOCK).\n"
         "  Refresh fleet-wide with: ward exec apply-catalog-block-hook\n"
-        "  Tracker: coilysiren/agentic-os-kai#488",
+        "  Tracker: docs/ward-specs.md",
         file=sys.stderr,
     )
     sys.exit(1)
@@ -52,7 +51,7 @@ except ImportError:  # pragma: no cover
 
 REQUIRED_KEYS = ("dependsOn",)
 LIST_KEYS = ("dependsOn",)
-TRACKER = "coilysiren/agentic-os-kai#420"
+TRACKER = "docs/ward-specs.md"
 
 
 def fail(msg: str) -> NoReturn:

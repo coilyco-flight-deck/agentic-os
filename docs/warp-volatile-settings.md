@@ -19,4 +19,4 @@ Only the scalar value is exempt. The key line itself must still be present and i
 
 ## Adding a key
 
-Add the TOML key name to `volatileSettingsKeys` in `warp/main.go`. Only do this for keys Warp genuinely owns and rewrites from live state - everything else should stay an enforced byte-for-byte match. See coilysiren/agentic-os#224 for the original motivation.
+Add the TOML key name to `volatileSettingsKeys` in `warp/main.go`. Only do this for keys Warp genuinely owns and rewrites from live state - everything else should stay an enforced byte-for-byte match. See docs/warp.md for the original motivation.

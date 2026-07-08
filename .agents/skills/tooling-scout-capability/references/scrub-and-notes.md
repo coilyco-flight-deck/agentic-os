@@ -36,12 +36,12 @@ content. The wrong default is a silent edit. Always ask.
   with an explicit phase number, run only that phase.
 - **Wrapper paths:** `ward-kdl pkg skillsmp skills {search,ai-search}`
   and `ward-kdl pkg glama server {list,get}`. These rode `coily pkg`
-  until [ward#105](https://forgejo.coilysiren.me/coilyco-flight-deck/ward/issues/105)
+  until the ward gating change
   moved both wrappers onto the ward-kdl spec runtime (landed `ward-kdl`
   v0.58.0), retiring the coily dependency. The argv gained a resource
   layer (`skills` / `server`) and the search term is now the `--q` flag
   (positional under coily); glama directory listing paginates with
-  `--after`/`--first`. Migrated 2026-06-25 (agentic-os#260).
+  `--after`/`--first`. Migrated 2026-06-25.
 - **Speculative entries are the point.** Don't be shy about listing
   things that don't exist yet. The "go bother someone" pathway is a
   primary use of this skill, not a side effect.

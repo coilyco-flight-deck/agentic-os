@@ -4,7 +4,7 @@ Reach for `ward gh ...`, `ward ops aws ...`, `ward kubectl ...`, `ward systemctl
 
 **Read verbs are explicitly allowed bare** (`aws s3 ls`, `gh pr view`, `kubectl get pods`, etc.) - lockdown's allow list enumerates them, and bare reads are fine to use directly when convenient. The "everything through ward" rule that used to live here was always a hygiene preference rather than a security boundary, and it was stricter than what lockdown actually enforces.
 
-`ward gh` / `ward ops aws` / `ward kubectl` are now thin pass-throughs (issue #27) - they take the same args as the underlying CLI verbatim, no flag parsing on ward's side. **Limitations:** ward rejects shell metacharacters in argv (no `|`, `&`, `>` inside an argument), so pipe / redirect *outside* the ward call (`ward gh ... > /tmp/x.json`) is fine but keep them out of any single arg.
+`ward gh` / `ward ops aws` / `ward kubectl` are now thin pass-throughs - they take the same args as the underlying CLI verbatim, no flag parsing on ward's side. **Limitations:** ward rejects shell metacharacters in argv (no `|`, `&`, `>` inside an argument), so pipe / redirect *outside* the ward call (`ward gh ... > /tmp/x.json`) is fine but keep them out of any single arg.
 
 ## Disabling pull requests on a repo
 
@@ -17,4 +17,4 @@ query { repository(owner:"coilysiren",name:"REPO"){ id hasPullRequestsEnabled } 
 mutation { updateRepository(input:{repositoryId:"R_...",hasPullRequestsEnabled:false}){ repository{ name hasPullRequestsEnabled } } }
 ```
 
-`pullRequestCreationPolicy` (`ALL` / `COLLABORATORS_ONLY`) is the softer "who can open PRs" dropdown, also on `updateRepository`. Pass the query as a file - `ward ops gh api graphql -F query=@/tmp/q.graphql` - because ward's metacharacter gate rejects the `{ }` in an inline `-f query=...` arg. Origin: coilysiren/agentic-os-kai#676.
+`pullRequestCreationPolicy` (`ALL` / `COLLABORATORS_ONLY`) is the softer "who can open PRs" dropdown, also on `updateRepository`. Pass the query as a file - `ward ops gh api graphql -F query=@/tmp/q.graphql` - because ward's metacharacter gate rejects the `{ }` in an inline `-f query=...` arg. Origin: the Forgejo API contract.

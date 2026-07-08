@@ -3,7 +3,7 @@
 
 `code-comments` and `documentation-layout` are meant to be the single source
 of truth for their numeric caps, but docs and skills kept restating those
-numbers by hand and the copies drifted (agentic-os#284). This generator reads
+numbers by hand and the copies drifted. This generator reads
 the constants straight off the two validator modules and renders a tiny,
 committed Markdown reference. Docs and skills point at that render instead of
 restating a number, so the caps can never drift between code and prose.
@@ -25,7 +25,7 @@ from pathlib import Path
 from agentic_os.pre_commit import check_code_comments as cc
 from agentic_os.pre_commit import check_documentation_layout as dl
 
-TRACKER = "coilyco-flight-deck/agentic-os#284"
+TRACKER = "docs/catalog-caps-reference.md"
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 DOC_PATH = _REPO_ROOT / "docs" / "catalog-caps-reference.md"

@@ -11,7 +11,7 @@ Canonical copy lives in coilyco-flight-deck/agentic-os/scripts/. Each consumer r
 gets a stamped copy via agentic-os-kai's apply-catalog-doc-size-hook
 rollout. Exits 0 on clean, 1 on any documentation-layout violation.
 
-See coilysiren/agentic-os-kai#545 for the design.
+See docs/catalog-caps-reference.md for the design.
 """
 from __future__ import annotations
 

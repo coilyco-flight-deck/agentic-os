@@ -1,4 +1,4 @@
-"""Tests for agentic_os.generators.generate_agent_compose: the opt-in composer spine (forgejo #135)."""
+"""Tests for agentic_os.generators.generate_agent_compose: the opt-in composer spine."""
 
 from __future__ import annotations
 
@@ -159,7 +159,7 @@ def test_dry_run_writes_nothing(paths: dict[str, Path], tmp_path: Path) -> None:
 def test_dry_run_on_converged_host_previews_no_change(
     paths: dict[str, Path], tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """A converged host must dry-run as a true no-op (forgejo #177).
+    """A converged host must dry-run as a true no-op.
 
     The ansible role's check-mode preview keys changed_when on "would " markers;
     once the host is composed and linked, a --dry-run must emit none of them, so
@@ -298,7 +298,7 @@ def test_claude_disabled_via_false(tmp_path: Path) -> None:
     assert set(points) == {"codex"}
 
 
-# ---------- source discovery via roots (forgejo #136) ----------
+# ---------- source discovery via roots ----------
 
 
 def test_discover_finds_source_files(tmp_path: Path) -> None:
@@ -387,7 +387,7 @@ def test_run_empty_sources_refuses(paths: dict[str, Path], tmp_path: Path) -> No
     assert not paths["composed"].exists()
 
 
-# ---------- frontmatter + scopes (forgejo #137) ----------
+# ---------- frontmatter + scopes ----------
 
 
 def test_parse_source_reads_scopes(tmp_path: Path) -> None:
@@ -443,7 +443,7 @@ def test_select_drops_untagged_under_filtering(tmp_path: Path) -> None:
     ]
 
 
-# The canonical compat matrix from forgejo #134's compat-matrix comment.
+# The canonical compat matrix from the compat-matrix comment.
 SCOPE_SOURCES = ["kai-public", "work", "kai-private", "eco"]
 MATRIX = {
     "work-mac": (["work", "kai-public"], {"work", "kai-public"}),
@@ -581,7 +581,7 @@ def test_run_preserves_similarly_named_user_file(
     assert user_file.read_text(encoding="utf-8") == "user-owned notes\n"
 
 
-# ---------- drift detection (forgejo #140) ----------
+# ---------- drift detection ----------
 
 
 def _written_config(paths: dict[str, Path], tmp_path: Path) -> None:
@@ -741,7 +741,7 @@ def test_override_makes_check_pass_then_detects_drift(
     assert generate_agent_compose.check(paths["config"], paths["composed"]) == 1
 
 
-# ---------- repo-local conventions rewritten for the composed context (#192) ----------
+# ---------- repo-local conventions rewritten for the composed context ----------
 
 
 def test_strip_navigation_sections_drops_see_also() -> None:
@@ -809,7 +809,7 @@ def test_compose_strips_see_also_from_overridden_base(tmp_path: Path) -> None:
     assert "## See also" not in out  # nav stripped after the merge
 
 
-# ---------- mount-eligibility manifest (forgejo #222) ----------
+# ---------- mount-eligibility manifest ----------
 
 
 def _read_manifest(composed_path: Path) -> dict:

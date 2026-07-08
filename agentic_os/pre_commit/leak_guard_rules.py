@@ -22,7 +22,7 @@ Rule fields:
 
 The rules below cover the three leak/coupling classes (sensitive data,
 private->public reference, dependency cycle); the dependency-cycle class carries
-more than one edge. See coilysiren/inbox#95 and docs/leak-guard.md.
+more than one edge. See docs/leak-guard.md.
 """
 from __future__ import annotations
 
@@ -46,7 +46,7 @@ RULES: list[dict] = [
         ),
     },
     # Sensitive data: an opaque tailnet suffix identifies a private host and is
-    # grep-bait in tracked config - dial via a run-time env var. See agentic-os#263.
+    # grep-bait in tracked config - dial via a run-time env var.
     {
         "id": "tailnet-suffix-tower",
         "term_hex": "7461696c303961343162",
@@ -73,7 +73,7 @@ RULES: list[dict] = [
         ),
     },
     # Dependency cycle: a public skill naming LUCA (private substrate consuming
-    # this repo's hooks) closes the cycle. See coilyco-flight-deck/agentic-os#77.
+    # this repo's hooks) closes the cycle.
     {
         "id": "luca-in-public-skills",
         "term_hex": "6c756361",

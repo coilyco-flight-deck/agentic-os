@@ -20,4 +20,4 @@ That means the documentation for the command is entirely agent-parsed. It does n
 - [Rule: top and bottom never collapse into one](references/intro-outro-distinct.md) - why Intro and Outro are two times, not two styles.
 - [Where the docs live in code](references/docs-in-code.md) - embed one markdown file per surface, what stays in the skill, and applying it to `ward agent`.
 
-Origin: [agentic-os-kai#711](https://github.com/coilysiren/agentic-os-kai/issues/711).
+Origin: the agent-workflow doc set.

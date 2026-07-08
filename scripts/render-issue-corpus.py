@@ -74,7 +74,7 @@ class WardForgejoError(RuntimeError):
     callers can surface the failure rather than silently drop it."""
 
 
-# Bounded exponential backoff for the transient `ward` not-found window (#280);
+# Bounded exponential backoff for the transient `ward` not-found window;
 # rationale in `_fj`. Attempts total, base seconds for the first retry's sleep.
 _FJ_MAX_ATTEMPTS = 5
 _FJ_BACKOFF_BASE = 1.0

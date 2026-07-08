@@ -54,6 +54,6 @@ Warp renders:
 - Images via the iTerm2 inline image protocol. So `imgcat foo.png` shows the image in the block.
 - Pretty-printed tables when output is structured (e.g. `ls -l`).
 
-The `open` wrapper in coilysiren/agentic-os#57 routes image extensions to `imgcat` and falls back to `command open` for everything else. `chafa` is the universal terminal image/video renderer if Warp's native protocol doesn't cover a case.
+The `open` wrapper routes image extensions to `imgcat` and falls back to `command open` for everything else. `chafa` is the universal terminal image/video renderer if Warp's native protocol doesn't cover a case.
 
 Less sure: whether Warp renders raw markdown in shell-mode output (agent panel definitely does). Verify when relevant.

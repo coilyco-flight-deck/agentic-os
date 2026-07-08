@@ -14,12 +14,12 @@ ARG GOOSE_VERSION=1.41.0
 ARG DOCKER_VERSION=28.5.2
 ARG TAILSCALE_VERSION=1.98.8
 ARG WARD_VERSION=0.396.0
-# .NET SDK for in-container C# compilation (agentic-os#329). Pinned to the .NET 10
+# .NET SDK for in-container C# compilation (see docs/dev-base-image.md). Pinned to the .NET 10
 # LTS line eco-app's Eco mods build against; auto-bump stays on the 10.x channel
 # (like NODE_VERSION stays on its major) so a mod never faces a surprise major jump.
 ARG DOTNET_VERSION=10.0.301
 
-# Pre-commit / CI gate tools (agentic-os#292). golangci-lint and kdlfmt are
+# Pre-commit / CI gate tools (see docs/dev-base-image.md). golangci-lint and kdlfmt are
 # hand-pinned to the versions the consuming repos' CI pins - cli-guard and ward
 # both pin golangci-lint v2.12.2, ward pins kdlfmt v0.1.7 - because their lint /
 # format output is version-sensitive: an image bumping them independently would
@@ -48,7 +48,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     DOTNET_NOLOGO=1
 
 # Base packages: catalog-hook deps (shellcheck, python3, git) plus the inner loop's fetch/build tools.
-# libicu74 is the .NET globalization backend (agentic-os#329): the SDK below runs
+# libicu74 is the .NET globalization backend: the SDK below runs
 # with full ICU-backed globalization, NOT invariant mode, so C# string/culture
 # behaviour in-container matches a normal host. Ubuntu 24.04 (the pinned base)
 # ships ICU as libicu74; a base bump re-pins this to that release's libicuNN.
@@ -81,7 +81,7 @@ RUN set -eux; \
     chmod -R a+rX /opt/uv; \
     pre-commit --version
 
-# Managed Pythons for the fleet's required versions (agentic-os#327). The env
+# Managed Pythons for the fleet's required versions. The env
 # above points UV_PYTHON_INSTALL_DIR at /opt/uv/python, and the a+rX above grants
 # read+traverse but NOT write - so a non-root agent whose repo needs a Python
 # other than the system 3.12 (e.g. eco-app's requires-python >=3.13) hit
@@ -115,9 +115,9 @@ RUN set -eux; \
     rm /tmp/go.tar.gz; \
     go version
 
-# .NET SDK, pinned (agentic-os#329). dev-base shipped no C# toolchain, so any repo
+# .NET SDK, pinned. dev-base shipped no C# toolchain, so any repo
 # with C# to compile (eco-app's Eco mods, `dotnet build mods/*`) had to hand-install
-# the SDK mid-run - the same absent-toolchain class as the uv/Python fix (#327). Bake
+# the SDK mid-run - the same absent-toolchain class as the uv/Python fix. Bake
 # it in with Microsoft's official dotnet-install.sh at the exact pinned SDK version so
 # `dotnet build` just works, no per-run install. --no-path since ENV owns DOTNET_ROOT
 # and PATH; chmod a+rX so any run-as-uid runs it like every other tool here.
@@ -135,7 +135,7 @@ RUN set -eux; \
 
 # golangci-lint (Go linter for ward + cli-guard). Closes the missing-binary gap
 # that made the in-container `pre-commit run --all-files` / CI lint job unrunnable
-# for agents (agentic-os#292). Release tag is v-prefixed; the tarball name and its
+# for agents. Release tag is v-prefixed; the tarball name and its
 # top-level dir are not. Pinned to the consuming repos' CI version (see the ARG).
 RUN set -eux; \
     . /tmp/arch.env; \
@@ -220,7 +220,7 @@ RUN set -eux; \
 
 # Docker CLI (client only, no daemon). ward's read-only `explore` session binds the
 # host docker socket so the in-container agent can dispatch a sibling `warded #N`
-# headless run; that needs a `docker` client in the image (ward#315). The static
+# headless run; that needs a `docker` client in the image. The static
 # tarball ships the full engine - extract only the client binary.
 RUN set -eux; \
     . /tmp/arch.env; \
@@ -234,7 +234,7 @@ RUN set -eux; \
 # Tailscale CLI (client only, no daemon). ward containers reach the tower
 # (kai-tower-3026 ollama on the tailnet) over the tailnet; the image shipped no
 # tailnet client, so an agent could not query tailnet status or route to the
-# tower (agentic-os#286). The static tarball ships the full engine - extract only
+# tower. The static tarball ships the full engine - extract only
 # the `tailscale` client binary. This makes the CLI *exist*; bringing up the
 # tailnet (auth) is a separate axis ward owns, not baked into the image.
 RUN set -eux; \
@@ -247,13 +247,13 @@ RUN set -eux; \
     rm /tmp/tailscale.tgz; \
     tailscale version
 
-# ward, built from source at a pinned tag (agentic-os#223). ward is the whole
+# ward, built from source at a pinned tag. ward is the whole
 # dev-command surface agents route through (`ward <verb>`); baking it in makes the
 # image batteries-included instead of leaving every warded run to `go install` it.
 # Go is already in the base, so this compiles in place - one RUN, source and build
 # caches cleaned in the same layer like every other tool here.
 #
-# NO build token. #223 deferred ward because it was assumed to need a cross-repo
+# NO build token. ward was deferred because it was assumed to need a cross-repo
 # clone secret, but coilyco-flight-deck/ward and its one private-domain module
 # dep (coilyco-flight-deck/cli-guard) are both public now, so an anonymous clone
 # plus GOPROXY=direct resolves everything. GOPRIVATE keeps the cli-guard fetch off
@@ -263,8 +263,8 @@ RUN set -eux; \
 # (its release.yml does the same) to keep a transient hang from shipping a
 # ward-less image. -X main.Version stamps the tag so `ward --version` is truthful.
 #
-# coily is deliberately NOT shipped. The #223 title paired ward + coily, but coily
-# was retired (agentic-os#261): its `coily ops` surface moved into ward-kdl (`ward
+# coily is deliberately NOT shipped. The title paired ward + coily, but coily
+# was retired: its `coily ops` surface moved into ward-kdl (`ward
 # ops <area>`) and coilyco-bridge/coily is archived. Baking a dead binary in would
 # reintroduce a retired command, so ward is the whole deliverable. Pinned as an
 # ARG like the other agent CLIs and auto-bumped against ward's latest release by
@@ -287,7 +287,7 @@ RUN set -eux; \
     cd /; rm -rf /tmp/ward-src /tmp/gobuild /tmp/gocache; \
     ward --version
 
-# Agent self-name + status-line composer (agentic-os#281, #294). Warded
+# Agent self-name + status-line composer. Warded
 # explorers / headless agents run in this image and otherwise get no name - host
 # sessions self-name via a Claude Code SessionStart + statusLine hook the
 # claude-hooks ansible role wires into ~/.claude/settings.json, but that role

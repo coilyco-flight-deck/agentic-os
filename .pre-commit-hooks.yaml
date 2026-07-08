@@ -21,10 +21,11 @@
 #       - id: unresolved-placeholder-guard  # manual opt-in
 #       - id: issue-reference-guard         # manual opt-in
 #
-# See coilysiren/agentic-os#59 for the trifecta convention.
+# See docs/features-release-tooling.md for the trifecta convention.
 # Rollout helper: agentic-os/scripts/apply-agentic-os-hooks.py.
 #
-# Intentionally NOT hooks (agentic-os#233 audit of check_*.py vs shipped ids).
+# Intentionally NOT hooks. See docs/features-release-tooling.md for the
+# authoring-vs-rollout split behind these CLI-only validators.
 # Three authored validators are CLI/on-demand tools, not commit-path hooks, and
 # ship as ward verbs instead (cli-guard/ward fenced). Wiring them here would
 # need new file-discovery logic the issue forbids, and would falsely flag every
@@ -47,7 +48,7 @@
 
 - id: catalog-trifecta
   name: catalog-trifecta cross-link convention
-  description: Enforce that README + AGENTS + docs/FEATURES + .ward/ward.yaml cross-link. See coilysiren/agentic-os#59.
+  description: Enforce that README + AGENTS + docs/FEATURES + .ward/ward.yaml cross-link. See docs/features-release-tooling.md.
   entry: check-catalog-trifecta
   language: python
   always_run: true
@@ -65,7 +66,7 @@
 
 - id: context-load-points
   name: agent context load-points
-  description: "Enforce the AGENTS/CLAUDE load-point framework: pure-pointer CLAUDE.md, no forked rungs in subdirs, root AGENTS.md needs a `@AGENTS.md` bridge. See coilysiren/agentic-os-kai#505."
+  description: "Enforce the AGENTS/CLAUDE load-point framework: pure-pointer CLAUDE.md, no forked rungs in subdirs, root AGENTS.md needs a `@AGENTS.md` bridge. See docs/context-load-points.md."
   entry: check-context-load-points
   language: python
   always_run: true
@@ -83,7 +84,7 @@
 
 - id: catalog-block-present
   name: .ward/ward.yaml catalog block present
-  description: Assert this repo declares its catalog metadata. See coilysiren/agentic-os-kai#420.
+  description: Assert this repo declares its catalog metadata. See docs/ward-specs.md.
   entry: check-catalog-block
   language: python
   additional_dependencies: [pyyaml]
@@ -112,7 +113,7 @@
 
 - id: repo-pointer-skills
   name: repo-pointer skills auto-generated
-  description: Regenerate every repo-<name> pointer skill offline and fail on drift from generator output. See coilysiren/agentic-os-kai#312.
+  description: Regenerate every repo-<name> pointer skill offline and fail on drift from generator output. See docs/features-agents-pointer.md.
   entry: check-repo-pointer-skills
   language: python
   additional_dependencies: [pyyaml]
@@ -122,7 +123,7 @@
 
 - id: agents-pointer
   name: AGENTS.md pointer block auto-generated
-  description: Regenerate the managed workspace-pointer block in AGENTS.md offline and fail on drift. No-ops for unmanaged orgs and the canonical base repos. See coilyco-flight-deck/agentic-os#196.
+  description: Regenerate the managed workspace-pointer block in AGENTS.md offline and fail on drift. No-ops for unmanaged orgs and the canonical base repos. See docs/features-agents-pointer.md.
   entry: check-agents-pointer
   language: python
   always_run: true
@@ -131,7 +132,7 @@
 
 - id: misplaced-skills
   name: no foreign repo-specific skills
-  description: "Assert a repo does not host skills owned by another repo. Opt in via [tool.agentic-os.misplaced-skills] deny/allow globs; no-ops otherwise. See coilyco-flight-deck/agentic-os#132."
+  description: "Assert a repo does not host skills owned by another repo. Opt in via [tool.agentic-os.misplaced-skills] deny/allow globs; no-ops otherwise. See docs/skill-discipline-authoring-shipping.md."
   entry: check-misplaced-skills
   language: python
   always_run: true
@@ -140,7 +141,7 @@
 
 - id: seed-skills
   name: code present implies seed-skill references
-  description: "Assert a repo references the seed skills its code requires (always-set plus one per detected language) so qwen-opencode ingests the right context. Opt in via [tool.agentic-os.seed-skills]; no-ops otherwise. Ansible enables it fleet-wide. See coilyco-flight-deck/agentic-os#176."
+  description: "Assert a repo references the seed skills its code requires (always-set plus one per detected language) so qwen-opencode ingests the right context. Opt in via [tool.agentic-os.seed-skills]; no-ops otherwise. Ansible enables it fleet-wide. See docs/skill-discipline-authoring-shipping.md."
   entry: check-seed-skills
   language: python
   additional_dependencies: [pyyaml]
@@ -150,7 +151,7 @@
 
 - id: agent-compose-size
   name: agent-compose source size budget
-  description: "Cap each AGENTS.COMPOSE.md and the repo's aggregate AGENTS.COMPOSE.md size. The composed file loads every session. See forgejo coilyco-flight-deck/agentic-os#138."
+  description: "Cap each AGENTS.COMPOSE.md and the repo's aggregate AGENTS.COMPOSE.md size. The composed file loads every session. See docs/context-budget.md."
   entry: check-agent-compose-size
   language: python
   always_run: true
@@ -159,7 +160,7 @@
 
 - id: agent-compose-dedup
   name: agent-compose dedup
-  description: "Reject doctrine duplicated across AGENTS.COMPOSE.md sources or already present in the repo's AGENTS.md cascade. See forgejo coilyco-flight-deck/agentic-os#139."
+  description: "Reject doctrine duplicated across AGENTS.COMPOSE.md sources or already present in the repo's AGENTS.md cascade. See docs/context-budget.md."
   entry: check-agent-compose-dedup
   language: python
   always_run: true
@@ -168,7 +169,7 @@
 
 - id: agent-compose-drift
   name: agent-compose composed-file drift
-  description: "Verify ~/.config/agent-compose/COMPOSED.md is reproducible from the composer (not hand-edited or stale). Machine-state check; no-op without a config. See forgejo coilyco-flight-deck/agentic-os#140."
+  description: "Verify ~/.config/agent-compose/COMPOSED.md is reproducible from the composer (not hand-edited or stale). Machine-state check; no-op without a config. See docs/context-budget.md."
   entry: check-agent-compose-drift
   language: python
   always_run: true
@@ -177,7 +178,7 @@
 
 - id: yaml-strict
   name: strict canonical YAML
-  description: "Autofix YAML to a deterministic canonical form: recursive mapping-key alpha-sort, recursive sequence sort by canonical serialization, comment stripping, single trailing newline, explicit --- start, 2-space indent. Rejects (without fixing) duplicate keys and anchors/aliases/tags. Re-stage after a fix. Dials + opt-outs under [tool.agentic-os.yaml-strict] (sort_sequences, no_comments, order_significant, excludes). See coilysiren/agentic-os#59."
+  description: "Autofix YAML to a deterministic canonical form: recursive mapping-key alpha-sort, recursive sequence sort by canonical serialization, comment stripping, single trailing newline, explicit --- start, 2-space indent. Rejects (without fixing) duplicate keys and anchors/aliases/tags. Re-stage after a fix. Dials + opt-outs under [tool.agentic-os.yaml-strict] (sort_sequences, no_comments, order_significant, excludes). See docs/features-release-tooling.md."
   entry: check-yaml-strict
   language: python
   additional_dependencies: ["ruamel.yaml>=0.18"]
@@ -186,7 +187,7 @@
 
 - id: trufflehog
   name: trufflehog (secret scan, offline)
-  description: Detect secrets in staged changes via local trufflehog binary (no API verification). Excludes gitignored build/cache dirs (target/, .venv/, node_modules/, ...) so a trufflehog build that walks untracked working-tree files does not block commits with artifact false positives (agentic-os#288). Requires the trufflehog binary on PATH (shipped in the agentic-os Brewfile).
+  description: Detect secrets in staged changes via local trufflehog binary (no API verification). Excludes gitignored build/cache dirs (target/, .venv/, node_modules/, ...) so a trufflehog build that walks untracked working-tree files does not block commits with artifact false positives. Requires the trufflehog binary on PATH (shipped in the agentic-os Brewfile).
   entry: scripts/trufflehog-scan.sh
   language: script
   pass_filenames: false
@@ -194,7 +195,7 @@
 
 - id: leak-guard
   name: encoded leak guard
-  description: "Reject plaintext occurrences of awkward-leak terms (employer/partner names, private->public references, dependency-cycle back-references) held as hex in agentic_os/pre_commit/leak_guard_rules.py and decoded only in memory. Rule scope matches the current repo, so a rule fires only where it should. See coilysiren/inbox#95."
+  description: "Reject plaintext occurrences of awkward-leak terms (employer/partner names, private->public references, dependency-cycle back-references) held as hex in agentic_os/pre_commit/leak_guard_rules.py and decoded only in memory. Rule scope matches the current repo, so a rule fires only where it should. See docs/leak-guard.md."
   entry: check-leak-guard
   language: python
   always_run: true

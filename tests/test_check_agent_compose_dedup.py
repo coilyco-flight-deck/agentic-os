@@ -1,4 +1,4 @@
-"""Tests for the agent-compose-dedup validator (forgejo #139)."""
+"""Tests for the agent-compose-dedup validator."""
 from __future__ import annotations
 
 from pathlib import Path

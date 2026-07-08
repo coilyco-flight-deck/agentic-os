@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Cap the size of AGENTS.COMPOSE.md sources, per file and per repo.
 
-AGENTS.COMPOSE.md sources are composed into always-loaded global context
-(agent-compose, forgejo #134), shared across harnesses by default and sliced
+AGENTS.COMPOSE.md sources are composed into always-loaded global context,
+shared across harnesses by default and sliced
 when frontmatter requires it. Their size matters in a way ordinary docs do not.
 The general documentation-layout hook already caps each Markdown file. The
 value this hook adds is the per-repo AGGREGATE budget: the sum of all
