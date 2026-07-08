@@ -190,8 +190,8 @@ RUN set -eux; \
 # one-off MCP calls and schema refreshes, so it has to be baked into the image
 # rather than pulled ad hoc at runtime.
 RUN set -eux; \
-    npm install -g "mcporter@${MCPORTER_VERSION}"; \
-    mcporter --help >/dev/null
+    timeout 5m npm install -g "mcporter@${MCPORTER_VERSION}"; \
+    timeout 1m mcporter --help >/dev/null
 
 # Codex CLI, pinned. ward injects host ~/.codex/auth.json at container launch.
 RUN set -eux; \

@@ -131,6 +131,7 @@ jobs:
     needs: release
     if: ${{ needs.release.outputs.tag != '' }}
     runs-on: docker
+    timeout-minutes: 20
     env:
       IMAGE: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os
       BUILDX_VERSION: v0.34.1
@@ -152,6 +153,7 @@ jobs:
             -o ~/.docker/cli-plugins/docker-buildx
           chmod +x ~/.docker/cli-plugins/docker-buildx
           docker buildx version
+          docker --version
 
       - name: Resolve docker host
         run: |
@@ -163,6 +165,8 @@ jobs:
             if docker -H "$h" info >/dev/null 2>&1; then
               echo "docker daemon reachable at $h"
               echo "DOCKER_HOST=$h" >> "$GITHUB_ENV"
+              echo "selected DOCKER_HOST=$h"
+              docker version
               exit 0
             fi
             echo "no docker daemon at $h"
@@ -184,21 +188,31 @@ jobs:
       - name: Set up qemu + buildx builder
         run: |
           set -euo pipefail
+          echo "buildx before bootstrap"
+          docker buildx ls
           docker run --privileged --rm tonistiigi/binfmt --install all
           docker buildx create --use --name aosbuilder \
             --driver docker-container --driver-opt network=host
           docker buildx inspect --bootstrap
+          echo "buildx after bootstrap"
+          docker buildx ls
 
       - name: Build and push (multi-arch)
         env:
           TAG: ${{ needs.release.outputs.tag }}
         run: |
           set -euo pipefail
-          docker buildx build \
+          status=0
+          timeout --preserve-status --kill-after=2m 15m docker buildx build \
+            --progress=plain \
             --platform "${PLATFORMS}" \
             --tag "${IMAGE}:${TAG}" \
             --tag "${IMAGE}:latest" \
             --cache-from "type=registry,ref=${IMAGE}:buildcache" \
             --cache-to "type=registry,ref=${IMAGE}:buildcache,mode=max,ignore-error=true" \
             --push \
-            docker/dev-base
+            docker/dev-base || status=$?
+          echo "buildx after build (exit ${status})"
+          docker buildx inspect || true
+          docker buildx ls || true
+          exit "${status}"
