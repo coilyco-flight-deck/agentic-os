@@ -4,10 +4,36 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
+import yaml
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - Python 3.10
+    import tomli as tomllib
+
 import agentic_os.config as cfg
 from agentic_os.pre_commit import text_scan
 from agentic_os.pre_commit import check_issue_references as ir
 from agentic_os.pre_commit import check_unresolved_placeholders as up
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
+
+def _project_scripts() -> dict[str, str]:
+    data = tomllib.loads((REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    scripts = data["project"]["scripts"]
+    return {str(name): str(entry) for name, entry in scripts.items()}
+
+
+def _published_python_hooks() -> dict[str, str]:
+    hooks = yaml.safe_load(
+        (REPO_ROOT / ".pre-commit-hooks.yaml").read_text(encoding="utf-8")
+    )
+    return {
+        str(hook["id"]): str(hook["entry"])
+        for hook in hooks
+        if hook.get("language") == "python"
+    }
 
 
 def _git(root: Path, *args: str) -> None:
@@ -87,3 +113,17 @@ allow_globs = ["docs/examples/**"]
     monkeypatch.setattr(cfg, "REPO_ROOT", repo, raising=True)
     monkeypatch.setattr(text_scan, "REPO_ROOT", repo, raising=True)
     assert ir.main([]) == 0
+
+
+def test_published_python_hook_entries_have_console_scripts() -> None:
+    scripts = _project_scripts()
+    hooks = _published_python_hooks()
+    missing = {
+        hook_id: entry
+        for hook_id, entry in hooks.items()
+        if entry not in scripts
+    }
+    assert not missing, (
+        "published hook entries must be exported from [project.scripts]: "
+        f"{missing}"
+    )
