@@ -51,7 +51,7 @@ fleet {
         role director {
             // smarter agents than baseline
             agent claude {
-                model "claude-opus-4-8"
+                model claude-opus-4-8
                 reasoning-effort high
             }
             agent codex {
@@ -62,7 +62,7 @@ fleet {
         role advisor {
             // smarter agents than baseline
             agent claude {
-                model "claude-opus-4-8"
+                model claude-opus-4-8
                 reasoning-effort high
             }
             agent codex {
