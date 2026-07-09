@@ -13,6 +13,7 @@ toolchain on `ubuntu:24.04`:
 - **python3 + shellcheck + git + git-lfs + build-essential** - direct needs and catalog-hook shell-outs.
 - **node + npm** - Claude Code's runtime.
 - **go** - builds the `warp/` hooks and the ward binary below.
+- **Rust toolchain** - `cargo` and `rustc` are on PATH for downstream Rust workspaces and CI.
 - **.NET SDK 10 + ICU** - C# mods compile in-container with no per-run install, full ICU globalization (`libicu74`) not invariant mode (agentic-os#329).
 - **aws cli v2** - SSM secret loader + `~/.aws` passthrough; region defaults `us-east-1` (agentic-os#286).
 - **Homebrew** - Linux Homebrew lives at `/home/linuxbrew/.linuxbrew` and is on `PATH`, so `brew` works without shell setup.
@@ -55,7 +56,7 @@ Needs a `docker login`; `ward container up/exec` (ward#98) is the entry point.
 
 - Mount / compose logic and `ward container` verbs - ward#98; the mount-eligibility manifest - aos#222.
 - `coily` (retired, folded into `ward ops`) and running services - not shipped.
-- `docker buildx`, Rust, and `wasm-pack` - job-local publish or toolchain steps.
+- `docker buildx` and `wasm-pack` - job-local publish or toolchain steps.
 
 ## See also
 

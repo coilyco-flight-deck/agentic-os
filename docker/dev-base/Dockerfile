@@ -41,7 +41,7 @@ ARG TARGETARCH
 
 # uv tools land on the global PATH so any run-as-uid finds pre-commit.
 ENV DEBIAN_FRONTEND=noninteractive \
-    PATH=/usr/local/go/bin:/usr/local/dotnet:/usr/local/bin:/usr/bin:/bin:/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin \
+    PATH=/usr/local/go/bin:/usr/local/dotnet:/usr/local/cargo/bin:/usr/local/bin:/usr/bin:/bin:/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin \
     HOME=/root \
     HOMEBREW_PREFIX=/home/linuxbrew/.linuxbrew \
     HOMEBREW_NO_ANALYTICS=1 \
@@ -49,6 +49,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
     UV_TOOL_DIR=/opt/uv/tools \
     UV_TOOL_BIN_DIR=/usr/local/bin \
     UV_PYTHON_INSTALL_DIR=/opt/uv/python \
+    CARGO_HOME=/usr/local/cargo \
+    RUSTUP_HOME=/usr/local/rustup \
     AWS_DEFAULT_REGION=us-east-1 \
     AWS_REGION=us-east-1 \
     DOTNET_ROOT=/usr/local/dotnet \
@@ -157,6 +159,21 @@ RUN set -eux; \
     chmod -R a+rX /usr/local/dotnet; \
     dotnet --version; dotnet --list-sdks
 
+# Rust toolchain, pinned to the stable channel. cargo/rustc now ship in the
+# shared base so downstream CI can run `cargo test --workspace` without a
+# per-repo bootstrap install. Install system-wide under /usr/local so any uid
+# gets the shims on PATH, then make the rustup and cargo trees world-writable
+# so cargo can fetch crates and persist its cache.
+RUN set -eux; \
+    curl -fsSL https://sh.rustup.rs -o /tmp/rustup-init.sh; \
+    chmod 0755 /tmp/rustup-init.sh; \
+    /tmp/rustup-init.sh -y --no-modify-path --profile minimal --default-toolchain stable; \
+    rm /tmp/rustup-init.sh; \
+    rustup --version; \
+    cargo --version; \
+    rustc --version; \
+    chmod -R a+rwX "${CARGO_HOME}" "${RUSTUP_HOME}"
+
 # golangci-lint (Go linter for ward + cli-guard). Closes the missing-binary gap
 # that made the in-container `pre-commit run --all-files` / CI lint job unrunnable
 # for agents. Release tag is v-prefixed; the tarball name and its
@@ -184,8 +201,9 @@ RUN set -eux; \
 
 # Fleet CI utilities that are generic enough to live in the shared base.
 # buildx stays job-local because the publish-image workflow still bootstraps a
-# privileged Docker daemon stack there. Rust + wasm-pack stay job-local because
-# they are a heavier, repo-specific toolchain rather than a recurring shared CLI.
+# privileged Docker daemon stack there. Rust ships here as the shared workspace
+# baseline now, while wasm-pack stays job-local because it is a heavier,
+# repo-specific toolchain rather than a recurring shared CLI.
 #
 # gh, helm, kubectl, and yq are pinned here so downstream workflows can drop
 # their package-manager/setup-action installs after the next image publish.
