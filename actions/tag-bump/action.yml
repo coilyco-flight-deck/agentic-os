@@ -1,12 +1,13 @@
 name: "Semver tag bump"
 description: |
   Bump the latest semver tag by a fixed amount (minor by default) and
-  create the new tag on the forgejo repo via the Releases API. Does NOT
-  parse commit messages: every automated release is a minor bump, and
-  major is hand-driven only (pass bump: major, e.g. from a
+  create the new tag on the forgejo repo via the Releases API, or run in
+  compute-only mode so a workflow can verify an image before the public tag
+  exists. Does NOT parse commit messages: every automated release is a minor
+  bump, and major is hand-driven only (pass bump: major, e.g. from a
   workflow_dispatch). Nothing in commit history can escalate the bump.
-  Replaces mathieudutour/github-tag-action for the forgejo-canonical
-  release pipeline. Forgejo source of truth, no github API calls.
+  Replaces mathieudutour/github-tag-action for the forgejo-canonical release
+  pipeline. Forgejo source of truth, no github API calls.
 
 inputs:
   forgejo_token:
@@ -25,6 +26,14 @@ inputs:
     description: "Bump to apply (minor|major|patch|none). Default minor. Major is hand-driven only - commit history never escalates it."
     required: false
     default: "minor"
+  create_tag:
+    description: "Create the Forgejo tag when true. Set false to only compute the next release tag/version."
+    required: false
+    default: "true"
+  tag_name:
+    description: "Explicit tag to create. When set, semver lookup is skipped and this tag is used directly."
+    required: false
+    default: ""
   tag_prefix:
     description: "Tag prefix. Tags are <prefix><semver>."
     required: false
@@ -36,10 +45,10 @@ inputs:
 
 outputs:
   new_tag:
-    description: "Newly created tag, empty when no bump happened."
+    description: "Computed tag, empty when no bump happened."
     value: ${{ steps.compute.outputs.new_tag }}
   new_version:
-    description: "Newly created semver, empty when no bump happened."
+    description: "Computed semver, empty when no bump happened."
     value: ${{ steps.compute.outputs.new_version }}
   previous_tag:
     description: "Tag the bump is relative to."
@@ -58,6 +67,8 @@ runs:
         FORGEJO_BASE_URL: ${{ inputs.forgejo_base_url }}
         REPO: ${{ inputs.repo }}
         BUMP: ${{ inputs.bump }}
+        CREATE_TAG: ${{ inputs.create_tag }}
+        TAG_NAME: ${{ inputs.tag_name }}
         TAG_PREFIX: ${{ inputs.tag_prefix }}
         RELEASE_SHA: ${{ inputs.release_sha }}
       run: |
@@ -84,52 +95,86 @@ runs:
           range="HEAD"
         fi
 
+        create_tag="$CREATE_TAG"
         bump="$BUMP"
+        tag_name="$TAG_NAME"
+        case "$create_tag" in
+          true|false) ;;
+          *) echo "::error::create_tag must be true|false, got '$create_tag'"; exit 1 ;;
+        esac
         case "$bump" in
           major|minor|patch|none) ;;
           *) echo "::error::bump must be major|minor|patch|none, got '$bump'"; exit 1 ;;
         esac
 
-        if [ "$bump" = "none" ]; then
-          echo "no-bump signal; skipping tag creation"
-          echo "new_tag=" >> "$GITHUB_OUTPUT"
-          echo "new_version=" >> "$GITHUB_OUTPUT"
-          echo "previous_tag=$prev_tag" >> "$GITHUB_OUTPUT"
-          {
-            echo "changelog<<EOF"
-            echo ""
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
-          exit 0
+        if [ -n "$tag_name" ]; then
+          new_tag="$tag_name"
+          case "$new_tag" in
+            "${TAG_PREFIX}"*)
+              new_version="${new_tag#"$TAG_PREFIX"}"
+              ;;
+            *)
+              echo "::error::explicit tag '$new_tag' must start with prefix '$TAG_PREFIX'"
+              exit 1
+              ;;
+          esac
+        else
+          if [ "$bump" = "none" ]; then
+            echo "no-bump signal; skipping tag creation"
+            echo "new_tag=" >> "$GITHUB_OUTPUT"
+            echo "new_version=" >> "$GITHUB_OUTPUT"
+            echo "previous_tag=$prev_tag" >> "$GITHUB_OUTPUT"
+            {
+              echo "changelog<<EOF"
+              echo ""
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          IFS='.' read -r maj min pat <<< "$prev_ver"
+          case "$bump" in
+            major) maj=$((maj+1)); min=0; pat=0 ;;
+            minor) min=$((min+1)); pat=0 ;;
+            patch) pat=$((pat+1)) ;;
+          esac
+          new_version="${maj}.${min}.${pat}"
+          new_tag="${TAG_PREFIX}${new_version}"
         fi
 
-        IFS='.' read -r maj min pat <<< "$prev_ver"
-        case "$bump" in
-          major) maj=$((maj+1)); min=0; pat=0 ;;
-          minor) min=$((min+1)); pat=0 ;;
-          patch) pat=$((pat+1)) ;;
-        esac
-        new_ver="${maj}.${min}.${pat}"
-        new_tag="${TAG_PREFIX}${new_ver}"
+        if [ -z "${new_version:-}" ]; then
+          new_version="${new_tag#"$TAG_PREFIX"}"
+        fi
 
         # Create the tag on forgejo. POST /api/v1/repos/{owner}/{name}/tags
         # accepts {tag_name, target}. Auto-issued token has write scope on
         # this repo. 201 Created on success.
-        payload=$(printf '{"tag_name":"%s","target":"%s"}' "$new_tag" "$RELEASE_SHA")
-        http_code=$(curl -sS -o /tmp/tagresp.json -w '%{http_code}' \
-          -X POST \
-          -H "Authorization: token $FORGEJO_TOKEN" \
-          -H "Content-Type: application/json" \
-          -d "$payload" \
-          "$FORGEJO_BASE_URL/api/v1/repos/$REPO/tags")
-        if [ "$http_code" != "201" ]; then
-          echo "::error::forgejo tag create failed: HTTP $http_code"
-          cat /tmp/tagresp.json
-          exit 1
+        if [ "$create_tag" = "true" ]; then
+          payload=$(printf '{"tag_name":"%s","target":"%s"}' "$new_tag" "$RELEASE_SHA")
+          http_code=$(curl -sS -o /tmp/tagresp.json -w '%{http_code}' \
+            -X POST \
+            -H "Authorization: token $FORGEJO_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "$payload" \
+            "$FORGEJO_BASE_URL/api/v1/repos/$REPO/tags")
+          case "$http_code" in
+            201)
+              ;;
+            409)
+              echo "tag already exists for $new_tag, continuing"
+              ;;
+            *)
+              echo "::error::forgejo tag create failed: HTTP $http_code"
+              cat /tmp/tagresp.json
+              exit 1
+              ;;
+          esac
+        else
+          echo "dry-run tag computation only; not creating $new_tag"
         fi
 
         echo "new_tag=$new_tag" >> "$GITHUB_OUTPUT"
-        echo "new_version=$new_ver" >> "$GITHUB_OUTPUT"
+        echo "new_version=$new_version" >> "$GITHUB_OUTPUT"
         echo "previous_tag=$prev_tag" >> "$GITHUB_OUTPUT"
         {
           echo "changelog<<EOF"

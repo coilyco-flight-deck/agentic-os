@@ -12,7 +12,7 @@ in [Tiered dev-base image design](dev-base-image-tiering.md).
 [`docker/dev-base/Dockerfile`](../docker/dev-base/Dockerfile) layers the
 toolchain on `ubuntu:24.04`:
 
-- **uv + managed Pythons** - Python project/tool manager; 3.13 + 3.12 pre-installed under a world-writable `UV_PYTHON_INSTALL_DIR` (agentic-os#327).
+- **uv + managed Pythons** - Python project/tool manager; 3.13 + 3.12 pre-installed in a writable `UV_PYTHON_INSTALL_DIR` (agentic-os#327).
 - **pre-commit** - the catalog hook driver (a uv tool).
 - **python3 + shellcheck + git + git-lfs + build-essential** - direct needs and hook shell-outs.
 - **node + npm** - Claude Code's runtime.
@@ -20,14 +20,14 @@ toolchain on `ubuntu:24.04`:
 - **Rust toolchain** - `cargo` and `rustc` are on PATH for Rust workspaces.
 - **.NET SDK 10 + ICU** - C# mods compile in-container with full ICU globalization (`libicu74`) not invariant mode (agentic-os#329).
 - **aws cli v2** - SSM secret loader + `~/.aws` passthrough; region defaults `us-east-1` (agentic-os#286).
-- **Homebrew** - Linux Homebrew lives at `/home/linuxbrew/.linuxbrew`, is bootstrapped as a dedicated non-root user, and is on `PATH`, so `brew` works without shell setup.
-- **claude + mcporter + codex + goose** - agent CLIs and MCP runtime, plus **docker cli + socat** for `warded #N` dispatch (ward#315).
+- **Homebrew** - Linux Homebrew at `/home/linuxbrew/.linuxbrew`, on `PATH`.
+- **claude + mcporter + codex + goose** - agent CLIs plus **docker cli + socat** for `warded #N` dispatch.
 - **gh + helm + kubectl + yq** - CI CLIs for sync, chart, deploy, and manifests.
 - **ward** - the dev-command surface agents route through (`ward <verb>`), built from source at pinned `WARD_VERSION`.
-- **golangci-lint + trufflehog + kdlfmt** - lint / secret-scan / format binaries the gate shells out to, self-run in-container (agentic-os#292).
+- **golangci-lint + trufflehog + kdlfmt** - lint / secret-scan / format binaries the gate shells out to.
 - **tailscale cli** - tailnet client (no daemon) so a credentialed container reaches the tower; auth stays ward's axis (agentic-os#286).
 - **public substrate seed** - mirrors of the image-tier reference repos at `/opt/substrate-seed`.
-- **in-container agent self-name** - baked `agent-name.sh` + policy `managed-settings.json` so warded agents self-name ([doc](dev-base-self-name.md)).
+- **in-container agent self-name** - baked `agent-name.sh` so warded agents self-name ([doc](dev-base-self-name.md)).
 
 Tools under `/usr/local`, `/home/linuxbrew/.linuxbrew`, or `/opt` run as any uid. ward owns `run-as-uid`, mounts, and `~/.aws`. Root bootstrap seeds `/home/ubuntu/.ward/audit` as uid 1000 and avoids root-owned audit state.
 
@@ -40,7 +40,9 @@ the layer cache.
 
 ## How it publishes
 
-The `publish-image` job in [`.forgejo/workflows/release.yml`](../.forgejo/workflows/release.yml) runs after a release tag on the DinD `docker` runner and pushes `:vX.Y.Z` and `:latest` with a registry cache. `REGISTRY_TOKEN` is a `coilyco-ops` `write:package` PAT ([`rotate-registry-token.sh`](../scripts/rotate-registry-token.sh) re-mints it); the ward build clones public source anonymously.
+The `publish-image` job in [`.forgejo/workflows/release.yml`](../.forgejo/workflows/release.yml) runs before the public tag exists. It pushes `:vX.Y.Z` and `:latest`, verifies both manifests, and only then lets the workflow create the matching git/release tag.
+
+The tag comes last, after the image has been built, pushed, and verified.
 The base apt layer retries against mirror drift so a publish can still land when Ubuntu package metadata and archives briefly disagree.
 
 ## Pinning a tool

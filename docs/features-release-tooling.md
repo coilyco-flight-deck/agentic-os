@@ -25,11 +25,11 @@ Single-purpose validators for cryptic failure modes. These plus [`ward context-b
 
 Composite Forgejo Actions for the brew release pipeline, each a forgejo-API-only replacement for a github-coupled marketplace action:
 
-- `actions/tag-bump` - bump the latest semver tag by a fixed amount (minor by default, major hand-driven via the `bump` input), create the tag via forgejo Tags API. Does not parse commit messages. Replaces `mathieudutour/github-tag-action`.
+- `actions/tag-bump` - bump the latest semver tag by a fixed amount (minor by default, major hand-driven via the `bump` input), or run in compute-only mode before the public tag exists. Does not parse commit messages. Replaces `mathieudutour/github-tag-action`.
 - `actions/create-release` - POST to forgejo Releases API with bounded JSON marshalling and timeouts. Idempotent on tag collision. Replaces `softprops/action-gh-release` for release creation.
 - `actions/upload-release-asset` - POST a release asset with bounded lookup, delete, and upload calls.
 - `actions/bump-formula` - rewrite a Homebrew Formula's `url ".."` line to pin the new tag + revision and PUT via forgejo Contents API with bounded lookup and write calls.
 
 Consumed via `uses: coilyco-flight-deck/agentic-os/actions/<name>@main` from a `.forgejo/workflows/*.yml`. Issued `${{ github.token }}` covers writes.
 
-agentic-os dogfoods these actions in `.forgejo/workflows/`, using local `uses: ./actions/...` refs so the source repo never waits on its own mirror. Push to main cuts a minor tag + release, and a mirror job force-pushes to the read-only `coilysiren/agentic-os` GitHub mirror. The consumer pin is tag-derived (`default_rev()`), so there is no per-push pin-bump commit (agentic-os#238). Major bumps stay hand-cut via `scripts/release.py`. A `workflow_dispatch` trigger re-fires it on a missed push enqueue, no dummy commit (agentic-os#240). Walkthrough: [docs/release.md](release.md).
+agentic-os dogfoods these actions in `.forgejo/workflows/`, using local `uses: ./actions/...` refs so the source repo never waits on its own mirror. The release workflow computes the next tag, publishes and verifies the image, then creates the public tag last. The consumer pin is tag-derived (`default_rev()`), so there is no per-push pin-bump commit (agentic-os#238). Major bumps stay hand-cut via `scripts/release.py`. A `workflow_dispatch` trigger re-fires it on a missed push enqueue, no dummy commit (agentic-os#240). Walkthrough: [docs/release.md](release.md).
