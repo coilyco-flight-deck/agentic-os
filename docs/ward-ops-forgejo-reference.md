@@ -756,6 +756,22 @@ Options (2):
 - `--page` (integer, optional): page number of results to return (1-based)
 - `--limit` (integer, optional): page size of results, default maximum page size is 50
 
+## ward-kdl ops forgejo workflow dispatch - Dispatch a workflow file (POST /repos/{owner}/{repo}/actions/workflows/{workflowfilename}/dispatches)
+
+`POST /repos/{owner}/{repo}/actions/workflows/{workflowfilename}/dispatches`
+
+Authorized by grant: can dispatch workflow. Not destructive.
+
+Positional arguments (3):
+
+- `<owner>` (string)
+- `<repo>` (string)
+- `<workflowfilename>` (string)
+
+Options (1):
+
+- `--ref` (string, required): Git reference for the workflow. The API body also accepts `inputs` and `return_run_info`.
+
 ## ward-kdl ops forgejo issue list-all - List all issues by auto-paginating issue list.
 
 Shadows the generated `issue list-all` leaf: invoking it runs this composite in the leaf's place.

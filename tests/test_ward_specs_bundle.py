@@ -11,6 +11,7 @@ def test_ward_specs_bundle_carries_deployment_anchors() -> None:
     assert "forgejo.coilysiren.me" in forgejo
     assert '/forgejo/coilyco-ops/api-token' in forgejo
     assert "restrict owner matches coily*" in forgejo
+    assert "can dispatch workflow" in forgejo
 
     signoz = (SPEC_DIR / "ward-kdl.signoz.guardfile.kdl").read_text()
     assert "/coilysiren/signoz-ser8/api-token" in signoz
@@ -29,6 +30,17 @@ def test_ward_specs_bundle_carries_deployment_anchors() -> None:
 
     fleet = (SPEC_DIR / "ward-kdl.fleet.kdl").read_text()
     assert "attribution name=coilyco-ops" in fleet
+
+
+def test_ward_specs_bundle_documents_workflow_dispatch() -> None:
+    docs = (
+        pathlib.Path(__file__).resolve().parents[1]
+        / "docs"
+        / "ward-ops-forgejo-reference.md"
+    ).read_text()
+    assert "workflow dispatch" in docs
+    assert "/actions/workflows/{workflowfilename}/dispatches" in docs
+    assert "--ref" in docs
 
 
 def test_ward_specs_fleet_parses() -> None:

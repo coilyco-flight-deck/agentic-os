@@ -194,6 +194,62 @@
       "type": "object",
       "x-go-package": "forgejo.org/modules/structs"
     },
+    "DispatchWorkflowOption": {
+      "description": "DispatchWorkflowOption options when dispatching a workflow",
+      "type": "object",
+      "required": [
+        "ref"
+      ],
+      "properties": {
+        "inputs": {
+          "description": "Input keys and values configured in the workflow file.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Inputs"
+        },
+        "ref": {
+          "description": "Git reference for the workflow",
+          "type": "string",
+          "x-go-name": "Ref"
+        },
+        "return_run_info": {
+          "description": "Flag to return the run info",
+          "type": "boolean",
+          "default": false,
+          "x-go-name": "ReturnRunInfo"
+        }
+      },
+      "x-go-package": "forgejo.org/modules/structs"
+    },
+    "DispatchWorkflowRun": {
+      "description": "DispatchWorkflowRun represents a workflow run",
+      "properties": {
+        "id": {
+          "description": "the workflow run id",
+          "format": "int64",
+          "type": "integer",
+          "x-go-name": "ID"
+        },
+        "jobs": {
+          "description": "the jobs name",
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "x-go-name": "Jobs"
+        },
+        "run_number": {
+          "description": "a unique number for each run of a repository",
+          "format": "int64",
+          "type": "integer",
+          "x-go-name": "RunNumber"
+        }
+      },
+      "type": "object",
+      "x-go-package": "forgejo.org/modules/structs"
+    },
     "Attachment": {
       "description": "Attachment a generic attachment",
       "properties": {
@@ -3218,6 +3274,59 @@
         ]
       }
     },
+    "/repos/{owner}/{repo}/actions/workflows/{workflowfilename}/dispatches": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "tags": [
+          "repository"
+        ],
+        "summary": "Dispatches a workflow",
+        "operationId": "DispatchWorkflow",
+        "parameters": [
+          {
+            "description": "owner of the repo",
+            "in": "path",
+            "name": "owner",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "name of the repo",
+            "in": "path",
+            "name": "repo",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "name of the workflow",
+            "in": "path",
+            "name": "workflowfilename",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "schema": {
+              "$ref": "#/definitions/DispatchWorkflowOption"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "$ref": "#/responses/DispatchWorkflowRun"
+          },
+          "204": {
+            "$ref": "#/responses/empty"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          }
+        }
+      }
+    },
     "/repos/{owner}/{repo}/branches": {
       "get": {
         "operationId": "repoListBranches",
@@ -5091,6 +5200,12 @@
       "description": "TasksList",
       "schema": {
         "$ref": "#/definitions/ActionTaskResponse"
+      }
+    },
+    "DispatchWorkflowRun": {
+      "description": "DispatchWorkflowRun represents a workflow run",
+      "schema": {
+        "$ref": "#/definitions/DispatchWorkflowRun"
       }
     },
     "UserList": {

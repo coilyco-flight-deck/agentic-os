@@ -249,6 +249,11 @@ wrap ward-kdl ops forgejo {
     can remove issue-label
     // actions tasks: the read-only CI-run listing surface.
     can list tasks
+    // actions workflows: manual dispatch for an allowed workflow file.
+    can dispatch workflow {
+        op DispatchWorkflow
+        describe "Dispatch a workflow file (POST /repos/{owner}/{repo}/actions/workflows/{workflowfilename}/dispatches). Allows a guarded manual trigger instead of a raw API call. The API body requires ref and may carry inputs."
+    }
     // move-issue: copy title/body to a target repo, back-link, then CLOSE the
     // source (never delete). Carrying labels/milestone is deferred (array flow).
     action move-issue {
