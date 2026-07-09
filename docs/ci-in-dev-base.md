@@ -5,6 +5,11 @@ through the same `ward exec` verbs the agents run**, so a green CI means "a
 headless agent can actually land this," not "it passed in some other
 environment" (agentic-os#328).
 
+The current contract still pins one `dev-base-full` image per app. The tiered
+follow-up design keeps that default but introduces narrower classes behind the
+same release tag and a manifest lock. See
+[Tiered dev-base image design](dev-base-image-tiering.md).
+
 ## The motivating failure
 
 On an app, CI was green while **every** dispatched `warded` run died. The two
@@ -40,6 +45,10 @@ The one tag every app pins to lives in
 owned here in aos. It is bumped by hand to a published tag
 ([dev-base-image.md](dev-base-image.md) covers how tags publish).
 
+That single-file source of truth remains the current contract. The tiered design
+proposes replacing it later with a manifest that maps image classes to full
+refs, while keeping the same release tag across the whole family.
+
 ## Authoring vs rollout
 
 aos **authors** the convention and the pinned tag. It does not reach into other
@@ -59,4 +68,6 @@ ward verbs pass inside dev-base and parity holds green.
 
 - [dev-base container image](dev-base-image.md) - the image CI pins.
 - [dev-base auto-bump](dev-base-auto-bump.md) - how pinned tool `ARG`s refresh.
+- [Tiered dev-base image design](dev-base-image-tiering.md) - the planned image
+  family and pinning evolution.
 - [FEATURES.md](FEATURES.md) - the feature inventory this lands in.
