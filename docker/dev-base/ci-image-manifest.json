@@ -1,9 +1,9 @@
 {
-  "dev-base-core": "forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:v0.195.0",
-  "dev-base-lang-node": "forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:v0.195.0",
-  "dev-base-lang-go": "forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:v0.195.0",
-  "dev-base-lang-dotnet": "forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:v0.195.0",
-  "dev-base-ops": "forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:v0.195.0",
-  "dev-base-agent": "forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:v0.195.0",
-  "dev-base-full": "forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:v0.195.0"
+  "dev-base-core": "forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:v0.242.0",
+  "dev-base-lang-node": "forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:v0.242.0",
+  "dev-base-lang-go": "forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:v0.242.0",
+  "dev-base-lang-dotnet": "forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:v0.242.0",
+  "dev-base-ops": "forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:v0.242.0",
+  "dev-base-agent": "forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:v0.242.0",
+  "dev-base-full": "forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:v0.242.0"
 }
