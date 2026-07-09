@@ -28,6 +28,13 @@ def test_homebrew_is_installed_noninteractively() -> None:
     assert "brew --version" in text
 
 
+def test_ward_is_pinned_and_smoke_checked() -> None:
+    text = DOCKERFILE.read_text()
+    assert "ARG WARD_VERSION=0.529.0" in text
+    assert 'git clone --depth 1 --branch "v${WARD_VERSION}"' in text
+    assert "ward --version" in text
+
+
 def test_dev_base_docs_include_homebrew_tooling() -> None:
     text = (Path(__file__).resolve().parent.parent / "docs" / "dev-base-image.md").read_text()
     assert "**Homebrew**" in text

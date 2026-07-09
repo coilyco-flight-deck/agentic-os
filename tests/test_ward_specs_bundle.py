@@ -43,6 +43,16 @@ def test_ward_specs_bundle_documents_workflow_dispatch() -> None:
     assert "--ref" in docs
 
 
+def test_ward_specs_docs_reference_live_config_source() -> None:
+    docs = (
+        pathlib.Path(__file__).resolve().parents[1]
+        / "docs"
+        / "ward-specs.md"
+    ).read_text()
+    assert "WARD_CONFIG_REF" in docs
+    assert "launch through `WARD_CONFIG_REF`" in docs
+
+
 def test_ward_specs_fleet_parses() -> None:
     body = (SPEC_DIR / "ward-kdl.fleet.kdl").read_text()
     assert "fleet {" in body

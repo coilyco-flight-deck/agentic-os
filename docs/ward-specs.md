@@ -39,21 +39,12 @@ path, and the packaging step enumerates the bundle files explicitly so
 
 ## How ward consumes it
 
-Both of ward's build sites - the brew formula and ward's release CI - **overlay
-this published asset before the build**, re-deriving the shipped embeds from it.
-During the staged cutover (ward#503) ward's tree still carries the coilyco
-values as a fail-safe backstop, and this aos#332 work closes that gap: the
-published bundle now reproduces ward's shipped surface byte-for-byte, so the
-overlay is a **live no-op**.
+ward now keeps one neutral shipped binary and selects the coilyco bundle at
+launch through `WARD_CONFIG_REF` for the guarded edge surfaces. The former
+release-time build overlay is gone, so the AOS asset is no longer a custom
+binary input. The published `ward-specs-<tag>.tar.gz` remains the canonical
+bundle artifact and checksum target, but the live config path is the runtime
+`WARD_CONFIG_REF` seam, not a bespoke rebuild from the asset.
 
-This is the **assets-dir / release-asset overlay** convention, **not** a sibling
-checkout. An earlier attempt wired ward's `make build-ward-kdl` to copy a sibling
-`agentic-os/ward-specs/` working tree; ward reverted it because it broke
-bare-clone builds and overlaid a stale copy.
-
-The overlay mechanism on the ward side is decided (ward#503): each of ward's
-build sites pins this asset by tag + `sha256`, verifies the checksum, extracts
-it, and **copies the bundle's source guardfiles over ward's neutral tracked
-tree before the build**. So the embeds are re-derived from this source bundle at
-build time, with no pre-generated embeds committed in ward and no live spec
-re-fetch or install-time generator.
+That keeps the coilyco deployment values authored here in `.ward/` and consumed
+by ward without reintroducing the removed release overlay.

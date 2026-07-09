@@ -17,7 +17,7 @@ ARG HELM_VERSION=4.2.2
 ARG KUBECTL_VERSION=1.36.2
 ARG YQ_VERSION=4.53.3
 ARG TAILSCALE_VERSION=1.98.8
-ARG WARD_VERSION=0.396.0
+ARG WARD_VERSION=0.529.0
 # .NET SDK for in-container C# compilation (see docs/dev-base-image.md). Pinned to the .NET 10
 # LTS line eco-app's Eco mods build against; auto-bump stays on the 10.x channel
 # (like NODE_VERSION stays on its major) so a mod never faces a surprise major jump.
