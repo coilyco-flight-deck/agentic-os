@@ -207,6 +207,11 @@ jobs:
         run: |
           set -euo pipefail
           status=0
+          buildx_log=$(mktemp)
+          # Keep the push as the success boundary. If buildx returns 130 after
+          # both release manifests were pushed in this run, the canceled
+          # registry cache export is treated as a best-effort miss instead of a
+          # red publish.
           timeout --preserve-status --kill-after=2m 15m docker buildx build \
             --progress=plain \
             --platform "${PLATFORMS}" \
@@ -215,7 +220,14 @@ jobs:
             --cache-from "type=registry,ref=${IMAGE}:buildcache" \
             --cache-to "type=registry,ref=${IMAGE}:buildcache,mode=max,ignore-error=true" \
             --push \
-            docker/dev-base || status=$?
+            docker/dev-base 2>&1 | tee "${buildx_log}" || status=$?
+          if [ "${status}" -eq 130 ]; then
+            if grep -Fq "pushing manifest for ${IMAGE}:${TAG}" "${buildx_log}" && \
+              grep -Fq "pushing manifest for ${IMAGE}:latest" "${buildx_log}"; then
+              echo "buildx exited 130 after both manifests pushed; accepting canceled cache export."
+              status=0
+            fi
+          fi
           echo "buildx after build (exit ${status})"
           docker buildx inspect || true
           docker buildx ls || true
