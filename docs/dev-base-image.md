@@ -21,8 +21,8 @@ toolchain on `ubuntu:24.04`:
 - **ward** - the dev-command surface agents route through (`ward <verb>`), built from source at pinned `WARD_VERSION`.
 - **golangci-lint + trufflehog + kdlfmt** - lint / secret-scan / format binaries the gate shells out to, self-run in-container (agentic-os#292).
 - **tailscale cli** - tailnet client (no daemon) so a credentialed container reaches the tower; auth stays ward's axis (agentic-os#286).
-- **public substrate seed** - bare mirrors of the image-tier reference repos at `/opt/substrate-seed`, so a cold gitcache hydrates offline.
-- **in-container agent self-name** - baked `agent-name.sh` + `managed-settings.json` so warded agents self-name ([doc](dev-base-self-name.md)).
+- **public substrate seed** - bare mirrors of the image-tier reference repos at `/opt/substrate-seed`, sourced from the canonical [`docker/dev-base/substrate-image-repos.txt`](../docker/dev-base/substrate-image-repos.txt), so a cold gitcache hydrates offline.
+- **in-container agent self-name** - baked `agent-name.sh` + policy `managed-settings.json` so warded agents self-name ([doc](dev-base-self-name.md)).
 
 Tools under `/usr/local` or `/opt` run as any uid. ward owns `run-as-uid`,
 mounts, and `~/.aws`; root bootstrap seeds `/home/ubuntu/.ward/audit` as uid
