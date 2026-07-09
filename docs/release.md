@@ -1,14 +1,18 @@
 # Release pipeline
 
 Forgejo-canonical release on push to `main`
-(`forgejo.coilysiren.me/coilyco-flight-deck/agentic-os`). `.forgejo/workflows/release.yml`
-now computes the next tag first, publishes and verifies the dev-base image, and
-only then cuts the public git/release tag so no announcement can outlive a
-missing manifest.
+(`forgejo.coilysiren.me/coilyco-flight-deck/agentic-os`). This repo follows the
+default public-repo contract in [forgejo-github-mirror-contract.md](forgejo-github-mirror-contract.md):
+Forgejo owns the release and tag, GitHub only mirrors the result, and GitHub
+Releases stay out of the default surface.
+
+`.forgejo/workflows/release.yml` computes the next tag first, publishes and
+verifies the dev-base image, and only then cuts the public git/release tag so
+no announcement can outlive a missing manifest.
 
 agentic-os is consumed as pre-commit hooks pinned by `rev:` tag, not a brew
 formula or a prebuilt binary, so there is nothing to attach to the release and
-no formula to bump - the only downstream artifact is the git tag itself.
+no formula to bump. The only downstream artifact is the git tag itself.
 
 ## Why not release-please
 
@@ -57,11 +61,11 @@ lag the tag between majors. That lag is cosmetic: consumers pin by git rev, and
 
 ## Mirror to GitHub
 
-`.forgejo/workflows/mirror-to-github.yml` fast-forwards Forgejo `main` + `v*`
-tags onto the read-only GitHub mirror (`coilysiren/agentic-os`) where the
-fleet's `uses:` refs resolve. It is fast-forward-only (never `--force`, which
-GitHub branch protection rejects) and no-ops without the PAT. See
-[mirror-to-github.md](mirror-to-github.md) for details.
+`.forgejo/workflows/mirror-to-github.yml` fast-forwards Forgejo `main` and
+`v*` tags onto the read-only GitHub mirror (`coilysiren/agentic-os`) where the
+fleet's `uses:` refs resolve. It is fast-forward-only, never `--force`, and
+no-ops without the PAT. See [mirror-to-github.md](mirror-to-github.md) for the
+mirror-side detail.
 
 ## Skip markers
 

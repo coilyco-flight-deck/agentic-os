@@ -1,18 +1,20 @@
 # Forgejo-canonical release pipeline. agentic-os dogfoods the composite
 # actions it ships (actions/tag-bump, actions/create-release) via local
 # `./actions/*` refs, so the source repo never depends on its own GitHub
-# mirror being current to release. No bump input means every push-to-main
-# release is a minor bump; major is hand-driven via scripts/release.py. The
-# consumer pin resolves from the latest git tag at read time (agentic-os#238),
-# so there is no pin-bump job and no per-push DEFAULT_REV commit - cutting the
-# tag is the whole release. A workflow_dispatch trigger re-fires the same
-# pipeline by hand when Forgejo misses a push enqueue (agentic-os#240), so a
-# missed release needs no dummy commit to recover; its bump input still defaults
-# to minor. The release pipeline now computes the next tag first, builds and
-# verifies the dev-base image under that tag, and only then creates the public
-# git/release tag. That keeps the announced tag as the last success marker
-# instead of an input that can outlive a missing image manifest. Full rationale
-# + skip-ci notes in docs/release.md, image notes in docs/dev-base-image.md.
+# mirror being current to release. This is the Forgejo-owned half of the
+# default public-repo contract in docs/forgejo-github-mirror-contract.md.
+# No bump input means every push-to-main release is a minor bump; major is
+# hand-driven via scripts/release.py. The consumer pin resolves from the latest
+# git tag at read time (agentic-os#238), so there is no pin-bump job and no
+# per-push DEFAULT_REV commit - cutting the tag is the whole release. A
+# workflow_dispatch trigger re-fires the same pipeline by hand when Forgejo
+# misses a push enqueue (agentic-os#240), so a missed release needs no dummy
+# commit to recover; its bump input still defaults to minor. The release
+# pipeline now computes the next tag first, builds and verifies the dev-base
+# image under that tag, and only then creates the public git/release tag. That
+# keeps the announced tag as the last success marker instead of an input that
+# can outlive a missing image manifest. Full rationale + skip-ci notes in
+# docs/release.md, image notes in docs/dev-base-image.md.
 
 name: release
 

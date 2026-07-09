@@ -1,5 +1,7 @@
 # Fast-forward Forgejo main+tags onto the read-only GitHub mirror; no-ops
-# without the PAT. Forgejo (coilyco-flight-deck/agentic-os) is canonical; GitHub
+# without the PAT. This is the GitHub side of the default public-repo contract
+# in docs/forgejo-github-mirror-contract.md. Forgejo
+# (coilyco-flight-deck/agentic-os) is canonical; GitHub
 # (coilysiren/agentic-os) is the PR-gated downstream mirror that the fleet's
 # `uses: coilysiren/agentic-os/actions/*@main` references resolve against.
 #
