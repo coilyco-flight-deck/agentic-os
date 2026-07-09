@@ -81,6 +81,7 @@ RUN set -eux; \
     ward --version
 
 FROM ubuntu:24.04 AS dev-base-core
+ARG UV_VERSION
 ARG TARGETARCH
 
 ENV DEBIAN_FRONTEND=noninteractive \
