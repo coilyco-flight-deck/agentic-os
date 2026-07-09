@@ -196,7 +196,7 @@ RUN set -eux; \
     curl -fsSL "https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/${KUBECTL_ARCH}/kubectl" \
       -o /usr/local/bin/kubectl; \
     chmod 0755 /usr/local/bin/kubectl; \
-    kubectl version --client --short; \
+    kubectl version --client=true; \
     curl -fsSL "https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/yq_linux_${YQ_ARCH}" \
       -o /usr/local/bin/yq; \
     chmod 0755 /usr/local/bin/yq; \
