@@ -6,7 +6,7 @@ first homed it at top-level `ward-specs/`). It carries the forgejo guardfile, th
 signoz and ollama guardfiles, the fleet manifest, the smart-defaults bundle, and
 the spec locks.
 
-## Direction of truth: aos authors, ward consumes
+## Direction of truth
 
 **aos is the source of truth for the coilyco ward-specs bundle.** As of the
 ward#503 producer cutover (Kai, 2026-07-07), the coilyco deployment values are
@@ -27,7 +27,7 @@ ward user melds. External ward users build neutral and never fetch it. The
 exception is stated in
 [AGENTS.md](../AGENTS.md).
 
-## Published as a pinned, checksummed release asset
+## Release asset
 
 Every aos release attaches the bundle as `ward-specs-<tag>.tar.gz` (plus a
 `.sha256` sidecar) via the `release` job in
