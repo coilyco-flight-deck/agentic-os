@@ -54,7 +54,14 @@ Config splits on three axes, each a distinct owner: **permission/surface** (ward
 
 ## Release
 
-Conventional-commits 1.0.0 and Forgejo issue references are encouraged house style but unenforced - the `conventional-commit` and `closes-issue` commit-msg hooks have been retired from the suite, so hand-written commits flow freely. Releases bump the minor version automatically on every push to main; the major version is hand-driven only (`scripts/release.py --bump major`), never inferred from commit messages. Canonical history lives on Forgejo; the GitHub mirror stays PR-gated. Land work on the merged branch, never `--no-verify`. Work lands by pushing straight to canonical Forgejo `main`, `ward agent` headless dispatch included - a headless run pushes its branch to `main` and closes its issue, it never opens a Forgejo pull request. So do not hunt for a Forgejo PR to track a run. Track it by issue state and the commits on `main`. `ward ops forgejo pr list` is denied by policy (PRs are read through the web UI), and the GitHub mirror is the only PR-gated surface.
+Conventional-commits 1.0.0 and Forgejo issue references are encouraged house style but unenforced - the `conventional-commit` and `closes-issue` commit-msg hooks have been retired from the suite, so hand-written commits flow freely. Releases bump the minor version automatically on every push to main; the major version is hand-driven only (`scripts/release.py --bump major`), never inferred from commit messages. Canonical history lives on Forgejo; the GitHub mirror stays PR-gated. Never `--no-verify`. `ward agent` headless dispatch follows the resolved workflow:
+
+* `direct-to-main` - merge or push to `main`, then close the issue.
+* `pull-request` - push a branch and open a human-gated Forgejo PR.
+* `pull-request-and-merge` - open a PR for the director lane. Merge only after the issue thread shows `workflow: pull-request-and-merge`, `WARD-OUTCOME: done`, and a passed review summary.
+* `remote-branch-only` - push a branch and stop. No PR or merge authority.
+
+A read-only clone cannot push itself, so push or merge workflows need a writable surface. Track landed work by issue state and commits on `main`. `ward ops forgejo pr list` is denied by policy.
 
 ## Agent rules
 
