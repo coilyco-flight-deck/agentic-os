@@ -20,6 +20,7 @@ on:
 jobs:
   mirror:
     runs-on: docker
+    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:v0.195.0
     steps:
       - uses: actions/checkout@v6
         with:

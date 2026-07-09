@@ -31,17 +31,13 @@ permissions:
 jobs:
   probe:
     runs-on: docker
+    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:v0.195.0
     steps:
       - uses: actions/checkout@v6
 
       - name: Probe knowledge-base freshness
         run: |
           set -euo pipefail
-
-          # The Forgejo runner image is minimal; self-install python3 if absent.
-          if ! command -v python3 >/dev/null 2>&1; then
-            apt-get update -qq && apt-get install -y -qq python3
-          fi
 
           # Hermetic: the probe imports only stdlib + agentic_os.config, so the
           # checkout on PYTHONPATH is enough - no pip install, no network.
