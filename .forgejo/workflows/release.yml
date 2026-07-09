@@ -133,7 +133,7 @@ jobs:
     needs: release
     if: ${{ needs.release.outputs.tag != '' }}
     runs-on: docker
-    timeout-minutes: 20
+    timeout-minutes: 45
     env:
       IMAGE: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os
       BUILDX_VERSION: v0.34.1
@@ -212,7 +212,11 @@ jobs:
           # both release manifests were pushed in this run, the canceled
           # registry cache export is treated as a best-effort miss instead of a
           # red publish.
-          timeout --preserve-status --kill-after=2m 15m docker buildx build \
+          # Rust made the dev-base image materially heavier, especially across
+          # both release platforms under qemu. Give the publish job enough
+          # wall-clock to finish the push instead of dying before the registry
+          # manifest exists.
+          timeout --preserve-status --kill-after=5m 30m docker buildx build \
             --progress=plain \
             --platform "${PLATFORMS}" \
             --tag "${IMAGE}:${TAG}" \
