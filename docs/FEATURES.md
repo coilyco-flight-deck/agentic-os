@@ -6,7 +6,7 @@ This doc describes capabilities, not files. If you want a file inventory, run `l
 
 ## Inventory
 
-- [Shell and secret handling](features-shell-secrets.md) - cross-platform zsh, agent-CLI repo gate (claude/codex/opencode refuse to launch outside a git repo), in-process SSM secret loader, Warp terminal config, GPG-without-disk-passphrases, install surface.
+- [Shell and secret handling](features-shell-secrets.md) - cross-platform zsh, agent-CLI repo gate (claude/codex/opencode refuse to launch outside a git repo), in-process SSM secret loader, Warp terminal config, GPG-without-disk-passphrases and shared-key bootstrap, install surface.
 - **Karabiner key binding assets** - `karabiner/*.json` store complex modifications symlinked into Karabiner's assets directory: Control+Escape -> backtick, a device-scoped left_option <-> left_command swap for the external keyboard, plus a command -> control remap scoped to Microsoft Remote Desktop so Cmd hotkeys reach the remote Windows session. Install `brew install --cask karabiner-elements`, setup in [docs/repo-layout.md](repo-layout.md).
 - [Agents and sessions](features-agents-sessions.md) - agent self-name, session pulse, and a project-local status-line repo-checkout tracker ([`.agentic-os/statusline.sh`](../.agentic-os/statusline.sh)) that names the `org/repo` clones on disk which are not on an expected-repos list, i.e. the strays to remove.
 - [Code review skill](../.agents/skills/tooling-code-review/SKILL.md) - the hand-curated in-container review stance for ward workers, with non-iterative diff review, baseline interpretation, and a stable pass/block output shape.
