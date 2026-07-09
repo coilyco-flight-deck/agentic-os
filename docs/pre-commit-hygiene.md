@@ -48,9 +48,6 @@ enabled = true
 excludes = [
   "docs/skill-discipline-handbook-hooks.md",
 ]
-allow_globs = [
-  "docs/issue-corpus.md",
-]
 ```
 
 The guard is intended for durable prose breadcrumbs like `See #337 for the draft`,
