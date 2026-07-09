@@ -16,7 +16,7 @@ toolchain on `ubuntu:24.04`:
 - **Rust toolchain** - `cargo` and `rustc` are on PATH for downstream Rust workspaces and CI.
 - **.NET SDK 10 + ICU** - C# mods compile in-container with no per-run install, full ICU globalization (`libicu74`) not invariant mode (agentic-os#329).
 - **aws cli v2** - SSM secret loader + `~/.aws` passthrough; region defaults `us-east-1` (agentic-os#286).
-- **Homebrew** - Linux Homebrew lives at `/home/linuxbrew/.linuxbrew` and is on `PATH`, so `brew` works without shell setup.
+- **Homebrew** - Linux Homebrew lives at `/home/linuxbrew/.linuxbrew`, is bootstrapped as a dedicated non-root user, and is on `PATH`, so `brew` works without shell setup.
 - **claude + mcporter + codex + goose** - pinned agent CLIs and MCP runtime, plus **docker cli + socat** for `explore`'s sibling `warded #N` dispatch (ward#315).
 - **gh + helm + kubectl + yq** - generic fleet CI CLIs for sync, chart, deploy, and manifests, baked in so repos can drop setup after publish.
 - **ward** - the dev-command surface agents route through (`ward <verb>`), built from source at pinned `WARD_VERSION`.

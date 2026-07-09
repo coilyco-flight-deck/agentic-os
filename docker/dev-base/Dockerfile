@@ -80,11 +80,24 @@ RUN set -eux; \
 # Homebrew (Linuxbrew). The image bakes the prefix and PATH so non-interactive
 # runs do not need shell setup or a `brew shellenv` eval at runtime. The
 # installer supports both supported build architectures under buildx because the
-# build container itself runs the matching Linux arch image.
+# build container itself runs the matching Linux arch image. Homebrew itself
+# must bootstrap as a non-root user, so create the dedicated user first and
+# run the installer there.
 RUN set -eux; \
-    export CI=1 NONINTERACTIVE=1; \
+    groupadd --system linuxbrew; \
+    useradd --system --create-home --home-dir /home/linuxbrew --gid linuxbrew \
+      --shell /bin/bash linuxbrew; \
+    mkdir -p /home/linuxbrew/.linuxbrew; \
+    chown -R linuxbrew:linuxbrew /home/linuxbrew
+
+USER linuxbrew
+
+RUN set -eux; \
+    export HOME=/home/linuxbrew CI=1 NONINTERACTIVE=1; \
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; \
     brew --version
+
+USER root
 
 # Map Docker's TARGETARCH onto each upstream's arch spelling once.
 RUN set -eux; \

@@ -21,6 +21,7 @@ def test_kubectl_smoke_check_uses_supported_client_only_flag() -> None:
 def test_homebrew_is_installed_noninteractively() -> None:
     text = DOCKERFILE.read_text()
     assert "/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin" in text
+    assert "USER linuxbrew" in text
     assert "NONINTERACTIVE=1" in text
     assert "brew --version" in text
 
