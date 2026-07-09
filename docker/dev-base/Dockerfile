@@ -38,6 +38,7 @@ ARG TARGETARCH
 # uv tools land on the global PATH so any run-as-uid finds pre-commit.
 ENV DEBIAN_FRONTEND=noninteractive \
     PATH=/usr/local/go/bin:/usr/local/dotnet:/usr/local/bin:/usr/bin:/bin \
+    HOME=/root \
     UV_TOOL_DIR=/opt/uv/tools \
     UV_TOOL_BIN_DIR=/usr/local/bin \
     UV_PYTHON_INSTALL_DIR=/opt/uv/python \
