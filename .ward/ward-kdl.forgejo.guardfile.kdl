@@ -234,13 +234,10 @@ wrap ward-kdl ops forgejo {
     can edit release
     can delete release
     can upload-asset release
-    // pulls: not surfaced through ward. Read them in the Forgejo web UI.
-    never view pr {
-        message "pull requests are not exposed through ward; read them in the web UI"
-    }
-    never list pr {
-        message "pull requests are not exposed through ward; read them in the web UI"
-    }
+    // pulls: read-only surface. Read/list are exposed here, while merge stays
+    // separately gated below as controlled director authority.
+    can view pr
+    can list pr
     // issue-labels: the compound resource targets the issue's labels sub-collection;
     // add/set/remove are the membership verbs (POST/PUT/DELETE).
     can list issue-label

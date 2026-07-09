@@ -61,7 +61,7 @@ Conventional-commits 1.0.0 and Forgejo issue references are encouraged house sty
 * `pull-request-and-merge` - open a PR for the director lane. Merge only after the issue thread shows `workflow: pull-request-and-merge`, `WARD-OUTCOME: done`, and a passed review summary.
 * `remote-branch-only` - push a branch and stop. No PR or merge authority.
 
-A read-only clone cannot push itself, so push or merge workflows need a writable surface. Track landed work by issue state and commits on `main`. `ward ops forgejo pr list` is denied by policy.
+A read-only clone cannot push itself, so push or merge workflows need a writable surface. Track landed work by issue state and commits on `main`. `ward ops forgejo pr list` and `pr view` are allowed; merge stays gated.
 
 ## Agent rules
 
