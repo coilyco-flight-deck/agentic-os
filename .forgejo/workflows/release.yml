@@ -143,6 +143,8 @@ jobs:
       - name: Install docker CLI + buildx plugin
         run: |
           set -euo pipefail
+          # Keep the buildx bootstrap here. dev-base does not yet carry a safe
+          # Docker daemon/buildx stack for the publish-image job.
           docker_cli_ver=$(curl -fsSL https://download.docker.com/linux/static/stable/x86_64/ \
             | grep -oE 'docker-[0-9]+\.[0-9]+\.[0-9]+\.tgz' | sort -V | tail -1 \
             | sed -E 's/^docker-(.*)\.tgz$/\1/')
