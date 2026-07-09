@@ -52,6 +52,7 @@ env:
 jobs:
   render:
     runs-on: docker
+    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:v0.195.0
     steps:
       - uses: actions/checkout@v6
 
@@ -64,11 +65,6 @@ jobs:
           if [ -z "${ISSUE_CORPUS_PUSH_TOKEN}" ]; then
             echo "issue-corpus: ISSUE_CORPUS_PUSH_TOKEN not set; skipping." >&2
             exit 0
-          fi
-
-          # The Forgejo runner image is minimal; self-install python3 if absent.
-          if ! command -v python3 >/dev/null 2>&1; then
-            apt-get update -qq && apt-get install -y -qq python3 git
           fi
 
           # ward-kdl is the Forgejo I/O boundary (no FORGEJO_TOKEN in the script).
