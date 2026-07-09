@@ -35,6 +35,19 @@ def test_ward_is_pinned_and_smoke_checked() -> None:
     assert "ward --version" in text
 
 
+def test_dev_base_exposes_named_targets_and_a_ward_builder() -> None:
+    text = DOCKERFILE.read_text()
+    assert "AS dev-base-core" in text
+    assert "AS dev-base-lang-node" in text
+    assert "AS dev-base-lang-go" in text
+    assert "AS dev-base-lang-dotnet" in text
+    assert "AS dev-base-ops" in text
+    assert "AS dev-base-agent" in text
+    assert "AS dev-base-full" in text
+    assert "AS dev-base-ward-builder" in text
+    assert 'COPY --from=dev-base-ward-builder /usr/local/bin/ward /usr/local/bin/ward' in text
+
+
 def test_dev_base_docs_include_homebrew_tooling() -> None:
     text = (Path(__file__).resolve().parent.parent / "docs" / "dev-base-image.md").read_text()
     assert "**Homebrew**" in text
