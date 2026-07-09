@@ -1,10 +1,12 @@
 # Mirror to GitHub
 
-`.forgejo/workflows/mirror-to-github.yml` keeps the read-only GitHub mirror
-(`coilysiren/agentic-os`) in step with canonical Forgejo `main`. GitHub is where
-the fleet's `uses: coilysiren/agentic-os/actions/*@main` references resolve, so
-the mirror advancing matters even though Forgejo is upstream-of-record. The job
-no-ops without the `GITHUB_MIRROR_PAT` secret.
+`.forgejo/workflows/mirror-to-github.yml` is the GitHub side of the default
+public-repo contract in [forgejo-github-mirror-contract.md](forgejo-github-mirror-contract.md).
+It keeps the read-only GitHub mirror (`coilysiren/agentic-os`) in step with
+canonical Forgejo `main`. GitHub is where the fleet's
+`uses: coilysiren/agentic-os/actions/*@main` references resolve, so the mirror
+advancing matters even though Forgejo is upstream-of-record. The job no-ops
+without the `GITHUB_MIRROR_PAT` secret.
 
 ## Fast-forward-only, never `--force`
 
@@ -16,10 +18,10 @@ mirror push is fast-forward-only:
   fast-forward, which is what we want against a protected branch.
 - `git push --tags github` - tags are append-only, never force-updated.
 
-Forgejo `main` is itself append-only (no force-push upstream), so in steady
-state every Forgejo push is a descendant of the GitHub tip and fast-forwards
-cleanly. If a push is ever rejected the job now **fails red with a remediation
-message** instead of forcing into the protected branch and stalling silently.
+Forgejo `main` is itself append-only, so in steady state every Forgejo push is a
+descendant of the GitHub tip and fast-forwards cleanly. If a push is ever
+rejected the job fails red with a remediation message instead of forcing into
+the protected branch and stalling silently.
 
 The old job ran `git push --force github main`, which GitHub rejected outright
 (`GH013`). Because nobody watches mirror CI, the mirror sat ~2 weeks stale while
