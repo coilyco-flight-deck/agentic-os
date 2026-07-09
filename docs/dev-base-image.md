@@ -1,7 +1,11 @@
 # dev-base container image
 
-aos owns the agent dev environment as a published artifact, like the ward brew
-binary. ward consumes it by tag, so config cannot drift.
+aos owns the agent dev environment. ward consumes it by tag, so config cannot
+drift.
+
+This page describes the current published `dev-base-full` contract. The
+tiering design that keeps this default while reducing rebuild blast radius is
+in [Tiered dev-base image design](dev-base-image-tiering.md).
 
 ## What ships
 
@@ -10,19 +14,19 @@ toolchain on `ubuntu:24.04`:
 
 - **uv + managed Pythons** - Python project/tool manager; 3.13 + 3.12 pre-installed under a world-writable `UV_PYTHON_INSTALL_DIR` (agentic-os#327).
 - **pre-commit** - the catalog hook driver (a uv tool).
-- **python3 + shellcheck + git + git-lfs + build-essential** - direct needs and catalog-hook shell-outs.
+- **python3 + shellcheck + git + git-lfs + build-essential** - direct needs and hook shell-outs.
 - **node + npm** - Claude Code's runtime.
 - **go** - builds the `warp/` hooks and the ward binary below.
-- **Rust toolchain** - `cargo` and `rustc` are on PATH for downstream Rust workspaces and CI.
-- **.NET SDK 10 + ICU** - C# mods compile in-container with no per-run install, full ICU globalization (`libicu74`) not invariant mode (agentic-os#329).
+- **Rust toolchain** - `cargo` and `rustc` are on PATH for Rust workspaces.
+- **.NET SDK 10 + ICU** - C# mods compile in-container with full ICU globalization (`libicu74`) not invariant mode (agentic-os#329).
 - **aws cli v2** - SSM secret loader + `~/.aws` passthrough; region defaults `us-east-1` (agentic-os#286).
 - **Homebrew** - Linux Homebrew lives at `/home/linuxbrew/.linuxbrew` and is on `PATH`, so `brew` works without shell setup.
-- **claude + mcporter + codex + goose** - pinned agent CLIs and MCP runtime, plus **docker cli + socat** for `explore`'s sibling `warded #N` dispatch (ward#315).
-- **gh + helm + kubectl + yq** - generic fleet CI CLIs for sync, chart, deploy, and manifests, baked in so repos can drop setup after publish.
+- **claude + mcporter + codex + goose** - agent CLIs and MCP runtime, plus **docker cli + socat** for `warded #N` dispatch (ward#315).
+- **gh + helm + kubectl + yq** - CI CLIs for sync, chart, deploy, and manifests.
 - **ward** - the dev-command surface agents route through (`ward <verb>`), built from source at pinned `WARD_VERSION`.
 - **golangci-lint + trufflehog + kdlfmt** - lint / secret-scan / format binaries the gate shells out to, self-run in-container (agentic-os#292).
 - **tailscale cli** - tailnet client (no daemon) so a credentialed container reaches the tower; auth stays ward's axis (agentic-os#286).
-- **public substrate seed** - bare mirrors of the image-tier reference repos at `/opt/substrate-seed`, sourced from [`docker/dev-base/substrate-image-repos.txt`](../docker/dev-base/substrate-image-repos.txt), so a cold gitcache hydrates offline.
+- **public substrate seed** - mirrors of the image-tier reference repos at `/opt/substrate-seed`.
 - **in-container agent self-name** - baked `agent-name.sh` + policy `managed-settings.json` so warded agents self-name ([doc](dev-base-self-name.md)).
 
 Tools under `/usr/local`, `/home/linuxbrew/.linuxbrew`, or `/opt` run as any uid. ward owns `run-as-uid`, mounts, and `~/.aws`. Root bootstrap seeds `/home/ubuntu/.ward/audit` as uid 1000 and avoids root-owned audit state.
@@ -61,3 +65,5 @@ Needs a `docker login`; `ward container up/exec` (ward#98) is the entry point.
 ## See also
 
 - [release.md](release.md) - the pipeline this rides on; [FEATURES.md](FEATURES.md).
+- [Tiered dev-base image design](dev-base-image-tiering.md) - the planned fan-out
+  and fan-in model that preserves `dev-base-full` as the default.
