@@ -113,6 +113,7 @@ RUN set -eux; \
         && apt-get install -y --no-install-recommends \
           ca-certificates curl wget git git-lfs gnupg jq ripgrep less unzip xz-utils socat \
           build-essential openssh-client procps shellcheck file patch \
+          passwd \
           python3 python3-pip python3-venv \
           libicu74; then \
         rm -rf /var/lib/apt/lists/*; \
