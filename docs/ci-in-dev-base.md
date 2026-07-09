@@ -40,14 +40,13 @@ every app on the next rollout - not silent drift.
 ## The pinned-tag source of truth
 
 <!-- freshness: as-of=2026-07-05 decay-class=pointer half-life=slow -->
-The one tag every app pins to lives in
-[`docker/dev-base/ci-pinned-tag.txt`](../docker/dev-base/ci-pinned-tag.txt),
-owned here in aos. It is bumped by hand to a published tag
-([dev-base-image.md](dev-base-image.md) covers how tags publish).
+The pin now lives in [`docker/dev-base/ci-image-manifest.json`](../docker/dev-base/ci-image-manifest.json),
+owned here in aos. It maps each logical image class to a published full ref,
+and every ref in the manifest carries the same release tag. [dev-base-image.md](dev-base-image.md)
+covers how those tags publish.
 
-That single-file source of truth remains the current contract. The tiered design
-proposes replacing it later with a manifest that maps image classes to full
-refs, while keeping the same release tag across the whole family.
+That manifest stays the current contract. The tiered design keeps `dev-base-full`
+as the default literal until ward can choose the same class directly.
 
 ## Authoring vs rollout
 

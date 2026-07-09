@@ -6,6 +6,7 @@ ARG GO_VERSION=1.26.4
 ARG AWSCLI_VERSION=2.35.15
 ARG CLAUDE_VERSION=2.1.200
 ARG MCPORTER_VERSION=0.12.3
+ARG OPENCODE_VERSION=1.17.18
 ARG CODEX_VERSION=0.142.5
 ARG GOOSE_VERSION=1.41.0
 ARG GH_VERSION=2.96.0
@@ -356,6 +357,15 @@ RUN set -eux; \
 RUN set -eux; \
     timeout 5m npm install -g "mcporter@${MCPORTER_VERSION}"; \
     timeout 1m mcporter --help >/dev/null
+
+# OpenCode, pinned. ward's `--harness opencode` path expects the binary to be
+# present already, so bake it into the image instead of downloading it during
+# engineer startup. The npm package owns the platform split for the optional
+# native payloads, and the global install lands the `opencode` command on PATH.
+RUN set -eux; \
+    npm_config_cache=/tmp/npm-cache timeout 10m npm install -g "opencode-ai@${OPENCODE_VERSION}"; \
+    rm -rf /tmp/npm-cache; \
+    opencode --version
 
 # Codex CLI, pinned. ward injects host ~/.codex/auth.json at container launch.
 RUN set -eux; \

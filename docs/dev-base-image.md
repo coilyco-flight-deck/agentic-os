@@ -21,7 +21,7 @@ toolchain on `ubuntu:24.04`:
 - **.NET SDK 10 + ICU** - C# mods compile in-container with full ICU globalization (`libicu74`) not invariant mode (agentic-os#329).
 - **aws cli v2** - SSM secret loader + `~/.aws` passthrough; region defaults `us-east-1` (agentic-os#286).
 - **Homebrew** - Linux Homebrew at `/home/linuxbrew/.linuxbrew`, on `PATH`.
-- **claude + mcporter + codex + goose** - agent CLIs plus **docker cli + socat** for `warded #N` dispatch.
+- **claude + mcporter + opencode + codex + goose** - agent CLIs plus **docker cli + socat** for `warded #N` dispatch.
 - **gh + helm + kubectl + yq** - CI CLIs for sync, chart, deploy, and manifests.
 - **ward** - the dev-command surface agents route through (`ward <verb>`), built from source at pinned `WARD_VERSION`.
 - **golangci-lint + trufflehog + kdlfmt** - lint / secret-scan / format binaries the gate shells out to.

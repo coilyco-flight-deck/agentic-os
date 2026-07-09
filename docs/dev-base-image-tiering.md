@@ -38,7 +38,7 @@ and uses one Dockerfile with named targets to cut rebuild blast radius.
 ## Pinning model
 
 - One repo release tag for every image class.
-- Replace `docker/dev-base/ci-pinned-tag.txt` with a manifest of full refs.
+- Replace `docker/dev-base/ci-image-manifest.json` with a manifest of full refs.
 - Downstream CI still gets a literal image ref.
 - `dev-base-full` stays the default literal until ward can choose the same class.
 

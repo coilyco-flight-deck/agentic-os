@@ -2,9 +2,10 @@
 # through the same `ward exec` verbs a dispatched agent runs, so a green CI
 # means "a headless agent can land this." See docs/ci-in-dev-base.md.
 #
-# Copy this into an app's .forgejo/workflows/ci.yml. Replace the pinned tag with
-# the value in aos docker/dev-base/ci-pinned-tag.txt (an ansible/template
-# rollout does this for you). Pin an explicit vX.Y.Z, never :latest.
+# Copy this into an app's .forgejo/workflows/ci.yml. Replace the pinned image ref
+# with the value in aos docker/dev-base/ci-image-manifest.json for the class you
+# want (an ansible/template rollout does this for you). Pin an explicit full ref,
+# never :latest.
 #
 # This is a documentation reference copy owned by aos, not a live workflow -
 # aos ships the convention, each app ships the rollout unit (agentic-os#328).

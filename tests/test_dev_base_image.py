@@ -1,10 +1,12 @@
 """Tests for the dev-base image contract."""
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 
 DOCKERFILE = Path(__file__).resolve().parent.parent / "docker" / "dev-base" / "Dockerfile"
+IMAGE_MANIFEST = Path(__file__).resolve().parent.parent / "docker" / "dev-base" / "ci-image-manifest.json"
 
 
 def test_root_bootstrap_home_is_pinned_to_root() -> None:
@@ -51,3 +53,19 @@ def test_dev_base_exposes_named_targets_and_a_ward_builder() -> None:
 def test_dev_base_docs_include_homebrew_tooling() -> None:
     text = (Path(__file__).resolve().parent.parent / "docs" / "dev-base-image.md").read_text()
     assert "**Homebrew**" in text
+
+
+def test_dev_base_manifest_maps_every_image_class_to_the_same_tag() -> None:
+    manifest = json.loads(IMAGE_MANIFEST.read_text())
+    expected = {
+        "dev-base-core",
+        "dev-base-lang-node",
+        "dev-base-lang-go",
+        "dev-base-lang-dotnet",
+        "dev-base-ops",
+        "dev-base-agent",
+        "dev-base-full",
+    }
+    assert set(manifest) == expected
+    assert len({ref.rsplit(":", 1)[-1] for ref in manifest.values()}) == 1
+    assert all(ref.startswith("forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:") for ref in manifest.values())
