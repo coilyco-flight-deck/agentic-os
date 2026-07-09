@@ -1,9 +1,7 @@
 # dev-base container image
 
-aos owns the agent dev environment as a published artifact, like the ward brew
-binary. ward consumes it by tag and never touches the Dockerfile, so config
-cannot drift. Part of the dockerized-dev epic
-(see docs/features-release-tooling.md for the release-tooling background).
+aos owns the agent dev environment as a published artifact. ward consumes it by
+tag, so config stays out of the repo.
 
 ## What ships
 
@@ -21,7 +19,7 @@ inner-loop toolchain on `ubuntu:24.04`:
 - **ward** - the dev-command surface agents route through (`ward <verb>`), built from source at the pinned `WARD_VERSION` tag, baked in not `go install`-ed per run - public source clones with **no build token** (agentic-os#223).
 - **golangci-lint + trufflehog + kdlfmt** - lint / secret-scan / format binaries the gate shells out to, self-run in-container (agentic-os#292).
 - **tailscale cli** - tailnet client (no daemon) so a credentialed container reaches the tower; auth stays ward's axis (agentic-os#286).
-- **public substrate seed** - bare mirrors of the image-tier reference repos at `/opt/substrate-seed`, so a cold gitcache hydrates offline.
+- **public substrate seed** - bare mirrors of the image-tier reference repos at `/opt/substrate-seed`, sourced from the canonical [`docker/dev-base/substrate-image-repos.txt`](../docker/dev-base/substrate-image-repos.txt), so a cold gitcache hydrates offline.
 - **in-container agent self-name** - baked `agent-name.sh` + policy `managed-settings.json` so warded agents self-name ([doc](dev-base-self-name.md)).
 
 Tools under `/usr/local` or `/opt` run as any uid. ward owns `run-as-uid`,

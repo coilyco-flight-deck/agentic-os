@@ -322,8 +322,9 @@ RUN set -eux; \
     chmod 0644 /etc/claude-code/managed-settings.json
 
 # Substrate seed: bare mirrors of the public (image-tier) reference repos a ward
-# container warms its gitcache from on a cold volume. List is a denormalized copy
-# of the image-tier subset of ward's cmd/ward/containerassets/preclone-repos.txt.
+# container warms its gitcache from on a cold volume. The list is canonical in
+# docker/dev-base/substrate-image-repos.txt and the runtime ward manifest
+# denormalizes that image-tier subset into cmd/ward/containerassets/preclone-repos.txt.
 # All public read (anonymous clone). Bridge/private repos are deliberately not
 # baked into this shareable image. Mirror dir name matches ward's owner__name.git.
 COPY substrate-image-repos.txt /tmp/substrate-image-repos.txt
