@@ -9,7 +9,11 @@ Default across `~/projects/coilyco-*/*` and `~/projects/coilysiren/*`:
 
 <!-- TODO: a different ruleset for bridge -->
 
-- Commit to `main` directly; push after each. No PRs unless asked.
+- Follow the resolved workflow for the repo and run:
+- `direct-to-main` - commit to `main` directly, then push.
+- `pull-request` - push a branch and open a human-gated Forgejo PR.
+- `pull-request-and-merge` - push a branch and mark the PR for the director merge lane.
+- `remote-branch-only` - push a branch and stop. No PR and no merge.
 - Run tests, linters, builds without asking. Fix failures.
 - Never `--no-verify`.
 - Readonly git/shell auto-allowed.
@@ -42,7 +46,7 @@ Use `git reset --hard <sha>` instead of cherry-pick only when nothing else has m
 
 ## `gish`
 
-`gish` is a hand typed shortcut for "**G**it **I**ssue, commit, pu**SH**". When it is mentioned you should: create an issue, make commit closing said issue, push to main. It is a single-command embodiment of the default flight deck workflow.
+`gish` is a hand typed shortcut for "**G**it **I**ssue, commit, pu**SH**". When it is mentioned you should: create an issue, make commit closing said issue, and push to main for the `direct-to-main` flow. It is a single-command embodiment of that land path, not the PR modes.
 
 ## Deploy knowledge
 
