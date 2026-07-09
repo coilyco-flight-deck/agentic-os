@@ -1,8 +1,7 @@
 # dev-base container image
 
 aos owns the agent dev environment as a published artifact, like the ward brew
-binary. ward consumes it by tag and never touches the Dockerfile, so config
-cannot drift.
+binary. ward consumes it by tag, so config cannot drift.
 
 ## What ships
 
@@ -16,17 +15,16 @@ toolchain on `ubuntu:24.04`:
 - **go** - builds the `warp/` hooks and the ward binary below.
 - **.NET SDK 10 + ICU** - C# mods compile in-container with no per-run install, full ICU globalization (`libicu74`) not invariant mode (agentic-os#329).
 - **aws cli v2** - SSM secret loader + `~/.aws` passthrough; region defaults `us-east-1` (agentic-os#286).
+- **Homebrew** - Linux Homebrew lives at `/home/linuxbrew/.linuxbrew` and is on `PATH`, so `brew` works without shell setup.
 - **claude + mcporter + codex + goose** - pinned agent CLIs and MCP runtime, plus **docker cli + socat** for `explore`'s sibling `warded #N` dispatch (ward#315).
-- **gh + helm + kubectl + yq** - generic fleet CI CLIs for sync, chart, deploy, and manifest workflows, baked in so consumer repos can drop setup steps after publish.
+- **gh + helm + kubectl + yq** - generic fleet CI CLIs for sync, chart, deploy, and manifests, baked in so repos can drop setup after publish.
 - **ward** - the dev-command surface agents route through (`ward <verb>`), built from source at pinned `WARD_VERSION`.
 - **golangci-lint + trufflehog + kdlfmt** - lint / secret-scan / format binaries the gate shells out to, self-run in-container (agentic-os#292).
 - **tailscale cli** - tailnet client (no daemon) so a credentialed container reaches the tower; auth stays ward's axis (agentic-os#286).
-- **public substrate seed** - bare mirrors of the image-tier reference repos at `/opt/substrate-seed`, sourced from the canonical [`docker/dev-base/substrate-image-repos.txt`](../docker/dev-base/substrate-image-repos.txt), so a cold gitcache hydrates offline.
+- **public substrate seed** - bare mirrors of the image-tier reference repos at `/opt/substrate-seed`, sourced from [`docker/dev-base/substrate-image-repos.txt`](../docker/dev-base/substrate-image-repos.txt), so a cold gitcache hydrates offline.
 - **in-container agent self-name** - baked `agent-name.sh` + policy `managed-settings.json` so warded agents self-name ([doc](dev-base-self-name.md)).
 
-Tools under `/usr/local` or `/opt` run as any uid. ward owns `run-as-uid`,
-mounts, and `~/.aws`; root bootstrap seeds `/home/ubuntu/.ward/audit` as uid
-1000 and avoids root-owned audit state.
+Tools under `/usr/local`, `/home/linuxbrew/.linuxbrew`, or `/opt` run as any uid. ward owns `run-as-uid`, mounts, and `~/.aws`. Root bootstrap seeds `/home/ubuntu/.ward/audit` as uid 1000 and avoids root-owned audit state.
 
 ## Naming and tags
 
@@ -37,13 +35,7 @@ the layer cache.
 
 ## How it publishes
 
-The `publish-image` job in [`.forgejo/workflows/release.yml`](../.forgejo/workflows/release.yml)
-runs after a release cuts a tag, on the DinD `docker` runner: `docker login` with
-the `REGISTRY_TOKEN` secret, then `buildx build --platform linux/amd64,linux/arm64
-... --push` with a registry layer cache, tagging `:vX.Y.Z` and `:latest`, so each
-arch pulls a native image off the cache. `REGISTRY_TOKEN` is a `coilyco-ops`
-`write:package` PAT ([`rotate-registry-token.sh`](../scripts/rotate-registry-token.sh)
-re-mints it); the ward build clones public source anonymously, no secret here.
+The `publish-image` job in [`.forgejo/workflows/release.yml`](../.forgejo/workflows/release.yml) runs after a release tag on the DinD `docker` runner and pushes `:vX.Y.Z` and `:latest` with a registry cache. `REGISTRY_TOKEN` is a `coilyco-ops` `write:package` PAT ([`rotate-registry-token.sh`](../scripts/rotate-registry-token.sh) re-mints it); the ward build clones public source anonymously.
 
 ## Pinning a tool
 
@@ -57,7 +49,7 @@ scheduled **auto-bump** refreshes stale pins ([auto-bump doc](dev-base-auto-bump
 docker pull forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:latest
 ```
 
-Needs a one-time `docker login`; `ward container up/exec` (ward#98) is the entry point.
+Needs a `docker login`; `ward container up/exec` (ward#98) is the entry point.
 
 ## Not here
 

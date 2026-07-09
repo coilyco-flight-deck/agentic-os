@@ -41,8 +41,11 @@ ARG TARGETARCH
 
 # uv tools land on the global PATH so any run-as-uid finds pre-commit.
 ENV DEBIAN_FRONTEND=noninteractive \
-    PATH=/usr/local/go/bin:/usr/local/dotnet:/usr/local/bin:/usr/bin:/bin \
+    PATH=/usr/local/go/bin:/usr/local/dotnet:/usr/local/bin:/usr/bin:/bin:/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin \
     HOME=/root \
+    HOMEBREW_PREFIX=/home/linuxbrew/.linuxbrew \
+    HOMEBREW_NO_ANALYTICS=1 \
+    HOMEBREW_NO_AUTO_UPDATE=1 \
     UV_TOOL_DIR=/opt/uv/tools \
     UV_TOOL_BIN_DIR=/usr/local/bin \
     UV_PYTHON_INSTALL_DIR=/opt/uv/python \
@@ -60,7 +63,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
       ca-certificates curl wget git git-lfs gnupg jq ripgrep less unzip xz-utils socat \
-      build-essential openssh-client procps shellcheck \
+      build-essential openssh-client procps shellcheck file patch \
       python3 python3-pip python3-venv \
       libicu74 \
  && rm -rf /var/lib/apt/lists/*
@@ -71,6 +74,15 @@ RUN apt-get update \
 RUN set -eux; \
     git lfs install --system --skip-repo; \
     git lfs version
+
+# Homebrew (Linuxbrew). The image bakes the prefix and PATH so non-interactive
+# runs do not need shell setup or a `brew shellenv` eval at runtime. The
+# installer supports both supported build architectures under buildx because the
+# build container itself runs the matching Linux arch image.
+RUN set -eux; \
+    export CI=1 NONINTERACTIVE=1; \
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; \
+    brew --version
 
 # Map Docker's TARGETARCH onto each upstream's arch spelling once.
 RUN set -eux; \
