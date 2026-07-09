@@ -1,18 +1,17 @@
 # dev-base container image
 
-aos owns the agent dev environment as a published artifact, like the ward brew
-binary. ward consumes it by tag and never touches the Dockerfile, so config
-cannot drift. Part of the dockerized-dev epic
+aos owns the agent dev environment as a published artifact. ward consumes it
+by tag, so config cannot drift. Part of the dockerized-dev epic
 (see docs/features-release-tooling.md for the release-tooling background).
 
 ## What ships
 
 [`docker/dev-base/Dockerfile`](../docker/dev-base/Dockerfile) layers the
-inner-loop toolchain on `ubuntu:24.04`:
+toolchain on `ubuntu:24.04`:
 
 - **uv + managed Pythons** - Python project/tool manager; 3.13 + 3.12 pre-installed under a world-writable `UV_PYTHON_INSTALL_DIR` so a non-root agent never hits `Permission denied` on `uv run` (agentic-os#327).
 - **pre-commit** - the catalog hook driver (a uv tool).
-- **python3 + shellcheck + git + build-essential** - direct needs and catalog-hook shell-outs.
+- **python3 + shellcheck + git + git-lfs + build-essential** - direct needs and catalog-hook shell-outs.
 - **node + npm** - Claude Code's runtime.
 - **go** - builds the `warp/` hooks and the ward binary below.
 - **.NET SDK 10 + ICU** - C# mods compile in-container with no per-run install, full ICU globalization (`libicu74`) not invariant mode (agentic-os#329).

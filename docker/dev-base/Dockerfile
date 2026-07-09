@@ -55,11 +55,18 @@ ENV DEBIAN_FRONTEND=noninteractive \
 # ships ICU as libicu74; a base bump re-pins this to that release's libicuNN.
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
-      ca-certificates curl wget git gnupg jq ripgrep less unzip xz-utils socat \
+      ca-certificates curl wget git git-lfs gnupg jq ripgrep less unzip xz-utils socat \
       build-essential openssh-client procps shellcheck \
       python3 python3-pip python3-venv \
       libicu74 \
  && rm -rf /var/lib/apt/lists/*
+
+# Git LFS is a Git-side capability, not just a client binary, so install the
+# system filter config alongside the package. That makes `git lfs version`
+# work and the default LFS smudge/clean filters available in future containers.
+RUN set -eux; \
+    git lfs install --system --skip-repo; \
+    git lfs version
 
 # Map Docker's TARGETARCH onto each upstream's arch spelling once.
 RUN set -eux; \
