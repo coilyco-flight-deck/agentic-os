@@ -139,8 +139,8 @@ RUN set -eux; \
 # must bootstrap as a non-root user, so create the dedicated user first and
 # run the installer there.
 RUN set -eux; \
-    groupadd --gid 1001 linuxbrew; \
-    useradd --uid 1001 --gid 1001 --create-home --home-dir /home/linuxbrew \
+    /usr/sbin/groupadd --gid 1001 linuxbrew; \
+    /usr/sbin/useradd --uid 1001 --gid 1001 --create-home --home-dir /home/linuxbrew \
       --shell /bin/bash linuxbrew; \
     install -d -o linuxbrew -g linuxbrew /home/linuxbrew/.linuxbrew
 
