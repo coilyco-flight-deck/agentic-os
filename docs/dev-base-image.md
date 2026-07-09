@@ -1,8 +1,8 @@
 # dev-base container image
 
-aos owns the agent dev environment as a published artifact - the analog of the
-ward brew binary, pulled not built. ward consumes it by tag and never touches the
-Dockerfile, so config cannot drift. Part of the dockerized-dev epic
+aos owns the agent dev environment as a published artifact, like the ward brew
+binary. ward consumes it by tag and never touches the Dockerfile, so config
+cannot drift. Part of the dockerized-dev epic
 (see docs/features-release-tooling.md for the release-tooling background).
 
 ## What ships
@@ -24,9 +24,10 @@ inner-loop toolchain on `ubuntu:24.04`:
 - **public substrate seed** - bare mirrors of the image-tier reference repos at `/opt/substrate-seed`, so a cold gitcache hydrates offline.
 - **in-container agent self-name** - baked `agent-name.sh` + policy `managed-settings.json` so warded agents self-name ([doc](dev-base-self-name.md)).
 
-Every tool installs world-readable under `/usr/local` or `/opt`, so the image runs
-as any uid. ward owns the run-as-uid, mounts, and `~/.aws` passthrough; it bakes in
-no user and no target repo.
+Tools under `/usr/local` or `/opt` run as any uid. ward owns `run-as-uid`,
+mounts, and `~/.aws`; it bakes in no user or repo. Root bootstrap keeps
+`HOME=/root`, so the image seeds `/home/ubuntu/.ward/audit` as uid 1000 and
+avoids root-owned audit state.
 
 ## Naming and tags
 

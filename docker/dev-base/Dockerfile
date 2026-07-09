@@ -38,6 +38,7 @@ ARG TARGETARCH
 # uv tools land on the global PATH so any run-as-uid finds pre-commit.
 ENV DEBIAN_FRONTEND=noninteractive \
     PATH=/usr/local/go/bin:/usr/local/dotnet:/usr/local/bin:/usr/bin:/bin \
+    HOME=/root \
     UV_TOOL_DIR=/opt/uv/tools \
     UV_TOOL_BIN_DIR=/usr/local/bin \
     UV_PYTHON_INSTALL_DIR=/opt/uv/python \
@@ -302,6 +303,15 @@ RUN set -eux; \
 # so a warded container shows the full segment-composed line and new providers
 # ride the next image build to all containers at once. See docs/statusline.md and
 # docs/dev-base-self-name.md.
+#
+# Seed the ward app dir with the non-root surface ownership up front. The first
+# root bootstrap in a fresh director/read-only surface preflights `~/.ward/audit`,
+# so this directory must already belong to the uid 1000 surface user or the audit
+# mkdir lands root-owned and blocks later `warded` runs.
+RUN set -eux; \
+    mkdir -p /home/ubuntu/.ward/audit; \
+    chown -R 1000:1000 /home/ubuntu/.ward; \
+    chmod 0700 /home/ubuntu/.ward /home/ubuntu/.ward/audit
 COPY agent-name.sh /opt/agentic-os/agent-name.sh
 COPY statusline.sh /opt/agentic-os/statusline.sh
 COPY statusline.d/ /opt/agentic-os/statusline.d/
