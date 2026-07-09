@@ -19,9 +19,9 @@ API drops that one tool from the plan, it never blocks the others.
 
 Version policy: bumps stay on the pinned line where crossing it is risky. Node
 tracks the latest release of its currently-pinned major (no surprise major jump);
-uv/go/aws-cli/claude/mcporter/codex/goose/ward track the latest stable upstream
-release (ward off its Forgejo tags, mcporter off npm, everything else off a
-GitHub Releases/tags feed).
+uv/go/aws-cli/claude/mcporter/codex/goose/ward/gh/helm/kubectl/yq track the
+latest stable upstream release (ward off its Forgejo tags, mcporter off npm,
+everything else off a GitHub Releases/tags feed).
 
 Usage:
     python3 scripts/dep-bump.py plan            # TSV: NAME<TAB>CURRENT<TAB>LATEST
@@ -167,10 +167,22 @@ def _resolve_goose() -> str | None:
     return _gh_release("block/goose", re.compile(r"^v(\d+\.\d+\.\d+)$"))
 
 
+def _resolve_gh() -> str | None:
+    return _gh_release("cli/cli", re.compile(r"^v?(\d+\.\d+\.\d+)$"))
+
+
 def _resolve_docker() -> str | None:
     # The static client tarball tracks the moby engine release; moby/moby tags as
     # vX.Y.Z. The strict regex drops the -rc/-beta prereleases _gh_tag would see.
     return _gh_tag("moby/moby", re.compile(r"^v(\d+\.\d+\.\d+)$"))
+
+
+def _resolve_helm() -> str | None:
+    return _gh_release("helm/helm", re.compile(r"^v(\d+\.\d+\.\d+)$"))
+
+
+def _resolve_kubectl() -> str | None:
+    return _gh_release("kubernetes/kubernetes", re.compile(r"^v(\d+\.\d+\.\d+)$"))
 
 
 def _resolve_tailscale() -> str | None:
@@ -182,6 +194,10 @@ def _resolve_tailscale() -> str | None:
 
 def _resolve_trufflehog() -> str | None:
     return _gh_release("trufflesecurity/trufflehog", re.compile(r"^v(\d+\.\d+\.\d+)$"))
+
+
+def _resolve_yq() -> str | None:
+    return _gh_release("mikefarah/yq", re.compile(r"^v(\d+\.\d+\.\d+)$"))
 
 
 def _resolve_dotnet(current: str) -> str | None:
@@ -220,7 +236,11 @@ RESOLVERS: dict[str, Callable[..., str | None]] = {
     "MCPORTER_VERSION": _resolve_mcporter,
     "CODEX_VERSION": _resolve_codex,
     "GOOSE_VERSION": _resolve_goose,
+    "GH_VERSION": _resolve_gh,
     "DOCKER_VERSION": _resolve_docker,
+    "HELM_VERSION": _resolve_helm,
+    "KUBECTL_VERSION": _resolve_kubectl,
+    "YQ_VERSION": _resolve_yq,
     "TAILSCALE_VERSION": _resolve_tailscale,
     "TRUFFLEHOG_VERSION": _resolve_trufflehog,
     "WARD_VERSION": _resolve_ward,

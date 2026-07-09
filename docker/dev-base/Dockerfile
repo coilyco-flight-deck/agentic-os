@@ -11,7 +11,11 @@ ARG CLAUDE_VERSION=2.1.200
 ARG MCPORTER_VERSION=0.12.3
 ARG CODEX_VERSION=0.142.5
 ARG GOOSE_VERSION=1.41.0
+ARG GH_VERSION=2.96.0
 ARG DOCKER_VERSION=28.5.2
+ARG HELM_VERSION=4.2.2
+ARG KUBECTL_VERSION=1.36.2
+ARG YQ_VERSION=4.53.3
 ARG TAILSCALE_VERSION=1.98.8
 ARG WARD_VERSION=0.396.0
 # .NET SDK for in-container C# compilation (see docs/dev-base-image.md). Pinned to the .NET 10
@@ -71,11 +75,11 @@ RUN set -eux; \
 # Map Docker's TARGETARCH onto each upstream's arch spelling once.
 RUN set -eux; \
     case "${TARGETARCH}" in \
-      amd64) NODE_ARCH=x64;   GO_ARCH=amd64; AWS_ARCH=x86_64; CODEX_ARCH=x86_64; GOOSE_ARCH=x86_64; DOCKER_ARCH=x86_64; TS_ARCH=amd64; GOLANGCI_ARCH=amd64; TRUFFLEHOG_ARCH=amd64; KDL_ARCH=x86_64; DOTNET_ARCH=x64 ;; \
-      arm64) NODE_ARCH=arm64; GO_ARCH=arm64; AWS_ARCH=aarch64; CODEX_ARCH=aarch64; GOOSE_ARCH=aarch64; DOCKER_ARCH=aarch64; TS_ARCH=arm64; GOLANGCI_ARCH=arm64; TRUFFLEHOG_ARCH=arm64; KDL_ARCH=aarch64; DOTNET_ARCH=arm64 ;; \
+      amd64) NODE_ARCH=x64;   GO_ARCH=amd64; AWS_ARCH=x86_64; CODEX_ARCH=x86_64; GOOSE_ARCH=x86_64; GH_ARCH=amd64; DOCKER_ARCH=x86_64; HELM_ARCH=amd64; KUBECTL_ARCH=amd64; YQ_ARCH=amd64; TS_ARCH=amd64; GOLANGCI_ARCH=amd64; TRUFFLEHOG_ARCH=amd64; KDL_ARCH=x86_64; DOTNET_ARCH=x64 ;; \
+      arm64) NODE_ARCH=arm64; GO_ARCH=arm64; AWS_ARCH=aarch64; CODEX_ARCH=aarch64; GOOSE_ARCH=aarch64; GH_ARCH=arm64; DOCKER_ARCH=aarch64; HELM_ARCH=arm64; KUBECTL_ARCH=arm64; YQ_ARCH=arm64; TS_ARCH=arm64; GOLANGCI_ARCH=arm64; TRUFFLEHOG_ARCH=arm64; KDL_ARCH=aarch64; DOTNET_ARCH=arm64 ;; \
       *) echo "unsupported TARGETARCH: ${TARGETARCH}" >&2; exit 1 ;; \
     esac; \
-    echo "NODE_ARCH=${NODE_ARCH} GO_ARCH=${GO_ARCH} AWS_ARCH=${AWS_ARCH} CODEX_ARCH=${CODEX_ARCH} GOOSE_ARCH=${GOOSE_ARCH} DOCKER_ARCH=${DOCKER_ARCH} TS_ARCH=${TS_ARCH} GOLANGCI_ARCH=${GOLANGCI_ARCH} TRUFFLEHOG_ARCH=${TRUFFLEHOG_ARCH} KDL_ARCH=${KDL_ARCH} DOTNET_ARCH=${DOTNET_ARCH}" > /tmp/arch.env
+    echo "NODE_ARCH=${NODE_ARCH} GO_ARCH=${GO_ARCH} AWS_ARCH=${AWS_ARCH} CODEX_ARCH=${CODEX_ARCH} GOOSE_ARCH=${GOOSE_ARCH} GH_ARCH=${GH_ARCH} DOCKER_ARCH=${DOCKER_ARCH} HELM_ARCH=${HELM_ARCH} KUBECTL_ARCH=${KUBECTL_ARCH} YQ_ARCH=${YQ_ARCH} TS_ARCH=${TS_ARCH} GOLANGCI_ARCH=${GOLANGCI_ARCH} TRUFFLEHOG_ARCH=${TRUFFLEHOG_ARCH} KDL_ARCH=${KDL_ARCH} DOTNET_ARCH=${DOTNET_ARCH}" > /tmp/arch.env
 
 # uv (Python project + tool manager).
 RUN set -eux; \
@@ -165,6 +169,38 @@ RUN set -eux; \
     chmod 0755 /usr/local/bin/trufflehog; \
     rm /tmp/trufflehog.tar.gz; \
     trufflehog --version
+
+# Fleet CI utilities that are generic enough to live in the shared base.
+# buildx stays job-local because the publish-image workflow still bootstraps a
+# privileged Docker daemon stack there. Rust + wasm-pack stay job-local because
+# they are a heavier, repo-specific toolchain rather than a recurring shared CLI.
+#
+# gh, helm, kubectl, and yq are pinned here so downstream workflows can drop
+# their package-manager/setup-action installs after the next image publish.
+RUN set -eux; \
+    . /tmp/arch.env; \
+    curl -fsSL "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_${GH_ARCH}.tar.gz" \
+      -o /tmp/gh.tar.gz; \
+    tar -xzf /tmp/gh.tar.gz -C /usr/local/bin --strip-components=2 \
+      "gh_${GH_VERSION}_linux_${GH_ARCH}/bin/gh"; \
+    chmod 0755 /usr/local/bin/gh; \
+    rm /tmp/gh.tar.gz; \
+    gh --version; \
+    curl -fsSL "https://get.helm.sh/helm-v${HELM_VERSION}-linux-${HELM_ARCH}.tar.gz" \
+      -o /tmp/helm.tar.gz; \
+    tar -xzf /tmp/helm.tar.gz -C /usr/local/bin --strip-components=1 \
+      "linux-${HELM_ARCH}/helm"; \
+    chmod 0755 /usr/local/bin/helm; \
+    rm /tmp/helm.tar.gz; \
+    helm version --short; \
+    curl -fsSL "https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/${KUBECTL_ARCH}/kubectl" \
+      -o /usr/local/bin/kubectl; \
+    chmod 0755 /usr/local/bin/kubectl; \
+    kubectl version --client --short; \
+    curl -fsSL "https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/yq_linux_${YQ_ARCH}" \
+      -o /usr/local/bin/yq; \
+    chmod 0755 /usr/local/bin/yq; \
+    yq --version
 
 # kdlfmt (KDL formatter for ward-kdl guardfiles, via ward's language:system hook).
 # cargo-dist ships a .tar.xz with the binary under a target-triple dir; only the
