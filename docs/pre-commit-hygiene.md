@@ -47,7 +47,7 @@ excludes = [
   "docs/skill-discipline-handbook-hooks.md",
 ]
 allow_globs = [
-  "docs/issue-corpus.md",
+  "docs/skill-discipline-example-pre-commit-config.yaml",
 ]
 ```
 
