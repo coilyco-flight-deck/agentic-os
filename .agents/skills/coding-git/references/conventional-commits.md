@@ -45,7 +45,7 @@ feat(auth): add JWT-based user authentication
 - Add auth middleware for protected routes
 - Add token refresh endpoint with rotation
 
-Closes issue
+Closes #42
 ```
 
 ## Linking Issues
@@ -53,9 +53,9 @@ Closes issue
 In the commit body or footer:
 
 ```
-Closes issue        ← closes the issue when merged
-Fixes issue         ← same effect
-Refs issue          ← references without closing
+Closes #42          ← closes the issue when merged
+Fixes #42           ← same effect
+Refs #42            ← references without closing
 Co-authored-by: Name <email>
 ```
 

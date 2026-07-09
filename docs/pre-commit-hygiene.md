@@ -24,8 +24,10 @@ text hygiene that are too disruptive to flip on everywhere at once.
   lower drama for the current shell style.
 - `unresolved-placeholder-guard` - manual stage only. Use it once the repo has
   enough allowlists for examples and quoted snippets.
-- `issue-reference-guard` - manual stage only. Use it once the repo has a
-  staged rollout plan and local allowlists for historical references.
+- `issue-reference-guard` - manual stage only. It skips fenced code, inline
+  code, quoted command examples, and test fixtures, and it leaves external
+  upstream issue links alone. Use it once the repo has a staged rollout plan
+  and local allowlists for historical references.
 
 ## Opting in
 
@@ -50,6 +52,9 @@ allow_globs = [
   "docs/issue-corpus.md",
 ]
 ```
+
+The guard is intended for durable prose breadcrumbs like `See #337 for the draft`,
+not literal syntax examples or upstream issue links.
 
 The manual-only hooks are intentionally excluded from the fleet coverage audit
 until they are rolled out as active checks.

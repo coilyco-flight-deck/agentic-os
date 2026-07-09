@@ -90,8 +90,7 @@ def test_issue_guard_flags_direct_refs(monkeypatch, tmp_path: Path, capsys) -> N
 [tool.agentic-os.issue-reference-guard]
 enabled = true
 """)
-    issue = "337"
-    _write(repo, "README.md", "See #" + issue + " for the draft\n")
+    _write(repo, "README.md", "See #337 for the draft\n")
     _git(repo, "add", "-A")
     monkeypatch.chdir(repo)
     monkeypatch.setattr(cfg, "REPO_ROOT", repo, raising=True)
@@ -108,13 +107,50 @@ def test_issue_guard_honors_allowlist(monkeypatch, tmp_path: Path) -> None:
 enabled = true
 allow_globs = ["docs/examples/**"]
 """)
-    issue = "337"
-    _write(repo, "docs/examples/example.md", "See #" + issue + " for the draft\n")
+    _write(repo, "docs/examples/example.md", "See #337 for the draft\n")
     _git(repo, "add", "-A")
     monkeypatch.chdir(repo)
     monkeypatch.setattr(cfg, "REPO_ROOT", repo, raising=True)
     monkeypatch.setattr(text_scan, "REPO_ROOT", repo, raising=True)
     assert ir.main([]) == 0
+
+
+def test_issue_guard_ignores_code_examples_test_fixtures_and_upstream_links(
+    monkeypatch, tmp_path: Path, capsys
+) -> None:
+    repo = _repo(tmp_path)
+    _write(repo, "pyproject.toml", """
+[tool.agentic-os.issue-reference-guard]
+enabled = true
+""")
+    _write(
+        repo,
+        "docs/examples.md",
+        """# Examples
+
+```bash
+gh pr create --body "Closes #42"
+```
+
+`owner/repo#88`
+
+> ward agent claude work owner/repo#88 --new-tab
+
+See https://warpdotdev/Warp/issues/2579 for the upstream workaround.
+""",
+    )
+    _write(repo, "tests/fixture.md", "See #999 in the fixture\n")
+    _write(repo, "docs/prose.md", "See #337 for the draft\n")
+    _git(repo, "add", "-A")
+    monkeypatch.chdir(repo)
+    monkeypatch.setattr(cfg, "REPO_ROOT", repo, raising=True)
+    monkeypatch.setattr(text_scan, "REPO_ROOT", repo, raising=True)
+    assert ir.main([]) == 1
+    err = capsys.readouterr().err
+    assert err.count("FAIL:") == 1
+    assert "bare-issue-ref" in err
+    assert "scoped-issue-ref" not in err
+    assert "issue-url" not in err
 
 
 def test_published_python_hook_entries_have_console_scripts() -> None:

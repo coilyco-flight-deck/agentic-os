@@ -1,6 +1,6 @@
 # `claude-agent-work`: spawn an agent session in a new tab from a CLI
 
-A pattern for opening a new Warp tab that runs a containerized agent against a Forgejo ref, fired from a CLI invocation: `ward agent <mode> work <owner>/<repo>/issue-<N> --new-tab` (this repo's `ward` CLI lives at `github.com/coilyco-flight-deck/ward`). Successor to the retired `claude-dispatch-interactive`, which ran a host `claude` in the real checkout; this one runs `ward agent <mode> work <ref>`, which clones the repo fresh inside an ephemeral container.
+A pattern for opening a new Warp tab that runs a containerized agent against a Forgejo ref, fired from a CLI invocation: `ward agent <mode> work <owner>/<repo>#<N> --new-tab` (this repo's `ward` CLI lives at `github.com/coilyco-flight-deck/ward`). Successor to the retired `claude-dispatch-interactive`, which ran a host `claude` in the real checkout; this one runs `ward agent <mode> work <ref>`, which clones the repo fresh inside an ephemeral container.
 
 This doc walks the design top to bottom. If you know Warp's `tab_configs/` directory and the `warp://tab_config/<name>` URI scheme, you have all the prerequisites. A sibling doc, `wtab.md`, covers the simpler case where the dynamic params fit as TOML literals.
 
@@ -13,17 +13,17 @@ $ ward agent claude work coilysiren/inbox/issue-88 --new-tab
 opens a new tab in the active Warp Preview window. The tab:
 
 - prints a one-line header like `issue 88: triage new inbox items` so the tab is identifiable at a glance from the vertical tabs sidebar
-- execs `ward agent claude work coilysiren/inbox/issue-88`, which spins an ephemeral container, fresh-clones the repo inside it, and drops you into the agent session carrying that work item
+- execs `ward agent claude work coilysiren/inbox#88`, which spins an ephemeral container, fresh-clones the repo inside it, and drops you into the agent session carrying that work item
 
 The fan-out shape that justifies the design: queue up half a dozen issues from the couch, walk away, come back to six tabs each labelled with its issue. None of them races the others, and each runs in its own isolated container.
 
 ```
-$ ward agent claude work coilysiren/inbox/issue-88 --new-tab
-$ ward agent claude work coilysiren/inbox/issue-42 --new-tab
-$ ward agent claude work coilysiren/inbox/issue-17 --new-tab
-$ ward agent claude work coilysiren/eco-mods/issue-203 --new-tab
-$ ward agent claude work coilysiren/agentic-os-kai/issue-588 --new-tab
-$ ward agent claude work coilysiren/ward/issue-274 --new-tab
+$ ward agent claude work coilysiren/inbox#88 --new-tab
+$ ward agent claude work coilysiren/inbox#42 --new-tab
+$ ward agent claude work coilysiren/inbox#17 --new-tab
+$ ward agent claude work coilysiren/eco-mods#203 --new-tab
+$ ward agent claude work coilysiren/agentic-os-kai#588 --new-tab
+$ ward agent claude work coilysiren/ward#274 --new-tab
 # six tabs open, each in its own containerized agent session
 ```
 

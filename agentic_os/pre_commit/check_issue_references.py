@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Reject direct issue references in tracked text files.
+"""Reject direct issue references in tracked prose files.
 
 This hook ships staged, not fleet-on. Repos opt in explicitly when they are
 ready to replace issue-thread anchors with durable documentation links.
@@ -8,12 +8,16 @@ from __future__ import annotations
 
 import re
 import sys
+from pathlib import Path
 
 from agentic_os.config import has_hook_config, is_enabled, is_excluded, load_excludes, load_str_list
 from agentic_os.pre_commit.text_scan import read_text, scan_text, target_files
 
 HOOK_ID = "issue-reference-guard"
 SKIP_FILES = {"pyproject.toml", ".agentic-os.toml"}
+SKIP_DIRS = {"tests"}
+INLINE_CODE_RE = re.compile(r"`[^`\n]+`")
+BLOCKQUOTE_RE = re.compile(r"^\s*>\s?")
 
 RULES = [
     (
@@ -27,19 +31,31 @@ RULES = [
         "replace scoped issue refs with durable docs or stable links",
     ),
     (
-        "issue-url",
-        re.compile(
-            r"https?://(?:forgejo\.coilysiren\.me|github\.com)/[^/\s]+/[^/\s]+/issues/\d+\b",
-            re.IGNORECASE,
-        ),
-        "replace issue URLs with durable docs or stable links",
-    ),
-    (
         "closing-keyword",
         re.compile(r"\b(?:closes|fixes|refs)\s+#\d+\b", re.IGNORECASE),
         "move the issue closure intent into a commit message or durable doc",
     ),
 ]
+
+
+def _is_fixture(rel: str) -> bool:
+    path = Path(rel)
+    return bool(path.parts and path.parts[0] in SKIP_DIRS)
+
+
+def _strip_code_and_quotes(text: str) -> str:
+    out: list[str] = []
+    in_fence = False
+    for line in text.splitlines(keepends=True):
+        if line.lstrip().startswith("```"):
+            in_fence = not in_fence
+            out.append("\n" if line.endswith("\n") else "")
+            continue
+        if in_fence or BLOCKQUOTE_RE.match(line):
+            out.append("\n" if line.endswith("\n") else "")
+            continue
+        out.append(INLINE_CODE_RE.sub(lambda m: " " * len(m.group(0)), line))
+    return "".join(out)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -57,6 +73,8 @@ def main(argv: list[str] | None = None) -> int:
     for rel in target_files(args):
         if rel in SKIP_FILES:
             continue
+        if _is_fixture(rel):
+            continue
         if is_excluded(rel, allow_globs):
             continue
         if is_excluded(rel, excludes):
@@ -64,6 +82,7 @@ def main(argv: list[str] | None = None) -> int:
         text = read_text(rel)
         if text is None:
             continue
+        text = _strip_code_and_quotes(text)
         violations.extend(scan_text(rel, text, RULES))
 
     if not violations:
