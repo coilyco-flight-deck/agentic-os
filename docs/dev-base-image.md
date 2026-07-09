@@ -41,6 +41,7 @@ the layer cache.
 ## How it publishes
 
 The `publish-image` job in [`.forgejo/workflows/release.yml`](../.forgejo/workflows/release.yml) runs after a release tag on the DinD `docker` runner and pushes `:vX.Y.Z` and `:latest` with a registry cache. `REGISTRY_TOKEN` is a `coilyco-ops` `write:package` PAT ([`rotate-registry-token.sh`](../scripts/rotate-registry-token.sh) re-mints it); the ward build clones public source anonymously.
+The base apt layer retries against mirror drift so a publish can still land when Ubuntu package metadata and archives briefly disagree.
 
 ## Pinning a tool
 
