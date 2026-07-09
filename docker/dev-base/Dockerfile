@@ -84,10 +84,10 @@ RUN set -eux; \
 # must bootstrap as a non-root user, so create the dedicated user first and
 # run the installer there.
 RUN set -eux; \
-    useradd --system --create-home --home-dir /home/linuxbrew --user-group \
-      --shell /bin/bash linuxbrew; \
+    echo 'linuxbrew:x:1001:1001:Linuxbrew:/home/linuxbrew:/bin/bash' >> /etc/passwd; \
+    echo 'linuxbrew:x:1001:' >> /etc/group; \
     mkdir -p /home/linuxbrew/.linuxbrew; \
-    chown -R linuxbrew:linuxbrew /home/linuxbrew
+    chown -R 1001:1001 /home/linuxbrew
 
 USER linuxbrew
 
