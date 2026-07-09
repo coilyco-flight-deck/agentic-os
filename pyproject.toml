@@ -43,6 +43,7 @@ check-agent-compose-drift = "agentic_os.pre_commit.check_agent_compose_drift:mai
 check-skills = "agentic_os.pre_commit.check_skill:main"
 check-dead-links = "agentic_os.pre_commit.check_dead_links:main"
 check-catalog-block = "agentic_os.pre_commit.check_catalog_block:main"
+check-ward-specs-bundle = "agentic_os.pre_commit.check_ward_specs_bundle:main"
 check-catalog-doc-size = "agentic_os.pre_commit.check_catalog_doc_size:main"
 check-catalog-trifecta = "agentic_os.pre_commit.check_catalog_trifecta:main"
 check-code-comments = "agentic_os.pre_commit.check_code_comments:main"

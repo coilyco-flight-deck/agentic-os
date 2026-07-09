@@ -49,9 +49,11 @@ byte-for-byte, so the overlay is a **live no-op** and the lag-revert no longer
 engages. Step 4 then neutralizes ward's tree, and this asset becomes the sole
 carrier of the coilyco values.
 
-This is the **assets-dir / release-asset overlay** convention, not a sibling
-checkout. An earlier sibling-tree overlay was reverted because it broke bare-clone
-builds; the bundle travels as a pinned release asset instead.
+This is the **assets-dir / release-asset overlay** convention, **not** a sibling
+checkout. An earlier attempt wired ward's `make build-ward-kdl` to copy a sibling
+`agentic-os/ward-specs/` working tree; ward reverted it (the commit dropping the
+`WARD_SPEC_BUNDLE_DIR` overlay) because it broke bare-clone builds and overlaid a
+stale copy. The bundle travels as a pinned release asset instead.
 
 The overlay mechanism on the ward side is decided (ward#503): each of ward's
 build sites pins this asset by tag + `sha256`, verifies the checksum, extracts

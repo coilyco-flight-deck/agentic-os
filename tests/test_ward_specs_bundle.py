@@ -20,11 +20,8 @@ def test_ward_specs_bundle_carries_deployment_anchors() -> None:
 
     defaults = (SPEC_DIR / "ward-kdl.defaults.kdl").read_text()
     assert 'agent-workflow default="direct-main"' in defaults
-    assert (
-        'repo "coilyco-flight-deck/ward" workflow="pull-requests-and-merge"'
-        in defaults
-    )
-    assert "workflow=pr" not in defaults
+    assert 'repo "coilyco-flight-deck/ward" workflow="pull-requests-and-merge"' in defaults
+    assert 'workflow="pr"' not in defaults
     assert 'default=pr' not in defaults
 
     fleet = (SPEC_DIR / "ward-kdl.fleet.kdl").read_text()
