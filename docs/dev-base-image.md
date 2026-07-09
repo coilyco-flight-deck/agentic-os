@@ -27,7 +27,7 @@ inner-loop toolchain on `ubuntu:24.04`:
 Tools under `/usr/local` or `/opt` run as any uid. ward owns `run-as-uid`,
 mounts, and `~/.aws`; it bakes in no user or repo. Root bootstrap keeps
 `HOME=/root`, so the image seeds `/home/ubuntu/.ward/audit` as uid 1000 and
-never leaves root-owned audit state.
+avoids root-owned audit state.
 
 ## Naming and tags
 
