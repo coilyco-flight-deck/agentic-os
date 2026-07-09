@@ -7,8 +7,10 @@ Forgejo owns the release and tag, GitHub only mirrors the result, and GitHub
 Releases stay out of the default surface.
 
 `.forgejo/workflows/release.yml` computes the next tag first, publishes and
-verifies the dev-base image, and only then cuts the public git/release tag so
-no announcement can outlive a missing manifest.
+verifies the dev-base image family by tier, and only then cuts the public
+git/release tag so no announcement can outlive a missing manifest. The core
+image publishes first, the sibling tier targets publish in parallel, and
+`dev-base-full` fans in last after its prerequisites pass.
 
 agentic-os is consumed as pre-commit hooks pinned by `rev:` tag, not a brew
 formula or a prebuilt binary, so there is nothing to attach to the release and

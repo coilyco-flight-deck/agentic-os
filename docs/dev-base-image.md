@@ -33,14 +33,14 @@ Tools under `/usr/local`, `/home/linuxbrew/.linuxbrew`, or `/opt` run as any uid
 
 ## Naming and tags
 
-Published to the forgejo registry as
-`forgejo.coilysiren.me/coilyco-flight-deck/agentic-os`. Each release tags `vX.Y.Z`
-and moves `:latest`, so a pin and its image share a version; `:buildcache` holds
-the layer cache.
+Published under
+`forgejo.coilysiren.me/coilyco-flight-deck/agentic-os` as a tiered family. The
+release workflow publishes the tier refs there, `dev-base-full` keeps
+`:latest`, and each release uses one `vX.Y.Z`; `:buildcache` holds the cache.
 
 ## How it publishes
 
-The `publish-image` job in [`.forgejo/workflows/release.yml`](../.forgejo/workflows/release.yml) runs before the public tag exists. It pushes `:vX.Y.Z` and `:latest`, verifies both manifests, and only then lets the workflow create the matching git/release tag.
+The release jobs in [`.forgejo/workflows/release.yml`](../.forgejo/workflows/release.yml) run before the public tag exists. They publish core first, fan out sibling tier targets in parallel, and publish `dev-base-full` last. The release tag lands only after the set has been pushed and verified.
 
 The tag comes last, after the image has been built, pushed, and verified.
 The base apt layer retries against mirror drift so a publish can still land when Ubuntu package metadata and archives briefly disagree.
@@ -54,7 +54,7 @@ scheduled **auto-bump** refreshes stale pins ([auto-bump doc](dev-base-auto-bump
 ## Pulling it
 
 ```bash
-docker pull forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:latest
+docker pull forgejo.coilysiren.me/coilyco-flight-deck/agentic-os-full:latest
 ```
 
 Needs a `docker login`; `ward container up/exec` (ward#98) is the entry point.
