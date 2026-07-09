@@ -50,43 +50,44 @@ runs:
         BODY: ${{ inputs.body }}
       run: |
         set -euo pipefail
-
-        # Self-install jq if missing. Forgejo's default runner image
-        # ships minimal; consumers shouldn't have to add a setup step.
-        if ! command -v jq >/dev/null 2>&1; then
-          if command -v apt-get >/dev/null 2>&1; then
-            apt-get update -qq && apt-get install -y -qq jq
-          elif command -v apk >/dev/null 2>&1; then
-            apk add --no-cache jq
-          else
-            echo "::error::no apt-get or apk to install jq" >&2
-            exit 1
-          fi
-        fi
+        source "${GITHUB_ACTION_PATH}/../_lib/release.sh"
 
         rel_name="${NAME:-$TAG}"
+        json_tool=$(release_json_tool)
 
-        # Marshal name/body via jq so newlines + quotes survive.
-        payload=$(jq -n --arg tag "$TAG" --arg name "$rel_name" --arg body "$BODY" \
-          '{tag_name:$tag, name:$name, body:$body, draft:false, prerelease:false}')
+        echo "creating Forgejo release for $TAG"
+        payload=$(release_json_make_create_payload "$json_tool" "$TAG" "$rel_name" "$BODY")
 
-        http_code=$(curl -sS -o /tmp/relresp.json -w '%{http_code}' \
+        if ! http_code=$(release_curl_status /tmp/relresp.json \
           -X POST \
           -H "Authorization: token $FORGEJO_TOKEN" \
           -H "Content-Type: application/json" \
           -d "$payload" \
-          "$FORGEJO_BASE_URL/api/v1/repos/$REPO/releases")
+          "$FORGEJO_BASE_URL/api/v1/repos/$REPO/releases"); then
+          echo "::error::forgejo release create request timed out or failed"
+          cat /tmp/relresp.json
+          exit 1
+        fi
 
         case "$http_code" in
           201)
-            release_id=$(jq -r '.id' /tmp/relresp.json)
+            release_id=$(release_json_get_field "$json_tool" /tmp/relresp.json id)
             ;;
           409)
-            # Release already exists for this tag. Look it up and continue.
-            curl -sS -H "Authorization: token $FORGEJO_TOKEN" \
-              "$FORGEJO_BASE_URL/api/v1/repos/$REPO/releases/tags/$TAG" \
-              > /tmp/relresp.json
-            release_id=$(jq -r '.id' /tmp/relresp.json)
+            echo "release already exists for $TAG, looking it up"
+            if ! http_code=$(release_curl_status /tmp/relresp.json \
+              -H "Authorization: token $FORGEJO_TOKEN" \
+              "$FORGEJO_BASE_URL/api/v1/repos/$REPO/releases/tags/$TAG"); then
+              echo "::error::forgejo release lookup timed out or failed"
+              cat /tmp/relresp.json
+              exit 1
+            fi
+            if [ "$http_code" != "200" ]; then
+              echo "::error::forgejo release lookup failed: HTTP $http_code"
+              cat /tmp/relresp.json
+              exit 1
+            fi
+            release_id=$(release_json_get_field "$json_tool" /tmp/relresp.json id)
             ;;
           *)
             echo "::error::forgejo release create failed: HTTP $http_code"
