@@ -99,6 +99,7 @@ jobs:
             ./forgejo.swagger.lock.json \
             ./glitchtip.openapi.lock.json \
             ./signoz.openapi.lock.json \
+            ./ward-kdl.defaults.kdl \
             ./ward-kdl.fleet.kdl \
             ./ward-kdl.forgejo.guardfile.kdl \
             ./ward-kdl.ollama.guardfile.kdl \
