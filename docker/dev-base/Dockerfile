@@ -62,13 +62,24 @@ ENV DEBIAN_FRONTEND=noninteractive \
 # with full ICU-backed globalization, NOT invariant mode, so C# string/culture
 # behaviour in-container matches a normal host. Ubuntu 24.04 (the pinned base)
 # ships ICU as libicu74; a base bump re-pins this to that release's libicuNN.
-RUN apt-get update \
- && apt-get install -y --no-install-recommends \
-      ca-certificates curl wget git git-lfs gnupg jq ripgrep less unzip xz-utils socat \
-      build-essential openssh-client procps shellcheck file patch \
-      python3 python3-pip python3-venv \
-      libicu74 \
- && rm -rf /var/lib/apt/lists/*
+RUN set -eux; \
+    # Ubuntu mirrors occasionally lag package index publication during release churn.
+    # Retry the base package install with a fresh index so publish-image can still land.
+    for attempt in 1 2 3; do \
+      if apt-get update -o Acquire::Retries=3 \
+        && apt-get install -y --no-install-recommends \
+          ca-certificates curl wget git git-lfs gnupg jq ripgrep less unzip xz-utils socat \
+          build-essential openssh-client procps shellcheck file patch \
+          python3 python3-pip python3-venv \
+          libicu74; then \
+        rm -rf /var/lib/apt/lists/*; \
+        break; \
+      fi; \
+      if [ "$attempt" -eq 3 ]; then \
+        exit 1; \
+      fi; \
+      sleep 5; \
+    done
 
 # Git LFS is a Git-side capability, not just a client binary, so install the
 # system filter config alongside the package. That makes `git lfs version`

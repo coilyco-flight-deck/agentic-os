@@ -10,6 +10,8 @@ DOCKERFILE = Path(__file__).resolve().parent.parent / "docker" / "dev-base" / "D
 def test_root_bootstrap_home_is_pinned_to_root() -> None:
     text = DOCKERFILE.read_text()
     assert "HOME=/root" in text
+    assert "Acquire::Retries=3" in text
+    assert "for attempt in 1 2 3" in text
 
 
 def test_kubectl_smoke_check_uses_supported_client_only_flag() -> None:
