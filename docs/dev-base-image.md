@@ -38,6 +38,9 @@ Published to the forgejo registry as
 and moves `:latest`, so a pin and its image share a version; `:buildcache` holds
 the layer cache.
 
+CI pins the family through [`docker/dev-base/ci-image-manifest.json`](../docker/dev-base/ci-image-manifest.json),
+which keeps one literal ref per image class at the same release tag.
+
 ## How it publishes
 
 The `publish-image` job in [`.forgejo/workflows/release.yml`](../.forgejo/workflows/release.yml) runs before the public tag exists. It pushes `:vX.Y.Z` and `:latest`, verifies both manifests, and only then lets the workflow create the matching git/release tag.
