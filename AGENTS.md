@@ -54,16 +54,7 @@ Config splits on three axes, each a distinct owner: **permission/surface** (ward
 
 ## Release
 
-Conventional-commits 1.0.0 and Forgejo issue references are unenforced - the `conventional-commit` and `closes-issue` commit-msg hooks have been retired, so hand-written commits flow freely. Releases bump minor on each push to main. Major bumps are hand-driven (`scripts/release.py --bump major`) and never inferred from commit messages. Canonical history lives on Forgejo; the GitHub mirror stays PR-gated. Land work on the merged branch, never `--no-verify`.
-
-Ward workflow mode decides how a run may land:
-
-* `direct-main` - merge or push to Forgejo `main`, then close the issue.
-* `pr` and `pull-requests` - push a branch and open a human-gated Forgejo PR. This lane does not push `main`.
-* `pull-requests-and-merge` - push a branch, open a PR for the director lane, and wait until the thread shows `workflow: pull-requests-and-merge`, `WARD-OUTCOME: done`, and a passed review summary before a director merges it.
-* `patch-only` - no landing authority. Leave a patch for human review and do not push `main` or open a PR.
-
-In read-only surface sessions, this clone cannot push itself. `ward ops forgejo pr list` is denied because PRs are read in the web UI, and GitHub mirror is PR-gated.
+Conventional-commits 1.0.0 and Forgejo issue references are encouraged house style but unenforced - the `conventional-commit` and `closes-issue` commit-msg hooks have been retired from the suite, so hand-written commits flow freely. Releases bump the minor version automatically on every push to main; the major version is hand-driven only (`scripts/release.py --bump major`), never inferred from commit messages. Canonical history lives on Forgejo; the GitHub mirror stays PR-gated. Land work on the merged branch, never `--no-verify`. Work lands by pushing straight to canonical Forgejo `main`, `ward agent` headless dispatch included - a headless run pushes its branch to `main` and closes its issue, it never opens a Forgejo pull request. So do not hunt for a Forgejo PR to track a run. Track it by issue state and the commits on `main`. `ward ops forgejo pr list` is denied by policy (PRs are read through the web UI), and the GitHub mirror is the only PR-gated surface.
 
 ## Agent rules
 
