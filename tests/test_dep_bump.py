@@ -103,6 +103,10 @@ def test_version_sensitive_pins_are_excluded_from_auto_bump() -> None:
     assert "GOLANGCI_LINT_VERSION" not in script.RESOLVERS
     assert "KDLFMT_VERSION" not in script.RESOLVERS
     assert "TRUFFLEHOG_VERSION" in script.RESOLVERS
+    assert "GH_VERSION" in script.RESOLVERS
+    assert "HELM_VERSION" in script.RESOLVERS
+    assert "KUBECTL_VERSION" in script.RESOLVERS
+    assert "YQ_VERSION" in script.RESOLVERS
 
 
 def test_mcporter_is_auto_bumped_from_npm_registry() -> None:
@@ -125,6 +129,49 @@ def test_mcporter_resolver_reads_npm_latest(monkeypatch) -> None:
     monkeypatch.setattr(script, "_get_json", fake_get_json)
     assert script._resolve_mcporter() == "0.12.3"
     assert seen["url"] == "https://registry.npmjs.org/mcporter/latest"
+
+
+def test_gh_resolver_reads_the_latest_release(monkeypatch) -> None:
+    script = _load_script()
+    seen: dict[str, str] = {}
+
+    def fake_get_json(url: str) -> object:
+        seen["url"] = url
+        return [{"draft": False, "prerelease": False, "tag_name": "v2.96.0"}]
+
+    monkeypatch.setattr(script, "_get_json", fake_get_json)
+    assert script._resolve_gh() == "2.96.0"
+    assert seen["url"] == "https://api.github.com/repos/cli/cli/releases?per_page=100"
+
+
+def test_helm_resolver_reads_the_latest_release(monkeypatch) -> None:
+    script = _load_script()
+    monkeypatch.setattr(
+        script,
+        "_get_json",
+        lambda url: [{"draft": False, "prerelease": False, "tag_name": "v4.2.2"}],
+    )
+    assert script._resolve_helm() == "4.2.2"
+
+
+def test_kubectl_resolver_reads_the_latest_release(monkeypatch) -> None:
+    script = _load_script()
+    monkeypatch.setattr(
+        script,
+        "_get_json",
+        lambda url: [{"draft": False, "prerelease": False, "tag_name": "v1.36.2"}],
+    )
+    assert script._resolve_kubectl() == "1.36.2"
+
+
+def test_yq_resolver_reads_the_latest_release(monkeypatch) -> None:
+    script = _load_script()
+    monkeypatch.setattr(
+        script,
+        "_get_json",
+        lambda url: [{"draft": False, "prerelease": False, "tag_name": "v4.53.3"}],
+    )
+    assert script._resolve_yq() == "4.53.3"
 
 
 def test_ward_binary_is_auto_bumped() -> None:

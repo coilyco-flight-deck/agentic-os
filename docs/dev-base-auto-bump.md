@@ -27,8 +27,8 @@ Fleet rollout is not its concern.
 - **Conservative bumps.** Node and the .NET SDK track the latest release of their
   currently-pinned major (no surprise major jump - the SDK stays on the .NET 10
   channel eco-app's mods build against, agentic-os#329); uv, go, aws-cli, claude,
-  mcporter, codex, goose, docker, tailscale, trufflehog, and ward track the
-  latest stable upstream release.
+  mcporter, codex, goose, gh, helm, kubectl, yq, docker, tailscale, trufflehog,
+  and ward track the latest stable upstream release.
   Tailscale resolves against its `pkgs.tailscale.com/stable` feed (not GitHub
   tags, which interleave the unstable odd-minor releases); ward resolves against
   its Forgejo tags list (it lives on Forgejo, not GitHub, and the image builds it
@@ -40,7 +40,9 @@ Fleet rollout is not its concern.
   version the consuming repos' CI pins (cli-guard + ward pin golangci-lint
   v2.12.2; ward pins kdlfmt v0.1.7). Auto-bumping them to upstream latest would
   re-drift the container gate from CI - the exact failure the bake-in closed.
-  Bump them by hand when the consumers move.
+  Bump them by hand when the consumers move. `docker buildx` and Rust plus
+  `wasm-pack` stay job-local for the publish and language-specific workflows, so
+  dev-base does not claim them.
 - **Fail-soft.** A resolver whose upstream is unreachable or has reshaped its API
   drops from that run with a warning; it never blocks the other bumps.
 
