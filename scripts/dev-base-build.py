@@ -24,6 +24,12 @@ def _run(cmd: list[str]) -> None:
     subprocess.run(cmd, check=True)
 
 
+def _ward_config_ref_commit() -> str:
+    return (
+        subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+    )
+
+
 def _host_targetarch() -> str:
     machine = platform.machine().lower()
     if machine in {"x86_64", "amd64"}:
@@ -35,11 +41,14 @@ def _host_targetarch() -> str:
 
 def _build_plan(registry_base: str, tag: str, push: bool, platforms: str | None) -> None:
     plan = publish_plan(registry_base, tag)
+    ward_config_ref_commit = _ward_config_ref_commit()
     for entry in plan:
         dockerfile = Path(entry["dockerfile"])
         cmd = _docker_base_command(push, platforms)
         if entry["tier"] == "core" and not push:
             cmd.extend(["--build-arg", f"TARGETARCH={_host_targetarch()}"])
+        if entry["tier"] == "core":
+            cmd.extend(["--build-arg", f"WARD_CONFIG_REF_COMMIT={ward_config_ref_commit}"])
         elif entry["tier"] != "core":
             cmd.extend(["--build-arg", f"BASE_IMAGE={entry['base_image']}"])
         if push:

@@ -37,7 +37,10 @@ run before the public tag exists. They compute the tag first, then call
 [`scripts/dev-base-build.py`](../scripts/dev-base-build.py), which derives the
 ordered tier plan from the folder layout and builds `core -> lang-node ->
 lang-go -> lang-dotnet -> ops -> agent -> full` in order. The release tag lands
-only after the set has been pushed and verified.
+only after the set has been pushed and verified. The core image stamps
+`WARD_CONFIG_REF` from the current agentic-os commit at build time, so ward
+launches against the exact bundled `.ward/` checkout rather than a moving
+`main`.
 
 The tag comes last, after the image has been built, pushed, and verified.
 The base apt layer retries against mirror drift so a publish can still land when Ubuntu package metadata and archives briefly disagree.
