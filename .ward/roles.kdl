@@ -8,18 +8,23 @@ roles {
         guardfile "guardfile.forgejo.read.kdl"
         guardfile "guardfile.forgejo.readactions.kdl"
         guardfile "guardfile.forgejo.write.kdl"
+        guardfile "guardfile.forgejo.merge.kdl"
     }
     role director {
         guardfile "guardfile.forgejo.read.kdl"
         guardfile "guardfile.forgejo.readactions.kdl"
         guardfile "guardfile.forgejo.write.kdl"
+        guardfile "guardfile.forgejo.merge.kdl"
         agent claude {
             model claude-opus-4-8
             reasoning-effort xhigh
         }
+        // Director codex rides the frontier model, distinct from the engineer
+        // default (aos#450). Rationale: docs/ward-specs-overrides.md.
         agent codex {
-            model gpt-5.5
+            model gpt-5.6-sol
             reasoning-effort xhigh
+            verbosity medium
         }
     }
     role advisor {
