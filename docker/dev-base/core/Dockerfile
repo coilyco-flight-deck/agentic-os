@@ -181,6 +181,7 @@ RUN set -eux; \
 COPY --from=dev-base-ward-builder /usr/local/bin/ward /usr/local/bin/ward
 RUN set -eux; \
     ward --version; \
+    ward doctor; \
     mkdir -p /home/ubuntu/.ward/audit; \
     chown -R 1000:1000 /home/ubuntu/.ward; \
     chmod 0700 /home/ubuntu/.ward /home/ubuntu/.ward/audit

@@ -40,7 +40,8 @@ lang-go -> lang-dotnet -> ops -> agent -> full` in order. The release tag lands
 only after the set has been pushed and verified. The core image stamps
 `WARD_CONFIG_REF` from the current agentic-os commit at build time, so ward
 launches against the exact bundled `.ward/` checkout rather than a moving
-`main`.
+`main`. The core build runs `ward doctor` after installing ward, which rejects a
+broken bundled config before the image publishes.
 
 The tag comes last, after the image has been built, pushed, and verified.
 The base apt layer retries against mirror drift so a publish can still land when Ubuntu package metadata and archives briefly disagree.

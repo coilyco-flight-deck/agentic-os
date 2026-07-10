@@ -67,6 +67,15 @@ def test_core_tier_keeps_the_hidden_ward_builder_stage() -> None:
     assert "WARD_CONFIG_REF=forgejo.coilysiren.me/coilyco-flight-deck/agentic-os@${WARD_CONFIG_REF_COMMIT}//.ward" in text
 
 
+def test_core_tier_runs_ward_doctor_after_installing_ward() -> None:
+    text = _tier_path("core").read_text()
+    assert (
+        text.index('COPY --from=dev-base-ward-builder /usr/local/bin/ward /usr/local/bin/ward')
+        < text.index("ward doctor")
+    )
+    assert "ward --version; \\\n    ward doctor; \\" in text
+
+
 def test_shell_common_exports_a_commit_addressed_ward_config_ref() -> None:
     text = (Path(__file__).resolve().parent.parent / "shell" / "common.sh").read_text()
     assert "_siren_ward_config_ref()" in text
