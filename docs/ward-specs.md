@@ -2,9 +2,11 @@
 
 The coilyco ward bundle lives in [`.ward/`](../.ward/), flattened beside
 `.ward/ward.yaml` (aos#330, first homed at top-level `ward-specs/`). It carries
-`ward.bundle.kdl`, `ops.forgejo.kdl`, `forgejo.swagger.lock.json`, the actions
-bridges, AWS and kubectl guardfiles, the agents manifest, the role catalog, the
-defaults bundle, and the repos bundle.
+the Forgejo guardfiles, the Actions log, list, and runner-token bridges,
+aws/tailscale/kubectl exec guardfiles, the agents manifest, the role catalog,
+the defaults bundle, the repos bundle, and the surface self-check
+([role-surface-tiers.md](role-surface-tiers.md)). The upstream Forgejo OpenAPI
+spec is no longer tracked as a committed blob in aos.
 
 ## Direction Of Truth
 
@@ -47,8 +49,9 @@ The tarball is deterministic, so downstream checksums stay reproducible from
 the tag. The packaging step recursively walks `.ward/` with a wildcard-style
 source set while excluding `.ward/ward.yaml`, so new bundle files land
 automatically without leaking the allowlist into ward's overlay input. The
-bundle metadata file, `.ward/ward.bundle.kdl`, and the Forgejo lockfile,
-`.ward/forgejo.swagger.lock.json`, are part of that flattening.
+bundle now includes the Forgejo actions bridges, the surface self-check, the
+role guardfiles, and the remaining bundle manifests, while the upstream Forgejo
+swagger lock is no longer committed here.
 
 ## How Ward Consumes It
 

@@ -435,9 +435,8 @@ jobs:
             -C .ward -cf ward-specs.tar \
             ./forgejo-actions-list.sh \
             ./forgejo-actions-logs.sh \
-            ./ward.bundle.kdl \
-            ./ops.forgejo.kdl \
-            ./forgejo.swagger.lock.json \
+            ./forgejo-runner-token.sh \
+            ./surface-check.sh \
             ./specverb.lock \
             ./agents.kdl \
             ./defaults.kdl \
@@ -447,8 +446,10 @@ jobs:
             ./guardfile.forgejo.merge.kdl \
             ./guardfile.forgejo.read.kdl \
             ./guardfile.forgejo.readactions.kdl \
+            ./guardfile.forgejo.runnertoken.kdl \
             ./guardfile.forgejo.write.kdl \
             ./guardfile.kubectl.kdl \
+            ./guardfile.tailscale.kdl \
             ./repos.kdl \
             ./roles.kdl
           gzip -n -9 -c ward-specs.tar > "${asset}"

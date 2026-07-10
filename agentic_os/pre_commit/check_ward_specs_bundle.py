@@ -52,9 +52,8 @@ EXPECTED_REPOS = """repos {
 """
 EXPECTED_TAR_MEMBERS = (
     "./forgejo-actions-logs.sh",
-    "./ward.bundle.kdl",
-    "./ops.forgejo.kdl",
-    "./forgejo.swagger.lock.json",
+    "./forgejo-runner-token.sh",
+    "./surface-check.sh",
     "./specverb.lock",
     "./agents.kdl",
     "./defaults.kdl",
@@ -64,8 +63,10 @@ EXPECTED_TAR_MEMBERS = (
     "./guardfile.forgejo.merge.kdl",
     "./guardfile.forgejo.read.kdl",
     "./guardfile.forgejo.readactions.kdl",
+    "./guardfile.forgejo.runnertoken.kdl",
     "./guardfile.forgejo.write.kdl",
     "./guardfile.kubectl.kdl",
+    "./guardfile.tailscale.kdl",
     "./repos.kdl",
     "./roles.kdl",
 )

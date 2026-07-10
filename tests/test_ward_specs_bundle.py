@@ -213,9 +213,13 @@ def test_ward_specs_bundle_defaults_are_packaged() -> None:
     assert "./guardfile.kubectl.kdl" in release
     assert "./repos.kdl" in release
     assert "./roles.kdl" in release
-    assert "./ward.bundle.kdl" in release
-    assert "./ops.forgejo.kdl" in release
-    assert "./forgejo.swagger.lock.json" in release
+    assert "./forgejo-runner-token.sh" in release
+    assert "./surface-check.sh" in release
+    assert "./guardfile.forgejo.runnertoken.kdl" in release
+    assert "./guardfile.tailscale.kdl" in release
+    assert "./ward.bundle.kdl" not in release
+    assert "./ops.forgejo.kdl" not in release
+    assert "./forgejo.swagger.lock.json" not in release
     assert "./forgejo-actions-list.sh" in release
     assert "./forgejo-actions-logs.sh" in release
     assert "./ward-kdl.forgejo.actions.guardfile.kdl" not in release
