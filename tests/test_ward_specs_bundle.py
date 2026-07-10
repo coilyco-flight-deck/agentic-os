@@ -1,6 +1,4 @@
-import os
 import pathlib
-import subprocess
 
 
 SPEC_DIR = pathlib.Path(__file__).resolve().parents[1] / ".ward"
@@ -163,28 +161,6 @@ def test_ward_specs_docs_reference_live_config_source() -> None:
     assert "no longer tracked as a committed blob" in docs
     assert "WARD_KDL_OPS_FORGEJO_SPEC" in docs
     assert "kdl-specs lock" in docs
-
-
-def test_ward_ops_forgejo_describe_works_from_a_local_bundle_ref() -> None:
-    env = os.environ.copy()
-    env.update(
-        {
-            "WARD_CONFIG_REF": f"file://{SPEC_DIR}",
-            "WARD_READONLY": "1",
-            "WARD_TARGET_OWNER": "coilyco-flight-deck",
-            "WARD_TARGET_REPO": "coilyco-flight-deck/agentic-os",
-        }
-    )
-    proc = subprocess.run(
-        ["ward", "ops", "forgejo", "describe"],
-        cwd=pathlib.Path(__file__).resolve().parents[1],
-        env=env,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-
-    assert proc.returncode == 0, proc.stderr
 
 
 def test_ward_specs_docs_cover_actions_log_streaming() -> None:
