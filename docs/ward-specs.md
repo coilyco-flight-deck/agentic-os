@@ -15,10 +15,11 @@ This inverts the older shape, where ward's tree held the canonical values and ao
 carried a lagging mirror that a `ward -> aos refresh` re-synced. Do **not**
 reinstate it. When a coilyco fleet/guardfile/spec-lock value changes, change it
 **here in aos's `.ward/`** and let a push republish the bundle. The launch
-defaults stay spelled out here too: fleet `direct-to-main`, with only
-`coilyco-flight-deck/ward` on `pull-requests`. ward's tree
-is being neutralized (ward#503 step 4), after which ward carries no coilyco
-values and derives its whole shipped surface from this asset.
+defaults stay spelled out here too: fleet `direct-to-main`, with
+`coilyco-flight-deck/ward` and `coilyco-flight-deck/agentic-os` on
+`pull-requests-and-merge`. ward's tree is being neutralized (ward#503 step 4),
+after which ward carries no coilyco values and derives its whole shipped
+surface from this asset.
 
 This is the one place a shipped tool (ward) consumes runtime config authored in a
 reference repo (aos), a reasoned exception to AGENTS.md's config-placement
