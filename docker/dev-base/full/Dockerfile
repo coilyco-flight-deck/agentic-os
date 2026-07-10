@@ -1,8 +1,8 @@
 ARG BASE_IMAGE
 FROM ${BASE_IMAGE} AS dev-base-full
-ARG GOLANGCI_LINT_VERSION
-ARG TRUFFLEHOG_VERSION
-ARG KDLFMT_VERSION
+ARG GOLANGCI_LINT_VERSION=2.12.2
+ARG TRUFFLEHOG_VERSION=3.95.8
+ARG KDLFMT_VERSION=0.1.7
 
 # golangci-lint (Go linter for ward + cli-guard). Closes the missing-binary gap
 # that made the in-container `pre-commit run --all-files` / CI lint job unrunnable

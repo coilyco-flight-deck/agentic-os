@@ -14,7 +14,7 @@ The `interactive` vs `consult` split earns its keep on a heavy backlog: an agent
 
 ## A third property: readiness
 
-Mode is the autonomy ceiling. It does not say whether a correctly-scoped issue can run **now** or is parked on an upstream that has not landed. That is **readiness**, orthogonal to both tier and mode. One blocked state earns a name: `blocked-on-dependency` - settled, `headless`-eligible work waiting on another repo's release, not on a human, and so distinct from `consult`. It should auto-resume into the `headless` queue when its blocker closes. See [readiness-axis](readiness-axis.md).
+Mode is the autonomy ceiling. It does not say whether a correctly-scoped issue can run **now** or is parked on an upstream that has not landed. That is **readiness**, orthogonal to both tier and mode. One blocked state earns a name: `blocked-on-dependency` - settled, `headless`-eligible work waiting on another repo's issue, not on a human, and so distinct from `consult`. It should auto-resume into the `headless` queue when its blocker closes. See [readiness-axis](readiness-axis.md) for the marker shape, fail-closed rule, and wake event.
 
 ## Fail-closed default
 

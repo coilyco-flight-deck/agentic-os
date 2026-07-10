@@ -20,9 +20,18 @@ def test_ward_specs_bundle_carries_deployment_anchors() -> None:
     assert "/coilysiren/ollama/host" in ollama
 
     defaults = (SPEC_DIR / "ward-kdl.defaults.kdl").read_text()
+    assert "repo-authority default=forgejo" in defaults
+    assert "trusted-owner coilysiren" in defaults
+    assert "trusted-owner coilyco-flight-deck" in defaults
+    assert 'repo "coilysiren/*" forge=github' in defaults
+    assert 'repo "coilyco-flight-deck/*" forge=forgejo' in defaults
     assert 'agent-workflow default="direct-main"' in defaults
     assert (
-        'repo "coilyco-flight-deck/ward" workflow="pull-requests"'
+        'repo "coilyco-flight-deck/ward" workflow="pull-requests-and-merge"'
+        in defaults
+    )
+    assert (
+        'repo "coilyco-flight-deck/agentic-os" workflow="pull-requests-and-merge"'
         in defaults
     )
     assert "workflow=pr" not in defaults
@@ -30,6 +39,17 @@ def test_ward_specs_bundle_carries_deployment_anchors() -> None:
 
     fleet = (SPEC_DIR / "ward-kdl.fleet.kdl").read_text()
     assert "attribution name=coilyco-ops" in fleet
+
+
+def test_shell_core_exports_the_ward_bundle_ref() -> None:
+    shell = (
+        pathlib.Path(__file__).resolve().parents[1] / "shell" / "common.sh"
+    ).read_text()
+    assert (
+        "export WARD_CONFIG_REF="
+        "forgejo.coilysiren.me/coilyco-flight-deck/agentic-os@main//.ward"
+        in shell
+    )
 
 
 def test_ward_specs_bundle_documents_workflow_dispatch() -> None:
