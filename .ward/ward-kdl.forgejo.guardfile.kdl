@@ -270,7 +270,7 @@ wrap ward-kdl ops forgejo {
             args {
                 owner $owner
                 repo $repo
-                page 1
+                page "1"
                 limit $limit
             }
             as tasks

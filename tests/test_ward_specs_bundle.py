@@ -1,4 +1,6 @@
+import os
 import pathlib
+import subprocess
 
 
 SPEC_DIR = pathlib.Path(__file__).resolve().parents[1] / ".ward"
@@ -39,7 +41,7 @@ def test_ward_specs_bundle_carries_deployment_anchors() -> None:
     guardfile = (SPEC_DIR / "ward-kdl.forgejo.guardfile.kdl").read_text()
     assert "action list tasks {" in guardfile
     assert 'describe "list Forgejo Actions tasks with a safe page-1 default"' in guardfile
-    assert "page 1" in guardfile
+    assert 'page "1"' in guardfile
     assert "limit $limit" in guardfile
 
     bridge = (SPEC_DIR / "forgejo-actions-logs.sh").read_text()
@@ -78,6 +80,44 @@ def test_ward_specs_bundle_carries_deployment_anchors() -> None:
 
     fleet = (SPEC_DIR / "ward-kdl.fleet.kdl").read_text()
     assert "attribution name=coilyco-ops" in fleet
+
+
+def test_ward_specs_bundle_tasks_list_injects_page_one() -> None:
+    env = os.environ.copy()
+    repo_root = pathlib.Path(__file__).resolve().parents[1]
+    sha = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=repo_root,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    env["WARD_CONFIG_REF"] = (
+        f"forgejo.coilysiren.me/coilyco-flight-deck/agentic-os@{sha}//.ward"
+    )
+
+    proc = subprocess.run(
+        [
+            "ward",
+            "ops",
+            "forgejo",
+            "tasks",
+            "list",
+            "--dry-run",
+            "coilyco-flight-deck",
+            "agentic-os",
+            "--limit",
+            "1",
+        ],
+        cwd=repo_root,
+        env=env,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    assert "page=1" in proc.stdout
+    assert "kdl.Int" not in proc.stdout
 
 
 def test_shell_core_exports_the_ward_bundle_ref() -> None:
