@@ -13,7 +13,22 @@ def test_ward_specs_bundle_carries_deployment_anchors() -> None:
     assert "restrict owner matches coily*" in forgejo
     assert "can dispatch workflow" in forgejo
 
-    actions = (SPEC_DIR / "ward-kdl.forgejo.actions.guardfile.kdl").read_text()
+    read = (SPEC_DIR / "ward-kdl.forgejo.read.guardfile.kdl").read_text()
+    assert "wrap ward-kdl-read ops forgejo" in read
+    assert "can get issue" in read
+    assert "never delete issue" in read
+
+    write = (SPEC_DIR / "ward-kdl.forgejo.write.guardfile.kdl").read_text()
+    assert 'inherit "../ward-kdl-read/ward-kdl.forgejo.read.guardfile.kdl"' in write
+    assert "can create issue" in write
+    assert "can comment issue" in write
+
+    admin = (SPEC_DIR / "ward-kdl.forgejo.admin.guardfile.kdl").read_text()
+    assert 'inherit "../ward-kdl-write/ward-kdl.forgejo.write.guardfile.kdl"' in admin
+    assert "can delete repo" in admin
+    assert "can delete issue-comment" in admin
+
+    actions = (SPEC_DIR / "ward-kdl.forgejo.readactions.guardfile.kdl").read_text()
     assert 'can run "actions logs"' in actions
     assert 'when arg0 matches coily*' in actions
     assert '.ward/forgejo-actions-logs.sh' in actions
@@ -22,11 +37,18 @@ def test_ward_specs_bundle_carries_deployment_anchors() -> None:
     assert "/actions/runs/${run_index}/jobs/${job_index}/attempt/${attempt}/logs" in bridge
     assert "Authorization: token ${FORGEJO_TOKEN}" in bridge
 
-    signoz = (SPEC_DIR / "ward-kdl.signoz.guardfile.kdl").read_text()
-    assert "/coilysiren/signoz-ser8/api-token" in signoz
+    aws = (SPEC_DIR / "ward-kdl.aws.guardfile.kdl").read_text()
+    assert "wrap ward-kdl ops aws" in aws
+    assert "can run ssm get-parameter" in aws
 
-    ollama = (SPEC_DIR / "ward-kdl.ollama.guardfile.kdl").read_text()
-    assert "/coilysiren/ollama/host" in ollama
+    kubectl = (SPEC_DIR / "ward-kdl.kubectl.guardfile.kdl").read_text()
+    assert "wrap ward-kdl ops kubectl" in kubectl
+    assert "can run apply" in kubectl
+
+    roles = (SPEC_DIR / "ward-kdl.roles.kdl").read_text()
+    assert "role qa" in roles
+    assert "role ops" in roles
+    assert "capabilities read ops" in roles
 
     defaults = (SPEC_DIR / "ward-kdl.defaults.kdl").read_text()
     assert "repo-authority default=forgejo" in defaults
@@ -108,5 +130,9 @@ def test_ward_specs_bundle_defaults_are_packaged() -> None:
         / "release.yml"
     ).read_text()
     assert "./ward-kdl.defaults.kdl" in release
-    assert "./ward-kdl.forgejo.actions.guardfile.kdl" in release
+    assert "./ward-kdl.forgejo.read.guardfile.kdl" in release
+    assert "./ward-kdl.forgejo.write.guardfile.kdl" in release
+    assert "./ward-kdl.forgejo.admin.guardfile.kdl" in release
+    assert "./ward-kdl.forgejo.readactions.guardfile.kdl" in release
     assert "./forgejo-actions-logs.sh" in release
+    assert "./ward-kdl.forgejo.actions.guardfile.kdl" not in release

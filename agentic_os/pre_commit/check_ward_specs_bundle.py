@@ -47,7 +47,28 @@ repo-authority default=forgejo {
     repo "coilyco-gaming/*" forge=forgejo
 }
 """
-EXPECTED_TAR_MEMBER = "./ward-kdl.defaults.kdl"
+EXPECTED_TAR_MEMBERS = (
+    "./forgejo-actions-logs.sh",
+    "./forgejo.swagger.lock.json",
+    "./specverb.lock",
+    "./ward-kdl.aws.guardfile.kdl",
+    "./ward-kdl.defaults.kdl",
+    "./ward-kdl.fleet.kdl",
+    "./ward-kdl.forgejo.admin.guardfile.kdl",
+    "./ward-kdl.forgejo.guardfile.kdl",
+    "./ward-kdl.forgejo.read.guardfile.kdl",
+    "./ward-kdl.forgejo.readactions.guardfile.kdl",
+    "./ward-kdl.forgejo.write.guardfile.kdl",
+    "./ward-kdl.kubectl.guardfile.kdl",
+    "./ward-kdl.roles.kdl",
+)
+REMOVED_TAR_MEMBERS = (
+    "./glitchtip.openapi.lock.json",
+    "./signoz.openapi.lock.json",
+    "./ward-kdl.forgejo.actions.guardfile.kdl",
+    "./ward-kdl.ollama.guardfile.kdl",
+    "./ward-kdl.signoz.guardfile.kdl",
+)
 
 
 def fail(msg: str) -> None:
@@ -68,7 +89,10 @@ def _validate_defaults(path: Path) -> None:
 def _validate_release_tar_members(path: Path) -> None:
     _require(path.exists(), f"missing release workflow: {path}")
     text = path.read_text()
-    _require(EXPECTED_TAR_MEMBER in text, f"{path} must package {EXPECTED_TAR_MEMBER} into ward-specs")
+    for member in EXPECTED_TAR_MEMBERS:
+        _require(member in text, f"{path} must package {member} into ward-specs")
+    for member in REMOVED_TAR_MEMBERS:
+        _require(member not in text, f"{path} must not package removed ward-specs member {member}")
 
 
 def main() -> int:

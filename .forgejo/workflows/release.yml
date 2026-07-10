@@ -435,14 +435,17 @@ jobs:
             -C .ward -cf ward-specs.tar \
             ./forgejo-actions-logs.sh \
             ./forgejo.swagger.lock.json \
-            ./glitchtip.openapi.lock.json \
-            ./signoz.openapi.lock.json \
+            ./specverb.lock \
+            ./ward-kdl.aws.guardfile.kdl \
             ./ward-kdl.defaults.kdl \
             ./ward-kdl.fleet.kdl \
-            ./ward-kdl.forgejo.actions.guardfile.kdl \
+            ./ward-kdl.forgejo.admin.guardfile.kdl \
             ./ward-kdl.forgejo.guardfile.kdl \
-            ./ward-kdl.ollama.guardfile.kdl \
-            ./ward-kdl.signoz.guardfile.kdl
+            ./ward-kdl.forgejo.read.guardfile.kdl \
+            ./ward-kdl.forgejo.readactions.guardfile.kdl \
+            ./ward-kdl.forgejo.write.guardfile.kdl \
+            ./ward-kdl.kubectl.guardfile.kdl \
+            ./ward-kdl.roles.kdl
           gzip -n -9 -c ward-specs.tar > "${asset}"
           sha256sum "${asset}" | awk '{print $1}' > "${asset}.sha256"
           echo "ward-specs asset sha256: $(cat "${asset}.sha256")"
