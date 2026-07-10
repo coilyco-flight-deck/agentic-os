@@ -54,7 +54,7 @@ bundle metadata file, `.ward/ward.bundle.kdl`, and the Forgejo lockfile,
 
 ward keeps one neutral shipped binary and launches the coilyco bundle through
 `WARD_CONFIG_REF`. The former release-time build overlay is gone, so the AOS
-asset is no longer a custom binary input. The published
+asset is no longer tracked as a committed blob. The published
 `ward-specs-<tag>.tar.gz` remains the canonical bundle artifact and checksum
 target, but the live config path is the runtime `WARD_CONFIG_REF` seam, not a
 bespoke rebuild from the asset. When the Forgejo lockfile is absent, ward
