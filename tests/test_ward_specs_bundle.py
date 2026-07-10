@@ -82,9 +82,8 @@ def test_ward_specs_bundle_carries_deployment_anchors() -> None:
     assert "capabilities read ops" not in roles
     assert 'guardfile "guardfile.forgejo.read.kdl"' in roles
     assert 'guardfile "guardfile.forgejo.readactions.kdl"' in roles
-    # The runner-token overlay binds to director and ops only (agentic-os#447).
-    assert roles.count('guardfile "guardfile.forgejo.runnertoken.kdl"') == 2
-    assert 'guardfile "guardfile.forgejo.merge.kdl"' not in roles
+    # The merge overlay binds to director and engineer only (agentic-os#446).
+    assert roles.count('guardfile "guardfile.forgejo.merge.kdl"') == 2
     assert 'guardfile "guardfile.aws.kdl"' in roles
     assert 'guardfile "guardfile.kubectl.kdl"' in roles
 
@@ -210,17 +209,17 @@ def test_ward_specs_bundle_defaults_are_packaged() -> None:
     assert "./guardfile.forgejo.admin.kdl" in release
     assert "./guardfile.forgejo.readactions.kdl" in release
     assert "./guardfile.forgejo.kdl" in release
-    assert "./guardfile.forgejo.runnertoken.kdl" in release
-    assert "./guardfile.tailscale.kdl" in release
+    assert "./guardfile.forgejo.merge.kdl" in release
     assert "./guardfile.kubectl.kdl" in release
     assert "./repos.kdl" in release
     assert "./roles.kdl" in release
     assert "./forgejo-runner-token.sh" in release
     assert "./surface-check.sh" in release
-    assert "./forgejo-actions-list.sh" in release
-    assert "./forgejo-actions-logs.sh" in release
-    assert "./guardfile.forgejo.merge.kdl" not in release
+    assert "./guardfile.forgejo.runnertoken.kdl" in release
+    assert "./guardfile.tailscale.kdl" in release
     assert "./ward.bundle.kdl" not in release
     assert "./ops.forgejo.kdl" not in release
     assert "./forgejo.swagger.lock.json" not in release
+    assert "./forgejo-actions-list.sh" in release
+    assert "./forgejo-actions-logs.sh" in release
     assert "./ward-kdl.forgejo.actions.guardfile.kdl" not in release

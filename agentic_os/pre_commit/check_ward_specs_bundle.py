@@ -60,6 +60,7 @@ EXPECTED_TAR_MEMBERS = (
     "./guardfile.aws.kdl",
     "./guardfile.forgejo.admin.kdl",
     "./guardfile.forgejo.kdl",
+    "./guardfile.forgejo.merge.kdl",
     "./guardfile.forgejo.read.kdl",
     "./guardfile.forgejo.readactions.kdl",
     "./guardfile.forgejo.runnertoken.kdl",
