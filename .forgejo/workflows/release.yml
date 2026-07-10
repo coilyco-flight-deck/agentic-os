@@ -68,6 +68,13 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Install uv
+        run: |
+          set -euo pipefail
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          "$HOME/.local/bin/uv" --version
+
       - name: Install docker CLI + buildx plugin
         run: |
           set -euo pipefail
