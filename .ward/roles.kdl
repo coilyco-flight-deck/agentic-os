@@ -18,6 +18,7 @@ roles {
         // director fronts incident recovery: live-observe + deploy + token mint
         // (agentic-os#447 restored these after the 2026-07-10 rollback).
         guardfile "guardfile.aws.kdl"
+        guardfile "guardfile.tailscale.kdl"
         guardfile "guardfile.kubectl.kdl"
         guardfile "guardfile.forgejo.runnertoken.kdl"
         agent claude {
@@ -32,9 +33,10 @@ roles {
     role advisor {
         guardfile "guardfile.forgejo.read.kdl"
         guardfile "guardfile.forgejo.readactions.kdl"
-        // advisor answers with live findings: the aws half of its documented
-        // live-observe set (tailnet bring-up is ward-side, see role-surface-tiers).
+        // advisor answers with live findings: its documented live-observe set
+        // (tailnet + aws). Daemon/creds bring-up stays ward-side, see role-surface-tiers.
         guardfile "guardfile.aws.kdl"
+        guardfile "guardfile.tailscale.kdl"
         agent claude {
             model claude-opus-4-8
             reasoning-effort high
@@ -54,6 +56,7 @@ roles {
         guardfile "guardfile.forgejo.readactions.kdl"
         guardfile "guardfile.forgejo.write.kdl"
         guardfile "guardfile.aws.kdl"
+        guardfile "guardfile.tailscale.kdl"
         guardfile "guardfile.kubectl.kdl"
         guardfile "guardfile.forgejo.runnertoken.kdl"
         agent claude {
