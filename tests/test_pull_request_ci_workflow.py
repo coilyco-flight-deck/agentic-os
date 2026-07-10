@@ -12,9 +12,30 @@ def test_pull_request_ci_workflow_exposes_branch_protection_context() -> None:
     assert "pull_request:" in workflow
     assert "git clone --depth 1 --branch main https://forgejo.coilysiren.me/coilyco-flight-deck/ward.git" in workflow
     assert "WARD_BIN" in workflow
+    assert "build-dev-base:" in workflow
+    assert "uses: ./actions/dev-base-build" in workflow
+    assert "uses: ./actions/tag-bump" in workflow
+
+
+def test_pull_request_ci_builds_dev_base_without_publishing() -> None:
+    workflow = (ROOT / ".forgejo" / "workflows" / "ci.yml").read_text()
+    assert "build-dev-base:" in workflow
+    assert "uses: ./actions/dev-base-build" in workflow
+    assert "github.event_name == 'pull_request'" in workflow
+    # Build-only contract: the PR job never publishes and never holds creds.
+    assert 'push: "true"' not in workflow
+    assert "registry_token" not in workflow
+    assert "secrets.REGISTRY_TOKEN" not in workflow
+
+
+def test_pull_request_ci_dry_runs_the_release_tag_computation() -> None:
+    workflow = (ROOT / ".forgejo" / "workflows" / "ci.yml").read_text()
+    assert "uses: ./actions/tag-bump" in workflow
+    assert "create_tag: false" in workflow
 
 
 def test_pull_request_ci_docs_name_the_required_context() -> None:
     docs = (ROOT / "docs" / "ci-in-dev-base.md").read_text()
     assert "ci / gate" in docs
-    assert "pull-request-and-merge" in docs
+    assert "ci / build-dev-base" in docs
+    assert "pull-requests-and-merge" in docs

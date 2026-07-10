@@ -32,9 +32,12 @@ starting point for an app's `.forgejo/workflows/*.yml`.
 
 This repo's live companion is [`.forgejo/workflows/ci.yml`](../.forgejo/workflows/ci.yml).
 It keeps the workflow name `ci` and the job name `gate`, so Forgejo branch
-protection can require the `ci / gate` status context on `pull-request-and-merge`
+protection can require the `ci / gate` status context on `pull-requests-and-merge`
 repos. The live gate runs `pytest` plus `pre-commit run --all-files`, matching
 the release gate so a PR cannot pass what main would refuse.
+PRs also run the main-only validations: a tag-compute dry run in `gate`, plus
+a `build-dev-base` job exposing a second required context, `ci / build-dev-base`
+([walkthrough](pr-dev-base-build-validation.md)).
 
 ## Pinned, not the moving alias
 
@@ -62,15 +65,13 @@ it carries a rendered literal, bumped only when the rollout re-runs.
 
 ## Rollout unit
 
-Each app's `.forgejo/workflows/*.yml` is the rollout unit; the first mover /
-reference adopter is a single app, on its own adoption issue. The blocking
-dependency was the dev-base image fix (agentic-os#327): with the image fixed,
-ward verbs pass inside dev-base and parity holds green.
+Each app's `.forgejo/workflows/*.yml` is the rollout unit, with a single app
+as first mover on its own adoption issue. The blocking dependency was the
+dev-base image fix (agentic-os#327): with it fixed, parity holds green.
 
 ## See also
 
 - [dev-base container image](dev-base-image.md) - the image CI pins.
 - [dev-base auto-bump](dev-base-auto-bump.md) - how pinned tool `ARG`s refresh.
-- [Tiered dev-base image split](dev-base-image-tiering.md) - the implemented image
-  family and pinning evolution.
+- [Tiered dev-base image split](dev-base-image-tiering.md) - the tier fan-out.
 - [FEATURES.md](FEATURES.md) - the feature inventory this lands in.

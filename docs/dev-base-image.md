@@ -48,6 +48,10 @@ ward launches against the bundled `.ward/` checkout rather than moving `main`.
 The core build runs `ward doctor` after installing ward, rejecting a broken
 bundle before the draft image publishes.
 
+The build/verify half of that publish also runs build-only on every pull
+request, so image breakage fails the PR rather than the post-merge publish.
+See [PR dev-base build validation](pr-dev-base-build-validation.md).
+
 ## Pinning a tool
 
 Versions pin as `ARG`s: hand-edit and push to main to pin or roll back, else a

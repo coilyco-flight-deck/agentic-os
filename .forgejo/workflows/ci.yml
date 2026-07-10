@@ -10,6 +10,16 @@
 # re-encoding their content. It is the same doctor the core image build runs
 # (the aos#452 fail-closed path), moved up to commit time so a broken bundle
 # cannot reach main.
+#
+# Beyond the test gate, PRs also run the validations that used to live only on
+# main (agentic-os#454, preventing the agentic-os#452 red-main class): gate
+# dry-runs the release tag computation, and build-dev-base builds the whole
+# dev-base tier family through the shared ./actions/dev-base-build composite in
+# build-only mode. That exercises every Dockerfile, pinned ARG, and the in-image
+# `ward doctor` gate pre-merge, while publish, tag, and the GitHub mirror stay
+# main-only. Branch protection can require the `ci / build-dev-base` context
+# alongside `ci / gate`. The job is pull_request-only: on main the same build
+# runs through the publish path, so re-building here would only duplicate it.
 
 name: ci
 
@@ -63,6 +73,10 @@ jobs:
           # Same surface release.yml's gate enforces: without this, a
           # pre-commit violation passes the PR and reddens main (run 1078).
           pre-commit run --all-files
+      - name: Validate release planning (compute-only tag bump)
+        uses: ./actions/tag-bump
+        with:
+          create_tag: false
       - name: Alert Telegram on main failure
         if: ${{ failure() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/release') }}
         env:
@@ -123,3 +137,25 @@ jobs:
 
           main()
           PY
+  build-dev-base:
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: docker
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Build and verify the dev-base tier family (no publish)
+        uses: ./actions/dev-base-build
+        with:
+          tag: pr-${{ github.run_id }}
+
+      - name: Clean up this run's local tier images
+        if: ${{ always() }}
+        run: |
+          set -euo pipefail
+          # The build-only images land on the shared daemon; drop this run's
+          # tags so PR runs do not pile named images up. The underlying
+          # layers stay behind as build cache for the next PR.
+          docker images --format '{{.Repository}}:{{.Tag}}' \
+            | { grep ":pr-${{ github.run_id }}$" || true; } \
+            | xargs -r docker rmi >/dev/null || true
