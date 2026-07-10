@@ -904,6 +904,20 @@ Options (2):
 - `--page` (integer, optional): page number of results to return (1-based)
 - `--limit` (integer, optional): page size of results, default maximum page size is 50
 
+## ward ops forgejo actions logs - stream plaintext Actions job logs from the live Forgejo web route
+
+`bash .ward/forgejo-actions-logs.sh <owner> <repo> <run-index> <job-index> <attempt>`
+
+Exec overlay. The binary and token are fixed at parse, and the caller can never substitute them.
+
+Env set on the process (resolved at exec time): `FORGEJO_TOKEN = ssm /forgejo/coilyco-ops/api-token`.
+
+Wrap-level guards (enforced on every verb, before any exec):
+
+- requires arg0 matches coily*
+
+Flags: unrestricted passthrough.
+
 ## ward ops forgejo issue list-all - List all issues by auto-paginating issue list.
 
 Shadows the generated `issue list-all` leaf: invoking it runs this composite in the leaf's place.

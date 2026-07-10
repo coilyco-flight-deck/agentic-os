@@ -2,9 +2,9 @@
 
 The aos-hosted deployment bundle for ward's coilyco build input lives directly
 in [`.ward/`](../.ward/), flattened alongside `.ward/ward.yaml` (aos#330 - aos#315
-first homed it at top-level `ward-specs/`). It carries the forgejo guardfile, the
-signoz and ollama guardfiles, the fleet manifest, the smart-defaults bundle, and
-the spec locks.
+first homed it at top-level `ward-specs/`). It carries the forgejo guardfiles,
+the raw Actions log bridge, the signoz and ollama guardfiles, the fleet
+manifest, the smart-defaults bundle, and the spec locks.
 
 ## Direction of truth
 
@@ -24,7 +24,9 @@ This is the one place a shipped tool (ward) consumes runtime config authored in 
 reference repo (aos), a reasoned exception to AGENTS.md's config-placement
 corollary. The bundle is Kai's single coilyco deployment, not fleet config every
 ward user melds. External ward users build neutral and never fetch it. The
-exception is stated in
+Forgejo Actions log bridge stays here as a coilyco-specific overlay because the
+upstream swagger omits the live web log route and the current renderer stays
+JSON-first. The exception is stated in
 [AGENTS.md](../AGENTS.md).
 
 ## Release asset
