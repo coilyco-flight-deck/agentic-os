@@ -134,6 +134,32 @@ wrap ward-kdl-read ops forgejo {
     can list issue-label
     // actions tasks: the read-only CI-run listing surface.
     can list tasks
+    action list tasks {
+        describe "list Forgejo Actions tasks with a safe page-1 default"
+        input owner {
+            positional
+            required
+            help "repo owner"
+        }
+        input repo {
+            positional
+            required
+            help "repo name"
+        }
+        input limit {
+            flag
+            help "page size of results"
+        }
+        call list tasks {
+            args {
+                owner $owner
+                repo $repo
+                page "1"
+                limit $limit
+            }
+            as tasks
+        }
+    }
     // list-all issue: auto-paginate the issue list (read-family). Actions are
     // child-local (cli-guard v0.72.0), so it is re-declared in write/admin (ward#278).
     action list-all issue {
