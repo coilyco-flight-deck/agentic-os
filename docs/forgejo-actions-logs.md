@@ -35,4 +35,5 @@ The resolved log route is:
 See also:
 
 - [ward-specs.md](ward-specs.md)
+- [Forgejo Actions rerun bridge](forgejo-actions-rerun.md)
 - [Cross-repo tooling and release](FEATURES.md)

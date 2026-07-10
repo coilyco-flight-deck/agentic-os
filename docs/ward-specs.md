@@ -29,10 +29,10 @@ Forgejo splits into a compatibility monolith for the current `ward ops forgejo`
 runtime surface plus role-facing read, write, and admin tier guardfiles. The read
 tier owns the shared spec, base URL, auth, explicit read grants, and inherited
 denials. The write tier inherits read and adds authoring verbs. The admin tier
-inherits write and adds targeted delete verbs. The raw Actions log bridge stays
-here as a coilyco-specific overlay because the upstream swagger omits the live
-web log route and the current renderer stays JSON-first. The exception is stated in
-[AGENTS.md](../AGENTS.md).
+inherits write and adds targeted delete verbs. The raw Actions log bridge and the
+Actions rerun bridge stay here as coilyco-specific overlays because the upstream
+swagger omits the live log and rerun routes and the current renderer stays
+JSON-first. The exception is stated in [AGENTS.md](../AGENTS.md).
 
 ## Release asset
 
