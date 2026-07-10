@@ -63,6 +63,15 @@ def test_core_tier_keeps_the_hidden_ward_builder_stage() -> None:
     assert "AS dev-base-ward-builder" in text
     assert 'COPY --from=dev-base-ward-builder /usr/local/bin/ward /usr/local/bin/ward' in text
     assert "ARG WARD_VERSION=0.529.0" in text
+    assert "ARG WARD_CONFIG_REF_COMMIT" in text
+    assert "WARD_CONFIG_REF=forgejo.coilysiren.me/coilyco-flight-deck/agentic-os@${WARD_CONFIG_REF_COMMIT}//.ward" in text
+
+
+def test_shell_common_exports_a_commit_addressed_ward_config_ref() -> None:
+    text = (Path(__file__).resolve().parent.parent / "shell" / "common.sh").read_text()
+    assert "_siren_ward_config_ref()" in text
+    assert 'git -C "$repo" rev-parse HEAD' in text
+    assert "export WARD_CONFIG_REF=\"$(_siren_ward_config_ref)\"" in text
 
 
 def test_cache_ref_strips_the_release_tag() -> None:
@@ -75,6 +84,40 @@ def test_tier_files_chain_from_the_previous_tier_image() -> None:
         text = _tier_path(tier).read_text()
         assert f"FROM ${{BASE_IMAGE}} AS dev-base-{tier}" in text
         assert "ARG BASE_IMAGE" in text
+
+
+def test_split_tiers_keep_their_managed_arg_defaults() -> None:
+    expected_defaults = {
+        "lang-node": ["ARG NODE_VERSION=22.23.1"],
+        "lang-go": ["ARG GO_VERSION=1.26.4"],
+        "lang-dotnet": ["ARG DOTNET_VERSION=10.0.301"],
+        "ops": [
+            "ARG AWSCLI_VERSION=2.35.15",
+            "ARG GH_VERSION=2.96.0",
+            "ARG DOCKER_VERSION=28.5.2",
+            "ARG HELM_VERSION=4.2.2",
+            "ARG KUBECTL_VERSION=1.36.2",
+            "ARG YQ_VERSION=4.53.3",
+            "ARG TAILSCALE_VERSION=1.98.8",
+        ],
+        "agent": [
+            "ARG CLAUDE_VERSION=2.1.200",
+            "ARG MCPORTER_VERSION=0.12.3",
+            "ARG CODEX_VERSION=0.142.5",
+            "ARG GOOSE_VERSION=1.41.0",
+            "ARG OPENCODE_VERSION=1.17.18",
+        ],
+        "full": [
+            "ARG GOLANGCI_LINT_VERSION=2.12.2",
+            "ARG TRUFFLEHOG_VERSION=3.95.8",
+            "ARG KDLFMT_VERSION=0.1.7",
+        ],
+    }
+
+    for tier, arg_lines in expected_defaults.items():
+        text = _tier_path(tier).read_text()
+        for line in arg_lines:
+            assert line in text
 
 
 def test_agent_tier_still_copies_the_stable_assets_from_the_root_context() -> None:
@@ -103,6 +146,7 @@ def test_pushed_build_uses_release_tagless_cache_ref(monkeypatch) -> None:
 
     monkeypatch.setattr(script, "_run", lambda cmd: commands.append(cmd))
     monkeypatch.setattr(script, "_host_targetarch", lambda: "amd64")
+    monkeypatch.setattr(script, "_ward_config_ref_commit", lambda: "abc123")
 
     script._build_plan(REGISTRY_BASE, "v0.243.0", True, "linux/amd64,linux/arm64")
 
@@ -116,3 +160,8 @@ def test_pushed_build_uses_release_tagless_cache_ref(monkeypatch) -> None:
     assert all(":v0.243.0:buildcache" not in ref for ref in cache_refs)
     assert f"type=registry,ref={REGISTRY_BASE}-core:buildcache" in cache_refs
     assert f"type=registry,ref={REGISTRY_BASE}-full:buildcache,mode=max,ignore-error=true" in cache_refs
+    assert any(
+        "WARD_CONFIG_REF_COMMIT=abc123" in arg
+        for cmd in commands
+        for arg in cmd
+    )

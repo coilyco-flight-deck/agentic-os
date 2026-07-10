@@ -1,0 +1,15 @@
+// Forgejo Actions log streaming overlay for ward-kdl.
+// The upstream swagger snapshot omits this live web route, and the current
+// specverb renderer is JSON-first, so this overlay uses an exec bridge to keep
+// the plaintext log body raw on stdout.
+wrap ward ops forgejo {
+    exec bash
+    env FORGEJO_TOKEN {
+        value ssm "/forgejo/coilyco-ops/api-token"
+    }
+    when arg0 matches coily*
+    can run "actions logs" {
+        argv ".ward/forgejo-actions-logs.sh"
+        describe "stream plaintext Actions job logs from the live Forgejo web route"
+    }
+}

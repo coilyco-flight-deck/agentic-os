@@ -9,6 +9,7 @@ FROM ubuntu:24.04 AS dev-base-ward-builder
 ARG GO_VERSION
 ARG WARD_VERSION
 ARG TARGETARCH
+ARG WARD_CONFIG_REF_COMMIT
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PATH=/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin
@@ -31,7 +32,7 @@ RUN set -eux; \
     rm /tmp/go.tar.gz; \
     go version
 
-ENV WARD_CONFIG_REF=forgejo.coilysiren.me/coilyco-flight-deck/agentic-os@main//.ward
+ENV WARD_CONFIG_REF=forgejo.coilysiren.me/coilyco-flight-deck/agentic-os@${WARD_CONFIG_REF_COMMIT}//.ward
 RUN set -eux; \
     export GOPATH=/tmp/gobuild GOCACHE=/tmp/gocache \
       GOPROXY=direct GOSUMDB=off GOPRIVATE=forgejo.coilysiren.me CGO_ENABLED=0; \
@@ -53,6 +54,7 @@ RUN set -eux; \
 FROM ubuntu:24.04 AS dev-base-core
 ARG UV_VERSION
 ARG TARGETARCH
+ARG WARD_CONFIG_REF_COMMIT
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PATH=/usr/local/go/bin:/usr/local/dotnet:/usr/local/cargo/bin:/usr/local/bin:/usr/bin:/bin:/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin \
@@ -69,7 +71,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
     AWS_REGION=us-east-1 \
     DOTNET_ROOT=/usr/local/dotnet \
     DOTNET_CLI_TELEMETRY_OPTOUT=1 \
-    DOTNET_NOLOGO=1
+    DOTNET_NOLOGO=1 \
+    WARD_CONFIG_REF=forgejo.coilysiren.me/coilyco-flight-deck/agentic-os@${WARD_CONFIG_REF_COMMIT}//.ward
 
 # Base packages: catalog-hook deps (shellcheck, python3, git) plus the inner loop's fetch/build tools.
 # libicu74 is the .NET globalization backend: the SDK below runs

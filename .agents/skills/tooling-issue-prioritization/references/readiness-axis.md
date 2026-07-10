@@ -4,14 +4,14 @@ A third property orthogonal to both tier (urgency) and [mode](automation-mode-ax
 
 ## The state
 
-- **`blocked-on-dependency`** - the work is correctly scoped **and** intrinsically `headless`-eligible, with no pending design call and no human decision. It is simply not runnable yet because its resolver is **another repo's release or issue**, not a person. It carries a **blocker pointer** - the upstream issue whose close unblocks it.
+- **`blocked-on-dependency`** - the work is correctly scoped **and** intrinsically `headless`-eligible, with no pending design call and no human decision. It is simply not runnable yet because its resolver is **another repo's issue**, not a person. It carries a **blocker pointer** - the upstream issue whose close unblocks it. The pointer lives in the issue body as `<!-- ward-blocked-on: owner/repo#123 -->`. That body marker is the source of truth. Labels alone cannot carry the upstream ref.
 
 ## Why it is not `consult`
 
 The trap is collapsing this into `consult`. They look alike (both "do not dispatch now") but resolve on opposite signals:
 
 - A **`consult`** issue waits for a **human** - a decision, design, or access an agent lacks. It should not be dispatched at all, and a person has to come back and re-decide before it ever moves.
-- A **`blocked-on-dependency`** issue waits for a **machine event** - its blocker closing. There is nothing to decide. The moment the upstream release lands it should **auto-resume into the `headless` queue** with no human re-triage.
+- A **`blocked-on-dependency`** issue waits for a **machine event** - its blocker issue closing. There is nothing to decide. The moment the upstream issue closes it should **auto-resume into the `headless` queue** with no human re-triage.
 
 A `consult` issue waits for a person. A blocked-headless issue should wake on upstream resolution. Reading the second as the first throws away the signal that matters.
 
@@ -19,8 +19,10 @@ A `consult` issue waits for a person. A blocked-headless issue should wake on up
 
 Because readiness is orthogonal to mode, `blocked-on-dependency` does **not** replace a mode label - it rides alongside one. The common case is `headless` + `blocked-on-dependency`: settled headless work, parked on an upstream, due to wake on its own.
 
-The triggering case is a ward issue, blocked only on cli-guard exporting `ParseIssueRef`/`IssueRef` and cutting a release. Its `ward agent headless` pre-flight NO-GO'd it as a cross-repo release-sequencing **fork** - reading a defer-and-wake as a needs-a-human consult, exactly the misread this state removes.
+The triggering case is a ward issue blocked only on cli-guard exporting `ParseIssueRef`/`IssueRef`. Its `ward agent headless` pre-flight NO-GO'd it as a cross-repo coordination **fork** - reading a defer-and-wake as a needs-a-human consult, exactly the misread this state removes.
+
+If the blocker pointer is missing or ambiguous, the issue fails closed. The classifier keeps the ordinary mode and tier labels and does not claim wake behavior.
 
 ## What is named here vs built later
 
-This doc names the state and fixes its semantics. The enforcing half - teaching the `ward agent headless` pre-flight to detect it, plus the auto-resume **wake mechanism** that re-enters a dependent issue into the dispatch queue when its blocker closes - is the cross-repo build tracked in the release-sequencing work.
+This doc names the state and fixes its semantics. The enforcing half - teaching the `ward agent headless` pre-flight to detect it, plus the auto-resume **wake mechanism** that re-enters a dependent issue into the dispatch queue when its blocker issue closes - is the cross-repo build tracked in the dependency work.

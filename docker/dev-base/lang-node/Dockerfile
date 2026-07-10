@@ -1,6 +1,6 @@
 ARG BASE_IMAGE
 FROM ${BASE_IMAGE} AS dev-base-lang-node
-ARG NODE_VERSION
+ARG NODE_VERSION=22.23.1
 
 # Node + npm (Claude Code's runtime).
 RUN set -eux; \
