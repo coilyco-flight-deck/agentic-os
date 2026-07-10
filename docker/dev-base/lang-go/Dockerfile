@@ -1,6 +1,6 @@
 ARG BASE_IMAGE
 FROM ${BASE_IMAGE} AS dev-base-lang-go
-ARG GO_VERSION
+ARG GO_VERSION=1.26.4
 
 # Go (builds the warp module's pre-commit hooks and, later, ward).
 RUN set -eux; \
