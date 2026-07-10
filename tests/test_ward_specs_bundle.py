@@ -103,6 +103,9 @@ def test_ward_specs_bundle_carries_deployment_anchors() -> None:
     assert "trusted-owner coilyco-flight-deck" in repos
     assert 'repo "coilysiren/*" forge=github' in repos
     assert 'repo "coilyco-flight-deck/*" forge=forgejo' in repos
+    assert "burndown default=true" in repos
+    assert 'repo "coilyco-flight-deck/infrastructure" false' in repos
+    assert 'repo "coilyco-bridge/deploy" false' in repos
 
     agents = (SPEC_DIR / "agents.kdl").read_text()
     assert "agents {" in agents
@@ -207,16 +210,20 @@ def test_ward_specs_bundle_defaults_are_packaged() -> None:
     assert "./guardfile.forgejo.admin.kdl" in release
     assert "./guardfile.forgejo.readactions.kdl" in release
     assert "./guardfile.forgejo.kdl" in release
-    assert "./ward-kdl.forgejo.rerun.guardfile.kdl" in release
+    assert "./guardfile.forgejo.merge.kdl" in release
     assert "./guardfile.kubectl.kdl" in release
     assert "./repos.kdl" in release
     assert "./roles.kdl" in release
     assert "./forgejo-actions-rerun-failed-jobs.sh" in release
     assert "./forgejo-actions-rerun.sh" in release
-    assert "./forgejo.swagger.lock.json" in release
+    assert "./forgejo-runner-token.sh" in release
+    assert "./surface-check.sh" in release
+    assert "./guardfile.forgejo.runnertoken.kdl" in release
+    assert "./guardfile.tailscale.kdl" in release
+    assert "./ward-kdl.forgejo.rerun.guardfile.kdl" in release
+    assert "./forgejo.swagger.lock.json" not in release
     assert "./forgejo-actions-list.sh" in release
     assert "./forgejo-actions-logs.sh" in release
-    assert "./guardfile.forgejo.merge.kdl" not in release
     assert "./ward.bundle.kdl" not in release
     assert "./ops.forgejo.kdl" not in release
     assert "./ward-kdl.forgejo.actions.guardfile.kdl" not in release

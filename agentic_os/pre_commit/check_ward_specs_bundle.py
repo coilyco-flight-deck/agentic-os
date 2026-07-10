@@ -48,13 +48,17 @@ EXPECTED_REPOS = """repos {
         repo "coilyco-flight-deck/*" forge=forgejo
         repo "coilyco-gaming/*" forge=forgejo
     }
+
+    burndown default=true {
+        repo "coilyco-flight-deck/infrastructure" false
+        repo "coilyco-bridge/deploy" false
+    }
 }
 """
 EXPECTED_TAR_MEMBERS = (
     "./forgejo-actions-logs.sh",
-    "./ward.bundle.kdl",
-    "./ops.forgejo.kdl",
-    "./forgejo.swagger.lock.json",
+    "./forgejo-runner-token.sh",
+    "./surface-check.sh",
     "./specverb.lock",
     "./agents.kdl",
     "./defaults.kdl",
@@ -64,8 +68,10 @@ EXPECTED_TAR_MEMBERS = (
     "./guardfile.forgejo.merge.kdl",
     "./guardfile.forgejo.read.kdl",
     "./guardfile.forgejo.readactions.kdl",
+    "./guardfile.forgejo.runnertoken.kdl",
     "./guardfile.forgejo.write.kdl",
     "./guardfile.kubectl.kdl",
+    "./guardfile.tailscale.kdl",
     "./repos.kdl",
     "./roles.kdl",
 )

@@ -433,7 +433,8 @@ jobs:
             ./forgejo-actions-logs.sh \
             ./forgejo-actions-rerun-failed-jobs.sh \
             ./forgejo-actions-rerun.sh \
-            ./forgejo.swagger.lock.json \
+            ./forgejo-runner-token.sh \
+            ./surface-check.sh \
             ./specverb.lock \
             ./agents.kdl \
             ./defaults.kdl \
@@ -442,9 +443,12 @@ jobs:
             ./guardfile.forgejo.kdl \
             ./guardfile.forgejo.read.kdl \
             ./guardfile.forgejo.readactions.kdl \
+            ./guardfile.forgejo.merge.kdl \
+            ./guardfile.forgejo.runnertoken.kdl \
             ./ward-kdl.forgejo.rerun.guardfile.kdl \
             ./guardfile.forgejo.write.kdl \
             ./guardfile.kubectl.kdl \
+            ./guardfile.tailscale.kdl \
             ./repos.kdl \
             ./roles.kdl
           gzip -n -9 -c ward-specs.tar > "${asset}"
