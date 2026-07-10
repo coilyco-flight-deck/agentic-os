@@ -79,10 +79,11 @@ RUN set -eux; \
 COPY agent-name.sh /opt/agentic-os/agent-name.sh
 COPY statusline.sh /opt/agentic-os/statusline.sh
 COPY statusline.d/ /opt/agentic-os/statusline.d/
+COPY ward-shell-entrypoint.sh /opt/agentic-os/ward-shell-entrypoint.sh
 COPY claude-managed-settings.json /etc/claude-code/managed-settings.json
 RUN set -eux; \
     chmod 0755 /opt/agentic-os/agent-name.sh /opt/agentic-os/statusline.sh; \
-    chmod 0755 /opt/agentic-os/statusline.d/*.sh; \
+    chmod 0755 /opt/agentic-os/statusline.d/*.sh /opt/agentic-os/ward-shell-entrypoint.sh; \
     chmod 0644 /etc/claude-code/managed-settings.json
 
 # Substrate seed: bare mirrors of the public (image-tier) reference repos a ward
@@ -105,3 +106,5 @@ RUN set -eux; \
     done < /tmp/substrate-image-repos.txt; \
     rm /tmp/substrate-image-repos.txt; \
     chmod -R a+rX /opt/substrate-seed
+
+ENTRYPOINT ["/opt/agentic-os/ward-shell-entrypoint.sh"]
