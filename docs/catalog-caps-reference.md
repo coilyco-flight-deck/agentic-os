@@ -16,8 +16,10 @@ Constants live in [`agentic_os/pre_commit/check_code_comments.py`](../agentic_os
 
 * **markdown lines** - 80 - non-blank lines for most `.md` files.
 * **markdown chars** - 4000 - characters for most `.md` files.
-* **trifecta lines** - 160 - non-blank lines for the root README.md, docs/FEATURES.md, and AGENTS.md.
-* **trifecta chars** - 12500 - characters for the trifecta files.
+* **README/AGENTS lines** - 160 - non-blank lines for the root README.md and AGENTS.md.
+* **README/AGENTS chars** - 12500 - characters for the root README.md and AGENTS.md.
+* **FEATURES.md lines** - 80 - non-blank lines for docs/FEATURES.md.
+* **FEATURES.md chars** - 4000 - characters for docs/FEATURES.md.
 * **AGENTS.md lines (default)** - 160 - AGENTS.md defaults to the trifecta line cap (override per-repo with `agents_md_max_lines`).
 * **AGENTS.md chars (default)** - 12500 - AGENTS.md defaults to the trifecta char cap (override per-repo with `agents_md_max_chars`).
 * **README.md lines (default)** - 160 - the root README.md defaults to the trifecta line cap (override per-repo with `readme_max_lines`).

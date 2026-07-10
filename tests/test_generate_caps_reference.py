@@ -19,6 +19,8 @@ def test_render_reflects_live_constants() -> None:
         dl.MAX_MARKDOWN_CHARS,
         dl.TRIFECTA_MAX_LINES,
         dl.TRIFECTA_MAX_CHARS,
+        dl.FEATURES_MAX_LINES,
+        dl.FEATURES_MAX_CHARS,
         dl.README_DEFAULT_MAX_LINES,
         dl.README_DEFAULT_MAX_CHARS,
         dl.README_MAX_LINES,

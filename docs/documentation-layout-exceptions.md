@@ -6,6 +6,7 @@ Every carve-out from the default `documentation-layout` rule: Markdown lives onl
 
 - **`excludes` (config)** - fully exempt from location AND size checks, per the layout escape hatch. Today: `warp/launch_configurations/**` (README), `warp/tab_configs/**` (wtab.md, claude-agent-work.md), `docs/ward-ops-forgejo-reference.md` (generated `ward ops forgejo describe` render, over-cap by design). This is the one hand-maintained surface, so it drifts - prune it when a file moves.
 - **AGENTS.md size override** - config keys `agents_md_max_lines = 160` and `agents_md_max_chars = 12000` replace the 80/4000 default for `AGENTS.md` only. Load-bearing: the file is over 4000 chars, so it would fail the default.
+- **FEATURES.md size cap** - `docs/FEATURES.md` uses the tight inventory cap from `check_documentation_layout.py`: 80 lines / 4000 chars. That keeps it a major-capability index, not a changelog.
 - **Root allowlist** - present: `AGENTS.md`, `CLAUDE.md`, `CODE-REVIEW.md`, `README.md`. Any other root `*.md` fails the location check and would need either a move into `docs/` or an explicit exclude.
 - **Skill-path location carve-out** - `*.md` under `.agents/skills/`, `.claude/skills/`, or `skills/` may live outside `docs/` at any depth (~220 files here). Location-only: the 80/4000 size cap still applies.
 
@@ -15,7 +16,7 @@ These ship in the shared validator for other repos in the family but match nothi
 
 - **`SIZE_CAP_EXEMPT_BASENAMES`** - `CODE_OF_CONDUCT.md` is exempt from the size cap by basename (verbatim-upstream file). Not present.
 - **`examples/` carve-out** - any `*.md` under an `examples/` dir is allowed at any depth (Go/Rust idiom). No such file here.
-- **README.md size opt-up** - config keys `readme_max_lines` / `readme_max_chars` lift the root `README.md` past the trifecta default (160 / 12500), the same mechanism as the AGENTS.md override. Unset here, so this repo's README rides the trifecta cap. Used by a release repo whose README is the launch-grade front page.
+- **README.md size opt-up** - config keys `readme_max_lines` / `readme_max_chars` lift the root `README.md` past the overview default (160 / 12500), the same mechanism as the AGENTS.md override. Unset here, so this repo's README rides the overview cap. Used by a release repo whose README is the launch-grade front page.
 
 ## Suppressed wholesale
 

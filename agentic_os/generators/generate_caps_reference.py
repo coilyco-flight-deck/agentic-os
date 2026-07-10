@@ -72,16 +72,27 @@ def _caps() -> list[tuple[str, str, str, str]]:
         ),
         (
             "documentation-layout",
-            "trifecta lines",
+            "README/AGENTS lines",
             str(dl.TRIFECTA_MAX_LINES),
-            "non-blank lines for the root README.md, docs/FEATURES.md, "
-            "and AGENTS.md",
+            "non-blank lines for the root README.md and AGENTS.md",
         ),
         (
             "documentation-layout",
-            "trifecta chars",
+            "README/AGENTS chars",
             str(dl.TRIFECTA_MAX_CHARS),
-            "characters for the trifecta files",
+            "characters for the root README.md and AGENTS.md",
+        ),
+        (
+            "documentation-layout",
+            "FEATURES.md lines",
+            str(dl.FEATURES_MAX_LINES),
+            "non-blank lines for docs/FEATURES.md",
+        ),
+        (
+            "documentation-layout",
+            "FEATURES.md chars",
+            str(dl.FEATURES_MAX_CHARS),
+            "characters for docs/FEATURES.md",
         ),
         (
             "documentation-layout",

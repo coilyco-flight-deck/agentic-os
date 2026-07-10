@@ -90,9 +90,9 @@ Proceed autonomously on anything reversible. Stop only for a destructive, irreve
 
 ### Front-load the context you know you need
 
-Naming a gap is not closing it. When you can already see what you do not know - a convention, a schema, how a subsystem is wired - and it sits in the repo, a skill, or a doc you can reach, read it before you plan, not lazily mid-task. "Discoverable in the clone" is a trap: it reads as resolved when the thing is only **locatable**, and an agent under pressure to start will defer the read and never come back. Before the first edit, list the conventions and subsystems the work touches and confirm you have actually read each one. The honest "the unknown is X" line in your own pre-flight is a blocking checklist item, not a footnote you walk past.
+Naming a gap is not closing it. When a convention, schema, or subsystem wiring is discoverable in the repo, a skill, or a doc, read it before planning. Before the first edit, list the conventions and subsystems the work touches and confirm you have read each one.
 
-A narrowed scope does not narrow the context budget. Walking a task back from a big surface to a small one makes it look like less work and so like less to know, which is backwards. The **first** instance of a pattern needs the most grounding, not the least, because that first entry sets the schema everything after it copies. Small scope, large blast radius. When the task shrinks, reach for the existing examples harder, not less.
+A narrowed scope does not narrow the context budget. The **first** instance of a pattern needs the most grounding, because that first entry sets the schema everything after it copies.
 
 ### Command delivery
 
@@ -107,7 +107,7 @@ That covers a **human** recipient. There is **no autonomous agent-to-agent comma
 
 ### Keep FEATURES.md current
 
-When a change adds, removes, or materially reshapes a feature, update that repo's `docs/FEATURES.md` in the same commit. It is the living inventory completing the README / AGENTS / docs/FEATURES trifecta, not a one-time doc. A feature is significant if a user or agent would look for it there: a new subsystem, verb surface, deploy target, or capability. Mechanical refactors, bugfixes, and dependency bumps do not qualify. Pair a substantial feature with its own `docs/<feature>.md` walkthrough and link it from the FEATURES entry.
+When a change adds, removes, or materially reshapes a feature, update that repo's `docs/FEATURES.md` in the same commit. It is the coarse inventory of major shipped capabilities, not a changelog or bugfix ledger. Add an entry only for a new or removed significant capability: a subsystem, command family, deploy target, major integration, or broad user-facing behavior. For an existing capability, update the entry only when the public boundary materially changes. Do not update FEATURES for bugfixes, diagnostics or error-message fixes, validation hardening, CI or build fixes, dependency bumps, refactors, docs-only changes, internal plumbing, or small behavior changes. Put those details in the specific docs page, PR or issue, release notes, or code comments. Pair a substantial feature with its own `docs/<feature>.md` walkthrough and link it from the FEATURES entry.
 
 ### No auto-memory
 

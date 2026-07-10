@@ -10,6 +10,8 @@ from pathlib import Path
 import agentic_os.config as config
 import agentic_os.pre_commit.check_documentation_layout as docs_layout
 from agentic_os.pre_commit.check_documentation_layout import (
+    FEATURES_MAX_CHARS,
+    FEATURES_MAX_LINES,
     MAX_MARKDOWN_CHARS,
     MAX_MARKDOWN_LINES,
     ROOT_MARKDOWN_ALLOWLIST,
@@ -22,15 +24,20 @@ from agentic_os.pre_commit.check_documentation_layout import (
 )
 
 
-def test_trifecta_gets_the_larger_cap() -> None:
-    # docs/FEATURES.md rides the flat trifecta cap.
-    assert caps_for(Path("docs/FEATURES.md")) == (TRIFECTA_MAX_LINES, TRIFECTA_MAX_CHARS)
-    # README.md and AGENTS.md default to the trifecta cap but carry a per-repo
-    # opt-up, so with no config set they resolve to at least the trifecta cap.
+def test_features_gets_the_tighter_cap() -> None:
+    # docs/FEATURES.md gets the tighter inventory cap.
+    assert caps_for(Path("docs/FEATURES.md")) == (
+        FEATURES_MAX_LINES,
+        FEATURES_MAX_CHARS,
+    )
+    assert FEATURES_MAX_LINES < TRIFECTA_MAX_LINES
+    assert FEATURES_MAX_CHARS < TRIFECTA_MAX_CHARS
+    # README.md and AGENTS.md default to the broader overview cap but carry a
+    # per-repo opt-up, so with no config set they resolve to at least that cap.
     readme_lines, readme_chars = caps_for(Path("README.md"))
     assert readme_lines >= TRIFECTA_MAX_LINES
     assert readme_chars >= TRIFECTA_MAX_CHARS
-    # AGENTS.md is at least the trifecta cap (its default); a per-repo config
+    # AGENTS.md is at least the overview cap (its default); a per-repo config
     # override may lift it further, so assert the floor rather than equality.
     agents_lines, agents_chars = caps_for(Path("AGENTS.md"))
     assert agents_lines >= TRIFECTA_MAX_LINES

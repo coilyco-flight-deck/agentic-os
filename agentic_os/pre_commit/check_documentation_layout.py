@@ -44,12 +44,13 @@ Most Markdown shares one size cap: MAX_MARKDOWN_LINES / MAX_MARKDOWN_CHARS.
 SKILL.md is not special. CLAUDE.md is expected to be a one-line `@AGENTS.md`
 pointer.
 
-The trifecta - the root README.md, docs/FEATURES.md, and AGENTS.md - carries
-each project's living overview (intro, feature inventory, operating doctrine),
-so it gets a larger cap, TRIFECTA_MAX_LINES / TRIFECTA_MAX_CHARS. Bounded, not
-infinite: room to breathe, not license to sprawl - durable detail still belongs
-in docs/*.md. README.md only at repo root; a co-located module README stays on
-the tight outpost / homestead shape.
+The root README.md and AGENTS.md carry each project's living overview (intro
+and operating doctrine), so they get the larger overview cap,
+TRIFECTA_MAX_LINES / TRIFECTA_MAX_CHARS. docs/FEATURES.md is a coarse inventory
+of major shipped capabilities, so it gets a tighter FEATURES_MAX_LINES /
+FEATURES_MAX_CHARS cap. Bounded, not infinite: room to breathe, not license to
+sprawl - durable detail still belongs in docs/*.md. README.md only at repo
+root; a co-located module README stays on the tight outpost / homestead shape.
 
 AGENTS.md may opt past the trifecta cap, per-repo, via config keys
 `agents_md_max_lines` / `agents_md_max_chars` under the documentation-layout
@@ -93,14 +94,15 @@ README_MAX_PROSE_CHARS = 90
 # outposts and back-links use inline links.
 MD_LINK_RE = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
 
-# The living-overview trifecta gets more room than a focused docs/ page -
+# The broad overview files get more room than a focused docs/ inventory page -
 # bounded, not infinite. See the module docstring.
 TRIFECTA_MAX_LINES = 160
 TRIFECTA_MAX_CHARS = 12_500
 
-# Trifecta paths matched by exact path. README.md and AGENTS.md are matched by
-# name in caps_for (each has a per-repo opt-up); only FEATURES rides this cap.
-TRIFECTA_PATHS = frozenset({"docs/FEATURES.md"})
+# FEATURES.md is the inventory-shaped exception: tighter than the overview
+# files so it stays a major-capability index, not a changelog.
+FEATURES_MAX_LINES = 80
+FEATURES_MAX_CHARS = 4_000
 
 # AGENTS.md defaults to the trifecta cap; repos opt higher via config keys
 # agents_md_max_lines / agents_md_max_chars.
@@ -420,8 +422,8 @@ def caps_for(rel: Path) -> tuple[int, int]:
             HOOK_ID, "readme_max_chars", README_DEFAULT_MAX_CHARS
         )
         return max_lines, max_chars
-    if rel.as_posix() in TRIFECTA_PATHS:
-        return TRIFECTA_MAX_LINES, TRIFECTA_MAX_CHARS
+    if rel.as_posix() == "docs/FEATURES.md":
+        return FEATURES_MAX_LINES, FEATURES_MAX_CHARS
     return MAX_MARKDOWN_LINES, MAX_MARKDOWN_CHARS
 
 
