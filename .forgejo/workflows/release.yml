@@ -42,7 +42,7 @@ permissions:
 jobs:
   test:
     runs-on: docker
-    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:v0.245.0
+    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:latest
     steps:
       - uses: actions/checkout@v6
         with:
@@ -129,7 +129,7 @@ jobs:
   plan-release:
     needs: test
     runs-on: docker
-    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:v0.245.0
+    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:latest
     outputs:
       tag: ${{ steps.tag.outputs.new_tag }}
       version: ${{ steps.tag.outputs.new_version }}
@@ -377,7 +377,7 @@ jobs:
     needs: [plan-release, publish-dev-base]
     if: ${{ needs.plan-release.outputs.tag != '' }}
     runs-on: docker
-    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:v0.245.0
+    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:latest
     steps:
       - uses: actions/checkout@v6
         with:
