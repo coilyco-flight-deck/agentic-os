@@ -3,8 +3,8 @@
 The aos-hosted deployment bundle for ward's coilyco build input lives directly
 in [`.ward/`](../.ward/), flattened alongside `.ward/ward.yaml` (aos#330 - aos#315
 first homed it at top-level `ward-specs/`). It carries the Forgejo guardfiles,
-the Actions log and runner-token bridges, the AWS and kubectl guardfiles, the
-agents/roles/defaults/repos bundles, the spec locks, and the surface
+the Actions log and runner-token bridges, aws/tailscale/kubectl exec
+guardfiles, agents/roles/defaults/repos bundles, spec locks, and the surface
 self-check ([role-surface-tiers.md](role-surface-tiers.md)).
 
 ## Direction of truth
