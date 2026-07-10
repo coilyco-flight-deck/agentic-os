@@ -112,7 +112,7 @@ def test_split_tiers_keep_their_managed_arg_defaults() -> None:
         "agent": [
             "ARG CLAUDE_VERSION=2.1.206",
             "ARG MCPORTER_VERSION=0.12.3",
-            "ARG CODEX_VERSION=0.142.5",
+            "ARG CODEX_VERSION=0.144.1",
             "ARG GOOSE_VERSION=1.41.0",
             "ARG OPENCODE_VERSION=1.17.18",
         ],
