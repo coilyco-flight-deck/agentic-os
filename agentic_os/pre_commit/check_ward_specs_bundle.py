@@ -49,7 +49,6 @@ repo-authority default=forgejo {
 """
 EXPECTED_TAR_MEMBERS = (
     "./forgejo-actions-logs.sh",
-    "./forgejo.swagger.lock.json",
     "./specverb.lock",
     "./ward-kdl.aws.guardfile.kdl",
     "./ward-kdl.defaults.kdl",
@@ -57,7 +56,7 @@ EXPECTED_TAR_MEMBERS = (
     "./ward-kdl.forgejo.admin.guardfile.kdl",
     "./ward-kdl.forgejo.guardfile.kdl",
     "./ward-kdl.forgejo.read.guardfile.kdl",
-    "./ward-kdl.forgejo.readactions.guardfile.kdl",
+    "./ward-kdl.forgejo.logs.guardfile.kdl",
     "./ward-kdl.forgejo.write.guardfile.kdl",
     "./ward-kdl.kubectl.guardfile.kdl",
     "./ward-kdl.roles.kdl",

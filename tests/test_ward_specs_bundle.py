@@ -28,7 +28,7 @@ def test_ward_specs_bundle_carries_deployment_anchors() -> None:
     assert "can delete repo" in admin
     assert "can delete issue-comment" in admin
 
-    actions = (SPEC_DIR / "ward-kdl.forgejo.readactions.guardfile.kdl").read_text()
+    actions = (SPEC_DIR / "ward-kdl.forgejo.logs.guardfile.kdl").read_text()
     assert 'can run "actions logs"' in actions
     assert 'when arg0 matches coily*' in actions
     assert '.ward/forgejo-actions-logs.sh' in actions
@@ -97,6 +97,9 @@ def test_ward_specs_docs_reference_live_config_source() -> None:
     ).read_text()
     assert "WARD_CONFIG_REF" in docs
     assert "launch through `WARD_CONFIG_REF`" in docs
+    assert "no longer tracked as a committed blob" in docs
+    assert "WARD_KDL_OPS_FORGEJO_SPEC" in docs
+    assert "kdl-specs lock" in docs
 
 
 def test_ward_specs_docs_cover_actions_log_streaming() -> None:
@@ -134,6 +137,7 @@ def test_ward_specs_bundle_defaults_are_packaged() -> None:
     assert "./ward-kdl.forgejo.read.guardfile.kdl" in release
     assert "./ward-kdl.forgejo.write.guardfile.kdl" in release
     assert "./ward-kdl.forgejo.admin.guardfile.kdl" in release
-    assert "./ward-kdl.forgejo.readactions.guardfile.kdl" in release
+    assert "./ward-kdl.forgejo.logs.guardfile.kdl" in release
     assert "./forgejo-actions-logs.sh" in release
+    assert "./forgejo.swagger.lock.json" not in release
     assert "./ward-kdl.forgejo.actions.guardfile.kdl" not in release
