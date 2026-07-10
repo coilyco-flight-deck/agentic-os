@@ -6,16 +6,25 @@
 
 set -u
 
-for _siren_aos_root in \
-  /workspace/coilyco-flight-deck/agentic-os \
-  /workspace/agentic-os \
-  "$HOME/projects/coilyco-flight-deck/agentic-os"; do
-  if git -C "$_siren_aos_root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    export AOS_REPO_ROOT="$_siren_aos_root"
-    export WARD_CONFIG_REF="forgejo.coilysiren.me/coilyco-flight-deck/agentic-os@$(git -C "$_siren_aos_root" rev-parse HEAD)//.ward"
-    break
-  fi
-done
+_siren_aos_root=${AOS_REPO_ROOT:-${FORGEJO_WORKSPACE:-${GITHUB_WORKSPACE:-/workspace/agentic-os}}}
+if ! git -C "$_siren_aos_root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  for _siren_aos_root in \
+    /workspace/coilyco-flight-deck/agentic-os \
+    /workspace/agentic-os \
+    "$HOME/projects/coilyco-flight-deck/agentic-os"; do
+    if git -C "$_siren_aos_root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+      break
+    fi
+  done
+fi
+if ! git -C "$_siren_aos_root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  _siren_entrypoint_dir="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)"
+  _siren_aos_root="$(cd "$_siren_entrypoint_dir/../.." && pwd -P)"
+fi
+if git -C "$_siren_aos_root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  export AOS_REPO_ROOT="$_siren_aos_root"
+  export WARD_CONFIG_REF="forgejo.coilysiren.me/coilyco-flight-deck/agentic-os@$(git -C "$_siren_aos_root" rev-parse HEAD)//.ward"
+fi
 
 if [ "$#" -gt 0 ]; then
   exec "$@"
