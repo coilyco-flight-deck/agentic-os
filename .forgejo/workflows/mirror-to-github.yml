@@ -47,3 +47,9 @@ jobs:
           fi
           # Tags are append-only; never force-update an existing tag.
           git push --tags github
+      - name: Alert Telegram on main failure
+        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        uses: ./actions/telegram-alert
+        with:
+          bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}

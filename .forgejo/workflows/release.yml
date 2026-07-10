@@ -56,6 +56,12 @@ jobs:
           bump: ${{ github.event.inputs.bump || 'minor' }}
           create_tag: false
 
+      - name: Alert Telegram on main failure
+        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        uses: ./actions/telegram-alert
+        with:
+          bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
   publish-dev-base:
     needs: plan-release
     if: ${{ needs.plan-release.outputs.tag != '' }}
@@ -164,6 +170,12 @@ jobs:
               docker buildx imagetools inspect "${ref}" >/dev/null
           done
 
+      - name: Alert Telegram on main failure
+        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        uses: ./actions/telegram-alert
+        with:
+          bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
   release:
     needs: [plan-release, publish-dev-base]
     if: ${{ needs.plan-release.outputs.tag != '' }}
@@ -256,3 +268,9 @@ jobs:
               "${FORGEJO_API}/releases/${REL_ID}/assets?name=${name}"
             echo "uploaded ${name}"
           done
+      - name: Alert Telegram on main failure
+        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        uses: ./actions/telegram-alert
+        with:
+          bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
