@@ -1,14 +1,16 @@
 # Telegram CI failure alerts
 
 `actions/telegram-alert` is the reusable primitive for posting a high-priority
-Telegram alert when a CI job fails on `main`.
+Telegram alert when a CI job fails on `main`. The repo's own workflows inline
+the same alert payload so failure-path notifications do not depend on local
+action resolution in a stale mirror.
 
 ## Contract
 
 - The caller passes `TELEGRAM_BOT_TOKEN` and `TELEGRAM_RED_CHAT_ID` as secrets.
 - The action formats the repo, workflow, job, ref, commit SHA, and run URL.
 - The message is plain text, so there is no markdown escaping surface.
-- The action does nothing special on branches or pull-request refs. The caller
+- The alert does nothing special on branches or pull-request refs. The caller
   gates it with `if: ${{ failure() && github.ref == 'refs/heads/main' }}`.
 
 ## Shape
@@ -24,6 +26,7 @@ Telegram alert when a CI job fails on `main`.
 
 The action defaults `repo`, `workflow`, `job`, `ref`, `sha`, and `run-url`
 from the GitHub / Forgejo context, so most call sites only pass the two secrets.
+The inline workflow version follows the same message contract.
 
 ## Dry run
 
