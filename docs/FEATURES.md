@@ -14,7 +14,7 @@ This doc lists major shipped capabilities, not files. If you want a file invento
 - [Harness selection](harness-selection.md) - choose Claude, Codex, OpenCode, Aider, or Goose.
 - [Test harnesses](test-harness.md) - smoke tests for agent harness and model pairings.
 - [Issue-corpus discovery index](issue-corpus.md) - offline corpus render plus live Forgejo lookup.
-- [Forgejo Actions log streaming](forgejo-actions-logs.md) - plaintext log bridge for live workflow logs.
+- [Forgejo Actions log bridge](forgejo-actions-logs.md) - packaged plaintext helper for live workflow logs while ward#950 moves the surface to ward-kdl.
 - [ward deployment spec bundle](ward-specs.md) - the shipped `WARD_CONFIG_REF` bundle for the coilyco fleet.
 - [Cross-repo tooling and release](features-release-tooling.md) - hooks, diagnostics, and Forgejo-canonical release actions, with the release pipeline gated before tagging.
 - [Telegram CI failure alerts](telegram-ci-alerts.md) - reusable red-channel alerting for failing jobs.

@@ -61,7 +61,18 @@ fleet {
     }
 
     roles {
+        role engineer {
+            agent claude {
+                model claude-sonnet-4-6
+                reasoning-effort medium
+            }
+            agent codex {
+                model gpt-5.5
+                reasoning-effort medium
+            }
+        }
         role director {
+            guardfiles ward-kdl.forgejo.guardfile.kdl ward-kdl.signoz.guardfile.kdl ward-kdl.ollama.guardfile.kdl
             // smart as they come (without going overboard... looking at you fable)
             agent claude {
                 model claude-opus-4-8
@@ -73,6 +84,7 @@ fleet {
             }
         }
         role advisor {
+            guardfiles ward-kdl.forgejo.guardfile.kdl ward-kdl.signoz.guardfile.kdl ward-kdl.ollama.guardfile.kdl
             // smarter agents than baseline
             agent claude {
                 model claude-opus-4-8

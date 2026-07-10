@@ -236,8 +236,12 @@ wrap ward-kdl ops forgejo {
     can upload-asset release
     // pulls: read-only surface. Read/list are exposed here, while merge stays
     // separately gated below as controlled director authority.
-    can view pr
-    can list pr
+    can view pr {
+        op repoGetPullRequest
+    }
+    can list pr {
+        op repoListPullRequests
+    }
     // issue-labels: the compound resource targets the issue's labels sub-collection;
     // add/set/remove are the membership verbs (POST/PUT/DELETE).
     can list issue-label
@@ -380,6 +384,6 @@ wrap ward-kdl ops forgejo {
     }
     // Back-link footer (ward#309): doc-link regenerates a `## See also` section
     // into this guardfile's reference doc, so it survives every rebuild wipe-proof.
-    doc-link "../ward-kdl.md" ward-kdl.md "the build-time authoring layer behind this surface"
-    doc-link "../ward-kdl-surface.md" ward-kdl-surface.md "the full generated verb surface, area by area"
+    doc-link "ward-specs.md" ward-specs.md "the bundle source behind this surface"
+    doc-link "../AGENTS.md" AGENTS.md "the workflow rules that keep read access and merge authority separate"
 }

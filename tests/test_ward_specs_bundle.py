@@ -62,8 +62,9 @@ def test_ward_specs_bundle_documents_workflow_dispatch() -> None:
     assert "workflow dispatch" in docs
     assert "/actions/workflows/{workflowfilename}/dispatches" in docs
     assert "--ref" in docs
-    assert "actions logs" in docs
-    assert "forgejo-actions-logs.sh" in docs
+    assert "ward ops forgejo pr view" in docs
+    assert "/repos/{owner}/{repo}/pulls/{index}" in docs
+    assert "ward ops forgejo pr list" in docs
 
 
 def test_ward_specs_docs_reference_live_config_source() -> None:
@@ -82,7 +83,8 @@ def test_ward_specs_docs_cover_actions_log_streaming() -> None:
         / "docs"
         / "forgejo-actions-logs.md"
     ).read_text()
-    assert "ward ops forgejo actions logs" in docs
+    assert "same-path exec overlays are skipped fail-closed" in docs
+    assert "ward#950" in docs
     assert "GET /repos/{owner}/{repo}/actions/runs/{run}/jobs/{job}/attempt/{attempt}/logs" in docs
     assert "JSON-render" in docs
 

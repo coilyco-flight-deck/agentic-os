@@ -1,17 +1,19 @@
-# Forgejo Actions log streaming
+# Forgejo Actions log bridge
 
-`ward ops forgejo actions logs <owner> <repo> <run-index> <job-index> <attempt>`
-streams the live plaintext job log from Forgejo's web route and prints it raw to
-stdout.
+The `.ward/forgejo-actions-logs.sh` bridge fetches the live plaintext job log
+from Forgejo's web route and prints it raw to stdout. It is packaged with the
+coilyco ward spec bundle, but latest ward does not mount it as
+`ward ops forgejo actions logs`: the spec-driven `ward ops forgejo` command owns
+that path, and same-path exec overlays are skipped fail-closed.
 
-Why it is separate:
+Why the bridge still exists:
 
 - Forgejo 15.0.2 exposes the Actions metadata in swagger, but not this log
   route.
-- The ward spec bundle keeps the existing spec-derived Forgejo surface, then
-  overlays this raw log bridge as a separate exec member.
-- The bridge preserves the owner gate and Forgejo token auth, and it does not
+- The script preserves the owner gate and Forgejo token auth, and it does not
   JSON-render the response body.
+- ward#950 tracks replacing this bridge with a first-class fetch-style ward-kdl
+  surface that can live beside the spec-driven Forgejo verbs.
 
 The route is:
 
