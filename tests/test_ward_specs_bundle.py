@@ -47,7 +47,7 @@ def test_ward_specs_bundle_carries_deployment_anchors() -> None:
     roles = (SPEC_DIR / "roles.kdl").read_text()
     assert "role qa" in roles
     assert "role ops" in roles
-    assert "capabilities read ops" in roles
+    assert "capabilities read ops" not in roles
     assert 'guardfile "guardfile.forgejo.read.kdl"' in roles
     assert 'guardfile "guardfile.forgejo.readactions.kdl"' in roles
     assert 'guardfile "guardfile.aws.kdl"' in roles
