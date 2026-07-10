@@ -11,6 +11,24 @@ if (Test-Path '{{ .StartupDir }}') {
     Set-Location -Path '{{ .StartupDir }}'
 }
 
+# Import env vars from shell/common.sh via bash - single source of truth for all
+# shells. Filters out shell-internal vars (PATH, SHLVL, etc.) that don't apply
+# to PowerShell; everything else (WARD_CONFIG_REF, AWS_*, EDITOR, ...) is set.
+$_bash = @(
+    'C:\Program Files\Git\bin\bash.exe',
+    'C:\msys64\usr\bin\bash.exe'
+) | Where-Object { Test-Path $_ } | Select-Object -First 1
+if ($_bash) {
+    $_envOut = & $_bash --norc --noprofile -c "source '{{ .StartupDir }}/shell/common.sh' 2>/dev/null && env" 2>$null
+    foreach ($_line in ($_envOut -split "`n")) {
+        if ($_line -match '^([A-Za-z][A-Za-z0-9_]*)=(.*)$' -and $Matches[1] -ne 'PATH') {
+            [System.Environment]::SetEnvironmentVariable($Matches[1], $Matches[2], 'Process')
+        }
+    }
+    Remove-Variable _envOut -ErrorAction SilentlyContinue
+}
+Remove-Variable _bash -ErrorAction SilentlyContinue
+
 # Defuse stuck xterm mouse-tracking modes (1000 click / 1002 drag / 1003
 # any-motion / 1006 SGR encoding) that a TUI child can leave enabled when it
 # exits or crashes without restoring them. A poisoned PTY then echoes every
