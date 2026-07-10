@@ -52,6 +52,9 @@ EXPECTED_REPOS = """repos {
 """
 EXPECTED_TAR_MEMBERS = (
     "./forgejo-actions-logs.sh",
+    "./ward.bundle.kdl",
+    "./ops.forgejo.kdl",
+    "./forgejo.swagger.lock.json",
     "./specverb.lock",
     "./agents.kdl",
     "./defaults.kdl",

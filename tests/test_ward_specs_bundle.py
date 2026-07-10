@@ -1,4 +1,6 @@
+import os
 import pathlib
+import subprocess
 
 
 SPEC_DIR = pathlib.Path(__file__).resolve().parents[1] / ".ward"
@@ -35,6 +37,18 @@ def test_ward_specs_bundle_carries_deployment_anchors() -> None:
     assert 'when arg0 matches coily*' in actions
     assert '.ward/forgejo-actions-logs.sh' in actions
     assert '.ward/forgejo-actions-list.sh' in actions
+
+    bundle_manifest = (SPEC_DIR / "ward.bundle.kdl").read_text()
+    assert "ops {" in bundle_manifest
+    assert 'forgejo "ops.forgejo.kdl"' in bundle_manifest
+
+    ops_guardfile = (SPEC_DIR / "ops.forgejo.kdl").read_text()
+    assert "wrap ward-kdl ops forgejo" in ops_guardfile
+    assert "spec forgejo.swagger.v1.json" in ops_guardfile
+
+    lockfile = (SPEC_DIR / "forgejo.swagger.lock.json").read_text()
+    assert '"basePath": "/api/v1"' in lockfile
+    assert '"definitions": {' in lockfile
 
     merge = (SPEC_DIR / "guardfile.forgejo.merge.kdl").read_text()
     assert "wrap ward-kdl-merge ops forgejo" in merge
@@ -151,6 +165,28 @@ def test_ward_specs_docs_reference_live_config_source() -> None:
     assert "kdl-specs lock" in docs
 
 
+def test_ward_ops_forgejo_describe_works_from_a_local_bundle_ref() -> None:
+    env = os.environ.copy()
+    env.update(
+        {
+            "WARD_CONFIG_REF": f"file://{SPEC_DIR}",
+            "WARD_READONLY": "1",
+            "WARD_TARGET_OWNER": "coilyco-flight-deck",
+            "WARD_TARGET_REPO": "coilyco-flight-deck/agentic-os",
+        }
+    )
+    proc = subprocess.run(
+        ["ward", "ops", "forgejo", "describe"],
+        cwd=pathlib.Path(__file__).resolve().parents[1],
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert proc.returncode == 0, proc.stderr
+
+
 def test_ward_specs_docs_cover_actions_log_streaming() -> None:
     docs = (
         pathlib.Path(__file__).resolve().parents[1]
@@ -201,7 +237,9 @@ def test_ward_specs_bundle_defaults_are_packaged() -> None:
     assert "./guardfile.kubectl.kdl" in release
     assert "./repos.kdl" in release
     assert "./roles.kdl" in release
+    assert "./ward.bundle.kdl" in release
+    assert "./ops.forgejo.kdl" in release
+    assert "./forgejo.swagger.lock.json" in release
     assert "./forgejo-actions-list.sh" in release
     assert "./forgejo-actions-logs.sh" in release
-    assert "./forgejo.swagger.lock.json" not in release
     assert "./ward-kdl.forgejo.actions.guardfile.kdl" not in release

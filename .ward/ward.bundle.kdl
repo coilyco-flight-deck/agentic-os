@@ -1,0 +1,3 @@
+ops {
+    forgejo "ops.forgejo.kdl"
+}
