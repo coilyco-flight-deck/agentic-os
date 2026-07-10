@@ -19,6 +19,7 @@ _siren_aos_repo_root() {
   for repo in "${AOS_REPO_ROOT:-}" \
     "${FORGEJO_WORKSPACE:-}" \
     "${GITHUB_WORKSPACE:-}" \
+    /workspace/coilyco-flight-deck/agentic-os \
     "${BASH_SOURCE[0]:-}" \
     "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)" \
     /workspace/agentic-os \
