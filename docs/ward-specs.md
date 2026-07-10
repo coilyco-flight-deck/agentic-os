@@ -53,5 +53,7 @@ That keeps the coilyco deployment values authored here in `.ward/` and consumed
 by ward without reintroducing the removed release overlay. The shell bootstrap
 and dev-base image both stamp the ref from the checked-out commit, so the live
 bundle follows the exact source tree that produced the container or shell
-session. The current defaults bundle keeps `agentic-os` and ward itself on
+session. The shell entrypoints resolve the current checkout from their own
+source path, export it once, and let child `warded` processes inherit it. The
+current defaults bundle keeps `agentic-os` and ward itself on
 `pull-requests-and-merge` under the `direct-main` fleet default.

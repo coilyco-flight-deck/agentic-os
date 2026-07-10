@@ -14,8 +14,30 @@ export BAT_PAGER=""
 export HISTSIZE=100000
 export SAVEHIST=100000
 
+_siren_aos_repo_root() {
+  local repo="${AOS_REPO_ROOT:-}"
+  if [ -n "$repo" ] && git -C "$repo" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    printf '%s\n' "$repo"
+    return 0
+  fi
+
+  if repo=$(git rev-parse --show-toplevel 2>/dev/null); then
+    printf '%s\n' "$repo"
+    return 0
+  fi
+
+  repo="$HOME/projects/coilyco-flight-deck/agentic-os"
+  if git -C "$repo" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    printf '%s\n' "$repo"
+    return 0
+  fi
+
+  return 1
+}
+
 _siren_ward_config_ref() {
-  local repo="$HOME/projects/coilyco-flight-deck/agentic-os"
+  local repo
+  repo=$(_siren_aos_repo_root) || return 1
   local commit
   commit=$(git -C "$repo" rev-parse HEAD) || return 1
   printf 'forgejo.coilysiren.me/coilyco-flight-deck/agentic-os@%s//.ward' "$commit"
