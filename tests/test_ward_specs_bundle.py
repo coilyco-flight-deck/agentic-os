@@ -12,6 +12,8 @@ def test_ward_specs_bundle_carries_deployment_anchors() -> None:
     assert '/forgejo/coilyco-ops/api-token' in forgejo
     assert "restrict owner matches coily*" in forgejo
     assert "can dispatch workflow" in forgejo
+    assert "can rerun run" in forgejo
+    assert "can rerun-failed-jobs run" in forgejo
 
     read = (SPEC_DIR / "ward-kdl.forgejo.read.guardfile.kdl").read_text()
     assert "wrap ward-kdl-read ops forgejo" in read
@@ -28,7 +30,7 @@ def test_ward_specs_bundle_carries_deployment_anchors() -> None:
     assert "can delete repo" in admin
     assert "can delete issue-comment" in admin
 
-    actions = (SPEC_DIR / "ward-kdl.forgejo.readactions.guardfile.kdl").read_text()
+    actions = (SPEC_DIR / "ward-kdl.forgejo.logs.guardfile.kdl").read_text()
     assert 'can run "actions logs"' in actions
     assert 'when arg0 matches coily*' in actions
     assert '.ward/forgejo-actions-logs.sh' in actions
@@ -89,6 +91,26 @@ def test_ward_specs_bundle_documents_workflow_dispatch() -> None:
     assert "ward ops forgejo pr list" in docs
 
 
+def test_ward_specs_bundle_documents_actions_rerun() -> None:
+    docs = (
+        pathlib.Path(__file__).resolve().parents[1]
+        / "docs"
+        / "ward-ops-forgejo-reference.md"
+    ).read_text()
+    forgejo = (SPEC_DIR / "ward-kdl.forgejo.guardfile.kdl").read_text()
+    lock = (SPEC_DIR / "forgejo.swagger.lock.json").read_text()
+    assert "ward ops forgejo run rerun" in docs
+    assert "ward ops forgejo run rerun-failed-jobs" in docs
+    assert "/actions/runs/{run_id}/rerun" in docs
+    assert "/actions/runs/{run_id}/rerun-failed-jobs" in docs
+    assert "can rerun run" in forgejo
+    assert "can rerun-failed-jobs run" in forgejo
+    assert '"/repos/{owner}/{repo}/actions/runs/{run_id}/rerun"' in lock
+    assert '"/repos/{owner}/{repo}/actions/runs/{run_id}/rerun-failed-jobs"' in lock
+    assert '"operationId": "rerunWorkflowRun"' in lock
+    assert '"operationId": "rerunFailedWorkflowRun"' in lock
+
+
 def test_ward_specs_docs_reference_live_config_source() -> None:
     docs = (
         pathlib.Path(__file__).resolve().parents[1]
@@ -134,6 +156,6 @@ def test_ward_specs_bundle_defaults_are_packaged() -> None:
     assert "./ward-kdl.forgejo.read.guardfile.kdl" in release
     assert "./ward-kdl.forgejo.write.guardfile.kdl" in release
     assert "./ward-kdl.forgejo.admin.guardfile.kdl" in release
-    assert "./ward-kdl.forgejo.readactions.guardfile.kdl" in release
+    assert "./ward-kdl.forgejo.logs.guardfile.kdl" in release
     assert "./forgejo-actions-logs.sh" in release
     assert "./ward-kdl.forgejo.actions.guardfile.kdl" not in release

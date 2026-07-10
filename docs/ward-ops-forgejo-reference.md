@@ -878,6 +878,30 @@ Options (2):
 - `--page` (integer, optional): page number of results to return (1-based)
 - `--limit` (integer, optional): page size of results, default maximum page size is 50
 
+## ward ops forgejo run rerun
+
+`POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun`
+
+Authorized by grant: can rerun run. Not destructive.
+
+Positional arguments (3):
+
+- `<owner>` (string)
+- `<repo>` (string)
+- `<run_id>` (string)
+
+## ward ops forgejo run rerun-failed-jobs
+
+`POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun-failed-jobs`
+
+Authorized by grant: can rerun-failed-jobs run. Not destructive.
+
+Positional arguments (3):
+
+- `<owner>` (string)
+- `<repo>` (string)
+- `<run_id>` (string)
+
 ## ward ops forgejo workflow dispatch - Dispatch a workflow file (POST /repos/{owner}/{repo}/actions/workflows/{workflowfilename}/dispatches). Allows a guarded manual trigger instead of a raw API call. The API body requires ref and may carry inputs.
 
 `POST /repos/{owner}/{repo}/actions/workflows/{workflowfilename}/dispatches`

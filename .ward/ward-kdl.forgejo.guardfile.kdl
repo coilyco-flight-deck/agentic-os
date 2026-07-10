@@ -250,6 +250,15 @@ wrap ward-kdl ops forgejo {
     can remove issue-label
     // actions tasks: the read-only CI-run listing surface.
     can list tasks
+    // actions runs: rerun an existing run, or only its failed jobs, by run id.
+    can rerun run {
+        op rerunWorkflowRun
+        describe "Rerun an existing workflow run by run id (POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun). This is targeted to a known run, not a workflow file, so it cannot dispatch a new workflow by mistake."
+    }
+    can rerun-failed-jobs run {
+        op rerunFailedWorkflowRun
+        describe "Rerun only the failed jobs in an existing workflow run by run id (POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun-failed-jobs). This stays scoped to the failed run already on the board."
+    }
     // actions workflows: manual dispatch for an allowed workflow file.
     can dispatch workflow {
         op DispatchWorkflow
