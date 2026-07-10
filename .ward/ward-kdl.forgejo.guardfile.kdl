@@ -250,6 +250,32 @@ wrap ward-kdl ops forgejo {
     can remove issue-label
     // actions tasks: the read-only CI-run listing surface.
     can list tasks
+    action list tasks {
+        describe "list Forgejo Actions tasks with a safe page-1 default"
+        input owner {
+            positional
+            required
+            help "repo owner"
+        }
+        input repo {
+            positional
+            required
+            help "repo name"
+        }
+        input limit {
+            flag
+            help "page size of results"
+        }
+        call list tasks {
+            args {
+                owner $owner
+                repo $repo
+                page 1
+                limit $limit
+            }
+            as tasks
+        }
+    }
     // actions workflows: manual dispatch for an allowed workflow file.
     can dispatch workflow {
         op DispatchWorkflow

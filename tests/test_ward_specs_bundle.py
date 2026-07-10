@@ -28,13 +28,27 @@ def test_ward_specs_bundle_carries_deployment_anchors() -> None:
     assert "can delete repo" in admin
     assert "can delete issue-comment" in admin
 
-    actions = (SPEC_DIR / "ward-kdl.forgejo.readactions.guardfile.kdl").read_text()
+    actions = (SPEC_DIR / "ward-kdl.forgejo.logs.guardfile.kdl").read_text()
     assert 'can run "actions logs"' in actions
+    assert 'can run "actions runs"' in actions
+    assert 'can run "actions tasks"' in actions
     assert 'when arg0 matches coily*' in actions
     assert '.ward/forgejo-actions-logs.sh' in actions
+    assert '.ward/forgejo-actions-list.sh' in actions
 
     bridge = (SPEC_DIR / "forgejo-actions-logs.sh").read_text()
     assert "python3 -m agentic_os.forgejo_actions_logs" in bridge
+
+    listing = (SPEC_DIR / "forgejo-actions-list.sh").read_text()
+    assert "/actions/${kind}?page=${page}" in listing
+    assert "page=1" in listing
+    assert "kind must be runs or tasks" in listing
+
+    guardfile = (SPEC_DIR / "ward-kdl.forgejo.guardfile.kdl").read_text()
+    assert "action list tasks {" in guardfile
+    assert 'describe "list Forgejo Actions tasks with a safe page-1 default"' in guardfile
+    assert "page 1" in guardfile
+    assert "limit $limit" in guardfile
 
     aws = (SPEC_DIR / "ward-kdl.aws.guardfile.kdl").read_text()
     assert "wrap ward-kdl ops aws" in aws
@@ -87,6 +101,9 @@ def test_ward_specs_bundle_documents_workflow_dispatch() -> None:
     assert "ward ops forgejo pr view" in docs
     assert "/repos/{owner}/{repo}/pulls/{index}" in docs
     assert "ward ops forgejo pr list" in docs
+    assert "ward ops forgejo tasks list" in docs
+    assert "safe page-1 default" in docs
+    assert "page=1" in docs
 
 
 def test_ward_specs_docs_reference_live_config_source() -> None:
@@ -113,6 +130,18 @@ def test_ward_specs_docs_cover_actions_log_streaming() -> None:
     assert "plaintext log stream" in docs
 
 
+def test_ward_specs_docs_cover_actions_listing() -> None:
+    docs = (
+        pathlib.Path(__file__).resolve().parents[1]
+        / "docs"
+        / "forgejo-actions-listing.md"
+    ).read_text()
+    assert "defaults to `page=1`" in docs
+    assert "ward ops forgejo actions runs" in docs
+    assert "ward ops forgejo actions tasks" in docs
+    assert "page=1&limit=1" in docs
+
+
 def test_ward_specs_fleet_parses() -> None:
     body = (SPEC_DIR / "ward-kdl.fleet.kdl").read_text()
     assert "fleet {" in body
@@ -134,6 +163,6 @@ def test_ward_specs_bundle_defaults_are_packaged() -> None:
     assert "./ward-kdl.forgejo.read.guardfile.kdl" in release
     assert "./ward-kdl.forgejo.write.guardfile.kdl" in release
     assert "./ward-kdl.forgejo.admin.guardfile.kdl" in release
-    assert "./ward-kdl.forgejo.readactions.guardfile.kdl" in release
+    assert "./forgejo-actions-list.sh" in release
+    assert "./ward-kdl.forgejo.guardfile.kdl" in release
     assert "./forgejo-actions-logs.sh" in release
-    assert "./ward-kdl.forgejo.actions.guardfile.kdl" not in release
