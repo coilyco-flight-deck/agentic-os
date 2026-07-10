@@ -31,6 +31,7 @@ RUN set -eux; \
     rm /tmp/go.tar.gz; \
     go version
 
+ENV WARD_CONFIG_REF=forgejo.coilysiren.me/coilyco-flight-deck/agentic-os@main//.ward
 RUN set -eux; \
     export GOPATH=/tmp/gobuild GOCACHE=/tmp/gocache \
       GOPROXY=direct GOSUMDB=off GOPRIVATE=forgejo.coilysiren.me CGO_ENABLED=0; \
