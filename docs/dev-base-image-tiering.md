@@ -27,7 +27,7 @@ became one folder per published tier, each with a literal `Dockerfile`, while
 - One repo release tag drives the whole family.
 - The folder name becomes the image suffix, so `core` becomes `agentic-os-core:${TAG}` and `full` becomes `agentic-os-full:${TAG}`.
 - The release helper in [`scripts/dev-base-build.py`](../scripts/dev-base-build.py) derives the plan from the directory layout.
-- `docker/dev-base/ci-image-manifest.json` is gone because every published ref is derivable from `{registry base, folder name, tag}`.
+- There is no checked-in `docker/dev-base/ci-image-manifest.json` anymore. Every published ref is derivable from `{registry base, folder name, tag}`, so the JSON map would only duplicate the folder layout.
 
 ## Release flow
 
