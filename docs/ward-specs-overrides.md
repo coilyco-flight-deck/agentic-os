@@ -21,9 +21,9 @@ This bundle currently uses the overlay layer for:
 * `ops` - `claude` and `codex` both use `xhigh` reasoning effort, with the same
   model pins as `director`.
 
-The regression guard in `tests/test_ward_specs_bundle.py` and
-`agentic_os/pre_commit/check_ward_specs_bundle.py` pins those blocks so another
-bundle split cannot silently drop them again.
+The bundle shape is documented in `docs/ward-specs.md`, and the release tarball
+packages `.ward/` recursively with `ward.yaml` excluded so the overlay blocks
+stay shipped without a hand-maintained file list.
 
 ## See also
 
