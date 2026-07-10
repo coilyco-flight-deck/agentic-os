@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "agentic-os"
 version = "0.62.0"
-description = "Cross-repo pre-commit hooks and operating utilities for coilysiren/* repos: catalog-trifecta, catalog-doc-size, documentation-layout, code-comments, catalog-block, check-skills, dead-cross-links."
+description = "Cross-repo pre-commit hooks and operating utilities for coilysiren/* repos: catalog-trifecta, code-review-contract, catalog-doc-size, documentation-layout, code-comments, catalog-block, check-skills, dead-cross-links."
 readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name = "Kai Siren" }]
@@ -46,6 +46,7 @@ check-catalog-block = "agentic_os.pre_commit.check_catalog_block:main"
 check-ward-specs-bundle = "agentic_os.pre_commit.check_ward_specs_bundle:main"
 check-catalog-doc-size = "agentic_os.pre_commit.check_catalog_doc_size:main"
 check-catalog-trifecta = "agentic_os.pre_commit.check_catalog_trifecta:main"
+check-code-review-contract = "agentic_os.pre_commit.check_code_review_contract:main"
 check-code-comments = "agentic_os.pre_commit.check_code_comments:main"
 check-documentation-layout = "agentic_os.pre_commit.check_documentation_layout:main"
 check-context-load-points = "agentic_os.pre_commit.check_context_load_points:main"

@@ -6,6 +6,7 @@
 #     hooks:
 #       - id: catalog-doc-size
 #       - id: catalog-trifecta
+#       - id: code-review-contract
 #       - id: documentation-layout
 #       - id: context-load-points
 #       - id: code-comments
@@ -50,6 +51,15 @@
   name: catalog-trifecta cross-link convention
   description: Enforce that README + AGENTS + docs/FEATURES + .ward/ward.yaml cross-link. See docs/features-release-tooling.md.
   entry: check-catalog-trifecta
+  language: python
+  always_run: true
+  pass_filenames: false
+  stages: [pre-commit]
+
+- id: code-review-contract
+  name: code review contract
+  description: Enforce a root CODE-REVIEW.md with localized-invariant, historical-issue, and refresh-trigger guidance.
+  entry: check-code-review-contract
   language: python
   always_run: true
   pass_filenames: false

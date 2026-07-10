@@ -66,6 +66,7 @@ Opt-in tooling that composes global agent context and symlinks each harness load
 
 - [AGENTS.md](AGENTS.md) - public-safe agent operating conventions and the global load point.
 - [docs/FEATURES.md](docs/FEATURES.md) - inventory of what ships today.
+- [CODE-REVIEW.md](CODE-REVIEW.md) - root review contract for repo-local invariants and historical issues.
 - [.ward/ward.yaml](.ward/ward.yaml) - allowlisted dev commands. Agents route through ward.
 
 Cross-reference convention from [features-release-tooling.md](docs/features-release-tooling.md).

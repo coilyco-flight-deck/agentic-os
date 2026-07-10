@@ -1,8 +1,8 @@
 # Skill Discipline Handbook - The Hooks
 
-## 10. The three hooks
+## 10. The hooks
 
-`.pre-commit-hooks.yaml` exposes three hooks. Wire each one explicitly in your repo's `.pre-commit-config.yaml`.
+`.pre-commit-hooks.yaml` exposes the repo-authored discipline hooks. Wire each one explicitly in your repo's `.pre-commit-config.yaml`.
 
 ### check-skills (pre-commit, pre-push)
 
@@ -29,11 +29,15 @@ Runs `check-catalog-trifecta`. Enforces the repo entrypoint set: `README.md`, `A
 * `## Agent rules`
 * `## See also`
 
+### code-review-contract (pre-commit)
+
+Runs `check-code-review-contract`. Enforces a root `CODE-REVIEW.md` that documents repo-local invariants, historical issues, and refresh triggers. Generic-purpose review advice stays out so the contract remains about defending the repo's own failure modes.
+
 ### documentation-layout (pre-commit)
 
 Runs `check-documentation-layout`. Enforces Markdown placement across the repo:
 
-* root Markdown is limited to the universal allow-list (`README.md`, `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `GOVERNANCE.md`, `SECURITY.md`, `SUPPORT.md`, `LICENSE.md`);
+* root Markdown is limited to the universal allow-list (`README.md`, `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `CODE-REVIEW.md`, `GOVERNANCE.md`, `SECURITY.md`, `SUPPORT.md`, `LICENSE.md`);
 * ordinary documentation lives in flat `docs/*.md`;
 * skill documentation lives under `.agents/skills/`, `.agents/skills/`, or `skills/`;
 * `docs/` has no subdirectories. Use filename prefixes when grouping is needed;

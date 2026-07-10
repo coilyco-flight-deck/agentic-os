@@ -47,10 +47,19 @@ def test_non_trifecta_markdown_keeps_the_standard_cap() -> None:
     )
 
 
+def test_code_review_md_keeps_the_standard_cap() -> None:
+    assert caps_for(Path("CODE-REVIEW.md")) == (MAX_MARKDOWN_LINES, MAX_MARKDOWN_CHARS)
+
+
 def test_agents_compose_md_is_an_allowed_root_file() -> None:
     # agent-compose's disjoint source is a repo-root convention; the layout
     # rule must not reject it the way it rejects one-off root Markdown.
     assert "AGENTS.COMPOSE.md" in ROOT_MARKDOWN_ALLOWLIST
+
+
+def test_code_review_md_is_an_allowed_root_file() -> None:
+    # CODE-REVIEW.md is a root contract doc, not a docs/ file.
+    assert "CODE-REVIEW.md" in ROOT_MARKDOWN_ALLOWLIST
 
 
 def test_harness_override_filenames_are_recognized() -> None:

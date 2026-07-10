@@ -124,6 +124,7 @@ ROOT_MARKDOWN_ALLOWLIST = {
     "AGENTS.COMPOSE.md",
     "CLAUDE.md",
     "CODE_OF_CONDUCT.md",
+    "CODE-REVIEW.md",
     "CONTRIBUTING.md",
     "GOVERNANCE.md",
     "LICENSE.md",

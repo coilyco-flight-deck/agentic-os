@@ -6,7 +6,7 @@ Every carve-out from the default `documentation-layout` rule: Markdown lives onl
 
 - **`excludes` (config)** - fully exempt from location AND size checks, per the layout escape hatch. Today: `warp/launch_configurations/**` (README), `warp/tab_configs/**` (wtab.md, claude-agent-work.md), `docs/ward-ops-forgejo-reference.md` (generated `ward ops forgejo describe` render, over-cap by design). This is the one hand-maintained surface, so it drifts - prune it when a file moves.
 - **AGENTS.md size override** - config keys `agents_md_max_lines = 160` and `agents_md_max_chars = 12000` replace the 80/4000 default for `AGENTS.md` only. Load-bearing: the file is over 4000 chars, so it would fail the default.
-- **Root allowlist** - present: `AGENTS.md`, `CLAUDE.md`, `README.md`. Any other root `*.md` fails the location check and would need either a move into `docs/` or an explicit exclude.
+- **Root allowlist** - present: `AGENTS.md`, `CLAUDE.md`, `CODE-REVIEW.md`, `README.md`. Any other root `*.md` fails the location check and would need either a move into `docs/` or an explicit exclude.
 - **Skill-path location carve-out** - `*.md` under `.agents/skills/`, `.claude/skills/`, or `skills/` may live outside `docs/` at any depth (~220 files here). Location-only: the 80/4000 size cap still applies.
 
 ## Dormant carve-outs
