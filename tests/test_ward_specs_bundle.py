@@ -34,8 +34,7 @@ def test_ward_specs_bundle_carries_deployment_anchors() -> None:
     assert '.ward/forgejo-actions-logs.sh' in actions
 
     bridge = (SPEC_DIR / "forgejo-actions-logs.sh").read_text()
-    assert "/actions/runs/${run_index}/jobs/${job_index}/attempt/${attempt}/logs" in bridge
-    assert "Authorization: token ${FORGEJO_TOKEN}" in bridge
+    assert "python3 -m agentic_os.forgejo_actions_logs" in bridge
 
     aws = (SPEC_DIR / "ward-kdl.aws.guardfile.kdl").read_text()
     assert "wrap ward-kdl ops aws" in aws
@@ -108,8 +107,10 @@ def test_ward_specs_docs_cover_actions_log_streaming() -> None:
     ).read_text()
     assert "same-path exec overlays are skipped fail-closed" in docs
     assert "ward#950" in docs
+    assert "/actions/runs/886/jobs/0" in docs
+    assert "data-run-id" in docs
     assert "GET /repos/{owner}/{repo}/actions/runs/{run}/jobs/{job}/attempt/{attempt}/logs" in docs
-    assert "JSON-render" in docs
+    assert "plaintext log stream" in docs
 
 
 def test_ward_specs_fleet_parses() -> None:
