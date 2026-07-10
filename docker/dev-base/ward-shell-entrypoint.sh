@@ -6,7 +6,8 @@
 
 set -u
 
-_siren_aos_root=/workspace/agentic-os
+_siren_entrypoint_dir="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)"
+_siren_aos_root="$(cd "$_siren_entrypoint_dir/../.." && pwd -P)"
 if git -C "$_siren_aos_root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   export AOS_REPO_ROOT="$_siren_aos_root"
   export WARD_CONFIG_REF="forgejo.coilysiren.me/coilyco-flight-deck/agentic-os@$(git -C "$_siren_aos_root" rev-parse HEAD)//.ward"
