@@ -423,12 +423,31 @@ jobs:
           asset="ward-specs-${TAG}.tar.gz"
           # Deterministic tarball: sort entries, zero mtime/owner, no gzip name/time
           # header, so the checksum a downstream pins is reproducible from the tag.
-          # The bundle now shares .ward/ with ward.yaml (aos#330), so package the
-          # directory recursively and exclude ward.yaml explicitly. That preserves
-          # the flat `./`-prefixed layout ward#503 expects while letting new bundle
-          # members land without hand-editing this step.
+          # The bundle now shares .ward/ with ward.yaml (aos#330), so enumerate the
+          # bundle files EXPLICITLY rather than tarring the whole dir - a naive
+          # `-C .ward .` would sweep ward.yaml (and any future .ward/ file) into
+          # ward's overlay input. Entries stay flat + `./`-prefixed, layout-identical
+          # to the pre-move asset, so ward#503's overlay needs no change. List them
+          # in alphabetical order: with explicit file args `--sort=name` is a no-op
+          # (it only sorts recursive traversal), so the hand-order below IS the
+          # tarball order, and it must match the sorted order the whole-dir tar used.
           tar --sort=name --mtime='UTC 1970-01-01' --owner=0 --group=0 --numeric-owner \
-            -C .ward --exclude=./ward.yaml -cf ward-specs.tar .
+            -C .ward -cf ward-specs.tar \
+            ./forgejo-actions-list.sh \
+            ./forgejo-actions-logs.sh \
+            ./specverb.lock \
+            ./agents.kdl \
+            ./defaults.kdl \
+            ./guardfile.aws.kdl \
+            ./guardfile.forgejo.admin.kdl \
+            ./guardfile.forgejo.kdl \
+            ./guardfile.forgejo.merge.kdl \
+            ./guardfile.forgejo.read.kdl \
+            ./guardfile.forgejo.readactions.kdl \
+            ./guardfile.forgejo.write.kdl \
+            ./guardfile.kubectl.kdl \
+            ./repos.kdl \
+            ./roles.kdl
           gzip -n -9 -c ward-specs.tar > "${asset}"
           sha256sum "${asset}" | awk '{print $1}' > "${asset}.sha256"
           echo "ward-specs asset sha256: $(cat "${asset}.sha256")"
