@@ -2,10 +2,9 @@
 
 The aos-hosted deployment bundle for ward's coilyco build input lives directly
 in [`.ward/`](../.ward/), flattened alongside `.ward/ward.yaml` (aos#330 - aos#315
-first homed it at top-level `ward-specs/`). It carries the Forgejo guardfiles,
-the raw Actions log bridge, AWS and kubectl exec guardfiles, the agents
-manifest, the role catalog, the defaults bundle, the repos bundle, and the spec
-locks.
+first homed it at top-level `ward-specs/`). It carries the Forgejo guardfiles
+and Actions bridges, AWS and kubectl exec guardfiles, the agents manifest, the
+role catalog, the defaults bundle, the repos bundle, and the spec locks.
 
 ## Direction of truth
 
@@ -30,15 +29,13 @@ Forgejo splits into a compatibility monolith for the current `ward ops forgejo`
 runtime surface plus role-facing read, write, and admin tier guardfiles. The
 read tier owns the shared spec, base URL, auth, explicit read grants, and
 inherited denials. The write tier inherits read and adds authoring verbs. The
-admin tier inherits write and adds targeted delete verbs. Role guardfile
-bindings live in `.ward/roles.kdl` as repeated singular `guardfile` nodes. The
-raw Actions log bridge stays here as a coilyco-specific overlay because the
-upstream swagger omits the live web log route and the current renderer stays
-JSON-first. The Actions list bridge and shadowed `tasks list` mount stay here
-too, defaulting to page 1 so callers who add `limit` do not fall back to
-full-history pulls. See [Forgejo Actions list bridge](forgejo-actions-listing.md).
+admin tier inherits write and adds targeted delete verbs. PR merge rides a
+director/engineer-only overlay, `guardfile.forgejo.merge.kdl`. Role guardfile
+bindings live in `.ward/roles.kdl` as repeated singular `guardfile` nodes. The raw Actions log bridge stays a coilyco-specific overlay
+because the upstream swagger omits the live web log route and the renderer
+stays JSON-first. The Actions list bridge and shadowed `tasks list` mount stay here
+too, defaulting to page 1 to avoid full-history pulls. See [Forgejo Actions list bridge](forgejo-actions-listing.md).
 The exception is stated in [AGENTS.md](../AGENTS.md).
-
 
 See [ward-specs-overrides.md](ward-specs-overrides.md) for the agent overlay.
 

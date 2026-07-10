@@ -225,6 +225,16 @@ wrap ward-kdl ops forgejo {
     can list tag {
         describe "tag list (GET /repos/{owner}/{repo}/tags)"
     }
+    // commit statuses: CI state per ref (agentic-os#446). Pure reads - the
+    // combined rollup is what a director grades a PR head red/green with.
+    can status commit {
+        op repoGetCombinedStatusByRef
+        describe "combined commit status (GET /repos/{owner}/{repo}/commits/{ref}/status): the single rolled-up state for a ref (success/failure/pending) across all its statuses. op pinned because the status singleton sits beside the statuses collection and the bare convention cannot split them."
+    }
+    can list-statuses commit {
+        op repoListStatusesByRef
+        describe "commit status list (GET /repos/{owner}/{repo}/commits/{ref}/statuses): the per-context statuses behind the combined rollup. op pinned beside `commit status` for the same singleton/collection split."
+    }
     // releases, with the multipart asset upload beside them (upload-asset resolves
     // as create-on the assets sub-collection).
     can get release
@@ -233,8 +243,8 @@ wrap ward-kdl ops forgejo {
     can edit release
     can delete release
     can upload-asset release
-    // pulls: read-only surface. Read/list are exposed here, while merge stays
-    // separately gated below as controlled director authority.
+    // pulls: read-only here. Merge rides guardfile.forgejo.merge.kdl, bound to
+    // the director/engineer roles only as completion authority (agentic-os#446).
     can view pr {
         op repoGetPullRequest
     }
@@ -247,6 +257,16 @@ wrap ward-kdl ops forgejo {
     can add issue-label
     can set issue-label
     can remove issue-label
+    // actions runs: status-bearing native run reads (agentic-os#446); unlike
+    // the `actions runs` exec bridge these carry each run's status/conclusion.
+    can list action-run {
+        op ListActionRuns
+        describe "Actions run list with status filters (GET /repos/{owner}/{repo}/actions/runs). op pinned to the upstream ListActionRuns id."
+    }
+    can get action-run {
+        op ActionRun
+        describe "single Actions run with its status and conclusion (GET /repos/{owner}/{repo}/actions/runs/{run_id}). op pinned to the upstream ActionRun id."
+    }
     // actions tasks: the read-only CI-run listing surface.
     can list tasks
     action list tasks {
