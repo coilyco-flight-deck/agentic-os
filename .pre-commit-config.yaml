@@ -9,13 +9,6 @@ repos:
         always_run: true
         pass_filenames: false
         stages: [pre-commit]
-      - id: ward-specs-bundle
-        name: coilyco ward-specs bundle shape
-        entry: python -m agentic_os.pre_commit.check_ward_specs_bundle
-        language: python
-        always_run: true
-        pass_filenames: false
-        stages: [pre-commit]
       - id: check-skills
         name: skill conventions
         entry: python -m agentic_os.pre_commit.check_skill

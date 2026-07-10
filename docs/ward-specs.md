@@ -35,6 +35,8 @@ bridge, and rerun bridge stay here as coilyco-specific overlays because the
 upstream swagger omits the live log, list, and rerun routes and the current
 renderer stays JSON-first. The exception is stated in [AGENTS.md](../AGENTS.md).
 
+See [ward-specs-overrides.md](ward-specs-overrides.md) for the agent overlay.
+
 ## Release asset
 
 Every aos release attaches the bundle as `ward-specs-<tag>.tar.gz` (plus a
@@ -42,8 +44,9 @@ Every aos release attaches the bundle as `ward-specs-<tag>.tar.gz` (plus a
 [`.forgejo/workflows/release.yml`](../.forgejo/workflows/release.yml). The
 tarball is deterministic, so the checksum a downstream pins is reproducible from
 the tag. Ward's build sites pin that URL + `sha256` rather than a raw tracked
-path, and the packaging step enumerates the bundle files explicitly so
-`.ward/ward.yaml` never leaks into ward's overlay input.
+path, and the packaging step enumerates the bundle files explicitly while
+keeping `.ward/ward.yaml` out of the tarball, so new bundle files land only
+when the release list is updated and the overlay input stays clean.
 
 ## How ward consumes it
 
@@ -56,7 +59,5 @@ bundle artifact and checksum target, but the live config path is the runtime
 
 That keeps the coilyco deployment values authored here in `.ward/` and consumed
 by ward without reintroducing the removed release overlay. The shell bootstrap
-and dev-base image both stamp the ref from the checked-out commit, so the live
-bundle follows the exact source tree that produced the container or shell
-session. The current defaults bundle keeps `agentic-os` and ward itself on
-`pull-requests-and-merge` under the `direct-main` fleet default.
+and dev-base image stamp the ref from the checked-out commit, so the live
+bundle follows the source tree that produced the container or shell session.

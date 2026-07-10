@@ -4,6 +4,8 @@ Part of the [test-harness](test-harness.md) doc family - one per agent.
 
 `scripts/goose-ask.sh` (ward verb `goose-ask`) is a minimal probe harness for the [Goose](../.agents/skills/agents-goose/SKILL.md) agent. It runs one-shot questions through `goose run --no-session`, strips the startup banner, times each call, and tees a full raw transcript under `~/.cache/agentic-os/goose-ask/<timestamp>.log`. The goal is to interrogate a Goose+model pairing before trusting it with real work.
 
+The standalone `goose-health` probe was not kept here. Its tower/Ollama reachability and residency checks belong in the always-on agent-health heartbeat in `infrastructure`, which is the canonical place for the serving-layer view.
+
 ## Mechanism
 
 `goose run --no-session -t "<question>"` against the bound model in `~/.config/goose/config.yaml` (currently `qwen3-coder:30b` via Ollama on the tower over tailnet). `goose-ask.sh` wraps that with banner stripping, timing, transcript capture, and `-f` batch / `-s` system / `-m` model-override flags.

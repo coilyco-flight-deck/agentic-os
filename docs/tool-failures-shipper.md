@@ -1,17 +1,25 @@
 # Tool-failure GlitchTip shipper
 
-`ward exec ship-tool-failures` drains the local tool-use failure-record buffer
-to GlitchTip so the tool-use error rate becomes a visible, grouped, counted
-feed. It is the shipper half of the o11y chain: producers write failure-records,
-this drains them. See docs/tool-failures-shipper.md.
+`ward exec ship-tool-failures` drains the tool-use failure-record buffer to
+GlitchTip so the tool-use error rate becomes a visible, grouped, counted feed.
+It is the shipper half of the o11y chain: ward-owned producers write
+failure-records, this drains them.
 
 ## The buffer it drains
 
-Any harness producer appends schema-v1 failure-records (one JSON object per
+Any ward-owned producer appends schema-v1 failure-records (one JSON object per
 line) to a per-repo buffer at `~/.cache/agentic-os/tool-failures/<repo>.jsonl`.
 The shipper is producer-agnostic - it ships whatever schema-v1 records exist,
-whoever wrote them. Load-bearing fields: `fingerprint` (grouping key),
+whoever wrote them. `agentic-os` remains the canonical schema-v1 documentation
+owner for now. Load-bearing fields: `fingerprint` (grouping key),
 `failure_class`, `harness`, `repo`, and an optional `expected` classifier flag.
+
+## Schema ownership
+
+The wire format stays documented here in `agentic-os` until the contract moves.
+That keeps the schema close to the shipper implementation while `ward`
+owns the producers. If the producer contract migrates later, this doc should
+link out instead of silently forking the schema.
 
 ## What a run does
 
@@ -49,5 +57,6 @@ POST.
 
 The buffer-and-classify half lands DSN-pluggable and is tested now. Creating the
 GlitchTip project and populating `/sentry-dsn/tool-failures` is the one
-externally-visible step, confirmed by the tool-failures shipper design; until then the
-shipper fail-softs.
+externally-visible step, and should happen as the first ward producer nears
+landing so the project does not sit dark indefinitely. Until then the shipper
+fail-softs.

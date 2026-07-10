@@ -13,10 +13,26 @@ roles {
         guardfile "guardfile.forgejo.read.kdl"
         guardfile "guardfile.forgejo.readactions.kdl"
         guardfile "guardfile.forgejo.write.kdl"
+        agent claude {
+            model claude-opus-4-8
+            reasoning-effort xhigh
+        }
+        agent codex {
+            model gpt-5.5
+            reasoning-effort xhigh
+        }
     }
     role advisor {
         guardfile "guardfile.forgejo.read.kdl"
         guardfile "guardfile.forgejo.readactions.kdl"
+        agent claude {
+            model claude-opus-4-8
+            reasoning-effort high
+        }
+        agent codex {
+            model gpt-5.5
+            reasoning-effort high
+        }
     }
     role qa {
         guardfile "guardfile.forgejo.read.kdl"
@@ -29,5 +45,13 @@ roles {
         guardfile "guardfile.forgejo.write.kdl"
         guardfile "guardfile.aws.kdl"
         guardfile "guardfile.kubectl.kdl"
+        agent claude {
+            model claude-opus-4-8
+            reasoning-effort xhigh
+        }
+        agent codex {
+            model gpt-5.5
+            reasoning-effort xhigh
+        }
     }
 }
