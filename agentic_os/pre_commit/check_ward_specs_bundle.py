@@ -37,15 +37,17 @@ EXPECTED_DEFAULTS = """defaults {
 }
 """
 EXPECTED_REPOS = """repos {
-    trusted-owner coilysiren
-    trusted-owner coilyco-bridge
-    trusted-owner coilyco-flight-deck
-    trusted-owner coilyco-gaming
+    repo-authority default=forgejo {
+        trusted-owner coilysiren
+        trusted-owner coilyco-bridge
+        trusted-owner coilyco-flight-deck
+        trusted-owner coilyco-gaming
 
-    repo "coilysiren/*" forge=github
-    repo "coilyco-bridge/*" forge=forgejo
-    repo "coilyco-flight-deck/*" forge=forgejo
-    repo "coilyco-gaming/*" forge=forgejo
+        repo "coilysiren/*" forge=github
+        repo "coilyco-bridge/*" forge=forgejo
+        repo "coilyco-flight-deck/*" forge=forgejo
+        repo "coilyco-gaming/*" forge=forgejo
+    }
 }
 """
 EXPECTED_TAR_MEMBERS = (
