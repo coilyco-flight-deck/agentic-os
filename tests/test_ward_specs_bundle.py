@@ -1,6 +1,8 @@
+import http.server
 import os
 import pathlib
 import subprocess
+import threading
 
 
 SPEC_DIR = pathlib.Path(__file__).resolve().parents[1] / ".ward"
@@ -96,6 +98,25 @@ def test_ward_specs_bundle_tasks_list_injects_page_one() -> None:
         f"forgejo.coilysiren.me/coilyco-flight-deck/agentic-os@{sha}//.ward"
     )
 
+    paths: list[str] = []
+
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def do_GET(self) -> None:  # noqa: N802
+            paths.append(self.path)
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(b"[]")
+
+        def log_message(self, format: str, *args: object) -> None:  # noqa: A003
+            pass
+
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    env["FORGEJO_BASE_URL"] = f"http://127.0.0.1:{server.server_address[1]}"
+    env["FORGEJO_TOKEN"] = "token"
+
     proc = subprocess.run(
         [
             "ward",
@@ -103,7 +124,6 @@ def test_ward_specs_bundle_tasks_list_injects_page_one() -> None:
             "forgejo",
             "tasks",
             "list",
-            "--dry-run",
             "coilyco-flight-deck",
             "agentic-os",
             "--limit",
@@ -116,8 +136,14 @@ def test_ward_specs_bundle_tasks_list_injects_page_one() -> None:
         text=True,
     )
 
-    assert "page=1" in proc.stdout
-    assert "kdl.Int" not in proc.stdout
+    server.shutdown()
+    thread.join(timeout=5)
+
+    assert proc.stdout == "[]"
+    assert proc.stderr == ""
+    assert paths
+    assert "page=1" in paths[0]
+    assert "kdl.Int" not in paths[0]
 
 
 def test_shell_core_exports_the_ward_bundle_ref() -> None:
