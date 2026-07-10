@@ -45,6 +45,8 @@ def test_ward_specs_bundle_carries_deployment_anchors() -> None:
     assert '/forgejo/api-token' in rerun
     assert '.ward/forgejo-actions-rerun.sh' in rerun
     assert '.ward/forgejo-actions-rerun-failed-jobs.sh' in rerun
+    assert "can run rerun" in rerun
+    assert "can run rerun-failed-jobs" in rerun
 
     rerun_bridge = (SPEC_DIR / "forgejo-actions-rerun.sh").read_text()
     assert "python3 -m agentic_os.forgejo_actions_rerun rerun" in rerun_bridge
@@ -120,8 +122,8 @@ def test_ward_specs_bundle_documents_actions_rerun() -> None:
     assert "/actions/runs/{run_id}/rerun-failed-jobs" in docs
     assert "Auth source: admin PAT from `/forgejo/api-token`" in docs
     forgejo = (SPEC_DIR / "ward-kdl.forgejo.rerun.guardfile.kdl").read_text()
-    assert "can rerun run" in forgejo
-    assert "can rerun-failed-jobs run" in forgejo
+    assert "can run rerun" in forgejo
+    assert "can run rerun-failed-jobs" in forgejo
     assert '"rerunWorkflowRun"' not in lock
     assert '"rerunFailedWorkflowRun"' not in lock
     assert '"/repos/{owner}/{repo}/actions/runs/{run_id}/rerun"' not in lock
