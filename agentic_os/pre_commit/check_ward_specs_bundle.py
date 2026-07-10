@@ -48,6 +48,11 @@ EXPECTED_REPOS = """repos {
         repo "coilyco-flight-deck/*" forge=forgejo
         repo "coilyco-gaming/*" forge=forgejo
     }
+
+    burndown default=true {
+        repo "coilyco-flight-deck/infrastructure" false
+        repo "coilyco-bridge/deploy" false
+    }
 }
 """
 EXPECTED_TAR_MEMBERS = (

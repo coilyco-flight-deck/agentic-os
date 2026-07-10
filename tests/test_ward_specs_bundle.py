@@ -103,6 +103,9 @@ def test_ward_specs_bundle_carries_deployment_anchors() -> None:
     assert "trusted-owner coilyco-flight-deck" in repos
     assert 'repo "coilysiren/*" forge=github' in repos
     assert 'repo "coilyco-flight-deck/*" forge=forgejo' in repos
+    assert "burndown default=true" in repos
+    assert 'repo "coilyco-flight-deck/infrastructure" false' in repos
+    assert 'repo "coilyco-bridge/deploy" false' in repos
 
     agents = (SPEC_DIR / "agents.kdl").read_text()
     assert "agents {" in agents
