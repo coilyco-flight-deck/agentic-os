@@ -134,8 +134,10 @@ def test_agent_tier_still_copies_the_stable_assets_from_the_root_context() -> No
     assert "COPY agent-name.sh /opt/agentic-os/agent-name.sh" in text
     assert "COPY statusline.sh /opt/agentic-os/statusline.sh" in text
     assert "COPY statusline.d/ /opt/agentic-os/statusline.d/" in text
+    assert "COPY ward-shell-entrypoint.sh /opt/agentic-os/ward-shell-entrypoint.sh" in text
     assert "COPY claude-managed-settings.json /etc/claude-code/managed-settings.json" in text
     assert "COPY substrate-image-repos.txt /tmp/substrate-image-repos.txt" in text
+    assert 'ENTRYPOINT ["/opt/agentic-os/ward-shell-entrypoint.sh"]' in text
 
 
 def test_full_tier_remains_the_default_surface() -> None:

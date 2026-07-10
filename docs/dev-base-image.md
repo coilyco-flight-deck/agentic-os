@@ -18,7 +18,7 @@ literal filename `Dockerfile`.
 - **language/runtime tiers** - Node, Go, and .NET 10 + ICU.
 - **ops / agent CLIs** - aws cli, Homebrew, claude, mcporter, opencode, codex, goose, gh, helm, kubectl, yq, Docker CLI, and Tailscale CLI.
 - **gate tools** - golangci-lint, trufflehog, and kdlfmt.
-- **platform seed** - the public substrate mirrors and the baked agent self-name / status-line assets.
+- **platform seed** - the public substrate mirrors, the baked agent self-name / status-line assets, and the container shell entrypoint that seeds `AOS_REPO_ROOT` plus `WARD_CONFIG_REF` before the read-only director shell starts.
 
 Tools under `/usr/local`, `/home/linuxbrew/.linuxbrew`, or `/opt` run as any uid. ward owns `run-as-uid`, mounts, and `~/.aws`. Root bootstrap seeds `/home/ubuntu/.ward/audit` as uid 1000 and avoids root-owned audit state.
 

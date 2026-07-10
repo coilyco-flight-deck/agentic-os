@@ -5,11 +5,14 @@ if [[ "$SHELL" == *"bash"* ]]; then
   exit 0
 fi
 
-ln -sf "$HOME/projects/coilyco-flight-deck/agentic-os/shell/zshrc" "$HOME/.zshrc"
-source "$HOME/projects/coilyco-flight-deck/agentic-os/shell/common.sh"
+_siren_zshrc_source="$(readlink "${(%):-%N}" 2>/dev/null || printf '%s' "${(%):-%N}")"
+_siren_aos_root="$(cd "$(dirname "$_siren_zshrc_source")/.." && pwd -P)"
+export AOS_REPO_ROOT="$_siren_aos_root"
+ln -sf "$_siren_aos_root/shell/zshrc" "$HOME/.zshrc"
+source "$_siren_aos_root/shell/common.sh"
 # compinit before warp.zsh: it registers a completion via compdef.
 autoload -Uz compinit && compinit
-source "$HOME/projects/coilyco-flight-deck/agentic-os/shell/warp.zsh"
+source "$_siren_aos_root/shell/warp.zsh"
 command -v direnv >/dev/null && eval "$(direnv hook zsh)"
 
 # Machine-local overrides (host-specific PATH, aliases, functions). Public-safe: the line is generic; the content lives outside this repo.
