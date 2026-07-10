@@ -23,6 +23,7 @@ repo-authority default=forgejo {
     trusted-owner coilyco-gaming
 
     repo "coilysiren/*" forge=github
+    repo "coilysiren/inbox" forge=forgejo
     repo "coilyco-bridge/*" forge=forgejo
     repo "coilyco-flight-deck/*" forge=forgejo
     repo "coilyco-gaming/*" forge=forgejo
