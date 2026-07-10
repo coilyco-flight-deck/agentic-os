@@ -19,6 +19,9 @@ same `publish-image` job as any other push to main, so `:latest` tracks upstream
 The bump logic lives in this repo because the publish pipeline does (AGENTS.md).
 Fleet rollout is not its concern.
 
+After the planned bumps are applied, the workflow runs the same gate as release
+before it pushes, so a bad pin leaves the run red and stops before `main`.
+
 ## Properties
 
 - **Auditable, not silent.** One commit per tool

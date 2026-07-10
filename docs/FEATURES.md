@@ -10,12 +10,13 @@ This doc lists major shipped capabilities, not files. If you want a file invento
 - **Karabiner key bindings** - complex modifications for the external keyboard and Remote Desktop.
 - [Agents and sessions](features-agents-sessions.md) - agent self-name, session pulse, and status-line repo tracking.
 - [Code review skill](../.agents/skills/tooling-code-review/SKILL.md) - the in-container review stance for ward workers.
+- [Code review contract](../CODE-REVIEW.md) - the root review doctrine for repo-local invariants and refresh triggers.
 - [Harness selection](harness-selection.md) - choose Claude, Codex, OpenCode, Aider, or Goose.
 - [Test harnesses](test-harness.md) - smoke tests for agent harness and model pairings.
 - [Issue-corpus discovery index](issue-corpus.md) - offline corpus render plus live Forgejo lookup.
 - [Forgejo Actions log streaming](forgejo-actions-logs.md) - plaintext log bridge for live workflow logs.
 - [ward deployment spec bundle](ward-specs.md) - the shipped `WARD_CONFIG_REF` bundle for the coilyco fleet.
-- [Cross-repo tooling and release](features-release-tooling.md) - hooks, diagnostics, and Forgejo-canonical release actions.
+- [Cross-repo tooling and release](features-release-tooling.md) - hooks, diagnostics, and Forgejo-canonical release actions, with the release pipeline gated before tagging.
 - [Telegram CI failure alerts](telegram-ci-alerts.md) - reusable red-channel alerting for failing jobs.
 - [dev-base container image](dev-base-image.md) - the inner-loop toolchain image family.
 - [CI parity in dev-base](ci-in-dev-base.md) - CI runs inside the pinned dev-base image.

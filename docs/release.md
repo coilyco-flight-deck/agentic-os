@@ -14,6 +14,8 @@ helper, while Docker/buildx/qemu stay job-local. The helper derives the tier
 refs from `docker/dev-base/<tier>/Dockerfile`, the core image publishes first,
 and `dev-base-full` fans in last after its prerequisites pass.
 
+Publish is gated by `test`, which runs `ward exec test` and `ward exec pre-commit-all`.
+
 agentic-os is consumed as pre-commit hooks pinned by `rev:` tag, not a brew
 formula or a prebuilt binary, so there is nothing to attach to the release and
 no formula to bump. The only downstream artifact is the git tag itself.
