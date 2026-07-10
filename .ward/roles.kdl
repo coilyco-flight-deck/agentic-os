@@ -14,18 +14,36 @@ roles {
         tagline "Autonomously drives a repo's headless lane to drain."
         capabilities read project-management
         modes "Attached LLM-in-the-loop heartbeat over a repo's backlog (`--repo` scope). Surfaces a read-only scope + dispatch session on drain, no ref."
+        // smart as they come
         posture attached
         guardfile "guardfile.forgejo.read.kdl"
         guardfile "guardfile.forgejo.readactions.kdl"
         guardfile "guardfile.forgejo.write.kdl"
+        agent claude {
+            model claude-opus-4-8
+            reasoning-effort xhigh
+        }
+        agent codex {
+            model gpt-5.5
+            reasoning-effort xhigh
+        }
     }
     role advisor {
         tagline "Answers without writing code."
         capabilities read
         modes "A ref researches the issue and posts the answer as a comment. Freeform text answers inline."
+        // smarter agents than baseline
         posture no-code
         guardfile "guardfile.forgejo.read.kdl"
         guardfile "guardfile.forgejo.readactions.kdl"
+        agent claude {
+            model claude-opus-4-8
+            reasoning-effort high
+        }
+        agent codex {
+            model gpt-5.5
+            reasoning-effort high
+        }
     }
     role qa {
         tagline "Inspects a candidate and posts a structured verdict comment."
@@ -40,11 +58,20 @@ roles {
         tagline "Perform live system maintenance and operations."
         capabilities read ops
         modes "A ref inspects the issue and surrounding runtime state, then uses only the role's declared guardfiles for cloud, cluster, and Forgejo follow-up. Freeform mode is not exposed."
+        // smart as they come
         posture no-code
         guardfile "guardfile.forgejo.read.kdl"
         guardfile "guardfile.forgejo.readactions.kdl"
         guardfile "guardfile.forgejo.write.kdl"
         guardfile "guardfile.aws.kdl"
         guardfile "guardfile.kubectl.kdl"
+        agent claude {
+            model claude-opus-4-8
+            reasoning-effort xhigh
+        }
+        agent codex {
+            model gpt-5.5
+            reasoning-effort xhigh
+        }
     }
 }

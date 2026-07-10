@@ -36,6 +36,10 @@ bridge stays here as a coilyco-specific overlay because the upstream swagger
 omits the live web log route and the current renderer stays JSON-first. The
 exception is stated in [AGENTS.md](../AGENTS.md).
 
+The same role file also carries the per-harness `agent <name> { ... }` overlay
+layer. See [ward-specs-overrides.md](ward-specs-overrides.md) for the shape and
+dispatch path.
+
 ## Release asset
 
 Every aos release attaches the bundle as `ward-specs-<tag>.tar.gz` (plus a

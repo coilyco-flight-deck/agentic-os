@@ -52,6 +52,26 @@ def test_ward_specs_bundle_carries_deployment_anchors() -> None:
     assert 'guardfile "guardfile.forgejo.readactions.kdl"' in roles
     assert 'guardfile "guardfile.aws.kdl"' in roles
     assert 'guardfile "guardfile.kubectl.kdl"' in roles
+    assert (
+        '        agent claude {\n'
+        '            model claude-opus-4-8\n'
+        '            reasoning-effort xhigh\n'
+        '        }\n'
+        '        agent codex {\n'
+        '            model gpt-5.5\n'
+        '            reasoning-effort xhigh\n'
+        '        }'
+    ) in roles
+    assert (
+        '        agent claude {\n'
+        '            model claude-opus-4-8\n'
+        '            reasoning-effort high\n'
+        '        }\n'
+        '        agent codex {\n'
+        '            model gpt-5.5\n'
+        '            reasoning-effort high\n'
+        '        }'
+    ) in roles
 
     defaults = (SPEC_DIR / "defaults.kdl").read_text()
     assert "defaults {" in defaults

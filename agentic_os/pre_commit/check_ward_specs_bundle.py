@@ -48,6 +48,38 @@ EXPECTED_REPOS = """repos {
     repo "coilyco-gaming/*" forge=forgejo
 }
 """
+EXPECTED_ROLE_OVERRIDES = {
+    "director": (
+        '        agent claude {\n'
+        '            model claude-opus-4-8\n'
+        '            reasoning-effort xhigh\n'
+        '        }\n'
+        '        agent codex {\n'
+        '            model gpt-5.5\n'
+        '            reasoning-effort xhigh\n'
+        '        }'
+    ),
+    "advisor": (
+        '        agent claude {\n'
+        '            model claude-opus-4-8\n'
+        '            reasoning-effort high\n'
+        '        }\n'
+        '        agent codex {\n'
+        '            model gpt-5.5\n'
+        '            reasoning-effort high\n'
+        '        }'
+    ),
+    "ops": (
+        '        agent claude {\n'
+        '            model claude-opus-4-8\n'
+        '            reasoning-effort xhigh\n'
+        '        }\n'
+        '        agent codex {\n'
+        '            model gpt-5.5\n'
+        '            reasoning-effort xhigh\n'
+        '        }'
+    ),
+}
 EXPECTED_TAR_MEMBERS = (
     "./forgejo-actions-logs.sh",
     "./forgejo.swagger.lock.json",
@@ -103,6 +135,14 @@ def _validate_repos(path: Path) -> None:
     _require(path.read_text() == EXPECTED_REPOS, f"{path} must match the canonical coilyco repos bundle")
 
 
+def _validate_roles(path: Path) -> None:
+    _require(path.exists(), f"missing bundle file: {path}")
+    text = path.read_text()
+    for role, override in EXPECTED_ROLE_OVERRIDES.items():
+        _require(f"    role {role} {{" in text, f"{path} must define role {role}")
+        _require(override in text, f"{path} must carry the {role} per-harness model and reasoning-effort overrides")
+
+
 def _validate_release_tar_members(path: Path) -> None:
     _require(path.exists(), f"missing release workflow: {path}")
     text = path.read_text()
@@ -116,6 +156,7 @@ def main() -> int:
     if not sys.argv[1:]:
         _validate_defaults(DEFAULTS_PATH)
         _validate_repos(REPOS_PATH)
+        _validate_roles(ROOT / ".ward" / "roles.kdl")
         _validate_release_tar_members(RELEASE_PATH)
         return 0
 
@@ -124,6 +165,8 @@ def main() -> int:
             _validate_defaults(DEFAULTS_PATH)
         elif arg == "--repos-only":
             _validate_repos(REPOS_PATH)
+        elif arg == "--roles-only":
+            _validate_roles(ROOT / ".ward" / "roles.kdl")
         elif arg == "--release-only":
             _validate_release_tar_members(RELEASE_PATH)
         else:
