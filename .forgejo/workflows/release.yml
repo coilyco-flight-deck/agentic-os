@@ -14,7 +14,9 @@
 # image family by tier through the release helper, and only then creates the
 # public git/release tag. That keeps the announced tag as the last success
 # marker. Full rationale + skip-ci notes in docs/release.md, image notes in
-# docs/dev-base-image.md.
+# docs/dev-base-image.md. A front test job now gates planning, publish, tag,
+# release, and ward-spec asset upload so release side effects cannot race
+# ahead of the repo-authoritative checks.
 
 name: release
 
@@ -38,7 +40,40 @@ permissions:
   contents: write
 
 jobs:
+  test:
+    runs-on: docker
+    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:v0.195.0
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Repo test gate
+        run: |
+          set -euo pipefail
+          # The release image is expected to carry ward. If a future image
+          # ever drops it, the fallback is the exact repo command the ward
+          # verb wraps.
+          if command -v ward >/dev/null 2>&1; then
+            ward exec test
+          else
+            uv run pytest
+          fi
+
+          if command -v ward >/dev/null 2>&1; then
+            ward exec pre-commit-all
+          else
+            pre-commit run --all-files
+          fi
+
+      - name: Alert Telegram on main failure
+        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        uses: ./actions/telegram-alert
+        with:
+          bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
   plan-release:
+    needs: test
     runs-on: docker
     container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:v0.195.0
     outputs:

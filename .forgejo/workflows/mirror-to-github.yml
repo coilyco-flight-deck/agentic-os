@@ -10,7 +10,9 @@
 # rejected outright (GH013) and the mirror silently stalls (agentic-os#309).
 # Forgejo main is append-only, so a fast-forward always suffices in steady
 # state. A rejected FF push means the two mains have diverged and need a
-# one-time human reconcile -- see docs/mirror-to-github.md.
+# one-time human reconcile -- see docs/mirror-to-github.md. A front test job
+# now gates the mirror push so GitHub never advances on a tree that failed the
+# repo-authoritative test/pre-commit checks.
 
 name: mirror-to-github
 
@@ -20,7 +22,35 @@ on:
     tags: ['v*']
 
 jobs:
+  test:
+    runs-on: docker
+    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:v0.195.0
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Repo test gate
+        run: |
+          set -euo pipefail
+          # Mirror follows the same repo gate as release. Use ward when the
+          # CI image provides it, otherwise run the exact wrapped commands.
+          if command -v ward >/dev/null 2>&1; then
+            ward exec test
+            ward exec pre-commit-all
+          else
+            uv run pytest
+            pre-commit run --all-files
+          fi
+
+      - name: Alert Telegram on main failure
+        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        uses: ./actions/telegram-alert
+        with:
+          bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
   mirror:
+    needs: test
     runs-on: docker
     container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:v0.195.0
     steps:

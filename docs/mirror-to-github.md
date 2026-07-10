@@ -8,6 +8,9 @@ canonical Forgejo `main`. GitHub is where the fleet's
 advancing matters even though Forgejo is upstream-of-record. The job no-ops
 without the `GITHUB_MIRROR_PAT` secret.
 
+The workflow now starts with a same-workflow test/pre-commit gate so the
+mirror push only runs when the repo-authoritative checks already passed.
+
 ## Fast-forward-only, never `--force`
 
 GitHub `main` carries a "cannot force-push" branch-protection rule - that rule

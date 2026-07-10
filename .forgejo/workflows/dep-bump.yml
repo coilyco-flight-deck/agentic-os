@@ -14,6 +14,8 @@
 # job token still pushes without it, but some Forgejo versions suppress workflow
 # runs from bot-token pushes. UPSTREAM_GH_TOKEN is optional and only lifts
 # github.com's anonymous API rate limit. Full walkthrough: docs/dev-base-auto-bump.md.
+# The applied bump tree now runs the repo test/pre-commit gate before the push
+# so a bad pin leaves this workflow red and never reaches main.
 
 name: dep-bump
 
@@ -61,6 +63,17 @@ jobs:
             git add docker/dev-base/*/Dockerfile
             git commit -m "chore(dev-base): auto-bump ${name} ${current} -> ${latest} (agentic-os#272)"
           done < /tmp/dep-bump-plan.tsv
+
+          # The bumped tree only gets pushed after the repo-authoritative gate
+          # passes. Use ward when the CI image has it, otherwise invoke the
+          # exact wrapped commands.
+          if command -v ward >/dev/null 2>&1; then
+            ward exec test
+            ward exec pre-commit-all
+          else
+            uv run pytest
+            pre-commit run --all-files
+          fi
 
           git push origin HEAD:main
       - name: Alert Telegram on main failure
