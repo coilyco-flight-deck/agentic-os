@@ -46,6 +46,10 @@ broken bundled config before the image publishes.
 The tag comes last, after the image has been built, pushed, and verified.
 The base apt layer retries against mirror drift so a publish can still land when Ubuntu package metadata and archives briefly disagree.
 
+The build/verify half of that publish also runs build-only on every pull
+request, so image breakage fails the PR rather than the post-merge publish.
+See [PR dev-base build validation](pr-dev-base-build-validation.md).
+
 ## Pinning a tool
 
 Versions pin as `ARG`s: hand-edit and push to main to pin or roll back, else a

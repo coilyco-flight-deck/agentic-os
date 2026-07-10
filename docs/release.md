@@ -6,13 +6,13 @@ default public-repo contract in [forgejo-github-mirror-contract.md](forgejo-gith
 Forgejo owns the release and tag, GitHub only mirrors the result, and GitHub
 Releases stay out of the default surface.
 
-`.forgejo/workflows/release.yml` computes the next tag first, then calls
-[`scripts/dev-base-build.py`](../scripts/dev-base-build.py) to publish and
-verify the dev-base image family by tier before it cuts the public git/release
-tag. The publish job bootstraps `uv` on the bare runner before it invokes that
-helper, while Docker/buildx/qemu stay job-local. The helper derives the tier
-refs from `docker/dev-base/<tier>/Dockerfile`, the core image publishes first,
-and `dev-base-full` fans in last after its prerequisites pass.
+`.forgejo/workflows/release.yml` computes the next tag first, then runs the
+shared [`actions/dev-base-build`](../actions/dev-base-build/action.yml)
+composite in push mode to publish and verify the dev-base image family by tier
+before it cuts the public git/release tag. The composite wraps
+[`scripts/dev-base-build.py`](../scripts/dev-base-build.py). The core image
+publishes first and `dev-base-full` fans in last. PRs run the same composite
+build-only ([walkthrough](pr-dev-base-build-validation.md)).
 
 Publish is gated by `test`, which runs `ward exec test` and `ward exec pre-commit-all`.
 
