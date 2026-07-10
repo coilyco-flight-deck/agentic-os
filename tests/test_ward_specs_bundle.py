@@ -27,11 +27,10 @@ def test_ward_specs_bundle_carries_deployment_anchors() -> None:
 
     admin = (SPEC_DIR / "ward-kdl.forgejo.admin.guardfile.kdl").read_text()
     assert 'inherit "../ward-kdl-write/ward-kdl.forgejo.write.guardfile.kdl"' in admin
-    assert '/forgejo/api-token' in admin
     assert "can delete repo" in admin
     assert "can delete issue-comment" in admin
-    assert "can rerun run" in admin
-    assert "can rerun-failed-jobs run" in admin
+    assert "can rerun run" not in admin
+    assert "can rerun-failed-jobs run" not in admin
 
     actions = (SPEC_DIR / "ward-kdl.forgejo.logs.guardfile.kdl").read_text()
     assert 'can run "actions logs"' in actions
@@ -41,10 +40,11 @@ def test_ward_specs_bundle_carries_deployment_anchors() -> None:
     bridge = (SPEC_DIR / "forgejo-actions-logs.sh").read_text()
     assert "python3 -m agentic_os.forgejo_actions_logs" in bridge
 
-    rerun = (SPEC_DIR / "ward-kdl.forgejo.admin.guardfile.kdl").read_text()
+    rerun = (SPEC_DIR / "ward-kdl.forgejo.rerun.guardfile.kdl").read_text()
+    assert 'restrict owner matches coily*' in rerun
+    assert '/forgejo/api-token' in rerun
     assert '.ward/forgejo-actions-rerun.sh' in rerun
     assert '.ward/forgejo-actions-rerun-failed-jobs.sh' in rerun
-    assert "value ssm \"/forgejo/api-token\"" in rerun
 
     rerun_bridge = (SPEC_DIR / "forgejo-actions-rerun.sh").read_text()
     assert "python3 -m agentic_os.forgejo_actions_rerun rerun" in rerun_bridge
@@ -119,7 +119,7 @@ def test_ward_specs_bundle_documents_actions_rerun() -> None:
     assert "/actions/runs/{run_id}/rerun" in docs
     assert "/actions/runs/{run_id}/rerun-failed-jobs" in docs
     assert "Auth source: admin PAT from `/forgejo/api-token`" in docs
-    forgejo = (SPEC_DIR / "ward-kdl.forgejo.admin.guardfile.kdl").read_text()
+    forgejo = (SPEC_DIR / "ward-kdl.forgejo.rerun.guardfile.kdl").read_text()
     assert "can rerun run" in forgejo
     assert "can rerun-failed-jobs run" in forgejo
     assert '"rerunWorkflowRun"' not in lock

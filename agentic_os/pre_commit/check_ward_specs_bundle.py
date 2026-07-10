@@ -58,6 +58,7 @@ EXPECTED_TAR_MEMBERS = (
     "./ward-kdl.fleet.kdl",
     "./ward-kdl.forgejo.admin.guardfile.kdl",
     "./ward-kdl.forgejo.guardfile.kdl",
+    "./ward-kdl.forgejo.rerun.guardfile.kdl",
     "./ward-kdl.forgejo.read.guardfile.kdl",
     "./ward-kdl.forgejo.logs.guardfile.kdl",
     "./ward-kdl.forgejo.write.guardfile.kdl",
