@@ -49,6 +49,8 @@ repo-authority default=forgejo {
 """
 EXPECTED_TAR_MEMBERS = (
     "./forgejo-actions-logs.sh",
+    "./forgejo-actions-rerun-failed-jobs.sh",
+    "./forgejo-actions-rerun.sh",
     "./forgejo.swagger.lock.json",
     "./specverb.lock",
     "./ward-kdl.aws.guardfile.kdl",

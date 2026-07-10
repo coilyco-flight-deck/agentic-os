@@ -434,6 +434,8 @@ jobs:
           tar --sort=name --mtime='UTC 1970-01-01' --owner=0 --group=0 --numeric-owner \
             -C .ward -cf ward-specs.tar \
             ./forgejo-actions-logs.sh \
+            ./forgejo-actions-rerun-failed-jobs.sh \
+            ./forgejo-actions-rerun.sh \
             ./forgejo.swagger.lock.json \
             ./specverb.lock \
             ./ward-kdl.aws.guardfile.kdl \

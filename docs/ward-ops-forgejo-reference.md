@@ -883,6 +883,8 @@ Options (2):
 `POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun`
 
 Authorized by grant: can rerun run. Not destructive.
+Auth source: admin PAT from `/forgejo/api-token`, because the rerun route needs repo-writer permission on this deployment.
+This leaf is a guarded exec bridge, not a swagger leaf.
 
 Positional arguments (3):
 
@@ -895,6 +897,8 @@ Positional arguments (3):
 `POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun-failed-jobs`
 
 Authorized by grant: can rerun-failed-jobs run. Not destructive.
+Auth source: admin PAT from `/forgejo/api-token`, because the rerun route needs repo-writer permission on this deployment.
+This leaf is a guarded exec bridge, not a swagger leaf.
 
 Positional arguments (3):
 
