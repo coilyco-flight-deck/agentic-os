@@ -36,6 +36,12 @@ def test_ward_specs_bundle_carries_deployment_anchors() -> None:
     assert '.ward/forgejo-actions-logs.sh' in actions
     assert '.ward/forgejo-actions-list.sh' in actions
 
+    merge = (SPEC_DIR / "guardfile.forgejo.merge.kdl").read_text()
+    assert "wrap ward-kdl-merge ops forgejo" in merge
+    assert "restrict owner matches coily*" in merge
+    assert "op repoMergePullRequest" in merge
+    assert "op repoPullRequestIsMerged" in merge
+
     guardfile = (SPEC_DIR / "guardfile.forgejo.kdl").read_text()
     assert "action list tasks {" in guardfile
     assert 'describe "list Forgejo Actions tasks with a safe page-1 default"' in guardfile
@@ -64,6 +70,8 @@ def test_ward_specs_bundle_carries_deployment_anchors() -> None:
     assert "capabilities read ops" not in roles
     assert 'guardfile "guardfile.forgejo.read.kdl"' in roles
     assert 'guardfile "guardfile.forgejo.readactions.kdl"' in roles
+    # The merge overlay binds to director and engineer only (agentic-os#446).
+    assert roles.count('guardfile "guardfile.forgejo.merge.kdl"') == 2
     assert 'guardfile "guardfile.aws.kdl"' in roles
     assert 'guardfile "guardfile.kubectl.kdl"' in roles
 
@@ -112,7 +120,10 @@ def test_ward_specs_bundle_documents_workflow_dispatch() -> None:
     assert "ward ops forgejo pr list" in docs
     assert "ward ops forgejo tasks list" in docs
     assert "safe page-1 default" in docs
-    assert "page=1" in docs
+    # The injected page=1 arg literal stays pinned in the guardfile-anchor
+    # test ('page "1"'); the v0.584.0 renderer no longer prints call args.
+    assert "ward ops forgejo commit status" in docs
+    assert "ward ops forgejo action-run list" in docs
 
 
 def test_ward_specs_docs_cover_actions_listing() -> None:
@@ -186,6 +197,7 @@ def test_ward_specs_bundle_defaults_are_packaged() -> None:
     assert "./guardfile.forgejo.admin.kdl" in release
     assert "./guardfile.forgejo.readactions.kdl" in release
     assert "./guardfile.forgejo.kdl" in release
+    assert "./guardfile.forgejo.merge.kdl" in release
     assert "./guardfile.kubectl.kdl" in release
     assert "./repos.kdl" in release
     assert "./roles.kdl" in release

@@ -4,7 +4,7 @@
 
 # ward ops forgejo - committed reference
 
-**as-of:** 2026-07-10 - **source:** `ward ops forgejo describe` (v0.565.0) - **regenerate:** `ward exec gen-ward-ops-reference`
+**as-of:** 2026-07-10 - **source:** `ward ops forgejo describe` (v0.584.0) - **regenerate:** `ward exec gen-ward-ops-reference`
 
 Operator verbs live in **ward-kdl**, surfaced as `ward ops <area> ...`. This is a
 committed render of `ward ops forgejo describe` so the verb names survive off-disk
@@ -661,6 +661,42 @@ Options (2):
 - `--page` (integer, optional): page number of results to return (1-based)
 - `--limit` (integer, optional): page size of results, default maximum page size is 50
 
+## ward ops forgejo commit status - combined commit status (GET /repos/{owner}/{repo}/commits/{ref}/status): the single rolled-up state for a ref (success/failure/pending) across all its statuses. op pinned because the status singleton sits beside the statuses collection and the bare convention cannot split them.
+
+`GET /repos/{owner}/{repo}/commits/{ref}/status`
+
+Authorized by grant: can status commit. Not destructive.
+
+Positional arguments (3):
+
+- `<owner>` (string)
+- `<repo>` (string)
+- `<ref>` (string)
+
+Options (2):
+
+- `--page` (integer, optional): page number of results to return (1-based)
+- `--limit` (integer, optional): page size of results
+
+## ward ops forgejo commit list-statuses - commit status list (GET /repos/{owner}/{repo}/commits/{ref}/statuses): the per-context statuses behind the combined rollup. op pinned beside `commit status` for the same singleton/collection split.
+
+`GET /repos/{owner}/{repo}/commits/{ref}/statuses`
+
+Authorized by grant: can list-statuses commit. Not destructive.
+
+Positional arguments (3):
+
+- `<owner>` (string)
+- `<repo>` (string)
+- `<ref>` (string)
+
+Options (4):
+
+- `--sort` (string, optional): type of sort
+- `--state` (string, optional): type of state
+- `--page` (integer, optional): page number of results to return (1-based)
+- `--limit` (integer, optional): page size of results
+
 ## ward ops forgejo release get
 
 `GET /repos/{owner}/{repo}/releases/{id}`
@@ -862,15 +898,38 @@ Options (1):
 
 - `--updated_at` (string, optional)
 
-## ward ops forgejo tasks list - list Forgejo Actions tasks with a safe page-1 default
+## ward ops forgejo action-run list - Actions run list with status filters (GET /repos/{owner}/{repo}/actions/runs). op pinned to the upstream ListActionRuns id.
 
-Shadows the generated `tasks list` leaf: invoking it runs this composite in the leaf's place.
+`GET /repos/{owner}/{repo}/actions/runs`
 
-The mounted call always injects `page=1`, so `--limit` cannot fall through to a full-history pull.
+Authorized by grant: can list action-run. Not destructive.
 
-Complex action. Runs 1 granted call in order, threading $step.field data between them:
+Positional arguments (2):
 
-1. `GET /repos/{owner}/{repo}/actions/tasks?page=1` - binds the response as `tasks`
+- `<owner>` (string)
+- `<repo>` (string)
+
+Options (6):
+
+- `--page` (integer, optional): page number of results to return (1-based)
+- `--limit` (integer, optional): page size of results, default maximum page size is 50
+- `--run_number` (integer, optional): Returns the workflow run associated with the run number.
+
+- `--head_sha` (string, optional): Only returns workflow runs that are associated with the specified head_sha.
+- `--ref` (string, optional): Only return workflow runs that involve the given Git reference, for example, `refs/heads/main`.
+- `--workflow_id` (string, optional): Only return workflow runs that involve the given workflow ID.
+
+## ward ops forgejo action-run get - single Actions run with its status and conclusion (GET /repos/{owner}/{repo}/actions/runs/{run_id}). op pinned to the upstream ActionRun id.
+
+`GET /repos/{owner}/{repo}/actions/runs/{run_id}`
+
+Authorized by grant: can get action-run. Not destructive.
+
+Positional arguments (3):
+
+- `<owner>` (string)
+- `<repo>` (string)
+- `<run_id>` (string)
 
 ## ward ops forgejo workflow dispatch - Dispatch a workflow file (POST /repos/{owner}/{repo}/actions/workflows/{workflowfilename}/dispatches). Allows a guarded manual trigger instead of a raw API call. The API body requires ref and may carry inputs.
 
@@ -896,6 +955,14 @@ Shadows the generated `issue list-all` leaf: invoking it runs this composite in 
 Complex action. Collects every page from `GET /repos/{owner}/{repo}/issues`, incrementing `page` and appending array responses until a page returns fewer than `50` item(s).
 
 Authorized by grant: can list issue.
+
+## ward ops forgejo tasks list - list Forgejo Actions tasks with a safe page-1 default
+
+Shadows the generated `tasks list` leaf: invoking it runs this composite in the leaf's place.
+
+Complex action. Runs 1 granted calls in order, threading $step.field data between them:
+
+1. `GET /repos/{owner}/{repo}/actions/tasks` - binds the response as `tasks`
 
 ## ward ops forgejo action move-issue - Move an issue to another repo (copy title/body, back-link, close source). Never deletes.
 

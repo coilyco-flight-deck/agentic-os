@@ -23,6 +23,7 @@ every ward user melds. External ward users build neutral and never fetch it.
 For Forgejo, the read tier owns the shared spec URL, base URL, auth, explicit
 read grants, and inherited denials. The write tier inherits read and adds
 authoring verbs. The admin tier inherits write and adds targeted delete verbs.
+PR merge rides a director/engineer-only overlay, `guardfile.forgejo.merge.kdl`.
 Role guardfile bindings live in `.ward/roles.kdl` as repeated singular
 `guardfile` nodes. When no embedded lock is present, ward fetches the upstream
 Forgejo OpenAPI from the configured URL. That keeps the guardfiles deterministic
