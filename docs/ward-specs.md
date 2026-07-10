@@ -30,9 +30,10 @@ because the upstream swagger omits the live web log route and the current
 renderer stays JSON-first. The exception is stated in
 [AGENTS.md](../AGENTS.md).
 
-The bundle also carries a safe Forgejo Actions list bridge that defaults to
-page 1, so live CI checks do not fall back to full-history pulls when callers
-add `limit`. See [Forgejo Actions list bridge](forgejo-actions-listing.md).
+The bundle also carries a safe Forgejo Actions list bridge and a shadowed
+`tasks list` mount that default to page 1, so live CI checks do not fall back to
+full-history pulls when callers add `limit`. See [Forgejo Actions list
+bridge](forgejo-actions-listing.md).
 
 ## Release asset
 

@@ -21,6 +21,12 @@ def test_ward_specs_bundle_carries_deployment_anchors() -> None:
     assert '.ward/forgejo-actions-logs.sh' in actions
     assert '.ward/forgejo-actions-list.sh' in actions
 
+    guardfile = (SPEC_DIR / "ward-kdl.forgejo.guardfile.kdl").read_text()
+    assert "action list tasks {" in guardfile
+    assert 'describe "list Forgejo Actions tasks with a safe page-1 default"' in guardfile
+    assert "page 1" in guardfile
+    assert "limit $limit" in guardfile
+
     bridge = (SPEC_DIR / "forgejo-actions-logs.sh").read_text()
     assert "/actions/runs/${run_index}/jobs/${job_index}/attempt/${attempt}/logs" in bridge
     assert "Authorization: token ${FORGEJO_TOKEN}" in bridge
@@ -74,6 +80,9 @@ def test_ward_specs_bundle_documents_workflow_dispatch() -> None:
     assert "ward ops forgejo pr view" in docs
     assert "/repos/{owner}/{repo}/pulls/{index}" in docs
     assert "ward ops forgejo pr list" in docs
+    assert "ward ops forgejo tasks list" in docs
+    assert "safe page-1 default" in docs
+    assert "page=1" in docs
 
 
 def test_ward_specs_docs_reference_live_config_source() -> None:

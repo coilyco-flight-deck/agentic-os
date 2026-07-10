@@ -862,21 +862,15 @@ Options (1):
 
 - `--updated_at` (string, optional)
 
-## ward ops forgejo tasks list
+## ward ops forgejo tasks list - list Forgejo Actions tasks with a safe page-1 default
 
-`GET /repos/{owner}/{repo}/actions/tasks`
+Shadows the generated `tasks list` leaf: invoking it runs this composite in the leaf's place.
 
-Authorized by grant: can list tasks. Not destructive.
+The mounted call always injects `page=1`, so `--limit` cannot fall through to a full-history pull.
 
-Positional arguments (2):
+Complex action. Runs 1 granted call in order, threading $step.field data between them:
 
-- `<owner>` (string)
-- `<repo>` (string)
-
-Options (2):
-
-- `--page` (integer, optional): page number of results to return (1-based)
-- `--limit` (integer, optional): page size of results, default maximum page size is 50
+1. `GET /repos/{owner}/{repo}/actions/tasks?page=1` - binds the response as `tasks`
 
 ## ward ops forgejo workflow dispatch - Dispatch a workflow file (POST /repos/{owner}/{repo}/actions/workflows/{workflowfilename}/dispatches). Allows a guarded manual trigger instead of a raw API call. The API body requires ref and may carry inputs.
 
