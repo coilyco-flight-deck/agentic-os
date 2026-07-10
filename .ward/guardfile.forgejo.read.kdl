@@ -119,6 +119,16 @@ wrap ward-kdl-read ops forgejo {
     can list tag {
         describe "tag list (GET /repos/{owner}/{repo}/tags)"
     }
+    // commit statuses: CI state per ref (agentic-os#446). Pure reads - the
+    // combined rollup is what a director grades a PR head red/green with.
+    can status commit {
+        op repoGetCombinedStatusByRef
+        describe "combined commit status (GET /repos/{owner}/{repo}/commits/{ref}/status): the single rolled-up state for a ref (success/failure/pending) across all its statuses. op pinned because the status singleton sits beside the statuses collection and the bare convention cannot split them."
+    }
+    can list-statuses commit {
+        op repoListStatusesByRef
+        describe "commit status list (GET /repos/{owner}/{repo}/commits/{ref}/statuses): the per-context statuses behind the combined rollup. op pinned beside `commit status` for the same singleton/collection split."
+    }
     // releases: read side. create/edit/upload/delete are up-tier.
     can get release
     can list release
@@ -132,6 +142,16 @@ wrap ward-kdl-read ops forgejo {
     }
     // issue-labels: read side (the attach/set/remove membership verbs are up-tier).
     can list issue-label
+    // actions runs: status-bearing native run reads (agentic-os#446); unlike
+    // the `actions runs` exec bridge these carry each run's status/conclusion.
+    can list action-run {
+        op ListActionRuns
+        describe "Actions run list with status filters (GET /repos/{owner}/{repo}/actions/runs). op pinned to the upstream ListActionRuns id."
+    }
+    can get action-run {
+        op ActionRun
+        describe "single Actions run with its status and conclusion (GET /repos/{owner}/{repo}/actions/runs/{run_id}). op pinned to the upstream ActionRun id."
+    }
     // actions tasks: the read-only CI-run listing surface.
     can list tasks
     action list tasks {

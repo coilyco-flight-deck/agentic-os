@@ -23,6 +23,8 @@ _siren_aos_repo_root() {
     "${BASH_SOURCE[0]:-}" \
     "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)" \
     /workspace/agentic-os \
+    X:/projects/coilyco-flight-deck/agentic-os \
+    /x/projects/coilyco-flight-deck/agentic-os \
     "$HOME/projects/coilyco-flight-deck/agentic-os"; do
     [ -n "$repo" ] || continue
     if [ "$repo" = "${BASH_SOURCE[0]:-}" ]; then
