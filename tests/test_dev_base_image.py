@@ -62,7 +62,7 @@ def test_core_tier_keeps_the_hidden_ward_builder_stage() -> None:
     text = _tier_path("core").read_text()
     assert "AS dev-base-ward-builder" in text
     assert 'COPY --from=dev-base-ward-builder /usr/local/bin/ward /usr/local/bin/ward' in text
-    assert "ARG WARD_VERSION=0.529.0" in text
+    assert "ARG WARD_VERSION=0.567.0" in text
     assert "ARG WARD_CONFIG_REF_COMMIT" in text
     assert "WARD_CONFIG_REF=forgejo.coilysiren.me/coilyco-flight-deck/agentic-os@${WARD_CONFIG_REF_COMMIT}//.ward" in text
 
@@ -89,7 +89,7 @@ def test_tier_files_chain_from_the_previous_tier_image() -> None:
 def test_split_tiers_keep_their_managed_arg_defaults() -> None:
     expected_defaults = {
         "lang-node": ["ARG NODE_VERSION=22.23.1"],
-        "lang-go": ["ARG GO_VERSION=1.26.4"],
+        "lang-go": ["ARG GO_VERSION=1.26.5"],
         "lang-dotnet": ["ARG DOTNET_VERSION=10.0.301"],
         "ops": [
             "ARG AWSCLI_VERSION=2.35.15",
@@ -101,7 +101,7 @@ def test_split_tiers_keep_their_managed_arg_defaults() -> None:
             "ARG TAILSCALE_VERSION=1.98.8",
         ],
         "agent": [
-            "ARG CLAUDE_VERSION=2.1.200",
+            "ARG CLAUDE_VERSION=2.1.206",
             "ARG MCPORTER_VERSION=0.12.3",
             "ARG CODEX_VERSION=0.142.5",
             "ARG GOOSE_VERSION=1.41.0",

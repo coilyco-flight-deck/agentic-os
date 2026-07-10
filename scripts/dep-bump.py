@@ -41,7 +41,7 @@ import urllib.request
 from pathlib import Path
 from typing import Callable
 
-from agentic_os.dev_base import DEV_BASE_ROOT, TIER_SPECS, tier_dockerfile
+from agentic_os.dev_base import DEV_BASE_ROOT, TIER_SPECS
 
 DOCKERFILE = DEV_BASE_ROOT
 
@@ -81,6 +81,21 @@ def set_arg(text: str, name: str, version: str) -> str:
 def set_arg_in_file(path: Path, name: str, version: str) -> None:
     """Rewrite one ARG default in a single file in place."""
     path.write_text(set_arg(path.read_text(encoding="utf-8"), name, version), encoding="utf-8")
+
+
+def set_arg_in_tree(root: Path, name: str, version: str) -> None:
+    """Rewrite one ARG default everywhere it appears in a Dockerfile tree."""
+    dockerfiles = sorted(root.rglob("Dockerfile"))
+    touched = 0
+    needle = re.compile(rf"^ARG {re.escape(name)}=\S+", re.MULTILINE)
+    for dockerfile in dockerfiles:
+        text = dockerfile.read_text(encoding="utf-8")
+        if not needle.search(text):
+            continue
+        dockerfile.write_text(set_arg(text, name, version), encoding="utf-8")
+        touched += 1
+    if touched == 0:
+        raise SystemExit(f"expected at least one 'ARG {name}=' line, found 0")
 
 
 def parse_semver(value: str) -> tuple[int, ...]:
@@ -379,8 +394,7 @@ def _cmd_apply(args: argparse.Namespace) -> int:
     if args.dockerfile.is_file():
         set_arg_in_file(args.dockerfile, args.arg, args.version)
     else:
-        target_tier = ARG_TO_TARGET[args.arg]
-        set_arg_in_file(tier_dockerfile(target_tier), args.arg, args.version)
+        set_arg_in_tree(args.dockerfile, args.arg, args.version)
     print(f"set {args.arg}={args.version}")
     return 0
 

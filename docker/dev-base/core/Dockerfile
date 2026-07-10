@@ -1,8 +1,8 @@
 # Canonical agent dev environment core tier. See docs/dev-base-image.md.
 
 ARG UV_VERSION=0.11.26
-ARG GO_VERSION=1.26.4
-ARG WARD_VERSION=0.529.0
+ARG GO_VERSION=1.26.5
+ARG WARD_VERSION=0.567.0
 ARG TARGETARCH
 
 FROM ubuntu:24.04 AS dev-base-ward-builder
