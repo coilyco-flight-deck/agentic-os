@@ -17,7 +17,10 @@ export SAVEHIST=100000
 _siren_aos_repo_root() {
   local repo source_dir
   for repo in "${AOS_REPO_ROOT:-}" \
+    "${FORGEJO_WORKSPACE:-}" \
+    "${GITHUB_WORKSPACE:-}" \
     "${BASH_SOURCE[0]:-}" \
+    "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)" \
     /workspace/agentic-os \
     "$HOME/projects/coilyco-flight-deck/agentic-os"; do
     [ -n "$repo" ] || continue
