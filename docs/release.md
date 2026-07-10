@@ -9,9 +9,10 @@ Releases stay out of the default surface.
 `.forgejo/workflows/release.yml` computes the next tag first, then calls
 [`scripts/dev-base-build.py`](../scripts/dev-base-build.py) to publish and
 verify the dev-base image family by tier before it cuts the public git/release
-tag. The helper derives the tier refs from `docker/dev-base/<tier>/Dockerfile`,
-the core image publishes first, and `dev-base-full` fans in last after its
-prerequisites pass.
+tag. The publish job bootstraps `uv` on the bare runner before it invokes that
+helper, while Docker/buildx/qemu stay job-local. The helper derives the tier
+refs from `docker/dev-base/<tier>/Dockerfile`, the core image publishes first,
+and `dev-base-full` fans in last after its prerequisites pass.
 
 agentic-os is consumed as pre-commit hooks pinned by `rev:` tag, not a brew
 formula or a prebuilt binary, so there is nothing to attach to the release and

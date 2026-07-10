@@ -63,10 +63,21 @@ jobs:
     timeout-minutes: 120
     env:
       IMAGE_BASE: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os
+      UV_VERSION: 0.11.26
       BUILDX_VERSION: v0.34.1
       PLATFORMS: linux/amd64,linux/arm64
     steps:
       - uses: actions/checkout@v6
+
+      - name: Install uv
+        run: |
+          set -euo pipefail
+          # The publish job still runs on the bare docker runner, so uv stays
+          # job-local here even though the image family itself also ships it.
+          curl -LsSf "https://astral.sh/uv/${UV_VERSION}/install.sh" | sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.local/bin:$PATH"
+          uv --version
 
       - name: Install docker CLI + buildx plugin
         run: |
