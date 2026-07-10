@@ -84,6 +84,7 @@ def test_ward_specs_bundle_carries_deployment_anchors() -> None:
 
     fleet = (SPEC_DIR / "ward-kdl.fleet.kdl").read_text()
     assert "attribution name=coilyco-ops" in fleet
+    assert "ward-kdl.forgejo.rerun.guardfile.kdl" in fleet
 
 
 def test_shell_core_exports_the_ward_bundle_ref() -> None:
