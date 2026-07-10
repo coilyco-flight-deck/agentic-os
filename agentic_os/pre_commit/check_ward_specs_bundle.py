@@ -52,6 +52,7 @@ EXPECTED_REPOS = """repos {
 """
 EXPECTED_TAR_MEMBERS = (
     "./forgejo-actions-logs.sh",
+    "./forgejo-runner-token.py",
     "./specverb.lock",
     "./agents.kdl",
     "./defaults.kdl",
@@ -61,6 +62,8 @@ EXPECTED_TAR_MEMBERS = (
     "./guardfile.forgejo.merge.kdl",
     "./guardfile.forgejo.read.kdl",
     "./guardfile.forgejo.readactions.kdl",
+    "./guardfile.forgejo.runnertoken.kdl",
+    "./guardfile.forgejo.runnertoken.exec.kdl",
     "./guardfile.forgejo.write.kdl",
     "./guardfile.kubectl.kdl",
     "./repos.kdl",

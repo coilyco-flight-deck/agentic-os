@@ -14,6 +14,8 @@ roles {
         guardfile "guardfile.forgejo.read.kdl"
         guardfile "guardfile.forgejo.readactions.kdl"
         guardfile "guardfile.forgejo.write.kdl"
+        guardfile "guardfile.forgejo.runnertoken.kdl"
+        guardfile "guardfile.forgejo.runnertoken.exec.kdl"
         guardfile "guardfile.forgejo.merge.kdl"
         agent claude {
             model claude-opus-4-8
@@ -48,6 +50,8 @@ roles {
         guardfile "guardfile.forgejo.read.kdl"
         guardfile "guardfile.forgejo.readactions.kdl"
         guardfile "guardfile.forgejo.write.kdl"
+        guardfile "guardfile.forgejo.runnertoken.kdl"
+        guardfile "guardfile.forgejo.runnertoken.exec.kdl"
         guardfile "guardfile.aws.kdl"
         guardfile "guardfile.kubectl.kdl"
         agent claude {

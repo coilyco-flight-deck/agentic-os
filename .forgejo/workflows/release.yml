@@ -435,6 +435,7 @@ jobs:
             -C .ward -cf ward-specs.tar \
             ./forgejo-actions-list.sh \
             ./forgejo-actions-logs.sh \
+            ./forgejo-runner-token.py \
             ./specverb.lock \
             ./agents.kdl \
             ./defaults.kdl \
@@ -444,6 +445,8 @@ jobs:
             ./guardfile.forgejo.merge.kdl \
             ./guardfile.forgejo.read.kdl \
             ./guardfile.forgejo.readactions.kdl \
+            ./guardfile.forgejo.runnertoken.kdl \
+            ./guardfile.forgejo.runnertoken.exec.kdl \
             ./guardfile.forgejo.write.kdl \
             ./guardfile.kubectl.kdl \
             ./repos.kdl \
