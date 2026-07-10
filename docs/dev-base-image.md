@@ -3,31 +3,22 @@
 aos owns the agent dev environment. ward consumes it by tag, so config cannot
 drift.
 
-This page describes the current published `dev-base-full` contract. The
-tiering design that keeps this default while reducing rebuild blast radius is
-in [Tiered dev-base image design](dev-base-image-tiering.md).
+This page describes the current published `dev-base-full` contract. The tier
+layout that keeps this default while reducing rebuild blast radius is in
+[Tiered dev-base image split](dev-base-image-tiering.md).
 
 ## What ships
 
-[`docker/dev-base/Dockerfile`](../docker/dev-base/Dockerfile) layers the
-toolchain on `ubuntu:24.04`:
+[`docker/dev-base/core/Dockerfile`](../docker/dev-base/core/Dockerfile) layers
+the root runtime tier on `ubuntu:24.04`. The sibling tier Dockerfiles live in
+[`docker/dev-base/`](../docker/dev-base/) as one folder per tier, each with the
+literal filename `Dockerfile`.
 
-- **uv + managed Pythons** - Python project/tool manager; 3.13 + 3.12 pre-installed in a writable `UV_PYTHON_INSTALL_DIR` (agentic-os#327).
-- **pre-commit** - the catalog hook driver (a uv tool).
-- **python3 + shellcheck + git + git-lfs + build-essential** - direct needs and hook shell-outs.
-- **node + npm** - Claude Code's runtime.
-- **go** - builds the `warp/` hooks and the ward binary below.
-- **Rust toolchain** - `cargo` and `rustc` are on PATH for Rust workspaces.
-- **.NET SDK 10 + ICU** - C# mods compile in-container with full ICU globalization (`libicu74`) not invariant mode (agentic-os#329).
-- **aws cli v2** - SSM secret loader + `~/.aws` passthrough; region defaults `us-east-1` (agentic-os#286).
-- **Homebrew** - Linux Homebrew at `/home/linuxbrew/.linuxbrew`, on `PATH`.
-- **claude + mcporter + opencode + codex + goose** - agent CLIs plus **docker cli + socat** for `warded #N` dispatch.
-- **gh + helm + kubectl + yq** - CI CLIs for sync, chart, deploy, and manifests.
-- **ward** - the dev-command surface agents route through (`ward <verb>`), built from source at pinned `WARD_VERSION`.
-- **golangci-lint + trufflehog + kdlfmt** - lint / secret-scan / format binaries the gate shells out to.
-- **tailscale cli** - tailnet client (no daemon) so a credentialed container reaches the tower; auth stays ward's axis (agentic-os#286).
-- **public substrate seed** - mirrors of the image-tier reference repos at `/opt/substrate-seed`.
-- **in-container agent self-name** - baked `agent-name.sh` so warded agents self-name ([doc](dev-base-self-name.md)).
+- **core toolchain** - `uv`, pre-commit, Python, shellcheck, git, git-lfs, build-essential, Rust, and ward.
+- **language/runtime tiers** - Node, Go, and .NET 10 + ICU.
+- **ops / agent CLIs** - aws cli, Homebrew, claude, mcporter, opencode, codex, goose, gh, helm, kubectl, yq, Docker CLI, and Tailscale CLI.
+- **gate tools** - golangci-lint, trufflehog, and kdlfmt.
+- **platform seed** - the public substrate mirrors and the baked agent self-name / status-line assets.
 
 Tools under `/usr/local`, `/home/linuxbrew/.linuxbrew`, or `/opt` run as any uid. ward owns `run-as-uid`, mounts, and `~/.aws`. Root bootstrap seeds `/home/ubuntu/.ward/audit` as uid 1000 and avoids root-owned audit state.
 
@@ -35,12 +26,18 @@ Tools under `/usr/local`, `/home/linuxbrew/.linuxbrew`, or `/opt` run as any uid
 
 Published under
 `forgejo.coilysiren.me/coilyco-flight-deck/agentic-os` as a tiered family. The
-release workflow publishes the tier refs there, `dev-base-full` keeps
-`:latest`, and each release uses one `vX.Y.Z`; `:buildcache` holds the cache.
+folder name is the source of truth for the suffix, so the published refs are
+`agentic-os-core:${TAG}`, `agentic-os-lang-node:${TAG}`, and so on. `dev-base-full`
+keeps `:latest`, and each release uses one `vX.Y.Z`; `:buildcache` holds the cache.
 
 ## How it publishes
 
-The release jobs in [`.forgejo/workflows/release.yml`](../.forgejo/workflows/release.yml) run before the public tag exists. They publish core first, fan out sibling tier targets in parallel, and publish `dev-base-full` last. The release tag lands only after the set has been pushed and verified.
+The release jobs in [`.forgejo/workflows/release.yml`](../.forgejo/workflows/release.yml)
+run before the public tag exists. They compute the tag first, then call
+[`scripts/dev-base-build.py`](../scripts/dev-base-build.py), which derives the
+ordered tier plan from the folder layout and builds `core -> lang-node ->
+lang-go -> lang-dotnet -> ops -> agent -> full` in order. The release tag lands
+only after the set has been pushed and verified.
 
 The tag comes last, after the image has been built, pushed, and verified.
 The base apt layer retries against mirror drift so a publish can still land when Ubuntu package metadata and archives briefly disagree.
@@ -68,5 +65,5 @@ Needs a `docker login`; `ward container up/exec` (ward#98) is the entry point.
 ## See also
 
 - [release.md](release.md) - the pipeline this rides on; [FEATURES.md](FEATURES.md).
-- [Tiered dev-base image design](dev-base-image-tiering.md) - the planned fan-out
+- [Tiered dev-base image split](dev-base-image-tiering.md) - the implemented fan-out
   and fan-in model that preserves `dev-base-full` as the default.

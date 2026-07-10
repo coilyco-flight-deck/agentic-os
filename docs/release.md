@@ -6,11 +6,12 @@ default public-repo contract in [forgejo-github-mirror-contract.md](forgejo-gith
 Forgejo owns the release and tag, GitHub only mirrors the result, and GitHub
 Releases stay out of the default surface.
 
-`.forgejo/workflows/release.yml` computes the next tag first, publishes and
-verifies the dev-base image family by tier, and only then cuts the public
-git/release tag so no announcement can outlive a missing manifest. The core
-image publishes first, the sibling tier targets publish in parallel, and
-`dev-base-full` fans in last after its prerequisites pass.
+`.forgejo/workflows/release.yml` computes the next tag first, then calls
+[`scripts/dev-base-build.py`](../scripts/dev-base-build.py) to publish and
+verify the dev-base image family by tier before it cuts the public git/release
+tag. The helper derives the tier refs from `docker/dev-base/<tier>/Dockerfile`,
+the core image publishes first, and `dev-base-full` fans in last after its
+prerequisites pass.
 
 agentic-os is consumed as pre-commit hooks pinned by `rev:` tag, not a brew
 formula or a prebuilt binary, so there is nothing to attach to the release and

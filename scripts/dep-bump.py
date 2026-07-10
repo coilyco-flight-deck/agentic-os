@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Resolve the dev-base image's pinned tool versions against upstream and bump them.
 
-The dev-base Dockerfile (`docker/dev-base/Dockerfile`) hand-pins every tool as an
-`ARG` (`UV_VERSION`, `NODE_VERSION`, ...). `release.yml` republishes the image on
-every push to main, but nothing keeps those pins current, so the published image
-drifts behind upstream until a human edits an `ARG` (agentic-os#272, ward#301).
+The dev-base tier Dockerfiles (`docker/dev-base/<tier>/Dockerfile`) hand-pin
+every tool as an `ARG` (`UV_VERSION`, `NODE_VERSION`, ...). `release.yml`
+republishes the image family on every push to main, but nothing keeps those
+pins current, so the published image drifts behind upstream until a human edits
+an `ARG` (agentic-os#272, ward#301).
 
 This script is the auto-bump: `plan` resolves each pin's latest upstream release
 and reports the drift; `apply` rewrites a single `ARG` in place. The scheduled
@@ -40,8 +41,9 @@ import urllib.request
 from pathlib import Path
 from typing import Callable
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-DOCKERFILE = REPO_ROOT / "docker" / "dev-base" / "Dockerfile"
+from agentic_os.dev_base import DEV_BASE_ROOT, TIER_SPECS, tier_dockerfile
+
+DOCKERFILE = DEV_BASE_ROOT
 
 GITHUB_API = "https://api.github.com"
 _TIMEOUT = 30
@@ -57,6 +59,16 @@ def parse_args_block(text: str) -> dict[str, str]:
     return {m.group("name"): m.group("value") for m in _ARG_RE.finditer(text)}
 
 
+def load_pins(dockerfile: Path) -> dict[str, str]:
+    """Collect ARG defaults from a single Dockerfile or the split dev-base tree."""
+    if dockerfile.is_file():
+        return parse_args_block(dockerfile.read_text(encoding="utf-8"))
+    pins: dict[str, str] = {}
+    for tier in TIER_SPECS:
+        pins.update(parse_args_block(tier.dockerfile.read_text(encoding="utf-8")))
+    return pins
+
+
 def set_arg(text: str, name: str, version: str) -> str:
     """Rewrite a single `ARG NAME=...` default, leaving everything else byte-identical."""
     pattern = re.compile(rf"^ARG {re.escape(name)}=\S+", re.MULTILINE)
@@ -64,6 +76,11 @@ def set_arg(text: str, name: str, version: str) -> str:
     if count != 1:
         raise SystemExit(f"expected exactly one 'ARG {name}=' line, found {count}")
     return new_text
+
+
+def set_arg_in_file(path: Path, name: str, version: str) -> None:
+    """Rewrite one ARG default in a single file in place."""
+    path.write_text(set_arg(path.read_text(encoding="utf-8"), name, version), encoding="utf-8")
 
 
 def parse_semver(value: str) -> tuple[int, ...]:
@@ -315,10 +332,30 @@ def compute_plan(text: str) -> list[dict[str, str]]:
     return plan
 
 
+def _compute_tree_plan(root: Path) -> list[dict[str, str]]:
+    pins = load_pins(root)
+    plan: list[dict[str, str]] = []
+    for name, resolver in RESOLVERS.items():
+        current = pins.get(name)
+        if current is None:
+            continue
+        try:
+            latest = resolver(current) if name in _NEEDS_CURRENT else resolver()
+        except Exception as exc:  # noqa: BLE001 - one flaky upstream must not sink the run
+            print(f"warning: resolving {name} failed: {exc}", file=sys.stderr)
+            continue
+        if not latest:
+            print(f"warning: no upstream version resolved for {name}", file=sys.stderr)
+            continue
+        if latest != current:
+            plan.append({"arg": name, "current": current, "latest": latest})
+    return plan
+
+
 # --- CLI --------------------------------------------------------------------
 
 def _cmd_plan(args: argparse.Namespace) -> int:
-    plan = compute_plan(args.dockerfile.read_text(encoding="utf-8"))
+    plan = _compute_tree_plan(args.dockerfile)
     if args.json:
         print(json.dumps(plan))
     else:
@@ -328,7 +365,7 @@ def _cmd_plan(args: argparse.Namespace) -> int:
 
 
 def _cmd_check(args: argparse.Namespace) -> int:
-    plan = compute_plan(args.dockerfile.read_text(encoding="utf-8"))
+    plan = _compute_tree_plan(args.dockerfile)
     if not plan:
         print("dev-base pins are current with upstream.")
         return 0
@@ -339,8 +376,11 @@ def _cmd_check(args: argparse.Namespace) -> int:
 
 
 def _cmd_apply(args: argparse.Namespace) -> int:
-    text = args.dockerfile.read_text(encoding="utf-8")
-    args.dockerfile.write_text(set_arg(text, args.arg, args.version), encoding="utf-8")
+    if args.dockerfile.is_file():
+        set_arg_in_file(args.dockerfile, args.arg, args.version)
+    else:
+        target_tier = ARG_TO_TARGET[args.arg]
+        set_arg_in_file(tier_dockerfile(target_tier), args.arg, args.version)
     print(f"set {args.arg}={args.version}")
     return 0
 
@@ -351,7 +391,7 @@ def main(argv: list[str] | None = None) -> int:
         "--dockerfile",
         type=Path,
         default=DOCKERFILE,
-        help="Dockerfile to read/rewrite (default: docker/dev-base/Dockerfile).",
+        help="Dockerfile or dev-base Dockerfile tree root to read/rewrite (default: docker/dev-base/).",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 

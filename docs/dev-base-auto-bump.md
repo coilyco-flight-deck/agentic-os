@@ -1,6 +1,6 @@
 # dev-base auto-bump
 
-The dev-base image pins every tool as a hand-edited `ARG`
+The dev-base tier Dockerfiles pin every tool as a hand-edited `ARG`
 ([docs/dev-base-image.md](dev-base-image.md)). `release.yml` republishes the
 image on every push to main, but nothing kept those pins current, so the
 published image silently drifted behind upstream until a human edited an `ARG`.

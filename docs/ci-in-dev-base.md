@@ -6,9 +6,8 @@ headless agent can actually land this," not "it passed in some other
 environment" (agentic-os#328).
 
 The current contract still pins one `dev-base-full` image per app. The tiered
-follow-up design keeps that default but introduces narrower classes behind the
-same release tag and a manifest lock. See
-[Tiered dev-base image design](dev-base-image-tiering.md).
+split keeps that default but introduces narrower classes behind the same
+release tag. See [Tiered dev-base image split](dev-base-image-tiering.md).
 
 ## The motivating failure
 
@@ -40,13 +39,15 @@ every app on the next rollout - not silent drift.
 ## The pinned-tag source of truth
 
 <!-- freshness: as-of=2026-07-05 decay-class=pointer half-life=slow -->
-The pin now lives in [`docker/dev-base/ci-image-manifest.json`](../docker/dev-base/ci-image-manifest.json),
-owned here in aos. It maps each logical image class to a published full ref,
-and every ref in the manifest carries the same release tag. [dev-base-image.md](dev-base-image.md)
-covers how those tags publish.
+The pin now derives from the tier folder layout through
+[`scripts/dev-base-build.py`](../scripts/dev-base-build.py). That helper turns
+`docker/dev-base/<tier>/Dockerfile` plus the release tag into the literal
+`agentic-os-<tier>:<tag>` ref, so there is no checked-in JSON map of identical
+refs to drift. [dev-base-image.md](dev-base-image.md) covers how those tags
+publish.
 
-That manifest stays the current contract. The tiered design keeps `dev-base-full`
-as the default literal until ward can choose the same class directly.
+The release helper keeps `dev-base-full` as the default literal until ward can
+choose the same class directly.
 
 ## Authoring vs rollout
 
@@ -67,6 +68,6 @@ ward verbs pass inside dev-base and parity holds green.
 
 - [dev-base container image](dev-base-image.md) - the image CI pins.
 - [dev-base auto-bump](dev-base-auto-bump.md) - how pinned tool `ARG`s refresh.
-- [Tiered dev-base image design](dev-base-image-tiering.md) - the planned image
+- [Tiered dev-base image split](dev-base-image-tiering.md) - the implemented image
   family and pinning evolution.
 - [FEATURES.md](FEATURES.md) - the feature inventory this lands in.
