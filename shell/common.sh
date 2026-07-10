@@ -15,14 +15,19 @@ export HISTSIZE=100000
 export SAVEHIST=100000
 
 _siren_aos_repo_root() {
-  local repo
+  local repo source_dir
   for repo in "${AOS_REPO_ROOT:-}" \
     "${FORGEJO_WORKSPACE:-}" \
     "${GITHUB_WORKSPACE:-}" \
+    "${BASH_SOURCE[0]:-}" \
     "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)" \
     /workspace/agentic-os \
     "$HOME/projects/coilyco-flight-deck/agentic-os"; do
     [ -n "$repo" ] || continue
+    if [ "$repo" = "${BASH_SOURCE[0]:-}" ]; then
+      source_dir="$(dirname "$(readlink "$repo" 2>/dev/null || printf '%s' "$repo")")"
+      repo="$(cd "$source_dir/.." && pwd -P)"
+    fi
     if git -C "$repo" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
       printf '%s\n' "$repo"
       return 0
