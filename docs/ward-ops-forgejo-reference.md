@@ -878,7 +878,7 @@ Options (2):
 - `--page` (integer, optional): page number of results to return (1-based)
 - `--limit` (integer, optional): page size of results, default maximum page size is 50
 
-## ward ops forgejo run rerun
+## ward ops forgejo actions rerun
 
 `POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun`
 
@@ -892,7 +892,7 @@ Positional arguments (3):
 - `<repo>` (string)
 - `<run_id>` (string)
 
-## ward ops forgejo run rerun-failed-jobs
+## ward ops forgejo actions rerun-failed-jobs
 
 `POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun-failed-jobs`
 
