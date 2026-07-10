@@ -36,8 +36,7 @@ tag. The packaging step enumerates the bundle files explicitly so
 
 ## How Ward Consumes It
 
-ward keeps one neutral shipped binary and selects the coilyco bundle at launch
-through `WARD_CONFIG_REF`. The former release-time build overlay is gone, so
+ward keeps one neutral shipped binary and launches the coilyco bundle through `WARD_CONFIG_REF`. The former release-time build overlay is gone, so
 the AOS asset is no longer a custom binary input. The published
 `ward-specs-<tag>.tar.gz` remains the canonical bundle artifact and checksum
 target, but the live config path is the runtime `WARD_CONFIG_REF` seam, not a

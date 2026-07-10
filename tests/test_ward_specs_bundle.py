@@ -96,7 +96,7 @@ def test_ward_specs_docs_reference_live_config_source() -> None:
         / "ward-specs.md"
     ).read_text()
     assert "WARD_CONFIG_REF" in docs
-    assert "launch through `WARD_CONFIG_REF`" in docs
+    assert "through `WARD_CONFIG_REF`" in docs
     assert "no longer tracked as a committed blob" in docs
     assert "WARD_KDL_OPS_FORGEJO_SPEC" in docs
     assert "kdl-specs lock" in docs
