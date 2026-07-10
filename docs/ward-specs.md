@@ -3,8 +3,9 @@
 The aos-hosted deployment bundle for ward's coilyco build input lives directly
 in [`.ward/`](../.ward/), flattened alongside `.ward/ward.yaml` (aos#330 - aos#315
 first homed it at top-level `ward-specs/`). It carries the Forgejo guardfiles,
-the raw Actions log bridge, AWS and kubectl exec guardfiles, the fleet manifest,
-the role catalog, the smart-defaults bundle, and the spec locks.
+the raw Actions log bridge, AWS and kubectl exec guardfiles, the agents
+manifest, the role catalog, the defaults bundle, the repos bundle, and the spec
+locks.
 
 ## Direction of truth
 
@@ -29,10 +30,11 @@ Forgejo splits into a compatibility monolith for the current `ward ops forgejo`
 runtime surface plus role-facing read, write, and admin tier guardfiles. The read
 tier owns the shared spec, base URL, auth, explicit read grants, and inherited
 denials. The write tier inherits read and adds authoring verbs. The admin tier
-inherits write and adds targeted delete verbs. The raw Actions log bridge stays
-here as a coilyco-specific overlay because the upstream swagger omits the live
-web log route and the current renderer stays JSON-first. The exception is stated in
-[AGENTS.md](../AGENTS.md).
+inherits write and adds targeted delete verbs. Role guardfile bindings live in
+`.ward/roles.kdl` as repeated singular `guardfile` nodes. The raw Actions log
+bridge stays here as a coilyco-specific overlay because the upstream swagger
+omits the live web log route and the current renderer stays JSON-first. The
+exception is stated in [AGENTS.md](../AGENTS.md).
 
 ## Release asset
 

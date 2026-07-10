@@ -13,9 +13,10 @@ from pathlib import Path
 HOOK_ID = "ward-specs-bundle"
 
 ROOT = Path(".")
-DEFAULTS_PATH = ROOT / ".ward" / "ward-kdl.defaults.kdl"
+DEFAULTS_PATH = ROOT / ".ward" / "defaults.kdl"
+REPOS_PATH = ROOT / ".ward" / "repos.kdl"
 RELEASE_PATH = ROOT / ".forgejo" / "workflows" / "release.yml"
-EXPECTED_DEFAULTS = """smart-defaults {
+EXPECTED_DEFAULTS = """defaults {
     agent-reservation-ttl "1h"
     agent-reservation-recheck-max "15s"
     agent-reap-idle "1h"
@@ -34,8 +35,8 @@ EXPECTED_DEFAULTS = """smart-defaults {
         repo "coilyco-flight-deck/agentic-os" workflow="pull-requests-and-merge"
     }
 }
-
-repo-authority default=forgejo {
+"""
+EXPECTED_REPOS = """repos {
     trusted-owner coilysiren
     trusted-owner coilyco-bridge
     trusted-owner coilyco-flight-deck
@@ -51,22 +52,33 @@ EXPECTED_TAR_MEMBERS = (
     "./forgejo-actions-logs.sh",
     "./forgejo.swagger.lock.json",
     "./specverb.lock",
+    "./agents.kdl",
+    "./defaults.kdl",
+    "./guardfile.aws.kdl",
+    "./guardfile.forgejo.admin.kdl",
+    "./guardfile.forgejo.kdl",
+    "./guardfile.forgejo.read.kdl",
+    "./guardfile.forgejo.readactions.kdl",
+    "./guardfile.forgejo.write.kdl",
+    "./guardfile.kubectl.kdl",
+    "./repos.kdl",
+    "./roles.kdl",
+)
+REMOVED_TAR_MEMBERS = (
+    "./glitchtip.openapi.lock.json",
+    "./signoz.openapi.lock.json",
     "./ward-kdl.aws.guardfile.kdl",
     "./ward-kdl.defaults.kdl",
     "./ward-kdl.fleet.kdl",
     "./ward-kdl.forgejo.admin.guardfile.kdl",
+    "./ward-kdl.forgejo.actions.guardfile.kdl",
     "./ward-kdl.forgejo.guardfile.kdl",
     "./ward-kdl.forgejo.read.guardfile.kdl",
     "./ward-kdl.forgejo.readactions.guardfile.kdl",
     "./ward-kdl.forgejo.write.guardfile.kdl",
     "./ward-kdl.kubectl.guardfile.kdl",
-    "./ward-kdl.roles.kdl",
-)
-REMOVED_TAR_MEMBERS = (
-    "./glitchtip.openapi.lock.json",
-    "./signoz.openapi.lock.json",
-    "./ward-kdl.forgejo.actions.guardfile.kdl",
     "./ward-kdl.ollama.guardfile.kdl",
+    "./ward-kdl.roles.kdl",
     "./ward-kdl.signoz.guardfile.kdl",
 )
 
@@ -86,6 +98,11 @@ def _validate_defaults(path: Path) -> None:
     _require(path.read_text() == EXPECTED_DEFAULTS, f"{path} must match the canonical coilyco defaults bundle")
 
 
+def _validate_repos(path: Path) -> None:
+    _require(path.exists(), f"missing bundle file: {path}")
+    _require(path.read_text() == EXPECTED_REPOS, f"{path} must match the canonical coilyco repos bundle")
+
+
 def _validate_release_tar_members(path: Path) -> None:
     _require(path.exists(), f"missing release workflow: {path}")
     text = path.read_text()
@@ -98,12 +115,15 @@ def _validate_release_tar_members(path: Path) -> None:
 def main() -> int:
     if not sys.argv[1:]:
         _validate_defaults(DEFAULTS_PATH)
+        _validate_repos(REPOS_PATH)
         _validate_release_tar_members(RELEASE_PATH)
         return 0
 
     for arg in sys.argv[1:]:
         if arg == "--defaults-only":
             _validate_defaults(DEFAULTS_PATH)
+        elif arg == "--repos-only":
+            _validate_repos(REPOS_PATH)
         elif arg == "--release-only":
             _validate_release_tar_members(RELEASE_PATH)
         else:

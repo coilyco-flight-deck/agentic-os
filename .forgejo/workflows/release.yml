@@ -42,7 +42,7 @@ permissions:
 jobs:
   test:
     runs-on: docker
-    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:v0.195.0
+    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:v0.245.0
     steps:
       - uses: actions/checkout@v6
         with:
@@ -129,7 +129,7 @@ jobs:
   plan-release:
     needs: test
     runs-on: docker
-    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:v0.195.0
+    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:v0.245.0
     outputs:
       tag: ${{ steps.tag.outputs.new_tag }}
       version: ${{ steps.tag.outputs.new_version }}
@@ -377,7 +377,7 @@ jobs:
     needs: [plan-release, publish-dev-base]
     if: ${{ needs.plan-release.outputs.tag != '' }}
     runs-on: docker
-    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:v0.195.0
+    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:v0.245.0
     steps:
       - uses: actions/checkout@v6
         with:
@@ -436,16 +436,17 @@ jobs:
             ./forgejo-actions-logs.sh \
             ./forgejo.swagger.lock.json \
             ./specverb.lock \
-            ./ward-kdl.aws.guardfile.kdl \
-            ./ward-kdl.defaults.kdl \
-            ./ward-kdl.fleet.kdl \
-            ./ward-kdl.forgejo.admin.guardfile.kdl \
-            ./ward-kdl.forgejo.guardfile.kdl \
-            ./ward-kdl.forgejo.read.guardfile.kdl \
-            ./ward-kdl.forgejo.readactions.guardfile.kdl \
-            ./ward-kdl.forgejo.write.guardfile.kdl \
-            ./ward-kdl.kubectl.guardfile.kdl \
-            ./ward-kdl.roles.kdl
+            ./agents.kdl \
+            ./defaults.kdl \
+            ./guardfile.aws.kdl \
+            ./guardfile.forgejo.admin.kdl \
+            ./guardfile.forgejo.kdl \
+            ./guardfile.forgejo.read.kdl \
+            ./guardfile.forgejo.readactions.kdl \
+            ./guardfile.forgejo.write.kdl \
+            ./guardfile.kubectl.kdl \
+            ./repos.kdl \
+            ./roles.kdl
           gzip -n -9 -c ward-specs.tar > "${asset}"
           sha256sum "${asset}" | awk '{print $1}' > "${asset}.sha256"
           echo "ward-specs asset sha256: $(cat "${asset}.sha256")"
