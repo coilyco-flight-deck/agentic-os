@@ -10,11 +10,13 @@ roles {
         guardfile "guardfile.forgejo.read.kdl"
         guardfile "guardfile.forgejo.readactions.kdl"
         guardfile "guardfile.forgejo.write.kdl"
+        guardfile "guardfile.forgejo.merge.kdl"
     }
     role director {
         guardfile "guardfile.forgejo.read.kdl"
         guardfile "guardfile.forgejo.readactions.kdl"
         guardfile "guardfile.forgejo.write.kdl"
+        guardfile "guardfile.forgejo.merge.kdl"
         // director fronts incident recovery: live-observe + deploy + token mint
         // (agentic-os#447 restored these after the 2026-07-10 rollback).
         guardfile "guardfile.aws.kdl"
@@ -25,9 +27,12 @@ roles {
             model claude-opus-4-8
             reasoning-effort xhigh
         }
+        // Director codex rides the frontier model, distinct from the engineer
+        // default (aos#450). Rationale: docs/ward-specs-overrides.md.
         agent codex {
-            model gpt-5.5
+            model gpt-5.6-sol
             reasoning-effort xhigh
+            verbosity medium
         }
     }
     role advisor {

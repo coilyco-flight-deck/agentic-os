@@ -73,6 +73,7 @@ def test_container_entrypoint_seeds_the_read_only_surface_env(tmp_path: Path) ->
             "HOME": str(tmp_path / "home"),
             "PATH": "/usr/bin:/bin",
             "FORGEJO_WORKSPACE": str(REPO_ROOT),
+            "WARD_READONLY": "1",
         }
     )
     entrypoint = REPO_ROOT / "docker" / "dev-base" / "ward-shell-entrypoint.sh"
