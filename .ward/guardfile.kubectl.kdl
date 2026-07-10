@@ -78,6 +78,6 @@ wrap ward-kdl ops kubectl {
     never run patch
     // Back-link footer (ward#309): doc-link regenerates a `## See also` section
     // into this guardfile's reference doc, so it survives every rebuild wipe-proof.
-    doc-link "../ward-kdl.md" ward-kdl.md "the build-time authoring layer behind this surface"
-    doc-link "../ward-kdl-surface.md" ward-kdl-surface.md "the full generated verb surface, area by area"
+    doc-link "../guardfile.kubectl.md" guardfile.kubectl.md "the build-time authoring layer behind this surface"
+    doc-link "../guardfile.kubectl-surface.md" guardfile.kubectl-surface.md "the full generated verb surface, area by area"
 }

@@ -1,4 +1,4 @@
-smart-defaults {
+defaults {
     agent-reservation-ttl "1h"
     agent-reservation-recheck-max "15s"
     agent-reap-idle "1h"
@@ -16,16 +16,4 @@ smart-defaults {
         repo "coilyco-flight-deck/ward" workflow="pull-requests-and-merge"
         repo "coilyco-flight-deck/agentic-os" workflow="pull-requests-and-merge"
     }
-}
-
-repo-authority default=forgejo {
-    trusted-owner coilysiren
-    trusted-owner coilyco-bridge
-    trusted-owner coilyco-flight-deck
-    trusted-owner coilyco-gaming
-
-    repo "coilysiren/*" forge=github
-    repo "coilyco-bridge/*" forge=forgejo
-    repo "coilyco-flight-deck/*" forge=forgejo
-    repo "coilyco-gaming/*" forge=forgejo
 }

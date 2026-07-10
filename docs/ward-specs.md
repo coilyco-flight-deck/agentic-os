@@ -3,8 +3,9 @@
 The aos-hosted deployment bundle for ward's coilyco build input lives directly
 in [`.ward/`](../.ward/), flattened alongside `.ward/ward.yaml` (aos#330 - aos#315
 first homed it at top-level `ward-specs/`). It carries the Forgejo guardfiles,
-the raw Actions log bridge, AWS and kubectl exec guardfiles, the fleet manifest,
-the role catalog, the smart-defaults bundle, and the spec locks.
+the raw Actions log bridge, AWS and kubectl exec guardfiles, the agents
+manifest, the role catalog, the defaults bundle, the repos bundle, and the spec
+locks.
 
 ## Direction of truth
 
@@ -24,15 +25,15 @@ surface from this asset.
 This is the one place a shipped tool (ward) consumes runtime config authored in a
 reference repo (aos), a reasoned exception to AGENTS.md's config-placement
 corollary. The bundle is Kai's single coilyco deployment, not fleet config every
-ward user melds. External ward users build neutral and never fetch it.
-Forgejo splits into a compatibility monolith for the current `ward ops forgejo`
-runtime surface plus role-facing read, write, and admin tier guardfiles. The read
-tier owns the shared spec, base URL, auth, explicit read grants, and inherited
+ward user melds. External ward users build neutral and never fetch it. Forgejo
+splits into a compatibility monolith for the current `ward ops forgejo` runtime
+surface plus role-facing read, write, and admin tier guardfiles. The read tier
+owns the shared spec, base URL, auth, explicit read grants, and inherited
 denials. The write tier inherits read and adds authoring verbs. The admin tier
-inherits write and adds targeted delete verbs. The raw Actions log bridge and the
-Actions rerun bridge stay here as coilyco-specific overlays because the upstream
-swagger omits the live log and rerun routes and the current renderer stays
-JSON-first. The exception is stated in [AGENTS.md](../AGENTS.md).
+inherits write and adds targeted delete verbs. The raw Actions log bridge, list
+bridge, and rerun bridge stay here as coilyco-specific overlays because the
+upstream swagger omits the live log, list, and rerun routes and the current
+renderer stays JSON-first. The exception is stated in [AGENTS.md](../AGENTS.md).
 
 ## Release asset
 

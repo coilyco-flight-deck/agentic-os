@@ -13,4 +13,14 @@ wrap ward ops forgejo {
         when arg0 matches coily*
         describe "stream plaintext Actions job logs from the live Forgejo web route"
     }
+    can run "actions runs" {
+        argv ".ward/forgejo-actions-list.sh" "runs"
+        when arg0 matches coily*
+        describe "list Forgejo Actions runs with a safe page-1 default"
+    }
+    can run "actions tasks" {
+        argv ".ward/forgejo-actions-list.sh" "tasks"
+        when arg0 matches coily*
+        describe "list Forgejo Actions tasks with a safe page-1 default"
+    }
 }
