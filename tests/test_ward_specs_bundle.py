@@ -26,8 +26,16 @@ def test_ward_specs_bundle_carries_deployment_anchors() -> None:
     assert 'repo "coilysiren/*" forge=github' in defaults
     assert 'repo "coilyco-flight-deck/*" forge=forgejo' in defaults
     assert 'agent-workflow default="direct-main"' in defaults
-    assert 'repo "coilyco-flight-deck/ward" workflow="pull-requests-and-merge"' in defaults
-    assert 'repo "coilyco-flight-deck/agentic-os" workflow="pull-requests-and-merge"' in defaults
+    assert (
+        'repo "coilyco-flight-deck/ward" workflow="pull-requests-and-merge"'
+        in defaults
+    )
+    assert (
+        'repo "coilyco-flight-deck/agentic-os" workflow="pull-requests-and-merge"'
+        in defaults
+    )
+    assert "workflow=pr" not in defaults
+    assert "default=pr" not in defaults
 
     fleet = (SPEC_DIR / "ward-kdl.fleet.kdl").read_text()
     assert "attribution name=coilyco-ops" in fleet

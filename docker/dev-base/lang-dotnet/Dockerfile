@@ -1,6 +1,6 @@
 ARG BASE_IMAGE
 FROM ${BASE_IMAGE} AS dev-base-lang-dotnet
-ARG DOTNET_VERSION
+ARG DOTNET_VERSION=10.0.301
 
 # .NET SDK, pinned. dev-base shipped no C# toolchain, so any repo
 # with C# to compile (eco-app's Eco mods, `dotnet build mods/*`) had to hand-install
