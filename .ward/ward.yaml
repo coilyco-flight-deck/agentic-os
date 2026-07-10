@@ -91,6 +91,9 @@ commands:
   ship-tool-failures:
     run: uv run python -m agentic_os.tool_failures.ship
     description: "Drain the tool-use failure-record buffer (~/.cache/agentic-os/tool-failures/<repo>.jsonl) to GlitchTip: gate on genuine failures, fingerprint-group, and emit one Sentry-protocol envelope per failure past a per-file watermark (idempotent). DSN from SSM (/sentry-dsn/tool-failures), fail-soft when absent so the buffer keeps accumulating. Producer-agnostic, out-of-band (timer / SessionEnd hook), never a hot path. `-- --dry-run` previews counts without a DSN or POST, `-- --repo <slug>` narrows. See docs/tool-failures-shipper.md, SSM.md."
+  surface-check:
+    run: bash .ward/surface-check.sh
+    description: "Assert this surface carries every capability its role tier promises (docs/role-surface-tiers.md). Reads $WARD_ROLE (or pass a role: `ward exec surface-check -- director`), probes binaries/creds/daemons/mounted verbs, and exits non-zero listing every miss so an over-broad rollback fails loud at bring-up rather than mid-incident. See agentic-os#447."
   agent-id:
     run: uv run python -m agentic_os.agent_id
     description: "Canonical short agent-id generator over the dictatable alphabet (lowercase 2-letter+2-digit, e.g. `ab85`). Bare invocation prints a fresh `secrets`-backed id (`-- -n 5` for more); `-- --seed <s>` prints the deterministic contract id for a seed, `-- --org <forgejo-org>` prints the short container token, `-- --emit-vectors` regenerates agent_id_vectors.json. The cross-repo naming primitive ward and cli-guard's Go port build against. See docs/dictatable-id-alphabet.md."

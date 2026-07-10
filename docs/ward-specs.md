@@ -3,18 +3,17 @@
 The aos-hosted deployment bundle for ward's coilyco build input lives directly
 in [`.ward/`](../.ward/), flattened alongside `.ward/ward.yaml` (aos#330 - aos#315
 first homed it at top-level `ward-specs/`). It carries the Forgejo guardfiles,
-the raw Actions log bridge, AWS and kubectl exec guardfiles, the agents
-manifest, the role catalog, the defaults bundle, the repos bundle, and the spec
-locks.
+the Actions log and runner-token bridges, the AWS and kubectl guardfiles, the
+agents/roles/defaults/repos bundles, the spec locks, and the surface
+self-check ([role-surface-tiers.md](role-surface-tiers.md)).
 
 ## Direction of truth
 
 **aos is the source of truth for the coilyco ward-specs bundle.** As of the
 ward#503 producer cutover (Kai, 2026-07-07), the coilyco deployment values are
 **authored here** and flow **down** into ward at release time, not the reverse.
-This inverts the older shape, where ward's tree held the canonical values and aos
-carried a lagging mirror that a `ward -> aos refresh` re-synced. Do **not**
-reinstate it. When a coilyco fleet, guardfile, role-catalog, or spec-lock value
+This inverts the older shape, where ward's tree held the canonical values and
+aos carried a lagging mirror. Do **not** reinstate it. When a coilyco fleet, guardfile, role-catalog, or spec-lock value
 changes, change it **here in aos's `.ward/`** and let a push republish the
 bundle. The launch defaults stay spelled out here too: fleet `direct-to-main`, with
 `coilyco-flight-deck/ward` and `coilyco-flight-deck/agentic-os` on
