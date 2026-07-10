@@ -63,6 +63,15 @@ def test_core_tier_keeps_the_hidden_ward_builder_stage() -> None:
     assert "AS dev-base-ward-builder" in text
     assert 'COPY --from=dev-base-ward-builder /usr/local/bin/ward /usr/local/bin/ward' in text
     assert "ARG WARD_VERSION=0.529.0" in text
+    assert "ARG WARD_CONFIG_REF_COMMIT" in text
+    assert "WARD_CONFIG_REF=forgejo.coilysiren.me/coilyco-flight-deck/agentic-os@${WARD_CONFIG_REF_COMMIT}//.ward" in text
+
+
+def test_shell_common_exports_a_commit_addressed_ward_config_ref() -> None:
+    text = (Path(__file__).resolve().parent.parent / "shell" / "common.sh").read_text()
+    assert "_siren_ward_config_ref()" in text
+    assert 'git -C "$repo" rev-parse HEAD' in text
+    assert "export WARD_CONFIG_REF=\"$(_siren_ward_config_ref)\"" in text
 
 
 def test_cache_ref_strips_the_release_tag() -> None:
@@ -103,6 +112,7 @@ def test_pushed_build_uses_release_tagless_cache_ref(monkeypatch) -> None:
 
     monkeypatch.setattr(script, "_run", lambda cmd: commands.append(cmd))
     monkeypatch.setattr(script, "_host_targetarch", lambda: "amd64")
+    monkeypatch.setattr(script, "_ward_config_ref_commit", lambda: "abc123")
 
     script._build_plan(REGISTRY_BASE, "v0.243.0", True, "linux/amd64,linux/arm64")
 
@@ -116,3 +126,8 @@ def test_pushed_build_uses_release_tagless_cache_ref(monkeypatch) -> None:
     assert all(":v0.243.0:buildcache" not in ref for ref in cache_refs)
     assert f"type=registry,ref={REGISTRY_BASE}-core:buildcache" in cache_refs
     assert f"type=registry,ref={REGISTRY_BASE}-full:buildcache,mode=max,ignore-error=true" in cache_refs
+    assert any(
+        "WARD_CONFIG_REF_COMMIT=abc123" in arg
+        for cmd in commands
+        for arg in cmd
+    )

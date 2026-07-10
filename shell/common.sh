@@ -14,7 +14,14 @@ export BAT_PAGER=""
 export HISTSIZE=100000
 export SAVEHIST=100000
 
-export WARD_CONFIG_REF=forgejo.coilysiren.me/coilyco-flight-deck/agentic-os@main//.ward
+_siren_ward_config_ref() {
+  local repo="$HOME/projects/coilyco-flight-deck/agentic-os"
+  local commit
+  commit=$(git -C "$repo" rev-parse HEAD) || return 1
+  printf 'forgejo.coilysiren.me/coilyco-flight-deck/agentic-os@%s//.ward' "$commit"
+}
+
+export WARD_CONFIG_REF="$(_siren_ward_config_ref)"
 
 # Env + PATH are inherited, so run once per terminal tree: the exported guard is
 # the "has this run in this terminal yet?" check. Aliases/functions always define.
