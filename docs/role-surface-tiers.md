@@ -41,8 +41,8 @@ It probes each promise above - binaries on PATH, creds present, `tailscale
 status` answering, kubeconfig readable, the runner-token verb mounted - and
 exits non-zero listing every miss, so an over-broad rollback fails loud at
 bring-up, not by hand mid-incident. Run it as `ward exec surface-check`. It
-rides the ward-specs bundle. Wiring it into ward's bring-up path is ward-side
-work, filed as a follow-up from agentic-os#447.
+rides the ward-specs bundle. Wiring it into ward's bring-up path (and mounting
+the role-bound overlay guardfiles at runtime) is ward#1072.
 
 ## Deferred
 
