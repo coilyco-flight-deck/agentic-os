@@ -15,12 +15,20 @@ def test_ward_specs_bundle_carries_deployment_anchors() -> None:
 
     actions = (SPEC_DIR / "ward-kdl.forgejo.actions.guardfile.kdl").read_text()
     assert 'can run "actions logs"' in actions
+    assert 'can run "actions runs"' in actions
+    assert 'can run "actions tasks"' in actions
     assert 'when arg0 matches coily*' in actions
     assert '.ward/forgejo-actions-logs.sh' in actions
+    assert '.ward/forgejo-actions-list.sh' in actions
 
     bridge = (SPEC_DIR / "forgejo-actions-logs.sh").read_text()
     assert "/actions/runs/${run_index}/jobs/${job_index}/attempt/${attempt}/logs" in bridge
     assert "Authorization: token ${FORGEJO_TOKEN}" in bridge
+
+    listing = (SPEC_DIR / "forgejo-actions-list.sh").read_text()
+    assert "/actions/${kind}?page=${page}" in listing
+    assert "page=1" in listing
+    assert "kind must be runs or tasks" in listing
 
     signoz = (SPEC_DIR / "ward-kdl.signoz.guardfile.kdl").read_text()
     assert "/coilysiren/signoz-ser8/api-token" in signoz
@@ -90,6 +98,18 @@ def test_ward_specs_docs_cover_actions_log_streaming() -> None:
     assert "JSON-render" in docs
 
 
+def test_ward_specs_docs_cover_actions_listing() -> None:
+    docs = (
+        pathlib.Path(__file__).resolve().parents[1]
+        / "docs"
+        / "forgejo-actions-listing.md"
+    ).read_text()
+    assert "defaults to `page=1`" in docs
+    assert "ward ops forgejo actions runs" in docs
+    assert "ward ops forgejo actions tasks" in docs
+    assert "page=1&limit=1" in docs
+
+
 def test_ward_specs_fleet_parses() -> None:
     body = (SPEC_DIR / "ward-kdl.fleet.kdl").read_text()
     assert "fleet {" in body
@@ -108,5 +128,6 @@ def test_ward_specs_bundle_defaults_are_packaged() -> None:
         / "release.yml"
     ).read_text()
     assert "./ward-kdl.defaults.kdl" in release
+    assert "./forgejo-actions-list.sh" in release
     assert "./ward-kdl.forgejo.actions.guardfile.kdl" in release
     assert "./forgejo-actions-logs.sh" in release
