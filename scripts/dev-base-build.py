@@ -1,0 +1,102 @@
+#!/usr/bin/env python3
+"""Build or plan the tiered dev-base image family from the folder layout."""
+from __future__ import annotations
+
+import argparse
+import json
+import platform
+import subprocess
+from pathlib import Path
+
+from agentic_os.dev_base import REGISTRY_BASE, publish_plan
+
+
+def _docker_base_command(push: bool, platforms: str | None) -> list[str]:
+    if push:
+        cmd = ["docker", "buildx", "build", "--progress=plain", "--push"]
+        if platforms:
+            cmd.extend(["--platform", platforms])
+        return cmd
+    return ["docker", "build"]
+
+
+def _run(cmd: list[str]) -> None:
+    subprocess.run(cmd, check=True)
+
+
+def _host_targetarch() -> str:
+    machine = platform.machine().lower()
+    if machine in {"x86_64", "amd64"}:
+        return "amd64"
+    if machine in {"aarch64", "arm64"}:
+        return "arm64"
+    raise SystemExit(f"unsupported host architecture: {machine}")
+
+
+def _build_plan(registry_base: str, tag: str, push: bool, platforms: str | None) -> None:
+    plan = publish_plan(registry_base, tag)
+    for entry in plan:
+        dockerfile = Path(entry["dockerfile"])
+        cmd = _docker_base_command(push, platforms)
+        if entry["tier"] == "core" and not push:
+            cmd.extend(["--build-arg", f"TARGETARCH={_host_targetarch()}"])
+        elif entry["tier"] != "core":
+            cmd.extend(["--build-arg", f"BASE_IMAGE={entry['base_image']}"])
+        if push:
+            cache_ref = f"{entry['image']}:buildcache"
+            cmd.extend(
+                [
+                    "--cache-from",
+                    f"type=registry,ref={cache_ref}",
+                    "--cache-to",
+                    f"type=registry,ref={cache_ref},mode=max,ignore-error=true",
+                ]
+            )
+        cmd.extend(["-t", entry["image"], "-f", str(dockerfile), str(dockerfile.parent.parent)])
+        _run(cmd)
+        if push:
+            _run(["docker", "buildx", "imagetools", "inspect", entry["image"]])
+
+
+def _cmd_plan(args: argparse.Namespace) -> int:
+    print(json.dumps({"registry_base": args.registry, "tag": args.tag, "tiers": publish_plan(args.registry, args.tag)}))
+    return 0
+
+
+def _cmd_build(args: argparse.Namespace) -> int:
+    _build_plan(args.registry, args.tag, args.push, args.platforms)
+    return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--registry",
+        default=REGISTRY_BASE,
+        help="Registry/image family base (default: Forgejo release registry).",
+    )
+    parser.add_argument(
+        "--tag",
+        required=True,
+        help="Release tag or local tag to stamp onto each tier image.",
+    )
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    p_plan = sub.add_parser("plan", help="Print the derived tier plan as JSON.")
+    p_plan.set_defaults(func=_cmd_plan)
+
+    p_build = sub.add_parser("build", help="Build the tier family in order.")
+    p_build.add_argument("--push", action="store_true", help="Push each published tier instead of loading locally.")
+    p_build.add_argument(
+        "--platforms",
+        default="linux/amd64,linux/arm64",
+        help="Platforms for buildx publishes (ignored for local builds).",
+    )
+    p_build.set_defaults(func=_cmd_build)
+
+    args = parser.parse_args(argv)
+    return args.func(args)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -8,11 +8,11 @@ commands:
     run: uv run python scripts/agent-compat.py
     description: "Run daily unittest smoke checks for local agent harness compatibility. The roster is read live from `ward agents list --json`, so it tracks ward's embedded fleet (Claude, Codex, OpenCode, Goose) instead of a private list; narrow with `-- --harness codex`. Uses unittest's native ok/FAIL/ERROR output and exit code. See docs/agent-compat.md."
   dev-base-build:
-    run: docker build -t agentic-os:dev-base-local -f docker/dev-base/Dockerfile docker/dev-base
-    description: "Build the dev-base image locally as agentic-os:dev-base-local for validating docker/dev-base/Dockerfile changes before the release workflow publishes the multi-arch image."
+    run: uv run python scripts/dev-base-build.py --registry agentic-os --tag dev-base-local build
+    description: "Build the split dev-base tier chain locally under agentic-os-<tier>:dev-base-local for validating docker/dev-base/<tier>/Dockerfile changes before the release workflow publishes the multi-arch image."
   dep-bump:
     run: uv run python scripts/dep-bump.py
-    description: "Resolve the dev-base Dockerfile's pinned tool versions against upstream and bump them. `ward exec dep-bump -- check` reports drift (exit 1 if stale); `-- plan` emits the stale set as TSV (`--json` for machines); `-- apply --arg UV_VERSION --version X` rewrites one ARG. The scheduled .forgejo/workflows/dep-bump.yml runs this to auto-republish the image. See docs/dev-base-image.md."
+    description: "Resolve the dev-base tier Dockerfiles' pinned tool versions against upstream and bump them. `ward exec dep-bump -- check` reports drift (exit 1 if stale); `-- plan` emits the stale set as TSV (`--json` for machines); `-- apply --arg UV_VERSION --version X` rewrites one ARG. The scheduled .forgejo/workflows/dep-bump.yml runs this to auto-republish the image family. See docs/dev-base-image.md."
   apply-agentic-os-hooks:
     run: uv run python scripts/apply-agentic-os-hooks.py
     description: "Roll out the canonical pre-commit hook block to every consumer repo under ~/projects/<org>/* (all org dirs). Idempotent."
