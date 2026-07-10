@@ -1,11 +1,11 @@
 """Drain the failure-record buffer to GlitchTip. CLI entrypoint + orchestration.
 
 ``ward exec ship-tool-failures`` (or a SessionEnd hook / timer) runs this
-out-of-band from the producers, never on a hot path. It resolves the DSN
-(fail-soft), then for each per-repo buffer reads past the watermark, gates on
-genuine failures, and POSTs one fingerprinted envelope per failure, advancing
-the watermark line-by-line so a re-run neither re-ships an accepted event nor
-loses one after a mid-file network error.
+out-of-band from the ward-owned producers, never on a hot path. It resolves the
+DSN (fail-soft), then for each per-repo buffer reads past the watermark, gates
+on genuine failures, and POSTs one fingerprinted envelope per failure,
+advancing the watermark line-by-line so a re-run neither re-ships an accepted
+event nor loses one after a mid-file network error.
 """
 
 from __future__ import annotations

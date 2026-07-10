@@ -27,7 +27,7 @@ This doc lists major shipped capabilities, not files. If you want a file invento
 - [Mount-eligibility manifest](mount-eligibility-manifest.md) - per-harness repo mount list for this host.
 - [Committed ward-ops reference](ward-ops-forgejo-reference.md) - checked-in `ward ops forgejo` command render.
 - [Catalog caps reference](catalog-caps-reference.md) - generated numeric caps for validators.
-- [Tool-failure GlitchTip shipper](tool-failures-shipper.md) - batch shipper for tool failure records.
+- [Tool-failure GlitchTip shipper](tool-failures-shipper.md) - batch shipper for ward-owned tool failure records, with schema-v1 docs still owned here.
 - [Canonical agent-id generator](dictatable-id-alphabet.md) - short lowercase agent IDs.
 - [Knowledge-base freshness program](knowledge-base-freshness.md) - age-based doc fact freshness markers.
 
