@@ -42,3 +42,9 @@ jobs:
           # Hermetic: the probe imports only stdlib + agentic_os.config, so the
           # checkout on PYTHONPATH is enough - no pip install, no network.
           PYTHONPATH=. python3 -m agentic_os.freshness --check
+      - name: Alert Telegram on main failure
+        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        uses: ./actions/telegram-alert
+        with:
+          bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
