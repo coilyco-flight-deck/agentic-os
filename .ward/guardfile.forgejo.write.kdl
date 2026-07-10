@@ -18,7 +18,7 @@
 // tiers monotonic, alongside the write-family actions (move-issue, comment
 // issue). See ../docs/ward-specs.md.
 wrap ward-kdl-write ops forgejo {
-    inherit "../ward-kdl-read/ward-kdl.forgejo.read.guardfile.kdl"
+    inherit "../guardfile.forgejo.read.kdl"
     // Scope gate: re-declared per tier (harmless dedup) so it reads present in
     // this tier's own guardfile and generated doc.
     restrict owner matches example*

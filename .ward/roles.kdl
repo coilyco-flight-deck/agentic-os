@@ -1,0 +1,33 @@
+// Fleet role -> guardfile bindings for the coilyco deployment. This is fleet
+// overlay data (dialect 2), consumed by ward's fleet-config parser, which wants
+// each role body to carry only `guardfile | guardfiles | agent` nodes. The role
+// presets (tagline / capabilities / modes / posture) are ward-embedded product
+// data and live in ward's tree, not in this overlay. See docs/ward-specs.md.
+roles {
+    role engineer {
+        guardfile "guardfile.forgejo.read.kdl"
+        guardfile "guardfile.forgejo.readactions.kdl"
+        guardfile "guardfile.forgejo.write.kdl"
+    }
+    role director {
+        guardfile "guardfile.forgejo.read.kdl"
+        guardfile "guardfile.forgejo.readactions.kdl"
+        guardfile "guardfile.forgejo.write.kdl"
+    }
+    role advisor {
+        guardfile "guardfile.forgejo.read.kdl"
+        guardfile "guardfile.forgejo.readactions.kdl"
+    }
+    role qa {
+        guardfile "guardfile.forgejo.read.kdl"
+        guardfile "guardfile.forgejo.readactions.kdl"
+        guardfile "guardfile.forgejo.write.kdl"
+    }
+    role ops {
+        guardfile "guardfile.forgejo.read.kdl"
+        guardfile "guardfile.forgejo.readactions.kdl"
+        guardfile "guardfile.forgejo.write.kdl"
+        guardfile "guardfile.aws.kdl"
+        guardfile "guardfile.kubectl.kdl"
+    }
+}

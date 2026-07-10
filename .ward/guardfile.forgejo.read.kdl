@@ -1,6 +1,6 @@
 // Forgejo READ tier - the base of the read -> write -> admin chain (ward#240),
 // now carrying the real curated surface ported from the monolith
-// ../ward-kdl.forgejo.guardfile.kdl (ward#278, Phase 1). The bare `can get *` /
+// ../guardfile.forgejo.kdl (ward#278, Phase 1). The bare `can get *` /
 // `can list *` wildcards are gone: they over-granted every get/list-able swagger
 // resource and dropped every curated construct. This tier lists the explicit
 // read-side leaves of the curated subset instead, so the surface is exactly the
