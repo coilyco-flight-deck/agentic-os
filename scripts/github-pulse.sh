@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Across-the-room GitHub API health monitor. See docs/github-pulse.md.
+# Across-the-room GitHub API health monitor.
 
 set -u
 

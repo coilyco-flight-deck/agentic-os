@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run a command, emit chat-safe fenced output. See docs/verbatim-echo.md.
+# Run a command, emit chat-safe fenced output. See docs/features-release-tooling.md.
 set -o pipefail
 echo '```'
 "$@" 2>&1 | awk '

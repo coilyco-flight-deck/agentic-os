@@ -60,6 +60,13 @@ repos:
         pass_filenames: false
         always_run: true
         stages: [pre-commit]
+      - id: source-doc-refs
+        name: source doc references
+        entry: python -m agentic_os.pre_commit.check_source_doc_refs
+        language: python
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
       - id: dead-cross-links
         name: dead cross-links
         entry: python -m agentic_os.pre_commit.check_dead_links

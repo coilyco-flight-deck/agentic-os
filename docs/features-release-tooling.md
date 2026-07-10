@@ -4,7 +4,7 @@ Pre-commit baseline, diagnostics, and Forgejo-canonical release actions.
 
 ## Cross-repo pre-commit baseline
 
-Ships the canonical hook IDs each `coilysiren/*` repo pins via `rev:`. The active set covers standard hygiene hooks, `actionlint`, `shellcheck`, and `typos`. Contract hooks ship too. `shfmt`, unresolved placeholders, and issue references stay opt-in in [pre-commit hygiene](pre-commit-hygiene.md); the manual guards live in [`.pre-commit-hooks.yaml`](../.pre-commit-hooks.yaml). Consumers don't vendor the validators. Package is pip-installed for pre-commit.
+Ships canonical hook IDs each `coilysiren/*` repo pins via `rev:`. The active set covers hygiene hooks, contract hooks, `actionlint`, `shellcheck`, and `typos`. `dead-cross-links` validates Markdown links; `source-doc-refs` validates source-comment doc paths. `shfmt`, placeholders, and issue refs stay opt-in in [pre-commit hygiene](pre-commit-hygiene.md). Manual guards live in [`.pre-commit-hooks.yaml`](../.pre-commit-hooks.yaml).
 
 ## Seed-skill propagation
 

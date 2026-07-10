@@ -12,6 +12,10 @@ Runs `check-skills`. Checks frontmatter, prefix/exact match, status (where enfor
 
 Runs `check-dead-links`. Walks every Markdown file in the repo (root `README.md`/`AGENTS.md`, `docs/`, co-located module READMEs, the skill tree), extracts inline `[text](target)` links, fails on any local-relative target that does not resolve to a real file. A link that resolves outside the repo root is a hard violation, not a skip - an internal `../` link is validated for existence like any other, while one that escapes the repo fails. External URLs, anchors, and placeholders (`...`, `TBD`, `TODO`) are skipped. Directory skipping mirrors `documentation-layout` (`.git`, `node_modules`, build/cache dirs); per-repo `excludes` live under `[tool.agentic-os.dead-cross-links]`.
 
+### source-doc-refs (pre-commit)
+
+Runs `check-source-doc-refs`. Walks tracked source files, extracts comment lines, and validates path-like documentation refs such as `docs/foo.md`, `.agents/skills/name/SKILL.md`, root `README.md`/`AGENTS.md` pointers, and hyphenated bare doc basenames that should resolve beside the source or under `docs/`. This catches source comments left pointing at deleted docs after a documentation burndown. Per-repo `excludes` live under `[tool.agentic-os.source-doc-refs]`.
+
 ### catalog-trifecta (pre-commit, pre-push)
 
 Runs `check-catalog-trifecta`. Enforces the repo entrypoint set: `README.md`, `AGENTS.md`, `docs/FEATURES.md`, and one catalog YAML (`.ward/ward.yaml` or `.ward/ward.yaml`). Each Markdown file needs `## See also`, links to the other entrypoints, and the convention citation.

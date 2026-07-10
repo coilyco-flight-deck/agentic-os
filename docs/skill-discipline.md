@@ -8,6 +8,7 @@ The validators live in the `agentic_os` Python package and ship through the mana
 
 - `check-skills` - validates `.agents/skills/` against a spec at `.agents/skills/categories.yaml`. Checks frontmatter, prefix taxonomy, status lines, required sections, size caps, stale skill-name references.
 - `check-dead-links` - walks every markdown file in the repo, fails if any inline `[text](path.md)` link does not resolve or escapes the repo root.
+- `check-source-doc-refs` - walks source comments, fails if a path-like documentation reference no longer resolves.
 - `check-code-review-contract` - requires a root `CODE-REVIEW.md` that names repo-local invariants, historical issues, and refresh triggers instead of generic review advice.
 - `check-documentation-layout` - keeps Markdown at repo root, flat `docs/*.md`, or skill folders only.
 - `check-code-comments` - keeps standalone code comments to two contiguous lines max, 90 chars each. YAML is stricter: one comment line, first line only, so a key-sorter cannot drift it.

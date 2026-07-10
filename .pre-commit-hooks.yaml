@@ -10,6 +10,7 @@
 #       - id: documentation-layout
 #       - id: context-load-points
 #       - id: code-comments
+#       - id: source-doc-refs
 #       - id: catalog-block-present
 #       - id: check-skills
 #       - id: dead-cross-links
@@ -87,6 +88,15 @@
   name: code comment discipline
   description: Cap inline comments at two contiguous 90-char lines (a top-of-file header block is exempt); YAML allows comments only in that top block.
   entry: check-code-comments
+  language: python
+  always_run: true
+  pass_filenames: false
+  stages: [pre-commit]
+
+- id: source-doc-refs
+  name: source doc references
+  description: Validate path-like documentation references in source comments so doc burndowns cannot leave stale pointers behind.
+  entry: check-source-doc-refs
   language: python
   always_run: true
   pass_filenames: false

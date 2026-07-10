@@ -9,5 +9,6 @@ repos:
     hooks:
       - id: check-skills
       - id: dead-cross-links
+      - id: source-doc-refs
       - id: documentation-layout
       - id: code-comments
