@@ -1,13 +1,30 @@
 """Tests for the dev-base image contract."""
 from __future__ import annotations
 
+import importlib.util
 from pathlib import Path
 
-from agentic_os.dev_base import DEV_BASE_ROOT, REGISTRY_BASE, PUBLISHED_TIER_NAMES, publish_plan
+from agentic_os.dev_base import (
+    DEV_BASE_ROOT,
+    REGISTRY_BASE,
+    PUBLISHED_TIER_NAMES,
+    cache_ref,
+    publish_plan,
+)
+
+SCRIPT = Path(__file__).resolve().parent.parent / "scripts" / "dev-base-build.py"
 
 
 def _tier_path(tier: str) -> Path:
     return DEV_BASE_ROOT / tier / "Dockerfile"
+
+
+def _load_script():
+    spec = importlib.util.spec_from_file_location("dev_base_build", SCRIPT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def test_dev_base_tier_directories_exist() -> None:
@@ -48,6 +65,11 @@ def test_core_tier_keeps_the_hidden_ward_builder_stage() -> None:
     assert "ARG WARD_VERSION=0.529.0" in text
 
 
+def test_cache_ref_strips_the_release_tag() -> None:
+    image = f"{REGISTRY_BASE}-core:v0.243.0"
+    assert cache_ref(image) == f"{REGISTRY_BASE}-core:buildcache"
+
+
 def test_tier_files_chain_from_the_previous_tier_image() -> None:
     for tier in ("lang-node", "lang-go", "lang-dotnet", "ops", "agent", "full"):
         text = _tier_path(tier).read_text()
@@ -73,3 +95,24 @@ def test_full_tier_remains_the_default_surface() -> None:
 def test_old_manifest_is_gone() -> None:
     assert not (DEV_BASE_ROOT / "Dockerfile").exists()
     assert not (DEV_BASE_ROOT / "ci-image-manifest.json").exists()
+
+
+def test_pushed_build_uses_release_tagless_cache_ref(monkeypatch) -> None:
+    script = _load_script()
+    commands: list[list[str]] = []
+
+    monkeypatch.setattr(script, "_run", lambda cmd: commands.append(cmd))
+    monkeypatch.setattr(script, "_host_targetarch", lambda: "amd64")
+
+    script._build_plan(REGISTRY_BASE, "v0.243.0", True, "linux/amd64,linux/arm64")
+
+    cache_refs = [
+        arg
+        for cmd in commands
+        for arg in cmd
+        if arg.startswith("type=registry,ref=")
+    ]
+    assert cache_refs
+    assert all(":v0.243.0:buildcache" not in ref for ref in cache_refs)
+    assert f"type=registry,ref={REGISTRY_BASE}-core:buildcache" in cache_refs
+    assert f"type=registry,ref={REGISTRY_BASE}-full:buildcache,mode=max,ignore-error=true" in cache_refs
