@@ -1,0 +1,58 @@
+agents {
+    schema-version 2
+    defaults {
+        agent claude
+        attribution name=coilyco-ops email=coilyco-ops@coilysiren.me
+    }
+    agent claude {
+        binary claude
+        context-level 2
+        stream stream-json
+        auth claude-keychain
+        model claude-sonnet-4-6
+        reasoning-effort medium
+        argv {
+            preflight claude -p
+            headless claude -p --verbose --output-format stream-json
+            interactive claude
+        }
+    }
+    agent codex {
+        binary codex
+        context-level 1
+        stream none
+        auth codex-file
+        model gpt-5.5
+        reasoning-effort medium
+        verbosity low
+        argv {
+            headless codex exec
+            interactive codex
+        }
+    }
+    agent opencode {
+        binary opencode
+        context-level 0
+        stream none
+        auth none
+        model qwen3-coder:30b
+        endpoint "http://localhost:11434/v1"
+        argv {
+            headless opencode run
+            interactive opencode
+        }
+    }
+    agent goose {
+        binary goose
+        context-level 1
+        stream none
+        auth ollama
+        endpoint "http://localhost:11434/v1"
+        argv {
+            preflight goose run -t
+            headless goose run -t
+            interactive goose session
+        }
+    }
+    // Role-specific guardfile bindings now live in roles.kdl.
+}
