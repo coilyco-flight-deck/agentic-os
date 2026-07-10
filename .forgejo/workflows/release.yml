@@ -347,6 +347,9 @@ jobs:
             -C .ward -cf ward-specs.tar \
             ./forgejo-actions-list.sh \
             ./forgejo-actions-logs.sh \
+            ./ward.bundle.kdl \
+            ./ops.forgejo.kdl \
+            ./forgejo.swagger.lock.json \
             ./specverb.lock \
             ./agents.kdl \
             ./defaults.kdl \
