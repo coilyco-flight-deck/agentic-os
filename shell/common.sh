@@ -15,8 +15,16 @@ export HISTSIZE=100000
 export SAVEHIST=100000
 
 _siren_aos_repo_root() {
-  local repo
+  local repo source_path
+  if source_path=$(_siren_shell_source_path); then
+    repo=$(cd "$(dirname "$source_path")/.." && pwd)
+    if git -C "$repo" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+      printf '%s\n' "$repo"
+      return 0
+    fi
+  fi
   for repo in "${AOS_REPO_ROOT:-}" \
+    /workspace/coilyco-flight-deck/agentic-os \
     /workspace/agentic-os \
     "$HOME/projects/coilyco-flight-deck/agentic-os"; do
     [ -n "$repo" ] || continue
@@ -25,6 +33,21 @@ _siren_aos_repo_root() {
       return 0
     fi
   done
+  return 1
+}
+
+_siren_shell_source_path() {
+  if [ -n "${BASH_SOURCE[0]:-}" ]; then
+    printf '%s\n' "${BASH_SOURCE[0]}"
+    return 0
+  fi
+
+  if [ -n "${ZSH_VERSION:-}" ]; then
+    # zsh exposes the current sourced file through %x, but bash cannot parse it.
+    eval 'printf "%s\n" "${(%):-%x}"'
+    return 0
+  fi
+
   return 1
 }
 
