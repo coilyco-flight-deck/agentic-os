@@ -62,14 +62,14 @@ fleet {
 
     roles {
         role director {
-            // smarter agents than baseline
+            // smart as they come (without going overboard... looking at you fable)
             agent claude {
                 model claude-opus-4-8
-                reasoning-effort high
+                reasoning-effort xhigh
             }
             agent codex {
                 model gpt-5.5
-                reasoning-effort high
+                reasoning-effort xhigh
             }
         }
         role advisor {
