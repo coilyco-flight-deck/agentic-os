@@ -425,7 +425,7 @@ jobs:
           # header, so the checksum a downstream pins is reproducible from the tag.
           # The bundle now shares .ward/ with ward.yaml (aos#330), so enumerate the
           # bundle files EXPLICITLY rather than tarring the whole dir - a naive
-          # `-C .ward . ` would sweep ward.yaml (and any future .ward/ file) into
+          # `-C .ward .` would sweep ward.yaml (and any future .ward/ file) into
           # ward's overlay input. Entries stay flat + `./`-prefixed, layout-identical
           # to the pre-move asset, so ward#503's overlay needs no change. List them
           # in alphabetical order: with explicit file args `--sort=name` is a no-op

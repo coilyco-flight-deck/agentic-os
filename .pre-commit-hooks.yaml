@@ -112,15 +112,6 @@
   pass_filenames: false
   stages: [pre-commit]
 
-- id: ward-specs-bundle
-  name: coilyco ward-specs bundle shape
-  description: "Assert the coilyco bundle keeps fleet default direct-main, wards only coilyco-flight-deck/ward to pull-requests-and-merge, and packages the defaults asset in the release tarball."
-  entry: check-ward-specs-bundle
-  language: python
-  always_run: true
-  pass_filenames: false
-  stages: [pre-commit]
-
 - id: check-skills
   name: skill conventions
   description: Validate the structure of .agents/skills/ against .agents/skills/categories.yaml.

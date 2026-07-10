@@ -16,8 +16,6 @@ if ! git -C "$_siren_aos_root" rev-parse --is-inside-work-tree >/dev/null 2>&1; 
       break
     fi
   done
-fi
-if ! git -C "$_siren_aos_root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   _siren_entrypoint_dir="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)"
   _siren_aos_root="$(cd "$_siren_entrypoint_dir/../.." && pwd -P)"
 fi

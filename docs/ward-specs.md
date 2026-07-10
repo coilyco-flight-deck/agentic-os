@@ -35,7 +35,8 @@ mount stay here too, defaulting to page 1 so callers who add `limit` do not fall
 back to full-history pulls. See [Forgejo Actions list bridge](forgejo-actions-listing.md).
 The exception is stated in [AGENTS.md](../AGENTS.md).
 
-The per-harness `agent <name> { ... }` overlay lives in [ward-specs-overrides.md](ward-specs-overrides.md).
+The per-harness `agent <name> { ... }` overlay lives in
+[ward-specs-overrides.md](ward-specs-overrides.md).
 
 ## Release Asset
 
