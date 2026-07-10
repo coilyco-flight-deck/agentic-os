@@ -2,9 +2,9 @@
 
 The coilyco ward bundle lives in [`.ward/`](../.ward/), flattened beside
 `.ward/ward.yaml` (aos#330, first homed at top-level `ward-specs/`). It carries
-the Forgejo guardfiles, the Actions log bridge, the Actions list bridge, AWS
-and kubectl guardfiles, the agents manifest, the role catalog, the defaults
-bundle, and the repos bundle. The upstream Forgejo OpenAPI spec is no longer tracked as a committed blob in aos.
+`ward.bundle.kdl`, `ops.forgejo.kdl`, `forgejo.swagger.lock.json`, the actions
+bridges, AWS and kubectl guardfiles, the agents manifest, the role catalog, the
+defaults bundle, and the repos bundle.
 
 ## Direction Of Truth
 
@@ -46,20 +46,17 @@ via the `release` job in [`.forgejo/workflows/release.yml`](../.forgejo/workflow
 The tarball is deterministic, so downstream checksums stay reproducible from
 the tag. The packaging step recursively walks `.ward/` with a wildcard-style
 source set while excluding `.ward/ward.yaml`, so new bundle files land
-automatically without leaking the allowlist into ward's overlay input.
+automatically without leaking the allowlist into ward's overlay input. The
+bundle metadata file, `.ward/ward.bundle.kdl`, and the Forgejo lockfile,
+`.ward/forgejo.swagger.lock.json`, are part of that flattening.
 
 ## How Ward Consumes It
 
 ward keeps one neutral shipped binary and launches the coilyco bundle through
 `WARD_CONFIG_REF`. The former release-time build overlay is gone, so the AOS
-asset is no longer a custom binary input. The published
+asset is no longer tracked as a committed blob. The published
 `ward-specs-<tag>.tar.gz` remains the canonical bundle artifact and checksum
 target, but the live config path is the runtime `WARD_CONFIG_REF` seam, not a
 bespoke rebuild from the asset. When the Forgejo lockfile is absent, ward
 resolves the upstream spec from the configured Forgejo swagger URL and tells
 the operator to run `kdl-specs lock` if a cached input is desired.
-
-The shell bootstrap and dev-base image stamp the ref from the checked-out
-commit, so the live bundle follows the source tree that produced the container
-or shell session. The current defaults bundle keeps `agentic-os` and ward
-itself on `pull-requests-and-merge` under the `direct-main` fleet default.
