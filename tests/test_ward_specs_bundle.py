@@ -41,7 +41,7 @@ def test_ward_specs_bundle_carries_deployment_anchors() -> None:
     assert "python3 -m agentic_os.forgejo_actions_logs" in bridge
 
     rerun = (SPEC_DIR / "ward-kdl.forgejo.rerun.guardfile.kdl").read_text()
-    assert 'restrict owner matches coily*' in rerun
+    assert 'when arg0 matches coily*' in rerun
     assert '/forgejo/api-token' in rerun
     assert '.ward/forgejo-actions-rerun.sh' in rerun
     assert '.ward/forgejo-actions-rerun-failed-jobs.sh' in rerun
