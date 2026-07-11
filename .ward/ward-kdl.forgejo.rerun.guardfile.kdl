@@ -1,0 +1,20 @@
+// Forgejo Actions rerun overlay. The live deployment exposes the rerun route,
+// but the generated swagger leaf stays too broad for the guarded surface. Keep
+// the rerun verbs in a tiny exec bridge with the admin PAT only.
+wrap ward ops forgejo {
+    exec bash {
+        env FORGEJO_TOKEN {
+            value ssm "/forgejo/api-token"
+        }
+    }
+    can run "actions rerun" {
+        when arg0 matches coily*
+        argv ".ward/forgejo-actions-rerun.sh"
+        describe "Rerun an existing workflow run by run id (POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun). This is targeted to a known run, not a workflow file, so it cannot dispatch a new workflow by mistake."
+    }
+    can run "actions rerun-failed-jobs" {
+        when arg0 matches coily*
+        argv ".ward/forgejo-actions-rerun-failed-jobs.sh"
+        describe "Rerun only the failed jobs in an existing workflow run by run id (POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun-failed-jobs). This stays scoped to the failed run already on the board."
+    }
+}

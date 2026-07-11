@@ -160,10 +160,8 @@ def test_ward_specs_docs_reference_live_config_source() -> None:
         / "ward-specs.md"
     ).read_text()
     assert "WARD_CONFIG_REF" in docs
-    assert "launches the coilyco bundle through" in docs
-    assert "no longer tracked as a committed blob" in docs
-    assert "WARD_KDL_OPS_FORGEJO_SPEC" in docs
-    assert "kdl-specs lock" in docs
+    assert "launch through `WARD_CONFIG_REF`" in docs
+    assert "release-time build overlay is gone" in docs
 
 
 def test_ward_specs_docs_cover_actions_log_streaming() -> None:
@@ -216,13 +214,16 @@ def test_ward_specs_bundle_defaults_are_packaged() -> None:
     assert "./guardfile.kubectl.kdl" in release
     assert "./repos.kdl" in release
     assert "./roles.kdl" in release
+    assert "./forgejo-actions-rerun-failed-jobs.sh" in release
+    assert "./forgejo-actions-rerun.sh" in release
     assert "./forgejo-runner-token.sh" in release
     assert "./surface-check.sh" in release
     assert "./guardfile.forgejo.runnertoken.kdl" in release
     assert "./guardfile.tailscale.kdl" in release
-    assert "./ward.bundle.kdl" not in release
-    assert "./ops.forgejo.kdl" not in release
+    assert "./ward-kdl.forgejo.rerun.guardfile.kdl" in release
     assert "./forgejo.swagger.lock.json" not in release
     assert "./forgejo-actions-list.sh" in release
     assert "./forgejo-actions-logs.sh" in release
+    assert "./ward.bundle.kdl" not in release
+    assert "./ops.forgejo.kdl" not in release
     assert "./ward-kdl.forgejo.actions.guardfile.kdl" not in release
