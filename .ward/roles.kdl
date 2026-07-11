@@ -7,6 +7,7 @@ roles {
         // guardfiles for dev
         guardfile "guardfile.forgejo.write.kdl"
         guardfile "guardfile.forgejo.merge.kdl"
+        guardfile "guardfile.aws.engineer.kdl"
         // make the agents average everyday fellows
         agent claude {
             model claude-sonnet-5
@@ -38,7 +39,6 @@ roles {
         agent codex {
             model gpt-5.6-sol
             reasoning-effort xhigh
-            verbosity medium
         }
     }
     // advisor: in depth research and analysis
@@ -46,7 +46,7 @@ roles {
         // guardfiles for day to day read (defaults)
         guardfile "guardfile.forgejo.read.kdl"
         guardfile "guardfile.forgejo.readactions.kdl"
-       // guardfiles for ops
+        // guardfiles for ops
         guardfile "guardfile.aws.kdl"
         guardfile "guardfile.tailscale.kdl"
         guardfile "guardfile.kubectl.kdl"
@@ -75,7 +75,7 @@ roles {
             reasoning-effort medium
         }
     }
-    // ops: investigate live systems and apply modifications and remidiation
+    // ops: investigate live systems and apply modifications and remediation
     role ops {
         // guardfiles for day to day read (defaults)
         guardfile "guardfile.forgejo.read.kdl"
@@ -93,7 +93,6 @@ roles {
         agent codex {
             model gpt-5.6-sol
             reasoning-effort xhigh
-            verbosity medium
         }
     }
     // pm: autonomous triage and project management
@@ -103,7 +102,7 @@ roles {
         guardfile "guardfile.forgejo.readactions.kdl"
         // guardfiles for project management
         guardfile "guardfile.forgejo.write.kdl"
-        guardfile "guardfile.forgejo.merge.kdl"        
+        guardfile "guardfile.forgejo.merge.kdl"
         // make the agents average everyday fellows
         agent claude {
             model claude-sonnet-5
