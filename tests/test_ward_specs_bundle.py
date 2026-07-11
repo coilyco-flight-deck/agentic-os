@@ -1,7 +1,16 @@
 import pathlib
+import re
 
 
 SPEC_DIR = pathlib.Path(__file__).resolve().parents[1] / ".ward"
+
+
+def _roles_binding(roles_text: str, guardfile: str) -> set[str]:
+    bound: set[str] = set()
+    for block in re.split(r"\n\s*role\s+", roles_text)[1:]:
+        if f'guardfile "{guardfile}"' in block:
+            bound.add(block.split(maxsplit=1)[0])
+    return bound
 
 
 def test_ward_specs_bundle_carries_deployment_anchors() -> None:
@@ -82,8 +91,11 @@ def test_ward_specs_bundle_carries_deployment_anchors() -> None:
     assert "capabilities read ops" not in roles
     assert 'guardfile "guardfile.forgejo.read.kdl"' in roles
     assert 'guardfile "guardfile.forgejo.readactions.kdl"' in roles
-    # The merge overlay binds to director and engineer only (agentic-os#446).
-    assert roles.count('guardfile "guardfile.forgejo.merge.kdl"') == 2
+    # Merge authority is the surface worth pinning by name, not by count: engineer
+    # and director land code, pm merges what it triages (agentic-os#446).
+    assert _roles_binding(roles, "guardfile.forgejo.merge.kdl") == {"engineer", "director", "pm"}
+    # aws/ssm reach stays off the code-landing roles except engineer's scoped read.
+    assert _roles_binding(roles, "guardfile.aws.kdl") == {"director", "advisor", "ops"}
     assert 'guardfile "guardfile.aws.kdl"' in roles
     assert 'guardfile "guardfile.kubectl.kdl"' in roles
 
@@ -103,9 +115,12 @@ def test_ward_specs_bundle_carries_deployment_anchors() -> None:
     assert "trusted-owner coilyco-flight-deck" in repos
     assert 'repo "coilysiren/*" forge=github' in repos
     assert 'repo "coilyco-flight-deck/*" forge=forgejo' in repos
-    assert "burndown default=true" in repos
-    assert 'repo "coilyco-flight-deck/infrastructure" false' in repos
-    assert 'repo "coilyco-bridge/deploy" false' in repos
+    # KDL v2 spells booleans #true / #false. Bare true / false parse as identifiers
+    # and fail the whole document, degrading ward's exec mount (regression: 778666c).
+    assert "burndown default=#true" in repos
+    assert 'repo "coilyco-flight-deck/infrastructure" #false' in repos
+    assert 'repo "coilyco-bridge/deploy" #false' in repos
+    assert not re.search(r"=(?:true|false)\b", repos)
 
     agents = (SPEC_DIR / "agents.kdl").read_text()
     assert "agents {" in agents

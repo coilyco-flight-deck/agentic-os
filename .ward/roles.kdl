@@ -1,3 +1,10 @@
+// Fleet role -> guardfile bindings for the coilyco deployment. This is fleet
+// overlay data (dialect 2), consumed by ward's fleet-config parser, which wants
+// each role body to carry only `guardfile | guardfiles | agent` nodes. The role
+// presets (tagline / capabilities / modes / posture) are ward-embedded product
+// data and live in ward's tree, not in this overlay. See docs/ward-specs.md.
+// The intended per-role tier each binding set realizes, and which layer owns each
+// capability, is docs/role-surface-tiers.md (agentic-os#447). Diff against it, not vibes.
 roles {
     // engineer: write code, merge code, stay focused on your goal
     role engineer {
