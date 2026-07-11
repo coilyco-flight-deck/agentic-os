@@ -1,47 +1,56 @@
-// Fleet role -> guardfile bindings for the coilyco deployment. This is fleet
-// overlay data (dialect 2), consumed by ward's fleet-config parser, which wants
-// each role body to carry only `guardfile | guardfiles | agent` nodes. The role
-// presets (tagline / capabilities / modes / posture) are ward-embedded product
-// data and live in ward's tree, not in this overlay. See docs/ward-specs.md.
-// The intended per-role tier each binding set realizes, and which layer owns each
-// capability, is docs/role-surface-tiers.md (agentic-os#447). Diff against it, not vibes.
 roles {
+    // engineer: write code, merge code, stay focused on your goal
     role engineer {
+        // guardfiles for day to day read (defaults)
         guardfile "guardfile.forgejo.read.kdl"
         guardfile "guardfile.forgejo.readactions.kdl"
+        // guardfiles for dev
         guardfile "guardfile.forgejo.write.kdl"
         guardfile "guardfile.forgejo.merge.kdl"
+        // make the agents average everyday fellows
+        agent claude {
+            model claude-sonnet-5
+            reasoning-effort medium
+        }
+        agent codex {
+            model gpt-5.5
+            reasoning-effort medium
+        }
     }
+    // director: pair with the human on high level goals
     role director {
+        // guardfiles for day to day read (defaults)
         guardfile "guardfile.forgejo.read.kdl"
         guardfile "guardfile.forgejo.readactions.kdl"
+        // guardfiles for project management
         guardfile "guardfile.forgejo.write.kdl"
         guardfile "guardfile.forgejo.merge.kdl"
-        // director fronts incident recovery: live-observe + deploy + token mint
-        // (agentic-os#447 restored these after the 2026-07-10 rollback).
+        // guardfiles for ops
         guardfile "guardfile.aws.kdl"
         guardfile "guardfile.tailscale.kdl"
         guardfile "guardfile.kubectl.kdl"
         guardfile "guardfile.forgejo.runnertoken.kdl"
+        // make the agents as smart as they come
         agent claude {
-            model claude-opus-4-8
+            model claude-fable-5
             reasoning-effort xhigh
         }
-        // Director codex rides the frontier model, distinct from the engineer
-        // default (aos#450). Rationale: docs/ward-specs-overrides.md.
         agent codex {
             model gpt-5.6-sol
             reasoning-effort xhigh
             verbosity medium
         }
     }
+    // advisor: in depth research and analysis
     role advisor {
+        // guardfiles for day to day read (defaults)
         guardfile "guardfile.forgejo.read.kdl"
         guardfile "guardfile.forgejo.readactions.kdl"
-        // advisor answers with live findings: its documented live-observe set
-        // (tailnet + aws). Daemon/creds bring-up stays ward-side, see role-surface-tiers.
+       // guardfiles for ops
         guardfile "guardfile.aws.kdl"
         guardfile "guardfile.tailscale.kdl"
+        guardfile "guardfile.kubectl.kdl"
+        // make the agents lil bit smart
         agent claude {
             model claude-opus-4-8
             reasoning-effort high
@@ -51,26 +60,58 @@ roles {
             reasoning-effort high
         }
     }
+    // qa: pair with engineers on polishing code
     role qa {
+        // guardfiles for day to day read (defaults)
         guardfile "guardfile.forgejo.read.kdl"
         guardfile "guardfile.forgejo.readactions.kdl"
-        guardfile "guardfile.forgejo.write.kdl"
+        // make the agents average everyday fellows
+        agent claude {
+            model claude-sonnet-5
+            reasoning-effort medium
+        }
+        agent codex {
+            model gpt-5.5
+            reasoning-effort medium
+        }
     }
+    // ops: investigate live systems and apply modifications and remidiation
     role ops {
+        // guardfiles for day to day read (defaults)
         guardfile "guardfile.forgejo.read.kdl"
         guardfile "guardfile.forgejo.readactions.kdl"
-        guardfile "guardfile.forgejo.write.kdl"
+        // guardfiles for ops
         guardfile "guardfile.aws.kdl"
         guardfile "guardfile.tailscale.kdl"
         guardfile "guardfile.kubectl.kdl"
         guardfile "guardfile.forgejo.runnertoken.kdl"
+        // make the agents as smart as they come
         agent claude {
-            model claude-opus-4-8
+            model claude-fable-5
             reasoning-effort xhigh
         }
         agent codex {
-            model gpt-5.5
+            model gpt-5.6-sol
             reasoning-effort xhigh
+            verbosity medium
+        }
+    }
+    // pm: autonomous triage and project management
+    role pm {
+        // guardfiles for day to day read (defaults)
+        guardfile "guardfile.forgejo.read.kdl"
+        guardfile "guardfile.forgejo.readactions.kdl"
+        // guardfiles for project management
+        guardfile "guardfile.forgejo.write.kdl"
+        guardfile "guardfile.forgejo.merge.kdl"        
+        // make the agents average everyday fellows
+        agent claude {
+            model claude-sonnet-5
+            reasoning-effort medium
+        }
+        agent codex {
+            model gpt-5.5
+            reasoning-effort medium
         }
     }
 }
