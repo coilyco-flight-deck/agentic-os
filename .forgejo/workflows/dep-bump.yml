@@ -1,7 +1,8 @@
 # Scheduled dev-base dependency auto-bump. Resolves each pinned tool in
 # docker/dev-base/<tier>/Dockerfile against its upstream latest release and, for every
-# pin that drifted, commits one ARG bump and pushes to main. The push to main
-# republishes the image family through release.yml's tiered build helper, so the
+# pin that drifted, commits one ARG bump and pushes to main. The push then rides
+# the two-stage flow: promote.yml gates + fast-forwards `release`, and
+# release.yml republishes the image family from there, so the
 # published dev-base stops lagging upstream with no human editing an ARG by hand
 # (agentic-os#272, the ward#288/#301 staleness incident). The resolve+rewrite
 # logic is scripts/dep-bump.py; this repo owns the publish pipeline per AGENTS.md

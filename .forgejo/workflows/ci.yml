@@ -1,12 +1,14 @@
 # Pull-request CI gate for director-merge repos. This is the live version of
 # docs/ci-in-dev-base-example.yml, and branch protection can require the
-# resulting `ci / gate` status context on PR-gated workflows.
+# resulting `ci / gate` status context on PR-gated workflows. `release` is the
+# promoted last-known-good branch (ward#1117 / aos#469): the full gate runs
+# again on every promotion, not just on main pushes and PRs.
 
 name: ci
 
 on:
   push:
-    branches: [main]
+    branches: [main, release]
   pull_request:
 
 permissions:
@@ -29,7 +31,7 @@ jobs:
           # pre-commit violation passes the PR and reddens main (run 1078).
           pre-commit run --all-files
       - name: Alert Telegram on main failure
-        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        if: ${{ failure() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/release') }}
         env:
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.TELEGRAM_RED_CHAT_ID }}

@@ -1,20 +1,21 @@
 # Release pipeline
 
-Forgejo-canonical release on push to `main`
-(`forgejo.coilysiren.me/coilyco-flight-deck/agentic-os`). This repo follows the
-default public-repo contract in [forgejo-github-mirror-contract.md](forgejo-github-mirror-contract.md):
-Forgejo owns the release and tag, GitHub only mirrors the result, and GitHub
-Releases stay out of the default surface.
+Two-stage Forgejo-canonical release (ward#1117 / aos#469). Stage 1:
+`promote.yml` runs the full repo gate on every `main` push and, when green,
+fast-forwards `release` to that sha using `CI_RELEASE_TOKEN` (a real-user PAT,
+so the push reliably enqueues workflows). Stage 2: `release.yml` runs on
+`release` pushes only, under a no-cancel `concurrency` queue, so promoted shas
+release in sequence instead of the old overlap-and-cancel. `main` stays
+yolo-able; `release` is last-known-good. Forgejo owns the release and tag per
+[forgejo-github-mirror-contract.md](forgejo-github-mirror-contract.md).
 
-`.forgejo/workflows/release.yml` computes the next tag first, then calls
+`release.yml` computes the next tag first, then calls
 [`scripts/dev-base-build.py`](../scripts/dev-base-build.py) to publish and
 verify the dev-base image family by tier before it cuts the public git/release
-tag. The publish job bootstraps `uv` on the bare runner before it invokes that
-helper, while Docker/buildx/qemu stay job-local. The helper derives the tier
-refs from `docker/dev-base/<tier>/Dockerfile`, the core image publishes first,
-and `dev-base-full` fans in last after its prerequisites pass.
-
-Publish is gated by `test`, which runs `ward exec test` and `ward exec pre-commit-all`.
+tag. The tier refs derive from `docker/dev-base/<tier>/Dockerfile`; core
+publishes first, `dev-base-full` fans in last. Publish is gated by `test`
+(`ward exec test` + `ward exec pre-commit-all`) - the second full gate on the
+promoted sha (`ci.yml` also re-runs on `release`).
 
 agentic-os is consumed as pre-commit hooks pinned by `rev:` tag, not a brew
 formula or a prebuilt binary, so there is nothing to attach to the release and
@@ -25,9 +26,8 @@ no formula to bump. The only downstream artifact is the git tag itself.
 release-please is PR-driven, and `coilysiren/agentic-os` has
 `hasPullRequestsEnabled = false` on GitHub (the no-PR-on-GitHub stance). Rather
 than port release-please to Forgejo, agentic-os reuses the forgejo-API-only
-composite actions it already ships for the rest of the fleet (ward, cli-guard,
-ward-kdl, ...). No PR, no manifest config, no GitHub API calls. The decision and
-its alternatives are recorded in the issue this pipeline closed.
+composite actions it already ships for the rest of the fleet. No PR, no
+manifest config, no GitHub API calls.
 
 ## Version bump
 
@@ -36,16 +36,15 @@ minor bump. Commit messages are never parsed. For a major, run
 `scripts/release.py --bump major` to cut `vN.0.0` by hand (its commit carries
 `[skip ci]`). The actions are referenced locally (`uses: ./actions/...`).
 
-`actions/tag-bump` also has a compute-only mode. That lets the workflow derive
-the next semver, verify the pushed manifest, and only then create the public
-tag and Forgejo release.
+`actions/tag-bump` also has a compute-only mode: derive the next semver first,
+create the public tag and Forgejo release only at the end.
 
 ## Manual re-run (enqueue-miss recovery)
 
-A `workflow_dispatch` trigger re-fires the pipeline by hand from the Forgejo
-Actions tab, no dummy commit. It is the recovery lever for agentic-os#240, where
-Forgejo missed a push enqueue and `v0.62.0` was hand-cut. Its `bump` input
-defaults to `minor` and feeds `tag-bump` directly.
+A `workflow_dispatch` re-fires the pipeline by hand, no dummy commit - dispatch
+against the `release` ref. It is the recovery lever for agentic-os#240 (missed
+push enqueue). Its `bump` input defaults to `minor`. `promote.yml` also takes a
+dispatch to re-attempt a promotion without a new main push.
 
 ## Consumer pin (derived from the tag)
 
