@@ -62,7 +62,7 @@ def test_core_tier_keeps_the_hidden_ward_builder_stage() -> None:
     text = _tier_path("core").read_text()
     assert "AS dev-base-ward-builder" in text
     assert 'COPY --from=dev-base-ward-builder /usr/local/bin/ward /usr/local/bin/ward' in text
-    assert "ARG WARD_VERSION=0.567.0" in text
+    assert "ARG WARD_VERSION=0.628.0" in text
     assert "ARG WARD_CONFIG_REF_COMMIT" in text
     assert "WARD_CONFIG_REF=forgejo.coilysiren.me/coilyco-flight-deck/agentic-os@${WARD_CONFIG_REF_COMMIT}//.ward" in text
 
