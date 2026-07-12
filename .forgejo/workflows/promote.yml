@@ -29,9 +29,17 @@ jobs:
     runs-on: docker
     container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:latest
     steps:
+      # persist-credentials: false matters: checkout otherwise stores the
+      # job token as an http extraheader in the local git config, and that
+      # Authorization header overrides the PAT in the promote push URL - the
+      # push then lands as the internal Actions user, whose pushes Forgejo
+      # deliberately never enqueues workflows for (the aos#240 class, one
+      # layer deeper). With it off, the push authenticates as the PAT user
+      # and stage 2 fires.
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Repo test gate
         run: |
