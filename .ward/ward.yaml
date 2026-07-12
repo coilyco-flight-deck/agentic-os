@@ -94,6 +94,9 @@ commands:
   surface-check:
     run: bash .ward/surface-check.sh
     description: "Assert this surface carries every capability its role tier promises (docs/role-surface-tiers.md). Reads $WARD_ROLE (or pass a role: `ward exec surface-check -- director`), probes binaries/creds/daemons/mounted verbs, and exits non-zero listing every miss so an over-broad rollback fails loud at bring-up rather than mid-incident. See agentic-os#447."
+  forgejo-actions-logs:
+    run: uv run python -m agentic_os.forgejo_actions_logs
+    description: "Stream a Forgejo Actions job log: `ward exec forgejo-actions-logs -- <owner> <repo> <run_index> <job_index> [attempt]` (indexes as shown in the run URL). Needs FORGEJO_TOKEN. Speaks the UI log-cursor route since the API logs route 404s on Forgejo 15 (aos#476); logs for older runs may already be purged (infrastructure#545)."
   sync-actions-secrets:
     run: uv run python scripts/sync-actions-secrets.py
     description: "Sync Forgejo Actions secrets (Telegram alert creds, CI_RELEASE_TOKEN) from their SSM sources of truth to the aos + ward repos. Values flow SSM -> Forgejo API in-process, never disk or argv. `-- --dry-run` previews the mapping. See docs/release.md."

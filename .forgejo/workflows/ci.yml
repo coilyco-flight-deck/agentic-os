@@ -27,6 +27,9 @@ jobs:
         run: |
           set -euo pipefail
           uv run pytest
+          # Same surface release.yml's gate enforces: without this, a
+          # pre-commit violation passes the PR and reddens main (run 1078).
+          pre-commit run --all-files
       - name: Alert Telegram on main failure
         if: ${{ failure() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/release') }}
         env:

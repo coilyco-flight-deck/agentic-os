@@ -23,6 +23,7 @@ OWNER = "coilyco-flight-deck"
 API_TOKEN_PARAM = "/forgejo/api-token"
 
 # repo -> secret name -> SSM parameter (see SSM.md in agentic-os-kai).
+# CI_RELEASE_TOKEN needs read:user + write:repository - see docs/release.md.
 MAPPING: dict[str, dict[str, str]] = {
     "agentic-os": {
         "TELEGRAM_BOT_TOKEN": "/coilysiren/telegram/bot-token",
@@ -32,6 +33,7 @@ MAPPING: dict[str, dict[str, str]] = {
     "ward": {
         "TELEGRAM_BOT_TOKEN": "/coilysiren/telegram/bot-token",
         "TELEGRAM_RED_CHAT_ID": "/coilysiren/telegram/red-chat-id",
+        "CI_RELEASE_TOKEN": "/forgejo/ci-release-token",
     },
 }
 
