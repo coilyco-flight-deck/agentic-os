@@ -108,6 +108,22 @@ def test_ward_specs_bundle_carries_deployment_anchors() -> None:
     assert "repo-authority" not in defaults
     assert "workflow=pr" not in defaults
     assert "default=pr" not in defaults
+    # ward's embedded smart-defaults are the product defaults; this bundle only
+    # overlays them. Restating a tuning key here shadows ward and rots (aos#452).
+    for product_default in (
+        "agent-reservation-ttl",
+        "agent-reservation-recheck-max",
+        "agent-reap-idle",
+        "agent-reap-max-cpu",
+        "director-max-parallel",
+        "director-limit",
+        "director-poll-interval",
+        "reviewer-timeout",
+        "config-bundle-ttl",
+        "container-assets-ttl",
+        "container-reap-keep",
+    ):
+        assert f"\n    {product_default} " not in defaults, f"{product_default} is ward's default, not the deployment bundle's"
 
     repos = (SPEC_DIR / "repos.kdl").read_text()
     assert "repos {" in repos
