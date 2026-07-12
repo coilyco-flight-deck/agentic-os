@@ -47,11 +47,15 @@ def test_ward_specs_bundle_carries_deployment_anchors() -> None:
 
     bundle_manifest = (SPEC_DIR / "ward.bundle.kdl").read_text()
     assert "ops {" in bundle_manifest
-    assert 'forgejo "ops.forgejo.kdl"' in bundle_manifest
+    # The ops surface is the deployment guardfile, the one carrying the real
+    # base-url, SSM token, and coily* owner gate. The generic copy is gone (ward#1122).
+    assert 'forgejo "guardfile.forgejo.kdl"' in bundle_manifest
+    assert not (SPEC_DIR / "ops.forgejo.kdl").exists()
 
-    ops_guardfile = (SPEC_DIR / "ops.forgejo.kdl").read_text()
+    ops_guardfile = (SPEC_DIR / "guardfile.forgejo.kdl").read_text()
     assert "wrap ward-kdl ops forgejo" in ops_guardfile
     assert "spec forgejo.swagger.v1.json" in ops_guardfile
+    assert "git.example.com" not in ops_guardfile
 
     lockfile = (SPEC_DIR / "forgejo.swagger.lock.json").read_text()
     assert '"basePath": "/api/v1"' in lockfile
