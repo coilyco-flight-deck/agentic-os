@@ -33,8 +33,8 @@ starting point for an app's `.forgejo/workflows/*.yml`.
 This repo's live companion is [`.forgejo/workflows/ci.yml`](../.forgejo/workflows/ci.yml).
 It keeps the workflow name `ci` and the job name `gate`, so Forgejo branch
 protection can require the `ci / gate` status context on `pull-request-and-merge`
-repos. The live gate runs `pytest` directly so the required PR context stays
-stable on a clean runner.
+repos. The live gate runs `pytest` plus `pre-commit run --all-files`, matching
+the release gate so a PR cannot pass what main would refuse.
 
 ## Pinned, not `:latest`
 
