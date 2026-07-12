@@ -1,32 +1,34 @@
-# Forgejo-canonical release pipeline. agentic-os dogfoods the composite
-# actions it ships (actions/tag-bump, actions/create-release) via local
-# `./actions/*` refs, so the source repo never depends on its own GitHub
-# mirror being current to release. This is the Forgejo-owned half of the
-# default public-repo contract in docs/forgejo-github-mirror-contract.md.
-# No bump input means every push-to-main release is a minor bump; major is
+# Forgejo-canonical release pipeline, stage 2 of the two-stage flow
+# (ward#1117 / aos#469): promote.yml fast-forwards gate-green main pushes onto
+# the `release` branch, and this pipeline runs on `release` pushes only - main
+# pushes never build or tag directly. The concurrency queue below replaces the
+# old overlap-and-cancel behavior: release runs execute in sequence
+# (cancel-in-progress: false), so a burst of promotions cannot cancel an
+# in-flight build. agentic-os dogfoods the composite actions it ships
+# (actions/tag-bump, actions/create-release) via local `./actions/*` refs, so
+# the source repo never depends on its own GitHub mirror being current to
+# release. No bump input means every promoted release is a minor bump; major is
 # hand-driven via scripts/release.py. The consumer pin resolves from the latest
 # git tag at read time (agentic-os#238), so there is no pin-bump job and no
 # per-push DEFAULT_REV commit - cutting the tag is the whole release. A
 # workflow_dispatch trigger re-fires the same pipeline by hand when Forgejo
-# misses a push enqueue (agentic-os#240), so a missed release needs no dummy
-# commit to recover; its bump input still defaults to minor. The release
-# pipeline now computes the next tag first, builds and verifies the dev-base
-# image family by tier through the release helper, and only then creates the
-# public git/release tag. That keeps the announced tag as the last success
-# marker. Full rationale + skip-ci notes in docs/release.md, image notes in
-# docs/dev-base-image.md. A front test job now gates planning, publish, tag,
-# release, and ward-spec asset upload so release side effects cannot race
-# ahead of the repo-authoritative checks.
+# misses a push enqueue (agentic-os#240); dispatch it against the `release`
+# ref. The pipeline computes the next tag first, builds and verifies the
+# dev-base image family by tier, and only then creates the public git/release
+# tag, keeping the announced tag as the last success marker. Full rationale in
+# docs/release.md, image notes in docs/dev-base-image.md. A front test job
+# gates planning, publish, tag, release, and ward-spec asset upload so release
+# side effects cannot race ahead of the repo-authoritative checks.
 
 name: release
 
 on:
   push:
-    branches: [main]
+    branches: [release]
   workflow_dispatch:
     inputs:
       bump:
-        description: "Version bump for a manual run (minor|major|patch|none). Defaults to minor, matching push-to-main."
+        description: "Version bump for a manual run (minor|major|patch|none). Defaults to minor, matching promoted releases."
         required: false
         default: "minor"
         type: choice
@@ -35,6 +37,10 @@ on:
           - major
           - patch
           - none
+
+concurrency:
+  group: release-pipeline
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -67,7 +73,7 @@ jobs:
           fi
 
       - name: Alert Telegram on main failure
-        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        if: ${{ failure() && github.ref == 'refs/heads/release' }}
         env:
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
@@ -146,7 +152,7 @@ jobs:
           create_tag: false
 
       - name: Alert Telegram on main failure
-        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        if: ${{ failure() && github.ref == 'refs/heads/release' }}
         env:
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
@@ -282,6 +288,9 @@ jobs:
           echo "buildx before bootstrap"
           docker buildx ls
           docker run --privileged --rm tonistiigi/binfmt --install all
+          # A cancelled or crashed prior run leaves `aosbuilder` registered on
+          # the shared daemon, and create then fails on the name collision.
+          docker buildx rm -f aosbuilder 2>/dev/null || true
           docker buildx create --use --name aosbuilder \
             --driver docker-container --driver-opt network=host
           docker buildx inspect --bootstrap
@@ -314,7 +323,7 @@ jobs:
           done
 
       - name: Alert Telegram on main failure
-        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        if: ${{ failure() && github.ref == 'refs/heads/release' }}
         env:
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
@@ -476,7 +485,7 @@ jobs:
             echo "uploaded ${name}"
           done
       - name: Alert Telegram on main failure
-        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        if: ${{ failure() && github.ref == 'refs/heads/release' }}
         env:
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.TELEGRAM_RED_CHAT_ID }}

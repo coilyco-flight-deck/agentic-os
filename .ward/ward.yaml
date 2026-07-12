@@ -94,6 +94,9 @@ commands:
   surface-check:
     run: bash .ward/surface-check.sh
     description: "Assert this surface carries every capability its role tier promises (docs/role-surface-tiers.md). Reads $WARD_ROLE (or pass a role: `ward exec surface-check -- director`), probes binaries/creds/daemons/mounted verbs, and exits non-zero listing every miss so an over-broad rollback fails loud at bring-up rather than mid-incident. See agentic-os#447."
+  sync-actions-secrets:
+    run: uv run python scripts/sync-actions-secrets.py
+    description: "Sync Forgejo Actions secrets (Telegram alert creds, CI_RELEASE_TOKEN) from their SSM sources of truth to the aos + ward repos. Values flow SSM -> Forgejo API in-process, never disk or argv. `-- --dry-run` previews the mapping. See docs/release.md."
   agent-id:
     run: uv run python -m agentic_os.agent_id
     description: "Canonical short agent-id generator over the dictatable alphabet (lowercase 2-letter+2-digit, e.g. `ab85`). Bare invocation prints a fresh `secrets`-backed id (`-- -n 5` for more); `-- --seed <s>` prints the deterministic contract id for a seed, `-- --org <forgejo-org>` prints the short container token, `-- --emit-vectors` regenerates agent_id_vectors.json. The cross-repo naming primitive ward and cli-guard's Go port build against. See docs/dictatable-id-alphabet.md."
