@@ -35,6 +35,11 @@ MAPPING: dict[str, dict[str, str]] = {
         "TELEGRAM_RED_CHAT_ID": "/coilysiren/telegram/red-chat-id",
         "CI_RELEASE_TOKEN": "/forgejo/ci-release-token",
     },
+    "cli-guard": {
+        "TELEGRAM_BOT_TOKEN": "/coilysiren/telegram/bot-token",
+        "TELEGRAM_RED_CHAT_ID": "/coilysiren/telegram/red-chat-id",
+        "CI_RELEASE_TOKEN": "/forgejo/ci-release-token",
+    },
 }
 
 
