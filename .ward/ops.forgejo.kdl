@@ -9,16 +9,18 @@
 // ../../docs/ward-kdl/ward-kdl.forgejo.guardfile.md.
 wrap ward-kdl ops forgejo {
     spec forgejo.swagger.v1.json
-    base-url "git.example.com/api/v1"
+    // (placeholder) marks a sentinel, not config: it yields to whatever the selected
+    // bundle supplies, so it can never win the merge and shadow a real host (ward#1122).
+    (placeholder)base-url "git.example.com/api/v1"
     // Auth as an example bot, not a personal PAT. Token + scopes are deployment
     // specific and belong to the selected bundle, not the baked default.
-    auth header-token {
+    (placeholder)auth header-token {
         header Authorization
         prefix "token "
         value ssm "/example/forgejo/api-token"
     }
     // Scope gate: every leaf whose path carries {owner} must name an example owner.
-    restrict owner matches example*
+    (placeholder)restrict owner matches example*
     // repos: read/create/edit/delete plus the cross-repo `search` finder. Fork
     // and archive/unarchive are denied below as human-only irreversible toggles.
     can get repo
