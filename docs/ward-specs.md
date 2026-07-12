@@ -17,9 +17,9 @@ This inverts the older shape, where ward's tree held the canonical values and ao
 carried a lagging mirror that a `ward -> aos refresh` re-synced. Do **not**
 reinstate it. When a coilyco fleet, guardfile, role-catalog, or spec-lock value
 changes, change it **here in aos's `.ward/`** and let a push republish the
-bundle. The launch defaults stay spelled out here too: fleet `direct-to-main`, with
-`coilyco-flight-deck/ward` and `coilyco-flight-deck/agentic-os` on
-`pull-requests-and-merge`. ward's tree is being neutralized (ward#503 step 4),
+bundle. The launch defaults stay spelled out here too: fleet `merge-remote-main`,
+with cli-guard, ward, and agentic-os on `pull-request-and-merge` (canonical
+ward#508 spellings). ward's tree is being neutralized (ward#503 step 4),
 after which ward carries no coilyco values and derives its whole shipped
 surface from this asset.
 
@@ -58,7 +58,8 @@ binary input. The published `ward-specs-<tag>.tar.gz` remains the canonical
 bundle artifact and checksum target, but the live config path is the runtime
 `WARD_CONFIG_REF` seam, not a bespoke rebuild from the asset.
 
-That keeps the coilyco deployment values authored here in `.ward/` and consumed
-by ward without reintroducing the removed release overlay. The shell bootstrap
-and dev-base image stamp the ref from the checked-out commit, so the live
-bundle follows the source tree that produced the container or shell session.
+Host shells and the container entrypoint point `WARD_CONFIG_REF` at the
+checkout's `.ward/` live (`file://`): no commit pin to rot in a long-lived
+terminal, no gitsync or git credential at launch (the stale-pin fail-closed
+chain behind aos#452/aos#472). Only the dev-base image build bakes a
+commit-pinned ref, the fallback without a seeded checkout.

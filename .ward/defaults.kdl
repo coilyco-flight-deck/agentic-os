@@ -13,9 +13,9 @@
 // agent-workflow stays: which repos are PR-gated is a coilyco deployment fact,
 // not a ward product default.
 defaults {
-    agent-workflow default="direct-main" {
-        repo "coilyco-flight-deck/cli-guard" workflow="pull-requests-and-merge"
-        repo "coilyco-flight-deck/ward" workflow="pull-requests-and-merge"
-        repo "coilyco-flight-deck/agentic-os" workflow="pull-requests-and-merge"
+    agent-workflow default="merge-remote-main" {
+        repo "coilyco-flight-deck/cli-guard" workflow="pull-request-and-merge"
+        repo "coilyco-flight-deck/ward" workflow="pull-request-and-merge"
+        repo "coilyco-flight-deck/agentic-os" workflow="pull-request-and-merge"
     }
 }

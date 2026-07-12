@@ -105,10 +105,12 @@ def test_ward_specs_bundle_carries_deployment_anchors() -> None:
 
     defaults = (SPEC_DIR / "defaults.kdl").read_text()
     assert "defaults {" in defaults
-    assert 'agent-workflow default="direct-main"' in defaults
-    assert 'repo "coilyco-flight-deck/cli-guard" workflow="pull-requests-and-merge"' in defaults
-    assert 'repo "coilyco-flight-deck/ward" workflow="pull-requests-and-merge"' in defaults
-    assert 'repo "coilyco-flight-deck/agentic-os" workflow="pull-requests-and-merge"' in defaults
+    # Canonical ward#508 spellings: the deprecated direct-main /
+    # pull-requests-and-merge aliases warned on every ward invocation.
+    assert 'agent-workflow default="merge-remote-main"' in defaults
+    assert 'repo "coilyco-flight-deck/cli-guard" workflow="pull-request-and-merge"' in defaults
+    assert 'repo "coilyco-flight-deck/ward" workflow="pull-request-and-merge"' in defaults
+    assert 'repo "coilyco-flight-deck/agentic-os" workflow="pull-request-and-merge"' in defaults
     assert "repo-authority" not in defaults
     assert "workflow=pr" not in defaults
     assert "default=pr" not in defaults
@@ -152,7 +154,8 @@ def test_shell_core_exports_the_ward_bundle_ref() -> None:
         pathlib.Path(__file__).resolve().parents[1] / "shell" / "common.sh"
     ).read_text()
     assert "_siren_ward_config_ref()" in shell
-    assert 'git -C "$repo" rev-parse HEAD' in shell
+    # Host shells read the checkout's bundle live: file://, no commit pin.
+    assert "printf 'file://%s/.ward'" in shell
     assert 'export WARD_CONFIG_REF="$(_siren_ward_config_ref)"' in shell
 
 

@@ -39,11 +39,16 @@ _siren_aos_repo_root() {
   return 1
 }
 
+# Host shells read the bundle live from the checkout (file://): a pull applies
+# immediately, and launch needs no pin, gitsync, or credential. See docs/ward-specs.md.
 _siren_ward_config_ref() {
-  local repo commit
+  local repo
   repo=$(_siren_aos_repo_root) || return 1
-  commit=$(git -C "$repo" rev-parse HEAD) || return 1
-  printf 'forgejo.coilysiren.me/coilyco-flight-deck/agentic-os@%s//.ward' "$commit"
+  # Native Windows ward.exe cannot stat an MSYS /x/... path; -m emits X:/...
+  if command -v cygpath >/dev/null 2>&1; then
+    repo=$(cygpath -m "$repo") || return 1
+  fi
+  printf 'file://%s/.ward' "$repo"
 }
 
 export WARD_CONFIG_REF="$(_siren_ward_config_ref)"
