@@ -23,6 +23,10 @@ OWNER = "coilyco-flight-deck"
 API_TOKEN_PARAM = "/forgejo/api-token"
 
 # repo -> secret name -> SSM parameter (see SSM.md in agentic-os-kai).
+# CI_RELEASE_TOKEN drives the two-stage promote push (ward#1117) and MUST be a
+# PAT with read:user alongside write:repository: without read:user Forgejo
+# records the push with an empty actor and silently enqueues no workflow for
+# it (ward runs 1831/1833 - release moved, stage 2 never fired). Remint first.
 MAPPING: dict[str, dict[str, str]] = {
     "agentic-os": {
         "TELEGRAM_BOT_TOKEN": "/coilysiren/telegram/bot-token",
@@ -32,6 +36,7 @@ MAPPING: dict[str, dict[str, str]] = {
     "ward": {
         "TELEGRAM_BOT_TOKEN": "/coilysiren/telegram/bot-token",
         "TELEGRAM_RED_CHAT_ID": "/coilysiren/telegram/red-chat-id",
+        "CI_RELEASE_TOKEN": "/forgejo/ci-release-token",
     },
 }
 
