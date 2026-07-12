@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import importlib.util
+import re
 from pathlib import Path
 
 from agentic_os.dev_base import (
@@ -13,6 +14,18 @@ from agentic_os.dev_base import (
 )
 
 SCRIPT = Path(__file__).resolve().parent.parent / "scripts" / "dev-base-build.py"
+
+# Managed-ARG contract: NAMES are pinned here, VALUES derive from the Dockerfiles.
+# Hard-pinned values deadlocked the daily dep-bump's own pytest gate (aos#452).
+_ARG_DEFAULT_RE = re.compile(r"^ARG (?P<name>[A-Z0-9_]+)=(?P<value>\S+)\s*$", re.MULTILINE)
+_VERSION_VALUE_RE = re.compile(r"^v?\d+[\w.\-]*$")
+
+
+def _arg_defaults(tier: str) -> dict[str, str]:
+    return {
+        m.group("name"): m.group("value")
+        for m in _ARG_DEFAULT_RE.finditer(_tier_path(tier).read_text())
+    }
 
 
 def _tier_path(tier: str) -> Path:
@@ -62,7 +75,8 @@ def test_core_tier_keeps_the_hidden_ward_builder_stage() -> None:
     text = _tier_path("core").read_text()
     assert "AS dev-base-ward-builder" in text
     assert 'COPY --from=dev-base-ward-builder /usr/local/bin/ward /usr/local/bin/ward' in text
-    assert "ARG WARD_VERSION=0.628.0" in text
+    ward_pin = _arg_defaults("core").get("WARD_VERSION")
+    assert ward_pin and _VERSION_VALUE_RE.match(ward_pin)
     assert "ARG WARD_CONFIG_REF_COMMIT" in text
     assert "WARD_CONFIG_REF=forgejo.coilysiren.me/coilyco-flight-deck/agentic-os@${WARD_CONFIG_REF_COMMIT}//.ward" in text
 
@@ -76,10 +90,10 @@ def test_core_tier_runs_ward_doctor_after_installing_ward() -> None:
     assert "ward --version; \\\n    CLIGUARD_NO_SANDBOX=1 ward doctor; \\" in text
 
 
-def test_shell_common_exports_a_commit_addressed_ward_config_ref() -> None:
+def test_shell_common_exports_a_live_file_ward_config_ref() -> None:
     text = (Path(__file__).resolve().parent.parent / "shell" / "common.sh").read_text()
     assert "_siren_ward_config_ref()" in text
-    assert 'git -C "$repo" rev-parse HEAD' in text
+    assert "printf 'file://%s/.ward'" in text
     assert "export WARD_CONFIG_REF=\"$(_siren_ward_config_ref)\"" in text
 
 
@@ -96,37 +110,40 @@ def test_tier_files_chain_from_the_previous_tier_image() -> None:
 
 
 def test_split_tiers_keep_their_managed_arg_defaults() -> None:
-    expected_defaults = {
-        "lang-node": ["ARG NODE_VERSION=22.23.1"],
-        "lang-go": ["ARG GO_VERSION=1.26.5"],
-        "lang-dotnet": ["ARG DOTNET_VERSION=10.0.301"],
+    expected_args = {
+        "lang-node": ["NODE_VERSION"],
+        "lang-go": ["GO_VERSION"],
+        "lang-dotnet": ["DOTNET_VERSION"],
         "ops": [
-            "ARG AWSCLI_VERSION=2.35.15",
-            "ARG GH_VERSION=2.96.0",
-            "ARG DOCKER_VERSION=28.5.2",
-            "ARG HELM_VERSION=4.2.2",
-            "ARG KUBECTL_VERSION=1.36.2",
-            "ARG YQ_VERSION=4.53.3",
-            "ARG TAILSCALE_VERSION=1.98.8",
+            "AWSCLI_VERSION",
+            "GH_VERSION",
+            "DOCKER_VERSION",
+            "HELM_VERSION",
+            "KUBECTL_VERSION",
+            "YQ_VERSION",
+            "TAILSCALE_VERSION",
         ],
         "agent": [
-            "ARG CLAUDE_VERSION=2.1.206",
-            "ARG MCPORTER_VERSION=0.12.3",
-            "ARG CODEX_VERSION=0.144.1",
-            "ARG GOOSE_VERSION=1.41.0",
-            "ARG OPENCODE_VERSION=1.17.18",
+            "CLAUDE_VERSION",
+            "MCPORTER_VERSION",
+            "CODEX_VERSION",
+            "GOOSE_VERSION",
+            "OPENCODE_VERSION",
         ],
         "full": [
-            "ARG GOLANGCI_LINT_VERSION=2.12.2",
-            "ARG TRUFFLEHOG_VERSION=3.95.8",
-            "ARG KDLFMT_VERSION=0.1.7",
+            "GOLANGCI_LINT_VERSION",
+            "TRUFFLEHOG_VERSION",
+            "KDLFMT_VERSION",
         ],
     }
 
-    for tier, arg_lines in expected_defaults.items():
-        text = _tier_path(tier).read_text()
-        for line in arg_lines:
-            assert line in text
+    for tier, names in expected_args.items():
+        defaults = _arg_defaults(tier)
+        for name in names:
+            assert name in defaults, f"{tier}: managed ARG {name} vanished"
+            assert _VERSION_VALUE_RE.match(defaults[name]), (
+                f"{tier}: ARG {name}={defaults[name]} does not look like a pinned version"
+            )
 
 
 def test_agent_tier_still_copies_the_stable_assets_from_the_root_context() -> None:

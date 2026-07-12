@@ -21,7 +21,9 @@ if ! git -C "$_siren_aos_root" rev-parse --is-inside-work-tree >/dev/null 2>&1; 
 fi
 if git -C "$_siren_aos_root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   export AOS_REPO_ROOT="$_siren_aos_root"
-  export WARD_CONFIG_REF="forgejo.coilysiren.me/coilyco-flight-deck/agentic-os@$(git -C "$_siren_aos_root" rev-parse HEAD)//.ward"
+  # file:// reads the seeded checkout live: no in-container gitsync, creds, or
+  # bundle cache (the ward#1086 FETCH_HEAD class). The checkout IS the pinned tree.
+  export WARD_CONFIG_REF="file://$_siren_aos_root/.ward"
 fi
 
 if [ "$#" -gt 0 ]; then

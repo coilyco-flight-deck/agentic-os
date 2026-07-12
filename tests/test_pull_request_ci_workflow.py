@@ -16,4 +16,4 @@ def test_pull_request_ci_workflow_exposes_branch_protection_context() -> None:
 def test_pull_request_ci_docs_name_the_required_context() -> None:
     docs = (ROOT / "docs" / "ci-in-dev-base.md").read_text()
     assert "ci / gate" in docs
-    assert "pull-requests-and-merge" in docs
+    assert "pull-request-and-merge" in docs
