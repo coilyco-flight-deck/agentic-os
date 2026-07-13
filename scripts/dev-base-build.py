@@ -8,7 +8,7 @@ import platform
 import subprocess
 from pathlib import Path
 
-from agentic_os.dev_base import REGISTRY_BASE, cache_ref, publish_plan
+from agentic_os.dev_base import REGISTRY_BASE, cache_ref, latest_ref, publish_plan
 
 
 def _docker_base_command(push: bool, platforms: str | None) -> list[str]:
@@ -61,7 +61,12 @@ def _build_plan(registry_base: str, tag: str, push: bool, platforms: str | None)
                     f"type=registry,ref={buildcache_ref},mode=max,ignore-error=true",
                 ]
             )
-        cmd.extend(["-t", entry["image"], "-f", str(dockerfile), str(dockerfile.parent.parent)])
+        cmd.extend(["-t", entry["image"]])
+        if push:
+            # Published pushes also carry the moving :latest alias - ward's
+            # default surface pulls agentic-os-full:latest.
+            cmd.extend(["-t", latest_ref(entry["image"])])
+        cmd.extend(["-f", str(dockerfile), str(dockerfile.parent.parent)])
         _run(cmd)
         if push:
             _run(["docker", "buildx", "imagetools", "inspect", entry["image"]])

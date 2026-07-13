@@ -81,11 +81,19 @@ def image_ref(registry_base: str, tier: str, tag: str) -> str:
     return f"{registry_base}-{tier}:{tag}"
 
 
-def cache_ref(image: str) -> str:
+def _retag(image: str, tag: str) -> str:
     repository, sep, _tag = image.rpartition(":")
     if not sep:
         raise ValueError(f"expected tagged image ref, got {image!r}")
-    return f"{repository}:buildcache"
+    return f"{repository}:{tag}"
+
+
+def cache_ref(image: str) -> str:
+    return _retag(image, "buildcache")
+
+
+def latest_ref(image: str) -> str:
+    return _retag(image, "latest")
 
 
 def tier_dockerfile(tier: str) -> Path:

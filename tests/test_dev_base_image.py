@@ -10,6 +10,7 @@ from agentic_os.dev_base import (
     REGISTRY_BASE,
     PUBLISHED_TIER_NAMES,
     cache_ref,
+    latest_ref,
     publish_plan,
 )
 
@@ -100,6 +101,11 @@ def test_shell_common_exports_a_live_file_ward_config_ref() -> None:
 def test_cache_ref_strips_the_release_tag() -> None:
     image = f"{REGISTRY_BASE}-core:v0.243.0"
     assert cache_ref(image) == f"{REGISTRY_BASE}-core:buildcache"
+
+
+def test_latest_ref_strips_the_release_tag() -> None:
+    image = f"{REGISTRY_BASE}-full:v0.243.0"
+    assert latest_ref(image) == f"{REGISTRY_BASE}-full:latest"
 
 
 def test_tier_files_chain_from_the_previous_tier_image() -> None:
@@ -193,3 +199,38 @@ def test_pushed_build_uses_release_tagless_cache_ref(monkeypatch) -> None:
         for cmd in commands
         for arg in cmd
     )
+
+
+def test_pushed_build_tags_every_tier_latest(monkeypatch) -> None:
+    script = _load_script()
+    commands: list[list[str]] = []
+
+    monkeypatch.setattr(script, "_run", lambda cmd: commands.append(cmd))
+    monkeypatch.setattr(script, "_host_targetarch", lambda: "amd64")
+    monkeypatch.setattr(script, "_ward_config_ref_commit", lambda: "abc123")
+
+    script._build_plan(REGISTRY_BASE, "v0.243.0", True, "linux/amd64,linux/arm64")
+
+    build_cmds = [cmd for cmd in commands if "--push" in cmd]
+    assert len(build_cmds) == len(PUBLISHED_TIER_NAMES)
+    for tier, cmd in zip(PUBLISHED_TIER_NAMES, build_cmds):
+        tags = [cmd[i + 1] for i, arg in enumerate(cmd) if arg == "-t"]
+        assert tags == [
+            f"{REGISTRY_BASE}-{tier}:v0.243.0",
+            f"{REGISTRY_BASE}-{tier}:latest",
+        ]
+
+
+def test_local_build_does_not_tag_latest(monkeypatch) -> None:
+    script = _load_script()
+    commands: list[list[str]] = []
+
+    monkeypatch.setattr(script, "_run", lambda cmd: commands.append(cmd))
+    monkeypatch.setattr(script, "_host_targetarch", lambda: "amd64")
+    monkeypatch.setattr(script, "_ward_config_ref_commit", lambda: "abc123")
+
+    script._build_plan("agentic-os", "dev-base-local", False, None)
+
+    for cmd in commands:
+        tags = [cmd[i + 1] for i, arg in enumerate(cmd) if arg == "-t"]
+        assert all(not tag.endswith(":latest") for tag in tags)
