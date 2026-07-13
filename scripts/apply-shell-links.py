@@ -33,6 +33,12 @@ def _target_for_gpg_ssm(repo_root: Path) -> Path:
     return repo_root / "scripts" / "gpg-ssm"
 
 
+def _target_for_git_credential(repo_root: Path) -> Path:
+    if os.name == "nt":
+        return repo_root / "scripts" / "git-credential-forgejo-ssm.cmd"
+    return repo_root / "scripts" / "git-credential-forgejo-ssm.sh"
+
+
 def link_specs(home: Path, repo_root: Path = REPO_ROOT) -> list[LinkSpec]:
     specs = [
         LinkSpec("zshrc", repo_root / "shell" / "zshrc", home / ".zshrc"),
@@ -40,6 +46,11 @@ def link_specs(home: Path, repo_root: Path = REPO_ROOT) -> list[LinkSpec]:
             "gpg-ssm",
             _target_for_gpg_ssm(repo_root),
             home / ".local" / "bin" / _target_for_gpg_ssm(repo_root).name,
+        ),
+        LinkSpec(
+            "git-credential-forgejo-ssm",
+            _target_for_git_credential(repo_root),
+            home / ".local" / "bin" / _target_for_git_credential(repo_root).name,
         ),
     ]
     if os.name != "nt":

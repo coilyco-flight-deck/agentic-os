@@ -28,4 +28,4 @@ Single Warp config tree rendered into the host's Warp config dir - `~/.warp-prev
 
 ## Install surface
 
-[README.md](../README.md) carries per-OS install steps. `ward exec apply-shell-links` repairs `~/.zshrc`, `~/.bashrc`, and `gpg-ssm` on Mac/Linux, but Windows repairs only `~/.zshrc` and `gpg-ssm.cmd` so Git Bash hook launchers cannot recreate stale `~/.bashrc` state. Mac/Linux can also use plain `ln -sf`. Windows symlinks need Developer Mode or elevation.
+[README.md](../README.md) carries per-OS install steps. `ward exec apply-shell-links` repairs shell links, `gpg-ssm`, and the Forgejo git credential helper. Windows skips `~/.bashrc` so Git Bash hook launchers cannot recreate stale state. Mac/Linux can also use plain `ln -sf`. Windows symlinks need Developer Mode or elevation.

@@ -34,7 +34,8 @@ ward exec warp apply                     # warp config
 ```
 
 On Windows, `ward exec apply-shell-links` manages `~/.zshrc` and the `gpg-ssm.cmd`
-shim only. Git Bash popup shells should not recreate `~/.bashrc`.
+shim only. It also links the Forgejo git credential helper; Git Bash popup shells
+should not recreate `~/.bashrc`.
 
 Agent self-name + session-pulse hooks, per-host steps, and gpg wiring: [docs/install.md](docs/install.md).
 
