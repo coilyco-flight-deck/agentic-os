@@ -3,7 +3,7 @@
 aos owns the agent dev environment. ward consumes it by tag, so config cannot
 drift.
 
-This page describes the current published `dev-base-full` contract. The tier
+This page describes the `dev-base-full` contract. The tier
 layout that keeps this default while reducing rebuild blast radius is in
 [Tiered dev-base image split](dev-base-image-tiering.md).
 
@@ -16,9 +16,9 @@ literal filename `Dockerfile`.
 
 - **core toolchain** - `uv`, pre-commit, Python, shellcheck, git, git-lfs, build-essential, Rust, and ward.
 - **language/runtime tiers** - Node, Go, and .NET 10 + ICU.
-- **ops / agent CLIs** - aws cli, Homebrew, claude, mcporter, opencode, codex, goose, gh, helm, kubectl, yq, Docker CLI, and Tailscale CLI.
+- **ops / agent CLIs** - aws cli, Homebrew, claude, mcporter, opencode, codex, goose, gh, helm, kubectl, yq, Docker CLI, and the Tailscale client plus `tailscaled` daemon binary.
 - **gate tools** - golangci-lint, trufflehog, and kdlfmt.
-- **platform seed** - the public substrate mirrors, the baked agent self-name / status-line assets, and the container shell entrypoint that seeds `AOS_REPO_ROOT` plus `WARD_CONFIG_REF` before the read-only director shell starts.
+- **platform seed** - the substrate mirrors, the baked agent self-name / status-line assets, and the container shell entrypoint that seeds `AOS_REPO_ROOT` plus `WARD_CONFIG_REF` before the read-only director shell starts.
 
 Tools under `/usr/local`, `/home/linuxbrew/.linuxbrew`, or `/opt` run as any uid. ward owns `run-as-uid`, mounts, and `~/.aws`. Root bootstrap seeds `/home/ubuntu/.ward/audit` as uid 1000 and avoids root-owned audit state.
 
@@ -48,7 +48,6 @@ launches against the exact bundled `.ward/` checkout rather than a moving
 broken bundled config before the image publishes.
 
 The tag comes last, after the image has been built, pushed, and verified.
-The base apt layer retries against mirror drift so a publish can still land when Ubuntu package metadata and archives briefly disagree.
 
 ## Pinning a tool
 
@@ -69,6 +68,7 @@ Needs a `docker login`; `ward container up/exec` (ward#98) is the entry point.
 - Mount / compose logic and `ward container` verbs - ward#98; the mount-eligibility manifest - aos#222.
 - `coily` (retired, folded into `ward ops`) and running services - not shipped.
 - `docker buildx` and `wasm-pack` - job-local publish or toolchain steps.
+- Tailnet daemon startup, auth, and socket wiring - ward owns bring-up, even though the image now ships both Tailscale binaries.
 
 ## See also
 
