@@ -53,6 +53,11 @@ _siren_ward_config_ref() {
 
 export WARD_CONFIG_REF="$(_siren_ward_config_ref)"
 
+# Dev-base image for `ward agent` dispatch: overrides ward's baked default (the
+# retired agentic-os-full:latest ref). Remove once ward#1139 lands and ward is current.
+export WARD_AGENT_IMAGE="forgejo.coilysiren.me/coilyco-flight-deck/agentic-os"
+export WARD_AGENT_TAG="release"
+
 # Env + PATH are inherited, so run once per terminal tree: the exported guard is
 # the "has this run in this terminal yet?" check. Aliases/functions always define.
 if [ -z "${_SIREN_SHELL_ENV:-}" ]; then
