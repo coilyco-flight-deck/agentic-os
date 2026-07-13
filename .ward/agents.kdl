@@ -1,7 +1,7 @@
 agents {
     schema-version 2
     defaults {
-        agent claude
+        agent codex
         attribution name=coilyco-ops email=coilyco-ops@coilysiren.me
     }
     agent claude {
