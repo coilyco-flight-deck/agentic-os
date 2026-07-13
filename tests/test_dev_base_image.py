@@ -3,7 +3,10 @@ from __future__ import annotations
 
 import importlib.util
 import re
+import subprocess
 from pathlib import Path
+
+import pytest
 
 from agentic_os.dev_base import (
     DEV_BASE_ROOT,
@@ -244,3 +247,67 @@ def test_local_build_does_not_tag_an_alias(monkeypatch) -> None:
     for cmd in commands:
         tags = [cmd[i + 1] for i, arg in enumerate(cmd) if arg == "-t"]
         assert tags == [tag for tag in tags if tag.endswith("dev-base-local")]
+
+
+def test_pushed_build_retries_a_flaky_tier_push(monkeypatch) -> None:
+    script = _load_script()
+    calls: list[list[str]] = []
+    sleeps: list[int] = []
+    state = {"failed_once": False}
+
+    def flaky_run(cmd: list[str]) -> None:
+        calls.append(cmd)
+        if "--push" in cmd and not state["failed_once"]:
+            state["failed_once"] = True
+            raise subprocess.CalledProcessError(1, cmd)
+
+    monkeypatch.setattr(script, "_run", flaky_run)
+    monkeypatch.setattr(script, "_sleep", sleeps.append)
+    monkeypatch.setattr(script, "_ward_config_ref_commit", lambda: "abc123")
+
+    script._build_plan(REGISTRY_BASE, "v0.243.0", True, "linux/amd64,linux/arm64")
+
+    push_cmds = [cmd for cmd in calls if "--push" in cmd]
+    assert len(push_cmds) == len(PUBLISHED_TIER_NAMES) + 1
+    assert push_cmds[0] == push_cmds[1]
+    assert sleeps == [15]
+
+
+def test_pushed_build_gives_up_after_bounded_attempts(monkeypatch) -> None:
+    script = _load_script()
+    calls: list[list[str]] = []
+    sleeps: list[int] = []
+
+    def failing_run(cmd: list[str]) -> None:
+        calls.append(cmd)
+        raise subprocess.CalledProcessError(1, cmd)
+
+    monkeypatch.setattr(script, "_run", failing_run)
+    monkeypatch.setattr(script, "_sleep", sleeps.append)
+    monkeypatch.setattr(script, "_ward_config_ref_commit", lambda: "abc123")
+
+    with pytest.raises(subprocess.CalledProcessError):
+        script._build_plan(REGISTRY_BASE, "v0.243.0", True, "linux/amd64,linux/arm64")
+
+    assert len(calls) == script.PUSH_ATTEMPTS
+    assert all(cmd == calls[0] for cmd in calls)
+    assert sleeps == [15, 60]
+
+
+def test_local_build_failure_does_not_retry(monkeypatch) -> None:
+    script = _load_script()
+    calls: list[list[str]] = []
+
+    def failing_run(cmd: list[str]) -> None:
+        calls.append(cmd)
+        raise subprocess.CalledProcessError(1, cmd)
+
+    monkeypatch.setattr(script, "_run", failing_run)
+    monkeypatch.setattr(script, "_sleep", lambda seconds: pytest.fail("local build slept"))
+    monkeypatch.setattr(script, "_host_targetarch", lambda: "amd64")
+    monkeypatch.setattr(script, "_ward_config_ref_commit", lambda: "abc123")
+
+    with pytest.raises(subprocess.CalledProcessError):
+        script._build_plan("agentic-os", "dev-base-local", False, None)
+
+    assert len(calls) == 1

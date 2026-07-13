@@ -13,13 +13,16 @@
 # per-push DEFAULT_REV commit - cutting the tag is the whole release. A
 # workflow_dispatch trigger re-fires the same pipeline by hand when Forgejo
 # misses a push enqueue (agentic-os#240); dispatch it against the `release`
-# ref. The pipeline computes the next tag first, builds and verifies the
-# dev-base image family by tier, and only then creates the public git/release
-# tag, keeping the announced tag as the last success marker. Full rationale in
-# docs/release.md, image notes in docs/dev-base-image.md. There is no test job
-# here: promote.yml already ran the full repo gate on the exact sha it
-# fast-forwarded, so re-running the suite on `release` only lets a flaky rerun
-# fail an already-vouched promotion (Kai's call, 2026-07-12).
+# ref. The pipeline computes the next tag first, then cuts the git tag, the
+# Forgejo release, and the ward-specs bundle from plan-release alone - those
+# artifacts are cheap and deterministic, so an image-registry flake can no
+# longer cost the release (aos#490 inverted the old images-before-tag order).
+# The dev-base image family publishes after the tag as a consequence of it,
+# with bounded per-tier push retries, and fails independently and loudly.
+# Full rationale in docs/release.md, image notes in docs/dev-base-image.md.
+# There is no test job here: promote.yml already ran the full repo gate on
+# the exact sha it fast-forwarded, so re-running the suite on `release` only
+# lets a flaky rerun fail an already-vouched promotion (Kai's call, 2026-07-12).
 
 name: release
 
@@ -81,9 +84,13 @@ jobs:
           set -euo pipefail
           python3 - <<'PY'
           import os
+          import time
           import urllib.error
           import urllib.parse
           import urllib.request
+
+          ATTEMPTS = 3
+          BACKOFF_SECONDS = (10, 30)
 
           def build_message(repo, workflow, job, ref, sha, run_url):
               return "\n".join([
@@ -95,6 +102,11 @@ jobs:
                   f"sha: {sha}",
                   f"run: {run_url}",
               ])
+
+          def send(url, payload):
+              req = urllib.request.Request(url, data=payload, method="POST")
+              with urllib.request.urlopen(req, timeout=30) as resp:
+                  resp.read()
 
           def main():
               bot_token = os.environ["BOT_TOKEN"]
@@ -115,18 +127,22 @@ jobs:
                   }
               ).encode("utf-8")
               url = f"{os.environ['API_BASE'].rstrip('/')}/bot{bot_token}/sendMessage"
-              req = urllib.request.Request(url, data=payload, method="POST")
-              try:
-                  with urllib.request.urlopen(req, timeout=15) as resp:
-                      resp.read()
-              except urllib.error.URLError as exc:
-                  print(f"telegram alert failed: {exc}")
-                  raise SystemExit(1)
+              # One flaky TLS handshake used to eat the whole alert (aos#490), so
+              # the send retries with backoff before giving up.
+              for attempt in range(1, ATTEMPTS + 1):
+                  try:
+                      send(url, payload)
+                      return
+                  except OSError as exc:
+                      print(f"telegram alert attempt {attempt}/{ATTEMPTS} failed: {exc}")
+                      if attempt < ATTEMPTS:
+                          time.sleep(BACKOFF_SECONDS[min(attempt - 1, len(BACKOFF_SECONDS) - 1)])
+              raise SystemExit(1)
 
           main()
           PY
   publish-dev-base:
-    needs: plan-release
+    needs: [plan-release, release]
     if: ${{ needs.plan-release.outputs.tag != '' }}
     runs-on: docker
     timeout-minutes: 120
@@ -261,9 +277,13 @@ jobs:
           set -euo pipefail
           python3 - <<'PY'
           import os
+          import time
           import urllib.error
           import urllib.parse
           import urllib.request
+
+          ATTEMPTS = 3
+          BACKOFF_SECONDS = (10, 30)
 
           def build_message(repo, workflow, job, ref, sha, run_url):
               return "\n".join([
@@ -275,6 +295,11 @@ jobs:
                   f"sha: {sha}",
                   f"run: {run_url}",
               ])
+
+          def send(url, payload):
+              req = urllib.request.Request(url, data=payload, method="POST")
+              with urllib.request.urlopen(req, timeout=30) as resp:
+                  resp.read()
 
           def main():
               bot_token = os.environ["BOT_TOKEN"]
@@ -295,18 +320,22 @@ jobs:
                   }
               ).encode("utf-8")
               url = f"{os.environ['API_BASE'].rstrip('/')}/bot{bot_token}/sendMessage"
-              req = urllib.request.Request(url, data=payload, method="POST")
-              try:
-                  with urllib.request.urlopen(req, timeout=15) as resp:
-                      resp.read()
-              except urllib.error.URLError as exc:
-                  print(f"telegram alert failed: {exc}")
-                  raise SystemExit(1)
+              # One flaky TLS handshake used to eat the whole alert (aos#490), so
+              # the send retries with backoff before giving up.
+              for attempt in range(1, ATTEMPTS + 1):
+                  try:
+                      send(url, payload)
+                      return
+                  except OSError as exc:
+                      print(f"telegram alert attempt {attempt}/{ATTEMPTS} failed: {exc}")
+                      if attempt < ATTEMPTS:
+                          time.sleep(BACKOFF_SECONDS[min(attempt - 1, len(BACKOFF_SECONDS) - 1)])
+              raise SystemExit(1)
 
           main()
           PY
   release:
-    needs: [plan-release, publish-dev-base]
+    needs: plan-release
     if: ${{ needs.plan-release.outputs.tag != '' }}
     runs-on: docker
     container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:latest
@@ -423,9 +452,13 @@ jobs:
           set -euo pipefail
           python3 - <<'PY'
           import os
+          import time
           import urllib.error
           import urllib.parse
           import urllib.request
+
+          ATTEMPTS = 3
+          BACKOFF_SECONDS = (10, 30)
 
           def build_message(repo, workflow, job, ref, sha, run_url):
               return "\n".join([
@@ -437,6 +470,11 @@ jobs:
                   f"sha: {sha}",
                   f"run: {run_url}",
               ])
+
+          def send(url, payload):
+              req = urllib.request.Request(url, data=payload, method="POST")
+              with urllib.request.urlopen(req, timeout=30) as resp:
+                  resp.read()
 
           def main():
               bot_token = os.environ["BOT_TOKEN"]
@@ -457,13 +495,17 @@ jobs:
                   }
               ).encode("utf-8")
               url = f"{os.environ['API_BASE'].rstrip('/')}/bot{bot_token}/sendMessage"
-              req = urllib.request.Request(url, data=payload, method="POST")
-              try:
-                  with urllib.request.urlopen(req, timeout=15) as resp:
-                      resp.read()
-              except urllib.error.URLError as exc:
-                  print(f"telegram alert failed: {exc}")
-                  raise SystemExit(1)
+              # One flaky TLS handshake used to eat the whole alert (aos#490), so
+              # the send retries with backoff before giving up.
+              for attempt in range(1, ATTEMPTS + 1):
+                  try:
+                      send(url, payload)
+                      return
+                  except OSError as exc:
+                      print(f"telegram alert attempt {attempt}/{ATTEMPTS} failed: {exc}")
+                      if attempt < ATTEMPTS:
+                          time.sleep(BACKOFF_SECONDS[min(attempt - 1, len(BACKOFF_SECONDS) - 1)])
+              raise SystemExit(1)
 
           main()
           PY

@@ -6,9 +6,13 @@ import argparse
 import json
 import platform
 import subprocess
+import time
 from pathlib import Path
 
 from agentic_os.dev_base import REGISTRY_BASE, publish_plan
+
+PUSH_ATTEMPTS = 3
+PUSH_BACKOFF_SECONDS = (15, 60)
 
 
 def _docker_base_command(push: bool, platforms: str | None) -> list[str]:
@@ -22,6 +26,28 @@ def _docker_base_command(push: bool, platforms: str | None) -> list[str]:
 
 def _run(cmd: list[str]) -> None:
     subprocess.run(cmd, check=True)
+
+
+def _sleep(seconds: int) -> None:
+    time.sleep(seconds)
+
+
+def _run_push_with_retries(cmd: list[str], attempts: int = PUSH_ATTEMPTS) -> None:
+    # Pushes to the self-hosted registry flake on single blob writes (aos#490);
+    # a per-tier retry mostly re-pushes cached layers. Local builds fail fast.
+    for attempt in range(1, attempts + 1):
+        try:
+            _run(cmd)
+            return
+        except subprocess.CalledProcessError:
+            if attempt == attempts:
+                raise
+            delay = PUSH_BACKOFF_SECONDS[min(attempt - 1, len(PUSH_BACKOFF_SECONDS) - 1)]
+            print(
+                f"push attempt {attempt}/{attempts} failed; retrying in {delay}s",
+                flush=True,
+            )
+            _sleep(delay)
 
 
 def _ward_config_ref_commit() -> str:
@@ -69,9 +95,11 @@ def _build_plan(
             # ward's default agentic-os:release surface stays pullable.
             cmd.extend(["-t", entry["alias_image"]])
         cmd.extend(["-f", str(dockerfile), str(dockerfile.parent.parent)])
-        _run(cmd)
         if push:
-            _run(["docker", "buildx", "imagetools", "inspect", entry["image"]])
+            _run_push_with_retries(cmd)
+            _run_push_with_retries(["docker", "buildx", "imagetools", "inspect", entry["image"]])
+        else:
+            _run(cmd)
 
 
 def _cmd_plan(args: argparse.Namespace) -> int:

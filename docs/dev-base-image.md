@@ -37,17 +37,18 @@ retired.
 ## How it publishes
 
 The release jobs in [`.forgejo/workflows/release.yml`](../.forgejo/workflows/release.yml)
-run before the public tag exists. They compute the tag first, then call
+compute the tag, cut it, and only then publish the images (aos#490 inverted
+the old images-before-tag order). `publish-dev-base` calls
 [`scripts/dev-base-build.py`](../scripts/dev-base-build.py), which derives the
 ordered tier plan from the folder layout and builds `core -> lang-node ->
-lang-go -> lang-dotnet -> ops -> agent -> full` in order. The release tag lands
-only after the set has been pushed and verified. The core image stamps
+lang-go -> lang-dotnet -> ops -> agent -> full` in order. Each pushed tier
+retries, so a flaky blob write re-pushes a tier, not the run. The core image
+stamps
 `WARD_CONFIG_REF` from the current agentic-os commit at build time, so ward
 launches against the exact bundled `.ward/` checkout rather than a moving
 `main`. The core build runs `ward doctor` after installing ward, which rejects a
 broken bundled config before the image publishes.
 
-The tag comes last, after the image has been built, pushed, and verified.
 The base apt layer retries against mirror drift so a publish can still land when Ubuntu package metadata and archives briefly disagree.
 
 ## Pinning a tool

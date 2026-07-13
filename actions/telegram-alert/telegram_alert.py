@@ -6,9 +6,13 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
+
+ATTEMPTS = 3
+BACKOFF_SECONDS = (10, 30)
 
 
 def build_message(repo: str, workflow: str, job: str, ref: str, sha: str, run_url: str) -> str:
@@ -35,8 +39,32 @@ def send_message(bot_token: str, chat_id: str, message: str, api_base: str) -> N
     ).encode("utf-8")
     url = f"{api_base.rstrip('/')}/bot{bot_token}/sendMessage"
     req = urllib.request.Request(url, data=payload, method="POST")
-    with urllib.request.urlopen(req, timeout=15) as resp:
+    with urllib.request.urlopen(req, timeout=30) as resp:
         resp.read()
+
+
+def send_with_retries(
+    bot_token: str,
+    chat_id: str,
+    message: str,
+    api_base: str,
+    attempts: int = ATTEMPTS,
+    sleep=time.sleep,
+) -> None:
+    # One flaky TLS handshake used to eat the whole alert (aos#490), so the
+    # send retries with backoff before giving up.
+    for attempt in range(1, attempts + 1):
+        try:
+            send_message(bot_token, chat_id, message, api_base)
+            return
+        except OSError as exc:
+            print(
+                f"telegram alert attempt {attempt}/{attempts} failed: {exc}",
+                file=sys.stderr,
+            )
+            if attempt == attempts:
+                raise
+            sleep(BACKOFF_SECONDS[min(attempt - 1, len(BACKOFF_SECONDS) - 1)])
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -80,8 +108,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     try:
-        send_message(args.bot_token, args.chat_id, message, args.api_base)
-    except urllib.error.URLError as exc:
+        send_with_retries(args.bot_token, args.chat_id, message, args.api_base)
+    except OSError as exc:
         print(f"telegram alert failed: {exc}", file=sys.stderr)
         return 1
     return 0

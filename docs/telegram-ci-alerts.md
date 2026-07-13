@@ -10,6 +10,9 @@ action resolution in a stale mirror.
 - The caller passes `TELEGRAM_BOT_TOKEN` and `TELEGRAM_RED_CHAT_ID` as secrets.
 - The action formats the repo, workflow, job, ref, commit SHA, and run URL.
 - The message is plain text, so there is no markdown escaping surface.
+- The send retries with backoff (3 attempts) before failing, so one flaky TLS
+  handshake cannot eat the alert (aos#490). The inline workflow copies carry
+  the same retry loop.
 - The alert does nothing special on branches or pull-request refs. The caller
   gates it with `if: ${{ failure() && github.ref == 'refs/heads/main' }}`.
 
