@@ -10,7 +10,7 @@ agents {
         stream stream-json
         auth claude-keychain
         model claude-sonnet-4-6
-        reasoning-effort medium
+        reasoning-effort high
         argv {
             preflight claude -p
             headless claude -p --verbose --output-format stream-json
@@ -23,23 +23,11 @@ agents {
         stream none
         auth codex-file
         model gpt-5.5
-        reasoning-effort medium
+        reasoning-effort high
         verbosity low
         argv {
             headless codex exec
             interactive codex
-        }
-    }
-    agent opencode {
-        binary opencode
-        context-level 0
-        stream none
-        auth none
-        model qwen3-coder:30b
-        endpoint "http://localhost:11434/v1"
-        argv {
-            headless opencode run
-            interactive opencode
         }
     }
     agent goose {
@@ -54,5 +42,4 @@ agents {
             interactive goose session
         }
     }
-    // Role-specific guardfile bindings now live in roles.kdl.
 }
