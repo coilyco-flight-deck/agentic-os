@@ -17,9 +17,14 @@ class TierSpec:
     stage: str
     dockerfile: Path
     base_tier: str | None
+    # Sibling tiers grafted in via COPY --from of their self-contained install
+    # dirs - a composed tier's extra toolchains (docs/dev-base-image-tiering.md).
+    graft_tiers: tuple[str, ...] = ()
     published: bool = True
 
 
+# TIER_SPECS stays in topological order: every base_tier and graft_tier names
+# an earlier entry, so a sequential local build always has its inputs.
 TIER_SPECS: tuple[TierSpec, ...] = (
     TierSpec(
         tier="core",
@@ -37,31 +42,33 @@ TIER_SPECS: tuple[TierSpec, ...] = (
         tier="lang-go",
         stage="dev-base-lang-go",
         dockerfile=DEV_BASE_ROOT / "lang-go" / "Dockerfile",
-        base_tier="lang-node",
+        base_tier="core",
     ),
     TierSpec(
         tier="lang-dotnet",
         stage="dev-base-lang-dotnet",
         dockerfile=DEV_BASE_ROOT / "lang-dotnet" / "Dockerfile",
-        base_tier="lang-go",
+        base_tier="core",
     ),
     TierSpec(
         tier="ops",
         stage="dev-base-ops",
         dockerfile=DEV_BASE_ROOT / "ops" / "Dockerfile",
-        base_tier="lang-dotnet",
+        base_tier="core",
     ),
     TierSpec(
         tier="agent",
         stage="dev-base-agent",
         dockerfile=DEV_BASE_ROOT / "agent" / "Dockerfile",
         base_tier="ops",
+        graft_tiers=("lang-node",),
     ),
     TierSpec(
         tier="full",
         stage="dev-base-full",
         dockerfile=DEV_BASE_ROOT / "full" / "Dockerfile",
         base_tier="agent",
+        graft_tiers=("lang-go", "lang-dotnet"),
     ),
 )
 
@@ -85,21 +92,28 @@ def tier_dockerfile(tier: str) -> Path:
     return TIER_BY_NAME[tier].dockerfile
 
 
+def graft_build_arg(tier: str) -> str:
+    return f"{tier.replace('-', '_').upper()}_IMAGE"
+
+
 def publish_plan(
     registry_base: str, tag: str, alias: str | None = None
-) -> list[dict[str, str | bool]]:
-    plan: list[dict[str, str | bool]] = []
+) -> list[dict[str, str | bool | dict[str, str]]]:
+    plan: list[dict[str, str | bool | dict[str, str]]] = []
     images: dict[str, str] = {}
     for spec in TIER_SPECS:
         ref = image_ref(registry_base, spec.tier, tag)
         base_ref = "ubuntu:24.04" if spec.base_tier is None else images[spec.base_tier]
-        entry: dict[str, str | bool] = {
+        entry: dict[str, str | bool | dict[str, str]] = {
             "tier": spec.tier,
             "stage": spec.stage,
             "dockerfile": spec.dockerfile.relative_to(REPO_ROOT).as_posix(),
             "image": ref,
             "cache_image": image_ref(registry_base, spec.tier, "buildcache"),
             "base_image": base_ref,
+            "graft_images": {
+                graft_build_arg(graft): images[graft] for graft in spec.graft_tiers
+            },
             "published": spec.published,
         }
         if alias:

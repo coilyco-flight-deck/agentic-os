@@ -9,13 +9,13 @@ release in sequence instead of the old overlap-and-cancel. `main` stays
 yolo-able; `release` is last-known-good. Forgejo owns the release and tag per
 [forgejo-github-mirror-contract.md](forgejo-github-mirror-contract.md).
 
-`release.yml` computes the next tag first, then calls
-[`scripts/dev-base-build.py`](../scripts/dev-base-build.py) to publish and
-verify the dev-base image family by tier before it cuts the public git/release
-tag. The tier refs derive from `docker/dev-base/<tier>/Dockerfile`; core
-publishes first, `dev-base-full` fans in last. There is no test gate on
-`release`: promote.yml already ran the full suite on the exact sha it
-fast-forwarded, so a flaky rerun cannot fail a vouched promotion.
+`release.yml` computes the next tag first, then publishes and verifies the
+dev-base image family before it cuts the public git/release tag - one job per
+tier, with `needs:` carrying the tier DAG (aos#491), so a flaky tier reruns
+alone instead of costing the family. Core publishes first, `dev-base-full`
+fans in last and gates the tag. There is no test gate on `release`:
+promote.yml already ran the full suite on the exact sha it fast-forwarded, so
+a flaky rerun cannot fail a vouched promotion.
 
 agentic-os is consumed as pre-commit hooks pinned by `rev:` tag, not a brew
 formula or a prebuilt binary, so there is nothing to attach to the release and

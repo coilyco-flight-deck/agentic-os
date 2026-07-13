@@ -37,10 +37,11 @@ retired.
 ## How it publishes
 
 The release jobs in [`.forgejo/workflows/release.yml`](../.forgejo/workflows/release.yml)
-run before the public tag exists. They compute the tag first, then call
-[`scripts/dev-base-build.py`](../scripts/dev-base-build.py), which derives the
-ordered tier plan from the folder layout and builds `core -> lang-node ->
-lang-go -> lang-dotnet -> ops -> agent -> full` in order. The release tag lands
+run before the public tag exists. They compute the tag first, then run one
+publish job per tier, each calling
+[`scripts/dev-base-build.py`](../scripts/dev-base-build.py) with `--tier`; the
+jobs' `needs:` carry the tier DAG (see the
+[tiering doc](dev-base-image-tiering.md)). The release tag lands
 only after the set has been pushed and verified. The core image stamps
 `WARD_CONFIG_REF` from the current agentic-os commit at build time, so ward
 launches against the exact bundled `.ward/` checkout rather than a moving
