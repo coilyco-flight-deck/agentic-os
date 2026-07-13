@@ -13,9 +13,9 @@ yolo-able; `release` is last-known-good. Forgejo owns the release and tag per
 [`scripts/dev-base-build.py`](../scripts/dev-base-build.py) to publish and
 verify the dev-base image family by tier before it cuts the public git/release
 tag. The tier refs derive from `docker/dev-base/<tier>/Dockerfile`; core
-publishes first, `dev-base-full` fans in last. Publish is gated by `test`
-(`ward exec test` + `ward exec pre-commit-all`) - the second full gate on the
-promoted sha (`ci.yml` also re-runs on `release`).
+publishes first, `dev-base-full` fans in last. There is no test gate on
+`release`: promote.yml already ran the full suite on the exact sha it
+fast-forwarded, so a flaky rerun cannot fail a vouched promotion.
 
 agentic-os is consumed as pre-commit hooks pinned by `rev:` tag, not a brew
 formula or a prebuilt binary, so there is nothing to attach to the release and
