@@ -1,5 +1,0 @@
-// The coilyco ops surface. guardfile.forgejo.kdl carries the real base-url, SSM
-// token, and coily* owner gate; the generic ops.forgejo.kdl copy is gone (ward#1122).
-ops {
-    forgejo "guardfile.forgejo.kdl"
-}
