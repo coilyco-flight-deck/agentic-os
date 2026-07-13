@@ -346,12 +346,10 @@ jobs:
           # The bundle now shares .ward/ with ward.yaml (aos#330), so ship every
           # file in the dir minus a short deny-list. Deny-list, not enumeration:
           # the enumerated list silently dropped the role-bound
-          # guardfile.aws.engineer.kdl, and a new bundle file must ship with no
-          # release edit. find keeps the flat ./-prefixed member layout ward#503
-          # expects.
+          # guardfile.aws.engineer.kdl, and find keeps the flat ./-prefixed
+          # member layout ward#503 expects.
           find .ward -maxdepth 1 -type f \
             ! -name ward.yaml \
-            ! -name ward.bundle.kdl \
             ! -name forgejo.swagger.lock.json \
             -printf './%f\n' | LC_ALL=C sort > ward-specs-files.txt
           tar --sort=name --mtime='UTC 1970-01-01' --owner=0 --group=0 --numeric-owner \

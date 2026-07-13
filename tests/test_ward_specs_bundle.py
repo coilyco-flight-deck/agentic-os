@@ -40,6 +40,7 @@ def test_release_ships_the_bundle_by_deny_list() -> None:
     assert "find .ward -maxdepth 1 -type f" in release
     excluded = set(re.findall(r"! -name ([\w.\-]+)", release))
     assert excluded, "the tar step lost its deny-list"
+    assert "ward.bundle.kdl" not in excluded
     for name in excluded:
         assert (SPEC_DIR / name).exists(), f"deny-listed {name} does not exist"
     bound = _role_bound_guardfiles()
@@ -49,6 +50,7 @@ def test_release_ships_the_bundle_by_deny_list() -> None:
 def test_ci_gates_the_bundle_through_ward_doctor() -> None:
     # The standalone guardfile-load test: config validity belongs to ward at
     # load, so this pin is on the gate existing, not on any config content.
+    assert not (SPEC_DIR / "ward.bundle.kdl").exists()
     ci = (REPO_ROOT / ".forgejo" / "workflows" / "ci.yml").read_text()
     assert "ward-doctor:" in ci
     assert "ward doctor" in ci
