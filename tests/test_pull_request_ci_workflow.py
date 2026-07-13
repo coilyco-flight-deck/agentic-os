@@ -10,7 +10,8 @@ def test_pull_request_ci_workflow_exposes_branch_protection_context() -> None:
     workflow = (ROOT / ".forgejo" / "workflows" / "ci.yml").read_text()
     assert "name: ci" in workflow
     assert "pull_request:" in workflow
-    assert "uv run pytest" in workflow
+    assert "git clone --depth 1 --branch main https://forgejo.coilysiren.me/coilyco-flight-deck/ward.git" in workflow
+    assert "WARD_BIN" in workflow
 
 
 def test_pull_request_ci_docs_name_the_required_context() -> None:

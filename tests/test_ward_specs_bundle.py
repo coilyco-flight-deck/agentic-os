@@ -51,9 +51,13 @@ def test_ci_gates_the_bundle_through_ward_doctor() -> None:
     # load, so this pin is on the gate existing, not on any config content.
     ci = (REPO_ROOT / ".forgejo" / "workflows" / "ci.yml").read_text()
     assert "ward-doctor:" in ci
-    assert "ward doctor" in ci
+    assert 'CLIGUARD_NO_SANDBOX=1 "$WARD_BIN" doctor' in ci
+    assert "git clone --depth 1 --branch main https://forgejo.coilysiren.me/coilyco-flight-deck/ward.git" in ci
+    assert "WARD_BIN" in ci
     promote = (REPO_ROOT / ".forgejo" / "workflows" / "promote.yml").read_text()
-    assert "ward doctor" in promote
+    assert 'CLIGUARD_NO_SANDBOX=1 "$WARD_BIN" doctor' in promote
+    assert "git clone --depth 1 --branch main https://forgejo.coilysiren.me/coilyco-flight-deck/ward.git" in promote
+    assert "WARD_BIN" in promote
 
 
 def test_docs_cover_the_forgejo_ops_surface() -> None:

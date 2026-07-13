@@ -58,11 +58,21 @@ jobs:
             pre-commit run --all-files
           fi
 
-          # Standalone guardfile-load gate: ward validates the .ward bundle by
-          # loading it, so every promoted sha carries a doctor-vouched bundle.
-          if command -v ward >/dev/null 2>&1; then
-            WARD_CONFIG_REF="file://${PWD}/.ward" CLIGUARD_NO_SANDBOX=1 ward doctor
-          fi
+      - name: Install ward from source with workflow bundle support
+        run: |
+          set -euo pipefail
+          tmpdir="$(mktemp -d)"
+          git clone --depth 1 --branch main https://forgejo.coilysiren.me/coilyco-flight-deck/ward.git "$tmpdir/ward"
+          cd "$tmpdir/ward"
+          go build -trimpath -o "$tmpdir/ward/ward" ./cmd/ward
+          "$tmpdir/ward/ward" --version
+          echo "WARD_BIN=$tmpdir/ward/ward" >> "$GITHUB_ENV"
+
+      - name: Load the .ward bundle with the updated ward
+        run: |
+          set -euo pipefail
+          export WARD_CONFIG_REF="file://${PWD}/.ward"
+          CLIGUARD_NO_SANDBOX=1 "$WARD_BIN" doctor
 
       - name: Promote main to release (fast-forward only)
         env:
