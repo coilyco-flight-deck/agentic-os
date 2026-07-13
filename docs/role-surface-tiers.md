@@ -32,16 +32,12 @@ as drift against this map instead of silently disabling a role.
 The 2026-07-10 incident: guardfiles still compiled in, but the binaries,
 creds, and daemons under them were gone, and nothing flagged it.
 
-## The self-check
+## Live-check ownership
 
-[.ward/surface-check.sh](../.ward/surface-check.sh) asserts a live surface
-matches its role's tier (`$WARD_ROLE`, or pass the role as the first argument).
-It probes each promise above - binaries on PATH, creds present, `tailscale
-status` answering, kubeconfig readable, the runner-token verb mounted - and
-exits non-zero listing every miss, so an over-broad rollback fails loud at
-bring-up, not by hand mid-incident. Run it as `ward exec surface-check`. It
-rides the ward-specs bundle. Wiring it into ward's bring-up path (and mounting
-the role-bound overlay guardfiles at runtime) is ward#1072.
+The capability map above is descriptive. If a live probe of the role surface is
+still desired, that check belongs in ward's bring-up path, where ward owns the
+container state and can make the result authoritative. See ward#1072 for the
+ward-owned follow-up path.
 
 ## Deferred
 

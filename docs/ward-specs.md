@@ -4,9 +4,8 @@ The coilyco ward bundle lives in [`.ward/`](../.ward/), flattened beside
 `.ward/ward.yaml` (aos#330, first homed at top-level `ward-specs/`). It carries
 the Forgejo guardfiles, the Actions log and list bridges, the rerun bridge,
 aws/tailscale/kubectl exec guardfiles, the agents manifest, the role catalog,
-the workflow bundle, the repos bundle, and the surface self-check
-([role-surface-tiers.md](role-surface-tiers.md)). The upstream Forgejo OpenAPI
-spec is no longer tracked as a committed blob in aos.
+the workflow bundle, and the repos bundle. The upstream Forgejo OpenAPI spec is
+no longer tracked as a committed blob in aos.
 
 ## Direction of truth
 
