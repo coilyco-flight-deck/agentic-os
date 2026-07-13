@@ -410,6 +410,52 @@
       "type": "object",
       "x-go-package": "forgejo.org/modules/structs"
     },
+    "ChangedFile": {
+      "description": "ChangedFile store information about files affected by the pull request",
+      "properties": {
+        "additions": {
+          "format": "int64",
+          "type": "integer",
+          "x-go-name": "Additions"
+        },
+        "changes": {
+          "format": "int64",
+          "type": "integer",
+          "x-go-name": "Changes"
+        },
+        "contents_url": {
+          "type": "string",
+          "x-go-name": "ContentsURL"
+        },
+        "deletions": {
+          "format": "int64",
+          "type": "integer",
+          "x-go-name": "Deletions"
+        },
+        "filename": {
+          "type": "string",
+          "x-go-name": "Filename"
+        },
+        "html_url": {
+          "type": "string",
+          "x-go-name": "HTMLURL"
+        },
+        "previous_filename": {
+          "type": "string",
+          "x-go-name": "PreviousFilename"
+        },
+        "raw_url": {
+          "type": "string",
+          "x-go-name": "RawURL"
+        },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status"
+        }
+      },
+      "type": "object",
+      "x-go-package": "forgejo.org/modules/structs"
+    },
     "CombinedStatus": {
       "description": "CombinedStatus holds the combined state of several statuses for a single commit",
       "properties": {
@@ -831,6 +877,58 @@
       "type": "object",
       "x-go-package": "forgejo.org/modules/structs"
     },
+    "CreatePullRequestOption": {
+      "description": "CreatePullRequestOption options when creating a pull request",
+      "properties": {
+        "assignee": {
+          "type": "string",
+          "x-go-name": "Assignee"
+        },
+        "assignees": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "x-go-name": "Assignees"
+        },
+        "base": {
+          "type": "string",
+          "x-go-name": "Base"
+        },
+        "body": {
+          "type": "string",
+          "x-go-name": "Body"
+        },
+        "due_date": {
+          "format": "date-time",
+          "type": "string",
+          "x-go-name": "Deadline"
+        },
+        "head": {
+          "type": "string",
+          "x-go-name": "Head"
+        },
+        "labels": {
+          "items": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "type": "array",
+          "x-go-name": "Labels"
+        },
+        "milestone": {
+          "format": "int64",
+          "type": "integer",
+          "x-go-name": "Milestone"
+        },
+        "title": {
+          "type": "string",
+          "x-go-name": "Title"
+        }
+      },
+      "type": "object",
+      "x-go-package": "forgejo.org/modules/structs"
+    },
     "CreateReleaseOption": {
       "description": "CreateReleaseOption options when creating a release",
       "properties": {
@@ -1127,6 +1225,66 @@
         "title": {
           "type": "string",
           "x-go-name": "Title"
+        }
+      },
+      "type": "object",
+      "x-go-package": "forgejo.org/modules/structs"
+    },
+    "EditPullRequestOption": {
+      "description": "EditPullRequestOption options when modify pull request",
+      "properties": {
+        "allow_maintainer_edit": {
+          "type": "boolean",
+          "x-go-name": "AllowMaintainerEdit"
+        },
+        "assignee": {
+          "type": "string",
+          "x-go-name": "Assignee"
+        },
+        "assignees": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "x-go-name": "Assignees"
+        },
+        "base": {
+          "type": "string",
+          "x-go-name": "Base"
+        },
+        "body": {
+          "type": "string",
+          "x-go-name": "Body"
+        },
+        "due_date": {
+          "format": "date-time",
+          "type": "string",
+          "x-go-name": "Deadline"
+        },
+        "labels": {
+          "items": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "type": "array",
+          "x-go-name": "Labels"
+        },
+        "milestone": {
+          "format": "int64",
+          "type": "integer",
+          "x-go-name": "Milestone"
+        },
+        "state": {
+          "type": "string",
+          "x-go-name": "State"
+        },
+        "title": {
+          "type": "string",
+          "x-go-name": "Title"
+        },
+        "unset_due_date": {
+          "type": "boolean",
+          "x-go-name": "RemoveDeadline"
         }
       },
       "type": "object",
@@ -5225,6 +5383,62 @@
         "tags": [
           "repository"
         ]
+      },
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "operationId": "repoCreatePullRequest",
+        "parameters": [
+          {
+            "description": "owner of the repo",
+            "in": "path",
+            "name": "owner",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "name of the repo",
+            "in": "path",
+            "name": "repo",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "schema": {
+              "$ref": "#/definitions/CreatePullRequestOption"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "201": {
+            "$ref": "#/responses/PullRequest"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          },
+          "409": {
+            "$ref": "#/responses/error"
+          },
+          "413": {
+            "$ref": "#/responses/quotaExceeded"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
+          },
+          "423": {
+            "$ref": "#/responses/repoArchivedError"
+          }
+        },
+        "summary": "Create a pull request",
+        "tags": [
+          "repository"
+        ]
       }
     },
     "/repos/{owner}/{repo}/pulls/{index}": {
@@ -5266,6 +5480,278 @@
           }
         },
         "summary": "Get a pull request",
+        "tags": [
+          "repository"
+        ]
+      },
+      "patch": {
+        "consumes": [
+          "application/json"
+        ],
+        "operationId": "repoEditPullRequest",
+        "parameters": [
+          {
+            "description": "owner of the repo",
+            "in": "path",
+            "name": "owner",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "name of the repo",
+            "in": "path",
+            "name": "repo",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "index of the pull request to edit",
+            "format": "int64",
+            "in": "path",
+            "name": "index",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "schema": {
+              "$ref": "#/definitions/EditPullRequestOption"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "201": {
+            "$ref": "#/responses/PullRequest"
+          },
+          "403": {
+            "$ref": "#/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          },
+          "409": {
+            "$ref": "#/responses/error"
+          },
+          "412": {
+            "$ref": "#/responses/error"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
+          }
+        },
+        "summary": "Update a pull request. If using deadline only the date will be taken into account, and time of day ignored.",
+        "tags": [
+          "repository"
+        ]
+      }
+    },
+    "/repos/{owner}/{repo}/pulls/{index}/commits": {
+      "get": {
+        "operationId": "repoGetPullRequestCommits",
+        "parameters": [
+          {
+            "description": "owner of the repo",
+            "in": "path",
+            "name": "owner",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "name of the repo",
+            "in": "path",
+            "name": "repo",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "index of the pull request to get",
+            "format": "int64",
+            "in": "path",
+            "name": "index",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "description": "page number of results to return (1-based)",
+            "in": "query",
+            "name": "page",
+            "type": "integer"
+          },
+          {
+            "description": "page size of results",
+            "in": "query",
+            "name": "limit",
+            "type": "integer"
+          },
+          {
+            "description": "include verification for every commit (disable for speedup, default 'true')",
+            "in": "query",
+            "name": "verification",
+            "type": "boolean"
+          },
+          {
+            "description": "include a list of affected files for every commit (disable for speedup, default 'true')",
+            "in": "query",
+            "name": "files",
+            "type": "boolean"
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/CommitList"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          }
+        },
+        "summary": "Get commits for a pull request",
+        "tags": [
+          "repository"
+        ]
+      }
+    },
+    "/repos/{owner}/{repo}/pulls/{index}/files": {
+      "get": {
+        "operationId": "repoGetPullRequestFiles",
+        "parameters": [
+          {
+            "description": "owner of the repo",
+            "in": "path",
+            "name": "owner",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "name of the repo",
+            "in": "path",
+            "name": "repo",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "index of the pull request to get",
+            "format": "int64",
+            "in": "path",
+            "name": "index",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "description": "skip to given file",
+            "in": "query",
+            "name": "skip-to",
+            "type": "string"
+          },
+          {
+            "description": "whitespace behavior",
+            "enum": [
+              "ignore-all",
+              "ignore-change",
+              "ignore-eol",
+              "show-all"
+            ],
+            "in": "query",
+            "name": "whitespace",
+            "type": "string"
+          },
+          {
+            "description": "page number of results to return (1-based)",
+            "in": "query",
+            "name": "page",
+            "type": "integer"
+          },
+          {
+            "description": "page size of results",
+            "in": "query",
+            "name": "limit",
+            "type": "integer"
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ChangedFileListWithPagination"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          }
+        },
+        "summary": "Get changed files for a pull request",
+        "tags": [
+          "repository"
+        ]
+      }
+    },
+    "/repos/{owner}/{repo}/pulls/{index}/update": {
+      "post": {
+        "operationId": "repoUpdatePullRequest",
+        "parameters": [
+          {
+            "description": "owner of the repo",
+            "in": "path",
+            "name": "owner",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "name of the repo",
+            "in": "path",
+            "name": "repo",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "index of the pull request to get",
+            "format": "int64",
+            "in": "path",
+            "name": "index",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "description": "how to update pull request",
+            "enum": [
+              "merge",
+              "rebase"
+            ],
+            "in": "query",
+            "name": "style",
+            "type": "string"
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/empty"
+          },
+          "403": {
+            "$ref": "#/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          },
+          "409": {
+            "$ref": "#/responses/error"
+          },
+          "413": {
+            "$ref": "#/responses/quotaExceeded"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
+          }
+        },
+        "summary": "Merge PR's baseBranch into headBranch",
         "tags": [
           "repository"
         ]
@@ -5899,6 +6385,36 @@
       "schema": {
         "items": {
           "$ref": "#/definitions/Branch"
+        },
+        "type": "array"
+      }
+    },
+    "ChangedFileListWithPagination": {
+      "description": "ChangedFileListWithPagination",
+      "headers": {
+        "X-HasMore": {
+          "description": "True if there is another page",
+          "type": "boolean"
+        },
+        "X-Page": {
+          "description": "The current page",
+          "format": "int64",
+          "type": "integer"
+        },
+        "X-PageCount": {
+          "description": "Total number of pages",
+          "format": "int64",
+          "type": "integer"
+        },
+        "X-PerPage": {
+          "description": "Commits per page",
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "schema": {
+        "items": {
+          "$ref": "#/definitions/ChangedFile"
         },
         "type": "array"
       }
