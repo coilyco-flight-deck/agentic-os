@@ -27,8 +27,10 @@ Tools under `/usr/local`, `/home/linuxbrew/.linuxbrew`, or `/opt` run as any uid
 Published under
 `forgejo.coilysiren.me/coilyco-flight-deck/agentic-os` as a tiered family. The
 folder name is the source of truth for the suffix, so the published refs are
-`agentic-os-core:${TAG}`, `agentic-os-lang-node:${TAG}`, and so on. `dev-base-full`
-keeps `:latest`, and each release uses one `vX.Y.Z`; `:buildcache` holds the cache.
+`agentic-os-core:${TAG}`, `agentic-os-lang-node:${TAG}`, and so on. Each tier also
+carries a moving alias named for the publishing branch (`:release` in the two-stage
+flow), each release uses one `vX.Y.Z`, and `:buildcache` holds the cache. `:latest`
+is retired.
 
 ## How it publishes
 
@@ -55,7 +57,7 @@ scheduled **auto-bump** refreshes stale pins ([auto-bump doc](dev-base-auto-bump
 ## Pulling it
 
 ```bash
-docker pull forgejo.coilysiren.me/coilyco-flight-deck/agentic-os-full:latest
+docker pull forgejo.coilysiren.me/coilyco-flight-deck/agentic-os-full:release
 ```
 
 Needs a `docker login`; `ward container up/exec` (ward#98) is the entry point.

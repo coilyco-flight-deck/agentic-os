@@ -33,7 +33,7 @@ became one folder per published tier, each with a literal `Dockerfile`, while
 
 - `release.yml` computes the next tag first.
 - It then calls the helper with `--push`, which builds and verifies each tier in order.
-- Every pushed tier carries the moving `:latest` alias alongside the release tag, so `dev-base-full` still fans in last and keeps the default `agentic-os-full:latest` surface ward pulls.
+- Every pushed tier carries a moving alias named for the publishing branch (`:release` in the two-stage flow) alongside the release tag, so `dev-base-full` still fans in last and keeps the default `agentic-os-full:release` surface ward pulls. `:latest` is retired - the branch name says what the alias tracks, `latest` said nothing.
 
 ## ARG ownership
 

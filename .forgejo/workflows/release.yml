@@ -300,6 +300,7 @@ jobs:
       - name: Build and push (multi-arch)
         env:
           TAG: ${{ needs.plan-release.outputs.tag }}
+          ALIAS: ${{ github.ref_name }}
         run: |
           set -euo pipefail
           timeout --preserve-status --kill-after=5m 120m \
@@ -308,15 +309,17 @@ jobs:
             --tag "${TAG}" \
             build \
             --push \
+            --alias "${ALIAS}" \
             --platforms "${PLATFORMS}"
 
       - name: Verify pushed image manifests are pullable
         env:
           TAG: ${{ needs.plan-release.outputs.tag }}
+          ALIAS: ${{ github.ref_name }}
         run: |
           set -euo pipefail
           for suffix in core lang-node lang-go lang-dotnet ops agent full; do
-            for tag in "${TAG}" latest; do
+            for tag in "${TAG}" "${ALIAS}"; do
               ref="${IMAGE_BASE}-${suffix}:${tag}"
               echo "verifying ${ref}"
               timeout --preserve-status --kill-after=15s 2m \

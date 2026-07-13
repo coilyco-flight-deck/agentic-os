@@ -10,8 +10,8 @@ from agentic_os.dev_base import (
     REGISTRY_BASE,
     PUBLISHED_TIER_NAMES,
     cache_ref,
-    latest_ref,
     publish_plan,
+    retag,
 )
 
 SCRIPT = Path(__file__).resolve().parent.parent / "scripts" / "dev-base-build.py"
@@ -103,9 +103,9 @@ def test_cache_ref_strips_the_release_tag() -> None:
     assert cache_ref(image) == f"{REGISTRY_BASE}-core:buildcache"
 
 
-def test_latest_ref_strips_the_release_tag() -> None:
+def test_retag_swaps_the_release_tag_for_the_alias() -> None:
     image = f"{REGISTRY_BASE}-full:v0.243.0"
-    assert latest_ref(image) == f"{REGISTRY_BASE}-full:latest"
+    assert retag(image, "release") == f"{REGISTRY_BASE}-full:release"
 
 
 def test_tier_files_chain_from_the_previous_tier_image() -> None:
@@ -201,7 +201,7 @@ def test_pushed_build_uses_release_tagless_cache_ref(monkeypatch) -> None:
     )
 
 
-def test_pushed_build_tags_every_tier_latest(monkeypatch) -> None:
+def test_pushed_build_tags_every_tier_with_the_branch_alias(monkeypatch) -> None:
     script = _load_script()
     commands: list[list[str]] = []
 
@@ -209,7 +209,7 @@ def test_pushed_build_tags_every_tier_latest(monkeypatch) -> None:
     monkeypatch.setattr(script, "_host_targetarch", lambda: "amd64")
     monkeypatch.setattr(script, "_ward_config_ref_commit", lambda: "abc123")
 
-    script._build_plan(REGISTRY_BASE, "v0.243.0", True, "linux/amd64,linux/arm64")
+    script._build_plan(REGISTRY_BASE, "v0.243.0", True, "linux/amd64,linux/arm64", "release")
 
     build_cmds = [cmd for cmd in commands if "--push" in cmd]
     assert len(build_cmds) == len(PUBLISHED_TIER_NAMES)
@@ -217,11 +217,11 @@ def test_pushed_build_tags_every_tier_latest(monkeypatch) -> None:
         tags = [cmd[i + 1] for i, arg in enumerate(cmd) if arg == "-t"]
         assert tags == [
             f"{REGISTRY_BASE}-{tier}:v0.243.0",
-            f"{REGISTRY_BASE}-{tier}:latest",
+            f"{REGISTRY_BASE}-{tier}:release",
         ]
 
 
-def test_local_build_does_not_tag_latest(monkeypatch) -> None:
+def test_local_build_does_not_tag_an_alias(monkeypatch) -> None:
     script = _load_script()
     commands: list[list[str]] = []
 
@@ -233,4 +233,4 @@ def test_local_build_does_not_tag_latest(monkeypatch) -> None:
 
     for cmd in commands:
         tags = [cmd[i + 1] for i, arg in enumerate(cmd) if arg == "-t"]
-        assert all(not tag.endswith(":latest") for tag in tags)
+        assert tags == [tag for tag in tags if tag.endswith(":dev-base-local")]

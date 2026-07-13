@@ -8,7 +8,7 @@ import platform
 import subprocess
 from pathlib import Path
 
-from agentic_os.dev_base import REGISTRY_BASE, cache_ref, latest_ref, publish_plan
+from agentic_os.dev_base import REGISTRY_BASE, cache_ref, publish_plan, retag
 
 
 def _docker_base_command(push: bool, platforms: str | None) -> list[str]:
@@ -39,7 +39,9 @@ def _host_targetarch() -> str:
     raise SystemExit(f"unsupported host architecture: {machine}")
 
 
-def _build_plan(registry_base: str, tag: str, push: bool, platforms: str | None) -> None:
+def _build_plan(
+    registry_base: str, tag: str, push: bool, platforms: str | None, alias: str | None = None
+) -> None:
     plan = publish_plan(registry_base, tag)
     ward_config_ref_commit = _ward_config_ref_commit()
     for entry in plan:
@@ -62,10 +64,10 @@ def _build_plan(registry_base: str, tag: str, push: bool, platforms: str | None)
                 ]
             )
         cmd.extend(["-t", entry["image"]])
-        if push:
-            # Published pushes also carry the moving :latest alias - ward's
-            # default surface pulls agentic-os-full:latest.
-            cmd.extend(["-t", latest_ref(entry["image"])])
+        if push and alias:
+            # The pipeline passes its branch name as the moving alias, so
+            # ward's default agentic-os-full:release surface stays pullable.
+            cmd.extend(["-t", retag(entry["image"], alias)])
         cmd.extend(["-f", str(dockerfile), str(dockerfile.parent.parent)])
         _run(cmd)
         if push:
@@ -78,7 +80,7 @@ def _cmd_plan(args: argparse.Namespace) -> int:
 
 
 def _cmd_build(args: argparse.Namespace) -> int:
-    _build_plan(args.registry, args.tag, args.push, args.platforms)
+    _build_plan(args.registry, args.tag, args.push, args.platforms, args.alias)
     return 0
 
 
@@ -101,6 +103,11 @@ def main(argv: list[str] | None = None) -> int:
 
     p_build = sub.add_parser("build", help="Build the tier family in order.")
     p_build.add_argument("--push", action="store_true", help="Push each published tier instead of loading locally.")
+    p_build.add_argument(
+        "--alias",
+        default=None,
+        help="Moving alias tag to push alongside the release tag (the CI pipeline passes its branch name).",
+    )
     p_build.add_argument(
         "--platforms",
         default="linux/amd64,linux/arm64",

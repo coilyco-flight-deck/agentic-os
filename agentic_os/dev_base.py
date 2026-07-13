@@ -81,7 +81,7 @@ def image_ref(registry_base: str, tier: str, tag: str) -> str:
     return f"{registry_base}-{tier}:{tag}"
 
 
-def _retag(image: str, tag: str) -> str:
+def retag(image: str, tag: str) -> str:
     repository, sep, _tag = image.rpartition(":")
     if not sep:
         raise ValueError(f"expected tagged image ref, got {image!r}")
@@ -89,11 +89,7 @@ def _retag(image: str, tag: str) -> str:
 
 
 def cache_ref(image: str) -> str:
-    return _retag(image, "buildcache")
-
-
-def latest_ref(image: str) -> str:
-    return _retag(image, "latest")
+    return retag(image, "buildcache")
 
 
 def tier_dockerfile(tier: str) -> Path:
@@ -110,7 +106,7 @@ def publish_plan(registry_base: str, tag: str) -> list[dict[str, str | bool]]:
             {
                 "tier": spec.tier,
                 "stage": spec.stage,
-                "dockerfile": str(spec.dockerfile.relative_to(REPO_ROOT)),
+                "dockerfile": spec.dockerfile.relative_to(REPO_ROOT).as_posix(),
                 "image": ref,
                 "base_image": base_ref,
                 "published": spec.published,
