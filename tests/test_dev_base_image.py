@@ -9,6 +9,8 @@ from agentic_os.dev_base import (
     DEV_BASE_ROOT,
     REGISTRY_BASE,
     PUBLISHED_TIER_NAMES,
+    TIER_SPECS,
+    graft_build_arg,
     publish_plan,
     tier_tag,
 )
@@ -59,17 +61,43 @@ def test_dev_base_plan_is_derived_from_tier_folder_names() -> None:
     assert [entry["dockerfile"] for entry in plan] == [
         f"docker/dev-base/{tier}/Dockerfile" for tier in PUBLISHED_TIER_NAMES
     ]
+    # The fan-out DAG (aos#491): the lang tiers and ops are siblings on core,
+    # agent composes ops, full fans in on agent.
     assert [entry["base_image"] for entry in plan] == [
         "ubuntu:24.04",
         f"{REGISTRY_BASE}:core-{tag}",
-        f"{REGISTRY_BASE}:lang-node-{tag}",
-        f"{REGISTRY_BASE}:lang-go-{tag}",
-        f"{REGISTRY_BASE}:lang-dotnet-{tag}",
+        f"{REGISTRY_BASE}:core-{tag}",
+        f"{REGISTRY_BASE}:core-{tag}",
+        f"{REGISTRY_BASE}:core-{tag}",
         f"{REGISTRY_BASE}:ops-{tag}",
         f"{REGISTRY_BASE}:agent-{tag}",
     ]
     assert plan[-1]["tier"] == "full"
     assert "alias_image" not in plan[0]
+
+
+def test_dev_base_plan_grafts_toolchains_into_the_composed_tiers() -> None:
+    tag = "v0.242.0"
+    plan = publish_plan(REGISTRY_BASE, tag)
+    grafts = {entry["tier"]: entry["graft_images"] for entry in plan}
+
+    assert grafts["agent"] == {"LANG_NODE_IMAGE": f"{REGISTRY_BASE}:lang-node-{tag}"}
+    assert grafts["full"] == {
+        "LANG_GO_IMAGE": f"{REGISTRY_BASE}:lang-go-{tag}",
+        "LANG_DOTNET_IMAGE": f"{REGISTRY_BASE}:lang-dotnet-{tag}",
+    }
+    for tier in ("core", "lang-node", "lang-go", "lang-dotnet", "ops"):
+        assert grafts[tier] == {}
+
+
+def test_tier_specs_stay_in_topological_order() -> None:
+    seen: set[str] = set()
+    for spec in TIER_SPECS:
+        if spec.base_tier is not None:
+            assert spec.base_tier in seen, f"{spec.tier}: base {spec.base_tier} not built yet"
+        for graft in spec.graft_tiers:
+            assert graft in seen, f"{spec.tier}: graft {graft} not built yet"
+        seen.add(spec.tier)
 
 
 def test_dev_base_plan_carries_per_tier_cache_and_alias_refs() -> None:
@@ -118,11 +146,38 @@ def test_tier_tag_keeps_full_plain_and_prefixes_variants() -> None:
     assert tier_tag("lang-node", "release") == "lang-node-release"
 
 
-def test_tier_files_chain_from_the_previous_tier_image() -> None:
+def test_tier_files_build_from_their_declared_base_image() -> None:
     for tier in ("lang-node", "lang-go", "lang-dotnet", "ops", "agent", "full"):
         text = _tier_path(tier).read_text()
         assert f"FROM ${{BASE_IMAGE}} AS dev-base-{tier}" in text
         assert "ARG BASE_IMAGE" in text
+
+
+def test_composed_tier_files_graft_their_declared_toolchain_tiers() -> None:
+    # Each declared graft needs an ARG-driven FROM stage plus a COPY --from of
+    # it, so the plan's graft_images build-args actually land in the image.
+    for spec in TIER_SPECS:
+        text = spec.dockerfile.read_text()
+        for graft in spec.graft_tiers:
+            arg = graft_build_arg(graft)
+            assert f"ARG {arg}" in text, f"{spec.tier}: missing ARG {arg}"
+            assert f"FROM ${{{arg}}} AS dev-base-{graft}-graft" in text
+            assert f"COPY --from=dev-base-{graft}-graft " in text
+    agent_text = _tier_path("agent").read_text()
+    full_text = _tier_path("full").read_text()
+    assert "COPY --from=dev-base-lang-node-graft /usr/local/node /usr/local/node" in agent_text
+    assert "COPY --from=dev-base-lang-go-graft /usr/local/go /usr/local/go" in full_text
+    assert (
+        "COPY --from=dev-base-lang-dotnet-graft /usr/local/dotnet /usr/local/dotnet" in full_text
+    )
+
+
+def test_lang_node_installs_into_a_self_contained_graftable_prefix() -> None:
+    text = _tier_path("lang-node").read_text()
+    assert "mkdir -p /usr/local/node" in text
+    assert "tar -xJf /tmp/node.tar.xz -C /usr/local/node --strip-components=1" in text
+    core = _tier_path("core").read_text()
+    assert "/usr/local/node/bin" in core
 
 
 def test_split_tiers_keep_their_managed_arg_defaults() -> None:
@@ -189,6 +244,7 @@ def test_pushed_build_uses_release_tagless_cache_ref(monkeypatch) -> None:
     commands: list[list[str]] = []
 
     monkeypatch.setattr(script, "_run", lambda cmd: commands.append(cmd))
+    monkeypatch.setattr(script, "_probe_cache_write", lambda ref: None)
     monkeypatch.setattr(script, "_host_targetarch", lambda: "amd64")
     monkeypatch.setattr(script, "_ward_config_ref_commit", lambda: "abc123")
 
@@ -216,6 +272,7 @@ def test_pushed_build_tags_every_tier_with_the_branch_alias(monkeypatch) -> None
     commands: list[list[str]] = []
 
     monkeypatch.setattr(script, "_run", lambda cmd: commands.append(cmd))
+    monkeypatch.setattr(script, "_probe_cache_write", lambda ref: None)
     monkeypatch.setattr(script, "_host_targetarch", lambda: "amd64")
     monkeypatch.setattr(script, "_ward_config_ref_commit", lambda: "abc123")
 
@@ -229,6 +286,60 @@ def test_pushed_build_tags_every_tier_with_the_branch_alias(monkeypatch) -> None
             f"{REGISTRY_BASE}:{tier_tag(tier, 'v0.243.0')}",
             f"{REGISTRY_BASE}:{tier_tag(tier, 'release')}",
         ]
+    # The push path also verifies the alias manifest per tier, not just the tag.
+    inspect_cmds = [cmd for cmd in commands if cmd[:4] == ["docker", "buildx", "imagetools", "inspect"]]
+    assert f"{REGISTRY_BASE}:release" in [cmd[-1] for cmd in inspect_cmds]
+
+
+def test_single_tier_push_builds_only_that_tier_with_graft_args(monkeypatch) -> None:
+    script = _load_script()
+    commands: list[list[str]] = []
+    probed: list[str] = []
+
+    monkeypatch.setattr(script, "_run", lambda cmd: commands.append(cmd))
+    monkeypatch.setattr(script, "_probe_cache_write", lambda ref: probed.append(ref))
+    monkeypatch.setattr(script, "_host_targetarch", lambda: "amd64")
+    monkeypatch.setattr(script, "_ward_config_ref_commit", lambda: "abc123")
+
+    script._build_plan(
+        REGISTRY_BASE, "v0.243.0", True, "linux/amd64,linux/arm64", "release", "full"
+    )
+
+    build_cmds = [cmd for cmd in commands if "--push" in cmd]
+    assert len(build_cmds) == 1
+    cmd = build_cmds[0]
+    build_args = [cmd[i + 1] for i, arg in enumerate(cmd) if arg == "--build-arg"]
+    assert f"BASE_IMAGE={REGISTRY_BASE}:agent-v0.243.0" in build_args
+    assert f"LANG_GO_IMAGE={REGISTRY_BASE}:lang-go-v0.243.0" in build_args
+    assert f"LANG_DOTNET_IMAGE={REGISTRY_BASE}:lang-dotnet-v0.243.0" in build_args
+    assert probed == [f"{REGISTRY_BASE}:buildcache"]
+
+
+def test_single_tier_build_rejects_an_unknown_tier(monkeypatch) -> None:
+    script = _load_script()
+    monkeypatch.setattr(script, "_run", lambda cmd: None)
+    monkeypatch.setattr(script, "_ward_config_ref_commit", lambda: "abc123")
+
+    try:
+        script._build_plan(REGISTRY_BASE, "v0.243.0", True, None, None, "nope")
+    except SystemExit as exc:
+        assert "unknown tier" in str(exc)
+    else:
+        raise AssertionError("unknown tier did not raise")
+
+
+def test_cache_probe_warns_loudly_when_the_cache_write_is_missing(monkeypatch, capsys) -> None:
+    script = _load_script()
+
+    class _Probe:
+        returncode = 1
+        stderr = "manifest unknown"
+
+    monkeypatch.setattr(script.subprocess, "run", lambda *a, **k: _Probe())
+    script._probe_cache_write(f"{REGISTRY_BASE}:buildcache")
+    err = capsys.readouterr().err
+    assert "::warning::" in err
+    assert "starts cold" in err
 
 
 def test_local_build_does_not_tag_an_alias(monkeypatch) -> None:

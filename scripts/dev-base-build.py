@@ -6,9 +6,10 @@ import argparse
 import json
 import platform
 import subprocess
+import sys
 from pathlib import Path
 
-from agentic_os.dev_base import REGISTRY_BASE, publish_plan
+from agentic_os.dev_base import PUBLISHED_TIER_NAMES, REGISTRY_BASE, publish_plan
 
 
 def _docker_base_command(push: bool, platforms: str | None) -> list[str]:
@@ -22,6 +23,24 @@ def _docker_base_command(push: bool, platforms: str | None) -> list[str]:
 
 def _run(cmd: list[str]) -> None:
     subprocess.run(cmd, check=True)
+
+
+def _probe_cache_write(buildcache_ref: str) -> None:
+    # cache-to runs with ignore-error=true so a registry hiccup cannot fail the
+    # push; probe the cache manifest and warn loudly so a cold cache is visible.
+    probe = subprocess.run(
+        ["docker", "buildx", "imagetools", "inspect", buildcache_ref],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if probe.returncode != 0:
+        print(
+            f"::warning::buildcache write to {buildcache_ref} failed or is "
+            "missing - the next build of this tier starts cold. "
+            f"imagetools inspect said: {probe.stderr.strip()}",
+            file=sys.stderr,
+        )
 
 
 def _ward_config_ref_commit() -> str:
@@ -40,9 +59,20 @@ def _host_targetarch() -> str:
 
 
 def _build_plan(
-    registry_base: str, tag: str, push: bool, platforms: str | None, alias: str | None = None
+    registry_base: str,
+    tag: str,
+    push: bool,
+    platforms: str | None,
+    alias: str | None = None,
+    only_tier: str | None = None,
 ) -> None:
+    # only_tier serves the per-tier CI jobs: base/graft refs resolve to the
+    # sibling jobs' already-pushed images under the same tag.
     plan = publish_plan(registry_base, tag, alias)
+    if only_tier is not None:
+        plan = [entry for entry in plan if entry["tier"] == only_tier]
+        if not plan:
+            raise SystemExit(f"unknown tier: {only_tier}")
     ward_config_ref_commit = _ward_config_ref_commit()
     for entry in plan:
         dockerfile = Path(entry["dockerfile"])
@@ -53,6 +83,8 @@ def _build_plan(
             cmd.extend(["--build-arg", f"WARD_CONFIG_REF_COMMIT={ward_config_ref_commit}"])
         elif entry["tier"] != "core":
             cmd.extend(["--build-arg", f"BASE_IMAGE={entry['base_image']}"])
+        for arg_name, graft_ref in entry["graft_images"].items():
+            cmd.extend(["--build-arg", f"{arg_name}={graft_ref}"])
         if push:
             buildcache_ref = entry["cache_image"]
             cmd.extend(
@@ -72,6 +104,9 @@ def _build_plan(
         _run(cmd)
         if push:
             _run(["docker", "buildx", "imagetools", "inspect", entry["image"]])
+            if entry.get("alias_image"):
+                _run(["docker", "buildx", "imagetools", "inspect", entry["alias_image"]])
+            _probe_cache_write(entry["cache_image"])
 
 
 def _cmd_plan(args: argparse.Namespace) -> int:
@@ -80,7 +115,7 @@ def _cmd_plan(args: argparse.Namespace) -> int:
 
 
 def _cmd_build(args: argparse.Namespace) -> int:
-    _build_plan(args.registry, args.tag, args.push, args.platforms, args.alias)
+    _build_plan(args.registry, args.tag, args.push, args.platforms, args.alias, args.tier)
     return 0
 
 
@@ -108,6 +143,12 @@ def main(argv: list[str] | None = None) -> int:
 
     p_build = sub.add_parser("build", help="Build the tier family in order.")
     p_build.add_argument("--push", action="store_true", help="Push each published tier instead of loading locally.")
+    p_build.add_argument(
+        "--tier",
+        default=None,
+        choices=PUBLISHED_TIER_NAMES,
+        help="Build only this tier (per-tier CI jobs); base and graft tiers must already exist under the same tag.",
+    )
     p_build.add_argument(
         "--platforms",
         default="linux/amd64,linux/arm64",

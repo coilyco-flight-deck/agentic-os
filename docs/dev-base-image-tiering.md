@@ -1,8 +1,7 @@
 # Tiered dev-base image split
 
 This is the implemented tier split for dev-base. The old monolithic Dockerfile
-became one folder per published tier, each with a literal `Dockerfile`, while
-`dev-base-full` kept the default `:latest` surface.
+became one folder per published tier, with `dev-base-full` the default surface.
 
 ## Tier layout
 
@@ -16,10 +15,17 @@ became one folder per published tier, each with a literal `Dockerfile`, while
 
 ## Dependency graph
 
-- `core` is the root published runtime tier.
-- `lang-node`, `lang-go`, `lang-dotnet`, and `ops` build from the previous tier image.
-- `agent` builds from `ops`.
-- `full` builds last from `agent`.
+The tiers form a fan-out/fan-in DAG (aos#491):
+
+- `core` is the root; `lang-node`, `lang-go`, `lang-dotnet`, and `ops` are
+  siblings on it, each carrying only its own toolchain.
+- `agent` builds from `ops` and **grafts** Node in (Claude Code rides Node).
+  `full` builds last from `agent` and grafts `lang-go` and `lang-dotnet`.
+- Docker images have one parent, so composed tiers graft sibling toolchains
+  with `COPY --from=` of self-contained prefixes (`/usr/local/node`, `/go`,
+  `/dotnet`), all on `core`'s `PATH`. `TierSpec.base_tier` / `graft_tiers` in
+  [`agentic_os/dev_base.py`](../agentic_os/dev_base.py) emit the
+  `BASE_IMAGE` / `<TIER>_IMAGE` build-args.
 - The hidden builder stage stays inside `core` so the ward binary still compiles per target platform during the core build.
 
 ## Tag derivation
@@ -27,12 +33,20 @@ became one folder per published tier, each with a literal `Dockerfile`, while
 - One repo release tag drives the whole family.
 - Everything publishes under the single `agentic-os` package, with the tier in the tag: `core` becomes `agentic-os:core-${TAG}` while `full`, the default surface, keeps the plain `agentic-os:${TAG}`.
 - The release helper in [`scripts/dev-base-build.py`](../scripts/dev-base-build.py) derives the plan from the directory layout.
-- There is no checked-in `docker/dev-base/ci-image-manifest.json` anymore. Every published ref is derivable from `{registry base, folder name, tag}`, so the JSON map would only duplicate the folder layout.
+- Every published ref derives from `{registry base, folder name, tag}` - there is no checked-in manifest JSON to drift out of step with the folder layout.
 
 ## Release flow
 
-- `release.yml` computes the next tag first.
-- It then calls the helper with `--push`, which builds and verifies each tier in order.
+- `release.yml` computes the next tag first, then runs **one publish job per
+  tier**
+  ([`actions/publish-dev-base-tier`](../actions/publish-dev-base-tier/action.yml)),
+  with `needs:` carrying the DAG above: siblings build in parallel, a flaky
+  tier fails and reruns alone, and a `lang-dotnet` flake no longer takes
+  `ops` or `agent` down - only `full` waits on it.
+- Each job verifies its pushed tag and alias manifests; the tag-cutting
+  `release` job needs `publish-full`, so the tag lands only after the
+  whole family. Builder and layer cache persist between runs:
+  [dev-base build cache](dev-base-build-cache.md).
 - Every pushed tier carries a moving alias named for the publishing branch (`:release` in the two-stage flow) alongside the release tag, so `dev-base-full` still fans in last and keeps the default `agentic-os:release` surface ward pulls. `:latest` is retired - the branch name says what the alias tracks, `latest` said nothing.
 
 ## ARG ownership
