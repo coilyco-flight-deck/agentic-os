@@ -132,13 +132,22 @@ wrap ward-kdl-read ops forgejo {
     // releases: read side. create/edit/upload/delete are up-tier.
     can get release
     can list release
-    // pulls: not surfaced through ward. Read them in the Forgejo web UI. The
-    // denials inherit up so no tier exposes a pr verb.
-    never view pr {
-        message "pull requests are not exposed through ward; read them in the web UI"
+    // pulls: read side, reconciled with the monolith (agentic-os#488) - the
+    // old web-UI-only `never` pair was dead and shadowed up-tier pr leaves.
+    can view pr {
+        op repoGetPullRequest
+        describe "single PR read (GET /repos/{owner}/{repo}/pulls/{index}). agentic-os#488 replaced the tier's old `never` denial pair here: the monolith had granted pr view/list all along and the live surface served them, so the deny was dead - and, since deny inherits up the read -> write -> admin chain, it would have silently shadowed every pr leaf an upper tier ever grew. Reads live in this tier; the mutating lifecycle (create/edit/close/reopen/update) and merge ride guardfile.forgejo.merge.kdl outside the chain, bound to the director/engineer/pm roles only. op pinned like the monolith's pr leaves - the bare convention does not reach the pulls sub-resources."
     }
-    never list pr {
-        message "pull requests are not exposed through ward; read them in the web UI"
+    can list pr {
+        op repoListPullRequests
+    }
+    can files pr {
+        op repoGetPullRequestFiles
+        describe "changed-file list for a PR (GET /repos/{owner}/{repo}/pulls/{index}/files): tells an empty leftover PR from real unmerged work without cloning the repo (agentic-os#488)."
+    }
+    can commits pr {
+        op repoGetPullRequestCommits
+        describe "commit list for a PR (GET /repos/{owner}/{repo}/pulls/{index}/commits): the read helper beside `pr files` (agentic-os#488)."
     }
     // issue-labels: read side (the attach/set/remove membership verbs are up-tier).
     can list issue-label

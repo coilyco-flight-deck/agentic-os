@@ -26,6 +26,13 @@ def test_ward_specs_bundle_carries_deployment_anchors() -> None:
     assert "wrap ward-kdl-read ops forgejo" in read
     assert "can get issue" in read
     assert "never delete issue" in read
+    # aos#488 reconciled the read tier with the monolith: the dead pr denials
+    # are gone (deny inherits up and shadows) and the pr read side is granted.
+    assert "never view pr" not in read
+    assert "never list pr" not in read
+    assert "can view pr" in read
+    assert "op repoGetPullRequestFiles" in read
+    assert "op repoGetPullRequestCommits" in read
 
     write = (SPEC_DIR / "guardfile.forgejo.write.kdl").read_text()
     assert 'inherit "../guardfile.forgejo.read.kdl"' in write
@@ -60,12 +67,33 @@ def test_ward_specs_bundle_carries_deployment_anchors() -> None:
     lockfile = (SPEC_DIR / "forgejo.swagger.lock.json").read_text()
     assert '"basePath": "/api/v1"' in lockfile
     assert '"definitions": {' in lockfile
+    # The pr lifecycle ops must resolve from the pruned lock, or specverb
+    # fails the ops bundle fail-closed at mount (the aos#452/ward#1123 mode).
+    assert "repoEditPullRequest" in lockfile
+    assert "repoUpdatePullRequest" in lockfile
+    assert "repoCreatePullRequest" in lockfile
+    assert "repoGetPullRequestFiles" in lockfile
+    assert "repoGetPullRequestCommits" in lockfile
 
     merge = (SPEC_DIR / "guardfile.forgejo.merge.kdl").read_text()
     assert "wrap ward-kdl-merge ops forgejo" in merge
     assert "restrict owner matches coily*" in merge
     assert "op repoMergePullRequest" in merge
     assert "op repoPullRequestIsMerged" in merge
+    # aos#488: the mutating pr lifecycle rides this overlay (director /
+    # engineer / pm blast radius), beside the unchanged merge pair.
+    assert "can close pr" in merge
+    assert "can reopen pr" in merge
+    assert "can update pr" in merge
+
+    # The monolith (the live `ward ops forgejo` surface via ward.bundle.kdl)
+    # carries the same lifecycle minus merge, so the merge gate is unchanged.
+    monolith = (SPEC_DIR / "guardfile.forgejo.kdl").read_text()
+    assert "can close pr" in monolith
+    assert "can reopen pr" in monolith
+    assert "can update pr" in monolith
+    assert "op repoEditPullRequest" in monolith
+    assert "repoMergePullRequest" not in monolith
 
     guardfile = (SPEC_DIR / "guardfile.forgejo.kdl").read_text()
     assert "action list tasks {" in guardfile
@@ -171,6 +199,14 @@ def test_ward_specs_bundle_documents_workflow_dispatch() -> None:
     assert "ward ops forgejo pr view" in docs
     assert "/repos/{owner}/{repo}/pulls/{index}" in docs
     assert "ward ops forgejo pr list" in docs
+    # The pr lifecycle set (aos#488) stays greppable off-disk.
+    assert "ward ops forgejo pr close" in docs
+    assert "ward ops forgejo pr reopen" in docs
+    assert "ward ops forgejo pr update" in docs
+    assert "ward ops forgejo pr files" in docs
+    assert "ward ops forgejo pr commits" in docs
+    assert "ward ops forgejo pr create" in docs
+    assert "/repos/{owner}/{repo}/pulls/{index}/update" in docs
     assert "ward ops forgejo tasks list" in docs
     assert "safe page-1 default" in docs
     # The injected page=1 arg literal stays pinned in the guardfile-anchor
