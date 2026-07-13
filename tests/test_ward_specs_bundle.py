@@ -53,9 +53,13 @@ def test_ci_gates_the_bundle_through_ward_doctor() -> None:
     assert not (SPEC_DIR / "ward.bundle.kdl").exists()
     ci = (REPO_ROOT / ".forgejo" / "workflows" / "ci.yml").read_text()
     assert "ward-doctor:" in ci
-    assert "ward doctor" in ci
+    assert 'CLIGUARD_NO_SANDBOX=1 "$WARD_BIN" doctor' in ci
+    assert "git clone --depth 1 --branch main https://forgejo.coilysiren.me/coilyco-flight-deck/ward.git" in ci
+    assert "WARD_BIN" in ci
     promote = (REPO_ROOT / ".forgejo" / "workflows" / "promote.yml").read_text()
-    assert "ward doctor" in promote
+    assert 'CLIGUARD_NO_SANDBOX=1 "$WARD_BIN" doctor' in promote
+    assert "git clone --depth 1 --branch main https://forgejo.coilysiren.me/coilyco-flight-deck/ward.git" in promote
+    assert "WARD_BIN" in promote
 
 
 def test_docs_cover_the_forgejo_ops_surface() -> None:
@@ -96,6 +100,8 @@ def test_ward_specs_docs_reference_live_config_source() -> None:
     assert "WARD_CONFIG_REF" in docs
     assert "launch through `WARD_CONFIG_REF`" in docs
     assert "release-time build overlay is gone" in docs
+    assert "workflow.kdl" in docs
+    assert "`workflow` block keeps the coilyco PR-gated repos explicit" in docs
 
 
 def test_ward_specs_docs_cover_actions_log_streaming() -> None:

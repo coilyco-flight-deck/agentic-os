@@ -13,29 +13,19 @@ from pathlib import Path
 HOOK_ID = "ward-specs-bundle"
 
 ROOT = Path(".")
-DEFAULTS_PATH = ROOT / ".ward" / "defaults.kdl"
+WORKFLOW_PATH = ROOT / ".ward" / "workflow.kdl"
 REPOS_PATH = ROOT / ".ward" / "repos.kdl"
 RELEASE_PATH = ROOT / ".forgejo" / "workflows" / "release.yml"
-EXPECTED_DEFAULTS = """// ward's embedded smart-defaults are THE defaults. This block is an overlay on
-// top of them (loadBundleSmartDefaultsFrom starts from bakedSmartDefaults), so a
-// key omitted here keeps ward's product value. Only carry what is genuinely
-// deployment-specific.
+EXPECTED_WORKFLOW = """// The workflow bundle is deployment-specific. It keeps the repo landing policy
+// out of ward's product defaults, so a deployment can change PR gating without
+// redefining the binary's neutral fallback.
 //
-// Every tuning key that used to sit here just restated ward's own default, and
-// one of them drifted: `agent-reservation-ttl "1h"` shadowed ward's "3h" and
-// undercut the engineer role's 90m execution-time-limit, so a reservation expired
-// mid-run. ward doctor fails that invariant fail-closed, which took the dev-base
-// image build down with it (aos#452). Duplicating a product default here buys
-// nothing and silently rots when ward moves.
-//
-// agent-workflow stays: which repos are PR-gated is a coilyco deployment fact,
-// not a ward product default.
-defaults {
-    agent-workflow default="merge-remote-main" {
-        repo "coilyco-flight-deck/cli-guard" workflow="pull-request-and-merge"
-        repo "coilyco-flight-deck/ward" workflow="pull-request-and-merge"
-        repo "coilyco-flight-deck/agentic-os" workflow="pull-request-and-merge"
-    }
+// The repos listed here are the coilyco PR-gated set. Keep them explicit so the
+// launch path that dispatches PRs resolves the same policy ward merges against.
+workflow default="merge-remote-main" {
+    repo "coilyco-flight-deck/cli-guard" workflow="pull-request-and-merge"
+    repo "coilyco-flight-deck/ward" workflow="pull-request-and-merge"
+    repo "coilyco-flight-deck/agentic-os" workflow="pull-request-and-merge"
 }
 """
 EXPECTED_REPOS = """repos {
@@ -65,7 +55,7 @@ EXPECTED_TAR_MEMBERS = (
     "./surface-check.sh",
     "./specverb.lock",
     "./agents.kdl",
-    "./defaults.kdl",
+    "./workflow.kdl",
     "./guardfile.aws.kdl",
     "./guardfile.forgejo.admin.kdl",
     "./guardfile.forgejo.kdl",
@@ -108,9 +98,9 @@ def _require(condition: bool, msg: str) -> None:
         fail(msg)
 
 
-def _validate_defaults(path: Path) -> None:
+def _validate_workflow(path: Path) -> None:
     _require(path.exists(), f"missing bundle file: {path}")
-    _require(path.read_text() == EXPECTED_DEFAULTS, f"{path} must match the canonical coilyco defaults bundle")
+    _require(path.read_text() == EXPECTED_WORKFLOW, f"{path} must match the canonical coilyco workflow bundle")
 
 
 def _validate_repos(path: Path) -> None:
@@ -129,14 +119,14 @@ def _validate_release_tar_members(path: Path) -> None:
 
 def main() -> int:
     if not sys.argv[1:]:
-        _validate_defaults(DEFAULTS_PATH)
+        _validate_workflow(WORKFLOW_PATH)
         _validate_repos(REPOS_PATH)
         _validate_release_tar_members(RELEASE_PATH)
         return 0
 
     for arg in sys.argv[1:]:
-        if arg == "--defaults-only":
-            _validate_defaults(DEFAULTS_PATH)
+        if arg == "--workflow-only":
+            _validate_workflow(WORKFLOW_PATH)
         elif arg == "--repos-only":
             _validate_repos(REPOS_PATH)
         elif arg == "--release-only":
