@@ -343,34 +343,19 @@ jobs:
           asset="ward-specs-${TAG}.tar.gz"
           # Deterministic tarball: sort entries, zero mtime/owner, no gzip name/time
           # header, so the checksum a downstream pins is reproducible from the tag.
-          # The bundle now shares .ward/ with ward.yaml (aos#330), so enumerate the
-          # bundle files explicitly and keep ward.yaml out of the tarball. That
-          # preserves the flat `./`-prefixed layout ward#503 expects while making
-          # bundle additions an explicit release-list update.
+          # The bundle now shares .ward/ with ward.yaml (aos#330), so ship every
+          # file in the dir minus a short deny-list. Deny-list, not enumeration:
+          # the enumerated list silently dropped the role-bound
+          # guardfile.aws.engineer.kdl, and a new bundle file must ship with no
+          # release edit. find keeps the flat ./-prefixed member layout ward#503
+          # expects.
+          find .ward -maxdepth 1 -type f \
+            ! -name ward.yaml \
+            ! -name ward.bundle.kdl \
+            ! -name forgejo.swagger.lock.json \
+            -printf './%f\n' | LC_ALL=C sort > ward-specs-files.txt
           tar --sort=name --mtime='UTC 1970-01-01' --owner=0 --group=0 --numeric-owner \
-            -C .ward -cf ward-specs.tar \
-            ./forgejo-actions-list.sh \
-            ./forgejo-actions-logs.sh \
-            ./forgejo-actions-rerun-failed-jobs.sh \
-            ./forgejo-actions-rerun.sh \
-            ./forgejo-runner-token.sh \
-            ./surface-check.sh \
-            ./specverb.lock \
-            ./agents.kdl \
-            ./defaults.kdl \
-            ./guardfile.aws.kdl \
-            ./guardfile.forgejo.admin.kdl \
-            ./guardfile.forgejo.kdl \
-            ./guardfile.forgejo.read.kdl \
-            ./guardfile.forgejo.readactions.kdl \
-            ./guardfile.forgejo.merge.kdl \
-            ./guardfile.forgejo.runnertoken.kdl \
-            ./ward-kdl.forgejo.rerun.guardfile.kdl \
-            ./guardfile.forgejo.write.kdl \
-            ./guardfile.kubectl.kdl \
-            ./guardfile.tailscale.kdl \
-            ./repos.kdl \
-            ./roles.kdl
+            -C .ward -cf ward-specs.tar -T ward-specs-files.txt
           gzip -n -9 -c ward-specs.tar > "${asset}"
           sha256sum "${asset}" | awk '{print $1}' > "${asset}.sha256"
           echo "ward-specs asset sha256: $(cat "${asset}.sha256")"

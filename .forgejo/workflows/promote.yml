@@ -58,6 +58,12 @@ jobs:
             pre-commit run --all-files
           fi
 
+          # Standalone guardfile-load gate: ward validates the .ward bundle by
+          # loading it, so every promoted sha carries a doctor-vouched bundle.
+          if command -v ward >/dev/null 2>&1; then
+            WARD_CONFIG_REF="file://${PWD}/.ward" CLIGUARD_NO_SANDBOX=1 ward doctor
+          fi
+
       - name: Promote main to release (fast-forward only)
         env:
           PROMOTE_TOKEN: ${{ secrets.CI_RELEASE_TOKEN }}

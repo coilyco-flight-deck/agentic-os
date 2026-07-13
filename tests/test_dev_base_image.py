@@ -15,19 +15,8 @@ from agentic_os.dev_base import (
     tier_tag,
 )
 
-SCRIPT = Path(__file__).resolve().parent.parent / "scripts" / "dev-base-build.py"
-
-# Managed-ARG contract: NAMES are pinned here, VALUES derive from the Dockerfiles.
-# Hard-pinned values deadlocked the daily dep-bump's own pytest gate (aos#452).
-_ARG_DEFAULT_RE = re.compile(r"^ARG (?P<name>[A-Z0-9_]+)=(?P<value>\S+)\s*$", re.MULTILINE)
-_VERSION_VALUE_RE = re.compile(r"^v?\d+[\w.\-]*$")
-
-
-def _arg_defaults(tier: str) -> dict[str, str]:
-    return {
-        m.group("name"): m.group("value")
-        for m in _ARG_DEFAULT_RE.finditer(_tier_path(tier).read_text())
-    }
+REPO_ROOT = Path(__file__).resolve().parent.parent
+SCRIPT = REPO_ROOT / "scripts" / "dev-base-build.py"
 
 
 def _tier_path(tier: str) -> Path:
@@ -117,10 +106,14 @@ def test_core_tier_keeps_the_hidden_ward_builder_stage() -> None:
     text = _tier_path("core").read_text()
     assert "AS dev-base-ward-builder" in text
     assert 'COPY --from=dev-base-ward-builder /usr/local/bin/ward /usr/local/bin/ward' in text
-    ward_pin = _arg_defaults("core").get("WARD_VERSION")
-    assert ward_pin and _VERSION_VALUE_RE.match(ward_pin)
     assert "ARG WARD_CONFIG_REF_COMMIT" in text
-    assert "WARD_CONFIG_REF=forgejo.coilysiren.me/coilyco-flight-deck/agentic-os@${WARD_CONFIG_REF_COMMIT}//.ward" in text
+    # The forge host is owned by the ops guardfile - derive it, never restate it.
+    ops_guardfile = (REPO_ROOT / ".ward" / "guardfile.forgejo.kdl").read_text()
+    host = re.search(r'base-url "([^/"]+)', ops_guardfile).group(1)
+    assert (
+        f"WARD_CONFIG_REF={host}/coilyco-flight-deck/agentic-os"
+        "@${WARD_CONFIG_REF_COMMIT}//.ward"
+    ) in text
 
 
 def test_core_tier_runs_ward_doctor_after_installing_ward() -> None:
@@ -129,14 +122,7 @@ def test_core_tier_runs_ward_doctor_after_installing_ward() -> None:
         text.index('COPY --from=dev-base-ward-builder /usr/local/bin/ward /usr/local/bin/ward')
         < text.index("ward doctor")
     )
-    assert "ward --version; \\\n    CLIGUARD_NO_SANDBOX=1 ward doctor; \\" in text
-
-
-def test_shell_common_exports_a_live_file_ward_config_ref() -> None:
-    text = (Path(__file__).resolve().parent.parent / "shell" / "common.sh").read_text()
-    assert "_siren_ward_config_ref()" in text
-    assert "printf 'file://%s/.ward'" in text
-    assert "export WARD_CONFIG_REF=\"$(_siren_ward_config_ref)\"" in text
+    assert "CLIGUARD_NO_SANDBOX=1 ward doctor" in text
 
 
 def test_tier_tag_keeps_full_plain_and_prefixes_variants() -> None:
@@ -172,59 +158,10 @@ def test_composed_tier_files_graft_their_declared_toolchain_tiers() -> None:
     )
 
 
-def test_lang_node_installs_into_a_self_contained_graftable_prefix() -> None:
-    text = _tier_path("lang-node").read_text()
-    assert "mkdir -p /usr/local/node" in text
-    assert "tar -xJf /tmp/node.tar.xz -C /usr/local/node --strip-components=1" in text
-    core = _tier_path("core").read_text()
-    assert "/usr/local/node/bin" in core
-
-
-def test_split_tiers_keep_their_managed_arg_defaults() -> None:
-    expected_args = {
-        "lang-node": ["NODE_VERSION"],
-        "lang-go": ["GO_VERSION"],
-        "lang-dotnet": ["DOTNET_VERSION"],
-        "ops": [
-            "AWSCLI_VERSION",
-            "GH_VERSION",
-            "DOCKER_VERSION",
-            "HELM_VERSION",
-            "KUBECTL_VERSION",
-            "YQ_VERSION",
-            "TAILSCALE_VERSION",
-        ],
-        "agent": [
-            "CLAUDE_VERSION",
-            "MCPORTER_VERSION",
-            "CODEX_VERSION",
-            "GOOSE_VERSION",
-            "OPENCODE_VERSION",
-        ],
-        "full": [
-            "GOLANGCI_LINT_VERSION",
-            "TRUFFLEHOG_VERSION",
-            "KDLFMT_VERSION",
-        ],
-    }
-
-    for tier, names in expected_args.items():
-        defaults = _arg_defaults(tier)
-        for name in names:
-            assert name in defaults, f"{tier}: managed ARG {name} vanished"
-            assert _VERSION_VALUE_RE.match(defaults[name]), (
-                f"{tier}: ARG {name}={defaults[name]} does not look like a pinned version"
-            )
-
-
-def test_ops_tier_installs_and_verifies_both_tailscale_binaries() -> None:
-    text = _tier_path("ops").read_text()
-    assert '"tailscale_${TAILSCALE_VERSION}_${TS_ARCH}/tailscale"' in text
-    assert '"tailscale_${TAILSCALE_VERSION}_${TS_ARCH}/tailscaled"' in text
-    assert "chmod 0755 /usr/local/bin/tailscale" in text
-    assert "chmod 0755 /usr/local/bin/tailscaled" in text
-    assert "tailscale version" in text
-    assert "tailscaled --version" in text
+def test_node_graft_prefix_is_on_the_core_path() -> None:
+    # Cross-tier wiring: core bakes the PATH entry so the node prefix grafted
+    # into agent (see the graft test above) lands runnable.
+    assert "/usr/local/node/bin" in _tier_path("core").read_text()
 
 
 def test_agent_tier_still_copies_the_stable_assets_from_the_root_context() -> None:

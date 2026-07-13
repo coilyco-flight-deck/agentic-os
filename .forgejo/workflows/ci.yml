@@ -4,6 +4,12 @@
 # promoted last-known-good branch (ward#1117 / aos#469) and never re-gates:
 # promote.yml already ran the suite on the exact sha it fast-forwarded, so a
 # flaky rerun cannot fail a vouched promotion (Kai's call, 2026-07-12).
+#
+# The ward-doctor job is the standalone guardfile-load gate: guardfiles are
+# config, so their validity check is ward loading them, never repo tests
+# re-encoding their content. It is the same doctor the core image build runs
+# (the aos#452 fail-closed path), moved up to commit time so a broken bundle
+# cannot reach main.
 
 name: ci
 
@@ -16,6 +22,17 @@ permissions:
   contents: read
 
 jobs:
+  ward-doctor:
+    runs-on: docker
+    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Load the .ward bundle with the shipped ward
+        run: |
+          set -euo pipefail
+          export WARD_CONFIG_REF="file://${PWD}/.ward"
+          CLIGUARD_NO_SANDBOX=1 ward doctor
+
   gate:
     runs-on: docker
     container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:latest

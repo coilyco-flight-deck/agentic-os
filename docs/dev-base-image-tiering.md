@@ -26,7 +26,7 @@ The tiers form a fan-out/fan-in DAG (aos#491):
   `/dotnet`), all on `core`'s `PATH`. `TierSpec.base_tier` / `graft_tiers` in
   [`agentic_os/dev_base.py`](../agentic_os/dev_base.py) emit the
   `BASE_IMAGE` / `<TIER>_IMAGE` build-args.
-- The hidden builder stage stays inside `core` so the ward binary still compiles per target platform during the core build.
+- The hidden builder stage stays inside `core` so ward still compiles per target platform.
 
 ## Tag derivation
 

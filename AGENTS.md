@@ -24,6 +24,8 @@ Route every dev command through ward, which reads [`.ward/ward.yaml`](.ward/ward
 
 This repo ships and dogfoods the catalog pre-commit suite (catalog-trifecta, documentation-layout, code-comments, catalog-block, check-skills, dead-cross-links, repo-pointer-skills, trufflehog). Run `pre-commit run --all-files` before committing. Per-repo opt-outs (excludes, cap overrides) live under `[tool.agentic-os.*]` in `pyproject.toml`.
 
+**Tests never encode config values.** A tunable lives in one owning source. Config validity belongs to the loader (`ward doctor` gates `.ward` in ci and promote), so tests never assert guardfile or KDL content, and CI enumerates no list a wildcard can derive.
+
 ## Safety
 
 Keep every artifact public-safe: messages, chat, code, commits, PRs, and public text. No private identity labels in public-facing content (bios, profiles, READMEs, social, public PR text). No opaque ids, tokens, or host/network identifiers in tracked files. trufflehog runs at commit time as the secret-scan backstop, but the discipline is upstream of the hook.
