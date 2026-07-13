@@ -94,6 +94,8 @@ def test_ward_specs_docs_reference_live_config_source() -> None:
     assert "WARD_CONFIG_REF" in docs
     assert "launch through `WARD_CONFIG_REF`" in docs
     assert "release-time build overlay is gone" in docs
+    assert "workflow.kdl" in docs
+    assert "`workflow` block keeps the coilyco PR-gated repos explicit" in docs
 
 
 def test_ward_specs_docs_cover_actions_log_streaming() -> None:
