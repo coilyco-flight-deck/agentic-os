@@ -24,7 +24,7 @@ Host config is converged by Ansible (rollout lives in infrastructure, per [AGENT
 ward exec apply-shell-links
 ```
 
-Equivalent links:
+Equivalent links on Mac and Linux:
 
 ```bash
 ln -sf "$PWD/shell/zshrc"  ~/.zshrc      # both source shell/common.sh
@@ -32,6 +32,9 @@ ln -sf "$PWD/shell/bashrc" ~/.bashrc
 ln -sf "$PWD/scripts/gpg-ssm" ~/.local/bin/gpg-ssm
 ward exec warp apply                     # warp config
 ```
+
+On Windows, `ward exec apply-shell-links` manages `~/.zshrc` and the `gpg-ssm.cmd`
+shim only. Git Bash popup shells should not recreate `~/.bashrc`.
 
 Agent self-name + session-pulse hooks, per-host steps, and gpg wiring: [docs/install.md](docs/install.md).
 

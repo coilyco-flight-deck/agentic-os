@@ -34,15 +34,17 @@ def _target_for_gpg_ssm(repo_root: Path) -> Path:
 
 
 def link_specs(home: Path, repo_root: Path = REPO_ROOT) -> list[LinkSpec]:
-    return [
+    specs = [
         LinkSpec("zshrc", repo_root / "shell" / "zshrc", home / ".zshrc"),
-        LinkSpec("bashrc", repo_root / "shell" / "bashrc", home / ".bashrc"),
         LinkSpec(
             "gpg-ssm",
             _target_for_gpg_ssm(repo_root),
             home / ".local" / "bin" / _target_for_gpg_ssm(repo_root).name,
         ),
     ]
+    if os.name != "nt":
+        specs.insert(1, LinkSpec("bashrc", repo_root / "shell" / "bashrc", home / ".bashrc"))
+    return specs
 
 
 def _backup_path(path: Path) -> Path:

@@ -8,7 +8,6 @@ fi
 _siren_zshrc_source="$(readlink "${(%):-%N}" 2>/dev/null || printf '%s' "${(%):-%N}")"
 _siren_aos_root="$(cd "$(dirname "$_siren_zshrc_source")/.." && pwd -P)"
 export AOS_REPO_ROOT="$_siren_aos_root"
-ln -sf "$_siren_aos_root/shell/zshrc" "$HOME/.zshrc"
 source "$_siren_aos_root/shell/common.sh"
 # compinit before warp.zsh: it registers a completion via compdef.
 autoload -Uz compinit && compinit

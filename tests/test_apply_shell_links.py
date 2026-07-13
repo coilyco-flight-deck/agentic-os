@@ -85,3 +85,16 @@ def test_check_reports_drift(tmp_path: Path) -> None:
     action, _ = script.apply_link(specs[0], dry_run=True)
 
     assert action == "would-link"
+
+
+def test_windows_skips_bashrc(monkeypatch, tmp_path: Path) -> None:
+    script = _load_script()
+    home = tmp_path / "home"
+    repo = tmp_path / "repo"
+    home.mkdir()
+    _make_repo(repo)
+    monkeypatch.setattr(script.os, "name", "nt")
+
+    names = [spec.name for spec in script.link_specs(home, repo)]
+
+    assert names == ["zshrc", "gpg-ssm"]
