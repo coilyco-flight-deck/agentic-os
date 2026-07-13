@@ -36,11 +36,11 @@ protection can require the `ci / gate` status context on `pull-request-and-merge
 repos. The live gate runs `pytest` plus `pre-commit run --all-files`, matching
 the release gate so a PR cannot pass what main would refuse.
 
-## Pinned, not `:latest`
+## Pinned, not the moving alias
 
-CI pins an explicit `vX.Y.Z` tag, never `:latest`, so a run is reproducible and
-adopting a newer dev-base is a **deliberate** bump - which itself re-validates
-every app on the next rollout - not silent drift.
+CI pins an explicit `vX.Y.Z` tag, never the moving `:release` alias, so a run is
+reproducible and adopting a newer dev-base is a **deliberate** bump - which
+itself re-validates every app on the next rollout - not silent drift.
 
 ## The pinned-tag source of truth
 
@@ -48,12 +48,9 @@ every app on the next rollout - not silent drift.
 The pin now derives from the tier folder layout through
 [`scripts/dev-base-build.py`](../scripts/dev-base-build.py). That helper turns
 `docker/dev-base/<tier>/Dockerfile` plus the release tag into the literal
-`agentic-os-<tier>:<tag>` ref, so there is no checked-in JSON map of identical
-refs to drift. [dev-base-image.md](dev-base-image.md) covers how those tags
-publish.
-
-The release helper keeps `dev-base-full` as the default literal until ward can
-choose the same class directly.
+`agentic-os:<tier>-<tag>` ref (`agentic-os:<tag>` for `full`, the default
+surface), so there is no checked-in JSON map of identical refs to drift.
+[dev-base-image.md](dev-base-image.md) covers how those tags publish.
 
 ## Authoring vs rollout
 

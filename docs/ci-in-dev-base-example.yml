@@ -4,7 +4,7 @@
 #
 # Copy this into an app's .forgejo/workflows/ci.yml. Replace the pinned image ref
 # with the tier ref the release helper derives from `docker/dev-base/<tier>/Dockerfile`
-# and the release tag. Pin an explicit full ref, never :latest.
+# and the release tag. Pin an explicit full ref, never the moving :release alias.
 #
 # This is a documentation reference copy owned by aos, not a live workflow -
 # aos ships the convention, each app ships the rollout unit (agentic-os#328).
@@ -19,7 +19,7 @@ on:
 jobs:
   gate:
     runs-on: docker
-    # Pinned dev-base: the same image agents run in. Bump deliberately, never :latest.
+    # Pinned dev-base: the same image agents run in. Bump deliberately, never the moving :release alias.
     container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:v0.245.0
     steps:
       - uses: actions/checkout@v6

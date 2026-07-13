@@ -8,7 +8,7 @@ import platform
 import subprocess
 from pathlib import Path
 
-from agentic_os.dev_base import REGISTRY_BASE, cache_ref, publish_plan, retag
+from agentic_os.dev_base import REGISTRY_BASE, publish_plan
 
 
 def _docker_base_command(push: bool, platforms: str | None) -> list[str]:
@@ -42,7 +42,7 @@ def _host_targetarch() -> str:
 def _build_plan(
     registry_base: str, tag: str, push: bool, platforms: str | None, alias: str | None = None
 ) -> None:
-    plan = publish_plan(registry_base, tag)
+    plan = publish_plan(registry_base, tag, alias)
     ward_config_ref_commit = _ward_config_ref_commit()
     for entry in plan:
         dockerfile = Path(entry["dockerfile"])
@@ -54,7 +54,7 @@ def _build_plan(
         elif entry["tier"] != "core":
             cmd.extend(["--build-arg", f"BASE_IMAGE={entry['base_image']}"])
         if push:
-            buildcache_ref = cache_ref(entry["image"])
+            buildcache_ref = entry["cache_image"]
             cmd.extend(
                 [
                     "--cache-from",
@@ -64,10 +64,10 @@ def _build_plan(
                 ]
             )
         cmd.extend(["-t", entry["image"]])
-        if push and alias:
+        if push and entry.get("alias_image"):
             # The pipeline passes its branch name as the moving alias, so
-            # ward's default agentic-os-full:release surface stays pullable.
-            cmd.extend(["-t", retag(entry["image"], alias)])
+            # ward's default agentic-os:release surface stays pullable.
+            cmd.extend(["-t", entry["alias_image"]])
         cmd.extend(["-f", str(dockerfile), str(dockerfile.parent.parent)])
         _run(cmd)
         if push:
@@ -75,7 +75,7 @@ def _build_plan(
 
 
 def _cmd_plan(args: argparse.Namespace) -> int:
-    print(json.dumps({"registry_base": args.registry, "tag": args.tag, "tiers": publish_plan(args.registry, args.tag)}))
+    print(json.dumps({"registry_base": args.registry, "tag": args.tag, "tiers": publish_plan(args.registry, args.tag, args.alias)}))
     return 0
 
 
@@ -96,6 +96,11 @@ def main(argv: list[str] | None = None) -> int:
         required=True,
         help="Release tag or local tag to stamp onto each tier image.",
     )
+    parser.add_argument(
+        "--alias",
+        default=None,
+        help="Moving alias tag pushed alongside the release tag (the CI pipeline passes its branch name).",
+    )
     sub = parser.add_subparsers(dest="command", required=True)
 
     p_plan = sub.add_parser("plan", help="Print the derived tier plan as JSON.")
@@ -103,11 +108,6 @@ def main(argv: list[str] | None = None) -> int:
 
     p_build = sub.add_parser("build", help="Build the tier family in order.")
     p_build.add_argument("--push", action="store_true", help="Push each published tier instead of loading locally.")
-    p_build.add_argument(
-        "--alias",
-        default=None,
-        help="Moving alias tag to push alongside the release tag (the CI pipeline passes its branch name).",
-    )
     p_build.add_argument(
         "--platforms",
         default="linux/amd64,linux/arm64",

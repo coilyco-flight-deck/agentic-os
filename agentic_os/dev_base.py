@@ -19,14 +19,6 @@ class TierSpec:
     base_tier: str | None
     published: bool = True
 
-    @property
-    def suffix(self) -> str:
-        return self.tier
-
-    @property
-    def image_name(self) -> str:
-        return f"agentic-os-{self.suffix}"
-
 
 TIER_SPECS: tuple[TierSpec, ...] = (
     TierSpec(
@@ -77,40 +69,41 @@ TIER_BY_NAME = {tier.tier: tier for tier in TIER_SPECS}
 PUBLISHED_TIER_NAMES = tuple(tier.tier for tier in TIER_SPECS if tier.published)
 
 
+def tier_tag(tier: str, tag: str) -> str:
+    # One package, variants as tags: full is the plain default tag, every
+    # other tier rides a "<tier>-" prefix on the same agentic-os name.
+    if tier == "full":
+        return tag
+    return f"{tier}-{tag}"
+
+
 def image_ref(registry_base: str, tier: str, tag: str) -> str:
-    return f"{registry_base}-{tier}:{tag}"
-
-
-def retag(image: str, tag: str) -> str:
-    repository, sep, _tag = image.rpartition(":")
-    if not sep:
-        raise ValueError(f"expected tagged image ref, got {image!r}")
-    return f"{repository}:{tag}"
-
-
-def cache_ref(image: str) -> str:
-    return retag(image, "buildcache")
+    return f"{registry_base}:{tier_tag(tier, tag)}"
 
 
 def tier_dockerfile(tier: str) -> Path:
     return TIER_BY_NAME[tier].dockerfile
 
 
-def publish_plan(registry_base: str, tag: str) -> list[dict[str, str | bool]]:
+def publish_plan(
+    registry_base: str, tag: str, alias: str | None = None
+) -> list[dict[str, str | bool]]:
     plan: list[dict[str, str | bool]] = []
     images: dict[str, str] = {}
     for spec in TIER_SPECS:
         ref = image_ref(registry_base, spec.tier, tag)
         base_ref = "ubuntu:24.04" if spec.base_tier is None else images[spec.base_tier]
-        plan.append(
-            {
-                "tier": spec.tier,
-                "stage": spec.stage,
-                "dockerfile": spec.dockerfile.relative_to(REPO_ROOT).as_posix(),
-                "image": ref,
-                "base_image": base_ref,
-                "published": spec.published,
-            }
-        )
+        entry: dict[str, str | bool] = {
+            "tier": spec.tier,
+            "stage": spec.stage,
+            "dockerfile": spec.dockerfile.relative_to(REPO_ROOT).as_posix(),
+            "image": ref,
+            "cache_image": image_ref(registry_base, spec.tier, "buildcache"),
+            "base_image": base_ref,
+            "published": spec.published,
+        }
+        if alias:
+            entry["alias_image"] = image_ref(registry_base, spec.tier, alias)
+        plan.append(entry)
         images[spec.tier] = ref
     return plan

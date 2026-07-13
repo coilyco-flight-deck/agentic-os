@@ -24,13 +24,15 @@ Tools under `/usr/local`, `/home/linuxbrew/.linuxbrew`, or `/opt` run as any uid
 
 ## Naming and tags
 
-Published under
-`forgejo.coilysiren.me/coilyco-flight-deck/agentic-os` as a tiered family. The
-folder name is the source of truth for the suffix, so the published refs are
-`agentic-os-core:${TAG}`, `agentic-os-lang-node:${TAG}`, and so on. Each tier also
-carries a moving alias named for the publishing branch (`:release` in the two-stage
-flow), each release uses one `vX.Y.Z`, and `:buildcache` holds the cache. `:latest`
-is retired.
+Published as one package,
+`forgejo.coilysiren.me/coilyco-flight-deck/agentic-os`, with variants as tags.
+`full` is the plain default tag, and the folder name prefixes every other tier's
+tag, so the published refs are `agentic-os:${TAG}`, `agentic-os:core-${TAG}`,
+`agentic-os:lang-node-${TAG}`, and so on. Each tier also carries a moving alias
+named for the publishing branch (`agentic-os:release` and `agentic-os:core-release`
+in the two-stage flow), each release uses one `vX.Y.Z`, and the `buildcache` tags
+hold the cache. `:latest` and the old `agentic-os-<tier>` package names are
+retired.
 
 ## How it publishes
 
@@ -57,7 +59,7 @@ scheduled **auto-bump** refreshes stale pins ([auto-bump doc](dev-base-auto-bump
 ## Pulling it
 
 ```bash
-docker pull forgejo.coilysiren.me/coilyco-flight-deck/agentic-os-full:release
+docker pull forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release
 ```
 
 Needs a `docker login`; `ward container up/exec` (ward#98) is the entry point.

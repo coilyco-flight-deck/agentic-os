@@ -307,9 +307,9 @@ jobs:
             uv run python scripts/dev-base-build.py \
             --registry "${IMAGE_BASE}" \
             --tag "${TAG}" \
+            --alias "${ALIAS}" \
             build \
             --push \
-            --alias "${ALIAS}" \
             --platforms "${PLATFORMS}"
 
       - name: Verify pushed image manifests are pullable
@@ -318,9 +318,13 @@ jobs:
           ALIAS: ${{ github.ref_name }}
         run: |
           set -euo pipefail
-          for suffix in core lang-node lang-go lang-dotnet ops agent full; do
-            for tag in "${TAG}" "${ALIAS}"; do
-              ref="${IMAGE_BASE}-${suffix}:${tag}"
+          # One package, variants as tags: full is the plain tag, other tiers
+          # carry a "<tier>-" prefix (agentic_os/dev_base.py tier_tag).
+          for tier in core lang-node lang-go lang-dotnet ops agent full; do
+            prefix="${tier}-"
+            [ "${tier}" = "full" ] && prefix=""
+            for tag in "${prefix}${TAG}" "${prefix}${ALIAS}"; do
+              ref="${IMAGE_BASE}:${tag}"
               echo "verifying ${ref}"
               timeout --preserve-status --kill-after=15s 2m \
                 docker buildx imagetools inspect "${ref}" >/dev/null

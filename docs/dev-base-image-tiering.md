@@ -25,7 +25,7 @@ became one folder per published tier, each with a literal `Dockerfile`, while
 ## Tag derivation
 
 - One repo release tag drives the whole family.
-- The folder name becomes the image suffix, so `core` becomes `agentic-os-core:${TAG}` and `full` becomes `agentic-os-full:${TAG}`.
+- Everything publishes under the single `agentic-os` package, with the tier in the tag: `core` becomes `agentic-os:core-${TAG}` while `full`, the default surface, keeps the plain `agentic-os:${TAG}`.
 - The release helper in [`scripts/dev-base-build.py`](../scripts/dev-base-build.py) derives the plan from the directory layout.
 - There is no checked-in `docker/dev-base/ci-image-manifest.json` anymore. Every published ref is derivable from `{registry base, folder name, tag}`, so the JSON map would only duplicate the folder layout.
 
@@ -33,7 +33,7 @@ became one folder per published tier, each with a literal `Dockerfile`, while
 
 - `release.yml` computes the next tag first.
 - It then calls the helper with `--push`, which builds and verifies each tier in order.
-- Every pushed tier carries a moving alias named for the publishing branch (`:release` in the two-stage flow) alongside the release tag, so `dev-base-full` still fans in last and keeps the default `agentic-os-full:release` surface ward pulls. `:latest` is retired - the branch name says what the alias tracks, `latest` said nothing.
+- Every pushed tier carries a moving alias named for the publishing branch (`:release` in the two-stage flow) alongside the release tag, so `dev-base-full` still fans in last and keeps the default `agentic-os:release` surface ward pulls. `:latest` is retired - the branch name says what the alias tracks, `latest` said nothing.
 
 ## ARG ownership
 

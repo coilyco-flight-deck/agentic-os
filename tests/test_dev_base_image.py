@@ -9,9 +9,8 @@ from agentic_os.dev_base import (
     DEV_BASE_ROOT,
     REGISTRY_BASE,
     PUBLISHED_TIER_NAMES,
-    cache_ref,
     publish_plan,
-    retag,
+    tier_tag,
 )
 
 SCRIPT = Path(__file__).resolve().parent.parent / "scripts" / "dev-base-build.py"
@@ -52,8 +51,8 @@ def test_dev_base_plan_is_derived_from_tier_folder_names() -> None:
 
     assert [entry["tier"] for entry in plan] == list(PUBLISHED_TIER_NAMES)
     assert [entry["image"] for entry in plan] == [
-        f"{REGISTRY_BASE}-{tier}:{tag}" for tier in PUBLISHED_TIER_NAMES
-    ]
+        f"{REGISTRY_BASE}:{tier}-{tag}" for tier in PUBLISHED_TIER_NAMES if tier != "full"
+    ] + [f"{REGISTRY_BASE}:{tag}"]
     assert [entry["stage"] for entry in plan] == [
         f"dev-base-{tier}" for tier in PUBLISHED_TIER_NAMES
     ]
@@ -62,14 +61,28 @@ def test_dev_base_plan_is_derived_from_tier_folder_names() -> None:
     ]
     assert [entry["base_image"] for entry in plan] == [
         "ubuntu:24.04",
-        f"{REGISTRY_BASE}-core:{tag}",
-        f"{REGISTRY_BASE}-lang-node:{tag}",
-        f"{REGISTRY_BASE}-lang-go:{tag}",
-        f"{REGISTRY_BASE}-lang-dotnet:{tag}",
-        f"{REGISTRY_BASE}-ops:{tag}",
-        f"{REGISTRY_BASE}-agent:{tag}",
+        f"{REGISTRY_BASE}:core-{tag}",
+        f"{REGISTRY_BASE}:lang-node-{tag}",
+        f"{REGISTRY_BASE}:lang-go-{tag}",
+        f"{REGISTRY_BASE}:lang-dotnet-{tag}",
+        f"{REGISTRY_BASE}:ops-{tag}",
+        f"{REGISTRY_BASE}:agent-{tag}",
     ]
     assert plan[-1]["tier"] == "full"
+    assert "alias_image" not in plan[0]
+
+
+def test_dev_base_plan_carries_per_tier_cache_and_alias_refs() -> None:
+    plan = publish_plan(REGISTRY_BASE, "v0.242.0", "release")
+
+    assert [entry["cache_image"] for entry in plan] == [
+        f"{REGISTRY_BASE}:{tier_tag(tier, 'buildcache')}" for tier in PUBLISHED_TIER_NAMES
+    ]
+    assert [entry["alias_image"] for entry in plan] == [
+        f"{REGISTRY_BASE}:{tier_tag(tier, 'release')}" for tier in PUBLISHED_TIER_NAMES
+    ]
+    assert plan[-1]["cache_image"] == f"{REGISTRY_BASE}:buildcache"
+    assert plan[-1]["alias_image"] == f"{REGISTRY_BASE}:release"
 
 
 def test_core_tier_keeps_the_hidden_ward_builder_stage() -> None:
@@ -98,14 +111,11 @@ def test_shell_common_exports_a_live_file_ward_config_ref() -> None:
     assert "export WARD_CONFIG_REF=\"$(_siren_ward_config_ref)\"" in text
 
 
-def test_cache_ref_strips_the_release_tag() -> None:
-    image = f"{REGISTRY_BASE}-core:v0.243.0"
-    assert cache_ref(image) == f"{REGISTRY_BASE}-core:buildcache"
-
-
-def test_retag_swaps_the_release_tag_for_the_alias() -> None:
-    image = f"{REGISTRY_BASE}-full:v0.243.0"
-    assert retag(image, "release") == f"{REGISTRY_BASE}-full:release"
+def test_tier_tag_keeps_full_plain_and_prefixes_variants() -> None:
+    assert tier_tag("full", "v0.243.0") == "v0.243.0"
+    assert tier_tag("full", "release") == "release"
+    assert tier_tag("core", "v0.243.0") == "core-v0.243.0"
+    assert tier_tag("lang-node", "release") == "lang-node-release"
 
 
 def test_tier_files_chain_from_the_previous_tier_image() -> None:
@@ -191,9 +201,9 @@ def test_pushed_build_uses_release_tagless_cache_ref(monkeypatch) -> None:
         if arg.startswith("type=registry,ref=")
     ]
     assert cache_refs
-    assert all(":v0.243.0:buildcache" not in ref for ref in cache_refs)
-    assert f"type=registry,ref={REGISTRY_BASE}-core:buildcache" in cache_refs
-    assert f"type=registry,ref={REGISTRY_BASE}-full:buildcache,mode=max,ignore-error=true" in cache_refs
+    assert all("v0.243.0" not in ref for ref in cache_refs)
+    assert f"type=registry,ref={REGISTRY_BASE}:core-buildcache" in cache_refs
+    assert f"type=registry,ref={REGISTRY_BASE}:buildcache,mode=max,ignore-error=true" in cache_refs
     assert any(
         "WARD_CONFIG_REF_COMMIT=abc123" in arg
         for cmd in commands
@@ -216,8 +226,8 @@ def test_pushed_build_tags_every_tier_with_the_branch_alias(monkeypatch) -> None
     for tier, cmd in zip(PUBLISHED_TIER_NAMES, build_cmds):
         tags = [cmd[i + 1] for i, arg in enumerate(cmd) if arg == "-t"]
         assert tags == [
-            f"{REGISTRY_BASE}-{tier}:v0.243.0",
-            f"{REGISTRY_BASE}-{tier}:release",
+            f"{REGISTRY_BASE}:{tier_tag(tier, 'v0.243.0')}",
+            f"{REGISTRY_BASE}:{tier_tag(tier, 'release')}",
         ]
 
 
@@ -233,4 +243,4 @@ def test_local_build_does_not_tag_an_alias(monkeypatch) -> None:
 
     for cmd in commands:
         tags = [cmd[i + 1] for i, arg in enumerate(cmd) if arg == "-t"]
-        assert tags == [tag for tag in tags if tag.endswith(":dev-base-local")]
+        assert tags == [tag for tag in tags if tag.endswith("dev-base-local")]
