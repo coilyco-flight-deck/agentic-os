@@ -9,7 +9,7 @@ became one folder per published tier, with `dev-base-full` the default surface.
 - `docker/dev-base/lang-node/Dockerfile` - Node and npm.
 - `docker/dev-base/lang-go/Dockerfile` - Go for repos that build or test Go in CI.
 - `docker/dev-base/lang-dotnet/Dockerfile` - .NET SDK and ICU.
-- `docker/dev-base/ops/Dockerfile` - `aws`, `gh`, `helm`, `kubectl`, `yq`, Docker client, Tailscale client.
+- `docker/dev-base/ops/Dockerfile` - `aws`, `gh`, `helm`, `kubectl`, `yq`, Docker client, Tailscale client, and `tailscaled`.
 - `docker/dev-base/agent/Dockerfile` - Claude, Codex, Goose, mcporter, self-name assets, substrate seed.
 - `docker/dev-base/full/Dockerfile` - fan-in image for general `warded` use and the default surface.
 

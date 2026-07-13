@@ -217,6 +217,16 @@ def test_split_tiers_keep_their_managed_arg_defaults() -> None:
             )
 
 
+def test_ops_tier_installs_and_verifies_both_tailscale_binaries() -> None:
+    text = _tier_path("ops").read_text()
+    assert '"tailscale_${TAILSCALE_VERSION}_${TS_ARCH}/tailscale"' in text
+    assert '"tailscale_${TAILSCALE_VERSION}_${TS_ARCH}/tailscaled"' in text
+    assert "chmod 0755 /usr/local/bin/tailscale" in text
+    assert "chmod 0755 /usr/local/bin/tailscaled" in text
+    assert "tailscale version" in text
+    assert "tailscaled --version" in text
+
+
 def test_agent_tier_still_copies_the_stable_assets_from_the_root_context() -> None:
     text = _tier_path("agent").read_text()
     assert "COPY agent-name.sh /opt/agentic-os/agent-name.sh" in text
