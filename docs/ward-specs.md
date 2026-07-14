@@ -1,41 +1,39 @@
 # Ward Spec Bundle
 
 The coilyco ward bundle lives in [`.ward/`](../.ward/), flattened beside
-`.ward/ward.yaml` (aos#330, first homed at top-level `ward-specs/`). It carries
-the Forgejo guardfiles, the Actions log and list bridges, the rerun bridge,
-aws/tailscale/kubectl exec guardfiles, the agents manifest, the role catalog,
-the workflow bundle, and the repos bundle. The upstream Forgejo OpenAPI spec is
-no longer tracked as a committed blob in aos.
+`.ward/ward.yaml`. It carries the Forgejo guardfiles, the Actions log and list
+bridges, the rerun bridge, aws/tailscale/kubectl exec guardfiles, the agents
+manifest, the role catalog, the workflow bundle, and the repos bundle. The
+upstream Forgejo OpenAPI spec is no longer tracked as a committed blob in aos.
 
 ## Direction of truth
 
-**aos is the source of truth for the coilyco ward-specs bundle.** As of the
-ward#503 producer cutover (Kai, 2026-07-07), the coilyco deployment values are
-**authored here** and flow **down** into ward at release time, not the reverse.
-This inverts the older shape, where ward's tree held the canonical values and aos
-carried a lagging mirror that a `ward -> aos refresh` re-synced. Do **not**
-reinstate it. When a coilyco fleet, guardfile, role-catalog, or spec-lock value
-changes, change it **here in aos's `.ward/`** and let a push republish the
-bundle. The launch defaults stay spelled out here too: fleet `merge-remote-main`,
-with cli-guard, ward, and agentic-os on `pull-request-and-merge` (canonical
-ward#508 spellings). ward's tree is being neutralized (ward#503 step 4),
-after which ward carries no coilyco values and derives its whole shipped
-surface from this asset.
+**aos is the source of truth for the coilyco ward-specs bundle.** Since the
+ward#503 producer cutover (2026-07-07), coilyco deployment values are authored
+here and flow down into ward at release time, not the reverse. This replaces
+the older shape where ward held the canonical values and aos mirrored them.
+When a coilyco fleet, guardfile, role-catalog, or spec-lock value changes,
+change it here in aos's `.ward/` and let a push republish the bundle. The
+launch defaults stay spelled out here too: fleet `merge-remote-main`, with
+cli-guard, ward, and agentic-os on `pull-request-and-merge` (canonical
+ward#508 spellings).
 
-This is the one place a shipped tool (ward) consumes runtime config authored in a
-reference repo (aos), a reasoned exception to AGENTS.md's config-placement
-corollary. The bundle is Kai's single coilyco deployment, not fleet config every
-ward user melds. External ward users build neutral and never fetch it. Forgejo
-splits into a compatibility monolith for the current `ward ops forgejo` runtime
-surface plus role-facing read, write, and admin tier guardfiles. The read tier
-owns the shared spec, base URL, auth, explicit read grants, and inherited
-denials. The write tier inherits read and adds authoring verbs. The admin tier
-inherits write and adds targeted delete verbs. The raw Actions log bridge, list
-bridge, and rerun bridge stay here as coilyco-specific overlays because the
-upstream swagger omits the live log, list, and rerun routes and the current
-renderer stays JSON-first. The exception is stated in [AGENTS.md](../AGENTS.md).
+This is the one place a shipped tool (ward) consumes runtime config authored in
+a reference repo (aos), a deliberate exception to AGENTS.md's config-placement
+corollary. The bundle is Kai's single coilyco deployment, not fleet config
+every ward user melds. Forgejo splits into a compatibility monolith for the
+current `ward ops forgejo` runtime surface plus role-facing read, write, and
+admin tier guardfiles. The raw Actions log bridge, list bridge, and rerun
+bridge stay here as coilyco-specific overlays because the upstream swagger
+omits the live log, list, and rerun routes and the current renderer stays
+JSON-first. The exception is stated in [AGENTS.md](../AGENTS.md).
 
 See [ward-specs-overrides.md](ward-specs-overrides.md) for the agent overlay.
+
+## Profile asset home
+
+When Ward consumes typed profile data, AOS owns the surviving profile and
+config assets under [ward-profile-assets.md](ward-profile-assets.md).
 
 ## Release asset
 
@@ -50,12 +48,11 @@ when the release list is updated and the overlay input stays clean.
 
 ## How ward consumes it
 
-ward now keeps one neutral shipped binary and selects the coilyco bundle at
-launch through `WARD_CONFIG_REF` for the guarded edge surfaces. The former
-release-time build overlay is gone, so the AOS asset is no longer a custom
-binary input. The published `ward-specs-<tag>.tar.gz` remains the canonical
-bundle artifact and checksum target, but the live config path is the runtime
-`WARD_CONFIG_REF` seam, not a bespoke rebuild from the asset.
+ward keeps one neutral shipped binary and selects the coilyco bundle at launch
+through `WARD_CONFIG_REF` for the guarded edge surfaces. The published
+`ward-specs-<tag>.tar.gz` remains the canonical bundle artifact and checksum
+target, but the live config path is the runtime `WARD_CONFIG_REF` seam, not a
+bespoke rebuild from the asset.
 
 Landing policy lives in [`.ward/workflow.kdl`](../.ward/workflow.kdl). Its
 `workflow` block keeps the coilyco PR-gated repos explicit.
