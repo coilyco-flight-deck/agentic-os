@@ -56,6 +56,7 @@ permissions:
 jobs:
   plan-release:
     runs-on: docker
+    timeout-minutes: 20
     container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release
     outputs:
       tag: ${{ steps.tag.outputs.new_tag }}

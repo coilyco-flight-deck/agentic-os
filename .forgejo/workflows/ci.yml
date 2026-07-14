@@ -21,9 +21,14 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   ward-doctor:
     runs-on: docker
+    timeout-minutes: 20
     container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release
     steps:
       - uses: actions/checkout@v6
@@ -44,6 +49,7 @@ jobs:
 
   gate:
     runs-on: docker
+    timeout-minutes: 30
     container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release
     steps:
       - uses: actions/checkout@v6

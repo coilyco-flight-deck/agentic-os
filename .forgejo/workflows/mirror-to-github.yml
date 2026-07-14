@@ -21,9 +21,14 @@ on:
     branches: [main]
     tags: ['v*']
 
+concurrency:
+  group: mirror-to-github-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: docker
+    timeout-minutes: 30
     container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:latest
     steps:
       - uses: actions/checkout@v6
@@ -106,6 +111,7 @@ jobs:
   mirror:
     needs: test
     runs-on: docker
+    timeout-minutes: 15
     container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:latest
     steps:
       - uses: actions/checkout@v6

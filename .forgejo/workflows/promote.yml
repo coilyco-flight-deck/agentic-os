@@ -35,6 +35,7 @@ permissions:
 jobs:
   plan-draft:
     runs-on: docker
+    timeout-minutes: 20
     container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release
     outputs:
       draft_tag: ${{ steps.draft.outputs.draft_tag }}
@@ -58,6 +59,7 @@ jobs:
 
   gate:
     runs-on: docker
+    timeout-minutes: 30
     container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release
     steps:
       - uses: actions/checkout@v6
