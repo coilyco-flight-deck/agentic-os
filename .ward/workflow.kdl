@@ -1,9 +1,3 @@
-// The workflow bundle is deployment-specific. It keeps the repo landing policy
-// out of ward's product defaults, so a deployment can change PR gating without
-// redefining the binary's neutral fallback.
-//
-// The repos listed here are the coilyco PR-gated set. Keep them explicit so the
-// launch path that dispatches PRs resolves the same policy ward merges against.
 workflow default="merge-remote-main" {
     repo "coilyco-flight-deck/infrastructure" workflow="pull-request"
     repo "coilyco-bridge/deploy" workflow="pull-request"
