@@ -17,7 +17,7 @@ This doc lists major shipped capabilities, not files. If you want a file invento
 - [Issue-corpus discovery index](issue-corpus.md) - offline corpus render plus live Forgejo lookup.
 - [Forgejo Actions log bridge](forgejo-actions-logs.md) - packaged plaintext helper for live workflow logs while ward#950 moves the surface to ward-kdl.
 - [Forgejo Actions list bridge](forgejo-actions-listing.md) - safe first-page helper for live Actions run/task inspection while raw `limit` examples stay pinned to `page=1`.
-- [Forgejo Actions rerun bridge](forgejo-actions-rerun.md) - guarded run-id rerun helper for failed Forgejo Actions jobs on the coilyco deployment.
+- [Forgejo Actions rerun bridge](forgejo-actions-rerun.md) - guarded run-id rerun helper that falls back to workflow dispatch when Forgejo rerun controls are absent on the coilyco deployment.
 - [ward deployment spec bundle](ward-specs.md) - the shipped `WARD_CONFIG_REF` bundle for the coilyco fleet.
 - [Ward profile assets home](ward-profile-assets.md) - AOS-owned profile/config source layout for Ward's typed `ProfileProvider` seam, with CUE validation/composition behind the YAML inputs.
 - [Role surface tiers](role-surface-tiers.md) - the intended per-role container capability tiers.

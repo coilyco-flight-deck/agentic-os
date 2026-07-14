@@ -38,7 +38,7 @@ def test_fetch_job_logs_uses_the_ui_log_cursor_route(monkeypatch):
             return JOB_PAGE_HTML.encode("utf-8")
         return json.dumps(CURSOR_RESPONSE).encode("utf-8")
 
-    monkeypatch.setattr(logs, "_request", fake_request)
+    monkeypatch.setattr(logs, "request", fake_request)
     target = logs.JobLogTarget(
         owner="coilyco-flight-deck", repo="agentic-os", run_index=886, job_index=0, attempt=1
     )

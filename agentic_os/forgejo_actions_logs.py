@@ -13,19 +13,18 @@ from __future__ import annotations
 
 import argparse
 import dataclasses
-import html
 import json
 import os
-import re
 import sys
 import urllib.error
-import urllib.request
+
+from agentic_os.forgejo_actions_web import (
+    ForgejoActionsWebError,
+    extract_initial_post_response,
+    request,
+)
 
 DEFAULT_BASE_URL = "https://forgejo.coilysiren.me"
-INITIAL_POST_RE = re.compile(
-    r'data-initial-post-response="(?P<payload>.*?)"\s*data-initial-artifacts-response=',
-    re.DOTALL,
-)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -47,28 +46,12 @@ class ForgejoActionsLogError(RuntimeError):
     """The bridge could not resolve or fetch the requested log stream."""
 
 
-def _request(url: str, token: str, *, data: bytes | None = None, content_type: str | None = None) -> bytes:
-    headers = {"Authorization": f"token {token}"}
-    if content_type:
-        headers["Content-Type"] = content_type
-    request = urllib.request.Request(url, data=data, headers=headers, method="POST" if data else "GET")
-    with urllib.request.urlopen(request) as response:
-        return response.read()
-
-
 def parse_job_steps(page_html: str, *, page_url: str) -> list[dict]:
     """Extract the current job's step list from the page's initial payload."""
-    payload_match = INITIAL_POST_RE.search(page_html)
-    if not payload_match:
-        raise ForgejoActionsLogError(
-            f"could not find the initial job payload in the Forgejo job page. target_url={page_url}"
-        )
     try:
-        decoded = json.loads(html.unescape(payload_match.group("payload")))
-    except json.JSONDecodeError as exc:
-        raise ForgejoActionsLogError(
-            f"Forgejo returned an unreadable job page payload. target_url={page_url}"
-        ) from exc
+        decoded = extract_initial_post_response(page_html, page_url=page_url)
+    except ForgejoActionsWebError as exc:
+        raise ForgejoActionsLogError(str(exc)) from exc
     steps = decoded.get("state", {}).get("currentJob", {}).get("steps", [])
     if not isinstance(steps, list) or not steps:
         raise ForgejoActionsLogError(
@@ -100,9 +83,9 @@ def render_step_logs(steps: list[dict], response: dict) -> str:
 
 def fetch_job_logs(target: JobLogTarget, *, token: str, base_url: str) -> str:
     url = target.page_url(base_url)
-    page = _request(url, token).decode("utf-8", "replace")
+    page = request(url, token).decode("utf-8", "replace")
     steps = parse_job_steps(page, page_url=url)
-    body = _request(url, token, data=log_cursor_body(len(steps)), content_type="application/json")
+    body = request(url, token, data=log_cursor_body(len(steps)), content_type="application/json")
     try:
         decoded = json.loads(body)
     except json.JSONDecodeError as exc:

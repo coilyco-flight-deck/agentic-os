@@ -10,8 +10,8 @@ Why the bridge still exists:
 
 - Forgejo 15.0.2 exposes the Actions metadata in swagger, but not this log
   route.
-- The script preserves the owner gate and Forgejo token auth, and it does not
-  JSON-render the response body.
+- The script preserves the owner gate and uses Basic auth against the job page
+  and its `logCursors` POST, and it does not JSON-render the response body.
 - ward#950 tracks replacing this bridge with a first-class fetch-style ward-kdl
   surface that can live beside the spec-driven Forgejo verbs.
 
@@ -30,7 +30,7 @@ Mapping:
 
 The resolved log route is:
 
-`GET /repos/{owner}/{repo}/actions/runs/{run}/jobs/{job}/attempt/{attempt}/logs`
+`GET` and `POST` `/repos/{owner}/{repo}/actions/runs/{run}/jobs/{job}/attempt/{attempt}`
 
 See also:
 
