@@ -10,9 +10,6 @@ repos {
         repo "coilyco-flight-deck/*" forge=forgejo
         repo "coilyco-gaming/*" forge=forgejo
     }
-
-    // KDL v2 booleans are #true / #false. Bare true / false parse as identifiers
-    // and fail the whole document, which silently degrades ward's exec mount.
     burndown default=#true {
         repo "coilyco-flight-deck/infrastructure" #false
         repo "coilyco-bridge/deploy" #false
