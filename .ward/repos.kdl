@@ -11,6 +11,7 @@ repos {
         repo "coilyco-gaming/*" forge=forgejo
     }
     burndown default=#true {
+        repo "coilysiren/inbox" #false
         repo "coilyco-flight-deck/infrastructure" #false
         repo "coilyco-bridge/deploy" #false
     }
