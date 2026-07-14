@@ -102,8 +102,9 @@ RUN set -eux; \
 # container warms its gitcache from on a cold volume. The list is canonical in
 # docker/dev-base/substrate-image-repos.txt and the runtime ward manifest
 # denormalizes that image-tier subset into cmd/ward/containerassets/preclone-repos.txt.
-# All public read (anonymous clone). Bridge/private repos are deliberately not
-# baked into this shareable image. Mirror dir name matches ward's owner__name.git.
+# All public read (anonymous clone). Non-profile bridge/private repos are
+# deliberately not baked into this shareable image. Mirror dir name matches
+# ward's owner__name.git.
 COPY substrate-image-repos.txt /tmp/substrate-image-repos.txt
 RUN set -eux; \
     mkdir -p /opt/substrate-seed; \
