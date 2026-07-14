@@ -1079,6 +1079,62 @@ Options (2):
 - `--ref` (string, required): Git reference for the workflow
 - `--return_run_info` (boolean, optional): Flag to return the run info
 
+## ward ops forgejo fetch actions-logs
+
+`GET /repos/{owner}/{repo}/actions/runs/{run}/jobs/{job}/attempt/{attempt}/logs`
+
+Fetch overlay. Output is raw stdout.
+
+Label: actions logs.
+
+Positional arguments:
+
+- `<owner>` (string)
+- `<repo>` (string)
+- `<run>` (string)
+- `<job>` (string)
+- `<attempt>` (string)
+
+Guards:
+
+- `arg0` matches coily*
+
+## ward ops forgejo fetch actions-rerun
+
+`POST /repos/{owner}/{repo}/actions/runs/{run}/rerun`
+
+Fetch overlay. Output is raw stdout.
+
+Label: actions rerun.
+
+Positional arguments:
+
+- `<owner>` (string)
+- `<repo>` (string)
+- `<run>` (string)
+
+Guards:
+
+- `arg0` matches coily*
+
+## ward ops forgejo fetch actions-rerun-failed-jobs
+
+`POST /repos/{owner}/{repo}/actions/runs/{run}/rerun-failed-jobs`
+
+Fetch overlay. Output is raw stdout.
+
+Label: actions rerun-failed-jobs.
+
+Positional arguments:
+
+- `<owner>` (string)
+- `<repo>` (string)
+- `<run>` (string)
+
+Guards:
+
+- `arg0` matches coily*
+
 ## ward ops forgejo issue list-all - List all issues by auto-paginating issue list.
 
 Shadows the generated `issue list-all` leaf: invoking it runs this composite in the leaf's place.

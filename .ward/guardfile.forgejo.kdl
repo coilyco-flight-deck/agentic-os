@@ -458,6 +458,26 @@ wrap ward-kdl ops forgejo {
         }
         fail-when "$issue.state == 'closed'"
     }
+    // fetch mirrors for the dead Forgejo Actions API routes. agentic-os#473
+    // documented these routes as 404s, and issue #530 asked for the fetch form.
+    fetch "actions logs" {
+        method "GET"
+        path "/repos/{owner}/{repo}/actions/runs/{run}/jobs/{job}/attempt/{attempt}/logs"
+        output "raw"
+        when first input matches coily*
+    }
+    fetch "actions rerun" {
+        method "POST"
+        path "/repos/{owner}/{repo}/actions/runs/{run}/rerun"
+        output "raw"
+        when first input matches coily*
+    }
+    fetch "actions rerun-failed-jobs" {
+        method "POST"
+        path "/repos/{owner}/{repo}/actions/runs/{run}/rerun-failed-jobs"
+        output "raw"
+        when first input matches coily*
+    }
     // Back-link footer (ward#309): doc-link regenerates a `## See also` section
     // into this guardfile's reference doc, so it survives every rebuild wipe-proof.
     doc-link "ward-specs.md" ward-specs.md "the bundle source behind this surface"

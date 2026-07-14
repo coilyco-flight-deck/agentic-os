@@ -6,6 +6,12 @@ coilyco ward spec bundle, but latest ward does not mount it as
 `ward ops forgejo actions logs`: the spec-driven `ward ops forgejo` command owns
 that path, and same-path exec overlays are skipped fail-closed.
 
+The companion specverb fetch overlay in
+[`.ward/guardfile.forgejo.kdl`](../.ward/guardfile.forgejo.kdl) pins the dead
+Forgejo API log route from agentic-os#473. PR #529 replaced that route with
+the live web UI helper below, and this fetch mirror keeps the dead shape
+documented instead of hand-coding another raw HTTP call.
+
 Why the bridge still exists:
 
 - Forgejo 15.0.2 exposes the Actions metadata in swagger, but not this log

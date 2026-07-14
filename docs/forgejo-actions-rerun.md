@@ -6,6 +6,12 @@ Actions workflow run by visible run id. They stay narrow on purpose. The call
 targets a known run, then falls back to dispatching that run's workflow file
 for the same ref when Forgejo does not expose a usable rerun control.
 
+The companion specverb fetch overlay in
+[`.ward/guardfile.forgejo.kdl`](../.ward/guardfile.forgejo.kdl) pins the dead
+Forgejo API rerun routes from agentic-os#473. PR #529 replaced those routes
+with the live web UI helper below, and this fetch mirror keeps the dead shape
+documented instead of hand-coding another raw HTTP call.
+
 Why the bridge exists:
 
 - Forgejo exposes the rerun controls inconsistently on this deployment, so the

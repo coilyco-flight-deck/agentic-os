@@ -2,9 +2,10 @@
 
 The coilyco ward bundle lives in [`.ward/`](../.ward/), flattened beside
 `.ward/ward.yaml`. It carries the Forgejo guardfiles, the Actions log and list
-bridges, the rerun bridge, aws/tailscale/kubectl exec guardfiles, the agents
-manifest, the role catalog, the workflow bundle, and the repos bundle. The
-upstream Forgejo OpenAPI spec is no longer tracked as a committed blob in aos.
+bridges, the rerun bridge, the specverb fetch mirrors for the dead log/rerun
+API routes, aws/tailscale/kubectl exec guardfiles, the agents manifest, the
+role catalog, the workflow bundle, and the repos bundle. The upstream Forgejo
+OpenAPI spec is no longer tracked as a committed blob in aos.
 
 ## Direction of truth
 
@@ -23,10 +24,11 @@ a reference repo (aos), a deliberate exception to AGENTS.md's config-placement
 corollary. The bundle is Kai's single coilyco deployment, not fleet config
 every ward user melds. Forgejo splits into a compatibility monolith for the
 current `ward ops forgejo` runtime surface plus role-facing read, write, and
-admin tier guardfiles. The raw Actions log bridge, list bridge, and rerun
-bridge stay here as coilyco-specific overlays because the upstream swagger
-omits the live log, list, and rerun routes and the current renderer stays
-JSON-first. The exception is stated in [AGENTS.md](../AGENTS.md).
+admin tier guardfiles. The raw Actions log bridge, list bridge, rerun bridge,
+and the fetch mirrors for the dead log/rerun API routes stay here as
+coilyco-specific overlays because the upstream swagger omits the live log,
+list, and rerun routes and the current renderer stays JSON-first. The exception
+is stated in [AGENTS.md](../AGENTS.md).
 
 See [ward-specs-overrides.md](ward-specs-overrides.md) for the agent overlay.
 
