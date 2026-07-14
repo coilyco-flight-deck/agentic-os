@@ -1,7 +1,7 @@
 // Forgejo Actions rerun overlay. The live deployment does not expose a stable
 // rerun control, so the bridge falls back to workflow dispatch for the same
 // ref. Keep the rerun verbs in a tiny exec bridge with the bot token only.
-wrap ward ops forgejo {
+wrap ward-kdl ops forgejo {
     exec bash {
         env FORGEJO_TOKEN {
             value ssm "/forgejo/api-token"

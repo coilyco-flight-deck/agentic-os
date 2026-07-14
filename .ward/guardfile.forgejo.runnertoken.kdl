@@ -1,20 +1,35 @@
-// Forgejo runner registration-token mint overlay (agentic-os#447). Restores the
-// operator token-restore path whose absence blocked infrastructure#539: a
-// director/ops surface mints a runner registration token from the guarded edge
-// instead of needing a human with a raw admin token. Kept out of
-// guardfile.forgejo.readactions.kdl on purpose - that overlay binds to every
-// role, and minting a registration credential is director/ops reach, not a
-// fleet-wide read. Role bindings live in roles.kdl; the intended per-role tiers
-// are docs/role-surface-tiers.md.
-wrap ward ops forgejo {
-    exec bash {
-        env FORGEJO_TOKEN {
-            value ssm "/forgejo/coilyco-ops/api-token"
-        }
+// Forgejo runner-token mint overlay. The HTTP request itself is declarative
+// fetch, and the exec bridge routes the human scope form onto the matching
+// fetch leaf.
+wrap ward-kdl-write ops forgejo {
+    base-url "forgejo.coilysiren.me/api/v1"
+    auth header-token {
+        header Authorization
+        prefix "token "
+        value ssm "/forgejo/coilyco-ops/api-token"
     }
-    can run "actions generate-runner-token" {
-        argv ".ward/forgejo-runner-token.sh"
-        when arg0 matches global org repo
-        describe "mint a Forgejo Actions runner registration token: `global`, `org <org>`, or `repo <owner> <repo>`"
+
+    restrict org matches coily*
+    restrict owner matches coily*
+
+    fetch "generate-runner-token global" {
+        method "GET"
+        path "/admin/runners/registration-token"
+        output "raw"
+        header "Accept" "application/json"
+    }
+
+    fetch "generate-runner-token org" {
+        method "GET"
+        path "/orgs/{org}/actions/runners/registration-token"
+        output "raw"
+        header "Accept" "application/json"
+    }
+
+    fetch "generate-runner-token repo" {
+        method "GET"
+        path "/repos/{owner}/{repo}/actions/runners/registration-token"
+        output "raw"
+        header "Accept" "application/json"
     }
 }

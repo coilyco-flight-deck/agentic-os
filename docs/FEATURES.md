@@ -15,9 +15,10 @@ This doc lists major shipped capabilities, not files. If you want a file invento
 - [Harness selection](harness-selection.md) - choose Claude, Codex, OpenCode, Aider, or Goose.
 - [Test harnesses](test-harness.md) - smoke tests for agent harness and model pairings.
 - [Issue-corpus discovery index](issue-corpus.md) - offline corpus render plus live Forgejo lookup.
-- [Forgejo Actions log bridge](forgejo-actions-logs.md) - packaged plaintext helper for live workflow logs, plus a specverb fetch mirror of the dead API route from agentic-os#473.
-- [Forgejo Actions list bridge](forgejo-actions-listing.md) - safe first-page helper for live Actions run/task inspection while raw `limit` examples stay pinned to `page=1`.
-- [Forgejo Actions rerun bridge](forgejo-actions-rerun.md) - guarded run-id rerun helper that falls back to workflow dispatch on the coilyco deployment, plus a specverb fetch mirror of the dead API routes from agentic-os#473.
+- [Forgejo Actions log bridge](forgejo-actions-logs.md) - plaintext helper for live workflow logs, plus a specverb fetch mirror.
+- [Forgejo Actions list bridge](forgejo-actions-listing.md) - safe first-page helper for live Actions run/task inspection.
+- [Forgejo runner-token fetch overlay](forgejo-runner-token.md) - guarded runner registration-token minting through declarative fetch leaves.
+- [Forgejo Actions rerun bridge](forgejo-actions-rerun.md) - guarded run-id rerun helper that falls back to workflow dispatch, plus a specverb fetch mirror.
 - [ward deployment spec bundle](ward-specs.md) - the shipped `WARD_CONFIG_REF` bundle for the coilyco fleet.
 - [Ward profile assets home](ward-profile-assets.md) - AOS-owned profile/config source layout for Ward's typed `ProfileProvider` seam, with CUE validation/composition behind the YAML inputs.
 - [Role surface tiers](role-surface-tiers.md) - the intended per-role container capability tiers.
