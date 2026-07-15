@@ -41,22 +41,6 @@ jobs:
           # violation passes the gate and reddens main.
           pre-commit run --all-files
 
-      - name: Install ward from source with workflow bundle support
-        run: |
-          set -euo pipefail
-          tmpdir="$(mktemp -d)"
-          git clone --depth 1 --branch main https://forgejo.coilysiren.me/coilyco-flight-deck/ward.git "$tmpdir/ward"
-          cd "$tmpdir/ward"
-          go build -trimpath -o "$tmpdir/ward/ward" ./cmd/ward
-          "$tmpdir/ward/ward" --version
-          echo "WARD_BIN=$tmpdir/ward/ward" >> "$GITHUB_ENV"
-
-      - name: Load the .ward bundle with the updated ward
-        run: |
-          set -euo pipefail
-          export WARD_CONFIG_REF="file://${PWD}/.ward"
-          CLIGUARD_NO_SANDBOX=1 "$WARD_BIN" doctor
-
       - name: Alert Telegram on main failure
         if: ${{ failure() && github.ref == 'refs/heads/main' }}
         continue-on-error: true

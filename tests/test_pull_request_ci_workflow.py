@@ -25,4 +25,6 @@ def test_promote_workflow_uses_the_same_repo_gate_as_ci() -> None:
     assert "name: promote" in workflow
     assert "uv run pytest" in workflow
     assert "pre-commit run --all-files" in workflow
+    assert "Install ward from source with workflow bundle support" not in workflow
+    assert "Load the .ward bundle with the updated ward" not in workflow
     assert "ward exec test" not in workflow
