@@ -151,6 +151,7 @@ def test_dotnet_tier_retries_the_installer_fetch_and_run() -> None:
     assert "dotnet-install.sh" in text
     assert "for attempt in 1 2 3" in text
     assert "--retry 5 --retry-all-errors --retry-delay 5" in text
+    assert "builds.dotnet.microsoft.com/dotnet/scripts/v1/dotnet-install.sh" in text
     assert '"${DOTNET_VERSION}" --architecture "${DOTNET_ARCH}"' in text
 
 

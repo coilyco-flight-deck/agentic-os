@@ -14,7 +14,7 @@ RUN set -eux; \
     . /tmp/arch.env; \
     for attempt in 1 2 3; do \
       if curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 \
-        --connect-timeout 20 https://dot.net/v1/dotnet-install.sh \
+        --connect-timeout 20 https://builds.dotnet.microsoft.com/dotnet/scripts/v1/dotnet-install.sh \
         -o /tmp/dotnet-install.sh; then \
         break; \
       fi; \
