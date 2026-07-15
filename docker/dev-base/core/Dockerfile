@@ -36,10 +36,19 @@ ENV WARD_CONFIG_REF=forgejo.coilysiren.me/coilyco-flight-deck/agentic-os@${WARD_
 RUN set -eux; \
     export GOPATH=/tmp/gobuild GOCACHE=/tmp/gocache \
       GOPROXY=direct GOSUMDB=off GOPRIVATE=forgejo.coilysiren.me CGO_ENABLED=0; \
-    git clone --depth 1 --branch "v${WARD_VERSION}" \
-      https://forgejo.coilysiren.me/coilyco-flight-deck/ward.git /tmp/ward-src; \
+    for attempt in 1 2 3; do \
+      echo "cloning ward source attempt ${attempt}/3" >&2; \
+      if timeout 120 git clone --progress --depth 1 --branch "v${WARD_VERSION}" \
+        https://forgejo.coilysiren.me/coilyco-flight-deck/ward.git /tmp/ward-src; then \
+        break; \
+      fi; \
+      [ "$attempt" -eq 3 ] && { echo "ward source clone failed after 3 attempts" >&2; exit 1; }; \
+      echo "ward source clone attempt ${attempt} failed/timed out; retrying in 5s" >&2; \
+      sleep 5; \
+    done; \
     cd /tmp/ward-src; \
     for attempt in 1 2 3; do \
+      echo "running go mod download attempt ${attempt}/3" >&2; \
       if timeout 240 go mod download; then break; fi; \
       [ "$attempt" -eq 3 ] && { echo "go mod download failed after 3 attempts" >&2; exit 1; }; \
       echo "go mod download attempt ${attempt} failed/timed out; retrying in 5s" >&2; \

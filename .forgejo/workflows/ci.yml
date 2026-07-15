@@ -38,6 +38,7 @@ jobs:
           tmpdir="$(mktemp -d)"
           git clone --depth 1 --branch main https://forgejo.coilysiren.me/coilyco-flight-deck/ward.git "$tmpdir/ward"
           cd "$tmpdir/ward"
+          make sync-defaults-assets
           go build -trimpath -o "$tmpdir/ward/ward" ./cmd/ward
           "$tmpdir/ward/ward" --version
           echo "WARD_BIN=$tmpdir/ward/ward" >> "$GITHUB_ENV"
