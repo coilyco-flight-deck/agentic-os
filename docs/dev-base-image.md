@@ -3,8 +3,7 @@
 aos owns the agent dev env. ward consumes it by tag, so config cannot
 drift.
 
-This page describes the `dev-base-full` contract. The tier layout is in
-[Tiered dev-base image split](dev-base-image-tiering.md).
+This page covers `dev-base-full`. See [tiering](dev-base-image-tiering.md).
 
 ## What ships
 
@@ -28,9 +27,10 @@ Published as one package,
 tag, so the published refs are `agentic-os:${TAG}`, `agentic-os:core-${TAG}`,
 `agentic-os:lang-node-${TAG}`, and so on. `dev-base-publish.yml` first
 publishes draft tags (`agentic-os:draft-${sha}`, `agentic-os:core-draft-${sha}`,
-and so on) on the promoted SHA. `release.yml` retags that family to `vX.Y.Z`,
-`:release`, and `:latest` after each draft tag appears. The `buildcache` tags
-hold the cache.
+and so on) on the promoted SHA. Its manual dispatch path can resume one tier
+closure at a time. `release.yml` retags that family to `vX.Y.Z`, `:release`,
+and `:latest` after each draft tag appears. The `buildcache` tags hold the
+cache.
 The old `agentic-os-<tier>` package names are retired.
 
 ## How it publishes
@@ -41,10 +41,12 @@ run after `release` already moved. They build one draft per tier with
 the tier DAG (see the [tiering doc](dev-base-image-tiering.md)). The manual
 retry workflow in [`.forgejo/workflows/release.yml`](../.forgejo/workflows/release.yml)
 retags the already-published draft family to `vX.Y.Z`, `:release`, and
-`:latest`, verifies manifests, uploads the release asset, then cuts the tag.
-The core image stamps `WARD_CONFIG_REF` from the current commit, so ward
-launches against the bundled `.ward/` checkout. The core build runs `ward
-doctor` first, rejecting a broken bundle before the draft image publishes.
+`:latest`, waiting for each draft source tag before retagging. The core image
+stamps `WARD_CONFIG_REF` from the current commit, so ward launches against the
+bundled `.ward/` checkout. The core build runs `ward doctor` first, rejecting
+a broken bundle before the draft image publishes.
+
+See [publish resume](dev-base-publish-resume.md).
 
 ## Pinning a tool
 

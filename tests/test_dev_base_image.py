@@ -1,6 +1,7 @@
 """Tests for the dev-base image contract."""
 from __future__ import annotations
 
+import argparse
 import importlib.util
 import re
 from pathlib import Path
@@ -42,7 +43,9 @@ def test_dev_base_plan_is_derived_from_tier_folder_names() -> None:
 
     assert [entry["tier"] for entry in plan] == list(PUBLISHED_TIER_NAMES)
     assert [entry["image"] for entry in plan] == [
-        f"{REGISTRY_BASE}:{tier}-{tag}" for tier in PUBLISHED_TIER_NAMES if tier != "full"
+        f"{REGISTRY_BASE}:{tier}-{tag}"
+        for tier in PUBLISHED_TIER_NAMES
+        if tier != "full"
     ] + [f"{REGISTRY_BASE}:{tag}"]
     assert [entry["stage"] for entry in plan] == [
         f"dev-base-{tier}" for tier in PUBLISHED_TIER_NAMES
@@ -83,7 +86,9 @@ def test_tier_specs_stay_in_topological_order() -> None:
     seen: set[str] = set()
     for spec in TIER_SPECS:
         if spec.base_tier is not None:
-            assert spec.base_tier in seen, f"{spec.tier}: base {spec.base_tier} not built yet"
+            assert spec.base_tier in seen, (
+                f"{spec.tier}: base {spec.base_tier} not built yet"
+            )
         for graft in spec.graft_tiers:
             assert graft in seen, f"{spec.tier}: graft {graft} not built yet"
         seen.add(spec.tier)
@@ -93,7 +98,8 @@ def test_dev_base_plan_carries_per_tier_cache_and_alias_refs() -> None:
     plan = publish_plan(REGISTRY_BASE, "v0.242.0", ("release", "latest", "release", ""))
 
     assert [entry["cache_image"] for entry in plan] == [
-        f"{REGISTRY_BASE}:{tier_tag(tier, 'buildcache')}" for tier in PUBLISHED_TIER_NAMES
+        f"{REGISTRY_BASE}:{tier_tag(tier, 'buildcache')}"
+        for tier in PUBLISHED_TIER_NAMES
     ]
     assert [entry["alias_image"] for entry in plan] == [
         f"{REGISTRY_BASE}:{tier_tag(tier, 'release')}" for tier in PUBLISHED_TIER_NAMES
@@ -112,7 +118,10 @@ def test_dev_base_plan_carries_per_tier_cache_and_alias_refs() -> None:
 def test_core_tier_keeps_the_hidden_ward_builder_stage() -> None:
     text = _tier_path("core").read_text()
     assert "AS dev-base-ward-builder" in text
-    assert 'COPY --from=dev-base-ward-builder /usr/local/bin/ward /usr/local/bin/ward' in text
+    assert (
+        'COPY --from=dev-base-ward-builder /usr/local/bin/ward /usr/local/bin/ward'
+        in text
+    )
     assert "ARG WARD_CONFIG_REF_COMMIT" in text
     # The forge host is owned by the ops guardfile - derive it, never restate it.
     ops_guardfile = (REPO_ROOT / ".ward" / "guardfile.forgejo.kdl").read_text()
@@ -126,7 +135,9 @@ def test_core_tier_keeps_the_hidden_ward_builder_stage() -> None:
 def test_core_tier_runs_ward_doctor_after_installing_ward() -> None:
     text = _tier_path("core").read_text()
     assert (
-        text.index('COPY --from=dev-base-ward-builder /usr/local/bin/ward /usr/local/bin/ward')
+        text.index(
+            'COPY --from=dev-base-ward-builder /usr/local/bin/ward /usr/local/bin/ward'
+        )
         < text.index("ward doctor")
     )
     assert "CLIGUARD_NO_SANDBOX=1 ward doctor" in text
@@ -158,10 +169,14 @@ def test_composed_tier_files_graft_their_declared_toolchain_tiers() -> None:
             assert f"COPY --from=dev-base-{graft}-graft " in text
     agent_text = _tier_path("agent").read_text()
     full_text = _tier_path("full").read_text()
-    assert "COPY --from=dev-base-lang-node-graft /usr/local/node /usr/local/node" in agent_text
+    assert (
+        "COPY --from=dev-base-lang-node-graft /usr/local/node /usr/local/node"
+        in agent_text
+    )
     assert "COPY --from=dev-base-lang-go-graft /usr/local/go /usr/local/go" in full_text
     assert (
-        "COPY --from=dev-base-lang-dotnet-graft /usr/local/dotnet /usr/local/dotnet" in full_text
+        "COPY --from=dev-base-lang-dotnet-graft /usr/local/dotnet /usr/local/dotnet"
+        in full_text
     )
 
 
@@ -176,8 +191,14 @@ def test_agent_tier_still_copies_the_stable_assets_from_the_root_context() -> No
     assert "COPY agent-name.sh /opt/agentic-os/agent-name.sh" in text
     assert "COPY statusline.sh /opt/agentic-os/statusline.sh" in text
     assert "COPY statusline.d/ /opt/agentic-os/statusline.d/" in text
-    assert "COPY ward-shell-entrypoint.sh /opt/agentic-os/ward-shell-entrypoint.sh" in text
-    assert "COPY claude-managed-settings.json /etc/claude-code/managed-settings.json" in text
+    assert (
+        "COPY ward-shell-entrypoint.sh /opt/agentic-os/ward-shell-entrypoint.sh"
+        in text
+    )
+    assert (
+        "COPY claude-managed-settings.json /etc/claude-code/managed-settings.json"
+        in text
+    )
     assert "COPY substrate-image-repos.txt /tmp/substrate-image-repos.txt" in text
     assert 'ENTRYPOINT ["/opt/agentic-os/ward-shell-entrypoint.sh"]' in text
 
@@ -213,12 +234,39 @@ def test_pushed_build_uses_release_tagless_cache_ref(monkeypatch) -> None:
     assert cache_refs
     assert all("v0.243.0" not in ref for ref in cache_refs)
     assert f"type=registry,ref={REGISTRY_BASE}:core-buildcache" in cache_refs
-    assert f"type=registry,ref={REGISTRY_BASE}:buildcache,mode=max,ignore-error=true" in cache_refs
+    assert (
+        f"type=registry,ref={REGISTRY_BASE}:buildcache,mode=max,ignore-error=true"
+        in cache_refs
+    )
     assert any(
         "WARD_CONFIG_REF_COMMIT=abc123" in arg
         for cmd in commands
         for arg in cmd
     )
+
+
+def test_pushed_build_skips_an_existing_checkpoint(monkeypatch) -> None:
+    script = _load_script()
+    commands: list[list[str]] = []
+    probed: list[str] = []
+
+    monkeypatch.setattr(script, "_has_target_checkpoint", lambda *_args: True)
+    monkeypatch.setattr(script, "_run", lambda cmd: commands.append(cmd))
+    monkeypatch.setattr(script, "_probe_cache_write", lambda ref: probed.append(ref))
+    monkeypatch.setattr(script, "_host_targetarch", lambda: "amd64")
+    monkeypatch.setattr(script, "_ward_config_ref_commit", lambda: "abc123")
+
+    script._build_plan(
+        REGISTRY_BASE,
+        "v0.243.0",
+        True,
+        "linux/amd64,linux/arm64",
+        ("release",),
+        "full",
+    )
+
+    assert commands == []
+    assert probed == []
 
 
 def test_pushed_build_tags_every_tier_with_the_requested_aliases(monkeypatch) -> None:
@@ -248,7 +296,11 @@ def test_pushed_build_tags_every_tier_with_the_requested_aliases(monkeypatch) ->
             f"{REGISTRY_BASE}:{tier_tag(tier, 'latest')}",
         ]
     # The push path also verifies the alias manifest per tier, not just the tag.
-    inspect_cmds = [cmd for cmd in commands if cmd[:4] == ["docker", "buildx", "imagetools", "inspect"]]
+    inspect_cmds = [
+        cmd
+        for cmd in commands
+        if cmd[:4] == ["docker", "buildx", "imagetools", "inspect"]
+    ]
     assert f"{REGISTRY_BASE}:release" in [cmd[-1] for cmd in inspect_cmds]
     assert f"{REGISTRY_BASE}:latest" in [cmd[-1] for cmd in inspect_cmds]
 
@@ -264,9 +316,15 @@ def test_promote_plan_retags_a_draft_to_release_aliases(monkeypatch) -> None:
     monkeypatch.setattr(script.subprocess, "run", lambda *a, **k: _Probe())
     monkeypatch.setattr(script, "_run", lambda cmd: commands.append(cmd))
 
-    script._promote_plan(REGISTRY_BASE, "draft-abc123", "v0.244.0", ("release", "latest"), "full")
+    script._promote_plan(
+        REGISTRY_BASE, "draft-abc123", "v0.244.0", ("release", "latest"), "full"
+    )
 
-    create_cmds = [cmd for cmd in commands if cmd[:4] == ["docker", "buildx", "imagetools", "create"]]
+    create_cmds = [
+        cmd
+        for cmd in commands
+        if cmd[:4] == ["docker", "buildx", "imagetools", "create"]
+    ]
     assert create_cmds == [
         [
             "docker",
@@ -318,9 +376,12 @@ def test_promote_plan_waits_for_the_source_image_before_retagging(monkeypatch) -
 
     monkeypatch.setattr(script.subprocess, "run", fake_run)
     monkeypatch.setattr(script.time, "sleep", lambda seconds: sleeps.append(seconds))
+    monkeypatch.setattr(script, "_target_matches_source", lambda *_args: False)
     monkeypatch.setattr(script, "_run", lambda cmd: commands.append(cmd))
 
-    script._promote_plan(REGISTRY_BASE, "draft-abc123", "v0.244.0", ("release", "latest"), "full")
+    script._promote_plan(
+        REGISTRY_BASE, "draft-abc123", "v0.244.0", ("release", "latest"), "full"
+    )
 
     assert sleeps == [15, 15]
     assert commands[0] == [
@@ -336,6 +397,52 @@ def test_promote_plan_waits_for_the_source_image_before_retagging(monkeypatch) -
         f"{REGISTRY_BASE}:latest",
         f"{REGISTRY_BASE}:draft-abc123",
     ]
+
+
+def test_promote_plan_skips_an_existing_checkpoint(monkeypatch) -> None:
+    script = _load_script()
+    commands: list[list[str]] = []
+
+    monkeypatch.setattr(script, "_target_matches_source", lambda *_args: True)
+    monkeypatch.setattr(script, "_run", lambda cmd: commands.append(cmd))
+
+    script._promote_plan(
+        REGISTRY_BASE, "draft-abc123", "v0.244.0", ("release", "latest"), "full"
+    )
+
+    assert commands == []
+
+
+def test_cmd_check_reports_the_requested_checkpoint_state(monkeypatch) -> None:
+    script = _load_script()
+
+    monkeypatch.setattr(script, "_has_target_checkpoint", lambda *_args: True)
+    monkeypatch.setattr(script, "_target_matches_source", lambda *_args: True)
+
+    build_args = argparse.Namespace(
+        registry=REGISTRY_BASE,
+        tag="v0.243.0",
+        alias=["release"],
+        mode="build",
+        tier="full",
+        source_tag="",
+    )
+    promote_args = argparse.Namespace(
+        registry=REGISTRY_BASE,
+        tag="v0.244.0",
+        alias=["release", "latest"],
+        mode="promote",
+        tier="full",
+        source_tag="draft-abc123",
+    )
+
+    assert script._cmd_check(build_args) == 0
+    assert script._cmd_check(promote_args) == 0
+
+    monkeypatch.setattr(script, "_has_target_checkpoint", lambda *_args: False)
+    monkeypatch.setattr(script, "_target_matches_source", lambda *_args: False)
+    assert script._cmd_check(build_args) == 1
+    assert script._cmd_check(promote_args) == 1
 
 
 def test_single_tier_push_builds_only_that_tier_with_graft_args(monkeypatch) -> None:
@@ -375,7 +482,9 @@ def test_single_tier_build_rejects_an_unknown_tier(monkeypatch) -> None:
         raise AssertionError("unknown tier did not raise")
 
 
-def test_cache_probe_warns_loudly_when_the_cache_write_is_missing(monkeypatch, capsys) -> None:
+def test_cache_probe_warns_loudly_when_the_cache_write_is_missing(
+    monkeypatch, capsys
+) -> None:
     script = _load_script()
 
     class _Probe:

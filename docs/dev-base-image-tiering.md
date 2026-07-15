@@ -51,6 +51,8 @@ The tiers form a fan-out/fan-in DAG (aos#491):
 - `release.yml` keeps the same publication logic as a manual retry path and
   never runs on push. Its retag jobs wait on their draft source tags, so a
   slower draft publish only delays the matching tier.
+- Manual workflow dispatches can target one tier closure at a time. See
+  [publish resume](dev-base-publish-resume.md).
 
 ## ARG ownership
 
