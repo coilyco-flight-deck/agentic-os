@@ -67,7 +67,8 @@ runs:
         set -euo pipefail
         # The publish jobs still run on the bare docker runner, so uv stays
         # job-local here even though the image family itself also ships it.
-        curl -LsSf "https://astral.sh/uv/${UV_VERSION}/install.sh" | sh
+        curl --retry 5 --retry-all-errors --retry-delay 2 -LsSf \
+          "https://astral.sh/uv/${UV_VERSION}/install.sh" | sh
         echo "$HOME/.local/bin" >> "$GITHUB_PATH"
         export PATH="$HOME/.local/bin:$PATH"
         uv --version

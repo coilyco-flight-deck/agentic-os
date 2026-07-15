@@ -138,7 +138,8 @@ RUN set -eux; \
 
 # uv (Python project + tool manager).
 RUN set -eux; \
-    curl -fsSL "https://astral.sh/uv/${UV_VERSION}/install.sh" \
+    curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
+      "https://astral.sh/uv/${UV_VERSION}/install.sh" \
       | env INSTALLER_NO_MODIFY_PATH=1 UV_INSTALL_DIR=/usr/local/bin sh; \
     uv --version
 
