@@ -24,6 +24,15 @@ def test_action_defaults_to_build_only() -> None:
     assert "scripts/dev-base-build.py" in text
 
 
+def test_action_retries_the_job_local_bootstrap_downloads() -> None:
+    text = ACTION.read_text(encoding="utf-8")
+    assert "--retry 5 --retry-all-errors --retry-delay 5" in text
+    assert "uv installer download attempt" in text
+    assert "docker version listing download attempt" in text
+    assert "docker CLI download attempt" in text
+    assert "buildx plugin download attempt" in text
+
+
 def test_action_guards_every_publish_side_effect_behind_push() -> None:
     text = ACTION.read_text(encoding="utf-8")
     guard = 'if [ "${PUSH}" != "true" ]'
@@ -65,3 +74,8 @@ def test_ci_stays_build_only() -> None:
     assert 'push: "true"' not in ci
     assert "secrets.REGISTRY_TOKEN" not in ci
     assert "registry-token: ${{ secrets.REGISTRY_TOKEN }}" in release
+
+
+def test_ci_cleanup_handles_a_runner_without_docker() -> None:
+    ci = CI.read_text(encoding="utf-8")
+    assert "command -v docker >/dev/null 2>&1 || exit 0" in ci

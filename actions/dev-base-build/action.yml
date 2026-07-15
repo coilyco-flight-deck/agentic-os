@@ -51,7 +51,19 @@ runs:
         set -euo pipefail
         # The build runs on the bare docker runner, so uv stays job-local here
         # even though the image family itself also ships it.
-        curl -LsSf "https://astral.sh/uv/${UV_VERSION}/install.sh" | sh
+        for attempt in 1 2 3; do
+          if curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 \
+            --connect-timeout 20 "https://astral.sh/uv/${UV_VERSION}/install.sh" \
+            -o /tmp/uv-install.sh; then
+            break
+          fi
+          if [ "$attempt" -eq 3 ]; then
+            exit 1
+          fi
+          echo "uv installer download attempt ${attempt} failed; retrying in 5s" >&2
+          sleep 5
+        done
+        sh /tmp/uv-install.sh
         echo "$HOME/.local/bin" >> "$GITHUB_PATH"
         export PATH="$HOME/.local/bin:$PATH"
         uv --version
@@ -64,15 +76,47 @@ runs:
         set -euo pipefail
         # Keep the buildx bootstrap here. dev-base does not yet carry a safe
         # Docker daemon/buildx stack for the build jobs.
-        docker_cli_ver=$(curl -fsSL https://download.docker.com/linux/static/stable/x86_64/ \
-          | grep -oE 'docker-[0-9]+\.[0-9]+\.[0-9]+\.tgz' | sort -V | tail -1 \
-          | sed -E 's/^docker-(.*)\.tgz$/\1/')
-        curl -fsSL "https://download.docker.com/linux/static/stable/x86_64/docker-${docker_cli_ver}.tgz" \
-          | tar -xz -C /tmp
+        docker_cli_ver=$(
+          for attempt in 1 2 3; do
+            if curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 \
+              --connect-timeout 20 https://download.docker.com/linux/static/stable/x86_64/; then
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              exit 1
+            fi
+            echo "docker version listing download attempt ${attempt} failed; retrying in 5s" >&2
+            sleep 5
+          done \
+            | grep -oE 'docker-[0-9]+\.[0-9]+\.[0-9]+\.tgz' | sort -V | tail -1 \
+            | sed -E 's/^docker-(.*)\.tgz$/\1/'
+        )
+        for attempt in 1 2 3; do
+          if curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 \
+            --connect-timeout 20 "https://download.docker.com/linux/static/stable/x86_64/docker-${docker_cli_ver}.tgz" \
+            | tar -xz -C /tmp; then
+            break
+          fi
+          if [ "$attempt" -eq 3 ]; then
+            exit 1
+          fi
+          echo "docker CLI download attempt ${attempt} failed; retrying in 5s" >&2
+          sleep 5
+        done
         install /tmp/docker/docker /usr/local/bin/docker
         mkdir -p ~/.docker/cli-plugins
-        curl -fsSL "https://github.com/docker/buildx/releases/download/${BUILDX_VERSION}/buildx-${BUILDX_VERSION}.linux-amd64" \
-          -o ~/.docker/cli-plugins/docker-buildx
+        for attempt in 1 2 3; do
+          if curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 \
+            --connect-timeout 20 "https://github.com/docker/buildx/releases/download/${BUILDX_VERSION}/buildx-${BUILDX_VERSION}.linux-amd64" \
+            -o ~/.docker/cli-plugins/docker-buildx; then
+            break
+          fi
+          if [ "$attempt" -eq 3 ]; then
+            exit 1
+          fi
+          echo "buildx plugin download attempt ${attempt} failed; retrying in 5s" >&2
+          sleep 5
+        done
         chmod +x ~/.docker/cli-plugins/docker-buildx
         docker buildx version
         docker --version
