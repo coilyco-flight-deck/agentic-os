@@ -177,8 +177,8 @@ runs:
         PLATFORMS: ${{ inputs.platforms }}
       run: |
         set -euo pipefail
-        # Build-only runs take the script's local `docker build` path: host
-        # arch only, no cache export, images stay on the daemon. The push
+        # Build-only runs take the script's cache-only Buildx path: host arch
+        # only, no image load, the result stays in Buildx cache. The push
         # path is the exact multi-arch buildx publish release.yml always ran.
         args=( --registry "${REGISTRY}" --tag "${TAG}" build )
         if [ "${PUSH}" = "true" ]; then

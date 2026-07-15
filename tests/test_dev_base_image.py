@@ -359,6 +359,11 @@ def test_local_build_does_not_tag_an_alias(monkeypatch) -> None:
 
     script._build_plan("agentic-os", "dev-base-local", False, None)
 
+    assert any(
+        cmd[:4] == ["docker", "buildx", "build", "--progress=plain"]
+        and cmd[4:6] == ["--output", "type=cacheonly"]
+        for cmd in commands
+    )
     for cmd in commands:
         tags = [cmd[i + 1] for i, arg in enumerate(cmd) if arg == "-t"]
         assert tags == [tag for tag in tags if tag.endswith("dev-base-local")]

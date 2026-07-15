@@ -19,7 +19,9 @@ def _docker_base_command(push: bool, platforms: str | None) -> list[str]:
         if platforms:
             cmd.extend(["--platform", platforms])
         return cmd
-    return ["docker", "build"]
+    # Build-only PR runs validate the whole graph without loading the result
+    # into the daemon. Cache-only output keeps the check fast.
+    return ["docker", "buildx", "build", "--progress=plain", "--output", "type=cacheonly"]
 
 
 def _run(cmd: list[str]) -> None:
