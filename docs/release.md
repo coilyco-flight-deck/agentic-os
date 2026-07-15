@@ -1,18 +1,18 @@
 # Release pipeline
 
-Two-stage Forgejo-canonical release (ward#1117 / aos#469). Stage 1:
-`promote.yml` gates every `main` push, publishes the dev-base family under
-`draft-${sha}`, performs the fallible release publication, and only then
-fast-forwards `release` with `CI_RELEASE_TOKEN`. Stage 2: `release.yml` is now
-manual retry only under a no-cancel queue, so retries stay sequenced and never
-gate the branch. `main` stays yolo-able. `release` is
+Three-stage Forgejo-canonical release (ward#1117 / aos#469). Stage 1:
+`promote.yml` gates every `main` push and fast-forwards `release` with
+`CI_RELEASE_TOKEN`. Stage 2: `dev-base-publish.yml` publishes the draft
+dev-base family under `draft-${sha}` on the promoted SHA. Stage 3:
+`release.yml` is manual retry only under a no-cancel queue, so retries stay
+sequenced and never gate the branch. `main` stays yolo-able. `release` is
 last-known-good. Forgejo owns the release and tag per
 [forgejo-github-mirror-contract.md](forgejo-github-mirror-contract.md).
 
-`promote.yml` computes semver, retags the draft image family to `vX.Y.Z`,
-`:release`, and `:latest`, verifies those manifests, creates the public
-git/release tag, uploads the ward-specs asset, then cuts the release branch.
-The queue owns semver, so pushes cannot race. The image build already happened on main before the release branch moved. `release.yml` keeps the same logic as a manual retry path, but it no longer runs on push.
+`promote.yml` only computes the repo gate and advances the branch. The draft
+image publish workflow uses the promoted SHA to keep image availability
+separate from branch promotion. `release.yml` keeps the same publication logic
+as a manual retry path, and it no longer runs on push.
 
 `draft-*` tags are commit-scoped staging refs for Forgejo package cleanup
 rules. `:latest` is a compatibility alias for `:release`.
@@ -41,10 +41,10 @@ create the public tag and Forgejo release only at the end.
 
 ## Manual re-run (enqueue-miss recovery)
 
-A `workflow_dispatch` re-fires either stage by hand, no dummy commit -
-dispatch against the `release` ref for publication retries or the `main` ref
-for a promotion retry. It is the recovery lever for agentic-os#240 (missed
-enqueue). Its `bump` input defaults to `minor`.
+A `workflow_dispatch` re-fires the publication retry stage by hand, no dummy
+commit - dispatch against the `release` ref when the draft images already
+exist and the release publication needs a retry. It is the recovery lever for
+agentic-os#240 (missed enqueue). Its `bump` input defaults to `minor`.
 
 ## Consumer pin (derived from the tag)
 

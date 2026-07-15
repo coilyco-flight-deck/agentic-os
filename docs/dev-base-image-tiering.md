@@ -39,18 +39,15 @@ The tiers form a fan-out/fan-in DAG (aos#491):
 
 ## Release flow
 
-- `promote.yml` runs **one draft publish job per tier**
+- `promote.yml` only gates `main` and fast-forwards `release` once the repo
+  is green. Draft image publishing is separate, so a registry or build flake
+  cannot stall branch advancement.
+- `dev-base-publish.yml` runs **one draft publish job per tier**
   ([`actions/publish-dev-base-tier`](../actions/publish-dev-base-tier/action.yml)),
-  with `needs:` carrying the DAG above: siblings build in parallel, flakes
-  rerun alone, and only `full` waits on `lang-dotnet`.
-- `promote.yml` computes the next public tag first, retags each tier from
-  `draft-${sha}` to `vX.Y.Z`, `:release`, and `:latest`, then uploads the
-  release metadata before the branch fast-forward.
-- Each job verifies its manifests. The release job needs every retag job, so
-  the public tag lands only after the family is pullable. Builder and layer
-  cache persist between runs: [dev-base build cache](dev-base-build-cache.md).
-- Every released tier carries `:release` and `:latest` alongside the versioned
-  tag, so `dev-base-full` keeps the default `agentic-os:release` surface.
+  keyed by the promoted SHA, with `needs:` carrying the DAG above: siblings
+  build in parallel, flakes rerun alone, and only `full` waits on `lang-dotnet`.
+- Each job verifies its manifests. Builder and layer cache persist between
+  runs: [dev-base build cache](dev-base-build-cache.md).
 - `release.yml` keeps the same publication logic as a manual retry path and
   never runs on push.
 

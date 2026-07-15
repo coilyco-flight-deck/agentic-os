@@ -1,8 +1,8 @@
-# Forgejo-canonical release publication, manual retry only, stage 2 of the
-# two-stage flow (ward#1117 / aos#469). `promote.yml` now does the fallible
-# image retagging, release creation, asset upload, and only then fast-forwards
-# `release`, so the branch stays last-known-good. This workflow remains as a
-# manual retry hook for the same publication work and never runs on push.
+# Forgejo-canonical release publication, manual retry only. `promote.yml`
+# now gates main and fast-forwards `release` on its own, while
+# `dev-base-publish.yml` publishes the draft image family on the promoted SHA.
+# This workflow stays as the retry hook for the same publication work and
+# never runs on push.
 # The concurrency queue below replaces the old overlap-and-cancel behavior:
 # release runs execute in sequence (cancel-in-progress: false), so a burst of
 # manual retries cannot cancel an in-flight build. agentic-os dogfoods the
@@ -15,10 +15,10 @@
 # the whole release. A `workflow_dispatch` trigger re-fires the same
 # publication pipeline by hand when Forgejo misses a run or a manual retry is
 # needed (agentic-os#240). Dispatch it against the `release` ref. The pipeline
-# computes the next tag first, retags the draft dev-base image family to the
-# versioned tag plus `:release` and `:latest`, and only then creates the
-# public git/release tag, keeping the announced tag as the last success
-# marker. Full rationale in docs/release.md, image notes in
+# computes the next tag first, retags the already-published draft dev-base
+# image family to the versioned tag plus `:release` and `:latest`, and only
+# then creates the public git/release tag, keeping the announced tag as the
+# last success marker. Full rationale in docs/release.md, image notes in
 # docs/dev-base-image.md. There is no test job here: promote.yml already ran
 # the full repo gate on the exact sha it published, so re-running the suite
 # here only lets a flaky rerun fail an already-vouched promotion (Kai's call,

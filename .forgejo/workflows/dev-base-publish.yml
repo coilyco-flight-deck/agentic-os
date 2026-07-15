@@ -1,0 +1,173 @@
+# Publish the draft dev-base image family after release has already advanced.
+# The branch promotion workflow only gates and fast-forwards `release`; this
+# separate workflow is keyed by that promoted SHA so registry or build flakes
+# cannot block branch advancement.
+
+name: dev-base-publish
+
+on:
+  push:
+    branches: [release]
+  workflow_dispatch:
+
+concurrency:
+  group: dev-base-publish-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  plan-draft:
+    runs-on: docker
+    timeout-minutes: 20
+    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release
+    outputs:
+      draft_tag: ${{ steps.draft.outputs.draft_tag }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - id: draft
+        name: Derive the draft image tag
+        run: |
+          set -euo pipefail
+          echo "draft_tag=draft-${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Alert Telegram on release failure
+        if: ${{ failure() && github.ref == 'refs/heads/release' }}
+        uses: ./actions/telegram-alert
+        with:
+          bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
+
+  publish-core:
+    needs: [plan-draft]
+    runs-on: docker
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./actions/publish-dev-base-tier
+        with:
+          tier: core
+          tag: ${{ needs.plan-draft.outputs.draft_tag }}
+          registry-token: ${{ secrets.REGISTRY_TOKEN }}
+      - name: Alert Telegram on release failure
+        if: ${{ failure() && github.ref == 'refs/heads/release' }}
+        continue-on-error: true
+        uses: ./actions/telegram-alert
+        with:
+          bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
+
+  publish-lang-node:
+    needs: [plan-draft, publish-core]
+    runs-on: docker
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./actions/publish-dev-base-tier
+        with:
+          tier: lang-node
+          tag: ${{ needs.plan-draft.outputs.draft_tag }}
+          registry-token: ${{ secrets.REGISTRY_TOKEN }}
+      - name: Alert Telegram on release failure
+        if: ${{ failure() && github.ref == 'refs/heads/release' }}
+        continue-on-error: true
+        uses: ./actions/telegram-alert
+        with:
+          bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
+
+  publish-lang-go:
+    needs: [plan-draft, publish-core]
+    runs-on: docker
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./actions/publish-dev-base-tier
+        with:
+          tier: lang-go
+          tag: ${{ needs.plan-draft.outputs.draft_tag }}
+          registry-token: ${{ secrets.REGISTRY_TOKEN }}
+      - name: Alert Telegram on release failure
+        if: ${{ failure() && github.ref == 'refs/heads/release' }}
+        continue-on-error: true
+        uses: ./actions/telegram-alert
+        with:
+          bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
+
+  publish-lang-dotnet:
+    needs: [plan-draft, publish-core]
+    runs-on: docker
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./actions/publish-dev-base-tier
+        with:
+          tier: lang-dotnet
+          tag: ${{ needs.plan-draft.outputs.draft_tag }}
+          registry-token: ${{ secrets.REGISTRY_TOKEN }}
+      - name: Alert Telegram on release failure
+        if: ${{ failure() && github.ref == 'refs/heads/release' }}
+        continue-on-error: true
+        uses: ./actions/telegram-alert
+        with:
+          bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
+
+  publish-ops:
+    needs: [plan-draft, publish-core]
+    runs-on: docker
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./actions/publish-dev-base-tier
+        with:
+          tier: ops
+          tag: ${{ needs.plan-draft.outputs.draft_tag }}
+          registry-token: ${{ secrets.REGISTRY_TOKEN }}
+      - name: Alert Telegram on release failure
+        if: ${{ failure() && github.ref == 'refs/heads/release' }}
+        uses: ./actions/telegram-alert
+        with:
+          bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
+
+  publish-agent:
+    needs: [plan-draft, publish-ops, publish-lang-node]
+    runs-on: docker
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./actions/publish-dev-base-tier
+        with:
+          tier: agent
+          tag: ${{ needs.plan-draft.outputs.draft_tag }}
+          registry-token: ${{ secrets.REGISTRY_TOKEN }}
+      - name: Alert Telegram on release failure
+        if: ${{ failure() && github.ref == 'refs/heads/release' }}
+        uses: ./actions/telegram-alert
+        with:
+          bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
+
+  publish-full:
+    needs: [plan-draft, publish-agent, publish-lang-go, publish-lang-dotnet]
+    runs-on: docker
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./actions/publish-dev-base-tier
+        with:
+          tier: full
+          tag: ${{ needs.plan-draft.outputs.draft_tag }}
+          registry-token: ${{ secrets.REGISTRY_TOKEN }}
+      - name: Alert Telegram on release failure
+        if: ${{ failure() && github.ref == 'refs/heads/release' }}
+        uses: ./actions/telegram-alert
+        with:
+          bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
