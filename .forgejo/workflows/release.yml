@@ -19,7 +19,9 @@
 # image family to the versioned tag plus `:release` and `:latest`, and only
 # then creates the public git/release tag, keeping the announced tag as the
 # last success marker. Full rationale in docs/release.md, image notes in
-# docs/dev-base-image.md. There is no test job here: promote.yml already ran
+# docs/dev-base-image.md. Each retag job polls its draft source tag until the
+# corresponding draft image exists, so publish and retag can overlap. The fan-out
+# does not fail every tier immediately. There is no test job here: promote.yml already ran
 # the full repo gate on the exact sha it published, so re-running the suite
 # here only lets a flaky rerun fail an already-vouched promotion (Kai's call,
 # 2026-07-12). The dev-base family retags as one job per tier through the

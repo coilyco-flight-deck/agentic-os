@@ -27,11 +27,10 @@ Published as one package,
 `full` is the plain default tag, and the folder name prefixes every other tier's
 tag, so the published refs are `agentic-os:${TAG}`, `agentic-os:core-${TAG}`,
 `agentic-os:lang-node-${TAG}`, and so on. `dev-base-publish.yml` first
-publishes commit-scoped draft tags (`agentic-os:draft-${sha}`,
-`agentic-os:core-draft-${sha}`, and so on) on the promoted SHA.
-`release.yml` then retags that same image family to one `vX.Y.Z`, the moving
-`:release` branch alias, and the `:latest` compatibility alias. The
-`buildcache` tags hold the cache.
+publishes draft tags (`agentic-os:draft-${sha}`, `agentic-os:core-draft-${sha}`,
+and so on) on the promoted SHA. `release.yml` retags that family to `vX.Y.Z`,
+`:release`, and `:latest` after each draft tag appears. The `buildcache` tags
+hold the cache.
 The old `agentic-os-<tier>` package names are retired.
 
 ## How it publishes

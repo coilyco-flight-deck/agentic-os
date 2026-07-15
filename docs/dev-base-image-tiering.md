@@ -49,7 +49,8 @@ The tiers form a fan-out/fan-in DAG (aos#491):
 - Each job verifies its manifests. Builder and layer cache persist between
   runs: [dev-base build cache](dev-base-build-cache.md).
 - `release.yml` keeps the same publication logic as a manual retry path and
-  never runs on push.
+  never runs on push. Its retag jobs wait on their draft source tags, so a
+  slower draft publish only delays the matching tier.
 
 ## ARG ownership
 

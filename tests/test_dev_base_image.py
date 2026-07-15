@@ -257,6 +257,11 @@ def test_promote_plan_retags_a_draft_to_release_aliases(monkeypatch) -> None:
     script = _load_script()
     commands: list[list[str]] = []
 
+    class _Probe:
+        returncode = 0
+        stderr = ""
+
+    monkeypatch.setattr(script.subprocess, "run", lambda *a, **k: _Probe())
     monkeypatch.setattr(script, "_run", lambda cmd: commands.append(cmd))
 
     script._promote_plan(REGISTRY_BASE, "draft-abc123", "v0.244.0", ("release", "latest"), "full")
@@ -286,6 +291,50 @@ def test_promote_plan_retags_a_draft_to_release_aliases(monkeypatch) -> None:
         f"{REGISTRY_BASE}:v0.244.0",
         f"{REGISTRY_BASE}:release",
         f"{REGISTRY_BASE}:latest",
+    ]
+
+
+def test_promote_plan_waits_for_the_source_image_before_retagging(monkeypatch) -> None:
+    script = _load_script()
+    commands: list[list[str]] = []
+    sleeps: list[int] = []
+
+    class _Probe:
+        def __init__(self, returncode: int, stderr: str) -> None:
+            self.returncode = returncode
+            self.stderr = stderr
+
+    probes = iter(
+        [
+            _Probe(1, "manifest unknown"),
+            _Probe(1, "manifest unknown"),
+            _Probe(0, ""),
+        ]
+    )
+
+    def fake_run(cmd, check=False, capture_output=False, text=False):  # noqa: ANN001
+        assert cmd[:4] == ["docker", "buildx", "imagetools", "inspect"]
+        return next(probes)
+
+    monkeypatch.setattr(script.subprocess, "run", fake_run)
+    monkeypatch.setattr(script.time, "sleep", lambda seconds: sleeps.append(seconds))
+    monkeypatch.setattr(script, "_run", lambda cmd: commands.append(cmd))
+
+    script._promote_plan(REGISTRY_BASE, "draft-abc123", "v0.244.0", ("release", "latest"), "full")
+
+    assert sleeps == [15, 15]
+    assert commands[0] == [
+        "docker",
+        "buildx",
+        "imagetools",
+        "create",
+        "-t",
+        f"{REGISTRY_BASE}:v0.244.0",
+        "-t",
+        f"{REGISTRY_BASE}:release",
+        "-t",
+        f"{REGISTRY_BASE}:latest",
+        f"{REGISTRY_BASE}:draft-abc123",
     ]
 
 

@@ -12,8 +12,8 @@ last-known-good. Forgejo owns the release and tag per
 `promote.yml` only computes the repo gate and advances the branch. The draft
 image publish workflow uses the promoted SHA to keep image availability
 separate from branch promotion. `release.yml` keeps the same publication logic
-as a manual retry path, and it no longer runs on push.
-
+as a manual retry path, and it no longer runs on push. Each retag job waits
+for its draft source tag, so a slower draft publish only delays that tier.
 `draft-*` tags are commit-scoped staging refs for Forgejo package cleanup
 rules. `:latest` is a compatibility alias for `:release`.
 

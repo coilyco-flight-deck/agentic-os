@@ -7,6 +7,7 @@ import json
 import platform
 import subprocess
 import sys
+import time
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -42,6 +43,25 @@ def _probe_cache_write(buildcache_ref: str) -> None:
             f"imagetools inspect said: {probe.stderr.strip()}",
             file=sys.stderr,
         )
+
+
+def _wait_for_source_image(source_ref: str, poll_seconds: int = 15) -> None:
+    while True:
+        probe = subprocess.run(
+            ["docker", "buildx", "imagetools", "inspect", source_ref],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        if probe.returncode == 0:
+            return
+        stderr = probe.stderr.strip()
+        print(
+            f"::notice::waiting for draft image {source_ref} before retagging. "
+            f"imagetools inspect said: {stderr or 'no stderr output'}",
+            file=sys.stderr,
+        )
+        time.sleep(poll_seconds)
 
 
 def _ward_config_ref_commit() -> str:
@@ -125,6 +145,7 @@ def _promote_plan(
     for source_entry in source_plan:
         target_entry = target_plan[source_entry["tier"]]
         target_images = [target_entry["image"], *target_entry.get("alias_images", [])]
+        _wait_for_source_image(source_entry["image"])
         cmd = ["docker", "buildx", "imagetools", "create"]
         for target_image in target_images:
             cmd.extend(["-t", target_image])
