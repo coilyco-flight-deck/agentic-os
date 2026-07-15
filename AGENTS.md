@@ -90,11 +90,13 @@ Unless told otherwise, "done" includes the obvious follow-through, not the first
 
 Proceed autonomously on anything reversible. Stop only for a destructive, irreversible, or externally-visible action (force-push, data loss, a post or email on the user's behalf, a public surface), or a genuine multi-path fork where the wrong choice is costly to undo. Everything short of that wall: pick the sensible default, name it inline in one line ("picking X because Y"), and keep going. A 5-second "no, do X" after the fact is cheaper than a run parked for an hour waiting on a question the user could have answered either way. Batch any genuine questions and surface them at the end with the work already done, not mid-run.
 
-### Engineers and QA: never debug or iterate against a live deployment
+### Engineers and QA: never debug or iterate against live operations
 
 This rule binds the **sealed roles - engineer and QA** - which run in ephemeral clones with no live-cluster access. It does **not** bind director or ops: those hold live-observe surfaces and are authorized to debug deployments.
 
 An engineer or QA runs in a sealed, ephemeral clone with **no live-cluster access**. You cannot curl a public edge, inspect a pod, watch a rollout, or confirm a secret synced. So you **must not** try to debug, tune, or "fix until green" a live deployment, and QA **must not** render a verdict that turns on live-cluster state it cannot observe. Treating infra like a unit test - change logic, push, watch CI, repeat - produces changes you cannot verify, which land red on `main` and churn. A live deployment you cannot observe **is** one of the walls worth a human.
+
+CI/CD is live operations for this rule. Reading workflow logs, summarizing evidence, and making one locally grounded push for a change whose behavior can be proven from the repo are allowed. Repeated pushes to probe Forgejo Actions, release promotion, package registries, runner configuration, Actions secrets, rollout jobs, or deployment pipelines are ops debugging. If the failure only appears in live CI/CD or registry state, stop after gathering evidence, file an `interactive`-labeled issue with the exact failing run and needed live verification, and hand it to a director or ops run.
 
 Deploys already have established precedent (exposure patterns, exemplar services, shared charts). For deploy work: **match the precedent and copy the exemplar, do not invent or iterate.** If a change genuinely needs live verification - does this rollout succeed, is this secret synced, is the edge reachable - you **cannot** provide it from a sealed clone. Stop, file an `interactive`-labeled issue describing exactly what needs live verification, and hand it to a role that can observe live (the operator, or a director / ops run). Do not push a speculative fix and hope CI confirms it.
 
