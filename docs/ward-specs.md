@@ -45,9 +45,9 @@ Every aos release attaches the bundle as `ward-specs-<tag>.tar.gz` (plus a
 [`.forgejo/workflows/release.yml`](../.forgejo/workflows/release.yml). The
 tarball is deterministic, so the checksum a downstream pins is reproducible from
 the tag. Ward's build sites pin that URL + `sha256` rather than a raw tracked
-path, and the packaging step enumerates the bundle files explicitly while
-keeping `.ward/ward.yaml` out of the tarball, so new bundle files land only
-when the release list is updated and the overlay input stays clean.
+path, and the packaging step walks `.ward/` recursively while excluding
+`.ward/ward.yaml`, so new bundle files land automatically and the overlay input
+stays clean.
 
 ## How ward consumes it
 
