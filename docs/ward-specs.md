@@ -4,9 +4,9 @@ The coilyco ward bundle lives in [`.ward/`](../.ward/), flattened beside
 `.ward/ward.yaml`. It carries the Forgejo guardfiles, the Actions log and list
 bridges, the rerun bridge, the runner-token fetch overlay, the specverb fetch
 mirrors for the dead log/rerun API routes, aws/tailscale/kubectl exec
-guardfiles, the agents manifest, the role catalog, the workflow bundle, and
-the repos bundle. The upstream Forgejo OpenAPI spec is no longer tracked as a
-committed blob in aos.
+guardfiles, the agents manifest, the role catalog, and the repos bundle,
+including its landing-policy block. The upstream Forgejo OpenAPI spec is no
+longer tracked as a committed blob in aos.
 
 ## Direction of truth
 
@@ -59,8 +59,8 @@ through `WARD_CONFIG_REF` for the guarded edge surfaces. The published
 target, but the live config path is the runtime `WARD_CONFIG_REF` seam, not a
 bespoke rebuild from the asset.
 
-Landing policy lives in [`.ward/workflow.kdl`](../.ward/workflow.kdl). Its
-`workflow` block keeps the coilyco PR-gated repos explicit.
+Landing policy lives in [`.ward/repos.kdl`](../.ward/repos.kdl). Its workflow
+block keeps the coilyco PR-gated repos explicit.
 
 Host shells and the container entrypoint point `WARD_CONFIG_REF` at the
 checkout's `.ward/` live (`file://`): no commit pin to rot in a long-lived

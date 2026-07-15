@@ -6,7 +6,7 @@ If the same repo also exists under `/substrate`, work in `/workspace/agentic-os`
 
 ## Find the current surfaces
 
-- `rg -n "pull-request-and-merge|director merge|WARD-OUTCOME|workflow:" .ward docs`
+- `rg -n "pull-request-and-merge|director merge|WARD-OUTCOME|repos\\.workflow" .ward docs`
 - `ward ops forgejo pr --help`
 - `ward agent director --help`
 

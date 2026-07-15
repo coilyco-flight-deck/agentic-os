@@ -6,7 +6,7 @@ If the same repo also exists under `/substrate`, work in `/workspace/agentic-os`
 
 ## Find the current surfaces
 
-- `rg -n "WARD_CONFIG_REF|roles.*kdl|workflow.kdl|ward-specs" .ward docs`
+- `rg -n "WARD_CONFIG_REF|roles.*kdl|repos.kdl|ward-specs" .ward docs`
 - `ward doctor`
 - `ward ops forgejo describe`
 
