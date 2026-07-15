@@ -44,8 +44,6 @@ the core build runs `ward doctor` after installing ward.
 
 The build/verify half of that publish also runs build-only on every pull
 request, so image breakage fails the PR rather than the post-merge publish.
-The PR path uses Buildx cache-only output, so it exercises the full tier graph
-without loading the result into the daemon.
 See [PR dev-base build validation](pr-dev-base-build-validation.md).
 
 ## Pinning a tool

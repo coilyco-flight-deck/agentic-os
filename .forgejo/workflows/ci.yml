@@ -153,8 +153,9 @@ jobs:
         if: ${{ always() }}
         run: |
           set -euo pipefail
-          # Build-only runs now export cache only, but keep this cleanup to
-          # clear any stray pr-* tags from older runs on the shared daemon.
+          # The build-only images land on the shared daemon; drop this run's
+          # tags so PR runs do not pile named images up. The underlying
+          # layers stay behind as build cache for the next PR.
           command -v docker >/dev/null 2>&1 || exit 0
           docker images --format '{{.Repository}}:{{.Tag}}' \
             | { grep ":pr-${{ github.run_id }}$" || true; } \

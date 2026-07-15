@@ -33,12 +33,12 @@ pin-consistency checks on the same PR.
 
 ## The build-only contract
 
-A PR run never publishes: no `--push`, no registry login, no `REGISTRY_TOKEN`
-in reach. It builds the host arch through the script's cache-only Buildx path,
-tags each tier `pr-<run_id>` for traceability, and discards the result instead
-of loading it into the daemon. The layers still seed Buildx cache, so later PR
-builds stay warm. Publish, the release tag, and the GitHub mirror stay
-main-only.
+A PR run never publishes: no `--push`, no tag, no registry login, no
+`REGISTRY_TOKEN` in reach. It builds the host arch through the script's local
+`docker build` path (the same path `ward exec dev-base-build` uses), tags each
+tier `pr-<run_id>`, and drops those tags again in a cleanup step. Image
+layers stay on the shared daemon as build cache, so later PR builds are warm.
+Publish, the release tag, and the GitHub mirror stay main-only.
 
 `gate` additionally dry-runs the release tag computation through
 [`actions/tag-bump`](../actions/tag-bump/action.yml) with `create_tag: false`,
