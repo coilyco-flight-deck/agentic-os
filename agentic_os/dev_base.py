@@ -130,6 +130,13 @@ def publish_plan(
             "tier": spec.tier,
             "stage": spec.stage,
             "dockerfile": spec.dockerfile.relative_to(REPO_ROOT).as_posix(),
+            # Most tiers build from their own folder. agent keeps the shared
+            # docker/dev-base root because it copies sibling assets from there.
+            "context_dir": (
+                spec.dockerfile.parent.parent
+                if spec.tier == "agent"
+                else spec.dockerfile.parent
+            ).relative_to(REPO_ROOT).as_posix(),
             "image": ref,
             "cache_image": image_ref(registry_base, spec.tier, "buildcache"),
             "base_image": base_ref,

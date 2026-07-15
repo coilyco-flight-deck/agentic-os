@@ -53,6 +53,15 @@ def test_dev_base_plan_is_derived_from_tier_folder_names() -> None:
     assert [entry["dockerfile"] for entry in plan] == [
         f"docker/dev-base/{tier}/Dockerfile" for tier in PUBLISHED_TIER_NAMES
     ]
+    assert [entry["context_dir"] for entry in plan] == [
+        "docker/dev-base/core",
+        "docker/dev-base/lang-node",
+        "docker/dev-base/lang-go",
+        "docker/dev-base/lang-dotnet",
+        "docker/dev-base/ops",
+        "docker/dev-base",
+        "docker/dev-base/full",
+    ]
     # The fan-out DAG (aos#491): the lang tiers and ops are siblings on core,
     # agent composes ops, full fans in on agent.
     assert [entry["base_image"] for entry in plan] == [
@@ -245,6 +254,14 @@ def test_pushed_build_uses_release_tagless_cache_ref(monkeypatch) -> None:
     )
 
 
+def test_dev_base_plan_uses_tier_local_build_contexts() -> None:
+    plan = publish_plan(REGISTRY_BASE, "v0.243.0")
+
+    assert plan[0]["context_dir"] == "docker/dev-base/core"
+    assert plan[5]["context_dir"] == "docker/dev-base"
+    assert plan[-1]["context_dir"] == "docker/dev-base/full"
+
+
 def test_core_push_emits_a_release_context_breadcrumb(
     monkeypatch, capsys, tmp_path
 ) -> None:
@@ -272,6 +289,7 @@ def test_core_push_emits_a_release_context_breadcrumb(
     assert f"image={REGISTRY_BASE}:core-v0.243.0" in captured
     assert f"cache={REGISTRY_BASE}:core-buildcache" in captured
     assert "ward_config_ref_commit=abc123" in captured
+    assert "context=docker/dev-base/core" in captured
     assert "docker buildx build --progress=plain --push --platform linux/amd64,linux/arm64" in captured
     assert commands
     summary = summary_file.read_text(encoding="utf-8")
@@ -280,6 +298,7 @@ def test_core_push_emits_a_release_context_breadcrumb(
     assert f"- image: {REGISTRY_BASE}:core-v0.243.0" in summary
     assert f"- cache: {REGISTRY_BASE}:core-buildcache" in summary
     assert "- base: ubuntu:24.04" in summary
+    assert "- context: docker/dev-base/core" in summary
     assert "- ward_config_ref_commit: abc123" in summary
     assert "command: docker buildx build --progress=plain --push --platform linux/amd64,linux/arm64" in summary
 

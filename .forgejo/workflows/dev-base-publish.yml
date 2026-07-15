@@ -161,7 +161,7 @@ jobs:
               "CORE_CACHE_IMAGE": core["cache_image"],
               "CORE_BASE_IMAGE": core["base_image"],
               "CORE_DOCKERFILE": core["dockerfile"],
-              "CORE_CONTEXT_DIR": dockerfile.parent.parent.as_posix(),
+              "CORE_CONTEXT_DIR": core["context_dir"],
               "CORE_WARD_CONFIG_REF_COMMIT": subprocess.check_output(
                   ["git", "rev-parse", "HEAD"],
                   text=True,

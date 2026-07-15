@@ -190,6 +190,7 @@ def _build_plan(
     ward_config_ref_commit = _ward_config_ref_commit()
     for entry in plan:
         dockerfile = Path(entry["dockerfile"])
+        context_dir = Path(entry["context_dir"])
         alias_images = tuple(entry.get("alias_images", ()))
         if push and _has_target_checkpoint(entry["image"], alias_images):
             print(
@@ -222,7 +223,7 @@ def _build_plan(
         if push:
             for alias_image in entry.get("alias_images", []):
                 cmd.extend(["-t", alias_image])
-        cmd.extend(["-f", str(dockerfile), str(dockerfile.parent.parent)])
+        cmd.extend(["-f", str(dockerfile), str(context_dir)])
         if push and entry["tier"] == "core":
             summary = "\n".join(
                 [
@@ -232,6 +233,7 @@ def _build_plan(
                     f"- image: {entry['image']}",
                     f"- cache: {entry['cache_image']}",
                     f"- base: {entry['base_image']}",
+                    f"- context: {entry['context_dir']}",
                     f"- ward_config_ref_commit: {ward_config_ref_commit}",
                     f"- command: {shlex.join(cmd)}",
                     "",
@@ -242,6 +244,7 @@ def _build_plan(
             print(f"image={entry['image']}")
             print(f"cache={entry['cache_image']}")
             print(f"base={entry['base_image']}")
+            print(f"context={entry['context_dir']}")
             print(f"ward_config_ref_commit={ward_config_ref_commit}")
             print(f"command={shlex.join(cmd)}")
             print("::endgroup::")
