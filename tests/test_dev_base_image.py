@@ -146,6 +146,14 @@ def test_tier_files_build_from_their_declared_base_image() -> None:
         assert "ARG BASE_IMAGE" in text
 
 
+def test_dotnet_tier_retries_the_installer_fetch_and_run() -> None:
+    text = _tier_path("lang-dotnet").read_text()
+    assert "dotnet-install.sh" in text
+    assert "for attempt in 1 2 3" in text
+    assert "--retry 5 --retry-all-errors --retry-delay 5" in text
+    assert '"${DOTNET_VERSION}" --architecture "${DOTNET_ARCH}"' in text
+
+
 def test_composed_tier_files_graft_their_declared_toolchain_tiers() -> None:
     # Each declared graft needs an ARG-driven FROM stage plus a COPY --from of
     # it, so the plan's graft_images build-args actually land in the image.

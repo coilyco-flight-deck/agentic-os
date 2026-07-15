@@ -12,10 +12,30 @@ ARG DOTNET_VERSION=10.0.301
 # so C# culture/string behaviour matches a normal host - no DOTNET_SYSTEM_GLOBALIZATION_INVARIANT.
 RUN set -eux; \
     . /tmp/arch.env; \
-    curl -fsSL https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh; \
+    for attempt in 1 2 3; do \
+      if curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 \
+        --connect-timeout 20 https://dot.net/v1/dotnet-install.sh \
+        -o /tmp/dotnet-install.sh; then \
+        break; \
+      fi; \
+      if [ "$attempt" -eq 3 ]; then \
+        exit 1; \
+      fi; \
+      echo "dotnet-install.sh download attempt ${attempt} failed; retrying in 5s" >&2; \
+      sleep 5; \
+    done; \
     chmod 0755 /tmp/dotnet-install.sh; \
-    /tmp/dotnet-install.sh --version "${DOTNET_VERSION}" --architecture "${DOTNET_ARCH}" \
-      --install-dir /usr/local/dotnet --no-path; \
+    for attempt in 1 2 3; do \
+      if /tmp/dotnet-install.sh --version "${DOTNET_VERSION}" --architecture "${DOTNET_ARCH}" \
+        --install-dir /usr/local/dotnet --no-path; then \
+        break; \
+      fi; \
+      if [ "$attempt" -eq 3 ]; then \
+        exit 1; \
+      fi; \
+      echo "dotnet install attempt ${attempt} failed; retrying in 5s" >&2; \
+      sleep 5; \
+    done; \
     rm /tmp/dotnet-install.sh; \
     chmod -R a+rX /usr/local/dotnet; \
     dotnet --version; dotnet --list-sdks
