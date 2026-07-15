@@ -64,18 +64,21 @@ RUN set -eux; \
     rm /tmp/docker.tgz; \
     docker --version
 
-# Tailscale CLI (client only, no daemon). ward containers reach the tower
-# (kai-tower-3026 ollama on the tailnet) over the tailnet; the image shipped no
-# tailnet client, so an agent could not query tailnet status or route to the
-# tower. The static tarball ships the full engine - extract only
-# the `tailscale` client binary. This makes the CLI *exist*; bringing up the
-# tailnet (auth) is a separate axis ward owns, not baked into the image.
+# Tailscale CLI + daemon binary. ward containers reach the tower
+# (kai-tower-3026 ollama on the tailnet) over the tailnet; the image must carry
+# both the client and daemon binaries so a live surface can inspect tailnet
+# state locally. Bringing up the daemon, auth, and socket wiring stays on ward's
+# container-bringup axis, not this image contract. The static tarball ships both
+# binaries - extract them into `/usr/local/bin` and verify each one exists.
 RUN set -eux; \
     . /tmp/arch.env; \
     curl -fsSL "https://pkgs.tailscale.com/stable/tailscale_${TAILSCALE_VERSION}_${TS_ARCH}.tgz" \
       -o /tmp/tailscale.tgz; \
     tar -xzf /tmp/tailscale.tgz -C /usr/local/bin --strip-components=1 \
-      "tailscale_${TAILSCALE_VERSION}_${TS_ARCH}/tailscale"; \
+      "tailscale_${TAILSCALE_VERSION}_${TS_ARCH}/tailscale" \
+      "tailscale_${TAILSCALE_VERSION}_${TS_ARCH}/tailscaled"; \
     chmod 0755 /usr/local/bin/tailscale; \
+    chmod 0755 /usr/local/bin/tailscaled; \
     rm /tmp/tailscale.tgz; \
-    tailscale version
+    tailscale version; \
+    tailscaled --version

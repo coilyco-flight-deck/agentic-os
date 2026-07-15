@@ -1,8 +1,7 @@
 # Tiered dev-base image split
 
-This is the implemented tier split for dev-base. The old monolithic Dockerfile
-became one folder per published tier, each with a literal `Dockerfile`, while
-`dev-base-full` kept the default `:latest` surface.
+dev-base split: one folder per published tier, with
+`dev-base-full` the default surface.
 
 ## Tier layout
 
@@ -10,30 +9,51 @@ became one folder per published tier, each with a literal `Dockerfile`, while
 - `docker/dev-base/lang-node/Dockerfile` - Node and npm.
 - `docker/dev-base/lang-go/Dockerfile` - Go for repos that build or test Go in CI.
 - `docker/dev-base/lang-dotnet/Dockerfile` - .NET SDK and ICU.
-- `docker/dev-base/ops/Dockerfile` - `aws`, `gh`, `helm`, `kubectl`, `yq`, Docker client, Tailscale client.
+- `docker/dev-base/ops/Dockerfile` - `aws`, `gh`, `helm`, `kubectl`, `yq`, Docker client, Tailscale client, and `tailscaled`.
 - `docker/dev-base/agent/Dockerfile` - Claude, Codex, Goose, mcporter, self-name assets, substrate seed.
 - `docker/dev-base/full/Dockerfile` - fan-in image for general `warded` use and the default surface.
 
 ## Dependency graph
 
-- `core` is the root published runtime tier.
-- `lang-node`, `lang-go`, `lang-dotnet`, and `ops` build from the previous tier image.
-- `agent` builds from `ops`.
-- `full` builds last from `agent`.
-- The hidden builder stage stays inside `core` so the ward binary still compiles per target platform during the core build.
+The tiers form a fan-out/fan-in DAG (aos#491):
+
+- `core` is the root. `lang-node`, `lang-go`, `lang-dotnet`, and `ops` are
+  siblings on it, each carrying only its own toolchain.
+- `agent` builds from `ops` and **grafts** Node in (Claude Code rides Node).
+  `full` builds last from `agent` and grafts `lang-go` and `lang-dotnet`.
+- Docker images have one parent, so composed tiers graft sibling toolchains
+  with `COPY --from=` of self-contained prefixes (`/usr/local/node`, `/go`,
+  `/dotnet`), all on `core`'s `PATH`. `TierSpec.base_tier` / `graft_tiers` in
+  [`agentic_os/dev_base.py`](../agentic_os/dev_base.py) emit the
+  `BASE_IMAGE` / `<TIER>_IMAGE` build-args.
+- The hidden builder stage stays inside `core` so ward still compiles per target platform.
 
 ## Tag derivation
 
 - One repo release tag drives the whole family.
-- The folder name becomes the image suffix, so `core` becomes `agentic-os-core:${TAG}` and `full` becomes `agentic-os-full:${TAG}`.
+- Everything publishes under one `agentic-os` package, with the tier in the
+  tag: `core` becomes `agentic-os:core-${TAG}` while `full` keeps
+  `agentic-os:${TAG}`.
 - The release helper in [`scripts/dev-base-build.py`](../scripts/dev-base-build.py) derives the plan from the directory layout.
-- There is no checked-in `docker/dev-base/ci-image-manifest.json` anymore. Every published ref is derivable from `{registry base, folder name, tag}`, so the JSON map would only duplicate the folder layout.
+- Every published ref derives from `{registry base, folder name, tag}` - there is no checked-in manifest JSON to drift out of step with the folder layout.
 
 ## Release flow
 
-- `release.yml` computes the next tag first.
-- It then calls the helper with `--push`, which builds and verifies each tier in order.
-- `dev-base-full` still fans in last and keeps `:latest`.
+- `promote.yml` runs **one draft publish job per tier**
+  ([`actions/publish-dev-base-tier`](../actions/publish-dev-base-tier/action.yml)),
+  with `needs:` carrying the DAG above: siblings build in parallel, a flaky
+  tier fails and reruns alone, and a `lang-dotnet` flake no longer takes
+  `ops` or `agent` down - only `full` waits on it.
+- `release.yml` computes the next public tag first, then runs one retag job
+  per tier from `draft-${sha}` to `vX.Y.Z`, `:release`, and `:latest`.
+- Each job verifies its pushed or retagged manifests. The tag-cutting
+  `release` job needs every retag job, so the public tag lands only after the
+  whole family is pullable under the final refs. Builder and layer cache
+  persist between runs: [dev-base build cache](dev-base-build-cache.md).
+- Every released tier carries the moving `:release` branch alias and the
+  `:latest` compatibility alias alongside the versioned release tag, so
+  `dev-base-full` keeps the default `agentic-os:release` surface ward pulls
+  while older `:latest` consumers still resolve to the same image.
 
 ## ARG ownership
 

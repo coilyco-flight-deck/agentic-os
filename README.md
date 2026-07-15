@@ -9,6 +9,7 @@ Cross-platform shell + terminal setup plus cross-repo pre-commit hooks for coily
 
 - `shell/` - shared `common.sh` plus thin `zshrc` + `bashrc`, so bash and zsh match. `warp.zsh` is the zsh-only Warp dispatcher.
 - `warp/` - Warp config (`settings.toml`, `tab_configs/`) plus the `ward exec warp` Go module.
+- `aos-say/` - the `ward exec aos-say` Go module for the speech helper client and relay.
 - `karabiner/` - Karabiner-Elements complex modification assets (`brew install --cask karabiner-elements`), symlinked into the local Karabiner config tree.
 - `scripts/` - portable utilities (gpg-ssm wrapper, agent-name + session-pulse hooks, aws-config lint).
 - `.agents/skills/` - SKILL.md docs for the configs that live here. A private overlay repo's skill mount walks this dir as a peer skill source.
@@ -24,7 +25,7 @@ Host config is converged by Ansible (rollout lives in infrastructure, per [AGENT
 ward exec apply-shell-links
 ```
 
-Equivalent links:
+Equivalent links on Mac and Linux:
 
 ```bash
 ln -sf "$PWD/shell/zshrc"  ~/.zshrc      # both source shell/common.sh
@@ -32,6 +33,10 @@ ln -sf "$PWD/shell/bashrc" ~/.bashrc
 ln -sf "$PWD/scripts/gpg-ssm" ~/.local/bin/gpg-ssm
 ward exec warp apply                     # warp config
 ```
+
+On Windows, `ward exec apply-shell-links` manages `~/.zshrc` and the `gpg-ssm.cmd`
+shim only. It also links the Forgejo git credential helper; Git Bash popup shells
+should not recreate `~/.bashrc`.
 
 Agent self-name + session-pulse hooks, per-host steps, and gpg wiring: [docs/install.md](docs/install.md).
 
@@ -66,6 +71,7 @@ Opt-in tooling that composes global agent context and symlinks each harness load
 
 - [AGENTS.md](AGENTS.md) - public-safe agent operating conventions and the global load point.
 - [docs/FEATURES.md](docs/FEATURES.md) - inventory of what ships today.
+- [Repo maps](docs/repo-maps.md) - compact starting points for high-churn warded workflow areas.
 - [CODE-REVIEW.md](CODE-REVIEW.md) - root review contract for repo-local invariants and historical issues.
 - [.ward/ward.yaml](.ward/ward.yaml) - allowlisted dev commands. Agents route through ward.
 

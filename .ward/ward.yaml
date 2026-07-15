@@ -4,12 +4,18 @@ commands:
   warp:
     run: go run -C warp .
     description: "Establish and verify Kai's Warp config across hosts. `ward exec warp apply` renders all three state layers (repo template, config-dir TOML, SQLite); `ward exec warp doctor` reports drift. See project-a-ward-exec-warp.md."
+  aos-say:
+    run: go run -C aos-say .
+    description: "Speak short status text with the Mac-integrated `aos-say` client. On Darwin it calls `/usr/bin/say` directly, and on other hosts it forwards one JSON request to the configured relay. Use `ward exec aos-say -- relay` for the relay entrypoint."
+  aos-say-test:
+    run: go test -C aos-say ./...
+    description: "Run the `aos-say` Go test suite."
   agent-compat:
     run: uv run python scripts/agent-compat.py
     description: "Run daily unittest smoke checks for local agent harness compatibility. The roster is read live from `ward agents list --json`, so it tracks ward's embedded fleet (Claude, Codex, OpenCode, Goose) instead of a private list; narrow with `-- --harness codex`. Uses unittest's native ok/FAIL/ERROR output and exit code. See docs/agent-compat.md."
   dev-base-build:
     run: uv run python scripts/dev-base-build.py --registry agentic-os --tag dev-base-local build
-    description: "Build the split dev-base tier chain locally under agentic-os-<tier>:dev-base-local for validating docker/dev-base/<tier>/Dockerfile changes before the release workflow publishes the multi-arch image."
+    description: "Build the split dev-base tier family (fan-out DAG, in topological order) locally under agentic-os:<tier>-dev-base-local (agentic-os:dev-base-local for full) for validating docker/dev-base/<tier>/Dockerfile changes before the release workflow publishes the multi-arch image."
   dep-bump:
     run: uv run python scripts/dep-bump.py
     description: "Resolve the dev-base tier Dockerfiles' pinned tool versions against upstream and bump them. `ward exec dep-bump -- check` reports drift (exit 1 if stale); `-- plan` emits the stale set as TSV (`--json` for machines); `-- apply --arg UV_VERSION --version X` rewrites one ARG. The scheduled .forgejo/workflows/dep-bump.yml runs this to auto-republish the image family. See docs/dev-base-image.md."
@@ -91,6 +97,15 @@ commands:
   ship-tool-failures:
     run: uv run python -m agentic_os.tool_failures.ship
     description: "Drain the tool-use failure-record buffer (~/.cache/agentic-os/tool-failures/<repo>.jsonl) to GlitchTip: gate on genuine failures, fingerprint-group, and emit one Sentry-protocol envelope per failure past a per-file watermark (idempotent). DSN from SSM (/sentry-dsn/tool-failures), fail-soft when absent so the buffer keeps accumulating. Producer-agnostic, out-of-band (timer / SessionEnd hook), never a hot path. `-- --dry-run` previews counts without a DSN or POST, `-- --repo <slug>` narrows. See docs/tool-failures-shipper.md, SSM.md."
+  forgejo-actions-logs:
+    run: uv run python -m agentic_os.forgejo_actions_logs
+    description: "Stream a Forgejo Actions job log: `ward exec forgejo-actions-logs -- <owner> <repo> <run_index> <job_index> [attempt]` (indexes as shown in the run URL). Needs FORGEJO_TOKEN. Speaks the UI log-cursor route with Basic auth because the API logs route 404s on Forgejo 15 (aos#476); logs for older runs may already be purged (infrastructure#545)."
+  sync-actions-secrets:
+    run: uv run python scripts/sync-actions-secrets.py
+    description: "Sync Forgejo Actions secrets (Telegram alert creds, CI_RELEASE_TOKEN) from their SSM sources of truth to the aos + ward + cli-guard repos. Values flow SSM -> Forgejo API in-process, never disk or argv. `-- --dry-run` previews the mapping. See docs/release.md."
+  remint-ci-release-token:
+    run: uv run --with boto3 python scripts/remint-ci-release-token.py
+    description: "Remint the two-stage promote PAT on the coilyco-ops bot (write:repository + read:user - without read:user Forgejo drops the release enqueue, ward#1117) and overwrite SSM /forgejo/ci-release-token. Values stay in-process. `-- --dry-run` previews. Follow with `ward exec sync-actions-secrets`."
   agent-id:
     run: uv run python -m agentic_os.agent_id
     description: "Canonical short agent-id generator over the dictatable alphabet (lowercase 2-letter+2-digit, e.g. `ab85`). Bare invocation prints a fresh `secrets`-backed id (`-- -n 5` for more); `-- --seed <s>` prints the deterministic contract id for a seed, `-- --org <forgejo-org>` prints the short container token, `-- --emit-vectors` regenerates agent_id_vectors.json. The cross-repo naming primitive ward and cli-guard's Go port build against. See docs/dictatable-id-alphabet.md."

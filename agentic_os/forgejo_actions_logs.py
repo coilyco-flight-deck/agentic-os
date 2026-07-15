@@ -1,32 +1,30 @@
-"""Forgejo Actions log bridge for status target URLs.
+"""Forgejo Actions log bridge over the UI log-cursor route.
 
-The visible PR status target uses the repository run index and the job index,
-for example `/actions/runs/886/jobs/0`. Forgejo's logs route needs the internal
-run id and job id, so this bridge resolves the HTML job page first, extracts the
-real ids, then fetches the plaintext log stream.
+The documented API log route (`/api/v1/.../actions/runs/{run_id}/jobs/{job_id}
+/attempt/{n}/logs`) 404s on Forgejo 15 even for fresh, successful runs
+(aos#476), so this bridge speaks the route the web UI itself uses: GET the job
+page for its embedded initial payload (the step list), then POST `logCursors`
+to the same URL to stream every step's lines. The `/attempt/{n}` segment is
+required - without it the handler resolves attempt 0 and reports the task
+missing.
 """
 
 from __future__ import annotations
 
 import argparse
 import dataclasses
-import html
 import json
 import os
-import re
 import sys
 import urllib.error
-import urllib.request
+
+from agentic_os.forgejo_actions_web import (
+    ForgejoActionsWebError,
+    extract_initial_post_response,
+    request,
+)
 
 DEFAULT_BASE_URL = "https://forgejo.coilysiren.me"
-RUN_INDEX_RE = re.compile(r'data-run-index="(?P<run_index>\d+)"')
-RUN_ID_RE = re.compile(r'data-run-id="(?P<run_id>\d+)"')
-JOB_INDEX_RE = re.compile(r'data-job-index="(?P<job_index>\d+)"')
-ATTEMPT_RE = re.compile(r'data-attempt-number="(?P<attempt>\d+)"')
-INITIAL_POST_RE = re.compile(
-    r'data-initial-post-response="(?P<payload>.*?)"\s*data-initial-artifacts-response=',
-    re.DOTALL,
-)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -36,8 +34,6 @@ class JobLogTarget:
     run_index: int
     job_index: int
     attempt: int
-    run_id: int
-    job_id: int
 
     def page_url(self, base_url: str) -> str:
         return (
@@ -45,113 +41,56 @@ class JobLogTarget:
             f"{self.run_index}/jobs/{self.job_index}/attempt/{self.attempt}"
         )
 
-    def logs_url(self, base_url: str) -> str:
-        return (
-            f"{base_url}/api/v1/repos/{self.owner}/{self.repo}/actions/runs/"
-            f"{self.run_id}/jobs/{self.job_id}/attempt/{self.attempt}/logs"
-        )
-
 
 class ForgejoActionsLogError(RuntimeError):
     """The bridge could not resolve or fetch the requested log stream."""
 
 
-def _http_get(url: str, token: str, accept: str) -> bytes:
-    request = urllib.request.Request(
-        url,
-        headers={
-            "Authorization": f"token {token}",
-            "Accept": accept,
-        },
-    )
-    with urllib.request.urlopen(request) as response:
-        return response.read()
-
-
-def _parse_job_page(
-    target: JobLogTarget, page_html: str, *, base_url: str
-) -> JobLogTarget:
-    run_index_match = RUN_INDEX_RE.search(page_html)
-    run_id_match = RUN_ID_RE.search(page_html)
-    job_index_match = JOB_INDEX_RE.search(page_html)
-    attempt_match = ATTEMPT_RE.search(page_html)
-    payload_match = INITIAL_POST_RE.search(page_html)
-    if not all((run_index_match, run_id_match, job_index_match, attempt_match, payload_match)):
-        raise ForgejoActionsLogError(
-            "could not resolve Forgejo job ids from the HTML job page. "
-            f"target_url={target.page_url(base_url)}"
-        )
-
-    if int(run_index_match.group("run_index")) != target.run_index:
-        raise ForgejoActionsLogError(
-            "Forgejo job page did not match the requested run index. "
-            f"target_url={target.page_url(base_url)}"
-        )
-    if int(job_index_match.group("job_index")) != target.job_index:
-        raise ForgejoActionsLogError(
-            "Forgejo job page did not match the requested job index. "
-            f"target_url={target.page_url(base_url)}"
-        )
-
-    payload = html.unescape(payload_match.group("payload"))
+def parse_job_steps(page_html: str, *, page_url: str) -> list[dict]:
+    """Extract the current job's step list from the page's initial payload."""
     try:
-        decoded = json.loads(payload)
+        decoded = extract_initial_post_response(page_html, page_url=page_url)
+    except ForgejoActionsWebError as exc:
+        raise ForgejoActionsLogError(str(exc)) from exc
+    steps = decoded.get("state", {}).get("currentJob", {}).get("steps", [])
+    if not isinstance(steps, list) or not steps:
+        raise ForgejoActionsLogError(
+            f"Forgejo job page exposed no steps for this job. target_url={page_url}"
+        )
+    return steps
+
+
+def log_cursor_body(step_count: int) -> bytes:
+    """The UI's log request: one expanded null cursor per step fetches everything."""
+    cursors = [{"step": i, "cursor": None, "expanded": True} for i in range(step_count)]
+    return json.dumps({"logCursors": cursors}).encode("utf-8")
+
+
+def render_step_logs(steps: list[dict], response: dict) -> str:
+    """Interleave step headers with their fetched lines, in step order."""
+    by_step: dict[int, list[str]] = {}
+    for entry in (response.get("logs", {}) or {}).get("stepsLog", []) or []:
+        lines = [line.get("message", "") for line in entry.get("lines", []) or []]
+        by_step[int(entry.get("step", -1))] = lines
+    out: list[str] = []
+    for i, step in enumerate(steps):
+        summary = step.get("summary", f"step {i}")
+        status = step.get("status", "unknown")
+        out.append(f"### step {i}: {summary} [{status}]")
+        out.extend(by_step.get(i, []))
+    return "\n".join(out) + "\n"
+
+
+def fetch_job_logs(target: JobLogTarget, *, token: str, base_url: str) -> str:
+    url = target.page_url(base_url)
+    page = request(url, token).decode("utf-8", "replace")
+    steps = parse_job_steps(page, page_url=url)
+    body = request(url, token, data=log_cursor_body(len(steps)), content_type="application/json")
+    try:
+        decoded = json.loads(body)
     except json.JSONDecodeError as exc:
-        raise ForgejoActionsLogError(
-            "Forgejo returned an unreadable job page payload. "
-            f"target_url={target.page_url(base_url)}"
-        ) from exc
-
-    run = decoded.get("state", {}).get("run", {})
-    jobs = run.get("jobs", [])
-    if not isinstance(jobs, list) or target.job_index >= len(jobs):
-        raise ForgejoActionsLogError(
-            "Forgejo job page did not expose the requested job index. "
-            f"target_url={target.page_url(base_url)}"
-        )
-
-    job = jobs[target.job_index]
-    try:
-        run_id = int(run_id_match.group("run_id"))
-        job_id = int(job["id"])
-        attempt = int(attempt_match.group("attempt"))
-    except (KeyError, TypeError, ValueError) as exc:
-        raise ForgejoActionsLogError(
-            "Forgejo job page exposed an incomplete job mapping. "
-            f"target_url={target.page_url(base_url)}"
-        ) from exc
-
-    return dataclasses.replace(target, run_id=run_id, job_id=job_id, attempt=attempt)
-
-
-def resolve_target(
-    owner: str,
-    repo: str,
-    run_index: int,
-    job_index: int,
-    attempt: int,
-    *,
-    token: str,
-    base_url: str = DEFAULT_BASE_URL,
-) -> JobLogTarget:
-    target = JobLogTarget(
-        owner=owner,
-        repo=repo,
-        run_index=run_index,
-        job_index=job_index,
-        attempt=attempt,
-        run_id=run_index,
-        job_id=job_index,
-    )
-    page_html = _http_get(target.page_url(base_url), token, "text/html").decode(
-        "utf-8", "replace"
-    )
-    resolved = _parse_job_page(target, page_html, base_url=base_url)
-    return resolved
-
-
-def fetch_logs(target: JobLogTarget, *, token: str, base_url: str) -> bytes:
-    return _http_get(target.logs_url(base_url), token, "text/plain")
+        raise ForgejoActionsLogError(f"unreadable log-cursor response. target_url={url}") from exc
+    return render_step_logs(steps, decoded)
 
 
 def _parse_args(argv: list[str] | None) -> argparse.Namespace:
@@ -163,7 +102,7 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser.add_argument("repo")
     parser.add_argument("run_index", type=int)
     parser.add_argument("job_index", type=int)
-    parser.add_argument("attempt", type=int)
+    parser.add_argument("attempt", type=int, nargs="?", default=1)
     return parser.parse_args(argv)
 
 
@@ -175,61 +114,40 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     base_url = os.environ.get("FORGEJO_BASE_URL", DEFAULT_BASE_URL).rstrip("/")
-    status_target = JobLogTarget(
+    target = JobLogTarget(
         owner=args.owner,
         repo=args.repo,
         run_index=args.run_index,
         job_index=args.job_index,
         attempt=args.attempt,
-        run_id=args.run_index,
-        job_id=args.job_index,
     )
     try:
-        target = resolve_target(
-            args.owner,
-            args.repo,
-            args.run_index,
-            args.job_index,
-            args.attempt,
-            token=token,
-            base_url=base_url,
+        rendered = fetch_job_logs(target, token=token, base_url=base_url)
+    except urllib.error.HTTPError as exc:
+        if exc.code == 404:
+            print(
+                "Forgejo returned 404 for the job page. Check the run/job indexes; "
+                f"next usable command: {target.page_url(base_url)}",
+                file=sys.stderr,
+            )
+            return 65
+        # The instance answers a purged task with an error body, not a clean 404.
+        print(
+            f"Forgejo refused the log fetch ({exc.code}). Logs for finished runs are "
+            "purged aggressively on this deployment (infrastructure#545), so an older "
+            f"run may simply be gone. target_url={target.page_url(base_url)}",
+            file=sys.stderr,
         )
-    except urllib.error.HTTPError as exc:
-        if exc.code == 404:
-            print(
-                "Forgejo returned 404 for the HTML job page that should resolve "
-                f"status target /actions/runs/{args.run_index}/jobs/{args.job_index}. "
-                "The bridge needs that page to map the visible run index and job "
-                "index to the internal run id and job id. "
-                f"next usable command: {status_target.page_url(base_url)}",
-                file=sys.stderr,
-            )
-            return 65
-        raise
+        return 65
     except (OSError, ForgejoActionsLogError) as exc:
         print(str(exc), file=sys.stderr)
         return 65
 
-    try:
-        logs = fetch_logs(target, token=token, base_url=base_url)
-    except urllib.error.HTTPError as exc:
-        if exc.code == 404:
-            print(
-                "Forgejo returned 404 for the resolved job log route. "
-                f"status target /actions/runs/{args.run_index}/jobs/{args.job_index} "
-                f"resolved to run_id={target.run_id} job_id={target.job_id}. "
-                f"next usable command: {status_target.page_url(base_url)}",
-                file=sys.stderr,
-            )
-            return 65
-        raise
-    except (OSError, ForgejoActionsLogError) as exc:
-        print(str(exc), file=sys.stderr)
-        return 65
-
-    sys.stdout.buffer.write(logs)
+    # Bytes, not str: log content is arbitrary UTF-8 and a cp1252 console
+    # (Windows) must not be able to crash the bridge on an emoji.
+    sys.stdout.buffer.write(rendered.encode("utf-8"))
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    sys.exit(main())

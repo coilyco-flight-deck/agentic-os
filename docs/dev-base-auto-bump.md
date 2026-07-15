@@ -13,8 +13,9 @@ a bug already fixed upstream because the image they ran predated the fix.
 daily (and on `workflow_dispatch`). It calls
 [`scripts/dep-bump.py`](../scripts/dep-bump.py), which resolves each pinned tool
 against its upstream latest release, and for every pin that drifted commits a
-single `ARG` bump and pushes to main. That push republishes the image through the
-same `publish-image` job as any other push to main, so `:latest` tracks upstream.
+single `ARG` bump and pushes to main. That push republishes the image through
+the same `publish-dev-base` job as any landed commit, so the moving `:release`
+alias tracks upstream.
 
 The bump logic lives in this repo because the publish pipeline does (AGENTS.md).
 Fleet rollout is not its concern.

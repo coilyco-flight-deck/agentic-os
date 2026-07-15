@@ -243,13 +243,44 @@ wrap ward-kdl ops forgejo {
     can edit release
     can delete release
     can upload-asset release
-    // pulls: read-only here. Merge rides guardfile.forgejo.merge.kdl, bound to
-    // the director/engineer roles only as completion authority (agentic-os#446).
+    // pulls: the full lifecycle except merge (agentic-os#488), every leaf
+    // op-pinned - the bare convention misses the pulls sub-resources.
     can view pr {
         op repoGetPullRequest
+        describe "single PR read (GET /repos/{owner}/{repo}/pulls/{index}). The lifecycle beside it (files/commits/create/edit/close/reopen/update, agentic-os#488) deliberately stops short of merge: merge rides guardfile.forgejo.merge.kdl as director-completion authority (agentic-os#446), so the merge gate is unchanged by the lifecycle set."
     }
     can list pr {
         op repoListPullRequests
+    }
+    can files pr {
+        op repoGetPullRequestFiles
+        describe "changed-file list for a PR (GET /repos/{owner}/{repo}/pulls/{index}/files). The stranded-PR sweep (agentic-os#488) had to clone each repo to learn a PR was empty because additions/changed_files on the PR body cannot distinguish 'no work' from 'already merged'; this read answers that off-disk."
+    }
+    can commits pr {
+        op repoGetPullRequestCommits
+        describe "commit list for a PR (GET /repos/{owner}/{repo}/pulls/{index}/commits): the read helper beside `pr files` (agentic-os#488)."
+    }
+    can create pr {
+        op repoCreatePullRequest
+        describe "open a pull request (POST /repos/{owner}/{repo}/pulls): --title plus --head and --base branch names. The authoring end of the lifecycle (agentic-os#488)."
+    }
+    can edit pr {
+        op repoEditPullRequest
+        describe "edit a pull request's title/body/state fields (PATCH /repos/{owner}/{repo}/pulls/{index}). Prefer the fixed-body `pr close` / `pr reopen` toggles for state flips."
+    }
+    can close pr {
+        op repoEditPullRequest
+        body state=closed
+        describe "close a pull request without merging (PATCH state=closed): the stranded-PR cleanup verb (agentic-os#488). Reversible with `pr reopen`, so a wrong close is not a wall."
+    }
+    can reopen pr {
+        op repoEditPullRequest
+        body state=open
+        describe "reopen a closed, unmerged pull request (PATCH state=open): the inverse of `pr close`."
+    }
+    can update pr {
+        op repoUpdatePullRequest
+        describe "update a stale PR head branch from its base (POST /repos/{owner}/{repo}/pulls/{index}/update), e.g. pull main into a branch that fell behind (agentic-os#488: ward#987 stranded partly because nothing could refresh a branch 180 commits back)."
     }
     // issue-labels: the compound resource targets the issue's labels sub-collection;
     // add/set/remove are the membership verbs (POST/PUT/DELETE).
@@ -426,6 +457,26 @@ wrap ward-kdl ops forgejo {
             as comment
         }
         fail-when "$issue.state == 'closed'"
+    }
+    // fetch mirrors for the dead Forgejo Actions API routes. agentic-os#473
+    // documented these routes as 404s, and issue #530 asked for the fetch form.
+    fetch "actions logs" {
+        method "GET"
+        path "/repos/{owner}/{repo}/actions/runs/{run}/jobs/{job}/attempt/{attempt}/logs"
+        output "raw"
+        when first input matches coily*
+    }
+    fetch "actions rerun" {
+        method "POST"
+        path "/repos/{owner}/{repo}/actions/runs/{run}/rerun"
+        output "raw"
+        when first input matches coily*
+    }
+    fetch "actions rerun-failed-jobs" {
+        method "POST"
+        path "/repos/{owner}/{repo}/actions/runs/{run}/rerun-failed-jobs"
+        output "raw"
+        when first input matches coily*
     }
     // Back-link footer (ward#309): doc-link regenerates a `## See also` section
     // into this guardfile's reference doc, so it survives every rebuild wipe-proof.

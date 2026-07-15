@@ -6,12 +6,18 @@ coilyco ward spec bundle, but latest ward does not mount it as
 `ward ops forgejo actions logs`: the spec-driven `ward ops forgejo` command owns
 that path, and same-path exec overlays are skipped fail-closed.
 
+The companion specverb fetch overlay in
+[`.ward/guardfile.forgejo.kdl`](../.ward/guardfile.forgejo.kdl) pins the dead
+Forgejo API log route from agentic-os#473. PR #529 replaced that route with
+the live web UI helper below, and this fetch mirror keeps the dead shape
+documented instead of hand-coding another raw HTTP call.
+
 Why the bridge still exists:
 
 - Forgejo 15.0.2 exposes the Actions metadata in swagger, but not this log
   route.
-- The script preserves the owner gate and Forgejo token auth, and it does not
-  JSON-render the response body.
+- The script preserves the owner gate and uses Basic auth against the job page
+  and its `logCursors` POST, and it does not JSON-render the response body.
 - ward#950 tracks replacing this bridge with a first-class fetch-style ward-kdl
   surface that can live beside the spec-driven Forgejo verbs.
 
@@ -30,9 +36,10 @@ Mapping:
 
 The resolved log route is:
 
-`GET /repos/{owner}/{repo}/actions/runs/{run}/jobs/{job}/attempt/{attempt}/logs`
+`GET` and `POST` `/repos/{owner}/{repo}/actions/runs/{run}/jobs/{job}/attempt/{attempt}`
 
 See also:
 
 - [ward-specs.md](ward-specs.md)
+- [Forgejo Actions rerun bridge](forgejo-actions-rerun.md)
 - [Cross-repo tooling and release](FEATURES.md)

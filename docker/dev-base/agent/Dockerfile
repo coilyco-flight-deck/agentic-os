@@ -1,10 +1,22 @@
 ARG BASE_IMAGE
+ARG LANG_NODE_IMAGE
+FROM ${LANG_NODE_IMAGE} AS dev-base-lang-node-graft
 FROM ${BASE_IMAGE} AS dev-base-agent
 ARG CLAUDE_VERSION=2.1.206
 ARG MCPORTER_VERSION=0.12.3
 ARG CODEX_VERSION=0.144.1
 ARG GOOSE_VERSION=1.41.0
 ARG OPENCODE_VERSION=1.17.18
+
+# Node toolchain graft. agent sits on ops (core + ops CLIs, no language
+# tiers) since the aos#491 fan-out, and Claude Code / mcporter / opencode all
+# ride Node, so graft the sibling lang-node tier's self-contained
+# /usr/local/node prefix in. core's ENV PATH already carries its bin dir, and
+# npm's global prefix follows the node binary, so the npm installs below land
+# inside the grafted directory.
+COPY --from=dev-base-lang-node-graft /usr/local/node /usr/local/node
+RUN set -eux; \
+    node --version; npm --version
 
 # Claude Code, pinned.
 RUN set -eux; \
@@ -90,8 +102,9 @@ RUN set -eux; \
 # container warms its gitcache from on a cold volume. The list is canonical in
 # docker/dev-base/substrate-image-repos.txt and the runtime ward manifest
 # denormalizes that image-tier subset into cmd/ward/containerassets/preclone-repos.txt.
-# All public read (anonymous clone). Bridge/private repos are deliberately not
-# baked into this shareable image. Mirror dir name matches ward's owner__name.git.
+# All public read (anonymous clone). Non-profile bridge/private repos are
+# deliberately not baked into this shareable image. Mirror dir name matches
+# ward's owner__name.git.
 COPY substrate-image-repos.txt /tmp/substrate-image-repos.txt
 RUN set -eux; \
     mkdir -p /opt/substrate-seed; \

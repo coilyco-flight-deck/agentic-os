@@ -7,11 +7,13 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-WARD_REF_PREFIX = "forgejo.coilysiren.me/coilyco-flight-deck/agentic-os@"
 
 
-def _git_head(repo: Path) -> str:
-    return subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"], text=True).strip()
+def _bundle_dir_of(ref: str) -> Path:
+    """Resolve a file:// WARD_CONFIG_REF back to the checkout it points into."""
+    assert ref.startswith("file://"), ref
+    assert ref.endswith("/.ward"), ref
+    return Path(ref[len("file://"):].removesuffix("/.ward")).resolve()
 
 
 def _foreign_repo(tmp_path: Path) -> Path:
@@ -62,7 +64,9 @@ def test_common_shell_uses_the_canonical_checkout_instead_of_cwd(tmp_path: Path)
         env=env,
     )
 
-    assert proc.stdout == f"{WARD_REF_PREFIX}{_git_head(REPO_ROOT)}//.ward"
+    # Host shells point at the canonical checkout's bundle live (file://), so a
+    # pull is immediately effective and launch needs no gitsync or credentials.
+    assert _bundle_dir_of(proc.stdout) == REPO_ROOT.resolve()
 
 
 def test_container_entrypoint_seeds_the_read_only_surface_env(tmp_path: Path) -> None:
@@ -94,4 +98,6 @@ def test_container_entrypoint_seeds_the_read_only_surface_env(tmp_path: Path) ->
 
     root, ref = proc.stdout.splitlines()
     assert root == str(REPO_ROOT)
-    assert ref == f"{WARD_REF_PREFIX}{_git_head(REPO_ROOT)}//.ward"
+    # The entrypoint reads the seeded checkout's bundle live too - no in-container
+    # gitsync, credentials, or config-bundle cache (the ward#1086 FETCH_HEAD class).
+    assert ref == f"file://{root}/.ward"

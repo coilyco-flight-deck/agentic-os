@@ -24,6 +24,8 @@ Route every dev command through ward, which reads [`.ward/ward.yaml`](.ward/ward
 
 This repo ships and dogfoods the catalog pre-commit suite (catalog-trifecta, documentation-layout, code-comments, catalog-block, check-skills, dead-cross-links, repo-pointer-skills, trufflehog). Run `pre-commit run --all-files` before committing. Per-repo opt-outs (excludes, cap overrides) live under `[tool.agentic-os.*]` in `pyproject.toml`.
 
+**Tests never encode config values.** A tunable lives in one owning source. Config validity belongs to the loader (`ward doctor` gates `.ward` in ci and promote), so tests never assert guardfile or KDL content, and CI enumerates no list a wildcard can derive.
+
 ## Safety
 
 Keep every artifact public-safe: messages, chat, code, commits, PRs, and public text. No private identity labels in public-facing content (bios, profiles, READMEs, social, public PR text). No opaque ids, tokens, or host/network identifiers in tracked files. trufflehog runs at commit time as the secret-scan backstop, but the discipline is upstream of the hook.
@@ -34,7 +36,7 @@ Keep every artifact public-safe: messages, chat, code, commits, PRs, and public 
 
 Anything that fits as a pre-commit validation is **authored** here in agentic-os (the `agentic_os/check_*.py` validator plus its `.pre-commit-hooks.yaml` entry). Its **fleet rollout** - the thing that fans it across every checkout - lives in infrastructure/ansible, never here. The same split applies to any fleet-wide mutation: the tool or logic is authored in its home repo, and an ansible role is the rollout. Install-time mass mutation never belongs in `ward setup` or a brew post-install. Homebrew installs the binary and stops. Ansible converges the fleet.
 
-The **trigger** for a rollout is a push, not a hand-run publish, keeping it in agent scope. When work needs the `dev-base :latest` image rebuilt (a Dockerfile, entrypoint, or pinned-`ARG` edit), the agent authors it and pushes to main - the `publish-image` job in [`release.yml`](.forgejo/workflows/release.yml) rebuilds and pushes `:latest` under the release tag. It holds no registry creds, runs no `buildx --push`: the publish is a CI consequence of the landed commit, like the tag. So "needs the image republished" is **in** scope (author, push, let CI publish), not a NO-GO wall - reserve it for a deliverable that cannot reduce to a push.
+The **trigger** for a rollout is a push, not a hand-run publish, keeping it in agent scope. When work needs the dev-base image family rebuilt (a Dockerfile, entrypoint, or pinned-`ARG` edit), the agent authors it and pushes to main - the `publish-dev-base` job in [`release.yml`](.forgejo/workflows/release.yml) rebuilds each tier and pushes the release tag plus the moving `:release` branch alias. It holds no registry creds, runs no `buildx --push`: the publish is a CI consequence of the landed commit, like the tag. So "needs the image republished" is **in** scope (author, push, let CI publish), not a NO-GO wall - reserve it for a deliverable that cannot reduce to a push.
 
 ### Config placement
 
@@ -87,6 +89,16 @@ Unless told otherwise, "done" includes the obvious follow-through, not the first
 ### Run until a wall worth a human
 
 Proceed autonomously on anything reversible. Stop only for a destructive, irreversible, or externally-visible action (force-push, data loss, a post or email on the user's behalf, a public surface), or a genuine multi-path fork where the wrong choice is costly to undo. Everything short of that wall: pick the sensible default, name it inline in one line ("picking X because Y"), and keep going. A 5-second "no, do X" after the fact is cheaper than a run parked for an hour waiting on a question the user could have answered either way. Batch any genuine questions and surface them at the end with the work already done, not mid-run.
+
+### Engineers and QA: never debug or iterate against a live deployment
+
+This rule binds the **sealed roles - engineer and QA** - which run in ephemeral clones with no live-cluster access. It does **not** bind director or ops: those hold live-observe surfaces and are authorized to debug deployments.
+
+An engineer or QA runs in a sealed, ephemeral clone with **no live-cluster access**. You cannot curl a public edge, inspect a pod, watch a rollout, or confirm a secret synced. So you **must not** try to debug, tune, or "fix until green" a live deployment, and QA **must not** render a verdict that turns on live-cluster state it cannot observe. Treating infra like a unit test - change logic, push, watch CI, repeat - produces changes you cannot verify, which land red on `main` and churn. A live deployment you cannot observe **is** one of the walls worth a human.
+
+Deploys already have established precedent (exposure patterns, exemplar services, shared charts). For deploy work: **match the precedent and copy the exemplar, do not invent or iterate.** If a change genuinely needs live verification - does this rollout succeed, is this secret synced, is the edge reachable - you **cannot** provide it from a sealed clone. Stop, file an `interactive`-labeled issue describing exactly what needs live verification, and hand it to a role that can observe live (the operator, or a director / ops run). Do not push a speculative fix and hope CI confirms it.
+
+Cross-reference the deploy precedent doc (`coilyco-bridge/deploy/docs/deploy-patterns.md`, forthcoming) and the burndown repo-exclusion filter (`coilyco-flight-deck/ward#1105`).
 
 ### Front-load the context you know you need
 

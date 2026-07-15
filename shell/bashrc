@@ -8,7 +8,6 @@ fi
 _siren_bashrc_source="$(readlink "${BASH_SOURCE[0]}" 2>/dev/null || printf '%s' "${BASH_SOURCE[0]}")"
 _siren_aos_root="$(cd "$(dirname "$_siren_bashrc_source")/.." && pwd -P)"
 export AOS_REPO_ROOT="$_siren_aos_root"
-ln -sf "$_siren_aos_root/shell/bashrc" "$HOME/.bashrc"
 source "$_siren_aos_root/shell/common.sh"
 source "$_siren_aos_root/shell/warp.zsh"
 command -v direnv >/dev/null && eval "$(direnv hook bash)"

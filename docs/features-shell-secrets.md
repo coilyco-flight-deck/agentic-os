@@ -28,4 +28,4 @@ Single Warp config tree rendered into the host's Warp config dir - `~/.warp-prev
 
 ## Install surface
 
-[README.md](../README.md) carries per-OS install steps. `ward exec apply-shell-links` repairs the local shell entry symlinks (`~/.zshrc`, `~/.bashrc`, `gpg-ssm`) when a host drifts from the ansible-owned layout. Mac/Linux can also use plain `ln -sf`. Windows uses symlinks via Git Bash, which requires Developer Mode + `MSYS=winsymlinks:nativestrict`.
+[README.md](../README.md) carries per-OS install steps. `ward exec apply-shell-links` repairs shell links, `gpg-ssm`, and the Forgejo git credential helper. Windows skips `~/.bashrc` so Git Bash hook launchers cannot recreate stale state. Mac/Linux can also use plain `ln -sf`. Windows symlinks need Developer Mode or elevation.

@@ -1,9 +1,9 @@
 """Tests for the dev-base agent-name.sh `gitidentity` mode (agentic-os#244).
 
-A warded agent stamps its self-name as the git author/committer NAME at session
-start so a commit records which agent made it, while the load-bearing bot EMAIL
-(set by ward at --system) is left untouched so Forgejo still links the commit to
-the coilyco-ops account. These drive the baked container script via subprocess.
+The status line and session banner still carry the agent self-name, but the git
+committer identity now resolves to the coilyco-ops bot account so Forgejo links
+the commit to the deployment identity instead of an example fallback. These
+drive the baked container script via subprocess.
 """
 from __future__ import annotations
 
@@ -14,7 +14,12 @@ SCRIPT = Path(__file__).resolve().parent.parent / "docker" / "dev-base" / "agent
 PAYLOAD = '{"session_id":"AbC123xyz"}'
 
 
-def _run(mode: str, home: Path, container: str | None = None) -> str:
+def _run(
+    mode: str,
+    home: Path,
+    container: str | None = None,
+    extra_env: dict[str, str] | None = None,
+) -> str:
     # A fresh HOME isolates --global writes/reads to this test's gitconfig, and
     # TMPDIR isolates the per-session name cache so runs never cross-talk.
     env = {"HOME": str(home), "TMPDIR": str(home), "PATH": "/usr/bin:/bin"}
@@ -22,6 +27,8 @@ def _run(mode: str, home: Path, container: str | None = None) -> str:
     # exercise the native-host / self-suppress path (agentic-os#296).
     if container is not None:
         env["WARD_CONTAINER_NAME"] = container
+    if extra_env is not None:
+        env.update(extra_env)
     proc = subprocess.run(
         [str(SCRIPT), mode],
         input=PAYLOAD,
@@ -43,19 +50,23 @@ def _git_global(key: str, home: Path) -> str:
     return proc.stdout.strip()  # empty string when unset (exit 1 ignored)
 
 
-def test_gitidentity_sets_user_name_to_self_name(tmp_path: Path) -> None:
-    name = _run("statusline", tmp_path)
-    assert name.startswith("claude-")  # sanity: the derived self-name
-
+def test_gitidentity_sets_bot_committer_identity(tmp_path: Path) -> None:
     _run("gitidentity", tmp_path)
-    assert _git_global("user.name", tmp_path) == name
+    assert _git_global("user.name", tmp_path) == "coilyco-ops"
+    assert _git_global("user.email", tmp_path) == "coilyco-ops@coilysiren.me"
 
 
-def test_gitidentity_leaves_email_untouched(tmp_path: Path) -> None:
-    # The email is load-bearing for Forgejo account linking; gitidentity must
-    # never write it, so it falls through to ward's --system bot address.
-    _run("gitidentity", tmp_path)
-    assert _git_global("user.email", tmp_path) == ""
+def test_gitidentity_honors_committer_overrides(tmp_path: Path) -> None:
+    _run(
+        "gitidentity",
+        tmp_path,
+        extra_env={
+            "WARD_GIT_NAME": "custom-bot",
+            "WARD_GIT_EMAIL": "custom-bot@example.com",
+        },
+    )
+    assert _git_global("user.name", tmp_path) == "custom-bot"
+    assert _git_global("user.email", tmp_path) == "custom-bot@example.com"
 
 
 def test_gitidentity_is_idempotent(tmp_path: Path) -> None:

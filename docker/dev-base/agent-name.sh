@@ -75,9 +75,10 @@ case "$mode" in
     printf '🐾 You are %s%s this session. When asked "who are you" or "what is your status", lead with this name.\n' "$name" "${pronouns:+ ($pronouns)}"
     ;;
   gitidentity)
-    # Stamp the self-name as the git author NAME, leaving ward's load-bearing
-    # --system user.email to the bot. Best-effort. See docs/dev-base-git-identity.md.
-    git config --global user.name "$name" 2>/dev/null || true
+    # Stamp the bot committer identity. The self-name stays on the status line
+    # and session banner only. Best-effort. See docs/dev-base-git-identity.md.
+    git config --global user.name "${WARD_GIT_NAME:-coilyco-ops}" 2>/dev/null || true
+    git config --global user.email "${WARD_GIT_EMAIL:-coilyco-ops@coilysiren.me}" 2>/dev/null || true
     ;;
   statusline | *)
     printf '%s%s' "$name" "$container_suffix"

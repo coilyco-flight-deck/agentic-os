@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Git credential helper: serve the Forgejo API token from AWS SSM on demand.
 # Git passes the op as $1 (get|store|erase) and the request on stdin.
-# For a "get" against forgejo.coilysiren.me we fetch /forgejo/api-token and print
-# username/password. The token stays in process memory, never written to disk.
+# For a "get" against forgejo.coilysiren.me we fetch the coilyco-ops token and
+# print username/password. The token stays in process memory, never written to disk.
 # Wire via `git config --global credential.<host>.helper` pointing at this path.
 # store/erase are no-ops: nothing on disk, never cache-then-persist the value.
 set -euo pipefail
@@ -26,9 +26,9 @@ done
 [ "$host" = "forgejo.coilysiren.me" ] || exit 0
 
 token="$(ward ops aws ssm get-parameter \
-  --name /forgejo/api-token --with-decryption \
+  --name /forgejo/coilyco-ops/api-token --with-decryption \
   --query Parameter.Value --output text 2>/dev/null)" || exit 0
 [ -n "$token" ] || exit 0
 
-printf 'username=coilysiren\n'
+printf 'username=coilyco-ops\n'
 printf 'password=%s\n' "$token"

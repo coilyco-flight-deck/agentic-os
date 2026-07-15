@@ -39,14 +39,24 @@ _siren_aos_repo_root() {
   return 1
 }
 
+# Host shells read the bundle live from the checkout (file://): a pull applies
+# immediately, and launch needs no pin, gitsync, or credential. See docs/ward-specs.md.
 _siren_ward_config_ref() {
-  local repo commit
+  local repo
   repo=$(_siren_aos_repo_root) || return 1
-  commit=$(git -C "$repo" rev-parse HEAD) || return 1
-  printf 'forgejo.coilysiren.me/coilyco-flight-deck/agentic-os@%s//.ward' "$commit"
+  # Native Windows ward.exe cannot stat an MSYS /x/... path; -m emits X:/...
+  if command -v cygpath >/dev/null 2>&1; then
+    repo=$(cygpath -m "$repo") || return 1
+  fi
+  printf 'file://%s/.ward' "$repo"
 }
 
 export WARD_CONFIG_REF="$(_siren_ward_config_ref)"
+
+# Dev-base image for `ward agent` dispatch: point host shells at the moving
+# release alias.
+export WARD_AGENT_IMAGE="forgejo.coilysiren.me/coilyco-flight-deck/agentic-os"
+export WARD_AGENT_TAG="release"
 
 # Env + PATH are inherited, so run once per terminal tree: the exported guard is
 # the "has this run in this terminal yet?" check. Aliases/functions always define.
@@ -144,70 +154,6 @@ alias ansible-playbook-sync="ANSIBLE_FORCE_COLOR=1 uv tool run --from ansible-co
 unalias bat 2>/dev/null || true
 bat() {
   command bat --no-pager "$@"
-}
-
-# Refuse to launch an agent CLI outside a git work tree (override: AOS_ALLOW_ANY=1).
-# Rationale and the cross-harness chokepoint argument: docs/features-shell-secrets.md.
-_siren_agent_gate() {
-  local cli="$1"
-  [ -n "${AOS_ALLOW_ANY:-}" ] && return 0
-  git rev-parse --is-inside-work-tree >/dev/null 2>&1 && return 0
-  printf '%s: refusing to start outside a git repo (cwd: %s)\n' "$cli" "$PWD" >&2
-  printf '  cd into a repo, or override with: AOS_ALLOW_ANY=1 %s\n' "$cli" >&2
-  return 1
-}
-_siren_argv_has_flag() {
-  local flag="$1"
-  shift
-  for arg in "$@"; do
-    case "$arg" in
-      "$flag"|"$flag"=*) return 0 ;;
-    esac
-  done
-  return 1
-}
-
-claude() { _siren_agent_gate claude || return 1; command claude "$@"; }
-codex() {
-  _siren_agent_gate codex || return 1
-  if [ "${1:-}" = "exec" ]; then
-    shift
-    if ! _siren_argv_has_flag --sandbox "$@" &&
-      ! _siren_argv_has_flag -s "$@" &&
-      ! _siren_argv_has_flag --dangerously-bypass-approvals-and-sandbox "$@"; then
-      set -- --sandbox danger-full-access "$@"
-    fi
-    if ! _siren_argv_has_flag --ask-for-approval "$@" &&
-      ! _siren_argv_has_flag -a "$@" &&
-      ! _siren_argv_has_flag --dangerously-bypass-approvals-and-sandbox "$@"; then
-      set -- --ask-for-approval on-request "$@"
-    fi
-    command codex exec "$@"
-    return
-  fi
-  if ! _siren_argv_has_flag --sandbox "$@" &&
-    ! _siren_argv_has_flag -s "$@" &&
-    ! _siren_argv_has_flag --dangerously-bypass-approvals-and-sandbox "$@"; then
-    set -- --sandbox danger-full-access "$@"
-  fi
-  if ! _siren_argv_has_flag --ask-for-approval "$@" &&
-    ! _siren_argv_has_flag -a "$@" &&
-    ! _siren_argv_has_flag --dangerously-bypass-approvals-and-sandbox "$@"; then
-    set -- --ask-for-approval on-request "$@"
-  fi
-  command codex "$@"
-}
-opencode() { _siren_agent_gate opencode || return 1; command opencode "$@"; }
-
-# `ward-kdl agents <cli>` launchers exec the real agent binary directly, so they
-# skip the wrappers above. Re-apply the gate here, the same shell chokepoint.
-ward-kdl() {
-  if [ "$1" = "agents" ]; then
-    case "${2:-}" in
-      claude|codex|opencode|aider|goose|ollama) _siren_agent_gate "$2" || return 1 ;;
-    esac
-  fi
-  command ward-kdl "$@"
 }
 
 pre-commit-aos-version-defined() {

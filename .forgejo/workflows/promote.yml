@@ -1,0 +1,270 @@
+# Stage 1 of the two-stage release flow (ward#1117 / aos#469): every main push
+# re-runs the full repo gate, publishes the dev-base image family under a
+# commit-scoped draft tag, and only then fast-forwards `release` to that sha.
+# release.yml runs on the `release` push and retags the already-pushed draft
+# images to the versioned tag, `:release`, and `:latest` before creating the
+# public git/release tag. main stays the integration branch Kai can yolo.
+# `release` is the last-known-good branch downstream consumers and heavy tests
+# hang off. Bursts on main collapse to the newest sha (cancel-in-progress: true
+# is correct here - promotion is idempotent and a newer gate supersedes an older
+# one), while release.yml itself queues without cancelling. The promote push
+# uses CI_RELEASE_TOKEN (real-user PAT from SSM /forgejo/ci-release-token):
+# some Forgejo versions do not enqueue workflows for job-token pushes, which is
+# how releases silently went missing before (agentic-os#240). The checkout
+# sets persist-credentials: false because checkout otherwise stores the job
+# token as an http extraheader in the local git config, and that Authorization
+# header overrides the PAT in the promote push URL - the push then lands as
+# the internal Actions user, whose pushes Forgejo deliberately never enqueues
+# workflows for (the same aos#240 class, one layer deeper). With it off, the
+# push authenticates as the PAT user and stage 2 fires.
+
+name: promote
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: promote-main
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  plan-draft:
+    runs-on: docker
+    timeout-minutes: 20
+    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release
+    outputs:
+      draft_tag: ${{ steps.draft.outputs.draft_tag }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - id: draft
+        name: Derive the draft image tag
+        run: |
+          set -euo pipefail
+          echo "draft_tag=draft-${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Alert Telegram on main failure
+        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        uses: ./actions/telegram-alert
+        with:
+          bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
+
+  gate:
+    runs-on: docker
+    timeout-minutes: 30
+    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Repo test gate
+        run: |
+          set -euo pipefail
+          # Same gate release.yml fronts with: ward verbs when the image
+          # carries ward, exact wrapped commands otherwise.
+          if command -v ward >/dev/null 2>&1; then
+            ward exec test
+          else
+            uv run pytest
+          fi
+
+          if command -v ward >/dev/null 2>&1; then
+            ward exec pre-commit-all
+          else
+            pre-commit run --all-files
+          fi
+
+      - name: Install ward from source with workflow bundle support
+        run: |
+          set -euo pipefail
+          tmpdir="$(mktemp -d)"
+          git clone --depth 1 --branch main https://forgejo.coilysiren.me/coilyco-flight-deck/ward.git "$tmpdir/ward"
+          cd "$tmpdir/ward"
+          go build -trimpath -o "$tmpdir/ward/ward" ./cmd/ward
+          "$tmpdir/ward/ward" --version
+          echo "WARD_BIN=$tmpdir/ward/ward" >> "$GITHUB_ENV"
+
+      - name: Load the .ward bundle with the updated ward
+        run: |
+          set -euo pipefail
+          export WARD_CONFIG_REF="file://${PWD}/.ward"
+          CLIGUARD_NO_SANDBOX=1 "$WARD_BIN" doctor
+
+      - name: Alert Telegram on main failure
+        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        uses: ./actions/telegram-alert
+        with:
+          bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
+
+  publish-core:
+    needs: [plan-draft, gate]
+    runs-on: docker
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./actions/publish-dev-base-tier
+        with:
+          tier: core
+          tag: ${{ needs.plan-draft.outputs.draft_tag }}
+          registry-token: ${{ secrets.REGISTRY_TOKEN }}
+      - name: Alert Telegram on main failure
+        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        uses: ./actions/telegram-alert
+        with:
+          bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
+
+  publish-lang-node:
+    needs: [plan-draft, publish-core]
+    runs-on: docker
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./actions/publish-dev-base-tier
+        with:
+          tier: lang-node
+          tag: ${{ needs.plan-draft.outputs.draft_tag }}
+          registry-token: ${{ secrets.REGISTRY_TOKEN }}
+      - name: Alert Telegram on main failure
+        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        uses: ./actions/telegram-alert
+        with:
+          bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
+
+  publish-lang-go:
+    needs: [plan-draft, publish-core]
+    runs-on: docker
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./actions/publish-dev-base-tier
+        with:
+          tier: lang-go
+          tag: ${{ needs.plan-draft.outputs.draft_tag }}
+          registry-token: ${{ secrets.REGISTRY_TOKEN }}
+      - name: Alert Telegram on main failure
+        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        uses: ./actions/telegram-alert
+        with:
+          bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
+
+  publish-lang-dotnet:
+    needs: [plan-draft, publish-core]
+    runs-on: docker
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./actions/publish-dev-base-tier
+        with:
+          tier: lang-dotnet
+          tag: ${{ needs.plan-draft.outputs.draft_tag }}
+          registry-token: ${{ secrets.REGISTRY_TOKEN }}
+      - name: Alert Telegram on main failure
+        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        uses: ./actions/telegram-alert
+        with:
+          bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
+
+  publish-ops:
+    needs: [plan-draft, publish-core]
+    runs-on: docker
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./actions/publish-dev-base-tier
+        with:
+          tier: ops
+          tag: ${{ needs.plan-draft.outputs.draft_tag }}
+          registry-token: ${{ secrets.REGISTRY_TOKEN }}
+      - name: Alert Telegram on main failure
+        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        uses: ./actions/telegram-alert
+        with:
+          bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
+
+  publish-agent:
+    needs: [plan-draft, publish-ops, publish-lang-node]
+    runs-on: docker
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./actions/publish-dev-base-tier
+        with:
+          tier: agent
+          tag: ${{ needs.plan-draft.outputs.draft_tag }}
+          registry-token: ${{ secrets.REGISTRY_TOKEN }}
+      - name: Alert Telegram on main failure
+        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        uses: ./actions/telegram-alert
+        with:
+          bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
+
+  publish-full:
+    needs: [plan-draft, publish-agent, publish-lang-go, publish-lang-dotnet]
+    runs-on: docker
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./actions/publish-dev-base-tier
+        with:
+          tier: full
+          tag: ${{ needs.plan-draft.outputs.draft_tag }}
+          registry-token: ${{ secrets.REGISTRY_TOKEN }}
+      - name: Alert Telegram on main failure
+        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        uses: ./actions/telegram-alert
+        with:
+          bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
+
+  promote-release:
+    needs: [publish-full]
+    runs-on: docker
+    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Promote main to release (fast-forward only)
+        env:
+          PROMOTE_TOKEN: ${{ secrets.CI_RELEASE_TOKEN }}
+          REPO: ${{ github.repository }}
+          SERVER: ${{ github.server_url }}
+        run: |
+          set -euo pipefail
+          if [ -z "${PROMOTE_TOKEN:-}" ]; then
+            echo "::error::CI_RELEASE_TOKEN not set. Promotion needs a real-user PAT so the release push enqueues release.yml. Mint from SSM /forgejo/ci-release-token (docs/release.md)." >&2
+            exit 1
+          fi
+          # server_url resolves to the in-cluster http URL on this runner, so
+          # keep its scheme instead of assuming https.
+          proto="${SERVER%%://*}"
+          host="${SERVER#*://}"
+          # Plain push: git refuses a non-fast-forward, so a diverged release
+          # branch fails loud here instead of being silently rewritten.
+          git push "${proto}://oauth2:${PROMOTE_TOKEN}@${host}/${REPO}.git" HEAD:release
+          echo "promoted $(git rev-parse --short HEAD) to release"
+
+      - name: Alert Telegram on main failure
+        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        uses: ./actions/telegram-alert
+        with:
+          bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}

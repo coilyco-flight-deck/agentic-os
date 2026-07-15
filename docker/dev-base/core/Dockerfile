@@ -2,7 +2,7 @@
 
 ARG UV_VERSION=0.11.26
 ARG GO_VERSION=1.26.5
-ARG WARD_VERSION=0.567.0
+ARG WARD_VERSION=0.656.0
 ARG TARGETARCH
 
 FROM ubuntu:24.04 AS dev-base-ward-builder
@@ -57,7 +57,7 @@ ARG TARGETARCH
 ARG WARD_CONFIG_REF_COMMIT
 
 ENV DEBIAN_FRONTEND=noninteractive \
-    PATH=/usr/local/go/bin:/usr/local/dotnet:/usr/local/cargo/bin:/usr/local/bin:/usr/bin:/bin:/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin \
+    PATH=/usr/local/go/bin:/usr/local/node/bin:/usr/local/dotnet:/usr/local/cargo/bin:/usr/local/bin:/usr/bin:/bin:/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin \
     HOME=/root \
     HOMEBREW_PREFIX=/home/linuxbrew/.linuxbrew \
     HOMEBREW_NO_ANALYTICS=1 \

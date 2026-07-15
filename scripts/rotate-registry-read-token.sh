@@ -3,7 +3,8 @@
 # (scripts/docker-credential-forgejo-ssm) serves for `docker pull` from the
 # forgejo.coilysiren.me container registry. The token is owned by the coilyco-ops
 # bot, scoped read:package, and lands in one place: SSM
-# (/forgejo/registry-read-token, the durable record the helper reads on demand).
+# (/forgejo/coilyco-ops/registry-read-token, the durable record the helper reads
+# on demand).
 # Unlike the write:package publish token and the write:repository dep-bump token,
 # this one is consumed by fleet laptops at pull time, not by a CI job, so there is
 # no repo Actions secret to set - SSM is the whole handoff.
@@ -23,7 +24,7 @@ set -euo pipefail
 
 HOST="forgejo.coilysiren.me"
 BOT_USER="coilyco-ops"
-SSM_PATH="/forgejo/registry-read-token"
+SSM_PATH="/forgejo/coilyco-ops/registry-read-token"
 # Token names are unique per user; stamp the name so re-runs never collide.
 TOKEN_NAME="registry-read-$(date +%Y%m%d%H%M%S)"
 

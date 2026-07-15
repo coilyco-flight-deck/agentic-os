@@ -2,7 +2,7 @@
 // The upstream swagger snapshot omits this live web route, and the current
 // specverb renderer is JSON-first, so this overlay uses an exec bridge to keep
 // the plaintext log body raw on stdout.
-wrap ward ops forgejo {
+wrap ward-kdl ops forgejo {
     exec bash {
         env FORGEJO_TOKEN {
             value ssm "/forgejo/coilyco-ops/api-token"

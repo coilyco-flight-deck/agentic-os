@@ -32,7 +32,8 @@ see [statusline.md](statusline.md).
   `statusLine` pointing at the [status-line composer](statusline.md) (which runs
   `agent-name.sh` as its `10-agent-name` provider) and two `SessionStart` hooks
   (the self-name banner and the [git-identity stamp](dev-base-git-identity.md))
-  pointing at the baked script.
+  pointing at the baked script. The banner carries the self-name, while the
+  git-identity hook stamps the deployment bot.
 
 ## Why policy-tier settings
 
