@@ -33,12 +33,12 @@ starting point for an app's `.forgejo/workflows/*.yml`.
 This repo's live companion is [`.forgejo/workflows/ci.yml`](../.forgejo/workflows/ci.yml).
 It keeps the workflow name `ci` and the job name `gate`, so Forgejo branch
 protection can require the `ci / gate` status context on `pull-requests-and-merge`
-repos. The live gate runs `pytest` directly so the required PR context stays
-stable on a clean runner. PRs also run the main-only validations - a
-tag-compute dry run in `gate`, plus a `build-dev-base` job exposing a second
-required context, `ci / build-dev-base`
+repos. The live gate runs `pytest` plus `pre-commit run --all-files` on a clean
+runner, while the sibling `ward-doctor` job loads the bundle with ward
+so broken config fails before merge. PRs also run the
+main-only validations - a tag-compute dry run in `gate`, plus a
+`build-dev-base` job exposing a second required context, `ci / build-dev-base`
 ([walkthrough](pr-dev-base-build-validation.md)).
-
 ## Pinned, not `:latest`
 
 CI pins an explicit `vX.Y.Z` tag, never `:latest`, so a run is reproducible and

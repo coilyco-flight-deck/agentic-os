@@ -1,18 +1,24 @@
 # Pull-request CI gate for director-merge repos. This is the live version of
 # docs/ci-in-dev-base-example.yml, and branch protection can require the
-# resulting `ci / gate` status context on PR-gated workflows.
+# resulting `ci / gate` status context on PR-gated workflows. `release` is the
+# promoted last-known-good branch (ward#1117 / aos#469) and never re-gates:
+# promote.yml already ran the suite on the exact sha it fast-forwarded, so a
+# flaky rerun cannot fail a vouched promotion (Kai's call, 2026-07-12).
+#
+# The ward-doctor job is the standalone guardfile-load gate: guardfiles are
+# config, so their validity check is ward loading them, never repo tests
+# re-encoding their content. It is the same doctor the core image build runs
+# (the aos#452 fail-closed path), moved up to commit time so a broken bundle
+# cannot reach main.
 #
 # Beyond the test gate, PRs also run the validations that used to live only
 # on main (agentic-os#454, preventing the agentic-os#452 red-main class):
 # gate dry-runs the release tag computation, and build-dev-base builds the
 # whole dev-base tier family through the shared ./actions/dev-base-build
-# composite - the same definition release.yml publishes with - in build-only
-# mode: no push, no tag, no registry auth. That exercises every Dockerfile,
-# pinned ARG, and the in-image `ward doctor` gate pre-merge, while publish,
-# tag, and the GitHub mirror stay main-only. Branch protection can require
-# the `ci / build-dev-base` context alongside `ci / gate`. The job is
-# pull_request-only: on main the same build runs (and publishes) through
-# release.yml, so re-building here would only duplicate it.
+# composite in build-only mode. That exercises every Dockerfile, pinned ARG,
+# and the in-image `ward doctor` gate pre-merge, while publish, tag, and the
+# GitHub mirror stay main-only. Branch protection can require the
+# `ci / build-dev-base` context alongside `ci / gate`.
 
 name: ci
 
@@ -24,10 +30,36 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  ward-doctor:
+    runs-on: docker
+    timeout-minutes: 20
+    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install ward from source with workflow bundle support
+        run: |
+          set -euo pipefail
+          tmpdir="$(mktemp -d)"
+          git clone --depth 1 --branch main https://forgejo.coilysiren.me/coilyco-flight-deck/ward.git "$tmpdir/ward"
+          cd "$tmpdir/ward"
+          go build -trimpath -o "$tmpdir/ward/ward" ./cmd/ward
+          "$tmpdir/ward/ward" --version
+          echo "WARD_BIN=$tmpdir/ward/ward" >> "$GITHUB_ENV"
+      - name: Load the .ward bundle with the updated ward
+        run: |
+          set -euo pipefail
+          export WARD_CONFIG_REF="file://${PWD}/.ward"
+          CLIGUARD_NO_SANDBOX=1 "$WARD_BIN" doctor
+
   gate:
     runs-on: docker
-    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:latest
+    timeout-minutes: 30
+    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release
     steps:
       - uses: actions/checkout@v6
         with:
@@ -37,14 +69,16 @@ jobs:
         run: |
           set -euo pipefail
           uv run pytest
+          # Same surface release.yml's gate enforces: without this, a
+          # pre-commit violation passes the PR and reddens main (run 1078).
+          pre-commit run --all-files
 
       - name: Validate release planning (compute-only tag bump)
         uses: ./actions/tag-bump
         with:
           create_tag: false
-
       - name: Alert Telegram on main failure
-        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        if: ${{ failure() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/release') }}
         env:
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.TELEGRAM_RED_CHAT_ID }}

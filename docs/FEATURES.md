@@ -21,7 +21,7 @@ This doc lists major shipped capabilities, not files. If you want a file invento
 - [Telegram CI failure alerts](telegram-ci-alerts.md) - reusable red-channel alerting for failing jobs.
 - [dev-base container image](dev-base-image.md) - the inner-loop toolchain image family.
 - [CI parity in dev-base](ci-in-dev-base.md) - CI runs inside the pinned dev-base image.
-- [Pull-request CI gate](ci-in-dev-base.md) - the live `ci` workflow that runs `pytest` plus the dev-base build-only validation on pull requests and exposes required `ci / gate` and `ci / build-dev-base` contexts for branch protection.
+- [Pull-request CI gate](ci-in-dev-base.md) - the live `ci` workflow that runs `ward-doctor`, `pytest`, `pre-commit run --all-files`, and the dev-base build-only validation on pull requests, exposing required `ci / gate` and `ci / build-dev-base` contexts for branch protection.
 - [Managed AGENTS.md pointer block](features-agents-pointer.md) - generated workspace pointer block for sibling repos.
 - [Encoded leak guard](leak-guard.md) - hex-encoded leak-term detector.
 - [Context-budget report](context-budget.md) - eager startup budget measurement per harness.
