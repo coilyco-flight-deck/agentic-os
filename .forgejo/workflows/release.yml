@@ -380,17 +380,11 @@ jobs:
           asset="ward-specs-${TAG}.tar.gz"
           # Deterministic tarball: sort entries, zero mtime/owner, no gzip name/time
           # header, so the checksum a downstream pins is reproducible from the tag.
-          # The bundle now shares .ward/ with ward.yaml (aos#330), so ship every
-          # file in the dir minus a short deny-list. Deny-list, not enumeration:
-          # the enumerated list silently dropped the role-bound
-          # guardfile.aws.engineer.kdl, and find keeps the flat ./-prefixed
-          # member layout ward#503 expects.
-          find .ward -maxdepth 1 -type f \
-            ! -name ward.yaml \
-            ! -name forgejo.swagger.lock.json \
-            -printf './%f\n' | LC_ALL=C sort > ward-specs-files.txt
+          # The bundle lives in .ward/ beside ward.yaml, so walk the directory and
+          # exclude ward.yaml explicitly. That keeps the flat `./`-prefixed member
+          # layout ward#503 expects while avoiding a hand-maintained file list.
           tar --sort=name --mtime='UTC 1970-01-01' --owner=0 --group=0 --numeric-owner \
-            -C .ward -cf ward-specs.tar -T ward-specs-files.txt
+            -C .ward --exclude=./ward.yaml -cf ward-specs.tar .
           gzip -n -9 -c ward-specs.tar > "${asset}"
           sha256sum "${asset}" | awk '{print $1}' > "${asset}.sha256"
           echo "ward-specs asset sha256: $(cat "${asset}.sha256")"
