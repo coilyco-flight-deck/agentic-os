@@ -44,32 +44,66 @@ def _retry(
     last_exc: Exception | None = None
     for attempt in range(1, attempts + 1):
         try:
-            return func()
+            result = func()
         except subprocess.CalledProcessError as exc:
             last_exc = exc
             if attempt == attempts:
                 break
             print(
-                f"retrying {action} after attempt {attempt} failed; sleeping {delay}s",
+                (
+                    f"::notice::retrying {action} after attempt "
+                    f"{attempt}/{attempts} failed; sleeping {delay}s"
+                ),
                 file=sys.stderr,
             )
             time.sleep(delay)
             delay = min(delay * 2, 30)
+            continue
+        if attempt > 1:
+            print(
+                f"::notice::{action} succeeded after attempt {attempt}/{attempts}",
+                file=sys.stderr,
+            )
+            _append_step_summary(
+                f"- {action} succeeded after attempt {attempt}/{attempts}\n"
+            )
+        return result
     assert last_exc is not None
     raise last_exc
 
 
-def _inspect_manifest(ref: str) -> str | None:
+def _inspect_manifest_once(ref: str) -> subprocess.CompletedProcess[str]:
+    cmd = ["docker", "buildx", "imagetools", "inspect", ref]
     try:
         probe = subprocess.run(
-            ["docker", "buildx", "imagetools", "inspect", ref],
+            cmd,
             check=False,
             capture_output=True,
             text=True,
         )
-    except OSError:
-        return None
+    except OSError as exc:
+        raise subprocess.CalledProcessError(127, cmd, stderr=str(exc)) from exc
     if probe.returncode != 0:
+        raise subprocess.CalledProcessError(
+            probe.returncode,
+            cmd,
+            output=getattr(probe, "stdout", ""),
+            stderr=getattr(probe, "stderr", ""),
+        )
+    return probe
+
+
+def _inspect_manifest(
+    ref: str, attempts: int = 3, initial_delay: int = 1
+) -> str | None:
+    try:
+        probe = _retry(
+            f"inspect manifest {ref}",
+            lambda: _inspect_manifest_once(ref),
+            attempts=attempts,
+            initial_delay=initial_delay,
+        )
+    except subprocess.CalledProcessError:
         return None
     stdout = getattr(probe, "stdout", "")
     stderr = getattr(probe, "stderr", "")
@@ -121,29 +155,7 @@ def _append_cache_summary(
 def _probe_cache_write(buildcache_ref: str) -> bool:
     # cache-to runs with ignore-error=true so a registry hiccup cannot fail the
     # push. Probe the cache manifest and warn loudly so a cold cache is visible.
-    def _inspect_once() -> subprocess.CompletedProcess[str]:
-        cmd = ["docker", "buildx", "imagetools", "inspect", buildcache_ref]
-        try:
-            probe = subprocess.run(
-                cmd,
-                check=False,
-                capture_output=True,
-                text=True,
-            )
-        except OSError as exc:
-            raise subprocess.CalledProcessError(127, cmd, stderr=str(exc)) from exc
-        if probe.returncode != 0:
-            raise subprocess.CalledProcessError(
-                probe.returncode,
-                cmd,
-                output=getattr(probe, "stdout", ""),
-                stderr=getattr(probe, "stderr", ""),
-            )
-        return probe
-
-    try:
-        _retry(f"inspect cache {buildcache_ref}", _inspect_once)
-    except subprocess.CalledProcessError:
+    if _inspect_manifest(buildcache_ref) is None:
         print(
             f"::warning::buildcache write to {buildcache_ref} failed or is "
             "missing - the next build of this tier starts cold. "
@@ -154,23 +166,18 @@ def _probe_cache_write(buildcache_ref: str) -> bool:
     return True
 
 
-def _wait_for_source_image(source_ref: str, poll_seconds: int = 15) -> None:
-    while True:
-        probe = subprocess.run(
-            ["docker", "buildx", "imagetools", "inspect", source_ref],
-            check=False,
-            capture_output=True,
-            text=True,
-        )
-        if probe.returncode == 0:
-            return
-        stderr = probe.stderr.strip()
-        print(
-            f"::notice::waiting for draft image {source_ref} before retagging. "
-            f"imagetools inspect said: {stderr or 'no stderr output'}",
-            file=sys.stderr,
-        )
-        time.sleep(poll_seconds)
+def _wait_for_source_image(
+    source_ref: str, attempts: int = 5, initial_delay: int = 5
+) -> None:
+    def _inspect_once() -> None:
+        _inspect_manifest_once(source_ref)
+
+    _retry(
+        f"wait for draft image {source_ref}",
+        _inspect_once,
+        attempts=attempts,
+        initial_delay=initial_delay,
+    )
 
 
 def _has_target_checkpoint(target_ref: str, alias_refs: Sequence[str]) -> bool:

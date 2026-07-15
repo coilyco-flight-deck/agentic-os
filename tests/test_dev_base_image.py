@@ -473,7 +473,7 @@ def test_promote_plan_waits_for_the_source_image_before_retagging(monkeypatch) -
         REGISTRY_BASE, "draft-abc123", "v0.244.0", ("release", "latest"), "full"
     )
 
-    assert sleeps == [15, 15]
+    assert sleeps == [5, 10]
     assert commands[0] == [
         "docker",
         "buildx",
@@ -487,6 +487,47 @@ def test_promote_plan_waits_for_the_source_image_before_retagging(monkeypatch) -
         f"{REGISTRY_BASE}:latest",
         f"{REGISTRY_BASE}:draft-abc123",
     ]
+
+
+def test_manifest_inspect_retries_and_writes_a_success_note(
+    monkeypatch, capsys, tmp_path
+) -> None:
+    script = _load_script()
+    sleeps: list[int] = []
+
+    class _Probe:
+        def __init__(self, returncode: int, stdout: str, stderr: str) -> None:
+            self.returncode = returncode
+            self.stdout = stdout
+            self.stderr = stderr
+
+    probes = iter(
+        [
+            _Probe(1, "", "manifest unknown"),
+            _Probe(0, "Digest: sha256:abc123", ""),
+        ]
+    )
+
+    def fake_run(cmd, check=False, capture_output=False, text=False):  # noqa: ANN001
+        assert cmd[:4] == ["docker", "buildx", "imagetools", "inspect"]
+        return next(probes)
+
+    monkeypatch.setattr(script.subprocess, "run", fake_run)
+    monkeypatch.setattr(script.time, "sleep", lambda seconds: sleeps.append(seconds))
+    summary_file = tmp_path / "summary.md"
+    monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(summary_file))
+
+    assert script._inspect_manifest(
+        f"{REGISTRY_BASE}:core-v0.243.0"
+    ) == "sha256:abc123"
+
+    err = capsys.readouterr().err
+    assert "retrying inspect manifest" in err
+    assert "succeeded after attempt 2/3" in err
+    assert sleeps == [1]
+    summary = summary_file.read_text(encoding="utf-8")
+    assert "- inspect manifest" in summary
+    assert "succeeded after attempt 2/3" in summary
 
 
 def test_promote_plan_skips_an_existing_checkpoint(monkeypatch) -> None:
@@ -592,6 +633,7 @@ def test_cache_probe_warns_loudly_when_the_cache_write_is_missing(
         stderr = "manifest unknown"
 
     monkeypatch.setattr(script.subprocess, "run", lambda *a, **k: _Probe())
+    monkeypatch.setattr(script.time, "sleep", lambda _seconds: None)
     assert script._probe_cache_write(f"{REGISTRY_BASE}:buildcache") is False
     err = capsys.readouterr().err
     assert "::warning::" in err
