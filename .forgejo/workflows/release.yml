@@ -1,38 +1,36 @@
-# Forgejo-canonical release pipeline, stage 2 of the two-stage flow
-# (ward#1117 / aos#469): promote.yml fast-forwards gate-green main pushes onto
-# the `release` branch after main has already published the dev-base family
-# under `draft-<sha>`, and this pipeline runs on `release` pushes only. The
-# concurrency queue below replaces the old overlap-and-cancel behavior:
+# Forgejo-canonical release publication, manual retry only, stage 2 of the
+# two-stage flow (ward#1117 / aos#469). `promote.yml` now does the fallible
+# image retagging, release creation, asset upload, and only then fast-forwards
+# `release`, so the branch stays last-known-good. This workflow remains as a
+# manual retry hook for the same publication work and never runs on push.
+# The concurrency queue below replaces the old overlap-and-cancel behavior:
 # release runs execute in sequence (cancel-in-progress: false), so a burst of
-# promotions cannot cancel an in-flight build. agentic-os dogfoods the
+# manual retries cannot cancel an in-flight build. agentic-os dogfoods the
 # composite actions it ships (actions/tag-bump, actions/create-release) via
 # local `./actions/*` refs, so the source repo never depends on its own GitHub
 # mirror being current to release. No bump input means every promoted release
-# is a minor bump. Major is
-# hand-driven via scripts/release.py. The consumer pin resolves from the latest
-# git tag at read time (agentic-os#238), so there is no pin-bump job and no
-# per-push DEFAULT_REV commit - cutting the tag is the whole release. A
-# workflow_dispatch trigger re-fires the same pipeline by hand when Forgejo
-# misses a push enqueue (agentic-os#240). Dispatch it against the `release`
-# ref. The pipeline computes the next tag first, retags the draft dev-base
-# image family to the versioned tag plus `:release` and `:latest`, and only
-# then creates the public git/release tag, keeping the announced tag as the
-# last success marker. Full rationale in
-# docs/release.md, image notes in docs/dev-base-image.md. There is no test job
-# here: promote.yml already ran the full repo gate on the exact sha it
-# fast-forwarded, so re-running the suite on `release` only lets a flaky rerun
-# fail an already-vouched promotion (Kai's call, 2026-07-12). The dev-base
-# family retags as one job per tier through the publish-dev-base-tier
-# composite action, so a failed retag reruns alone via rerun-failed-jobs.
-# Draft tags are commit-scoped and intended for Forgejo package cleanup rules.
-# Tier DAG and cache model:
+# is a minor bump. Major is hand-driven via scripts/release.py. The consumer
+# pin resolves from the latest git tag at read time (agentic-os#238), so there
+# is no pin-bump job and no per-push DEFAULT_REV commit - cutting the tag is
+# the whole release. A `workflow_dispatch` trigger re-fires the same
+# publication pipeline by hand when Forgejo misses a run or a manual retry is
+# needed (agentic-os#240). Dispatch it against the `release` ref. The pipeline
+# computes the next tag first, retags the draft dev-base image family to the
+# versioned tag plus `:release` and `:latest`, and only then creates the
+# public git/release tag, keeping the announced tag as the last success
+# marker. Full rationale in docs/release.md, image notes in
+# docs/dev-base-image.md. There is no test job here: promote.yml already ran
+# the full repo gate on the exact sha it published, so re-running the suite
+# here only lets a flaky rerun fail an already-vouched promotion (Kai's call,
+# 2026-07-12). The dev-base family retags as one job per tier through the
+# publish-dev-base-tier composite action, so a failed retag reruns alone via
+# rerun-failed-jobs. Draft tags are commit-scoped and intended for Forgejo
+# package cleanup rules. Tier DAG and cache model:
 # docs/dev-base-image-tiering.md.
 
 name: release
 
 on:
-  push:
-    branches: [release]
   workflow_dispatch:
     inputs:
       bump:
@@ -82,6 +80,7 @@ jobs:
 
       - name: Alert Telegram on main failure
         if: ${{ failure() && github.ref == 'refs/heads/release' }}
+        continue-on-error: true
         env:
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
@@ -161,6 +160,7 @@ jobs:
 
       - name: Alert Telegram on main failure
         if: ${{ failure() && github.ref == 'refs/heads/release' }}
+        continue-on-error: true
         uses: ./actions/telegram-alert
         with:
           bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -187,6 +187,7 @@ jobs:
 
       - name: Alert Telegram on main failure
         if: ${{ failure() && github.ref == 'refs/heads/release' }}
+        continue-on-error: true
         uses: ./actions/telegram-alert
         with:
           bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -213,6 +214,7 @@ jobs:
 
       - name: Alert Telegram on main failure
         if: ${{ failure() && github.ref == 'refs/heads/release' }}
+        continue-on-error: true
         uses: ./actions/telegram-alert
         with:
           bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -239,6 +241,7 @@ jobs:
 
       - name: Alert Telegram on main failure
         if: ${{ failure() && github.ref == 'refs/heads/release' }}
+        continue-on-error: true
         uses: ./actions/telegram-alert
         with:
           bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -265,6 +268,7 @@ jobs:
 
       - name: Alert Telegram on main failure
         if: ${{ failure() && github.ref == 'refs/heads/release' }}
+        continue-on-error: true
         uses: ./actions/telegram-alert
         with:
           bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -291,6 +295,7 @@ jobs:
 
       - name: Alert Telegram on main failure
         if: ${{ failure() && github.ref == 'refs/heads/release' }}
+        continue-on-error: true
         uses: ./actions/telegram-alert
         with:
           bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}

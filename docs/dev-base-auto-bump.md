@@ -1,11 +1,12 @@
 # dev-base auto-bump
 
 The dev-base tier Dockerfiles pin every tool as a hand-edited `ARG`
-([docs/dev-base-image.md](dev-base-image.md)). `release.yml` republishes the
-image on every push to main, but nothing kept those pins current, so the
-published image silently drifted behind upstream until a human edited an `ARG`.
-That is the ward#288/#301 incident (agentic-os#272): headless agents kept hitting
-a bug already fixed upstream because the image they ran predated the fix.
+([docs/dev-base-image.md](dev-base-image.md)). `promote.yml` republishes the
+image on every push to main before `release` moves, but nothing kept those pins
+current, so the image drifted behind upstream until a human edited an `ARG`.
+That is the ward#288/#301 incident (agentic-os#272): headless agents kept
+hitting a bug already fixed upstream because the image they ran predated the
+fix.
 
 ## What runs
 
@@ -60,10 +61,10 @@ before it pushes, so a bad pin leaves the run red and stops before `main`.
 
 The workflow pushes with the auto-issued job token by default, which is enough on
 a Forgejo that enqueues workflow runs from bot-token pushes. If your Forgejo
-suppresses them (the guard GitHub applies to prevent recursion), the bump lands
-but `publish-image` never fires. Set the `DEP_BUMP_TOKEN` Actions secret to a
-`coilyco-ops`-owned `write:repository` PAT so the push is attributed to a real
-user and enqueues `release.yml`;
+suppresses them, the bump lands but the release promotion never fires. Set the
+`DEP_BUMP_TOKEN` Actions secret to a `coilyco-ops`-owned `write:repository`
+PAT so the push is attributed to a real user and reliably reaches the
+promotion flow;
 [`scripts/rotate-dep-bump-token.sh`](../scripts/rotate-dep-bump-token.sh) mints
 and sets it (mirrors the `REGISTRY_TOKEN` rotation in dev-base-image.md).
 

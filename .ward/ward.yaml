@@ -4,6 +4,9 @@ commands:
   warp:
     run: go run -C warp .
     description: "Establish and verify Kai's Warp config across hosts. `ward exec warp apply` renders all three state layers (repo template, config-dir TOML, SQLite); `ward exec warp doctor` reports drift. See project-a-ward-exec-warp.md."
+  warp-test:
+    run: go test -C warp ./...
+    description: "Run the Warp config Go test suite."
   aos-say:
     run: go run -C aos-say .
     description: "Speak short status text with the Mac-integrated `aos-say` client. On Darwin it calls `/usr/bin/say` directly, and on other hosts it forwards one JSON request to the configured relay. Use `ward exec aos-say -- relay` for the relay entrypoint."
@@ -100,6 +103,9 @@ commands:
   forgejo-actions-logs:
     run: uv run python -m agentic_os.forgejo_actions_logs
     description: "Stream a Forgejo Actions job log: `ward exec forgejo-actions-logs -- <owner> <repo> <run_index> <job_index> [attempt]` (indexes as shown in the run URL). Needs FORGEJO_TOKEN. Speaks the UI log-cursor route with Basic auth because the API logs route 404s on Forgejo 15 (aos#476); logs for older runs may already be purged (infrastructure#545)."
+  forgejo-org-repo-bootstrap:
+    run: uv run python scripts/forgejo_org_repo_bootstrap.py
+    description: "Create or reconcile a Forgejo org repo using the admin token. Use this when coilyco-ops only has write access but a GitHub profile mirror needs the repo public and described for a substrate seed."
   sync-actions-secrets:
     run: uv run python scripts/sync-actions-secrets.py
     description: "Sync Forgejo Actions secrets (Telegram alert creds, CI_RELEASE_TOKEN) from their SSM sources of truth to the aos + ward + cli-guard repos. Values flow SSM -> Forgejo API in-process, never disk or argv. `-- --dry-run` previews the mapping. See docs/release.md."

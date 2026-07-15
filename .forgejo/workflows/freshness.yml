@@ -31,7 +31,7 @@ permissions:
 jobs:
   probe:
     runs-on: docker
-    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:latest
+    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release
     steps:
       - uses: actions/checkout@v6
 
@@ -44,6 +44,7 @@ jobs:
           PYTHONPATH=. python3 -m agentic_os.freshness --check
       - name: Alert Telegram on main failure
         if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        continue-on-error: true
         env:
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.TELEGRAM_RED_CHAT_ID }}

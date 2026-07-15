@@ -27,6 +27,8 @@ action resolution in a stale mirror.
 The action defaults `repo`, `workflow`, `job`, `ref`, `sha`, and `run-url`
 from the GitHub / Forgejo context, so most call sites only pass the two secrets.
 The inline workflow version follows the same message contract.
+The repo's own workflows mark the alert step `continue-on-error: true`, so a
+Telegram outage warns but does not redden the job.
 
 ## Dry run
 
