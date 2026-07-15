@@ -11,7 +11,9 @@ repos {
         repo "coilyco-gaming/*" forge=forgejo
     }
     burndown default=#true {
+        // inbox issues are messy and not really burndown shaped
         repo "coilysiren/inbox" #false
+        // infra repos are structurally hostile to headless agent work
         repo "coilyco-flight-deck/infrastructure" #false
         repo "coilyco-bridge/deploy" #false
     }
