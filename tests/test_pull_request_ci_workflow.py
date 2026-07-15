@@ -28,3 +28,5 @@ def test_promote_workflow_uses_the_same_repo_gate_as_ci() -> None:
     assert "Install ward from source with workflow bundle support" not in workflow
     assert "Load the .ward bundle with the updated ward" not in workflow
     assert "ward exec test" not in workflow
+    assert "Install ward from source with workflow bundle support" not in workflow
+    assert "Load the .ward bundle with the updated ward" not in workflow
