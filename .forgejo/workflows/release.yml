@@ -29,6 +29,9 @@
 # rerun-failed-jobs. Draft tags are commit-scoped and intended for Forgejo
 # package cleanup rules. Tier DAG and cache model:
 # docs/dev-base-image-tiering.md.
+# Tier-scoped dispatches can stop at the selected closure for revalidation.
+# The final git/release publish only runs for `tier=all`, so a narrow rerun
+# does not wait on skipped siblings just to prove one tier again.
 
 name: release
 
@@ -374,7 +377,7 @@ jobs:
       - retag-ops
       - retag-agent
       - retag-full
-    if: ${{ needs.plan-release.outputs.tag != '' }}
+    if: ${{ needs.plan-release.outputs.tag != '' && (github.event_name != 'workflow_dispatch' || github.event.inputs.tier == 'all') }}
     runs-on: docker
     container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release
     steps:

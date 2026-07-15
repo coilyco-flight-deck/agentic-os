@@ -55,5 +55,6 @@ def test_dev_base_publish_workflows_support_tier_reruns_and_non_blocking_alerts(
         "needs: [plan-release, retag-agent, retag-lang-go, retag-lang-dotnet]"
         in release
     )
+    assert "github.event.inputs.tier == 'all'" in release
     _assert_alert_steps_are_non_blocking(publish)
     _assert_alert_steps_are_non_blocking(release)

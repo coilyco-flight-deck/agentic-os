@@ -5,6 +5,10 @@ one tier closure at a time with `sha`, `tier`, and `tag` inputs, checks the
 target registry manifest first, and skips any tier that already matches
 exactly.
 
+A `release.yml` dispatch can use the same tier selector to revalidate one
+closure without forcing the final release job. `tier=all` keeps the full
+release gate intact.
+
 The retry budget is bounded around registry login, manifest inspection,
 buildx push, cache probe, and retag operations. A transient registry hiccup
 can heal without hiding a real publish failure, and the durable checkpoint is
