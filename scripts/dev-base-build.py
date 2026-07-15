@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import platform
+import shlex
 import re
 import subprocess
 import sys
@@ -213,6 +214,15 @@ def _build_plan(
             for alias_image in entry.get("alias_images", []):
                 cmd.extend(["-t", alias_image])
         cmd.extend(["-f", str(dockerfile), str(dockerfile.parent.parent)])
+        if push and entry["tier"] == "core":
+            print("::group::core publish context")
+            print(f"tier={entry['tier']}")
+            print(f"image={entry['image']}")
+            print(f"cache={entry['cache_image']}")
+            print(f"base={entry['base_image']}")
+            print(f"ward_config_ref_commit={ward_config_ref_commit}")
+            print(f"command={shlex.join(cmd)}")
+            print("::endgroup::")
         if push:
             _retry(f"build {entry['tier']}", lambda: _run(cmd))
         else:

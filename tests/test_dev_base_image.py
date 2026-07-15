@@ -245,6 +245,33 @@ def test_pushed_build_uses_release_tagless_cache_ref(monkeypatch) -> None:
     )
 
 
+def test_core_push_emits_a_release_context_breadcrumb(monkeypatch, capsys) -> None:
+    script = _load_script()
+    commands: list[list[str]] = []
+
+    monkeypatch.setattr(script, "_run", lambda cmd: commands.append(cmd))
+    monkeypatch.setattr(script, "_probe_cache_write", lambda ref: None)
+    monkeypatch.setattr(script, "_host_targetarch", lambda: "amd64")
+    monkeypatch.setattr(script, "_ward_config_ref_commit", lambda: "abc123")
+
+    script._build_plan(
+        REGISTRY_BASE,
+        "v0.243.0",
+        True,
+        "linux/amd64,linux/arm64",
+        only_tier="core",
+    )
+
+    captured = capsys.readouterr().out
+    assert "::group::core publish context" in captured
+    assert "tier=core" in captured
+    assert f"image={REGISTRY_BASE}:core-v0.243.0" in captured
+    assert f"cache={REGISTRY_BASE}:core-buildcache" in captured
+    assert "ward_config_ref_commit=abc123" in captured
+    assert "docker buildx build --progress=plain --push --platform linux/amd64,linux/arm64" in captured
+    assert commands
+
+
 def test_pushed_build_skips_an_existing_checkpoint(monkeypatch) -> None:
     script = _load_script()
     commands: list[list[str]] = []
