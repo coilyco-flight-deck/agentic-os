@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import platform
 import shlex
 import re
@@ -154,6 +155,14 @@ def _ward_config_ref_commit() -> str:
     )
 
 
+def _append_step_summary(text: str) -> None:
+    summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
+    if not summary_path:
+        return
+    with open(summary_path, "a", encoding="utf-8") as fh:
+        fh.write(text)
+
+
 def _host_targetarch() -> str:
     machine = platform.machine().lower()
     if machine in {"x86_64", "amd64"}:
@@ -215,6 +224,19 @@ def _build_plan(
                 cmd.extend(["-t", alias_image])
         cmd.extend(["-f", str(dockerfile), str(dockerfile.parent.parent)])
         if push and entry["tier"] == "core":
+            summary = "\n".join(
+                [
+                    "### core publish context",
+                    "",
+                    f"- tier: {entry['tier']}",
+                    f"- image: {entry['image']}",
+                    f"- cache: {entry['cache_image']}",
+                    f"- base: {entry['base_image']}",
+                    f"- ward_config_ref_commit: {ward_config_ref_commit}",
+                    f"- command: {shlex.join(cmd)}",
+                    "",
+                ]
+            )
             print("::group::core publish context")
             print(f"tier={entry['tier']}")
             print(f"image={entry['image']}")
@@ -223,6 +245,7 @@ def _build_plan(
             print(f"ward_config_ref_commit={ward_config_ref_commit}")
             print(f"command={shlex.join(cmd)}")
             print("::endgroup::")
+            _append_step_summary(summary + "\n")
         if push:
             _retry(f"build {entry['tier']}", lambda: _run(cmd))
         else:

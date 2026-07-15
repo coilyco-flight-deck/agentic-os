@@ -245,7 +245,9 @@ def test_pushed_build_uses_release_tagless_cache_ref(monkeypatch) -> None:
     )
 
 
-def test_core_push_emits_a_release_context_breadcrumb(monkeypatch, capsys) -> None:
+def test_core_push_emits_a_release_context_breadcrumb(
+    monkeypatch, capsys, tmp_path
+) -> None:
     script = _load_script()
     commands: list[list[str]] = []
 
@@ -253,6 +255,8 @@ def test_core_push_emits_a_release_context_breadcrumb(monkeypatch, capsys) -> No
     monkeypatch.setattr(script, "_probe_cache_write", lambda ref: None)
     monkeypatch.setattr(script, "_host_targetarch", lambda: "amd64")
     monkeypatch.setattr(script, "_ward_config_ref_commit", lambda: "abc123")
+    summary_file = tmp_path / "core-publish-summary.md"
+    monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(summary_file))
 
     script._build_plan(
         REGISTRY_BASE,
@@ -270,6 +274,14 @@ def test_core_push_emits_a_release_context_breadcrumb(monkeypatch, capsys) -> No
     assert "ward_config_ref_commit=abc123" in captured
     assert "docker buildx build --progress=plain --push --platform linux/amd64,linux/arm64" in captured
     assert commands
+    summary = summary_file.read_text(encoding="utf-8")
+    assert "### core publish context" in summary
+    assert "- tier: core" in summary
+    assert f"- image: {REGISTRY_BASE}:core-v0.243.0" in summary
+    assert f"- cache: {REGISTRY_BASE}:core-buildcache" in summary
+    assert "- base: ubuntu:24.04" in summary
+    assert "- ward_config_ref_commit: abc123" in summary
+    assert "command: docker buildx build --progress=plain --push --platform linux/amd64,linux/arm64" in summary
 
 
 def test_pushed_build_skips_an_existing_checkpoint(monkeypatch) -> None:
