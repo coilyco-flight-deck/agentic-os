@@ -23,7 +23,7 @@ This doc lists major shipped capabilities, not files. If you want a file invento
 - [ward deployment spec bundle](ward-specs.md) - the shipped `WARD_CONFIG_REF` bundle for the coilyco fleet.
 - [Ward profile assets home](ward-profile-assets.md) - AOS-owned profile/config source layout for Ward's typed `ProfileProvider` seam, with CUE behind YAML inputs.
 - [Role surface tiers](role-surface-tiers.md) - the intended per-role container capability tiers.
-- [Cross-repo tooling and release](features-release-tooling.md) - hooks, diagnostics, and Forgejo-canonical release actions, gated before tagging.
+- [Cross-repo tooling and release](features-release-tooling.md) - hooks, diagnostics, and Forgejo-canonical release actions, with pre-fast-forward promotion.
 - [Telegram CI failure alerts](telegram-ci-alerts.md) - reusable red-channel alerting for failing jobs.
 - [dev-base container image](dev-base-image.md) - inner-loop toolchain image family with release/latest aliases and coilyco-ops git stamp.
 - [CI parity in dev-base](ci-in-dev-base.md) - CI runs inside the pinned dev-base image.

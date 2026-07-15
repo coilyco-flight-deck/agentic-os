@@ -36,17 +36,17 @@ The old `agentic-os-<tier>` package names are retired.
 ## How it publishes
 
 The publish jobs in [`.forgejo/workflows/promote.yml`](../.forgejo/workflows/promote.yml)
-run after the repo gate and before `release` moves. They build one draft image
-per tier with [`scripts/dev-base-build.py`](../scripts/dev-base-build.py) and
-`--tier`, with `needs:` carrying the tier DAG (see the
-[tiering doc](dev-base-image-tiering.md)). The release jobs in
-[`.forgejo/workflows/release.yml`](../.forgejo/workflows/release.yml) compute
-the public tag, retag the draft family to `vX.Y.Z`, `:release`, and `:latest`,
-verify those manifests, then cut the public git/release tag. The core image
-stamps `WARD_CONFIG_REF` from the current agentic-os commit at build time, so
-ward launches against the bundled `.ward/` checkout rather than moving `main`.
-The core build runs `ward doctor` after installing ward, rejecting a broken
-bundle before the draft image publishes.
+run after the repo gate and before `release` moves. They build one draft per
+tier with [`scripts/dev-base-build.py`](../scripts/dev-base-build.py);
+`needs:` carries the tier DAG (see the [tiering doc](dev-base-image-tiering.md)).
+The same workflow's release jobs retag the draft family to `vX.Y.Z`,
+`:release`, and `:latest`, verify manifests, upload the release asset, then
+cut the tag before the branch fast-forward. The manual retry workflow in
+[`.forgejo/workflows/release.yml`](../.forgejo/workflows/release.yml) keeps the
+same logic and never runs on push. The core image stamps `WARD_CONFIG_REF`
+from the current commit, so ward launches against the bundled `.ward/`
+checkout. The core build runs `ward doctor` first, rejecting a broken bundle
+before the draft image publishes.
 
 ## Pinning a tool
 

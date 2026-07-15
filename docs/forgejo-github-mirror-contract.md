@@ -32,5 +32,6 @@ routine release step.
 ## Shared implementation
 
 No separate workflow template is required yet. The reusable part is the
-contract itself, while the repo-local `release.yml` and `mirror-to-github.yml`
-jobs implement the policy for a given repo.
+contract itself, while the repo-local release promotion path in `promote.yml`,
+manual retry path in `release.yml`, and `mirror-to-github.yml` jobs implement
+the policy for a given repo.

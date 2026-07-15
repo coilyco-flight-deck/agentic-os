@@ -2,18 +2,17 @@
 
 Two-stage Forgejo-canonical release (ward#1117 / aos#469). Stage 1:
 `promote.yml` gates every `main` push, publishes the dev-base family under
-`draft-${sha}`, then fast-forwards `release` with `CI_RELEASE_TOKEN`. Stage 2:
-`release.yml` runs on `release` pushes only under a no-cancel `concurrency`
-queue, so promoted shas release in sequence. `main` stays yolo-able. `release`
-is last-known-good. Forgejo owns the release and tag per
+`draft-${sha}`, performs the fallible release publication, and only then
+fast-forwards `release` with `CI_RELEASE_TOKEN`. Stage 2: `release.yml` is now
+manual retry only under a no-cancel queue, so retries stay sequenced and never
+gate the branch. `main` stays yolo-able. `release` is
+last-known-good. Forgejo owns the release and tag per
 [forgejo-github-mirror-contract.md](forgejo-github-mirror-contract.md).
 
-`release.yml` computes semver, retags the draft image family to `vX.Y.Z`,
-`:release`, and `:latest`, verifies those manifests, then cuts the public
-git/release tag. The release queue owns semver, so two main pushes cannot race
-to claim the same version. The expensive image build already happened on
-`main`, before the release branch moved. There is no test gate on `release`:
-promote.yml already ran the suite on the exact sha it fast-forwarded.
+`promote.yml` computes semver, retags the draft image family to `vX.Y.Z`,
+`:release`, and `:latest`, verifies those manifests, creates the public
+git/release tag, uploads the ward-specs asset, then cuts the release branch.
+The queue owns semver, so pushes cannot race. The image build already happened on main before the release branch moved. `release.yml` keeps the same logic as a manual retry path, but it no longer runs on push.
 
 `draft-*` tags are commit-scoped staging refs for Forgejo package cleanup
 rules. `:latest` is a compatibility alias for `:release`.
@@ -42,10 +41,10 @@ create the public tag and Forgejo release only at the end.
 
 ## Manual re-run (enqueue-miss recovery)
 
-A `workflow_dispatch` re-fires the pipeline by hand, no dummy commit - dispatch
-against the `release` ref. It is the recovery lever for agentic-os#240 (missed
-push enqueue). Its `bump` input defaults to `minor`. `promote.yml` also takes a
-dispatch to re-attempt a promotion without a new main push.
+A `workflow_dispatch` re-fires either stage by hand, no dummy commit -
+dispatch against the `release` ref for publication retries or the `main` ref
+for a promotion retry. It is the recovery lever for agentic-os#240 (missed
+enqueue). Its `bump` input defaults to `minor`.
 
 ## Consumer pin (derived from the tag)
 

@@ -41,19 +41,18 @@ The tiers form a fan-out/fan-in DAG (aos#491):
 
 - `promote.yml` runs **one draft publish job per tier**
   ([`actions/publish-dev-base-tier`](../actions/publish-dev-base-tier/action.yml)),
-  with `needs:` carrying the DAG above: siblings build in parallel, a flaky
-  tier fails and reruns alone, and a `lang-dotnet` flake no longer takes
-  `ops` or `agent` down - only `full` waits on it.
-- `release.yml` computes the next public tag first, then runs one retag job
-  per tier from `draft-${sha}` to `vX.Y.Z`, `:release`, and `:latest`.
-- Each job verifies its pushed or retagged manifests. The tag-cutting
-  `release` job needs every retag job, so the public tag lands only after the
-  whole family is pullable under the final refs. Builder and layer cache
-  persist between runs: [dev-base build cache](dev-base-build-cache.md).
-- Every released tier carries the moving `:release` branch alias and the
-  `:latest` compatibility alias alongside the versioned release tag, so
-  `dev-base-full` keeps the default `agentic-os:release` surface ward pulls
-  while older `:latest` consumers still resolve to the same image.
+  with `needs:` carrying the DAG above: siblings build in parallel, flakes
+  rerun alone, and only `full` waits on `lang-dotnet`.
+- `promote.yml` computes the next public tag first, retags each tier from
+  `draft-${sha}` to `vX.Y.Z`, `:release`, and `:latest`, then uploads the
+  release metadata before the branch fast-forward.
+- Each job verifies its manifests. The release job needs every retag job, so
+  the public tag lands only after the family is pullable. Builder and layer
+  cache persist between runs: [dev-base build cache](dev-base-build-cache.md).
+- Every released tier carries `:release` and `:latest` alongside the versioned
+  tag, so `dev-base-full` keeps the default `agentic-os:release` surface.
+- `release.yml` keeps the same publication logic as a manual retry path and
+  never runs on push.
 
 ## ARG ownership
 

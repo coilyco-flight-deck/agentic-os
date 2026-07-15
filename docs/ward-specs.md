@@ -41,8 +41,10 @@ config assets under [ward-profile-assets.md](ward-profile-assets.md).
 ## Release asset
 
 Every aos release attaches the bundle as `ward-specs-<tag>.tar.gz` (plus a
-`.sha256` sidecar) via the `release` job in
-[`.forgejo/workflows/release.yml`](../.forgejo/workflows/release.yml). The
+`.sha256` sidecar) via the release publication job in
+[`.forgejo/workflows/promote.yml`](../.forgejo/workflows/promote.yml), with
+[`.forgejo/workflows/release.yml`](../.forgejo/workflows/release.yml) kept as a
+manual retry path. The
 tarball is deterministic, so the checksum a downstream pins is reproducible from
 the tag. Ward's build sites pin that URL + `sha256` rather than a raw tracked
 path, and the packaging step walks `.ward/` recursively while excluding

@@ -1,9 +1,10 @@
 # Scheduled dev-base dependency auto-bump. Resolves each pinned tool in
 # docker/dev-base/<tier>/Dockerfile against its upstream latest release and, for every
 # pin that drifted, commits one ARG bump and pushes to main. The push then rides
-# the two-stage flow: promote.yml gates + fast-forwards `release`, and
-# release.yml republishes the image family from there, so the
-# published dev-base stops lagging upstream with no human editing an ARG by hand
+# the two-stage flow: promote.yml gates, republishes the image family, and
+# fast-forwards `release`, while release.yml remains the manual retry hook for
+# the same publication work, so the published dev-base stops lagging upstream
+# with no human editing an ARG by hand
 # (agentic-os#272, the ward#288/#301 staleness incident). The resolve+rewrite
 # logic is scripts/dep-bump.py; this repo owns the publish pipeline per AGENTS.md
 # and fleet rollout stays in infrastructure/ansible. One commit per tool keeps
@@ -11,10 +12,11 @@
 #
 # Runs daily at 09:17 UTC (off the hour, to dodge cron rush) and on dispatch.
 # DEP_BUMP_TOKEN, when set, is a write:repository PAT so the bump push is
-# attributed to a real user and reliably enqueues release.yml; the auto-issued
-# job token still pushes without it, but some Forgejo versions suppress workflow
-# runs from bot-token pushes. UPSTREAM_GH_TOKEN is optional and only lifts
-# github.com's anonymous API rate limit. Full walkthrough: docs/dev-base-auto-bump.md.
+# attributed to a real user and reliably fast-forwards the release branch; the
+# auto-issued job token still pushes without it, but some Forgejo versions
+# suppress workflow runs from bot-token pushes. UPSTREAM_GH_TOKEN is optional
+# and only lifts github.com's anonymous API rate limit. Full walkthrough:
+# docs/dev-base-auto-bump.md.
 # The applied bump tree now runs the repo test/pre-commit gate before the push
 # so a bad pin leaves this workflow red and never reaches main.
 
