@@ -33,6 +33,10 @@ cold run pushes even more multi-GB blobs at the struggling registry.
 buildcache manifest after each pushed tier and emits a `::warning::` in the
 job log when the write did not land, after a bounded retry budget, so cache rot
 is observed, not inferred from slow runs or a single transient registry miss.
+The same helper also writes a per-tier step-summary cache plan before the
+expensive build starts, including the cache key, registry source, destination,
+and whether the source manifest was already present. That makes a cold cache
+visible as a cache event, not just as a slow or failed build.
 
 ## See also
 

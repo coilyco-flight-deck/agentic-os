@@ -227,8 +227,14 @@ def test_pushed_build_uses_release_tagless_cache_ref(monkeypatch) -> None:
     script = _load_script()
     commands: list[list[str]] = []
 
+    monkeypatch.setattr(script, "_has_target_checkpoint", lambda *_args: False)
     monkeypatch.setattr(script, "_run", lambda cmd: commands.append(cmd))
-    monkeypatch.setattr(script, "_probe_cache_write", lambda ref: None)
+    monkeypatch.setattr(
+        script,
+        "_inspect_manifest",
+        lambda ref: "sha256:cache" if "buildcache" in ref else None,
+    )
+    monkeypatch.setattr(script, "_probe_cache_write", lambda ref: True)
     monkeypatch.setattr(script, "_host_targetarch", lambda: "amd64")
     monkeypatch.setattr(script, "_ward_config_ref_commit", lambda: "abc123")
 
@@ -268,8 +274,14 @@ def test_core_push_emits_a_release_context_breadcrumb(
     script = _load_script()
     commands: list[list[str]] = []
 
+    monkeypatch.setattr(script, "_has_target_checkpoint", lambda *_args: False)
     monkeypatch.setattr(script, "_run", lambda cmd: commands.append(cmd))
-    monkeypatch.setattr(script, "_probe_cache_write", lambda ref: None)
+    monkeypatch.setattr(
+        script,
+        "_inspect_manifest",
+        lambda ref: "sha256:cache" if "buildcache" in ref else None,
+    )
+    monkeypatch.setattr(script, "_probe_cache_write", lambda ref: True)
     monkeypatch.setattr(script, "_host_targetarch", lambda: "amd64")
     monkeypatch.setattr(script, "_ward_config_ref_commit", lambda: "abc123")
     summary_file = tmp_path / "core-publish-summary.md"
@@ -291,6 +303,7 @@ def test_core_push_emits_a_release_context_breadcrumb(
     assert "ward_config_ref_commit=abc123" in captured
     assert "context=docker/dev-base/core" in captured
     assert "docker buildx build --progress=plain --push --platform linux/amd64,linux/arm64" in captured
+    assert "cache_source_provenance=sha256:cache" in captured
     assert commands
     summary = summary_file.read_text(encoding="utf-8")
     assert "### core publish context" in summary
@@ -301,6 +314,16 @@ def test_core_push_emits_a_release_context_breadcrumb(
     assert "- context: docker/dev-base/core" in summary
     assert "- ward_config_ref_commit: abc123" in summary
     assert "command: docker buildx build --progress=plain --push --platform linux/amd64,linux/arm64" in summary
+    assert "### core cache plan" in summary
+    assert f"- cache key: {REGISTRY_BASE}:core-buildcache" in summary
+    assert f"- cache source: type=registry,ref={REGISTRY_BASE}:core-buildcache" in summary
+    assert (
+        f"- cache destination: type=registry,ref={REGISTRY_BASE}:core-buildcache,mode=max,ignore-error=true"
+        in summary
+    )
+    assert "- cache source provenance: sha256:cache" in summary
+    assert "### core cache result" in summary
+    assert "- cache write: verified" in summary
 
 
 def test_pushed_build_skips_an_existing_checkpoint(monkeypatch) -> None:
@@ -310,7 +333,10 @@ def test_pushed_build_skips_an_existing_checkpoint(monkeypatch) -> None:
 
     monkeypatch.setattr(script, "_has_target_checkpoint", lambda *_args: True)
     monkeypatch.setattr(script, "_run", lambda cmd: commands.append(cmd))
-    monkeypatch.setattr(script, "_probe_cache_write", lambda ref: probed.append(ref))
+    monkeypatch.setattr(script, "_inspect_manifest", lambda ref: "sha256:cache")
+    monkeypatch.setattr(
+        script, "_probe_cache_write", lambda ref: probed.append(ref) or True
+    )
     monkeypatch.setattr(script, "_host_targetarch", lambda: "amd64")
     monkeypatch.setattr(script, "_ward_config_ref_commit", lambda: "abc123")
 
@@ -331,8 +357,14 @@ def test_pushed_build_tags_every_tier_with_the_requested_aliases(monkeypatch) ->
     script = _load_script()
     commands: list[list[str]] = []
 
+    monkeypatch.setattr(script, "_has_target_checkpoint", lambda *_args: False)
     monkeypatch.setattr(script, "_run", lambda cmd: commands.append(cmd))
-    monkeypatch.setattr(script, "_probe_cache_write", lambda ref: None)
+    monkeypatch.setattr(
+        script,
+        "_inspect_manifest",
+        lambda ref: "sha256:cache" if "buildcache" in ref else None,
+    )
+    monkeypatch.setattr(script, "_probe_cache_write", lambda ref: True)
     monkeypatch.setattr(script, "_host_targetarch", lambda: "amd64")
     monkeypatch.setattr(script, "_ward_config_ref_commit", lambda: "abc123")
 
@@ -508,8 +540,18 @@ def test_single_tier_push_builds_only_that_tier_with_graft_args(monkeypatch) -> 
     commands: list[list[str]] = []
     probed: list[str] = []
 
+    monkeypatch.setattr(script, "_has_target_checkpoint", lambda *_args: False)
     monkeypatch.setattr(script, "_run", lambda cmd: commands.append(cmd))
-    monkeypatch.setattr(script, "_probe_cache_write", lambda ref: probed.append(ref))
+    monkeypatch.setattr(
+        script,
+        "_inspect_manifest",
+        lambda ref: "sha256:cache" if "buildcache" in ref else None,
+    )
+    monkeypatch.setattr(
+        script,
+        "_probe_cache_write",
+        lambda ref: probed.append(ref) or True,
+    )
     monkeypatch.setattr(script, "_host_targetarch", lambda: "amd64")
     monkeypatch.setattr(script, "_ward_config_ref_commit", lambda: "abc123")
 
@@ -550,7 +592,7 @@ def test_cache_probe_warns_loudly_when_the_cache_write_is_missing(
         stderr = "manifest unknown"
 
     monkeypatch.setattr(script.subprocess, "run", lambda *a, **k: _Probe())
-    script._probe_cache_write(f"{REGISTRY_BASE}:buildcache")
+    assert script._probe_cache_write(f"{REGISTRY_BASE}:buildcache") is False
     err = capsys.readouterr().err
     assert "::warning::" in err
     assert "starts cold" in err

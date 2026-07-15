@@ -34,6 +34,9 @@ def test_dev_base_publish_workflows_support_tier_reruns_and_non_blocking_alerts(
         "continue-on-error: true",
     ):
         assert needle in publish
+    assert "Publish core image" in publish
+    assert "scripts/dev-base-build.py" in publish
+    assert "Probe core buildcache write" not in publish
 
     for needle in (
         "sha:",

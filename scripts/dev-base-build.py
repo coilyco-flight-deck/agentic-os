@@ -60,12 +60,15 @@ def _retry(
 
 
 def _inspect_manifest(ref: str) -> str | None:
-    probe = subprocess.run(
-        ["docker", "buildx", "imagetools", "inspect", ref],
-        check=False,
-        capture_output=True,
-        text=True,
-    )
+    try:
+        probe = subprocess.run(
+            ["docker", "buildx", "imagetools", "inspect", ref],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+    except OSError:
+        return None
     if probe.returncode != 0:
         return None
     stdout = getattr(probe, "stdout", "")
@@ -76,17 +79,59 @@ def _inspect_manifest(ref: str) -> str | None:
     return match.group(1)
 
 
-def _probe_cache_write(buildcache_ref: str) -> None:
+def _cache_refs(buildcache_ref: str) -> tuple[str, str]:
+    cache_from = f"type=registry,ref={buildcache_ref}"
+    cache_to = f"{cache_from},mode=max,ignore-error=true"
+    return cache_from, cache_to
+
+
+def _append_cache_summary(
+    tier: str,
+    buildcache_ref: str,
+    provenance: str | None,
+    *,
+    write_state: str | None = None,
+) -> None:
+    cache_from, cache_to = _cache_refs(buildcache_ref)
+    lines = [
+        f"### {tier} cache plan",
+        "",
+        f"- cache key: {buildcache_ref}",
+        f"- cache source: {cache_from}",
+        f"- cache destination: {cache_to}",
+        (
+            f"- cache source provenance: {provenance}"
+            if provenance is not None
+            else "- cache source provenance: miss or unavailable"
+        ),
+    ]
+    if write_state is not None:
+        lines.extend(
+            [
+                "",
+                f"### {tier} cache result",
+                "",
+                f"- cache key: {buildcache_ref}",
+                f"- cache write: {write_state}",
+            ]
+        )
+    _append_step_summary("\n".join(lines) + "\n")
+
+
+def _probe_cache_write(buildcache_ref: str) -> bool:
     # cache-to runs with ignore-error=true so a registry hiccup cannot fail the
     # push. Probe the cache manifest and warn loudly so a cold cache is visible.
     def _inspect_once() -> subprocess.CompletedProcess[str]:
         cmd = ["docker", "buildx", "imagetools", "inspect", buildcache_ref]
-        probe = subprocess.run(
-            cmd,
-            check=False,
-            capture_output=True,
-            text=True,
-        )
+        try:
+            probe = subprocess.run(
+                cmd,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+        except OSError as exc:
+            raise subprocess.CalledProcessError(127, cmd, stderr=str(exc)) from exc
         if probe.returncode != 0:
             raise subprocess.CalledProcessError(
                 probe.returncode,
@@ -105,6 +150,8 @@ def _probe_cache_write(buildcache_ref: str) -> None:
             "imagetools inspect could not resolve the cache manifest.",
             file=sys.stderr,
         )
+        return False
+    return True
 
 
 def _wait_for_source_image(source_ref: str, poll_seconds: int = 15) -> None:
@@ -192,6 +239,8 @@ def _build_plan(
         dockerfile = Path(entry["dockerfile"])
         context_dir = Path(entry["context_dir"])
         alias_images = tuple(entry.get("alias_images", ()))
+        buildcache_ref = str(entry["cache_image"])
+        cache_from, cache_to = _cache_refs(buildcache_ref)
         if push and _has_target_checkpoint(entry["image"], alias_images):
             print(
                 f"{entry['tier']} already published at {entry['image']}; "
@@ -210,15 +259,7 @@ def _build_plan(
         for arg_name, graft_ref in entry["graft_images"].items():
             cmd.extend(["--build-arg", f"{arg_name}={graft_ref}"])
         if push:
-            buildcache_ref = entry["cache_image"]
-            cmd.extend(
-                [
-                    "--cache-from",
-                    f"type=registry,ref={buildcache_ref}",
-                    "--cache-to",
-                    f"type=registry,ref={buildcache_ref},mode=max,ignore-error=true",
-                ]
-            )
+            cmd.extend(["--cache-from", cache_from, "--cache-to", cache_to])
         cmd.extend(["-t", entry["image"]])
         if push:
             for alias_image in entry.get("alias_images", []):
@@ -250,6 +291,19 @@ def _build_plan(
             print("::endgroup::")
             _append_step_summary(summary + "\n")
         if push:
+            provenance = _inspect_manifest(buildcache_ref)
+            print(f"::group::{entry['tier']} cache plan")
+            print(f"tier={entry['tier']}")
+            print(f"cache_key={buildcache_ref}")
+            print(f"cache_source={cache_from}")
+            print(f"cache_destination={cache_to}")
+            print(
+                "cache_source_provenance="
+                + (provenance if provenance is not None else "miss or unavailable")
+            )
+            print("::endgroup::")
+            _append_cache_summary(entry["tier"], buildcache_ref, provenance)
+        if push:
             _retry(f"build {entry['tier']}", lambda: _run(cmd))
         else:
             _run(cmd)
@@ -267,7 +321,10 @@ def _build_plan(
                         ["docker", "buildx", "imagetools", "inspect", alias_image]
                     ),
                 )
-            _probe_cache_write(entry["cache_image"])
+            write_state = "verified" if _probe_cache_write(buildcache_ref) else "missing"
+            _append_cache_summary(
+                entry["tier"], buildcache_ref, provenance, write_state=write_state
+            )
 
 
 def _promote_plan(

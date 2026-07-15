@@ -275,39 +275,24 @@ jobs:
           echo "buildx after bootstrap"
           docker buildx ls
 
-      - name: Build core image
+      - name: Publish core image
         if: ${{ steps.checkpoint.outputs.skip_publish != 'true' }}
         shell: bash
         env:
+          REGISTRY_BASE: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os
+          TAG: ${{ needs.plan-draft.outputs.draft_tag }}
           BUILD_TIMEOUT: 110m
           PLATFORMS: linux/amd64,linux/arm64
         run: |
           set -euo pipefail
           timeout --preserve-status --kill-after=5m "${BUILD_TIMEOUT}" \
-            docker buildx build --progress=plain --push \
-            --platform "${PLATFORMS}" \
-            --cache-from "type=registry,ref=${CORE_CACHE_IMAGE}" \
-            --cache-to "type=registry,ref=${CORE_CACHE_IMAGE},mode=max,ignore-error=true" \
-            --build-arg "WARD_CONFIG_REF_COMMIT=${CORE_WARD_CONFIG_REF_COMMIT}" \
-            -t "${CORE_IMAGE}" \
-            -f "${CORE_DOCKERFILE}" \
-            "${CORE_CONTEXT_DIR}"
-
-      - name: Verify published core image
-        if: ${{ steps.checkpoint.outputs.skip_publish != 'true' }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          docker buildx imagetools inspect "${CORE_IMAGE}"
-
-      - name: Probe core buildcache write
-        if: ${{ steps.checkpoint.outputs.skip_publish != 'true' }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          if ! docker buildx imagetools inspect "${CORE_CACHE_IMAGE}"; then
-            echo "::warning::buildcache write to ${CORE_CACHE_IMAGE} failed or is missing - the next build of this tier starts cold. imagetools inspect could not resolve the cache manifest." >&2
-          fi
+            uv run python scripts/dev-base-build.py \
+            --registry "${REGISTRY_BASE}" \
+            --tag "${TAG}" \
+            build \
+            --push \
+            --tier core \
+            --platforms "${PLATFORMS}"
 
       - name: Alert Telegram on release failure
         if: ${{ failure() && github.ref == 'refs/heads/release' }}
