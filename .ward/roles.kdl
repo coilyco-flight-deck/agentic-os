@@ -11,14 +11,14 @@ roles {
         // make the agents average everyday fellows
         agent claude {
             model claude-opus-4-8
-            name "opal engineer"
-            pronouns she
+            // name "opal engineer"
+            // pronouns she
             reasoning-effort high
         }
         agent codex {
             model gpt-5.6-terra
-            name "terran engineer"
-            pronouns he
+            // name "terran engineer"
+            // pronouns he
             reasoning-effort high
         }
     }
@@ -39,14 +39,14 @@ roles {
         // make the agents as smart as they come
         agent claude {
             model claude-fable-5
-            name "fabled director"
-            pronouns she
+            // name "fabled director"
+            // pronouns she
             reasoning-effort xhigh
         }
         agent codex {
             model gpt-5.6-sol
-            name "solar director"
-            pronouns he
+            // name "solar director"
+            // pronouns he
             reasoning-effort xhigh
         }
     }
@@ -58,14 +58,14 @@ roles {
         // make the agents average everyday fellows
         agent claude {
             model claude-opus-4-8
-            name "opal tester"
-            pronouns she
+            // name "opal tester"
+            // pronouns she
             reasoning-effort high
         }
         agent codex {
             model gpt-5.6-terra
-            name "terran tester"
-            pronouns he
+            // name "terran tester"
+            // pronouns he
             reasoning-effort high
         }
     }
@@ -81,14 +81,14 @@ roles {
         // make the agents lil bit smart
         agent claude {
             model claude-fable-5
-            name "fabled advisor"
-            pronouns she
+            // name "fabled advisor"
+            // pronouns she
             reasoning-effort xhigh
         }
         agent codex {
             model gpt-5.6-sol
-            name "solar advisor"
-            pronouns he
+            // name "solar advisor"
+            // pronouns he
             reasoning-effort xhigh
         }
     }
@@ -106,14 +106,14 @@ roles {
         // make the agents as smart as they come
         agent claude {
             model claude-fable-5
-            name "fabled SRE"
-            pronouns she
+            // name "fabled SRE"
+            // pronouns she
             reasoning-effort xhigh
         }
         agent codex {
             model gpt-5.6-sol
-            name "solar SRE"
-            pronouns he
+            // name "solar SRE"
+            // pronouns he
             reasoning-effort xhigh
         }
     }
@@ -128,14 +128,14 @@ roles {
         // make the agents average everyday fellows
         agent claude {
             model claude-opus-4-8
-            name "opal planner"
-            pronouns she
+            // name "opal planner"
+            // pronouns she
             reasoning-effort high
         }
         agent codex {
             model gpt-5.6-terra
-            name "terran planner"
-            pronouns he
+            // name "terran planner"
+            // pronouns he
             reasoning-effort high
         }
     }
