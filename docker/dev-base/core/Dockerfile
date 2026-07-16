@@ -5,7 +5,7 @@ ARG GO_VERSION=1.26.5
 # Ward raw releases are staging until aos validates them against the real .ward
 # bundle. Keep the build tool pinned to the current prod/N-1 ward; the target
 # shape is N-1 for build work, then candidate N only at the late config gate.
-ARG WARD_VERSION=0.775.0
+ARG WARD_VERSION=0.775.0-tmp
 ARG TARGETARCH
 
 FROM ubuntu:24.04 AS dev-base-ward-builder

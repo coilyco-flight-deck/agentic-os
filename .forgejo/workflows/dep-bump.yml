@@ -31,7 +31,7 @@ permissions:
   contents: write
 
 env:
-  WARD_WORKFLOW_VERSION: v0.775.0
+  WARD_WORKFLOW_VERSION: v0.775.0-tmp
 
 jobs:
   bump:

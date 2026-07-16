@@ -22,7 +22,7 @@ permissions:
   contents: read
 
 env:
-  WARD_WORKFLOW_VERSION: v0.775.0
+  WARD_WORKFLOW_VERSION: v0.775.0-tmp
 
 concurrency:
   group: ci-${{ github.ref }}

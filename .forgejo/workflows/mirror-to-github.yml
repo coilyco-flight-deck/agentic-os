@@ -26,7 +26,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  WARD_WORKFLOW_VERSION: v0.775.0
+  WARD_WORKFLOW_VERSION: v0.775.0-tmp
 
 jobs:
   test:
