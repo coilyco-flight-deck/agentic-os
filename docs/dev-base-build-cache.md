@@ -20,6 +20,13 @@ composite now **reuses** the builder: it creates it only when absent (with a
 it only when the existing one genuinely fails to bootstrap. The crash-collision
 case still self-heals; the warm cache stops being collateral.
 
+The core image assigns its commit-pinned `WARD_CONFIG_REF` only after the
+package and toolchain layers. That ref must change on every aos commit so the
+final `ward doctor` validates the exact bundled `.ward/` source, but placing it
+in the core stage's initial environment invalidates every later layer. Keeping
+the stamp beside the final validation gate preserves the expensive layers
+across commits while still making the gate commit-specific.
+
 ## The registry cache is secondary, and loud when broken
 
 Each tier also reads and writes a `type=registry` cache under its

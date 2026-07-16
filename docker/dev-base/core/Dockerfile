@@ -12,16 +12,23 @@ FROM ubuntu:24.04 AS dev-base-ward-builder
 ARG GO_VERSION
 ARG WARD_VERSION
 ARG TARGETARCH
-ARG WARD_CONFIG_REF_COMMIT
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PATH=/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin
 
 RUN set -eux; \
-    apt-get update -o Acquire::Retries=3 && \
-    apt-get install -y --no-install-recommends \
-      ca-certificates curl git openssh-client && \
-    rm -rf /var/lib/apt/lists/*
+    for attempt in 1 2 3; do \
+      if apt-get update -o Acquire::Retries=3 \
+        && apt-get install -y --no-install-recommends \
+          ca-certificates curl git openssh-client; then \
+        rm -rf /var/lib/apt/lists/*; \
+        break; \
+      fi; \
+      if [ "$attempt" -eq 3 ]; then \
+        exit 1; \
+      fi; \
+      sleep 5; \
+    done
 
 RUN set -eux; \
     case "${TARGETARCH}" in \
@@ -35,7 +42,6 @@ RUN set -eux; \
     rm /tmp/go.tar.gz; \
     go version
 
-ENV WARD_CONFIG_REF=forgejo.coilysiren.me/coilyco-flight-deck/agentic-os@${WARD_CONFIG_REF_COMMIT}//.ward
 RUN set -eux; \
     export GOPATH=/tmp/gobuild GOCACHE=/tmp/gocache \
       GOPROXY=direct GOSUMDB=off GOPRIVATE=forgejo.coilysiren.me CGO_ENABLED=0; \
@@ -66,7 +72,6 @@ RUN set -eux; \
 FROM ubuntu:24.04 AS dev-base-core
 ARG UV_VERSION
 ARG TARGETARCH
-ARG WARD_CONFIG_REF_COMMIT
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PATH=/usr/local/go/bin:/usr/local/node/bin:/usr/local/dotnet:/usr/local/cargo/bin:/usr/local/bin:/usr/bin:/bin:/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin \
@@ -83,8 +88,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     AWS_REGION=us-east-1 \
     DOTNET_ROOT=/usr/local/dotnet \
     DOTNET_CLI_TELEMETRY_OPTOUT=1 \
-    DOTNET_NOLOGO=1 \
-    WARD_CONFIG_REF=forgejo.coilysiren.me/coilyco-flight-deck/agentic-os@${WARD_CONFIG_REF_COMMIT}//.ward
+    DOTNET_NOLOGO=1
 
 # Base packages: catalog-hook deps (shellcheck, python3, git) plus the inner loop's fetch/build tools.
 # libicu74 is the .NET globalization backend: the SDK below runs
@@ -192,6 +196,10 @@ RUN set -eux; \
     chmod -R a+rwX "${CARGO_HOME}" "${RUSTUP_HOME}"
 
 COPY --from=dev-base-ward-builder /usr/local/bin/ward /usr/local/bin/ward
+# Keep the per-commit config ref below the expensive tool layers so ordinary
+# aos commits invalidate only the real-bundle validation gate.
+ARG WARD_CONFIG_REF_COMMIT
+ENV WARD_CONFIG_REF=forgejo.coilysiren.me/coilyco-flight-deck/agentic-os@${WARD_CONFIG_REF_COMMIT}//.ward
 RUN set -eux; \
     ward --version; \
     CLIGUARD_NO_SANDBOX=1 ward doctor; \

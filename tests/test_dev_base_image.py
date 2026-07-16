@@ -141,6 +141,21 @@ def test_core_tier_keeps_the_hidden_ward_builder_stage() -> None:
     ) in text
 
 
+def test_core_tier_stamps_ward_config_after_cacheable_tool_layers() -> None:
+    text = _tier_path("core").read_text()
+    builder, core = text.split("FROM ubuntu:24.04 AS dev-base-core", maxsplit=1)
+    ward_ref = "ENV WARD_CONFIG_REF="
+
+    assert "WARD_CONFIG_REF_COMMIT" not in builder
+    assert ward_ref not in builder
+    assert core.index("curl -fsSL https://sh.rustup.rs") < core.index(ward_ref)
+    assert core.index("COPY --from=dev-base-ward-builder") < core.index(
+        "ARG WARD_CONFIG_REF_COMMIT"
+    )
+    assert core.index("ARG WARD_CONFIG_REF_COMMIT") < core.index(ward_ref)
+    assert core.index(ward_ref) < core.index("ward doctor")
+
+
 def test_core_tier_runs_ward_doctor_after_installing_ward() -> None:
     text = _tier_path("core").read_text()
     assert (

@@ -42,9 +42,9 @@ the tier DAG (see the [tiering doc](dev-base-image-tiering.md)). The manual
 retry workflow in [`.forgejo/workflows/release.yml`](../.forgejo/workflows/release.yml)
 retags the already-published draft family to `vX.Y.Z`, `:release`, and
 `:latest`, waiting for each draft source tag before retagging. The core image
-stamps `WARD_CONFIG_REF` from the current commit, so ward launches against the
-bundled `.ward/` checkout. The core build runs `ward doctor` first, rejecting
-a broken bundle before the draft image publishes.
+sets its commit-pinned `WARD_CONFIG_REF` in the final validation layer. That
+lets `ward doctor` validate the bundled `.ward/` checkout without invalidating
+the cached toolchain layers on every commit.
 
 See [publish resume](dev-base-publish-resume.md).
 
