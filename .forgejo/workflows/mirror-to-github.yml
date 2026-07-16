@@ -25,6 +25,9 @@ concurrency:
   group: mirror-to-github-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  WARD_WORKFLOW_VERSION: v0.775.0
+
 jobs:
   test:
     runs-on: docker
@@ -34,6 +37,11 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
+
+      - name: Install validated ward for repo gate
+        run: |
+          set -euo pipefail
+          scripts/install-workflow-ward.sh "${WARD_WORKFLOW_VERSION}"
 
       - name: Cache pre-commit envs
         uses: actions/cache@v4
@@ -46,15 +54,8 @@ jobs:
       - name: Repo test gate
         run: |
           set -euo pipefail
-          # Mirror follows the same repo gate as release. Use ward when the
-          # CI image provides it, otherwise run the exact wrapped commands.
-          if command -v ward >/dev/null 2>&1; then
-            ward exec test
-            ward exec pre-commit-all
-          else
-            uv run pytest
-            pre-commit run --all-files
-          fi
+          ward exec test
+          ward exec pre-commit-all
 
       - name: Alert Telegram on main failure
         if: ${{ failure() && github.ref == 'refs/heads/main' }}

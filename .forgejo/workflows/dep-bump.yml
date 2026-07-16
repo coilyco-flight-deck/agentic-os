@@ -30,6 +30,9 @@ on:
 permissions:
   contents: write
 
+env:
+  WARD_WORKFLOW_VERSION: v0.775.0
+
 jobs:
   bump:
     runs-on: docker
@@ -40,6 +43,11 @@ jobs:
           fetch-depth: 0
           ref: main
           token: ${{ secrets.DEP_BUMP_TOKEN || github.token }}
+
+      - name: Install validated ward for repo gate
+        run: |
+          set -euo pipefail
+          scripts/install-workflow-ward.sh "${WARD_WORKFLOW_VERSION}"
 
       - name: Cache pre-commit envs
         uses: actions/cache@v4
@@ -76,15 +84,9 @@ jobs:
           done < /tmp/dep-bump-plan.tsv
 
           # The bumped tree only gets pushed after the repo-authoritative gate
-          # passes. Use ward when the CI image has it, otherwise invoke the
-          # exact wrapped commands.
-          if command -v ward >/dev/null 2>&1; then
-            ward exec test
-            ward exec pre-commit-all
-          else
-            uv run pytest
-            pre-commit run --all-files
-          fi
+          # passes under the same validated ward the release gate uses.
+          ward exec test
+          ward exec pre-commit-all
 
           git push origin HEAD:main
       - name: Alert Telegram on main failure
