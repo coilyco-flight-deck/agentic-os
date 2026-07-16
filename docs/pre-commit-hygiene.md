@@ -14,7 +14,8 @@ text hygiene that are too disruptive to flip on everywhere at once.
 - `mixed-line-ending`
 - `check-json`
 - `check-toml`
-- `actionlint` on `.forgejo/workflows/*.yml` and `.yaml`; `.github/actionlint.yaml` teaches it the Forgejo runner label `docker`
+- `actionlint` on `.forgejo/workflows/*.yml` and `.yaml`. `.github/actionlint.yaml` teaches it the Forgejo runner label `docker`
+- `forgejo-runner-validate` for Forgejo-native workflow and local-action semantics
 - `shellcheck` on shell scripts
 - `typos` with repo-specific words in [`.typos.toml`](../.typos.toml)
 
