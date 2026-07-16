@@ -9,15 +9,15 @@
 // `never` denial (cli-guard v0.72.0 makes deny inherit up), plus the read root's
 // spec/base-url singletons, which this file does not restate. So the label
 // policy-disable, the fork/archive/org denials, and `never delete issue` all stay
-// in force here without restatement. The result is read + curated create/edit: a
-// `ward-kdl-write` binary that authors content but never deletes it (no delete
+// in force here without restatement. The result is read + curated create/edit: an
+// aos-agent tier member that authors content but never deletes it (no delete
 // leaf is compiled in at this tier - that is admin).
 //
 // Actions are child-local (not inherited, cli-guard v0.72.0), so the read-family
 // actions (list-all issue, view issue) are re-declared verbatim here to keep the
 // tiers monotonic, alongside the write-family actions (move-issue, comment
 // issue). See ../docs/ward-specs.md.
-wrap ward-kdl-write ops forgejo {
+wrap aos-agent ops forgejo {
     inherit "../guardfile.forgejo.read.kdl"
     // Scope gate: re-declared per tier (harmless dedup) so it reads present in
     // this tier's own guardfile and generated doc.

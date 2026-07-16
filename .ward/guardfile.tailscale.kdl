@@ -1,4 +1,4 @@
-// ward-kdl ops tailscale - the tailnet live-observe surface as an allowlist
+// ward ops tailscale - the tailnet live-observe surface as an allowlist
 // (cli-guard execverb, exec dialect). Wraps the image-baked
 // `/usr/local/bin/tailscale` client so a live-observe surface can
 // answer "is the tailnet up, is the peer reachable" itself instead of handing
@@ -7,7 +7,7 @@
 // verbs (up/down/login/logout/set/serve/funnel/ssh/file) stay denied - joining
 // or reshaping the tailnet is ward's container bring-up axis, never an agent
 // verb. Per-role bindings live in roles.kdl; tiers: docs/role-surface-tiers.md.
-wrap ward-kdl ops tailscale {
+wrap aos-ward ops tailscale {
     exec "/usr/local/bin/tailscale"
     can run status {
         describe "tailnet state: peers, this node, and whether tailscaled is up"

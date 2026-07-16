@@ -1,4 +1,4 @@
-wrap ward-kdl ops aws {
+wrap aos-ward ops aws {
     exec aws
     can run ssm get-parameter {
         when name matches "*coilyco-ops*"

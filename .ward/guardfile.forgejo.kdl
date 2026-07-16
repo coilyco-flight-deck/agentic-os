@@ -1,4 +1,5 @@
-// Forgejo ops surface for ward-kdl. Every `can` resolves its operationId by
+// Forgejo ops surface for the aos-authored ward bundle. Every `can` resolves
+// its operationId by
 // convention (verb + resource -> method + path); the only explicit `op` pins are
 // on the repo-label denials below, where a bare `label` would resolve org-ward.
 // Hardened per ward#109: orgs and repos lose their irreversible verbs, repo-label
@@ -6,7 +7,7 @@
 // land, and every path-{owner} leaf is scoped to coily* owners. Repo-level label
 // create/edit are additionally policy-disabled per ward#107 (dup P0-P4 prevention).
 // Auto-resolution per cli-guard#147. See ../docs/ward-specs.md.
-wrap ward-kdl ops forgejo {
+wrap aos-ward ops forgejo {
     spec forgejo.swagger.v1.json
     base-url "forgejo.coilysiren.me/api/v1"
     // Auth as the coilyco-ops bot, not a personal PAT (ward#151), so automated

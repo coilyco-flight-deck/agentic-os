@@ -59,6 +59,12 @@ through `WARD_CONFIG_REF` for the guarded edge surfaces. The published
 target, but the live config path is the runtime `WARD_CONFIG_REF` seam, not a
 bespoke rebuild from the asset.
 
+The bundle uses `aos-ward` as the source binary name for the public ward surface
+that loads into `ward ops ...`. Role-only Forgejo tier files use `aos-agent`, so
+director/engineer PR lifecycle grants do not merge into the public ops bundle.
+Ward reroots selected bundle sources back to the public `ward` command name at
+runtime.
+
 Landing policy lives in [`.ward/repos.kdl`](../.ward/repos.kdl). Its workflow
 block keeps the coilyco PR-gated repos explicit.
 

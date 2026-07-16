@@ -18,7 +18,7 @@
 // and joins the director/engineer tier once that lands.
 // Every leaf pins its op - the bare convention does not reach the pulls
 // sub-resources. See ../docs/ward-specs.md.
-wrap ward-kdl-merge ops forgejo {
+wrap aos-agent ops forgejo {
     spec forgejo.swagger.v1.json
     base-url "forgejo.coilysiren.me/api/v1"
     // Auth as the coilyco-ops bot (ward#151), matching the monolith surface.

@@ -1,7 +1,7 @@
 // Forgejo runner-token mint overlay. The HTTP request itself is declarative
 // fetch, and the exec bridge routes the human scope form onto the matching
 // fetch leaf.
-wrap ward-kdl-write ops forgejo {
+wrap aos-ward ops forgejo {
     base-url "forgejo.coilysiren.me/api/v1"
     auth header-token {
         header Authorization
