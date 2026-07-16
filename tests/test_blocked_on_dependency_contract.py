@@ -5,6 +5,14 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+AUTOMATION_MODE = (
+    ROOT
+    / ".agents"
+    / "skills"
+    / "tooling-issue-prioritization"
+    / "references"
+    / "automation-mode-axis.md"
+)
 READINESS_AXIS = (
     ROOT
     / ".agents"
@@ -26,11 +34,15 @@ def test_blocker_pointer_marker_is_pinned_to_issue_body_comment() -> None:
     assert "source of truth" in body
 
 
+def test_automation_axis_points_readers_at_readiness_contract() -> None:
+    body = _text(AUTOMATION_MODE)
+    assert "See [readiness-axis](readiness-axis.md)" in body
+
+
 def test_blocked_on_dependency_wakes_only_on_issue_close() -> None:
     body = _text(READINESS_AXIS)
     assert "blocker issue closes" in body
-    assert "returns to the interactive queue" in body
-    assert "never authorizes or starts unattended dispatch" in body
+    assert "auto-resume into the `headless` queue" in body
     assert "PR merge" not in body
     assert "release tag" not in body
 

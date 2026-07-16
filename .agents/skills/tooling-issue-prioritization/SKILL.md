@@ -1,6 +1,6 @@
 ---
 name: tooling-issue-prioritization
-description: Tier and prune an issue backlog - P0-P4 tier definitions (P4 is the icebox/lowest tier), a target distribution as ranges, percentile-cut assignment that lands within the bands, dependency readiness, and pruning. Triggers - prioritize, prioritization, triage the backlog, P0/P1/P2/P3/P4, backlog ratio, icebox, burn down the backlog, tier the issues, readiness, blocked on dependency.
+description: Tier and prune an issue backlog - P0-P4 tier definitions (P4 is the icebox/lowest tier), a target distribution as ranges, percentile-cut assignment that lands within the bands, pruning, and a second orthogonal automation-mode axis (headless/interactive/consult). Triggers - prioritize, prioritization, triage the backlog, P0/P1/P2/P3/P4, backlog ratio, icebox, burn down the backlog, tier the issues, automation mode, eligibility to dispatch.
 ---
 
 # Issue Prioritization
@@ -26,9 +26,9 @@ You never force a P0 percentage - urgent is whatever genuinely is (a re-triage o
 
 The **non-P0 remainder** splits to a global distribution (across the whole backlog, NOT per repo), as equal-width ranges so the cut lands on a natural break, not a forced percentage: **P1 0-20%, P2 10-30%, P3 20-40%, P4 30-50%** - same 20-point width, centers at **10 / 20 / 30 / 40**, summing to 100. Treat the band, not a single number, as the target. P1 floors at zero on purpose: a backlog with nothing important-and-near-term has an empty P1, and that is correct. Small or urgent repos may deviate past a band edge; the shape holds on the total.
 
-## Interaction policy
+## Second axis: automation mode
 
-Tier ranks urgency only. Every issue requires an interactive human loop, so trackers do not carry `headless`, `interactive`, or `consult` autonomy labels. Dependency readiness remains separate from priority and never authorizes unattended dispatch. See [readiness-axis](references/readiness-axis.md).
+Tier ranks urgency, not "can an agent land it unattended?" - independent questions. A second orthogonal axis labels each issue `headless` / `interactive` / `consult`, the agent-autonomy ceiling it is cleared for; unlabeled and unsure both fail-closed to `consult`. See [automation-mode-axis](references/automation-mode-axis.md).
 
 ## Assignment, pruning, and running it over an API
 
