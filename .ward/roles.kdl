@@ -139,4 +139,8 @@ roles {
             reasoning-effort high
         }
     }
+    // social: social media leads and analysis
+    role social {}
+    // sales: brings in the money
+    role saled {}
 }
