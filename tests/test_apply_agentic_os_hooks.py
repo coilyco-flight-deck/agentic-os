@@ -141,6 +141,7 @@ def test_managed_block_includes_standard_hygiene_hooks() -> None:
     script = _load_script()
     block = script.managed_block("v9.9.9")
     for needle in (
+        "source-doc-refs",
         "trailing-whitespace",
         "end-of-file-fixer",
         "check-added-large-files",
