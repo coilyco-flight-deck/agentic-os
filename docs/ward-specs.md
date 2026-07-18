@@ -1,12 +1,9 @@
 # Ward Spec Bundle
 
-The coilyco ward bundle lives in [`.ward/`](../.ward/), flattened beside
-`.ward/ward.yaml`. It carries the Forgejo guardfiles, the Actions log and list
-bridges, the rerun bridge, the runner-token fetch overlay, the specverb fetch
-mirrors for the dead log/rerun API routes, aws/tailscale/kubectl exec
-guardfiles, the agents manifest, the role catalog, and the repos bundle,
-including its landing-policy block. The upstream Forgejo OpenAPI spec is no
-longer tracked as a committed blob in aos.
+The coilyco ward bundle lives in [`.ward/`](../.ward/) beside `ward.yaml`. It
+carries ops sources, Actions bridges, agent/role/repo policy, and
+[`defaults.kdl`](../.ward/defaults.kdl), which selects the aos agent image and
+`release` tag. Aos tracks no upstream Forgejo OpenAPI blob.
 
 ## Direction of truth
 
@@ -14,11 +11,11 @@ longer tracked as a committed blob in aos.
 ward#503 producer cutover (2026-07-07), coilyco deployment values are authored
 here and flow down into ward at release time, not the reverse. This replaces
 the older shape where ward held the canonical values and aos mirrored them.
-When a coilyco fleet, guardfile, role-catalog, or spec-lock value changes,
-change it here in aos's `.ward/` and let a push republish the bundle. The
-launch defaults stay spelled out here too: fleet `merge-remote-main`, with
-cli-guard, ward, and agentic-os on `pull-request-and-merge` (canonical
-ward#508 spellings).
+When a coilyco fleet, guardfile, role-catalog, spec-lock, or launch-default
+value changes, change it here in aos's `.ward/` and let a push republish the
+bundle. The launch defaults include the aos agent image on its moving
+`release` tag and fleet `merge-remote-main`, with cli-guard, ward, and
+agentic-os on `pull-request-and-merge` (canonical ward#508 spellings).
 
 This is the one place a shipped tool (ward) consumes runtime config authored in
 a reference repo (aos), a deliberate exception to AGENTS.md's config-placement
@@ -57,7 +54,8 @@ ward keeps one neutral shipped binary and selects the coilyco bundle at launch
 through `WARD_CONFIG_REF` for the guarded edge surfaces. The published
 `ward-specs-<tag>.tar.gz` remains the canonical bundle artifact and checksum
 target, but the live config path is the runtime `WARD_CONFIG_REF` seam, not a
-bespoke rebuild from the asset.
+bespoke rebuild from the asset. Ward's embedded image stays neutral, while
+[`defaults.kdl`](../.ward/defaults.kdl) selects the aos image and tag.
 
 The bundle uses `aos-ward` as the source binary name for the public ward surface
 that loads into `ward ops ...`. Role-only Forgejo tier files use `aos-agent`, so

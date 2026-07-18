@@ -20,7 +20,7 @@ This doc lists major shipped capabilities, not files. If you want a file invento
 - [Forgejo runner-token fetch overlay](forgejo-runner-token.md) - guarded runner registration-token minting via fetch leaves.
 - [Forgejo Actions rerun bridge](forgejo-actions-rerun.md) - guarded run-id rerun helper that falls back to dispatch, plus fetch mirror.
 - [Forgejo org-repo bootstrap](forgejo-org-repo-bootstrap.md) - admin-backed helper that creates or reconciles org repos for GitHub profile mirrors.
-- [ward deployment spec bundle](ward-specs.md) - the shipped `WARD_CONFIG_REF` bundle for the coilyco fleet.
+- [ward bundle](ward-specs.md) - coilyco launch defaults, roles, and guarded surfaces.
 - [Ward profile assets home](ward-profile-assets.md) - AOS-owned profile/config source layout for Ward's typed `ProfileProvider` seam, with CUE behind YAML inputs.
 - [Role surface tiers](role-surface-tiers.md) - the intended per-role container capability tiers.
 - [Cross-repo tooling and release](features-release-tooling.md) - hooks, diagnostics, Forgejo release actions, fast-forward promotion, draft retries, and tier reruns.
