@@ -158,3 +158,39 @@ def test_managed_block_includes_standard_hygiene_hooks() -> None:
         "args: []",
     ):
         assert needle in block
+
+
+def test_refresh_protects_current_block_and_preserves_local_hooks(
+    tmp_path: Path,
+) -> None:
+    """Managed-repo cleanup must not consume the current block's end marker."""
+    script = _load_script()
+    config = tmp_path / ".pre-commit-config.yaml"
+    config.write_text(
+        f"""\
+repos:
+{script.managed_block("v1.0.0")}
+  - repo: local
+    hooks:
+      - id: repo-specific
+        name: repository-specific hook
+        entry: true
+        language: system
+  - repo: {script.TYPOS_REPO_URL}
+    rev: v0.1.0
+    hooks:
+      - id: typos
+""",
+        encoding="utf-8",
+    )
+
+    status, removed = script.upsert_managed_block(config, "v2.0.0")
+    rendered = config.read_text(encoding="utf-8")
+
+    assert status == "updated"
+    assert removed == 1
+    assert rendered.count(script.BEGIN_MARKER) == 1
+    assert rendered.count(script.END_MARKER) == 1
+    assert "rev: v2.0.0" in rendered
+    assert "repo-specific" in rendered
+    assert "rev: v0.1.0" not in rendered

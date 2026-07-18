@@ -324,21 +324,23 @@ def upsert_managed_block(
         config_path.write_text(empty_config_template(rev, hook_ids))
         return "created", 0
 
-    text = config_path.read_text()
-    text, legacy_removed = strip_legacy_blocks(text)
-
+    original_text = config_path.read_text()
     block = managed_block(rev, hook_ids)
-    if BEGIN_MARKER in text and END_MARKER in text:
-        before, _, rest = text.partition(BEGIN_MARKER)
+    if BEGIN_MARKER in original_text and END_MARKER in original_text:
+        before, _, rest = original_text.partition(BEGIN_MARKER)
         _, _, after = rest.partition(END_MARKER)
+        before, removed_before = strip_legacy_blocks(before)
+        after, removed_after = strip_legacy_blocks(after)
+        legacy_removed = removed_before + removed_after
         before = before.rstrip()
         after = after.lstrip("\n")
         new_text = before + "\n\n" + block + (after if after else "")
-        if new_text == config_path.read_text():
+        if new_text == original_text:
             return "unchanged", legacy_removed
         config_path.write_text(new_text)
         return "updated", legacy_removed
 
+    text, legacy_removed = strip_legacy_blocks(original_text)
     if not text.endswith("\n"):
         text += "\n"
     text += block
