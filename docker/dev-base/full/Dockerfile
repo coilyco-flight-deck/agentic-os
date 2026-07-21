@@ -67,14 +67,16 @@ RUN set -eux; \
     rm /tmp/kdlfmt.tar.xz; \
     kdlfmt --version
 
-# Bevy-class native build libs (alsa/udev via pkg-config) so Rust game
-# workspaces can `cargo test` natively in CI. Apt libs cannot graft, so
-# they live in the fan-in tier next to the lang-rust toolchain consumer.
+# Bevy-class native build libs (alsa/udev/wayland/xkbcommon via pkg-config)
+# so Rust game workspaces can `cargo test` natively in CI. Apt libs cannot
+# graft, so they live in the fan-in tier next to the lang-rust consumer.
 RUN set -eux; \
     apt-get update; \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
       libasound2-dev \
       libudev-dev \
+      libwayland-dev \
+      libxkbcommon-dev \
       pkg-config; \
     rm -rf /var/lib/apt/lists/*
 

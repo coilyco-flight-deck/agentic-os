@@ -15,7 +15,7 @@ the root runtime tier on `ubuntu:24.04`. The sibling tier Dockerfiles live in
 - **language/runtime tiers** - Node, Go, .NET 10 + ICU, and Rust (stable toolchain, wasm target, `trunk`).
 - **ops / agent CLIs** - aws cli, Homebrew, claude, mcporter, opencode, codex, goose, gh, helm, kubectl, yq, Docker CLI, and the Tailscale client plus `tailscaled` daemon binary.
 - **gate tools** - golangci-lint, trufflehog, and kdlfmt.
-- **native game-build libs (full only)** - alsa/udev + pkg-config for Bevy-class builds.
+- **native game-build libs (full only)** - alsa/udev/wayland/xkbcommon + pkg-config for Bevy-class builds.
 - **platform seed** - the substrate mirrors, the baked agent self-name / status-line assets, and the container shell entrypoint that seeds `AOS_REPO_ROOT` plus `WARD_CONFIG_REF` before the read-only director shell starts.
 
 Tools under `/usr/local`, `/home/linuxbrew/.linuxbrew`, or `/opt` run as any uid. ward owns `run-as-uid`, mounts, and `~/.aws`. Root bootstrap seeds `/home/ubuntu/.ward/audit` as uid 1000 and avoids root-owned audit state.
