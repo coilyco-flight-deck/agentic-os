@@ -7,6 +7,7 @@ FROM ${BASE_IMAGE} AS dev-base-full
 ARG GOLANGCI_LINT_VERSION=2.12.2
 ARG TRUFFLEHOG_VERSION=3.95.8
 ARG KDLFMT_VERSION=0.1.7
+ARG TRUNK_VERSION=0.21.14
 
 # Toolchain grafts. full is the fan-in default surface: it sits on agent
 # (which carries Node) and grafts the remaining sibling language tiers in via
@@ -59,6 +60,30 @@ RUN set -eux; \
     chmod 0755 /usr/local/bin/kdlfmt; \
     rm /tmp/kdlfmt.tar.xz; \
     kdlfmt --version
+
+# Bevy-class native build libs (alsa/udev via pkg-config) so Rust game
+# workspaces can `cargo test` natively in CI without per-repo apt steps.
+RUN set -eux; \
+    apt-get update; \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      libasound2-dev \
+      libudev-dev \
+      pkg-config; \
+    rm -rf /var/lib/apt/lists/*
+
+# Rust wasm target + trunk static-site packager for Bevy/Wasm app shells.
+# Trunk's release triple spelling matches KDL_ARCH (x86_64/aarch64).
+RUN set -eux; \
+    rustup target add wasm32-unknown-unknown; \
+    chmod -R a+rwX /usr/local/rustup; \
+    . /tmp/arch.env; \
+    curl -fsSL "https://github.com/trunk-rs/trunk/releases/download/v${TRUNK_VERSION}/trunk-${KDL_ARCH}-unknown-linux-gnu.tar.gz" \
+      -o /tmp/trunk.tar.gz; \
+    tar -xzf /tmp/trunk.tar.gz -C /usr/local/bin trunk; \
+    chmod 0755 /usr/local/bin/trunk; \
+    rm /tmp/trunk.tar.gz; \
+    trunk --version; \
+    rustup target list --installed | grep -q wasm32-unknown-unknown
 
 WORKDIR /workspace
 CMD ["bash"]
