@@ -1,13 +1,14 @@
 ARG BASE_IMAGE
 ARG LANG_GO_IMAGE
 ARG LANG_DOTNET_IMAGE
+ARG LANG_RUST_IMAGE
 FROM ${LANG_GO_IMAGE} AS dev-base-lang-go-graft
 FROM ${LANG_DOTNET_IMAGE} AS dev-base-lang-dotnet-graft
+FROM ${LANG_RUST_IMAGE} AS dev-base-lang-rust-graft
 FROM ${BASE_IMAGE} AS dev-base-full
 ARG GOLANGCI_LINT_VERSION=2.12.2
 ARG TRUFFLEHOG_VERSION=3.95.8
 ARG KDLFMT_VERSION=0.1.7
-ARG TRUNK_VERSION=0.21.14
 
 # Toolchain grafts. full is the fan-in default surface: it sits on agent
 # (which carries Node) and grafts the remaining sibling language tiers in via
@@ -18,10 +19,15 @@ ARG TRUNK_VERSION=0.21.14
 # toolchain at lint time, so the go graft is also a build-order dependency.
 COPY --from=dev-base-lang-go-graft /usr/local/go /usr/local/go
 COPY --from=dev-base-lang-dotnet-graft /usr/local/dotnet /usr/local/dotnet
+COPY --from=dev-base-lang-rust-graft /usr/local/cargo /usr/local/cargo
+COPY --from=dev-base-lang-rust-graft /usr/local/rustup /usr/local/rustup
 RUN set -eux; \
     node --version; \
     go version; \
-    dotnet --list-sdks
+    dotnet --list-sdks; \
+    cargo --version; \
+    trunk --version; \
+    rustup target list --installed | grep -q wasm32-unknown-unknown
 
 # golangci-lint (Go linter for ward + cli-guard). Closes the missing-binary gap
 # that made the in-container `pre-commit run --all-files` / CI lint job unrunnable
@@ -62,7 +68,8 @@ RUN set -eux; \
     kdlfmt --version
 
 # Bevy-class native build libs (alsa/udev via pkg-config) so Rust game
-# workspaces can `cargo test` natively in CI without per-repo apt steps.
+# workspaces can `cargo test` natively in CI. Apt libs cannot graft, so
+# they live in the fan-in tier next to the lang-rust toolchain consumer.
 RUN set -eux; \
     apt-get update; \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
@@ -70,20 +77,6 @@ RUN set -eux; \
       libudev-dev \
       pkg-config; \
     rm -rf /var/lib/apt/lists/*
-
-# Rust wasm target + trunk static-site packager for Bevy/Wasm app shells.
-# Trunk's release triple spelling matches KDL_ARCH (x86_64/aarch64).
-RUN set -eux; \
-    rustup target add wasm32-unknown-unknown; \
-    chmod -R a+rwX /usr/local/rustup; \
-    . /tmp/arch.env; \
-    curl -fsSL "https://github.com/trunk-rs/trunk/releases/download/v${TRUNK_VERSION}/trunk-${KDL_ARCH}-unknown-linux-gnu.tar.gz" \
-      -o /tmp/trunk.tar.gz; \
-    tar -xzf /tmp/trunk.tar.gz -C /usr/local/bin trunk; \
-    chmod 0755 /usr/local/bin/trunk; \
-    rm /tmp/trunk.tar.gz; \
-    trunk --version; \
-    rustup target list --installed | grep -q wasm32-unknown-unknown
 
 WORKDIR /workspace
 CMD ["bash"]

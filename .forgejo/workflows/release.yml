@@ -53,6 +53,7 @@ on:
           - lang-node
           - lang-go
           - lang-dotnet
+          - lang-rust
           - ops
           - agent
           - full
@@ -180,7 +181,7 @@ jobs:
           PY
   retag-core:
     needs: [plan-release]
-    if: ${{ needs.plan-release.outputs.tag != '' && (github.event_name != 'workflow_dispatch' || contains('all,core,lang-node,lang-go,lang-dotnet,ops,agent,full', github.event.inputs.tier)) }}
+    if: ${{ needs.plan-release.outputs.tag != '' && (github.event_name != 'workflow_dispatch' || contains('all,core,lang-node,lang-go,lang-dotnet,lang-rust,ops,agent,full', github.event.inputs.tier)) }}
     runs-on: docker
     timeout-minutes: 120
     steps:
@@ -286,6 +287,33 @@ jobs:
           bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
 
+  retag-lang-rust:
+    needs: [plan-release, retag-core]
+    if: ${{ needs.plan-release.outputs.tag != '' && (github.event_name != 'workflow_dispatch' || contains('all,lang-rust,full', github.event.inputs.tier)) }}
+    runs-on: docker
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./actions/publish-dev-base-tier
+        with:
+          mode: promote
+          tier: lang-rust
+          tag: ${{ needs.plan-release.outputs.tag }}
+          source-tag: ${{ needs.plan-release.outputs.draft_tag }}
+          alias: ${{ github.ref_name }}
+          extra-aliases: latest
+          registry-token: ${{ secrets.REGISTRY_TOKEN }}
+          build-timeout: 80m
+
+      - name: Alert Telegram on main failure
+        if: ${{ failure() && github.ref == 'refs/heads/release' }}
+        continue-on-error: true
+        uses: ./actions/telegram-alert
+        with:
+          bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
+
   retag-ops:
     needs: [plan-release, retag-core]
     if: ${{ needs.plan-release.outputs.tag != '' && (github.event_name != 'workflow_dispatch' || contains('all,ops,agent,full', github.event.inputs.tier)) }}
@@ -341,7 +369,7 @@ jobs:
           chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
 
   retag-full:
-    needs: [plan-release, retag-agent, retag-lang-go, retag-lang-dotnet]
+    needs: [plan-release, retag-agent, retag-lang-go, retag-lang-dotnet, retag-lang-rust]
     if: ${{ needs.plan-release.outputs.tag != '' && (github.event_name != 'workflow_dispatch' || contains('all,full', github.event.inputs.tier)) }}
     runs-on: docker
     timeout-minutes: 90

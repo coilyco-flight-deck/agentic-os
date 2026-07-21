@@ -52,6 +52,12 @@ TIER_SPECS: tuple[TierSpec, ...] = (
         base_tier="core",
     ),
     TierSpec(
+        tier="lang-rust",
+        stage="dev-base-lang-rust",
+        dockerfile=DEV_BASE_ROOT / "lang-rust" / "Dockerfile",
+        base_tier="core",
+    ),
+    TierSpec(
         tier="ops",
         stage="dev-base-ops",
         dockerfile=DEV_BASE_ROOT / "ops" / "Dockerfile",
@@ -69,7 +75,7 @@ TIER_SPECS: tuple[TierSpec, ...] = (
         stage="dev-base-full",
         dockerfile=DEV_BASE_ROOT / "full" / "Dockerfile",
         base_tier="agent",
-        graft_tiers=("lang-go", "lang-dotnet"),
+        graft_tiers=("lang-go", "lang-dotnet", "lang-rust"),
     ),
 )
 

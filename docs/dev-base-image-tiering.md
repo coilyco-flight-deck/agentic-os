@@ -5,25 +5,27 @@ dev-base split: one folder per published tier, with
 
 ## Tier layout
 
-- `docker/dev-base/core/Dockerfile` - Ubuntu, certs, shell/git, `python3`, `uv`, `pre-commit`, `ward`, Rust, and the hidden `dev-base-ward-builder` stage that compiles `ward`.
+- `docker/dev-base/core/Dockerfile` - Ubuntu, certs, shell/git, `python3`, `uv`, `pre-commit`, `ward`, and the hidden `dev-base-ward-builder` stage that compiles `ward`.
 - `docker/dev-base/lang-node/Dockerfile` - Node and npm.
-- `docker/dev-base/lang-go/Dockerfile` - Go for repos that build or test Go in CI.
+- `docker/dev-base/lang-go/Dockerfile` - Go.
 - `docker/dev-base/lang-dotnet/Dockerfile` - .NET SDK and ICU.
+- `docker/dev-base/lang-rust/Dockerfile` - Rust toolchain, wasm target, `trunk`.
 - `docker/dev-base/ops/Dockerfile` - `aws`, `gh`, `helm`, `kubectl`, `yq`, Docker client, Tailscale client, and `tailscaled`.
 - `docker/dev-base/agent/Dockerfile` - Claude, Codex, Goose, mcporter, self-name assets, substrate seed.
-- `docker/dev-base/full/Dockerfile` - fan-in default surface for `warded` use, plus full-only extras: gate tools, Rust wasm target, `trunk`, Bevy-class native libs.
+- `docker/dev-base/full/Dockerfile` - fan-in default surface for `warded` use, plus gate tools and Bevy-class native libs.
 
 ## Dependency graph
 
 The tiers form a fan-out/fan-in DAG (aos#491):
 
-- `core` is the root. `lang-node`, `lang-go`, `lang-dotnet`, and `ops` are
-  siblings on it, each carrying only its own toolchain.
+- `core` is the root. The `lang-*` tiers and `ops` are siblings on it,
+  each carrying only its own toolchain.
 - `agent` builds from `ops` and **grafts** Node in (Claude Code rides Node).
-  `full` builds last from `agent` and grafts `lang-go` and `lang-dotnet`.
+  `full` builds last from `agent` and grafts `lang-go`,
+  `lang-dotnet`, and `lang-rust`.
 - Docker images have one parent, so composed tiers graft sibling toolchains
   with `COPY --from=` of self-contained prefixes (`/usr/local/node`, `/go`,
-  `/dotnet`), all on `core`'s `PATH`. `TierSpec.base_tier` / `graft_tiers` in
+  `/dotnet`, `/cargo` + `/rustup`), all on `core`'s `PATH`. `TierSpec.base_tier` / `graft_tiers` in
   [`agentic_os/dev_base.py`](../agentic_os/dev_base.py) emit the
   `BASE_IMAGE` / `<TIER>_IMAGE` build-args.
 - The hidden builder stage stays inside `core` so ward still compiles per target platform.
@@ -60,6 +62,7 @@ The tiers form a fan-out/fan-in DAG (aos#491):
 - `NODE_VERSION` lives in `lang-node`.
 - `GO_VERSION` lives in `lang-go`.
 - `DOTNET_VERSION` lives in `lang-dotnet`.
+- `TRUNK_VERSION` lives in `lang-rust`.
 - `AWSCLI_VERSION`, `GH_VERSION`, `DOCKER_VERSION`, `HELM_VERSION`, `KUBECTL_VERSION`, `YQ_VERSION`, and `TAILSCALE_VERSION` live in `ops`.
 - `CLAUDE_VERSION`, `MCPORTER_VERSION`, `OPENCODE_VERSION`, `CODEX_VERSION`, and `GOOSE_VERSION` live in `agent`.
 - `GOLANGCI_LINT_VERSION`, `TRUFFLEHOG_VERSION`, and `KDLFMT_VERSION` live in `full`.

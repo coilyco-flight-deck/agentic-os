@@ -11,11 +11,11 @@ This page covers `dev-base-full`. See [tiering](dev-base-image-tiering.md).
 the root runtime tier on `ubuntu:24.04`. The sibling tier Dockerfiles live in
 [`docker/dev-base/`](../docker/dev-base/) as one folder per tier.
 
-- **core toolchain** - `uv`, pre-commit, Python, shellcheck, git, git-lfs, build-essential, Rust, and ward.
-- **language/runtime tiers** - Node, Go, and .NET 10 + ICU.
+- **core toolchain** - `uv`, pre-commit, Python, shellcheck, git, git-lfs, build-essential, and ward.
+- **language/runtime tiers** - Node, Go, .NET 10 + ICU, and Rust (stable toolchain, wasm target, `trunk`).
 - **ops / agent CLIs** - aws cli, Homebrew, claude, mcporter, opencode, codex, goose, gh, helm, kubectl, yq, Docker CLI, and the Tailscale client plus `tailscaled` daemon binary.
 - **gate tools** - golangci-lint, trufflehog, and kdlfmt.
-- **Rust wasm surface (full only)** - the `wasm32-unknown-unknown` target, `trunk`, and alsa/udev native libs for Bevy-class game builds.
+- **native game-build libs (full only)** - alsa/udev + pkg-config for Bevy-class builds.
 - **platform seed** - the substrate mirrors, the baked agent self-name / status-line assets, and the container shell entrypoint that seeds `AOS_REPO_ROOT` plus `WARD_CONFIG_REF` before the read-only director shell starts.
 
 Tools under `/usr/local`, `/home/linuxbrew/.linuxbrew`, or `/opt` run as any uid. ward owns `run-as-uid`, mounts, and `~/.aws`. Root bootstrap seeds `/home/ubuntu/.ward/audit` as uid 1000 and avoids root-owned audit state.
@@ -51,7 +51,7 @@ See [publish resume](dev-base-publish-resume.md).
 
 Versions pin as `ARG`s: hand-edit and push, else **auto-bump** refreshes stale
 pins ([auto-bump doc](dev-base-auto-bump.md)).
-`GOLANGCI_LINT_VERSION`, `KDLFMT_VERSION`, and `WARD_VERSION` opt out. Ward stays
+`GOLANGCI_LINT_VERSION`, `KDLFMT_VERSION`, `TRUNK_VERSION`, and `WARD_VERSION` opt out. Ward stays
 manual while raw releases stage: aos advances prod/N-1 after real-bundle
 validation.
 

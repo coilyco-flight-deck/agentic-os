@@ -180,21 +180,8 @@ RUN set -eux; \
     chmod -R a+rwX "${UV_PYTHON_INSTALL_DIR}"; \
     uv python list
 
-# Rust toolchain, pinned to the stable channel. cargo/rustc now ship in the
-# shared base so downstream CI can run `cargo test --workspace` without a
-# per-repo bootstrap install. Install system-wide under /usr/local so any uid
-# gets the shims on PATH, then make the rustup and cargo trees world-writable
-# so cargo can fetch crates and persist its cache.
-RUN set -eux; \
-    curl -fsSL https://sh.rustup.rs -o /tmp/rustup-init.sh; \
-    chmod 0755 /tmp/rustup-init.sh; \
-    /tmp/rustup-init.sh -y --no-modify-path --profile minimal --default-toolchain stable; \
-    rm /tmp/rustup-init.sh; \
-    rustup --version; \
-    cargo --version; \
-    rustc --version; \
-    chmod -R a+rwX "${CARGO_HOME}" "${RUSTUP_HOME}"
-
+# CARGO_HOME/RUSTUP_HOME and the cargo PATH entry stay in core's ENV, but the
+# Rust toolchain itself ships in lang-rust and grafts into full (aos#610).
 COPY --from=dev-base-ward-builder /usr/local/bin/ward /usr/local/bin/ward
 # Keep the per-commit config ref below the expensive tool layers so ordinary
 # aos commits invalidate only the real-bundle validation gate.

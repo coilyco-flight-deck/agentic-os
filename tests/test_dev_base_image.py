@@ -58,6 +58,7 @@ def test_dev_base_plan_is_derived_from_tier_folder_names() -> None:
         "docker/dev-base/lang-node",
         "docker/dev-base/lang-go",
         "docker/dev-base/lang-dotnet",
+        "docker/dev-base/lang-rust",
         "docker/dev-base/ops",
         "docker/dev-base",
         "docker/dev-base/full",
@@ -66,6 +67,7 @@ def test_dev_base_plan_is_derived_from_tier_folder_names() -> None:
     # agent composes ops, full fans in on agent.
     assert [entry["base_image"] for entry in plan] == [
         "ubuntu:24.04",
+        f"{REGISTRY_BASE}:core-{tag}",
         f"{REGISTRY_BASE}:core-{tag}",
         f"{REGISTRY_BASE}:core-{tag}",
         f"{REGISTRY_BASE}:core-{tag}",
@@ -86,8 +88,9 @@ def test_dev_base_plan_grafts_toolchains_into_the_composed_tiers() -> None:
     assert grafts["full"] == {
         "LANG_GO_IMAGE": f"{REGISTRY_BASE}:lang-go-{tag}",
         "LANG_DOTNET_IMAGE": f"{REGISTRY_BASE}:lang-dotnet-{tag}",
+        "LANG_RUST_IMAGE": f"{REGISTRY_BASE}:lang-rust-{tag}",
     }
-    for tier in ("core", "lang-node", "lang-go", "lang-dotnet", "ops"):
+    for tier in ("core", "lang-node", "lang-go", "lang-dotnet", "lang-rust", "ops"):
         assert grafts[tier] == {}
 
 
@@ -148,7 +151,7 @@ def test_core_tier_stamps_ward_config_after_cacheable_tool_layers() -> None:
 
     assert "WARD_CONFIG_REF_COMMIT" not in builder
     assert ward_ref not in builder
-    assert core.index("curl -fsSL https://sh.rustup.rs") < core.index(ward_ref)
+    assert core.index("uv python install") < core.index(ward_ref)
     assert core.index("COPY --from=dev-base-ward-builder") < core.index(
         "ARG WARD_CONFIG_REF_COMMIT"
     )
@@ -279,7 +282,7 @@ def test_dev_base_plan_uses_tier_local_build_contexts() -> None:
     plan = publish_plan(REGISTRY_BASE, "v0.243.0")
 
     assert plan[0]["context_dir"] == "docker/dev-base/core"
-    assert plan[5]["context_dir"] == "docker/dev-base"
+    assert plan[6]["context_dir"] == "docker/dev-base"
     assert plan[-1]["context_dir"] == "docker/dev-base/full"
 
 
