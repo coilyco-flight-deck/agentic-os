@@ -11,7 +11,7 @@ dev-base split: one folder per published tier, with
 - `docker/dev-base/lang-dotnet/Dockerfile` - .NET SDK and ICU.
 - `docker/dev-base/ops/Dockerfile` - `aws`, `gh`, `helm`, `kubectl`, `yq`, Docker client, Tailscale client, and `tailscaled`.
 - `docker/dev-base/agent/Dockerfile` - Claude, Codex, Goose, mcporter, self-name assets, substrate seed.
-- `docker/dev-base/full/Dockerfile` - fan-in image for general `warded` use and the default surface, plus the full-only extras: gate tools, the Rust `wasm32-unknown-unknown` target, `trunk`, and Bevy-class native build libs.
+- `docker/dev-base/full/Dockerfile` - fan-in default surface for `warded` use, plus full-only extras: gate tools, Rust wasm target, `trunk`, Bevy-class native libs.
 
 ## Dependency graph
 

@@ -15,7 +15,7 @@ the root runtime tier on `ubuntu:24.04`. The sibling tier Dockerfiles live in
 - **language/runtime tiers** - Node, Go, and .NET 10 + ICU.
 - **ops / agent CLIs** - aws cli, Homebrew, claude, mcporter, opencode, codex, goose, gh, helm, kubectl, yq, Docker CLI, and the Tailscale client plus `tailscaled` daemon binary.
 - **gate tools** - golangci-lint, trufflehog, and kdlfmt.
-- **Rust wasm surface (full only)** - the `wasm32-unknown-unknown` rustup target, `trunk` for static-site Wasm packaging, and the Bevy-class native build libs (`libasound2-dev`, `libudev-dev`, `pkg-config`) so downstream Rust game workspaces build natively and for the browser without per-repo setup steps.
+- **Rust wasm surface (full only)** - the `wasm32-unknown-unknown` target, `trunk`, and alsa/udev native libs for Bevy-class game builds.
 - **platform seed** - the substrate mirrors, the baked agent self-name / status-line assets, and the container shell entrypoint that seeds `AOS_REPO_ROOT` plus `WARD_CONFIG_REF` before the read-only director shell starts.
 
 Tools under `/usr/local`, `/home/linuxbrew/.linuxbrew`, or `/opt` run as any uid. ward owns `run-as-uid`, mounts, and `~/.aws`. Root bootstrap seeds `/home/ubuntu/.ward/audit` as uid 1000 and avoids root-owned audit state.
@@ -32,7 +32,6 @@ and so on) on the promoted SHA. Its manual dispatch path can resume one tier
 closure at a time. `release.yml` retags that family to `vX.Y.Z`, `:release`,
 and `:latest` after each draft tag appears. The `buildcache` tags hold the
 cache.
-The old `agentic-os-<tier>` package names are retired.
 
 ## How it publishes
 
@@ -41,8 +40,7 @@ run after `release` already moved. They build one draft per tier with
 [`scripts/dev-base-build.py`](../scripts/dev-base-build.py); `needs:` carries
 the tier DAG (see the [tiering doc](dev-base-image-tiering.md)). The manual
 retry workflow in [`.forgejo/workflows/release.yml`](../.forgejo/workflows/release.yml)
-retags the already-published draft family to `vX.Y.Z`, `:release`, and
-`:latest`, waiting for each draft source tag before retagging. The core image
+re-runs the same retag path. The core image
 sets its commit-pinned `WARD_CONFIG_REF` in the final validation layer. That
 lets `ward doctor` validate the bundled `.ward/` checkout without invalidating
 the cached toolchain layers on every commit.
@@ -69,7 +67,7 @@ Needs a `docker login`. `ward container up/exec` (ward#98) is the entry point.
 
 - Mount / compose logic and `ward container` verbs - ward#98. The mount-eligibility manifest - aos#222.
 - `coily` (retired, folded into `ward ops`) and running services - not shipped.
-- `docker buildx` and `wasm-pack` - job-local publish or toolchain steps.
+- `docker buildx` and `wasm-pack` - job-local.
 - Tailnet daemon startup, auth, and socket wiring - ward owns bring-up, even though the image now ships both Tailscale binaries.
 
 ## See also
