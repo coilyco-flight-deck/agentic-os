@@ -7,3 +7,8 @@ personal overlay concern, not part of the shipped product role catalog.
 The director's codex override rides a stronger model than the rank-and-file
 engineer default (aos#450): a coordination role decides what to dispatch and
 whether it can land, so it does not need to be cheap.
+
+Local harness policy is deployment-wide rather than role-specific. AOS publishes
+the AOSH-selected OpenCode and Goose models as sparse top-level overlays in
+`.ward/agents.kdl`. The repeatable ownership and drift check live in
+[ward-local-models.md](ward-local-models.md).

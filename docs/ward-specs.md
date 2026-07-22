@@ -28,7 +28,8 @@ routes stay here as coilyco-specific overlays because the upstream swagger
 omits the live log, list, and rerun routes and the current renderer stays
 JSON-first. The exception is stated in [AGENTS.md](../AGENTS.md).
 
-See [ward-specs-overrides.md](ward-specs-overrides.md) for the agent overlay.
+See [role overlays](ward-specs-overrides.md) and
+[local model ownership](ward-local-models.md).
 
 ## Profile asset home
 

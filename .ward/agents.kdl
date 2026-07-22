@@ -31,6 +31,8 @@ agents {
         }
     }
     agent goose {
+        // Synced from the AOSH selected batch by `ward exec sync-local-models`.
+        model ministral-3:8b
         binary goose
         context-level 1
         stream none
@@ -41,5 +43,10 @@ agents {
             headless goose run -t
             interactive goose session
         }
+    }
+    agent opencode {
+        // Synced from the AOSH selected batch by `ward exec sync-local-models`.
+        model gpt-oss:120b
+        endpoint "http://host.docker.internal:8082/v1"
     }
 }
