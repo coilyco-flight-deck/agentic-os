@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from agentic_os.dev_base import PUBLISHED_TIER_NAMES
+
 
 ROOT = Path(__file__).resolve().parent.parent
 PUBLISH = ROOT / ".forgejo" / "workflows" / "dev-base-publish.yml"
@@ -62,3 +64,10 @@ def test_dev_base_publish_workflows_support_tier_reruns_and_non_blocking_alerts(
     assert "github.event.inputs.tier == 'all'" in release
     _assert_alert_steps_are_non_blocking(publish)
     _assert_alert_steps_are_non_blocking(release)
+
+
+def test_dev_base_image_builds_use_the_dedicated_runner() -> None:
+    publish = PUBLISH.read_text(encoding="utf-8")
+
+    assert publish.count("runs-on: docker-build") == len(PUBLISHED_TIER_NAMES)
+    assert "plan-draft:\n    runs-on: docker\n" in publish

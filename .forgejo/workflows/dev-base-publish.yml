@@ -75,7 +75,7 @@ jobs:
   publish-core:
     needs: [plan-draft]
     if: ${{ github.event_name != 'workflow_dispatch' || contains('all,core,lang-node,lang-go,lang-dotnet,lang-rust,lang-python,full', github.event.inputs.tier) }}
-    runs-on: docker
+    runs-on: docker-build
     timeout-minutes: 120
     steps:
       - name: Acquire core publish source
@@ -305,7 +305,7 @@ jobs:
   publish-lang-node:
     needs: [plan-draft, publish-core]
     if: ${{ github.event_name != 'workflow_dispatch' || contains('all,lang-node,full', github.event.inputs.tier) }}
-    runs-on: docker
+    runs-on: docker-build
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v6
@@ -325,7 +325,7 @@ jobs:
   publish-lang-go:
     needs: [plan-draft, publish-core]
     if: ${{ github.event_name != 'workflow_dispatch' || contains('all,lang-go,full', github.event.inputs.tier) }}
-    runs-on: docker
+    runs-on: docker-build
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v6
@@ -345,7 +345,7 @@ jobs:
   publish-lang-dotnet:
     needs: [plan-draft, publish-core]
     if: ${{ github.event_name != 'workflow_dispatch' || contains('all,lang-dotnet,full', github.event.inputs.tier) }}
-    runs-on: docker
+    runs-on: docker-build
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v6
@@ -365,7 +365,7 @@ jobs:
   publish-lang-rust:
     needs: [plan-draft, publish-core]
     if: ${{ github.event_name != 'workflow_dispatch' || contains('all,lang-rust,full', github.event.inputs.tier) }}
-    runs-on: docker
+    runs-on: docker-build
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v6
@@ -385,7 +385,7 @@ jobs:
   publish-lang-python:
     needs: [plan-draft, publish-core]
     if: ${{ github.event_name != 'workflow_dispatch' || contains('all,lang-python,full', github.event.inputs.tier) }}
-    runs-on: docker
+    runs-on: docker-build
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v6
@@ -405,7 +405,7 @@ jobs:
   publish-full:
     needs: [plan-draft, publish-lang-node, publish-lang-go, publish-lang-dotnet, publish-lang-rust, publish-lang-python]
     if: ${{ github.event_name != 'workflow_dispatch' || contains('all,full', github.event.inputs.tier) }}
-    runs-on: docker
+    runs-on: docker-build
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v6
