@@ -1,6 +1,6 @@
 ---
 name: tooling-tailscale
-description: Run Tailscale alongside a second host VPN by containerizing it - userspace/SOCKS5 mode in Docker so SSH and tailnet reach coexist with a WireGuard-based commercial VPN. Use when two VPNs fight over the macOS route table, or wiring Tailscale SSH to a peer behind a host VPN. Triggers - tailscale, tailnet, vpn coexistence, tailscale ssh, two vpns, wireguard utun conflict, ward-tailnet, mac-proxy socks5.
+description: Run Tailscale alongside a second host VPN by containerizing it on Docker Desktop for macOS or Windows - userspace/SOCKS5 mode keeps SSH and tailnet reach out of the host route table. Use when two VPNs fight over host routing, or wiring Tailscale SSH to a peer behind a host VPN. Triggers - tailscale, tailnet, vpn coexistence, tailscale ssh, two vpns, wireguard utun conflict, ward-tailnet, tailscale-proxy socks5.
 ---
 
 # Tailscale
@@ -13,9 +13,9 @@ Tailscale and a second WireGuard-based VPN (any commercial WireGuard client - Mu
 
 ## The escape hatch: containerize Tailscale
 
-Run Tailscale in a Docker container in userspace/SOCKS5 mode so its interface and routes live in the container namespace, never the macOS route table. The host VPN keeps the default route uncontested while you still get tailnet reach.
+Run Tailscale in a Docker container in userspace/SOCKS5 mode so its interface and routes live in the container namespace, never the host route table. The host VPN keeps the default route uncontested while you still get tailnet reach. The same Docker Desktop compose contract runs on macOS and Windows.
 
-- [containerized setup](references/containerized-setup.md) - compose file, auth-key injection, SSH-through-SOCKS5 config, and the two-consumer model (Mac-host loopback plus the `ward-tailnet` shared-network carry).
+- [containerized setup](references/containerized-setup.md) - compose file, auth-key injection, SSH-through-SOCKS5 config, and the two-consumer model (host loopback plus the `ward-tailnet` shared-network carry).
 - [sharp edges](references/sharp-edges.md) - tailnet identity, MagicDNS, IaC key minting, per-connection scope, throughput.
 
 ## Why this is here
@@ -25,4 +25,4 @@ A real conflict - Tailscale and a host VPN both grabbing the macOS route table -
 ## See also
 
 - Official image: `https://hub.docker.com/r/tailscale/tailscale`, env-var reference at `https://tailscale.com/kb/1282/docker`.
-- SSM params: `/coilysiren/mac-proxy/ts-authkey` (minted by `terraform/tailscale`), `/coilysiren/kai-server/tailnet-ip`. Inventory in `<personal-os-repo>/SSM.md`.
+- SSM params: `/coilysiren/tailscale-proxy/ts-authkey` (minted by `terraform/tailscale`), `/coilysiren/kai-server/tailnet-ip`. Inventory in `<personal-os-repo>/SSM.md`.
