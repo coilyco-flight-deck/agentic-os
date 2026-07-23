@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 import urllib.request
@@ -92,7 +93,7 @@ def main() -> int:
     if args.dry_run:
         return 0
 
-    token = ssm_get(API_TOKEN_PARAM)
+    token = os.environ.get("FORGEJO_ADMIN_TOKEN") or ssm_get(API_TOKEN_PARAM)
     for repo, name, param in plan:
         put_secret(token, repo, name, ssm_get(param))
         print(f"{OWNER}/{repo}: {name} set")
