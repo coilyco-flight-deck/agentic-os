@@ -44,16 +44,18 @@ SKILL.md and COMPOSED.md are not special. CLAUDE.md is expected to be a
 one-line `@AGENTS.md` pointer.
 
 The root README.md and AGENTS.md carry each project's living overview (intro
-and operating doctrine), so they get the larger overview cap,
-TRIFECTA_MAX_LINES / TRIFECTA_MAX_CHARS. docs/FEATURES.md is a coarse inventory
-of major shipped capabilities, so it gets a tighter FEATURES_MAX_LINES /
-FEATURES_MAX_CHARS cap. Bounded, not infinite: room to breathe, not license to
-sprawl - durable detail still belongs in docs/*.md. README.md only at repo
+and operating doctrine), so both get more room than ordinary Markdown.
+README.md uses TRIFECTA_MAX_LINES / TRIFECTA_MAX_CHARS. AGENTS.md gets a larger
+default because universal person and operating context must fire eagerly while
+selective capability detail moves into ordinary and composed skills.
+docs/FEATURES.md is a coarse inventory of major shipped capabilities, so it
+gets the tighter FEATURES_MAX_LINES / FEATURES_MAX_CHARS cap. Bounded, not
+infinite: durable detail still belongs in docs/*.md. README.md only at repo
 root; a co-located module README stays on the tight outpost / homestead shape.
 
-AGENTS.md may opt past the trifecta cap, per-repo, via config keys
+AGENTS.md may opt past its default cap, per-repo, via config keys
 `agents_md_max_lines` / `agents_md_max_chars` under the documentation-layout
-hook section. Repos that don't set them get the trifecta cap for AGENTS.md.
+hook section. Repos that don't set them get the shared AGENTS.md default.
 The canonical agentic-os-kai AGENTS.md is loader-bound (read on every session)
 and holds universal-fire doctrine that can't split into docs/*.md without
 losing unconditional firing, so that repo opts higher.
@@ -103,10 +105,10 @@ TRIFECTA_MAX_CHARS = 12_500
 FEATURES_MAX_LINES = 80
 FEATURES_MAX_CHARS = 4_000
 
-# AGENTS.md defaults to the trifecta cap; repos opt higher via config keys
-# agents_md_max_lines / agents_md_max_chars.
-AGENTS_DEFAULT_MAX_LINES = TRIFECTA_MAX_LINES
-AGENTS_DEFAULT_MAX_CHARS = TRIFECTA_MAX_CHARS
+# AGENTS.md carries universal-fire context after selective capability detail
+# moves into ordinary and composed skills. Repos may opt higher via config.
+AGENTS_DEFAULT_MAX_LINES = TRIFECTA_MAX_LINES * 2
+AGENTS_DEFAULT_MAX_CHARS = TRIFECTA_MAX_CHARS * 2
 
 # The root README.md - the launch-grade front page - defaults to the trifecta
 # cap and opts higher per-repo via readme_max_lines / readme_max_chars.
