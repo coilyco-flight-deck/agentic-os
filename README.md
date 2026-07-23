@@ -52,6 +52,13 @@ agent role, and then runs the selected harness:
 aos --role engineer acompose -- codex
 ```
 
+The released binary also resolves the committed model-opaque default for a
+role-intent lane:
+
+```bash
+aos --role director harness-default --intent strategic-planning
+```
+
 Ward is not part of this path. See the [CLI and substrate contract](docs/aos-cli.md).
 Homebrew and Scoop installs plus direct release binaries are documented in the
 [CLI release walkthrough](docs/aos-cli-release.md).

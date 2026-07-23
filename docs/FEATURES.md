@@ -12,10 +12,10 @@ This lists shipped capabilities, not files.
 - [Agents and sessions](features-agents-sessions.md) - agent self-name, session pulse, and status-line repo tracking.
 - [Agent-compose personalities](personality-provider.md) - invariant plus 16 full/brief bodies.
 - [Role-composed skills](role-composed-skills.md) - deep, role-gated knowledge.
-- [AOS launcher](aos-cli.md) - released Go containers with CWD and substrate.
+- [AOS launcher](aos-cli.md) - released Go containers and embedded defaults.
 - [Code review skill](../.agents/skills/tooling-code-review/SKILL.md) - the in-container review stance for ward workers.
 - [Code review contract](../CODE-REVIEW.md) - review invariants.
-- [Harness selection](harness-selection.md) - choose Claude, Codex, OpenCode, Aider, or Goose.
+- [Harness selection](harness-selection.md) - 10-role, 16-lane defaults from AOSH.
 - [Test harnesses](test-harness.md) - agent/model smokes and composed-role probes.
 - [Issue-corpus discovery index](issue-corpus.md) - offline corpus render plus live Forgejo lookup.
 - [Forgejo Actions log bridge](forgejo-actions-logs.md) - plaintext helper for live workflow logs, plus fetch mirror.

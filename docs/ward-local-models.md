@@ -1,43 +1,53 @@
-# Ward Local Model Policy
+# AOSH projections into AOS
 
-AOSH selects and records role-to-agent-to-model routes. AOS publishes the
-selected Goose route in the Ward bundle. Ward supplies neutral harness mechanics
-and consumes that selected value without embedding Kai-specific model policy.
-The OpenCode model remains deployment-local AOS backend policy. An AOSH role
-route does not own or rewrite it.
+AOSH owns hand selection and backend routing. AOS consumes two narrow,
+authoring-time projections. Both commands read a sibling AOSH checkout, write an
+AOS-owned artifact, and commit that result. Shipped AOS runtimes never fetch
+config upward from AOSH.
 
-## Sources
+## Role-intent harness board
 
-AOSH's generated `94-pairings.yaml` is the Goose selection source. Its generated
-`90-inventory.yaml` records the provisioned model/server pairs. The AOS sync
-rejects that selection unless the inventory contains exactly one matching entry
-with `keep: true`. Unrelated role routes, including engineer through OpenHands,
-do not participate in this deployment-local overlay.
+AOSH's hand-owned `roles.yaml`, `agent-selections.yaml`, and `harnesses.yaml`
+define the model-opaque board. `ward exec sync-harness-board` validates all ten
+roles and sixteen lanes, then rewrites
+[`role-harnesses.json`](../aos/role-harnesses.json).
 
-The published values live as sparse top-level agent overlays in
-[`agents.kdl`](../.ward/agents.kdl). Ward merges those model values with its
-generic OpenCode and Goose launch definitions. AOS owns the OpenCode model and
-endpoint directly. Goose keeps its existing AOS endpoint while its model follows
-the selected AOSH route.
+The projection contains only its format, role-source provenance, counts, and
+role-intent-harness assignments. Backend model, server, score, fallback,
+hardware, orchestrator, and selection rationale do not cross the boundary.
 
-## Sync and validation
+The released `aos` binary embeds that committed file.
+`aos --role ROLE harness-default --intent INTENT` resolves a lane and emits only
+the harness slug. Role remains control-plane provenance and never becomes a
+harness argument.
 
-Run `ward exec sync-local-models` from the AOS checkout after AOSH selects a new
-Goose route. The command discovers the sibling AOSH checkout, validates that
-selected model against the provisioned inventory, and rewrites only the Goose
-model line.
+Run `ward exec sync-harness-board -- --check` for a read-only drift check. The
+local pre-commit suite runs it with `--if-present`. A missing sibling AOSH
+checkout skips visibly, while missing or malformed files inside a present
+checkout fail closed.
+
+## Local model overlay
+
+AOSH's generated `94-pairings.yaml` is the Goose model-selection source. Its
+generated `90-inventory.yaml` records provisioned model-server pairs. The AOS
+sync rejects the selection unless the inventory contains exactly one matching
+entry with `keep: true`.
+
+The published value lives as a sparse top-level agent overlay in
+[`agents.kdl`](../.ward/agents.kdl). Ward merges it with its generic Goose
+launch definition. OpenCode remains deployment-local AOS backend policy and is
+not rewritten from the engineer role's OpenHands route.
+
+Run `ward exec sync-local-models` after AOSH selects a new Goose route. The
+command discovers the sibling checkout, validates the selected model against
+the provisioned inventory, and rewrites only the Goose model line.
 
 Run `ward exec sync-local-models -- --check` for a read-only drift check. The
-command names the mismatched harness and exits nonzero. AOS's local pre-commit
-suite runs that check when the sibling AOSH checkout exists. Public checkouts
-without AOSH report a visible skip instead of acquiring a private cross-repo
-dependency.
-
-The command accepts `--aosh-root` and `--bundle` for an alternate checkout or a
-fixture. A missing or malformed selected roster fails closed.
+local pre-commit suite applies the same visible-skip behavior as the harness
+board check.
 
 ## See also
 
-- [Ward spec bundle](ward-specs.md)
-- [Ward spec overrides](ward-specs-overrides.md)
-- [Ward profile assets](ward-profile-assets.md)
+* [Harness selection](harness-selection.md) - the projected board and resolver.
+* [Ward spec bundle](ward-specs.md) - AOS-authored Ward overlays.
+* [Ward profile assets](ward-profile-assets.md) - profile-provider inputs.
