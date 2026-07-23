@@ -31,11 +31,24 @@ roles {
         composed-skill coding-shape-cli
         composed-skill coding-shape-web-server
     }
+    role qa {
+        composed-skill tooling-qa-adversarial-verification
+    }
+    role ops {
+        composed-skill tooling-ops-live-remediation
+    }
+    role pm {
+        composed-skill tooling-pm-program-decomposition
+    }
 }
 ```
 
 Each binding names an existing directory under `.agents/composed/`. Duplicate
 roles, duplicate bindings, unknown roles, and missing sources fail composition.
+
+Current exemplars give engineer whole-product coding shapes, QA adversarial
+verification, ops live-remediation discipline, and PM program decomposition.
+Each body is substantial enough to justify its role boundary.
 
 ## Composition
 
