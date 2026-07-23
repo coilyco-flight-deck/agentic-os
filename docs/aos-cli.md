@@ -54,24 +54,16 @@ Ward owns governed execution layered above it: fresh target clones, writable
 repo grants, credential scopes, issues, reservations, reaping, and landing.
 Ward can later consume this primitive without moving those policies into AOS.
 
-## Release specification
+## Release
 
-The CLI will copy agent-compose's Forgejo-canonical release shape:
-
-* every main push validates, then queues an automatic minor release
-* manual dispatch retries a tag or selects patch, minor, or major
-* builds publish `aos-darwin-arm64`, `aos-linux-amd64`,
-  `aos-linux-arm64`, and `aos-windows-amd64.exe`
-* `SHA256SUMS`, `aos.rb`, and `aos.json` ship beside the binaries
-* the Homebrew tap and Scoop bucket update from generated metadata
-* `aos version` reports the stamped tag
-
-This release automation is specified, not implemented, in the first launcher
-slice. Local development uses `ward exec aos-build`, `aos-test`, `aos-lint`,
-`aos-install`, and the focused image/smoke verbs.
+The [CLI release pipeline](aos-cli-release.md) validates every main push and
+publishes the next minor `aos-v*` release. It cross-compiles checksummed
+binaries, renders Homebrew and Scoop metadata, and stamps `aos version`.
+Manual dispatch retries a tag or selects patch, minor, or major.
 
 ## See also
 
 * [dev-base-image.md](dev-base-image.md) - image tiers and publication.
+* [aos-cli-release.md](aos-cli-release.md) - binary and package delivery.
 * [personality-provider.md](personality-provider.md) - composed source.
 * [FEATURES.md](FEATURES.md) - shipped inventory.

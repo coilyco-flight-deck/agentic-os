@@ -34,6 +34,15 @@ commands:
   aos-install:
     run: go install -C aos .
     description: "Install the standalone Go `aos` launcher into GOBIN."
+  aos-release-build:
+    run: sh scripts/aos-release-build.sh
+    description: "Cross-compile version-stamped `aos` release binaries and checksums from the owning target manifest."
+  aos-release-package:
+    run: sh scripts/render-aos-packaging.sh
+    description: "Render the `aos` Homebrew formula and Scoop manifest from release binaries."
+  aos-release-check:
+    run: sh scripts/check-aos-release.sh
+    description: "Verify `aos` release checksums, package metadata, and the native version-stamped binary."
   aos-dry-run:
     run: ./aos/aos --role engineer --dry-run acompose -- codex --version
     description: "Render the default standalone composed-container launch without starting Docker."

@@ -18,9 +18,9 @@ resume a partial publish or retag.
 `draft-*` tags are commit-scoped staging refs for Forgejo package cleanup
 rules. `:latest` is a compatibility alias for `:release`.
 
-agentic-os is consumed as pre-commit hooks pinned by `rev:` tag, not a brew
-formula or a prebuilt binary, so there is nothing to attach to the release and
-no formula to bump. The only downstream artifact is the git tag itself.
+The root `v*` train serves hook pins and dev-base images. The standalone CLI
+publishes binaries and packages on its independent `aos-v*` train. See
+[aos-cli-release.md](aos-cli-release.md).
 
 ## Why not release-please
 release-please is PR-driven, and `coilysiren/agentic-os` disables GitHub PRs. Rather than port it to Forgejo, agentic-os reuses its forgejo-API-only release actions.

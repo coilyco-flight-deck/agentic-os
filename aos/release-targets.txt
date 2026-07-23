@@ -1,0 +1,5 @@
+# GOOS/GOARCH, one release binary per line.
+darwin/arm64
+linux/amd64
+linux/arm64
+windows/amd64
