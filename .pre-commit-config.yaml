@@ -17,6 +17,14 @@ repos:
         pass_filenames: false
         files: '^\.agents/skills/'
         stages: [pre-commit]
+      - id: check-composed-skills
+        name: composed skill conventions
+        entry: python -m agentic_os.pre_commit.check_composed_skills
+        language: python
+        additional_dependencies: [pyyaml]
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
       - id: documentation-layout
         name: documentation layout
         entry: python -m agentic_os.pre_commit.check_documentation_layout

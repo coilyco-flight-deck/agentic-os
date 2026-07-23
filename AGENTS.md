@@ -22,7 +22,7 @@ Route every dev command through ward, which reads [`.ward/ward.yaml`](.ward/ward
 
 ## Validation
 
-This repo ships and dogfoods the catalog pre-commit suite (catalog-trifecta, documentation-layout, code-comments, catalog-block, check-skills, dead-cross-links, repo-pointer-skills, trufflehog). Run `pre-commit run --all-files` before committing. Per-repo opt-outs (excludes, cap overrides) live under `[tool.agentic-os.*]` in `pyproject.toml`.
+This repo ships and dogfoods the catalog pre-commit suite (catalog-trifecta, documentation-layout, code-comments, catalog-block, check-skills, check-composed-skills, dead-cross-links, repo-pointer-skills, trufflehog). Run `pre-commit run --all-files` before committing. Per-repo opt-outs (excludes, cap overrides) live under `[tool.agentic-os.*]` in `pyproject.toml`.
 
 **Tests never encode config values.** A tunable lives in one owning source. Config validity belongs to the loader (`ward doctor` gates `.ward` in ci and promote), so tests never assert guardfile or KDL content, and CI enumerates no list a wildcard can derive.
 
@@ -52,7 +52,11 @@ Config splits on three axes, each a distinct owner: **permission/surface** (ward
 
 ### Skills
 
-`.agents/skills/` ships the generalizable, public-safe skills - tooling docs for the configs that live here, plus cross-repo skills that help any agentic-os user, not just Kai. These directories are the canonical sources; harness-specific setup owns installation and discovery. Edit the SKILL.md here, not an installed copy.
+`.agents/skills/` ships generalizable, public-safe ordinary skills.
+`.agents/composed/` ships public-safe role-scoped sources that agent-compose
+promotes only after role selection. These directories are canonical.
+Harness-specific setup owns installation and discovery. Edit `SKILL.md` or
+`COMPOSED.md` here, not an installed copy.
 
 ## Release
 

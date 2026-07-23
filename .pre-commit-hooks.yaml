@@ -13,6 +13,7 @@
 #       - id: source-doc-refs
 #       - id: catalog-block-present
 #       - id: check-skills
+#       - id: check-composed-skills
 #       - id: dead-cross-links
 #       - id: repo-pointer-skills
 #       - id: agents-pointer
@@ -116,6 +117,16 @@
   name: skill conventions
   description: Validate the structure of .agents/skills/ against .agents/skills/categories.yaml.
   entry: check-skills
+  language: python
+  additional_dependencies: [pyyaml]
+  pass_filenames: false
+  always_run: true
+  stages: [pre-commit, pre-push]
+
+- id: check-composed-skills
+  name: composed skill conventions
+  description: Validate role-composed COMPOSED.md sources against the ordinary skill taxonomy while preventing native discovery and name collisions.
+  entry: check-composed-skills
   language: python
   additional_dependencies: [pyyaml]
   pass_filenames: false

@@ -9,10 +9,9 @@ can never drift between code and prose.
 Markdown documentation may live only in:
     1. the repo root, with a small universal filename allow-list;
     2. docs/*.md, with no docs subdirectories;
-    3. skill folders (.agents/skills, .claude/skills, or skills), which may
-       carry any support subdirs (scripts/, assets/, references/, agents/,
-       ...) - the only flatness rule is that no nested SKILL.md may hide below
-       the top-level skill dir, since the loader only sees top-level dirs;
+    3. skill folders (.agents/skills, .agents/composed, .claude/skills, or
+       skills), which may carry support subdirs. No nested skill entry point
+       may hide below the top-level skill dir;
     4. anywhere under an `examples/` directory at any depth, any .md filename;
     5. a co-located module README.md, but only in one of two tightly-capped
        shapes (see below). Any other co-located Markdown is still a violation.
@@ -41,8 +40,8 @@ README that links a docs/*.md file is an outpost, otherwise it is a
 homestead.
 
 Most Markdown shares one size cap: MAX_MARKDOWN_LINES / MAX_MARKDOWN_CHARS.
-SKILL.md is not special. CLAUDE.md is expected to be a one-line `@AGENTS.md`
-pointer.
+SKILL.md and COMPOSED.md are not special. CLAUDE.md is expected to be a
+one-line `@AGENTS.md` pointer.
 
 The root README.md and AGENTS.md carry each project's living overview (intro
 and operating doctrine), so they get the larger overview cap,
@@ -163,6 +162,7 @@ SKIP_DIR_NAMES = {
 
 SKILL_PATHS = (
     (".agents", "skills"),
+    (".agents", "composed"),
     (".claude", "skills"),
     ("skills",),
 )
@@ -372,10 +372,9 @@ def check_markdown_locations() -> list[str]:
 def check_skill_flatness(repo_root: Path | None = None) -> list[str]:
     """Flag nested sub-skills, not support material.
 
-    The skill loader only sees top-level skill dirs, so a SKILL.md nested
-    below the top level is invisible and must move up. Support subdirs
-    (scripts/, assets/, references/, agents/, ...) are fine - the rule
-    targets hidden sub-skills, not material that sits beside SKILL.md.
+    The skill loader only sees top-level skill dirs. SKILL.md or COMPOSED.md
+    nested below the top level is invisible and must move up. Support subdirs
+    are fine because the rule targets hidden sub-skills.
     """
     root = repo_root or REPO_ROOT
     excludes = load_excludes(HOOK_ID, root)
@@ -389,19 +388,19 @@ def check_skill_flatness(repo_root: Path | None = None) -> list[str]:
                 continue
             if should_skip(skill_dir.relative_to(root)):
                 continue
-            for nested in sorted(skill_dir.rglob("SKILL.md")):
-                if nested.parent == skill_dir:
-                    continue  # the skill's own top-level SKILL.md
-                rel = nested.relative_to(root)
-                if should_skip(rel):
-                    continue
-                if is_excluded(rel, excludes):
-                    continue
-                violations.append(
-                    f"{rel.as_posix()}: nested SKILL.md must not hide below the top-level "
-                    f"skill dir - the loader only sees top-level dirs. Move "
-                    f"this sub-skill up to sit beside the others."
-                )
+            for entrypoint in ("SKILL.md", "COMPOSED.md"):
+                for nested in sorted(skill_dir.rglob(entrypoint)):
+                    if nested.parent == skill_dir:
+                        continue
+                    rel = nested.relative_to(root)
+                    if should_skip(rel):
+                        continue
+                    if is_excluded(rel, excludes):
+                        continue
+                    violations.append(
+                        f"{rel.as_posix()}: nested {entrypoint} must not hide below "
+                        f"the top-level skill dir. Move this sub-skill beside the others."
+                    )
     return violations
 
 

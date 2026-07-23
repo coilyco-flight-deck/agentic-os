@@ -110,6 +110,20 @@ def test_top_level_skill_md_is_clean(tmp_path: Path) -> None:
     assert check_skill_flatness(tmp_path) == []
 
 
+def test_top_level_composed_md_is_clean(tmp_path: Path) -> None:
+    write(tmp_path / ".agents" / "composed" / "my-skill" / "COMPOSED.md")
+    assert check_skill_flatness(tmp_path) == []
+
+
+def test_nested_composed_md_is_flagged(tmp_path: Path) -> None:
+    skill = tmp_path / ".agents" / "composed" / "my-skill"
+    write(skill / "COMPOSED.md")
+    write(skill / "sub-skill" / "COMPOSED.md")
+    problems = check_skill_flatness(tmp_path)
+    assert len(problems) == 1
+    assert "nested COMPOSED.md" in problems[0]
+
+
 def test_nested_skill_md_can_be_excluded(tmp_path: Path) -> None:
     skill = tmp_path / ".agents" / "skills" / "my-skill"
     write(skill / "SKILL.md")
