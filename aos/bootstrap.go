@@ -269,10 +269,6 @@ func composeHome(
 	provider string,
 	runner commandRunner,
 ) error {
-	declaration := filepath.Join(provider, "agent-compose-source.kdl")
-	if info, err := os.Stat(declaration); err != nil || !info.Mode().IsRegular() {
-		return fmt.Errorf("AOS provider declaration is absent at %s", declaration)
-	}
 	request, err := os.CreateTemp(provider, ".aos-compose-*.kdl")
 	if err != nil {
 		return fmt.Errorf("create compose request: %w", err)
@@ -283,7 +279,7 @@ func composeHome(
 		"    role " + strconv.Quote(opts.Role) + "\n" +
 		"    delivery " + strconv.Quote(opts.Delivery) + "\n" +
 		"    density " + strconv.Quote(opts.Density) + "\n" +
-		"    source \"aos-public\" declaration=\"agent-compose-source.kdl\" required=#true\n" +
+		"    source \"aos-public\" root=\".\" required=#true\n" +
 		"}\n"
 	if _, err := io.WriteString(request, body); err != nil {
 		request.Close()

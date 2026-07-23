@@ -2,7 +2,7 @@
 
 AOS publishes the reusable personality bodies that agent-compose selects for
 Kai's synthetic company. The provider is local and deterministic. A consumer
-reads one committed declaration and fetches no context over the network.
+reads the checkout directly and fetches no context over the network.
 
 ## Ownership boundary
 
@@ -15,10 +15,10 @@ personality content.
 
 ## Provider contract
 
-[agent-compose-source.kdl](../agent-compose-source.kdl) declares
-the stable source id `aos-public`, one `personality-invariant` instruction,
-and all sixteen `personality-<name>` skills. Every path is relative to the AOS
-repository root and stays beneath it.
+Agent-compose infers one `personality-invariant` instruction and every
+`personality-*` skill from the AOS root's `.agents/skills` directory. The
+compose request supplies the stable source id `aos-public`, so adding a
+personality body needs no parallel provider inventory.
 
 Each personality directory carries two densities:
 
@@ -30,14 +30,14 @@ role. A request cannot select an arbitrary trait or change compatibility.
 
 ## Local consumer use
 
-An agent-compose request admits the committed declaration:
+An agent-compose request stored under the provider root admits that root:
 
 ```kdl
 compose {
     role "engineer"
     delivery "native-skills"
     density "full"
-    source "aos-public" declaration="/path/to/agentic-os/agent-compose-source.kdl" required=#true
+    source "aos-public" root="." required=#true
 }
 ```
 
@@ -46,7 +46,7 @@ and `SKILL.md` for full density. Native delivery preserves the selected skill
 directories. Both modes always carry the shared invariant as source
 instructions.
 
-Host convergence points `roster_sources` at the same declaration. The roster
+Host convergence points `roster_sources` at the AOS checkout. The roster
 artifact supplies seat dispatch and linked personality definitions to the
 global cascade. Container composition uses the same provider to build one
 immutable selected bundle.

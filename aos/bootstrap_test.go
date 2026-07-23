@@ -23,15 +23,6 @@ func (f *fakeCommandRunner) Run(_ context.Context, name string, args ...string) 
 		if err := os.MkdirAll(destination, 0o755); err != nil {
 			return err
 		}
-		if filepath.Base(destination) == "agentic-os" || filepath.Base(destination) == ".aos-provider" {
-			if err := os.WriteFile(
-				filepath.Join(destination, "agent-compose-source.kdl"),
-				[]byte("source \"aos-public\" {}\n"),
-				0o644,
-			); err != nil {
-				return err
-			}
-		}
 		return nil
 	}
 	if name == "agent-compose" && len(args) >= 4 && args[0] == "compose" {
@@ -166,6 +157,7 @@ func TestPrepareContainerHydratesSubstrateAndProjectsHome(t *testing.T) {
 		`role "engineer"`,
 		`delivery "native-skills"`,
 		`density "full"`,
+		`source "aos-public" root="." required=#true`,
 	} {
 		if !strings.Contains(runner.request, want) {
 			t.Errorf("compose request missing %q:\n%s", want, runner.request)
