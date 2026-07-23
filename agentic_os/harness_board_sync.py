@@ -27,8 +27,10 @@ EXPECTED_LANE_COUNT = 16
 UNATTENDED_INTENT = "autonomous-coding"
 SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 ROLE_RE = re.compile(r"(?m)^\s*role\s+([a-z0-9][a-z0-9-]*)\s+\{$")
-KDL_BEGIN = "// BEGIN generated role-intent harness board"
-KDL_END = "// END generated role-intent harness board"
+LEGACY_KDL_BEGIN = "// BEGIN generated role-intent harness board"
+LEGACY_KDL_END = "// END generated role-intent harness board"
+ROLE_ROUTES_BEGIN = "// BEGIN generated role-intent harness routes"
+ROLE_ROUTES_END = "// END generated role-intent harness routes"
 
 
 class BoardSyncError(RuntimeError):
@@ -216,46 +218,121 @@ def render_board(board: HarnessBoard) -> str:
     return json.dumps(payload, indent=2) + "\n"
 
 
-def render_ward_board(board: HarnessBoard) -> str:
-    lines = [
-        KDL_BEGIN,
-        "role-harnesses {",
-        f'    format {json.dumps(FORMAT)}',
-        f'    role-source {json.dumps(board.role_source)}',
-        f"    role-count {len(board.roles)}",
-        f"    lane-count {board.lane_count}",
-    ]
-    for route in board.roles:
-        lines.append(f"    role {route.role} {{")
-        for lane in route.lanes:
-            lines.extend(
-                (
-                    f"        intent {lane.intent} {{",
-                    f"            harness {lane.harness}",
-                    "        }",
-                )
-            )
-        lines.append("    }")
-    lines.extend(("}", KDL_END))
-    return "\n".join(lines) + "\n"
-
-
-def merge_ward_board(current: str, rendered: str, path: Path) -> str:
-    begin_count = current.count(KDL_BEGIN)
-    end_count = current.count(KDL_END)
+def _remove_legacy_ward_board(current: str, path: Path) -> str:
+    begin_count = current.count(LEGACY_KDL_BEGIN)
+    end_count = current.count(LEGACY_KDL_END)
     if begin_count == 0 and end_count == 0:
-        return current.rstrip() + "\n\n" + rendered
+        return current
     if begin_count != 1 or end_count != 1:
         raise BoardSyncError(
-            f"{path}: expected one matched generated board marker pair, "
+            f"{path}: expected one matched legacy board marker pair, "
             f"found begin={begin_count}, end={end_count}"
         )
-    begin = current.index(KDL_BEGIN)
-    end_start = current.index(KDL_END)
+    begin = current.index(LEGACY_KDL_BEGIN)
+    end_start = current.index(LEGACY_KDL_END)
     if end_start < begin:
-        raise BoardSyncError(f"{path}: generated board markers are out of order")
-    end = end_start + len(KDL_END)
-    return current[:begin] + rendered.rstrip("\n") + current[end:]
+        raise BoardSyncError(f"{path}: legacy board markers are out of order")
+    end = end_start + len(LEGACY_KDL_END)
+    before = current[:begin].rstrip()
+    after = current[end:].lstrip("\n")
+    if after:
+        return before + "\n\n" + after
+    return before + "\n"
+
+
+def _render_role_routes(route: RoleRoute, indent: str) -> list[str]:
+    lines = [f"{indent}{ROLE_ROUTES_BEGIN}"]
+    for lane in route.lanes:
+        lines.extend(
+            (
+                f"{indent}intent {lane.intent} {{",
+                f"{indent}    harness {lane.harness}",
+                f"{indent}}}",
+            )
+        )
+    lines.append(f"{indent}{ROLE_ROUTES_END}")
+    return lines
+
+
+def merge_ward_board(current: str, board: HarnessBoard, path: Path) -> str:
+    lines = _remove_legacy_ward_board(current, path).splitlines()
+    for route in board.roles:
+        block_pattern = re.compile(
+            rf"^([ \t]*)role\s+{re.escape(route.role)}\s+\{{\s*\}}$"
+        )
+        for index, line in enumerate(lines):
+            match = block_pattern.fullmatch(line)
+            if match is not None:
+                indent = match.group(1)
+                lines[index : index + 1] = [
+                    f"{indent}role {route.role} {{",
+                    f"{indent}}}",
+                ]
+
+        open_pattern = re.compile(
+            rf"^([ \t]*)role\s+{re.escape(route.role)}\s+\{{$"
+        )
+        openings = [
+            (index, match.group(1))
+            for index, line in enumerate(lines)
+            if (match := open_pattern.fullmatch(line)) is not None
+        ]
+        if len(openings) != 1:
+            raise BoardSyncError(
+                f"{path}: expected one canonical role {route.role}, "
+                f"found {len(openings)}"
+            )
+        open_index, role_indent = openings[0]
+        try:
+            close_index = lines.index(f"{role_indent}}}", open_index + 1)
+        except ValueError as exc:
+            raise BoardSyncError(
+                f"{path}: role {route.role} has no closing brace"
+            ) from exc
+
+        body = lines[open_index + 1 : close_index]
+        begin_indexes = [
+            index
+            for index, line in enumerate(body)
+            if line.strip() == ROLE_ROUTES_BEGIN
+        ]
+        end_indexes = [
+            index
+            for index, line in enumerate(body)
+            if line.strip() == ROLE_ROUTES_END
+        ]
+        if len(begin_indexes) != len(end_indexes) or len(begin_indexes) > 1:
+            raise BoardSyncError(
+                f"{path}: role {route.role} has a malformed generated route "
+                f"marker pair"
+            )
+        route_lines = _render_role_routes(route, role_indent + "    ")
+        if begin_indexes:
+            begin_index = begin_indexes[0]
+            end_index = end_indexes[0]
+            if end_index < begin_index:
+                raise BoardSyncError(
+                    f"{path}: role {route.role} generated route markers "
+                    "are out of order"
+                )
+            lines[
+                open_index + 1 + begin_index : open_index + 2 + end_index
+            ] = route_lines
+        else:
+            insertion = route_lines
+            if body:
+                insertion = route_lines + [""]
+            lines[open_index + 1 : open_index + 1] = insertion
+
+    begin_count = sum(line.strip() == ROLE_ROUTES_BEGIN for line in lines)
+    end_count = sum(line.strip() == ROLE_ROUTES_END for line in lines)
+    expected_count = len(board.roles)
+    if begin_count != expected_count or end_count != expected_count:
+        raise BoardSyncError(
+            f"{path}: expected {expected_count} generated route marker pairs, "
+            f"found begin={begin_count}, end={end_count}"
+        )
+    return "\n".join(lines).rstrip() + "\n"
 
 
 def run(
@@ -280,7 +357,7 @@ def run(
         raise BoardSyncError(f"read {ward_roles_path}: {exc}") from exc
     expected_ward_roles = merge_ward_board(
         current_ward_roles,
-        render_ward_board(board),
+        board,
         ward_roles_path,
     )
 

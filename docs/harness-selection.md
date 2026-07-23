@@ -54,8 +54,8 @@ aos --role engineer acompose -- codex
 ## Ownership and synchronization
 
 AOSH owns the hand-selected `roles.yaml`, `agent-selections.yaml`, and `harnesses.yaml`.
-AOS owns the generated `role-harnesses` block in [`.ward/roles.kdl`](../.ward/roles.kdl),
-the committed human-visible Ward-profile projection.
+AOS owns the generated `intent` children inside each canonical role in
+[`.ward/roles.kdl`](../.ward/roles.kdl), the committed Ward-profile projection.
 
 The sync also writes [`role-harnesses.json`](../aos/role-harnesses.json) as the
 compiled view embedded by the standalone `aos` binary. The JSON does not become
@@ -67,11 +67,10 @@ Run `ward exec sync-harness-board` after an AOSH selection changes. Run
 pre-commit performs the same check when the sibling AOSH checkout exists.
 Public checkouts without that sibling report a visible skip.
 
-Malformed or incomplete present sources fail closed. The generated KDL region
-is marker-bounded so the sync preserves hand-owned guardfiles, agent overlays,
-and role shells in the rest of `roles.kdl`. Both views copy only role, intent,
-and harness identity plus schema counts and role-source provenance. Neither
-copies backend routing data.
+Malformed or incomplete present sources fail closed. Each generated KDL region
+is marker-bounded so the sync preserves hand-owned guardfiles and agent
+overlays. The KDL carries role, intent, and harness identity. The JSON adds
+schema counts and role-source provenance. Neither copies backend routing data.
 
 ## See also
 

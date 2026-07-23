@@ -9,8 +9,8 @@ config upward from AOSH.
 
 AOSH's hand-owned `roles.yaml`, `agent-selections.yaml`, and `harnesses.yaml`
 define the model-opaque board. `ward exec sync-harness-board` validates all ten
-roles and sixteen lanes, then rewrites the generated `role-harnesses` block in
-[`roles.kdl`](../.ward/roles.kdl). The same run updates
+roles and sixteen lanes, then rewrites generated `intent` children inside the
+canonical roles in [`roles.kdl`](../.ward/roles.kdl). The same run updates
 [`role-harnesses.json`](../aos/role-harnesses.json) as the compiled launcher
 view.
 

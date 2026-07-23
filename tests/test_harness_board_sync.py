@@ -34,11 +34,15 @@ def _rewrite_yaml(path: Path, mutate: Callable[[dict[str, object]], None]) -> No
 def test_fixture_renders_deterministic_model_opaque_projection(
     board_sources: tuple[Path, Path, Path],
 ) -> None:
-    aosh_root, roles_path, _ = board_sources
+    aosh_root, roles_path, ward_roles_path = board_sources
 
     board = harness_board_sync.load_board(aosh_root, roles_path=roles_path)
     rendered = harness_board_sync.render_board(board)
-    rendered_ward = harness_board_sync.render_ward_board(board)
+    rendered_ward = harness_board_sync.merge_ward_board(
+        ward_roles_path.read_text(encoding="utf-8"),
+        board,
+        ward_roles_path,
+    )
 
     payload = json.loads(rendered)
     assert payload["roles"] == [
@@ -52,10 +56,11 @@ def test_fixture_renders_deterministic_model_opaque_projection(
         for route in board.roles
     ]
     for route in board.roles:
-        assert f"    role {route.role} {{" in rendered_ward
+        assert rendered_ward.count(f"    role {route.role} {{") == 1
         for lane in route.lanes:
             assert f"        intent {lane.intent} {{" in rendered_ward
             assert f"            harness {lane.harness}" in rendered_ward
+    assert "role-harnesses {" not in rendered_ward
     assert not {"model", "server", "fallback", "orchestrator", "rationale"} & set(
         rendered.split('"')
     )
@@ -81,7 +86,7 @@ def test_check_reports_drift_without_writing(
         ward_roles_path.write_text(
             harness_board_sync.merge_ward_board(
                 current_ward_roles,
-                harness_board_sync.render_ward_board(board),
+                board,
                 ward_roles_path,
             ),
             encoding="utf-8",
@@ -124,8 +129,14 @@ def test_sync_writes_then_check_passes(
     )
     projected_roles = ward_roles_path.read_text(encoding="utf-8")
     assert projected_roles.startswith("roles {\n")
-    assert projected_roles.count(harness_board_sync.KDL_BEGIN) == 1
     board = harness_board_sync.load_board(aosh_root, roles_path=roles_path)
+    assert (
+        projected_roles.count(harness_board_sync.ROLE_ROUTES_BEGIN)
+        == len(board.roles)
+    )
+    assert "role-harnesses {" not in projected_roles
+    for route in board.roles:
+        assert projected_roles.count(f"    role {route.role} {{") == 1
     first_lane = board.roles[0].lanes[0]
     assert f"intent {first_lane.intent} {{" in projected_roles
     assert f"harness {first_lane.harness}" in projected_roles
@@ -241,11 +252,40 @@ def test_merge_ward_board_rejects_malformed_generated_markers(
 ) -> None:
     aosh_root, roles_path, ward_roles_path = board_sources
     board = harness_board_sync.load_board(aosh_root, roles_path=roles_path)
+    current = ward_roles_path.read_text(encoding="utf-8")
+    first_role = board.roles[0].role
+    malformed = current.replace(
+        f"    role {first_role} {{\n",
+        f"    role {first_role} {{\n"
+        f"        {harness_board_sync.ROLE_ROUTES_BEGIN}\n",
+        1,
+    )
 
     with pytest.raises(harness_board_sync.BoardSyncError, match="marker pair"):
         harness_board_sync.merge_ward_board(
-            ward_roles_path.read_text(encoding="utf-8")
-            + f"\n{harness_board_sync.KDL_BEGIN}\n",
-            harness_board_sync.render_ward_board(board),
+            malformed,
+            board,
             ward_roles_path,
         )
+
+
+def test_merge_ward_board_migrates_legacy_sibling_registry(
+    board_sources: tuple[Path, Path, Path],
+) -> None:
+    aosh_root, roles_path, ward_roles_path = board_sources
+    board = harness_board_sync.load_board(aosh_root, roles_path=roles_path)
+    legacy = (
+        ward_roles_path.read_text(encoding="utf-8").rstrip()
+        + "\n\n"
+        + harness_board_sync.LEGACY_KDL_BEGIN
+        + "\nrole-harnesses {\n    role obsolete {}\n}\n"
+        + harness_board_sync.LEGACY_KDL_END
+        + "\n"
+    )
+
+    merged = harness_board_sync.merge_ward_board(legacy, board, ward_roles_path)
+
+    assert "role-harnesses {" not in merged
+    assert harness_board_sync.LEGACY_KDL_BEGIN not in merged
+    for route in board.roles:
+        assert merged.count(f"    role {route.role} {{") == 1
