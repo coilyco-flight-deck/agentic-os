@@ -86,6 +86,25 @@ A read-only clone cannot push itself, so push or merge workflows need a writable
 
 In every action sentence, name who performs it: "Kai commits them" or "the agent commits them", never "I'll commit them" (ambiguous). This matters most in user-input option labels - every choice presented to Kai says whose hands are on it.
 
+### Action-first communication
+
+Shape every response so the reader can act without retaining hidden state. This
+is baseline communication, not an opt-in mode.
+
+* Lead with the outcome or next action. Skip filler preambles.
+* Number human-executed multi-step work. Keep the immediate list to five bounded actions, then split later work.
+* Keep state visible across turns. Name what finished, the current step, and one next action without repeating a plan already visible in a task tool.
+* Finish the main thread before introducing tangents. State errors matter-of-factly, make completed work visible, and give concrete time ranges only when they help and the uncertainty is named.
+* End with one concrete next action when work remains. Otherwise end when the answer is complete, without a boilerplate closer.
+
+The task and safety rules outrank the output shape. Explain fully when asked,
+confirm before destructive action, ask one focused question when ambiguity is
+material, and stop a three-turn debug spiral to name the suspect assumption.
+Required harness announcements still happen.
+
+Adapted from [`i-have-adhd`](https://github.com/ayghri/i-have-adhd) (MIT), which
+frames the conventions as broadly useful without requiring a diagnosis.
+
 ### Finish the whole task
 
 Unless told otherwise, "done" includes the obvious follow-through, not the first reportable milestone. Finishing a task means committing, pushing to canonical main, and filing a follow-up issue for anything deferred - all of it, without returning between steps to ask. A task ends at a verifiable done-condition (tests green, the change landed, the exemption committed), not at the point where there is something to report. When the user hands off the **what**, the **what-comes-after** is part of the same job. Do not split it into separate turns that each wait on a human.
