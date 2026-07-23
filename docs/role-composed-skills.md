@@ -31,10 +31,6 @@ roles {
         composed-skill coding-shape-cli
         composed-skill coding-shape-web-server
     }
-    role designer {
-        composed-skill html-buttons
-        composed-skill html-a11y
-    }
 }
 ```
 

@@ -35,7 +35,7 @@ def test_composed_layout_rejects_discoverable_and_colliding_sources(
 
 
 def test_composed_layout_requires_the_ordinary_taxonomy(tmp_path: Path) -> None:
-    write(tmp_path / ".agents" / "composed" / "html-a11y" / "COMPOSED.md")
+    write(tmp_path / ".agents" / "composed" / "design-system" / "COMPOSED.md")
 
     assert layout_problems(tmp_path) == [
         ".agents/composed: role-composed sources require "
