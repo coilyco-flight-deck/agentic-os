@@ -20,10 +20,10 @@ budget with a fill bar and an `OVER by N` flag:
   description) is eager so the model knows the skill exists; bodies load lazily
   on invoke. With a large skill surface this is routinely the **biggest** axis,
   larger than the composed doc. Lever: prune the skill set.
-- **mcp** - native MCP tool schemas. Lazy through mcporter (codex shells
-  `mcporter call` / `list` on demand) and deferred under ToolSearch, so the eager
-  figure is ~0; reported as a server-count note, not a token sum, until a
-  non-lazy path needs measuring.
+- **mcp** - MCP tool schemas. The shared mcporter inventory is projected
+  into each supported native registry. Harness schema discovery stays deferred,
+  and `mcporter call` remains the CLI fallback, so the eager figure is ~0. The
+  report shows a server-count note rather than a token sum.
 
 When no `agent-compose.yaml` is present (agent-compose is opt-in), the doc axis
 falls back to measuring the installed load-point files directly. These three axes
@@ -49,8 +49,8 @@ The budgets are not one number. They encode three distinct failure modes:
   overlay, so it is the heaviest, and a bloated baseline crowds the task and
   makes the model miss the obvious. The budget is a forcing function: doc growth
   is zero-sum against it.
-- **codex** - its eager MCP surface is ~0 (mcporter never loads tool schemas
-  eagerly), so the budget only bounds the composed doc. Sweep blow-out is runtime
+- **codex** - its native MCP schemas are deferred, so the eager MCP surface is
+  ~0 and the budget only bounds the composed doc. Sweep blow-out is runtime
   accumulation a static report cannot govern.
 - **opencode** - a small local qwen model, curated hardest, so its budget is
   tightest.
@@ -67,7 +67,7 @@ harnesses, which a zero-sum comparison needs. The swap is one function.
 Budgets are global (host-wide, not repo-scoped): module defaults, overridable by
 a `budgets:` mapping in `agent-compose.yaml` or `--<harness>-budget` flags.
 `--check` exits non-zero when any harness is over budget, for CI. `--mcporter`
-points at the merged mcporter config for codex's server inventory.
+points at the shared inventory projected into each native harness registry.
 
 ## See also
 

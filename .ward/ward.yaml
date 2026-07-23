@@ -121,6 +121,9 @@ commands:
   test:
     run: uv run pytest
     description: "Run the agentic_os Python test suite (pytest)."
+  apply-base-claude-settings:
+    run: python3 scripts/apply-base-claude-settings.py
+    description: "Converge public-safe Claude Code preferences without clobbering local settings."
   gen-repo-pointer-skill:
     run: uv run python -m agentic_os.generators.generate_repo_pointer_skill
     description: "Generate a repo-<name> pointer skill from GitHub metadata. Pipe `ward ops gh repo view coilysiren/<name>` into it with `<name> --from-json -`, or pass --description/--topic. See docs/features-agents-pointer.md."

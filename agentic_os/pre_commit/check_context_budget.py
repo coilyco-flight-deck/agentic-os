@@ -12,10 +12,10 @@ lever:
              eager so the model knows the skill exists; bodies load lazily on
              invoke. With a large skill surface this is routinely the BIGGEST
              axis, larger than the composed doc. Lever: prune the skill set.
-  * mcp    - native MCP tool schemas. Lazy through mcporter (codex shells
-             `mcporter call`/`list` on demand) and deferred under ToolSearch, so
-             the eager figure is near-0; reported as a server-count note, not a
-             token sum, until a non-lazy path needs measuring.
+  * mcp    - native MCP tool schemas. One mcporter inventory is projected into
+             each native harness registry, where schema discovery is deferred.
+             `mcporter call` remains the CLI fallback. The eager figure is near
+             zero and is reported as a server-count note, not a token sum.
 
 The three axes above are the *proactive* tier - eager prompt bytes, per harness.
 Two further tiers are cheap-to-provide context a driver can reach one tool call
@@ -365,7 +365,7 @@ def _harness_block(
     lines.append(f"          skills {skill_total:6} tok  ({skill_count} skills, frontmatter only)")
     for name, tok in skill_top[:3]:
         lines.append(f"            top: {tok:6} tok  {name}")
-    mcp_label = f"{mcp_servers} servers (lazy/deferred, ~0 eager)" if mcp_servers is not None else "not measured"
+    mcp_label = f"{mcp_servers} servers (native/deferred, CLI fallback)" if mcp_servers is not None else "not measured"
     lines.append(f"          mcp       n/a       ({mcp_label})")
     lines.append("")
     return lines, is_over
@@ -444,8 +444,8 @@ def run(
         "Bodies load lazily, not counted."
     )
     lines.append(
-        "mcp eager surface is ~0: mcporter loads schemas on demand and ToolSearch "
-        "defers them. A non-lazy harness would carry the full schemas here."
+        "mcp eager surface is ~0: each native harness defers projected schemas. "
+        "mcporter remains the inventory, schema browser, and CLI call fallback."
     )
     lines.extend(tier_section(immediate or [], peripheral or []))
 
@@ -470,7 +470,7 @@ def main() -> int:
         "--mcporter",
         type=Path,
         default=Path.home() / ".mcporter" / "mcporter.json",
-        help="merged mcporter config to read codex's exposed server inventory from",
+        help="shared mcporter inventory projected into each native harness registry",
     )
     parser.add_argument(
         "--immediate",

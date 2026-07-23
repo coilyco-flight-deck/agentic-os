@@ -9,7 +9,7 @@ This lists shipped capabilities, not files.
 - [Shell and secret handling](features-shell-secrets.md) - shared shell setup, Warp config, SSM secrets, GPG bootstrap, repo gate.
 - [Speech helper](aos-say.md) - `aos-say` client plus relay for status speech.
 - **Karabiner key bindings** - complex modifications for the external keyboard and Remote Desktop.
-- [Agents and sessions](features-agents-sessions.md) - agent self-name, session pulse, and status-line repo tracking.
+- [Agents and sessions](features-agents-sessions.md) - self-name, session pulse, status line, and harness policy.
 - [Agent-compose personalities](personality-provider.md) - invariant plus 16 full/brief bodies.
 - [Role-composed skills](role-composed-skills.md) - deep, role-gated knowledge.
 - [AOS launcher](aos-cli.md) - released Go containers and embedded defaults.
