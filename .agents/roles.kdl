@@ -3,13 +3,19 @@ roles {
         composed-skill coding-shape-cli
         composed-skill coding-shape-web-server
     }
+    role director {}
     role qa {
         composed-skill tooling-qa-adversarial-verification
     }
+    role advisor {}
     role ops {
         composed-skill tooling-ops-live-remediation
     }
     role pm {
         composed-skill tooling-pm-program-decomposition
     }
+    role designer {}
+    role social {}
+    role sales {}
+    role customer-success {}
 }

@@ -23,28 +23,22 @@ anywhere, including nested support directories.
 
 ## Role binding
 
-AOS owns the allowlist in `.agents/roles.kdl`:
+AOS owns the allowlist in `.agents/roles.kdl`. This abridged example shows a
+binding and an empty shell:
 
 ```kdl
 roles {
     role engineer {
         composed-skill coding-shape-cli
-        composed-skill coding-shape-web-server
     }
-    role qa {
-        composed-skill tooling-qa-adversarial-verification
-    }
-    role ops {
-        composed-skill tooling-ops-live-remediation
-    }
-    role pm {
-        composed-skill tooling-pm-program-decomposition
-    }
+    role designer {}
 }
 ```
 
 Each binding names an existing directory under `.agents/composed/`. Duplicate
 roles, duplicate bindings, unknown roles, and missing sources fail composition.
+Every canonical agent-compose role has a block. Empty shells reserve roles that
+have no deep role-specific knowledge yet and select no composed skills.
 
 Current exemplars give engineer whole-product coding shapes, QA adversarial
 verification, ops live-remediation discipline, and PM program decomposition.
