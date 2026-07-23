@@ -46,7 +46,7 @@ agents {
     }
     agent opencode {
         // Synced from the AOSH selected batch by `ward exec sync-local-models`.
-        model gpt-oss:120b
+        model qwen3.6:35b
         endpoint "http://host.docker.internal:8082/v1"
     }
 }
