@@ -150,7 +150,7 @@ commands:
     description: "Create or reconcile a Forgejo org repo using the admin token. Use this when coilyco-ops only has write access but a GitHub profile mirror needs the repo public and described for a substrate seed."
   sync-actions-secrets:
     run: uv run python scripts/sync-actions-secrets.py
-    description: "Sync Forgejo Actions secrets (Telegram alert creds, CI_RELEASE_TOKEN) from their SSM sources of truth to the aos + ward + cli-guard repos. Values flow SSM -> Forgejo API in-process, never disk or argv. `-- --dry-run` previews the mapping. See docs/release.md."
+    description: "Sync Forgejo Actions secrets (Telegram alert creds, release PATs, and package-repository writers) from their SSM sources of truth to the aos + ward + cli-guard repos. Values flow SSM -> Forgejo API in-process, never disk or argv. `-- --dry-run` previews the mapping. See docs/release.md."
   remint-ci-release-token:
     run: uv run --with boto3 python scripts/remint-ci-release-token.py
     description: "Remint the two-stage promote PAT on the coilyco-ops bot (write:repository + read:user - without read:user Forgejo drops the release enqueue, ward#1117) and overwrite SSM /forgejo/ci-release-token. Values stay in-process. `-- --dry-run` previews. Follow with `ward exec sync-actions-secrets`."

@@ -44,6 +44,11 @@ scoop install coilyco/aos
 Forgejo also serves every checksummed binary directly from the
 [agentic-os releases](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/releases).
 
+The Homebrew and Scoop publication steps consume the repo-scoped
+`TAP_WRITE_TOKEN` and `SCOOP_WRITE_TOKEN` Actions secrets. Their existing
+SSM-backed token family is synchronized into the AOS repository by
+`ward exec sync-actions-secrets`.
+
 ## Manual retry
 
 Workflow dispatch accepts an existing or explicit `aos-v*` tag. With no tag,

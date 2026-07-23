@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Sync Forgejo Actions secrets from their SSM sources of truth.
 
-Repo Actions secrets (Telegram alert credentials, the promote/release PAT)
-are write-only in Forgejo, so drift shows up as silently-dead alert steps and
-promotions - runs 986..1062 failed their alert step because the aos repo never
-had TELEGRAM_* set. This makes the mapping explicit and re-applying it one
-verb: `ward exec sync-actions-secrets` (add `-- --dry-run` to preview).
+Repo Actions secrets (Telegram alert credentials, promote/release PAT, and
+package-repository writers) are write-only in Forgejo, so drift shows up as
+silently-dead alert or publication steps. This makes the mapping explicit and
+re-applying it one verb: `ward exec sync-actions-secrets` (add `-- --dry-run`
+to preview).
 
 Values never touch disk or argv: read from SSM with the AWS CLI, PUT straight
 to the Forgejo secrets API, authenticated by the /forgejo/api-token PAT.
@@ -23,12 +23,14 @@ OWNER = "coilyco-flight-deck"
 API_TOKEN_PARAM = "/forgejo/api-token"
 
 # repo -> secret name -> SSM parameter (see SSM.md in agentic-os-kai).
-# CI_RELEASE_TOKEN needs read:user + write:repository - see docs/release.md.
+# Release and package writers use their separately rotated SSM token family.
 MAPPING: dict[str, dict[str, str]] = {
     "agentic-os": {
         "TELEGRAM_BOT_TOKEN": "/coilysiren/telegram/bot-token",
         "TELEGRAM_RED_CHAT_ID": "/coilysiren/telegram/red-chat-id",
         "CI_RELEASE_TOKEN": "/forgejo/ci-release-token",
+        "TAP_WRITE_TOKEN": "/forgejo/tap-bump-token",
+        "SCOOP_WRITE_TOKEN": "/forgejo/scoop-write-token",
     },
     "ward": {
         "TELEGRAM_BOT_TOKEN": "/coilysiren/telegram/bot-token",
