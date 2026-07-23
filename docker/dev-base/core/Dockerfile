@@ -2,6 +2,7 @@
 
 ARG UV_VERSION=0.11.26
 ARG GO_VERSION=1.26.5
+ARG AGENT_COMPOSE_VERSION=0.14.0
 # Ward raw releases are staging until aos validates them against the real .ward
 # bundle. Keep the build tool pinned to the current prod/N-1 ward; the target
 # shape is N-1 for build work, then candidate N only at the late config gate.
@@ -69,9 +70,24 @@ RUN set -eux; \
     cd /; rm -rf /tmp/ward-src /tmp/gobuild /tmp/gocache; \
     ward --version
 
+WORKDIR /tmp/aos-src
+COPY --from=aos-cli go.mod go.sum ./
+RUN set -eux; \
+    export GOPATH=/tmp/aos-gopath GOCACHE=/tmp/aos-gocache; \
+    go mod download
+COPY --from=aos-cli . .
+RUN set -eux; \
+    export GOPATH=/tmp/aos-gopath GOCACHE=/tmp/aos-gocache CGO_ENABLED=0; \
+    go build -trimpath -ldflags "-s -w -X main.version=dev-base" \
+      -o /usr/local/bin/aos .; \
+    chmod 0755 /usr/local/bin/aos; \
+    rm -rf /tmp/aos-gopath /tmp/aos-gocache; \
+    /usr/local/bin/aos --version
+
 FROM ubuntu:24.04 AS dev-base-core
 ARG UV_VERSION
 ARG TARGETARCH
+ARG AGENT_COMPOSE_VERSION
 ARG NODE_VERSION=22.23.1
 ARG CLAUDE_VERSION=2.1.206
 ARG MCPORTER_VERSION=0.12.3
@@ -230,6 +246,21 @@ RUN set -eux; \
     rm /tmp/goose.tar.gz; \
     goose --version
 
+RUN set -eux; \
+    . /tmp/arch.env; \
+    asset="agent-compose-linux-${GO_ARCH}"; \
+    base="https://forgejo.coilysiren.me/coilyco-flight-deck/agent-compose/releases/download/v${AGENT_COMPOSE_VERSION}"; \
+    curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
+      "${base}/${asset}" -o "/tmp/${asset}"; \
+    curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
+      "${base}/SHA256SUMS" -o /tmp/agent-compose-SHA256SUMS; \
+    grep "[[:space:]]${asset}$" /tmp/agent-compose-SHA256SUMS \
+      | (cd /tmp && sha256sum -c -); \
+    install -m 0755 "/tmp/${asset}" /usr/local/bin/agent-compose; \
+    ln -s agent-compose /usr/local/bin/acompose; \
+    rm "/tmp/${asset}" /tmp/agent-compose-SHA256SUMS; \
+    agent-compose version
+
 # Operational CLIs are shared substrate capabilities, not a language tier.
 RUN set -eux; \
     . /tmp/arch.env; \
@@ -300,7 +331,7 @@ RUN set -eux; \
     chmod 0755 /opt/agentic-os/statusline.d/*.sh /opt/agentic-os/ward-shell-entrypoint.sh; \
     chmod 0644 /etc/claude-code/managed-settings.json
 
-COPY substrate-image-repos.txt /tmp/substrate-image-repos.txt
+COPY substrate-image-repos.txt /opt/agentic-os/substrate-repos.txt
 RUN set -eux; \
     mkdir -p /opt/substrate-seed; \
     while read -r ref; do \
@@ -311,13 +342,13 @@ RUN set -eux; \
         *) base="https://forgejo.coilysiren.me" ;; \
       esac; \
       git clone --mirror "$base/$owner/$name.git" "/opt/substrate-seed/${owner}__${name}.git"; \
-    done < /tmp/substrate-image-repos.txt; \
-    rm /tmp/substrate-image-repos.txt; \
+    done < /opt/agentic-os/substrate-repos.txt; \
     chmod -R a+rX /opt/substrate-seed
 
 # CARGO_HOME/RUSTUP_HOME and the cargo PATH entry stay in core's ENV, but the
 # Rust toolchain itself ships in lang-rust and grafts into full (aos#610).
 COPY --from=dev-base-ward-builder /usr/local/bin/ward /usr/local/bin/ward
+COPY --from=dev-base-ward-builder /usr/local/bin/aos /usr/local/bin/aos
 # Keep the per-commit config ref below the expensive tool layers so ordinary
 # aos commits invalidate only the real-bundle validation gate.
 ARG WARD_CONFIG_REF_COMMIT

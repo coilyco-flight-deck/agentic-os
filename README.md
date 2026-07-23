@@ -9,6 +9,7 @@ Cross-platform shell + terminal setup plus cross-repo pre-commit hooks for coily
 
 - `shell/` - shared `common.sh` plus thin `zshrc` + `bashrc`, so bash and zsh match. `warp.zsh` is the zsh-only Warp dispatcher.
 - `warp/` - Warp config (`settings.toml`, `tab_configs/`) plus the `ward exec warp` Go module.
+- `aos/` - the standalone Go container launcher for composed agents and the shared runtime substrate.
 - `aos-say/` - the `ward exec aos-say` Go module for the speech helper client and relay.
 - `karabiner/` - Karabiner-Elements complex modification assets (`brew install --cask karabiner-elements`), symlinked into the local Karabiner config tree.
 - `scripts/` - portable utilities (gpg-ssm wrapper, agent-name + session-pulse hooks, aws-config lint).
@@ -39,6 +40,18 @@ shim only. It also links the Forgejo git credential helper; Git Bash popup shell
 should not recreate `~/.bashrc`.
 
 Agent self-name + session-pulse hooks, per-host steps, and gpg wiring: [docs/install.md](docs/install.md).
+
+## aos CLI
+
+The standalone launcher always carries the current directory into the AOS
+dev-base image, hydrates its baked read-only substrate, composes the requested
+agent role, and then runs the selected harness:
+
+```bash
+aos --role engineer acompose -- codex
+```
+
+Ward is not part of this path. See the [CLI and substrate contract](docs/aos-cli.md).
 
 ## Secrets pattern
 

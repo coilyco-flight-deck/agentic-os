@@ -259,7 +259,12 @@ def _build_plan(
             cmd.extend(["--build-arg", f"TARGETARCH={_host_targetarch()}"])
         if entry["tier"] == "core":
             cmd.extend(
-                ["--build-arg", f"WARD_CONFIG_REF_COMMIT={ward_config_ref_commit}"]
+                [
+                    "--build-arg",
+                    f"WARD_CONFIG_REF_COMMIT={ward_config_ref_commit}",
+                    "--build-context",
+                    "aos-cli=aos",
+                ]
             )
         elif entry["tier"] != "core":
             cmd.extend(["--build-arg", f"BASE_IMAGE={entry['base_image']}"])

@@ -1,11 +1,11 @@
-# Image-tier substrate repos: the canonical seed list for the dev-base image,
-# baked as bare-mirror seeds at /opt/substrate-seed so a ward container on a
-# cold gitcache volume warms them with no network. The entrypoint hydrates the
-# gitcache from these seeds (see ward cmd/ward/containerassets/entrypoint.sh).
+# Public substrate repos for the dev-base image and standalone `aos` launcher.
+# The image retains this manifest at /opt/agentic-os/substrate-repos.txt and
+# bakes matching bare mirrors at /opt/substrate-seed. A launch hydrates its
+# shared mirror cache and fresh read-only /substrate trees without network.
 #
-# Ward's runtime substrate manifest denormalizes this image-tier subset into
-# `cmd/ward/containerassets/preclone-repos.txt`. The non-profile bridge/private
-# (cache-tier) repos are deliberately NOT baked into this shareable image.
+# Deployment-private reference repos are deliberately not baked into this
+# shareable image. Ward may add governed deployment context through its own
+# grants and lifecycle without changing this public AOS substrate.
 #
 # owner/name, one per line. All are public read (anonymous clone). coilysiren is
 # GitHub-origin until its Forgejo mirror lands (infrastructure#352).

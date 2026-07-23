@@ -235,7 +235,16 @@ def test_core_copies_the_stable_assets_from_the_root_context() -> None:
         "COPY claude-managed-settings.json /etc/claude-code/managed-settings.json"
         in text
     )
-    assert "COPY substrate-image-repos.txt /tmp/substrate-image-repos.txt" in text
+    assert (
+        "COPY substrate-image-repos.txt /opt/agentic-os/substrate-repos.txt"
+        in text
+    )
+    assert "COPY --from=aos-cli go.mod go.sum ./" in text
+    assert (
+        "COPY --from=dev-base-ward-builder /usr/local/bin/aos /usr/local/bin/aos"
+        in text
+    )
+    assert "agent-compose version" in text
     assert 'ENTRYPOINT ["/opt/agentic-os/ward-shell-entrypoint.sh"]' in text
 
 
@@ -343,6 +352,11 @@ def test_pushed_build_uses_release_tagless_cache_ref(monkeypatch) -> None:
     )
     assert any(
         "WARD_CONFIG_REF_COMMIT=abc123" in arg
+        for cmd in commands
+        for arg in cmd
+    )
+    assert any(
+        arg == "aos-cli=aos"
         for cmd in commands
         for arg in cmd
     )

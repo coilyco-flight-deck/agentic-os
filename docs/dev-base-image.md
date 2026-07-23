@@ -1,7 +1,6 @@
 # dev-base container image
 
-aos owns the agent dev env. ward consumes it by tag, so config cannot
-drift.
+aos owns the agent dev env. ward consumes it by tag, so config cannot drift.
 
 This page covers the language specialists and the `dev-base-full` compatibility
 surface. See [tiering](dev-base-image-tiering.md).
@@ -12,19 +11,20 @@ surface. See [tiering](dev-base-image-tiering.md).
 the root runtime tier on `ubuntu:24.04`. The sibling tier Dockerfiles live in
 [`docker/dev-base/`](../docker/dev-base/) as one folder per tier.
 
-* **core** - common development tools, Node-backed agent harnesses, operational CLIs, platform assets, and ward.
+* **core** - development tools, agent harnesses, operational CLIs, platform assets, `aos`, agent-compose, and ward.
 * **language specialists** - Node, Go, .NET 10 + ICU, Rust + wasm + `trunk`, and Python + pip + `pipenv`.
-* **shared CLIs** - aws, Homebrew, claude, mcporter, opencode, codex, goose, gh, helm, kubectl, yq, Docker, `tailscale`, and `tailscaled`. Core supplies them to every parallel `lang-*` image.
+* **shared CLIs** - `aos`, agent-compose/`acompose`, cloud, cluster, agent, and language CLIs inherited by every `lang-*` image.
 * **gate tools** - golangci-lint, trufflehog, and kdlfmt.
 * Rust native libs - `lang-rust` supplies native Bevy/Winit dependencies, and `full` inherits them.
-* **platform seed** - substrate mirrors, self-name/status assets, and the shell entrypoint.
+* **platform seed** - the public substrate manifest and mirrors, self-name/status assets, and the shell entrypoint.
 
-Tools under `/usr/local`, `/home/linuxbrew/.linuxbrew`, or `/opt` run as any uid. ward owns `run-as-uid`, mounts, and `~/.aws`. Root bootstrap seeds `/home/ubuntu/.ward/audit` as uid 1000 and avoids root-owned audit state.
+Tools under `/usr/local`, `/home/linuxbrew/.linuxbrew`, or `/opt` run as any uid.
+The [AOS launcher](aos-cli.md) owns CWD, substrate, and composed HOME. Ward owns
+governed uid, credentials, clones, and lifecycle.
 
 ## Naming and tags
 
-Published as one package,
-`forgejo.coilysiren.me/coilyco-flight-deck/agentic-os`, with variants as tags.
+Published as `forgejo.coilysiren.me/coilyco-flight-deck/agentic-os`, with variants as tags.
 `full` is the plain default tag, and the folder name prefixes every other tier's
 tag. `full` uses `agentic-os:${TAG}`. Other refs use
 `agentic-os:<tier>-${TAG}` for `core`, `lang-node`, `lang-go`, `lang-dotnet`,
@@ -68,7 +68,7 @@ Needs a `docker login`. `ward container up/exec` (ward#98) is the entry point.
 
 ## Not here
 
-* Mount and compose logic, `ward container` verbs, and the mount-eligibility manifest - ward#98 and aos#222.
+* Ward's fresh target clone, repo grants, reservations, reaper, and landing policy.
 * `coily` (retired, folded into `ward ops`) and running services - not shipped.
 * Standalone `ops` and `agent` images - capabilities live in each language specialist instead.
 * `docker buildx` and `wasm-pack` - job-local.

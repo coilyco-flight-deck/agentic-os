@@ -11,6 +11,7 @@ This doc lists major shipped capabilities, not files. If you want a file invento
 - **Karabiner key bindings** - complex modifications for the external keyboard and Remote Desktop.
 - [Agents and sessions](features-agents-sessions.md) - agent self-name, session pulse, and status-line repo tracking.
 - [Agent-compose personalities](personality-provider.md) - invariant plus 16 full/brief bodies.
+- [AOS launcher](aos-cli.md) - Go composed containers with CWD and substrate.
 - [Code review skill](../.agents/skills/tooling-code-review/SKILL.md) - the in-container review stance for ward workers.
 - [Code review contract](../CODE-REVIEW.md) - review invariants.
 - [Harness selection](harness-selection.md) - choose Claude, Codex, OpenCode, Aider, or Goose.
@@ -24,7 +25,7 @@ This doc lists major shipped capabilities, not files. If you want a file invento
 - [ward bundle](ward-specs.md) - launch policy, guarded surfaces, and AOSH-selected local models.
 - [Ward profile assets home](ward-profile-assets.md) - AOS profile/config inputs for Ward's `ProfileProvider`.
 - [Role surface tiers](role-surface-tiers.md) - the intended per-role container capability tiers.
-- [Cross-repo tooling and release](features-release-tooling.md) - hooks, diagnostics, Forgejo release actions, fast-forward promotion, draft retries, and tier reruns.
+- [Cross-repo tooling and release](features-release-tooling.md) - hooks, diagnostics, promotion, retries, and reruns.
 - [Telegram CI failure alerts](telegram-ci-alerts.md) - reusable red-channel alerting for failing jobs.
 - [dev-base images](dev-base-image.md) - language specialists with shared agent and operational tools, release aliases, and resumable publishing.
 - [CI parity in dev-base](ci-in-dev-base.md) - CI runs inside the pinned dev-base image.
@@ -35,7 +36,7 @@ This doc lists major shipped capabilities, not files. If you want a file invento
 - [Mount-eligibility manifest](mount-eligibility-manifest.md) - per-harness repo mount list for this host.
 - [Committed ward-ops reference](ward-ops-forgejo-reference.md) - checked-in `ward ops forgejo` command render.
 - [Catalog caps reference](catalog-caps-reference.md) - generated numeric caps for validators.
-- [Tool-failure GlitchTip shipper](tool-failures-shipper.md) - batch shipper for ward-owned tool failure records, with schema-v1 docs still owned here.
+- [Tool-failure shipper](tool-failures-shipper.md) - batches ward tool failures for GlitchTip.
 - [Canonical agent-id generator](dictatable-id-alphabet.md) - short lowercase agent IDs.
 - [Knowledge-base freshness program](knowledge-base-freshness.md) - age-based doc fact freshness markers.
 
