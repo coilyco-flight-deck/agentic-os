@@ -50,3 +50,4 @@ specgen also-grant convenience is agentic-os#446.
 * [ward-specs.md](ward-specs.md) - the bundle these guardfiles ship in.
 * [dev-base-image-tiering.md](dev-base-image-tiering.md) - the image tier split.
 * [ward-ops-forgejo-reference.md](ward-ops-forgejo-reference.md) - the committed forgejo surface render.
+* [ward-ops-aws-reference.md](ward-ops-aws-reference.md) - the committed AWS surface render.

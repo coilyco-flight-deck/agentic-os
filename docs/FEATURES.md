@@ -23,7 +23,7 @@ This lists shipped capabilities, not files.
 - [Forgejo runner-token fetch overlay](forgejo-runner-token.md) - guarded runner registration-token minting via fetch leaves.
 - [Forgejo Actions rerun bridge](forgejo-actions-rerun.md) - guarded run-id rerun helper that falls back to dispatch, plus fetch mirror.
 - [Forgejo org-repo bootstrap](forgejo-org-repo-bootstrap.md) - admin-backed helper that creates or reconciles org repos for GitHub profile mirrors.
-- [ward bundle](ward-specs.md) - launch policy, guarded surfaces, and AOSH-selected local models.
+- [ward bundle](ward-specs.md) - launch policy, guarded surfaces, AOSH-selected Goose routing, and AOS-local OpenCode policy.
 - [Ward profile assets home](ward-profile-assets.md) - AOS profile/config inputs for Ward's `ProfileProvider`.
 - [Role surface tiers](role-surface-tiers.md) - the intended per-role container capability tiers.
 - [Cross-repo tooling and release](features-release-tooling.md) - hooks, diagnostics, promotion, retries, and reruns.
@@ -35,7 +35,7 @@ This lists shipped capabilities, not files.
 - [Encoded leak guard](leak-guard.md) - hex-encoded leak-term detector.
 - [Context-budget report](context-budget.md) - eager startup budget measurement per harness.
 - [Mount-eligibility manifest](mount-eligibility-manifest.md) - per-harness repo mount list for this host.
-- [Committed ward-ops reference](ward-ops-forgejo-reference.md) - checked-in `ward ops forgejo` command render.
+- Ward-ops references - [Forgejo](ward-ops-forgejo-reference.md) and [AWS](ward-ops-aws-reference.md) command renders.
 - [Catalog caps reference](catalog-caps-reference.md) - generated numeric caps for validators.
 - [Tool-failure shipper](tool-failures-shipper.md) - batches ward tool failures for GlitchTip.
 - [Canonical agent-id generator](dictatable-id-alphabet.md) - short lowercase agent IDs.

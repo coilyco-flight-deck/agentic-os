@@ -57,7 +57,7 @@ commands:
     description: "Run daily unittest smoke checks for local agent harness compatibility. The roster is read live from `ward agents list --json`, so it tracks ward's embedded fleet (Claude, Codex, OpenCode, Goose) instead of a private list; narrow with `-- --harness codex`. Uses unittest's native ok/FAIL/ERROR output and exit code. See docs/agent-compat.md."
   sync-local-models:
     run: uv run python -m agentic_os.local_model_sync
-    description: "Sync AOSH's generated OpenCode and Goose selections into `.ward/agents.kdl`. `-- --check` compares the AOS bundle with the selected, provisioned roster and fails on drift. See docs/ward-local-models.md."
+    description: "Sync AOSH's selected Goose route into `.ward/agents.kdl`. OpenCode remains AOS-local backend policy. `-- --check` compares the synced overlay with the selected, provisioned roster and fails on drift. See docs/ward-local-models.md."
   dev-base-build:
     run: uv run python scripts/dev-base-build.py --registry agentic-os --tag dev-base-local build
     description: "Build the specialist dev-base image family in topological order locally under agentic-os:<tier>-dev-base-local (agentic-os:dev-base-local for full) for validating docker/dev-base/<tier>/Dockerfile changes before the release workflow publishes the multi-arch image."
@@ -136,6 +136,9 @@ commands:
   gen-ward-ops-reference:
     run: bash scripts/gen-ward-ops-reference.sh
     description: "Regenerate docs/ward-ops-forgejo-reference.md from `ward ops forgejo describe` with a provenance header (as-of date + ward version). The committed render keeps operator-verb names greppable off-disk so a cold agent never guesses the name. Run at converge time or when ward-kdl's forgejo surface changes."
+  gen-ward-ops-aws-reference:
+    run: uv run python -m agentic_os.generators.generate_ward_aws_reference
+    description: "Regenerate docs/ward-ops-aws-reference.md from the launch-selected AOS bundle. `-- --check` reports drift without writing."
   freshness:
     run: uv run python -m agentic_os.freshness
     description: "Knowledge-base freshness probe: parse `<!-- freshness: as-of= half-life= -->` provenance markers across tracked docs and grade each fact by age against its half-life horizon. `-- --check` exits non-zero when any fast-decay fact is past its horizon (the loud trigger a scheduled CI job fails on), `-- --lint` checks markers are well-formed. Hermetic, on-demand/scheduled, not a commit-path hook since rot is time-based. See docs/knowledge-base-freshness.md."
