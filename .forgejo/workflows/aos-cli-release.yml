@@ -51,7 +51,7 @@ jobs:
         run: |
           ward exec test
           ward exec aos-test
-          ward exec pre-commit
+          ward exec pre-commit-all
 
       - id: tag
         uses: ./actions/tag-bump
