@@ -9,6 +9,7 @@ from agentic_os.dev_base import PUBLISHED_TIER_NAMES
 ROOT = Path(__file__).resolve().parent.parent
 PUBLISH = ROOT / ".forgejo" / "workflows" / "dev-base-publish.yml"
 RELEASE = ROOT / ".forgejo" / "workflows" / "release.yml"
+PUBLISH_TIER = ROOT / "actions" / "publish-dev-base-tier" / "action.yml"
 
 
 def _assert_alert_steps_are_non_blocking(text: str) -> None:
@@ -53,8 +54,12 @@ def test_dev_base_publish_workflows_support_tier_reruns_and_non_blocking_alerts(
 
     assert "needs: [plan-release, retag-core]" in release
     assert (
-        "needs: [plan-release, retag-lang-node, retag-lang-go, retag-lang-dotnet,"
-        " retag-lang-rust, retag-lang-python]" in release
+        "needs: [plan-release, retag-lang-go, retag-lang-dotnet, retag-lang-rust,"
+        " retag-lang-python]" in release
+    )
+    assert (
+        "needs: [plan-draft, publish-lang-go, publish-lang-dotnet, publish-lang-rust,"
+        " publish-lang-python]" in publish
     )
     for retired_tier in ("ops", "agent"):
         assert f"publish-{retired_tier}" not in publish
@@ -71,3 +76,20 @@ def test_dev_base_image_builds_use_the_dedicated_runner() -> None:
 
     assert publish.count("runs-on: docker-build") == len(PUBLISHED_TIER_NAMES)
     assert "plan-draft:\n    runs-on: docker\n" in publish
+
+
+def test_lang_rust_publish_verifies_native_wayland_and_xkb_development_surface() -> None:
+    action = PUBLISH_TIER.read_text(encoding="utf-8")
+
+    assert "Verify lang-rust native development surface on both architectures" in action
+    assert "if: ${{ inputs.tier == 'lang-rust' }}" in action
+    assert "linux/amd64 linux/arm64" in action
+    assert "--entrypoint bash" in action
+    assert "libasound2-dev" in action
+    assert "libudev-dev" in action
+    assert "libwayland-dev" in action
+    assert "libxkbcommon-dev" in action
+    assert "pkg-config" in action
+    assert "rustup target list --installed" in action
+    assert "pkg-config --exists wayland-client xkbcommon" in action
+    assert "cc /tmp/bevy-native-smoke.c" in action
