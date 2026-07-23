@@ -141,8 +141,89 @@ roles {
             reasoning-effort high
         }
     }
+    // designer: shape product interactions and produce design artifacts
+    role designer {}
     // social: social media leads and analysis
     role social {}
     // sales: brings in the money
-    role saled {}
+    role sales {}
+    // customer-success: onboarding, support, retention, and customer research
+    role customer-success {}
 }
+
+// BEGIN generated role-intent harness board
+role-harnesses {
+    format "agentic-os.role-harness-board.v1"
+    role-source "coilyco-flight-deck/agent-compose:internal/person/person.kdl"
+    role-count 10
+    lane-count 16
+    role engineer {
+        intent autonomous-coding {
+            harness openhands
+        }
+    }
+    role director {
+        intent strategic-planning {
+            harness plandex
+        }
+    }
+    role qa {
+        intent code-review {
+            harness aider
+        }
+    }
+    role advisor {
+        intent research-synthesis {
+            harness hermes
+        }
+    }
+    role ops {
+        intent ops-investigation {
+            harness holmesgpt
+        }
+        intent operational-decision {
+            harness goose
+        }
+    }
+    role pm {
+        intent strategic-planning {
+            harness hermes
+        }
+        intent project-coordination {
+            harness plane
+        }
+    }
+    role designer {
+        intent product-shaping {
+            harness penpot
+        }
+        intent design-production {
+            harness aosx
+        }
+    }
+    role social {
+        intent message-composition {
+            harness mixpost
+        }
+        intent channel-publishing {
+            harness elizaos
+        }
+    }
+    role sales {
+        intent research-synthesis {
+            harness hermes
+        }
+        intent conversation-management {
+            harness elizaos
+        }
+    }
+    role customer-success {
+        intent knowledge-retrieval {
+            harness rasa
+        }
+        intent conversation-management {
+            harness rasa
+        }
+    }
+}
+// END generated role-intent harness board

@@ -18,4 +18,5 @@ If the same repo also exists under `/substrate`, work in `/workspace/agentic-os`
 
 - This repo authors the coilyco ward spec bundle.
 - `defaults.kdl` owns the aos deployment image and moving tag.
-- `roles.kdl` is where the shipped per-harness agent overlays live.
+- `roles.kdl` holds shipped per-harness agent overlays and the generated,
+  model-opaque AOSH role-intent harness board.

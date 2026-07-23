@@ -15,7 +15,7 @@ This lists shipped capabilities, not files.
 - [AOS launcher](aos-cli.md) - released Go containers and embedded defaults.
 - [Code review skill](../.agents/skills/tooling-code-review/SKILL.md) - the in-container review stance for ward workers.
 - [Code review contract](../CODE-REVIEW.md) - review invariants.
-- [Harness selection](harness-selection.md) - 10-role, 16-lane defaults from AOSH.
+- [Harness selection](harness-selection.md) - 10-role AOSH board in the Ward profile and AOS launcher.
 - [Test harnesses](test-harness.md) - agent/model smokes and composed-role probes.
 - [Issue-corpus discovery index](issue-corpus.md) - offline corpus render plus live Forgejo lookup.
 - [Forgejo Actions log bridge](forgejo-actions-logs.md) - plaintext helper for live workflow logs, plus fetch mirror.

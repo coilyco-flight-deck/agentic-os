@@ -1,49 +1,44 @@
 package main
 
-import (
-	"strings"
-	"testing"
-)
+import "testing"
 
-func TestEmbeddedHarnessBoardResolvesConfirmedDefaults(t *testing.T) {
+func TestEmbeddedHarnessBoardIsValid(t *testing.T) {
 	t.Parallel()
-	board, err := loadHarnessBoard(embeddedHarnessBoard)
+	if _, err := loadHarnessBoard(embeddedHarnessBoard); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestResolveHarnessDefaultReturnsOnlyTheSelectedHarness(t *testing.T) {
+	t.Parallel()
+	board := harnessBoard{
+		Roles: []harnessRole{{
+			Role: "example-role",
+			Intents: []harnessLane{{
+				Intent:  "example-intent",
+				Harness: "example-harness",
+			}},
+		}},
+	}
+	got, err := resolveHarnessDefault(board, "example-role", "example-intent")
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, test := range []struct {
-		role    string
-		intent  string
-		harness string
-	}{
-		{role: "director", intent: "strategic-planning", harness: "plandex"},
-		{role: "customer-success", intent: "knowledge-retrieval", harness: "rasa"},
-		{role: "customer-success", intent: "conversation-management", harness: "rasa"},
-	} {
-		test := test
-		t.Run(test.role+"/"+test.intent, func(t *testing.T) {
-			t.Parallel()
-			got, err := resolveHarnessDefault(board, test.role, test.intent)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if got != test.harness {
-				t.Fatalf("resolveHarnessDefault() = %q, want %q", got, test.harness)
-			}
-			if strings.Contains(got, test.role) || strings.Contains(got, test.intent) {
-				t.Fatalf("control-plane provenance leaked into harness output %q", got)
-			}
-		})
+	if got != "example-harness" {
+		t.Fatalf("resolveHarnessDefault() = %q, want example-harness", got)
 	}
 }
 
 func TestResolveHarnessDefaultRejectsUnknownLane(t *testing.T) {
 	t.Parallel()
-	board, err := loadHarnessBoard(embeddedHarnessBoard)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := resolveHarnessDefault(board, "director", "code-review"); err == nil {
+	board := harnessBoard{Roles: []harnessRole{{
+		Role: "example-role",
+		Intents: []harnessLane{{
+			Intent:  "known-intent",
+			Harness: "example-harness",
+		}},
+	}}}
+	if _, err := resolveHarnessDefault(board, "example-role", "unknown-intent"); err == nil {
 		t.Fatal("unknown role-intent lane resolved")
 	}
 }

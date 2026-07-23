@@ -1,4 +1,4 @@
-"""Project AOSH's role-intent harness board into the released AOS launcher."""
+"""Project AOSH's role-intent harness board into AOS's Ward profile and launcher."""
 
 from __future__ import annotations
 
@@ -17,6 +17,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_AOSH_ROOT = REPO_ROOT.parents[1] / "coilyco-bridge" / "agentic-os-hardware"
 DEFAULT_ROLES = REPO_ROOT / ".agents" / "roles.kdl"
 DEFAULT_OUTPUT = REPO_ROOT / "aos" / "role-harnesses.json"
+DEFAULT_WARD_ROLES = REPO_ROOT / ".ward" / "roles.kdl"
 ROLES_PATH = Path("roles.yaml")
 SELECTIONS_PATH = Path("agent-selections.yaml")
 HARNESSES_PATH = Path("harnesses.yaml")
@@ -26,6 +27,8 @@ EXPECTED_LANE_COUNT = 16
 UNATTENDED_INTENT = "autonomous-coding"
 SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 ROLE_RE = re.compile(r"(?m)^\s*role\s+([a-z0-9][a-z0-9-]*)\s+\{$")
+KDL_BEGIN = "// BEGIN generated role-intent harness board"
+KDL_END = "// END generated role-intent harness board"
 
 
 class BoardSyncError(RuntimeError):
@@ -213,38 +216,106 @@ def render_board(board: HarnessBoard) -> str:
     return json.dumps(payload, indent=2) + "\n"
 
 
+def render_ward_board(board: HarnessBoard) -> str:
+    lines = [
+        KDL_BEGIN,
+        "role-harnesses {",
+        f'    format {json.dumps(FORMAT)}',
+        f'    role-source {json.dumps(board.role_source)}',
+        f"    role-count {len(board.roles)}",
+        f"    lane-count {board.lane_count}",
+    ]
+    for route in board.roles:
+        lines.append(f"    role {route.role} {{")
+        for lane in route.lanes:
+            lines.extend(
+                (
+                    f"        intent {lane.intent} {{",
+                    f"            harness {lane.harness}",
+                    "        }",
+                )
+            )
+        lines.append("    }")
+    lines.extend(("}", KDL_END))
+    return "\n".join(lines) + "\n"
+
+
+def merge_ward_board(current: str, rendered: str, path: Path) -> str:
+    begin_count = current.count(KDL_BEGIN)
+    end_count = current.count(KDL_END)
+    if begin_count == 0 and end_count == 0:
+        return current.rstrip() + "\n\n" + rendered
+    if begin_count != 1 or end_count != 1:
+        raise BoardSyncError(
+            f"{path}: expected one matched generated board marker pair, "
+            f"found begin={begin_count}, end={end_count}"
+        )
+    begin = current.index(KDL_BEGIN)
+    end_start = current.index(KDL_END)
+    if end_start < begin:
+        raise BoardSyncError(f"{path}: generated board markers are out of order")
+    end = end_start + len(KDL_END)
+    return current[:begin] + rendered.rstrip("\n") + current[end:]
+
+
 def run(
     aosh_root: Path,
     output: Path,
     *,
     roles_path: Path = DEFAULT_ROLES,
+    ward_roles_path: Path = DEFAULT_WARD_ROLES,
     check: bool,
 ) -> int:
     board = load_board(aosh_root, roles_path=roles_path)
-    expected = render_board(board)
+    expected_output = render_board(board)
     try:
-        current = output.read_text(encoding="utf-8")
+        current_output = output.read_text(encoding="utf-8")
     except FileNotFoundError:
-        current = ""
+        current_output = ""
     except OSError as exc:
         raise BoardSyncError(f"read {output}: {exc}") from exc
+    try:
+        current_ward_roles = ward_roles_path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise BoardSyncError(f"read {ward_roles_path}: {exc}") from exc
+    expected_ward_roles = merge_ward_board(
+        current_ward_roles,
+        render_ward_board(board),
+        ward_roles_path,
+    )
 
-    if current == expected:
+    drift = [
+        path
+        for path, current, expected in (
+            (output, current_output, expected_output),
+            (ward_roles_path, current_ward_roles, expected_ward_roles),
+        )
+        if current != expected
+    ]
+    if not drift:
         print(
             "ok: AOS role-intent harness defaults match AOSH "
             f"({len(board.roles)} roles, {board.lane_count} lanes)"
         )
         return 0
     if check:
-        print(f"drift: {output} does not match {aosh_root / SELECTIONS_PATH}", file=sys.stderr)
+        for path in drift:
+            print(
+                f"drift: {path} does not match {aosh_root / SELECTIONS_PATH}",
+                file=sys.stderr,
+            )
         print("run `ward exec sync-harness-board` from the AOS checkout", file=sys.stderr)
         return 1
 
     try:
-        output.write_text(expected, encoding="utf-8")
+        ward_roles_path.write_text(expected_ward_roles, encoding="utf-8")
+        output.write_text(expected_output, encoding="utf-8")
     except OSError as exc:
-        raise BoardSyncError(f"write {output}: {exc}") from exc
-    print(f"updated {output} from {aosh_root / SELECTIONS_PATH}")
+        raise BoardSyncError(f"write harness-board projection: {exc}") from exc
+    print(
+        f"updated {ward_roles_path} and {output} from "
+        f"{aosh_root / SELECTIONS_PATH}"
+    )
     return 0
 
 
@@ -261,6 +332,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--aosh-root", type=Path, default=DEFAULT_AOSH_ROOT)
     parser.add_argument("--roles", type=Path, default=DEFAULT_ROLES)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument("--ward-roles", type=Path, default=DEFAULT_WARD_ROLES)
     args = parser.parse_args(argv)
 
     if args.if_present and not args.aosh_root.exists():
@@ -271,6 +343,7 @@ def main(argv: list[str] | None = None) -> int:
             args.aosh_root,
             args.output,
             roles_path=args.roles,
+            ward_roles_path=args.ward_roles,
             check=args.check,
         )
     except BoardSyncError as exc:

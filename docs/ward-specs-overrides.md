@@ -8,6 +8,11 @@ The director's codex override rides a stronger model than the rank-and-file
 engineer default (aos#450): a coordination role decides what to dispatch and
 whether it can land, so it does not need to be cheap.
 
+The sibling generated `role-harnesses` block in the same file is a different
+axis. It records AOSH's model-opaque role-intent surface selections without
+changing guardfiles or per-harness model tuning. `ward exec sync-harness-board`
+rewrites only that marker-bounded block.
+
 Local harness policy is deployment-wide rather than role-specific. AOS publishes
 the AOSH-selected Goose model and its own OpenCode backend policy as sparse
 top-level overlays in `.ward/agents.kdl`. The repeatable ownership and drift

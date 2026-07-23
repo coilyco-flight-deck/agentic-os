@@ -53,23 +53,28 @@ aos --role engineer acompose -- codex
 
 ## Ownership and synchronization
 
-AOSH owns the hand-selected `roles.yaml`, `agent-selections.yaml`, and
-`harnesses.yaml` sources. AOS owns the committed
-[`role-harnesses.json`](../aos/role-harnesses.json) projection consumed by its
-binary.
+AOSH owns the hand-selected `roles.yaml`, `agent-selections.yaml`, and `harnesses.yaml`.
+AOS owns the generated `role-harnesses` block in [`.ward/roles.kdl`](../.ward/roles.kdl),
+the committed human-visible Ward-profile projection.
+
+The sync also writes [`role-harnesses.json`](../aos/role-harnesses.json) as the
+compiled view embedded by the standalone `aos` binary. The JSON does not become
+a second hand-owned source. The drift check requires both generated views to
+match the same AOSH board.
 
 Run `ward exec sync-harness-board` after an AOSH selection changes. Run
 `ward exec sync-harness-board -- --check` for a read-only drift check. Local
 pre-commit performs the same check when the sibling AOSH checkout exists.
 Public checkouts without that sibling report a visible skip.
 
-Malformed or incomplete present sources fail closed. The projection copies only
-role, intent, and harness identity plus schema counts and role-source
-provenance. It never copies backend routing data.
+Malformed or incomplete present sources fail closed. The generated KDL region
+is marker-bounded so the sync preserves hand-owned guardfiles, agent overlays,
+and role shells in the rest of `roles.kdl`. Both views copy only role, intent,
+and harness identity plus schema counts and role-source provenance. Neither
+copies backend routing data.
 
 ## See also
 
 * [AOS composed-container CLI](aos-cli.md) - released launcher behavior.
 * [AOSH projections](ward-local-models.md) - authoring-time sync boundaries.
-* [Role-composed skills](role-composed-skills.md) - role-scoped knowledge rather
-  than harness selection.
+* [Role-composed skills](role-composed-skills.md) - role-scoped knowledge.
