@@ -21,6 +21,7 @@ from agentic_os.dev_base import (
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = REPO_ROOT / "scripts" / "dev-base-build.py"
 DOCKERFILE = DEV_BASE_ROOT / "Dockerfile"
+INSTALL_COMMON = DEV_BASE_ROOT / "install-common.sh"
 
 
 def _load_script():
@@ -62,6 +63,12 @@ def test_full_dockerfile_contains_every_language_and_operator_surface() -> None:
     assert "sha256sum -c -" in text
     assert "COPY --from=aguard-spec" in text
     assert "COPY --from=aguard-python" in text
+
+
+def test_substrate_seed_parser_accepts_windows_line_endings() -> None:
+    text = INSTALL_COMMON.read_text(encoding="utf-8")
+
+    assert "ref=${ref%$'\\r'}" in text
 
 
 def test_version_defaults_have_one_owning_source() -> None:

@@ -2,6 +2,7 @@
 // fetch, and the exec bridge routes the human scope form onto the matching
 // fetch leaf.
 wrap aos-ward ops forgejo {
+    spec forgejo.swagger.v1.json
     base-url "forgejo.coilysiren.me/api/v1"
     auth header-token {
         header Authorization
@@ -11,6 +12,10 @@ wrap aos-ward ops forgejo {
 
     restrict org matches coily*
     restrict owner matches coily*
+
+    // Ward validates each API guardfile standalone. Director and ops already
+    // mount the read tier, so this duplicate read is a least-privilege anchor.
+    can get issue
 
     fetch "generate-runner-token global" {
         method "GET"

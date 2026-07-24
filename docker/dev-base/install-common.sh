@@ -257,6 +257,7 @@ chown -R 1000:1000 /home/ubuntu/.ward
 chmod 0700 /home/ubuntu/.ward /home/ubuntu/.ward/audit
 
 while read -r ref; do
+  ref=${ref%$'\r'}
   case "$ref" in
     ''|\#*) continue ;;
   esac
