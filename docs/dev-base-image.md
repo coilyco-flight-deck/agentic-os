@@ -35,9 +35,9 @@ The default AOS launcher image remains `agentic-os:release`.
 ## How it publishes
 
 [`.forgejo/workflows/dev-base-publish.yml`](../.forgejo/workflows/dev-base-publish.yml)
-builds each language image in parallel on the dedicated image runner. Every
-language job starts from Ubuntu and can rerun independently. The `full` job
-waits only for the Go, .NET, Rust, and Python images it consumes.
+builds the language images through a matrix capped at one active export on the
+shared image builder. Every matrix row starts from Ubuntu and can rerun
+independently. The `full` job waits for the language matrix.
 
 [`release.yml`](../.forgejo/workflows/release.yml) retags the already-published
 draft manifests to the versioned tag plus `release` and `latest`. The helper

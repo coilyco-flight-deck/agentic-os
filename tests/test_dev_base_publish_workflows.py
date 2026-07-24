@@ -42,28 +42,26 @@ def test_publish_and_release_workflows_have_no_core_job() -> None:
     assert "retag-core" not in release
     assert "tier: core" not in publish
     assert "tier: core" not in release
-    assert publish.count("uses: ./actions/publish-dev-base-tier") == len(
-        PUBLISHED_TIER_NAMES
-    )
+    assert publish.count("uses: ./actions/publish-dev-base-tier") == 2
     assert release.count("uses: ./actions/publish-dev-base-tier") == len(
         PUBLISHED_TIER_NAMES
     )
 
 
-def test_language_jobs_are_parallel_and_full_waits_for_its_inputs() -> None:
+def test_language_builds_are_serialized_and_full_waits_for_the_matrix() -> None:
     publish = PUBLISH.read_text(encoding="utf-8")
     release = RELEASE.read_text(encoding="utf-8")
 
     for tier in PUBLISHED_TIER_NAMES:
         if not tier.startswith("lang-"):
             continue
-        assert f"publish-{tier}:\n    needs: [plan-draft]" in publish
+        assert f"          - {tier}" in publish
         assert f"retag-{tier}:\n    needs: [plan-release]" in release
 
-    assert (
-        "needs: [plan-draft, publish-lang-go, publish-lang-dotnet, "
-        "publish-lang-rust, publish-lang-python]" in publish
-    )
+    assert "publish-languages:\n    name: publish-${{ matrix.tier }}" in publish
+    assert "max-parallel: 1" in publish
+    assert "tier: ${{ matrix.tier }}" in publish
+    assert "needs: [plan-draft, publish-languages]" in publish
     assert (
         "needs: [plan-release, retag-lang-go, retag-lang-dotnet, "
         "retag-lang-rust, retag-lang-python]" in release
@@ -92,7 +90,9 @@ def test_publish_workflow_keeps_resume_inputs_and_non_blocking_alerts() -> None:
 
 def test_each_image_build_uses_the_dedicated_runner() -> None:
     publish = PUBLISH.read_text(encoding="utf-8")
-    assert publish.count("runs-on: docker-build") == len(PUBLISHED_TIER_NAMES)
+    assert publish.count("runs-on: docker-build") == 2
+    assert "publish-languages:" in publish
+    assert "publish-full:" in publish
     assert "plan-draft:\n    runs-on: docker\n" in publish
 
 

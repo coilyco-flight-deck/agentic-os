@@ -66,96 +66,28 @@ jobs:
           bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
 
-  publish-lang-node:
+  publish-languages:
+    name: publish-${{ matrix.tier }}
     needs: [plan-draft]
-    if: ${{ github.event_name != 'workflow_dispatch' || contains('all,lang-node', github.event.inputs.tier) }}
     runs-on: docker-build
     timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        tier:
+          - lang-node
+          - lang-go
+          - lang-dotnet
+          - lang-rust
+          - lang-python
     steps:
-      - uses: actions/checkout@v6
-      - uses: ./actions/publish-dev-base-tier
+      - if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.tier == 'all' || github.event.inputs.tier == matrix.tier || (github.event.inputs.tier == 'full' && matrix.tier != 'lang-node') }}
+        uses: actions/checkout@v6
+      - if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.tier == 'all' || github.event.inputs.tier == matrix.tier || (github.event.inputs.tier == 'full' && matrix.tier != 'lang-node') }}
+        uses: ./actions/publish-dev-base-tier
         with:
-          tier: lang-node
-          tag: ${{ needs.plan-draft.outputs.draft_tag }}
-          registry-token: ${{ secrets.REGISTRY_TOKEN }}
-      - name: Alert Telegram on release failure
-        if: ${{ failure() && github.ref == 'refs/heads/release' }}
-        continue-on-error: true
-        uses: ./actions/telegram-alert
-        with:
-          bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
-
-  publish-lang-go:
-    needs: [plan-draft]
-    if: ${{ github.event_name != 'workflow_dispatch' || contains('all,lang-go,full', github.event.inputs.tier) }}
-    runs-on: docker-build
-    timeout-minutes: 120
-    steps:
-      - uses: actions/checkout@v6
-      - uses: ./actions/publish-dev-base-tier
-        with:
-          tier: lang-go
-          tag: ${{ needs.plan-draft.outputs.draft_tag }}
-          registry-token: ${{ secrets.REGISTRY_TOKEN }}
-      - name: Alert Telegram on release failure
-        if: ${{ failure() && github.ref == 'refs/heads/release' }}
-        continue-on-error: true
-        uses: ./actions/telegram-alert
-        with:
-          bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
-
-  publish-lang-dotnet:
-    needs: [plan-draft]
-    if: ${{ github.event_name != 'workflow_dispatch' || contains('all,lang-dotnet,full', github.event.inputs.tier) }}
-    runs-on: docker-build
-    timeout-minutes: 120
-    steps:
-      - uses: actions/checkout@v6
-      - uses: ./actions/publish-dev-base-tier
-        with:
-          tier: lang-dotnet
-          tag: ${{ needs.plan-draft.outputs.draft_tag }}
-          registry-token: ${{ secrets.REGISTRY_TOKEN }}
-      - name: Alert Telegram on release failure
-        if: ${{ failure() && github.ref == 'refs/heads/release' }}
-        continue-on-error: true
-        uses: ./actions/telegram-alert
-        with:
-          bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
-
-  publish-lang-rust:
-    needs: [plan-draft]
-    if: ${{ github.event_name != 'workflow_dispatch' || contains('all,lang-rust,full', github.event.inputs.tier) }}
-    runs-on: docker-build
-    timeout-minutes: 120
-    steps:
-      - uses: actions/checkout@v6
-      - uses: ./actions/publish-dev-base-tier
-        with:
-          tier: lang-rust
-          tag: ${{ needs.plan-draft.outputs.draft_tag }}
-          registry-token: ${{ secrets.REGISTRY_TOKEN }}
-      - name: Alert Telegram on release failure
-        if: ${{ failure() && github.ref == 'refs/heads/release' }}
-        continue-on-error: true
-        uses: ./actions/telegram-alert
-        with:
-          bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
-
-  publish-lang-python:
-    needs: [plan-draft]
-    if: ${{ github.event_name != 'workflow_dispatch' || contains('all,lang-python,full', github.event.inputs.tier) }}
-    runs-on: docker-build
-    timeout-minutes: 120
-    steps:
-      - uses: actions/checkout@v6
-      - uses: ./actions/publish-dev-base-tier
-        with:
-          tier: lang-python
+          tier: ${{ matrix.tier }}
           tag: ${{ needs.plan-draft.outputs.draft_tag }}
           registry-token: ${{ secrets.REGISTRY_TOKEN }}
       - name: Alert Telegram on release failure
@@ -167,7 +99,7 @@ jobs:
           chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
 
   publish-full:
-    needs: [plan-draft, publish-lang-go, publish-lang-dotnet, publish-lang-rust, publish-lang-python]
+    needs: [plan-draft, publish-languages]
     if: ${{ github.event_name != 'workflow_dispatch' || contains('all,full', github.event.inputs.tier) }}
     runs-on: docker-build
     timeout-minutes: 120

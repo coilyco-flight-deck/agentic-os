@@ -22,9 +22,10 @@ binaries copied into each language target.
 
 ## Dependency graph
 
-All language jobs depend only on the draft plan. They can build in parallel and
-resume independently. `full` waits for Go, .NET, Rust, and Python. Node already
-arrives through the Rust image's complete common surface.
+All language rows depend only on the draft plan and resume independently. The
+publish matrix caps itself at one active row because every multi-architecture
+export shares the persistent image builder. `full` waits for the matrix. Node
+already arrives through the Rust image's complete common surface.
 
 ## Tag derivation
 
@@ -47,8 +48,8 @@ same-release registry images through explicit build arguments.
 ## Release flow
 
 * `promote.yml` gates `main` and fast-forwards `release`.
-* `dev-base-publish.yml` publishes the draft language images in parallel, then
-  publishes `full`.
+* `dev-base-publish.yml` serializes the draft language exports on the shared
+  builder, then publishes `full`.
 * `release.yml` retags those draft manifests and creates the release only after
   every image succeeds.
 * Manual dispatches can target one tier closure. See
