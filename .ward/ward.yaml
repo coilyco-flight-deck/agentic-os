@@ -1,6 +1,24 @@
 # Per-repo command allowlist. Add verbs here as they emerge.
 
 commands:
+  agent-terminal:
+    run: go run -C agent-terminal .
+    description: "Launch one agent-compose branded Alacritty director window. Pass role, seat, task title, and a child command after `--`; use `--dry-run` to inspect without opening a window."
+  agent-terminal-build:
+    run: go build -C agent-terminal ./...
+    description: "Compile the branded Alacritty director launcher."
+  agent-terminal-test:
+    run: go test -C agent-terminal ./...
+    description: "Run the branded Alacritty director launcher tests."
+  agent-terminal-lint:
+    run: go vet -C agent-terminal ./...
+    description: "Run Go static analysis for the branded Alacritty director launcher."
+  agent-terminal-fmt:
+    run: gofmt -w agent-terminal
+    description: "Format the branded Alacritty director launcher."
+  agent-terminal-tidy:
+    run: go mod tidy -C agent-terminal
+    description: "Reconcile the branded Alacritty director launcher's Go module metadata."
   warp:
     run: go run -C warp .
     description: "Establish and verify Kai's Warp config across hosts. `ward exec warp apply` renders all three state layers (repo template, config-dir TOML, SQLite); `ward exec warp doctor` reports drift. See project-a-ward-exec-warp.md."

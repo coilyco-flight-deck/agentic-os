@@ -109,3 +109,7 @@ test-images/
 # Test files
 *.test.js
 *.spec.js
+
+# Local Go launcher builds
+/agent-terminal/agent-terminal
+/agent-terminal/agent-terminal.exe

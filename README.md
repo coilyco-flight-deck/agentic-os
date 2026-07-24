@@ -3,12 +3,16 @@
 
 ![Sombra hacking skull](static/wallpaper.jpg)
 
-Cross-platform shell + terminal setup plus cross-repo pre-commit hooks for coilysiren/* repos. Zsh on Mac, Linux, and Windows (Git Bash). Warp on Mac and Windows; both configs symlink into `~/.warp/`.
+Cross-platform shell and terminal setup plus cross-repo pre-commit hooks for
+coilysiren/* repos. Zsh runs on Mac, Linux, and Windows (Git Bash).
+Agent-compose identity brands Alacritty director windows, while the
+transitional Warp configuration remains available on Mac and Windows.
 
 ## Layout
 
 - `shell/` - shared `common.sh` plus thin `zshrc` + `bashrc`, so bash and zsh match. `warp.zsh` is the zsh-only Warp dispatcher.
-- `warp/` - Warp config (`settings.toml`, `tab_configs/`) plus the `ward exec warp` Go module.
+- `agent-terminal/` - static agent-compose identity branding for one Alacritty director window.
+- `warp/` - transitional Warp config (`settings.toml`, `tab_configs/`) plus the `ward exec warp` Go module.
 - `aos/` - the standalone Go container launcher for composed agents and the shared runtime substrate.
 - `aos-say/` - the `ward exec aos-say` Go module for the speech helper client and relay.
 - `karabiner/` - Karabiner-Elements complex modification assets (`brew install --cask karabiner-elements`), symlinked into the local Karabiner config tree.
