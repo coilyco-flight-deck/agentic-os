@@ -145,12 +145,12 @@ A narrowed scope does not narrow the context budget. The **first** instance of a
 
 ### Command delivery
 
-Where a command lands depends on the **execution model**: the `/tmp` launcher convention only works when the agent's `/tmp` is the operator's.
+Commands for a human operator must cross the current execution boundary truthfully.
 
-* **Container / surface session** - a `warded` container or read-only director surface (no writable host mount). Nothing the agent writes reaches the host, so a `/tmp/<name>.sh` launcher dies with the container and never reaches the operator, reading as delivered when nothing crossed the boundary. Hand short single-line commands back **inline**. For anything multi-line, reusable, or worth tracking, commit to a **pushable** repo and push, then hand back the committed path - the only file handback that crosses the boundary from here.
-* **Host harness** - native on Kai's Mac under Warp, so `/tmp` is the Mac's. The launcher guidance holds: a genuinely one-off command (pasted once, discarded) goes to `/tmp/<name>.sh` with a `bash /tmp/<name>.sh` launcher whenever it is multi-line or over 25 characters, because Warp mangles pasted multi-line and long commands. Trivial one-liners under the limit stay inline.
+* **Container / surface session** - a `warded` container or read-only director surface has no writable host mount. Hand one-off commands back inline. For anything reusable or worth tracking, commit to a **pushable** repo and push, then hand back the committed path. A local container file does not cross this boundary.
+* **Host harness** - hand one-off commands back inline. A temporary file is optional when it materially improves review or safety, not a terminal-specific paste requirement.
 
-In either model a **reusable script** - anything Kai might run more than once, or worth tracking - is committed to a repo, never `/tmp`, and handed back as a path. This covers **any** command offered for the human to run, optional and alternative ones included, not just the primary next step. The trigger is the recipient, not the framing: commands the agent runs itself through its shell execution tool never touch a human paste path and stay out of scope.
+In either model a **reusable script** - anything Kai might run more than once, or worth tracking - is committed to a repo and handed back as a path. This covers **any** command offered for the human to run, optional and alternative ones included, not just the primary next step. The trigger is the recipient, not the framing: commands the agent runs itself through its shell execution tool never touch a human paste path and stay out of scope.
 
 That covers a **human** recipient. There is **no autonomous agent-to-agent command channel**. The o2r channel (the `otel-a2a-relay` relay plus its `o2r` CLI) was **archived in the June 2026 surface reduction** (`agentic-os-kai#677`), kept active but never used autonomously. Delivery is now **human-mediated**: route the request through Kai, who relays it upstream, no command crossing an agent boundary on its own. Revival and absorption are tracked at `ward#104`. The `kai-command-handover` skill holds the current procedure.
 
