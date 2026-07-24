@@ -42,10 +42,12 @@ roles, duplicate bindings, unknown roles, and missing sources fail composition.
 Every canonical agent-compose role has a block and at least one composed
 source.
 
-Current exemplars span all ten roles. They cover whole-product coding shapes,
+Role foundations span all ten roles. They cover whole-product coding shapes,
 decision architecture, adversarial verification, evidence synthesis, live
 remediation, program decomposition, interaction shaping, editorial learning,
-sales discovery, and customer-signal routing.
+sales discovery, and customer-signal routing. Deeper specialist sources add
+causal-claim auditing for advisor, state-machine verification for QA, and
+cognitive walkthroughs for designer.
 
 ## Composition
 
