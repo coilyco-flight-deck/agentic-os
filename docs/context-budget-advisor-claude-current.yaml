@@ -1,0 +1,111 @@
+format: agentic-os.role-seat-context.v1
+subject:
+  role: advisor
+  seat: claude
+provider: coilyco-flight-deck/agentic-os
+repository: coilyco-flight-deck/agentic-os
+cwd: .
+tokenizer: tokens = chars/4 proxy (v1, swap for the qwen tokenizer later)
+bundle:
+  format: agent-compose.bundle
+  personalities:
+  - reflective
+  - curious
+  - candid
+  sources:
+  - person:kai
+  - aos-public
+mcp:
+  delivery: deferred
+  server_count: 12
+  eager_schema_count: 0
+totals:
+  eager:
+    components: 23
+    bytes: 49005
+    tokens: 12256
+  lazy:
+    components: 43
+    bytes: 67233
+    tokens: 16818
+breakdown:
+  eager:
+    agents-cascade: {components: 4, bytes: 40959, tokens: 10241}
+    ordinary-skill-frontmatter: {components: 13, bytes: 3229, tokens: 812}
+    personality-frontmatter: {components: 3, bytes: 462, tokens: 117}
+    role-composed-frontmatter: {components: 2, bytes: 416, tokens: 105}
+    role-instructions: {components: 1, bytes: 3939, tokens: 981}
+  lazy:
+    mcp-server-registration: {components: 1, bytes: 0, tokens: 0}
+    ordinary-skill-body: {components: 13, bytes: 24420, tokens: 6103}
+    ordinary-skill-resource: {components: 24, bytes: 33367, tokens: 8351}
+    personality-body: {components: 3, bytes: 4063, tokens: 1017}
+    role-composed-body: {components: 2, bytes: 5383, tokens: 1347}
+components:
+  eager:
+    agents-cascade:
+    - id: agents:000:AGENTS.md
+      owner: coilyco-flight-deck/agentic-os
+      source: coilyco-flight-deck/agentic-os:AGENTS.md
+      delivery: global-composed
+      bytes: 19743
+      tokens: 4936
+      sha256: 7331191c1474d8329dc34df262177970cc8753e95b3ca22feccf399130ba3bef
+    - id: agents:001:AGENTS.claude.md
+      owner: coilyco-flight-deck/agentic-os
+      source: coilyco-flight-deck/agentic-os:AGENTS.claude.md
+      delivery: global-harness-override
+      bytes: 1462
+      tokens: 366
+      sha256: 2e0f4081fba5a03230d0397cad478f393e225e9d5982940dbb4ab1e804132430
+    - id: agents:002:CLAUDE.md
+      owner: coilyco-flight-deck/agentic-os
+      source: coilyco-flight-deck/agentic-os:CLAUDE.md
+      delivery: repo-cascade-bridge
+      bytes: 11
+      tokens: 3
+      sha256: 336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49
+    - id: agents:003:AGENTS.md
+      owner: coilyco-flight-deck/agentic-os
+      source: coilyco-flight-deck/agentic-os:AGENTS.md
+      delivery: repo-cascade
+      bytes: 19743
+      tokens: 4936
+      sha256: 7331191c1474d8329dc34df262177970cc8753e95b3ca22feccf399130ba3bef
+    role-instructions:
+    - id: instructions:role
+      owner: agent-compose+person:kai+aos-public
+      source: bundle:content/instructions.md
+      delivery: .claude/CLAUDE.md
+      bytes: 3939
+      tokens: 981
+      sha256: 85950f6d5f00b1ce15bef3a239ecc7742a261dfeeba73580f3e7adfdcc5f48ef
+  lazy:
+    mcp-server-registration:
+    - id: mcp:deferred
+      owner: mcporter
+      source: mcporter:inventory
+      delivery: deferred
+      bytes: 0
+      tokens: 0
+      sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+skills:
+  aos-public/kai-tech-prefs: {class: ordinary, eager: 51, lazy: 1936, resources: 5}
+  aos-public/repo-agentic-os: {class: ordinary, eager: 56, lazy: 93, resources: 0}
+  aos-public/tooling-advisor-causal-claim-audit: {class: role-composed, eager: 53, lazy: 840, resources: 0}
+  aos-public/tooling-advisor-evidence-synthesis: {class: role-composed, eager: 52, lazy: 507, resources: 0}
+  aos-public/tooling-agent-workflows: {class: ordinary, eager: 53, lazy: 1642, resources: 4}
+  aos-public/tooling-claude-in-chrome: {class: ordinary, eager: 55, lazy: 1416, resources: 3}
+  aos-public/tooling-discord-community-host: {class: ordinary, eager: 61, lazy: 690, resources: 0}
+  aos-public/tooling-ffmpeg: {class: ordinary, eager: 50, lazy: 559, resources: 0}
+  aos-public/tooling-gpg-ssm: {class: ordinary, eager: 78, lazy: 1376, resources: 3}
+  aos-public/tooling-image-zoom: {class: ordinary, eager: 44, lazy: 975, resources: 1}
+  aos-public/tooling-imagemagick: {class: ordinary, eager: 50, lazy: 492, resources: 0}
+  aos-public/tooling-tailscale: {class: ordinary, eager: 109, lazy: 1885, resources: 2}
+  aos-public/tooling-warp: {class: ordinary, eager: 39, lazy: 317, resources: 0}
+  aos-public/tooling-zsh: {class: ordinary, eager: 114, lazy: 787, resources: 0}
+  aos-public/vault-obsidian-markdown: {class: ordinary, eager: 52, lazy: 2286, resources: 6}
+  person:kai/personality-candid: {class: personality, eager: 38, lazy: 334, resources: 0}
+  person:kai/personality-curious: {class: personality, eager: 39, lazy: 337, resources: 0}
+  person:kai/personality-reflective: {class: personality, eager: 40, lazy: 346, resources: 0}
+payload_hash: 5570fe322f4ebb846db0c1722d5059e69b8b673d04d4e0e7bcc5bb8675500b18

@@ -48,8 +48,8 @@ The shared AGENTS inventory preserves a source that arrives through both global
 and repository delivery paths as two occurrences.
 
 Snapshots use `context-budget-<role>-<seat>-<phase>.yaml`. The
-[ops/codex baseline](context-budget-ops-codex-before.yaml) is historical, and
-the [current snapshot](context-budget-ops-codex-after.yaml) is post-pruning.
+[ops/codex baseline](context-budget-ops-codex-before.yaml) is historical.
+Every current role-seat snapshot is linked from the all-seat inventory.
 
 The [current all-seat inventory](context-budget-role-seat-current.md) records
 the compact mobile-review surface for every canonical role in the Claude and
@@ -70,7 +70,7 @@ checkpoint:
 ```sh
 ward exec context-budget -- --role ops --seat codex \
   --compare docs/context-budget-ops-codex-before.yaml \
-  --snapshot docs/context-budget-ops-codex-after.yaml
+  --snapshot docs/context-budget-ops-codex-current.yaml
 ```
 
 `--skill-root` adds a seat or plugin skill root when the projected runtime

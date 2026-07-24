@@ -1,34 +1,33 @@
 # Current role-seat context inventory
 
-This review snapshot measures every canonical role in the Claude and Codex
-native seats at AOS commit
-[`1529af7`](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/commit/1529af7).
+This snapshot measures every canonical role in Claude and Codex at AOS commit
+[`4bfa715`](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/commit/4bfa715).
 It uses agent-compose 0.36.0 and the deterministic characters-divided-by-four
-token proxy. The provider, repository, and CWD are this AOS checkout.
+token proxy against this AOS checkout.
 
-Each role line reports Codex eager, Claude eager, shared lazy, then the number
-of role-composed sources. Lazy totals match across the two native seats.
+Each role reports Codex eager, Claude eager, shared lazy, then composed source
+count. Lazy totals match across seats.
 
 ## Shared surface
 
-* **AGENTS cascade** - Codex 10,327 eager tokens, Claude 10,489.
-* **Ordinary skills** - 751 eager and 13,764 lazy tokens across 12 sources.
+* **AGENTS cascade** - Codex 10,079 eager tokens, Claude 10,241.
+* **Ordinary skills** - 812 eager and 14,454 lazy tokens across 13 sources.
 * **MCP** - zero eager schemas and 12 deferred server registrations.
 * **Seat difference** - Claude adds 162 eager tokens through one additional
   AGENTS cascade component.
 
 ## Roles
 
-* **Director** - Codex 13,974, Claude 14,136, lazy 88,433, 32 composed.
-* **Engineer** - Codex 13,359, Claude 13,521, lazy 52,348, 23 composed.
-* **QA** - Codex 13,448, Claude 13,610, lazy 46,431, 25 composed.
-* **Advisor** - Codex 12,281, Claude 12,443, lazy 16,128, 2 composed.
-* **Ops** - Codex 13,530, Claude 13,692, lazy 54,591, 26 composed.
-* **PM** - Codex 12,958, Claude 13,120, lazy 51,783, 11 composed.
-* **Designer** - Codex 12,444, Claude 12,606, lazy 23,470, 5 composed.
-* **Social** - Codex 12,495, Claude 12,657, lazy 19,427, 5 composed.
-* **Sales** - Codex 12,416, Claude 12,578, lazy 18,802, 4 composed.
-* **Customer success** - Codex 12,488, Claude 12,650, lazy 18,904,
+* **Director** - [Codex 13,787](context-budget-director-codex-current.yaml), [Claude 13,949](context-budget-director-claude-current.yaml), lazy 89,123, 32 composed.
+* **Engineer** - [Codex 13,172](context-budget-engineer-codex-current.yaml), [Claude 13,334](context-budget-engineer-claude-current.yaml), lazy 53,038, 23 composed.
+* **QA** - [Codex 13,261](context-budget-qa-codex-current.yaml), [Claude 13,423](context-budget-qa-claude-current.yaml), lazy 47,121, 25 composed.
+* **Advisor** - [Codex 12,094](context-budget-advisor-codex-current.yaml), [Claude 12,256](context-budget-advisor-claude-current.yaml), lazy 16,818, 2 composed.
+* **Ops** - [Codex 13,343](context-budget-ops-codex-current.yaml), [Claude 13,505](context-budget-ops-claude-current.yaml), lazy 55,281, 26 composed.
+* **PM** - [Codex 12,771](context-budget-pm-codex-current.yaml), [Claude 12,933](context-budget-pm-claude-current.yaml), lazy 52,473, 11 composed.
+* **Designer** - [Codex 12,257](context-budget-designer-codex-current.yaml), [Claude 12,419](context-budget-designer-claude-current.yaml), lazy 24,160, 5 composed.
+* **Social** - [Codex 12,308](context-budget-social-codex-current.yaml), [Claude 12,470](context-budget-social-claude-current.yaml), lazy 20,117, 5 composed.
+* **Sales** - [Codex 12,229](context-budget-sales-codex-current.yaml), [Claude 12,391](context-budget-sales-claude-current.yaml), lazy 19,492, 4 composed.
+* **Customer success** - [Codex 12,301](context-budget-customer-success-codex-current.yaml), [Claude 12,463](context-budget-customer-success-claude-current.yaml), lazy 19,594,
   4 composed.
 
 ## Latest pruning delta
@@ -40,14 +39,16 @@ The comparison point is the immediately preceding provider commit,
   tokens plus five composed sources.
 * **Other six roles** - unchanged by the Azure, CloudFormation, GCP, Pulumi,
   and Ruby source deletion.
+* **AGENTS follow-up** - later command-handover cleanup shed another 248 eager
+  tokens from every seat.
 
 ## Cumulative tracked baseline
 
 The checked-in ops/Codex baseline now has a paired
-[current snapshot](context-budget-ops-codex-after.yaml).
+[current snapshot](context-budget-ops-codex-current.yaml).
 
-* **Eager** - fell from 14,564 to 13,530 tokens, a reduction of 1,034.
-* **Lazy** - fell from 126,332 to 54,591 tokens, a reduction of 71,741.
+* **Eager** - fell from 14,564 to 13,343 tokens, a reduction of 1,221.
+* **Lazy** - fell from 126,332 to 55,281 tokens, a reduction of 71,051.
 * **Components** - added five, removed 31, and changed 23 across the full
   pruning interval.
 
@@ -64,7 +65,7 @@ load.
   comparison, and failure rules.
 * [Historical ops/Codex baseline](context-budget-ops-codex-before.yaml) -
   machine-readable comparison source.
-* [Current ops/Codex snapshot](context-budget-ops-codex-after.yaml) -
+* [Current ops/Codex snapshot](context-budget-ops-codex-current.yaml) -
   machine-readable post-pruning checkpoint.
 * [Context-budget report](context-budget.md) - component definitions and token
   proxy.
