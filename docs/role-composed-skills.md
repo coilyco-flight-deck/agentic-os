@@ -45,10 +45,10 @@ source.
 The complete `coding-*` family is composed for engineer, director, QA, and ops.
 Designer receives only the JavaScript pair. Other roles receive none.
 
-Specialist sources add causal-claim auditing for advisor, cognitive walkthroughs
-for designer, state-machine and visual verification for QA, dynamic diagnosis,
-change-risk modeling and incident command for ops, and signal triangulation for
-PM. Social adds cultural reading and trust boundaries. Sales adds negotiation architecture, and customer-success adds trust repair.
+Specialist sources add role-specific methods across advisor, designer, QA,
+ops, PM, social, sales, and customer-success.
+
+The [principal workflow matrix](role-composed-principal-methods.md) records the broader role-gated method catalog and handoffs.
 
 ## Composition
 

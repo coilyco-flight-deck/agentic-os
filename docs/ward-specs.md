@@ -28,6 +28,10 @@ The exception is stated in [AGENTS.md](../AGENTS.md).
 See [role overlays](ward-specs-overrides.md) and
 [local model ownership](ward-local-models.md).
 
+Historical boundary evidence remains in the
+[venv-binary bypass](security-boundary-deny-uv-venv-bypass.md) and
+[scratch execution audit](security-boundary-scratch-execution-audit.md).
+
 ## Profile asset home
 
 When Ward consumes typed profile data, AOS owns the surviving profile and

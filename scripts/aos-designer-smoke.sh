@@ -6,6 +6,7 @@ skills_root="${HOME}/.agents/skills"
 designer_skill="${skills_root}/tooling-designer-interaction-shaping/SKILL.md"
 javascript_skill="${skills_root}/coding-javascript/SKILL.md"
 react_skill="${skills_root}/coding-javascript-react/SKILL.md"
+brainstorming_skill="${skills_root}/tooling-product-brainstorming/SKILL.md"
 
 if [ ! -f "${instructions}" ]; then
     echo "designer smoke: missing Codex instructions at ${instructions}" >&2
@@ -25,6 +26,10 @@ if [ ! -f "${designer_skill}" ]; then
 fi
 if [ ! -f "${javascript_skill}" ] || [ ! -f "${react_skill}" ]; then
     echo "designer smoke: frontend coding skills were not promoted" >&2
+    exit 1
+fi
+if [ ! -f "${brainstorming_skill}" ]; then
+    echo "designer smoke: product brainstorming was not promoted" >&2
     exit 1
 fi
 frontend_count=0

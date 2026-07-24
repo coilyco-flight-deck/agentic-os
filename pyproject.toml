@@ -126,7 +126,7 @@ excludes = [
 [tool.agentic-os.code-comments]
 excludes = [
     ".agents/skills/categories.yaml",
-    ".agents/skills/tooling-issue-prioritization/references/p0-content-rules.yaml",
+    ".agents/composed/tooling-issue-prioritization/references/p0-content-rules.yaml",
     ".ward/ward.yaml",
     ".pre-commit-config.yaml",
     ".pre-commit-hooks.yaml",

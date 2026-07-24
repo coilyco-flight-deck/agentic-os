@@ -9,10 +9,14 @@ Twelve prefix families and five exact-name skills. Pick the prefix up front; the
 * `ops-eng-sentry-*` - Sentry review playbooks.
 * `ops-investigation-*` - investigation playbooks and runbooks. Status-enforced. Required H2 sections enforced.
 * `gaming-eco-*` - Eco modding (investigation, scaffolding, source-auditing).
-* `writing-*` - prose / voice / issue authoring surface (writing-voice-guide-linter, writing-bluesky, writing-refactor-plan, writing-to-issues).
+* `writing-*` - prose / voice / issue authoring surface
+  (`writing-voice-guide-linter`, `writing-observer-narrator`,
+  `writing-to-issues`, and the social writing family).
 * `personality-*` - role-neutral presence, attention, tempo, and voice for agent-compose personality providers.
 * `home-*` - smart-home control at My House (hue, sonos, cast).
-* `tooling-*` - agent-ecosystem meta (tooling-skillsmp, tooling-scout-capability, tooling-scout-displacement, tooling-mcp-servers, tooling-supply-chain-audit, tooling-security-boundary-discipline). `meta-tooling skills may stay in the personal-prefix` since they encode operating-context discipline.
+* `tooling-*` - agent-ecosystem meta (`tooling-skillsmp`, the scout family,
+  `tooling-supply-chain-audit`, and role-specific methods). Meta-tooling may
+  stay in the personal prefix when it encodes operating-context discipline.
 * `vault-*` - Obsidian vault tooling (cli, markdown rules, vault rules).
 * `coding-*` - code-engineering recipes (Discord bot scaffolding, the coding-shape-iac umbrella, git/GitHub PR workflow). Reusable build patterns, not tooling on the agent ecosystem itself.
 

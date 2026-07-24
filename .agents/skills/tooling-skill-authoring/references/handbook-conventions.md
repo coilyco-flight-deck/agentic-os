@@ -14,7 +14,9 @@ To author a new shaped skill: copy the template, fill in. The validator catches 
 ## 8. Cross-linking rules
 
 * Use **skill names**, not relative paths, in prose mentions. The router resolves.
-* An `ops-investigation-*` skill that uses an MCP heavily cross-links to the relevant `tooling-mcp-servers` or sibling skill, and the corresponding skill cross-links back where the link pulls weight.
+* An `ops-investigation-*` skill that uses an external tool heavily
+  cross-links to the relevant adapter or sibling skill when the link pulls
+  weight.
 * The `ops-investigation` router keeps its routing table current. Adding a new `ops-investigation-*` skill = update the router in the same commit.
 * `<ops-investigation-meta>` is the meta-discipline layer. It cross-links to `ops-investigation` (the router) and to specific subject skills for examples.
 
