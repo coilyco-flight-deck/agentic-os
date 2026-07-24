@@ -24,6 +24,12 @@ from agentic_os.agents_context_inventory import (
 )
 from agentic_os.context_budget_tokens import TOKENIZER_NOTE, count_tokens
 from agentic_os.generators.generate_agent_compose import _split_frontmatter
+from agentic_os.role_personality_sync import (
+    PROJECTION_PATH as ROLE_PERSONALITY_PROJECTION,
+    RolePersonalitySyncError,
+    load_projection as load_personality_projection,
+    personality_skill_id,
+)
 
 FORMAT = "agentic-os.role-seat-context.v1"
 SOURCE_ID = "aos-public"
@@ -346,6 +352,38 @@ def _load_manifest(bundle: Path, role: str) -> tuple[dict[str, object], Path, Pa
     return document, instructions, skills_root
 
 
+def _validate_manifest_personalities(
+    provider: Path,
+    manifest: dict[str, object],
+    role: str,
+) -> tuple[str, ...]:
+    projection_path = provider / ROLE_PERSONALITY_PROJECTION
+    try:
+        role_personalities = load_personality_projection(projection_path)
+    except RolePersonalitySyncError as exc:
+        raise RuntimeError(
+            f"read AOS role personality projection: {exc}"
+        ) from exc
+    expected = role_personalities.get(role)
+    if expected is None:
+        raise RuntimeError(
+            f"{projection_path}: role personality projection lacks role {role}"
+        )
+    actual = manifest.get("personalities")
+    if (
+        not isinstance(actual, list)
+        or not actual
+        or not all(isinstance(value, str) and value for value in actual)
+    ):
+        raise RuntimeError("agent-compose bundle manifest has malformed personalities")
+    if tuple(actual) != expected:
+        raise RuntimeError(
+            "agent-compose bundle personalities differ from the AOS projection "
+            f"for role {role}: bundle={actual}, aos={list(expected)}"
+        )
+    return expected
+
+
 def _canonical_skill(
     provider: Path, source_id: str, skill_id: str
 ) -> tuple[str, str, Path | None]:
@@ -666,6 +704,7 @@ def build_snapshot(
     repo_identity = repository_identity(repo)
     scenario = Scenario(role=role, intent="context-measurement", harness=seat)
     manifest, instructions, skills_root = _load_manifest(bundle.resolve(), role)
+    personalities = _validate_manifest_personalities(provider, manifest, role)
     projection = _load_projection(projected_root.resolve(), seat)
     if projection.instructions.read_bytes() != instructions.read_bytes():
         raise RuntimeError("projected role instructions differ from the verified bundle")
@@ -697,6 +736,20 @@ def build_snapshot(
         provider,
         projection.skills_delivery,
     )
+    expected_personality_skills = {
+        personality_skill_id(personality) for personality in personalities
+    }
+    selected_personality_skills = {
+        skill_id
+        for skill_id in selected_ids
+        if skill_id.startswith("personality-")
+    }
+    if selected_personality_skills != expected_personality_skills:
+        raise RuntimeError(
+            "agent-compose bundle personality skills differ from the AOS "
+            f"projection: bundle={sorted(selected_personality_skills)}, "
+            f"aos={sorted(expected_personality_skills)}"
+        )
     components.extend(bundle_components)
     components.extend(
         _plugin_skill_components(
@@ -740,6 +793,7 @@ def build_snapshot(
         "bundle": {
             "format": manifest["format"],
             "density": manifest.get("density"),
+            "personalities": list(personalities),
             "sources": manifest.get("sources", []),
         },
         "mcp": {

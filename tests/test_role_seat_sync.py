@@ -147,6 +147,27 @@ def test_duplicate_seat_harness_fails_closed(
         role_seat_sync.load_orientation(aosh_root, roles_path=roles_path)
 
 
+def test_duplicate_role_personality_fails_closed(
+    role_seat_sources: tuple[Path, Path, Path],
+) -> None:
+    aosh_root, roles_path, _ = role_seat_sources
+    orientation_path = aosh_root / role_seat_sync.ORIENTATION_PATH
+
+    def mutate(document: dict[str, object]) -> None:
+        roles = document["roles"]
+        assert isinstance(roles, dict)
+        engineer = roles["engineer"]
+        assert isinstance(engineer, dict)
+        personalities = engineer["personalities"]
+        assert isinstance(personalities, list)
+        personalities.append(personalities[0])
+
+    _rewrite_yaml(orientation_path, mutate)
+
+    with pytest.raises(role_seat_sync.RoleSeatSyncError, match="personality"):
+        role_seat_sync.load_orientation(aosh_root, roles_path=roles_path)
+
+
 def test_source_seat_requires_an_existing_ward_agent_block(
     role_seat_sources: tuple[Path, Path, Path],
 ) -> None:

@@ -10,6 +10,10 @@ import pytest
 import yaml
 
 from agentic_os import context_budget_role_seat as context
+from agentic_os import role_personality_sync
+
+
+FIXTURE_PERSONALITIES = ("protective", "grounded", "reflective")
 
 
 def write(path: Path, content: str) -> None:
@@ -47,6 +51,45 @@ def provider_fixture(root: Path) -> Path:
         "---\n"
         "# Remediate\n",
     )
+    for personality in FIXTURE_PERSONALITIES:
+        skill_id = role_personality_sync.personality_skill_id(personality)
+        write(
+            provider / ".agents" / "skills" / skill_id / "SKILL.md",
+            "---\n"
+            f"name: {skill_id}\n"
+            f"description: Bring {personality} attention.\n"
+            "---\n"
+            f"# {personality}\n",
+        )
+        write(
+            provider / ".agents" / "skills" / skill_id / "BRIEF.md",
+            f"Bring {personality} attention.\n",
+        )
+    write(
+        provider / role_personality_sync.PROJECTION_PATH,
+        json.dumps(
+            {
+                "format": role_personality_sync.FORMAT,
+                "role_count": 1,
+                "personality_count": len(FIXTURE_PERSONALITIES),
+                "roles": [
+                    {
+                        "role": "ops",
+                        "personalities": list(FIXTURE_PERSONALITIES),
+                    }
+                ],
+                "skills": [
+                    {
+                        "personality": personality,
+                        "skill": role_personality_sync.personality_skill_id(
+                            personality
+                        ),
+                    }
+                    for personality in FIXTURE_PERSONALITIES
+                ],
+            }
+        ),
+    )
     return provider
 
 
@@ -58,7 +101,7 @@ def bundle_fixture(root: Path) -> Path:
             {
                 "format": "agent-compose.bundle",
                 "role": "ops",
-                "personalities": ["protective", "grounded", "reflective"],
+                "personalities": list(FIXTURE_PERSONALITIES),
                 "density": "full",
                 "sources": ["person:kai", "aos-public"],
                 "delivery": {
@@ -87,6 +130,30 @@ def bundle_fixture(root: Path) -> Path:
         "---\n"
         "# Remediate\n",
     )
+    for personality in FIXTURE_PERSONALITIES:
+        skill_id = role_personality_sync.personality_skill_id(personality)
+        write(
+            bundle
+            / "content"
+            / "skills"
+            / "aos-public"
+            / skill_id
+            / "SKILL.md",
+            "---\n"
+            f"name: {skill_id}\n"
+            f"description: Bring {personality} attention.\n"
+            "---\n"
+            f"# {personality}\n",
+        )
+        write(
+            bundle
+            / "content"
+            / "skills"
+            / "aos-public"
+            / skill_id
+            / "BRIEF.md",
+            f"Bring {personality} attention.\n",
+        )
     write(
         bundle
         / "content"
@@ -271,6 +338,7 @@ def test_build_snapshot_separates_eager_and_lazy_components(tmp_path: Path) -> N
 
     assert first == second
     assert first["subject"] == {"role": "ops", "seat": "codex"}
+    assert first["bundle"]["personalities"] == list(FIXTURE_PERSONALITIES)
     assert first["cwd"] == "nested/deeper"
     assert first["mcp"] == {
         "delivery": "deferred",
@@ -290,11 +358,19 @@ def test_build_snapshot_separates_eager_and_lazy_components(tmp_path: Path) -> N
         )
     skills = first["skills"]
     assert isinstance(skills, dict)
-    assert list(skills) == [
-        "aos-public/alpha",
-        "aos-public/tooling-ops-live-remediation",
-        "skill-root-0/plugin-tool",
+    expected_personality_skills = [
+        "aos-public/"
+        + role_personality_sync.personality_skill_id(personality)
+        for personality in FIXTURE_PERSONALITIES
     ]
+    assert list(skills) == sorted(
+        [
+            "aos-public/alpha",
+            "aos-public/tooling-ops-live-remediation",
+            *expected_personality_skills,
+            "skill-root-0/plugin-tool",
+        ]
+    )
     alpha = skills["aos-public/alpha"]
     assert set(alpha) == {"class", "eager", "lazy", "resources"}
     assert alpha["class"] == "ordinary"
@@ -302,6 +378,10 @@ def test_build_snapshot_separates_eager_and_lazy_components(tmp_path: Path) -> N
     assert alpha["lazy"] > 0
     assert alpha["resources"] == 1
     assert skills["aos-public/tooling-ops-live-remediation"]["class"] == "role-composed"
+    assert all(
+        skills[skill_id]["class"] == "personality"
+        for skill_id in expected_personality_skills
+    )
     assert skills["skill-root-0/plugin-tool"]["class"] == "plugin"
     components = {item["id"]: item for item in component_rows(first)}
     assert components["instructions:role"]["delivery"] == ".codex/AGENTS.md"
@@ -332,6 +412,57 @@ def test_snapshot_rejects_wrong_bundle_role(tmp_path: Path) -> None:
     write(bundle / "manifest.json", json.dumps(manifest))
 
     with pytest.raises(RuntimeError, match="expected role ops"):
+        context.build_snapshot(
+            bundle,
+            projected,
+            provider,
+            repo,
+            cwd,
+            role="ops",
+            seat="codex",
+        )
+
+
+def test_snapshot_rejects_personality_drift_from_agent_compose(
+    tmp_path: Path,
+) -> None:
+    provider = provider_fixture(tmp_path)
+    bundle = bundle_fixture(tmp_path)
+    projected = projection_fixture(tmp_path, bundle)
+    repo, cwd = repo_fixture(tmp_path)
+    manifest = json.loads(
+        (bundle / "manifest.json").read_text(encoding="utf-8")
+    )
+    manifest["personalities"] = list(reversed(FIXTURE_PERSONALITIES))
+    write(bundle / "manifest.json", json.dumps(manifest))
+
+    with pytest.raises(RuntimeError, match="personalities differ"):
+        context.build_snapshot(
+            bundle,
+            projected,
+            provider,
+            repo,
+            cwd,
+            role="ops",
+            seat="codex",
+        )
+
+
+def test_snapshot_rejects_missing_personality_skill_body(
+    tmp_path: Path,
+) -> None:
+    provider = provider_fixture(tmp_path)
+    bundle = bundle_fixture(tmp_path)
+    projected = projection_fixture(tmp_path, bundle)
+    repo, cwd = repo_fixture(tmp_path)
+    missing = role_personality_sync.personality_skill_id(
+        FIXTURE_PERSONALITIES[0]
+    )
+    shutil.rmtree(
+        bundle / "content" / "skills" / "aos-public" / missing
+    )
+
+    with pytest.raises(RuntimeError, match="personality skills differ"):
         context.build_snapshot(
             bundle,
             projected,

@@ -26,7 +26,7 @@ Unselected role sources leave no catalog metadata or trace in that bundle.
 See [role-composed skills](role-composed-skills.md) for the complete contract.
 
 The compose request supplies the stable source id `aos-public`, so adding an
-ordinary skill, role binding, or personality body needs no parallel provider
+ordinary skill or role binding needs no parallel hand-authored provider
 inventory.
 
 Each personality directory carries two densities:
@@ -36,6 +36,10 @@ Each personality directory carries two densities:
 
 Agent-compose activates the complete ordered personality meld for a selected
 role. A request cannot select an arbitrary trait or change compatibility.
+Agent-compose owns canonical role-to-personality bindings. AOS commits a narrow
+alignment board that verifies each selected full and brief body and the actual
+bundle manifest without selecting runtime behavior. See
+[role-orientation projections](role-orientation-projections.md).
 
 ## Local consumer use
 

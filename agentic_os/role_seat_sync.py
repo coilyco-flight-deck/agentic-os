@@ -48,6 +48,7 @@ class SeatIdentity:
 @dataclass(frozen=True)
 class RoleIdentity:
     role: str
+    personalities: tuple[str, ...]
     seats: tuple[SeatIdentity, ...]
 
 
@@ -132,6 +133,22 @@ def load_orientation(
             {"purpose", "personalities", "seats"},
             f"{orientation_file}: {role}",
         )
+        raw_personalities = role_spec["personalities"]
+        if not isinstance(raw_personalities, list) or not raw_personalities:
+            raise RoleSeatSyncError(
+                f"{orientation_file}: {role}.personalities must be a non-empty list"
+            )
+        personalities = tuple(
+            _slug(
+                personality,
+                f"{orientation_file}: {role}.personalities[{index}]",
+            )
+            for index, personality in enumerate(raw_personalities)
+        )
+        if len(set(personalities)) != len(personalities):
+            raise RoleSeatSyncError(
+                f"{orientation_file}: {role} repeats a personality"
+            )
         raw_seats = role_spec["seats"]
         if not isinstance(raw_seats, list):
             raise RoleSeatSyncError(
@@ -157,7 +174,13 @@ def load_orientation(
                     pronouns=_slug(seat["pronouns"], f"{label}.pronouns"),
                 )
             )
-        identities.append(RoleIdentity(role=role, seats=tuple(seats)))
+        identities.append(
+            RoleIdentity(
+                role=role,
+                personalities=personalities,
+                seats=tuple(seats),
+            )
+        )
     return RoleOrientation(roles=tuple(identities))
 
 
