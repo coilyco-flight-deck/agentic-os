@@ -17,19 +17,7 @@ def write(path: Path, content: str) -> None:
 
 
 def component_rows(snapshot: dict[str, object]) -> list[dict[str, object]]:
-    groups = snapshot["components"]
-    assert isinstance(groups, dict)
-    rows: list[dict[str, object]] = []
-    for eager, delivery_class in ((True, "eager"), (False, "lazy")):
-        kinds = groups[delivery_class]
-        assert isinstance(kinds, dict)
-        for kind, components in kinds.items():
-            assert isinstance(kind, str) and isinstance(components, list)
-            rows.extend(
-                {"kind": kind, "eager": eager, **component}
-                for component in components
-            )
-    return rows
+    return list(goose._snapshot_component_rows(snapshot))
 
 
 def provider_fixture(root: Path, *, harness: str = "goose") -> Path:
@@ -240,6 +228,23 @@ def test_build_snapshot_separates_eager_and_lazy_components(tmp_path: Path) -> N
     for kinds in groups.values():
         assert isinstance(kinds, dict)
         assert list(kinds) == sorted(kinds)
+        assert all(
+            not str(component["id"]).startswith("skill:")
+            for components in kinds.values()
+            for component in components
+        )
+    skills = first["skills"]
+    assert isinstance(skills, dict)
+    assert list(skills) == [
+        "aos-public/alpha",
+        "aos-public/tooling-ops-live-remediation",
+        "skill-root-0/plugin-tool",
+    ]
+    alpha = skills["aos-public/alpha"]
+    assert alpha["class"] == "ordinary"
+    assert alpha["eager"]["tokens"] > 0
+    assert alpha["lazy"]["components"] == 2
+    assert alpha["lazy"]["resources"] == 1
     components = {item["id"]: item for item in component_rows(first)}
     assert components["instructions:goose"]["delivery"] == ".config/goose/.goosehints"
     assert components["agents:000:AGENTS.md"]["eager"] is True
@@ -280,8 +285,12 @@ def test_snapshot_round_trip_and_delta(tmp_path: Path) -> None:
     before = goose.build_snapshot(bundle, provider, repo, cwd)
     snapshot_path = tmp_path / "before.yaml"
     goose.write_snapshot(snapshot_path, before)
-    serialized = yaml.safe_load(snapshot_path.read_text(encoding="utf-8"))
+    serialized_text = snapshot_path.read_text(encoding="utf-8")
+    serialized = yaml.safe_load(serialized_text)
     assert list(serialized["components"]) == ["eager", "lazy"]
+    assert "skills" in serialized
+    assert "eager: {" in serialized_text
+    assert "lazy: {" in serialized_text
 
     write(repo / "nested" / "AGENTS.md", "# Nested instructions\n" + "More context.\n" * 5)
     after = goose.build_snapshot(bundle, provider, repo, cwd)
@@ -305,12 +314,14 @@ def test_load_snapshot_accepts_legacy_flat_json(tmp_path: Path) -> None:
         "format": goose.LEGACY_FORMAT,
         "components": component_rows(current),
     }
+    legacy.pop("skills")
     path = tmp_path / "before.json"
     write(path, json.dumps(legacy))
 
     loaded = goose.load_snapshot(path)
 
-    assert "components +0  -0  ~0" in goose.render_delta(loaded, current)
+    assert loaded["format"] == goose.LEGACY_FORMAT
+    assert "Goose context baseline" in goose.render_snapshot(loaded)
 
 
 def test_plugin_skill_collision_fails_closed(tmp_path: Path) -> None:

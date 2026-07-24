@@ -25,7 +25,8 @@ from agentic_os.agents_context_inventory import (
 from agentic_os.context_budget_tokens import TOKENIZER_NOTE, count_tokens
 from agentic_os.generators.generate_agent_compose import _split_frontmatter
 
-FORMAT = "agentic-os.goose-context.v2"
+FORMAT = "agentic-os.goose-context.v3"
+GROUPED_FORMAT = "agentic-os.goose-context.v2"
 LEGACY_FORMAT = "agentic-os.goose-context.v1"
 HARNESS = "goose"
 ROLE = "ops"
@@ -34,6 +35,48 @@ SOURCE_ID = "aos-public"
 INSTRUCTIONS_LOAD_POINT = ".config/goose/.goosehints"
 SKILLS_LOAD_POINT = ".agents/skills"
 REPO_ROOT = Path(__file__).resolve().parents[1]
+
+SKILL_CLASS_KINDS = {
+    "ordinary": (
+        "ordinary-skill-frontmatter",
+        "ordinary-skill-body",
+        "ordinary-skill-resource",
+    ),
+    "personality": (
+        "personality-frontmatter",
+        "personality-body",
+        "personality-resource",
+    ),
+    "plugin": (
+        "plugin-skill-frontmatter",
+        "plugin-skill-body",
+        "plugin-skill-resource",
+    ),
+    "role-composed": (
+        "role-composed-frontmatter",
+        "role-composed-body",
+        "role-composed-resource",
+    ),
+}
+
+
+class _FlowMap(dict[str, object]):
+    """A compact inline mapping in the generated YAML artifact."""
+
+
+class _SnapshotDumper(yaml.SafeDumper):
+    """Safe YAML dumper with compact measurement mappings."""
+
+
+def _represent_flow_map(
+    dumper: yaml.SafeDumper, value: _FlowMap
+) -> yaml.nodes.MappingNode:
+    return dumper.represent_mapping(
+        "tag:yaml.org,2002:map", value, flow_style=True
+    )
+
+
+_SnapshotDumper.add_representer(_FlowMap, _represent_flow_map)
 
 
 @dataclass(frozen=True)
@@ -447,6 +490,99 @@ def _group_components(
     return grouped
 
 
+def _skill_component_identity(component_id: object) -> tuple[str, str, str]:
+    if not isinstance(component_id, str):
+        raise RuntimeError("skill component has no id")
+    parts = component_id.split(":", 3)
+    if len(parts) != 4 or parts[0] != "skill":
+        raise RuntimeError(f"malformed skill component id: {component_id}")
+    owner, skill_id, stage = parts[1:]
+    return owner, skill_id, stage
+
+
+def _skill_class(kind: object) -> str:
+    if not isinstance(kind, str):
+        raise RuntimeError("skill component has no kind")
+    for skill_class, kinds in SKILL_CLASS_KINDS.items():
+        if kind in kinds:
+            return skill_class
+    raise RuntimeError(f"unsupported skill component kind: {kind}")
+
+
+def _skill_records_from_rows(
+    rows: Iterable[dict[str, object]],
+) -> dict[str, dict[str, object]]:
+    buckets: dict[str, list[dict[str, object]]] = defaultdict(list)
+    for raw in rows:
+        owner, skill_id, _stage = _skill_component_identity(raw.get("id"))
+        buckets[f"{owner}/{skill_id}"].append(raw)
+
+    records: dict[str, dict[str, object]] = {}
+    for skill_key in sorted(buckets):
+        components = sorted(buckets[skill_key], key=lambda raw: str(raw["id"]))
+        eager = [raw for raw in components if raw.get("eager") is True]
+        lazy = [raw for raw in components if raw.get("eager") is False]
+        if len(eager) != 1 or not lazy:
+            raise RuntimeError(
+                f"skill {skill_key} must have one eager frontmatter and lazy content"
+            )
+        frontmatter = eager[0]
+        skill_class = _skill_class(frontmatter.get("kind"))
+        if any(_skill_class(raw.get("kind")) != skill_class for raw in components):
+            raise RuntimeError(f"skill {skill_key} spans multiple component classes")
+        body = [raw for raw in lazy if str(raw.get("kind", "")).endswith("-body")]
+        resources = [
+            raw for raw in lazy if str(raw.get("kind", "")).endswith("-resource")
+        ]
+        if len(body) != 1 or len(body) + len(resources) != len(lazy):
+            raise RuntimeError(f"skill {skill_key} has malformed lazy components")
+        lazy_material = "\n".join(
+            f"{raw['id']}:{raw.get('sha256', '')}" for raw in lazy
+        ).encode()
+        records[skill_key] = {
+            "class": skill_class,
+            "source": frontmatter.get("source"),
+            "delivery": frontmatter.get("delivery"),
+            "eager": _FlowMap(
+                {
+                    "bytes": int(frontmatter.get("bytes", 0)),
+                    "tokens": int(frontmatter.get("tokens", 0)),
+                    "sha256": frontmatter.get("sha256"),
+                }
+            ),
+            "lazy": _FlowMap(
+                {
+                    "components": len(lazy),
+                    "resources": len(resources),
+                    "bytes": sum(int(raw.get("bytes", 0)) for raw in lazy),
+                    "tokens": sum(int(raw.get("tokens", 0)) for raw in lazy),
+                    "body_bytes": int(body[0].get("bytes", 0)),
+                    "body_tokens": int(body[0].get("tokens", 0)),
+                    "resource_bytes": sum(
+                        int(raw.get("bytes", 0)) for raw in resources
+                    ),
+                    "resource_tokens": sum(
+                        int(raw.get("tokens", 0)) for raw in resources
+                    ),
+                    "payload_hash": hashlib.sha256(lazy_material).hexdigest(),
+                }
+            ),
+        }
+    return records
+
+
+def _group_skills(components: list[Component]) -> dict[str, dict[str, object]]:
+    rows = [
+        {
+            **component.document(),
+            "kind": component.kind,
+            "eager": component.eager,
+        }
+        for component in components
+    ]
+    return _skill_records_from_rows(rows)
+
+
 def build_snapshot(
     bundle: Path,
     provider: Path,
@@ -509,6 +645,12 @@ def build_snapshot(
         cwd_label = cwd.relative_to(repo).as_posix() or "."
     except ValueError as exc:
         raise RuntimeError(f"CWD {cwd} is outside repository root {repo}") from exc
+    skill_components = [
+        component for component in components if component.id.startswith("skill:")
+    ]
+    other_components = [
+        component for component in components if not component.id.startswith("skill:")
+    ]
     document: dict[str, object] = {
         "format": FORMAT,
         "lane": {"harness": HARNESS, "role": ROLE, "intent": INTENT},
@@ -530,7 +672,8 @@ def build_snapshot(
             "eager": _totals(components, True),
             "lazy": _totals(components, False),
         },
-        "components": _group_components(components),
+        "components": _group_components(other_components),
+        "skills": _group_skills(skill_components),
     }
     canonical = json.dumps(document, sort_keys=True, separators=(",", ":")).encode()
     document["payload_hash"] = hashlib.sha256(canonical).hexdigest()
@@ -606,12 +749,13 @@ def write_snapshot(path: Path, snapshot: dict[str, object]) -> None:
         raise RuntimeError("only the current grouped Goose snapshot format can be written")
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
-        yaml.safe_dump(
+        yaml.dump(
             snapshot,
+            Dumper=_SnapshotDumper,
             allow_unicode=False,
             default_flow_style=False,
             sort_keys=False,
-            width=100,
+            width=4096,
         ),
         encoding="utf-8",
     )
@@ -624,20 +768,25 @@ def load_snapshot(path: Path) -> dict[str, object]:
         raise RuntimeError(f"read Goose context snapshot {path}: {exc}") from exc
     if not isinstance(document, dict):
         raise RuntimeError(f"{path}: Goose context snapshot must be a mapping")
-    if document.get("format") not in {FORMAT, LEGACY_FORMAT}:
+    if document.get("format") not in {FORMAT, GROUPED_FORMAT, LEGACY_FORMAT}:
         raise RuntimeError(f"{path}: unsupported Goose context snapshot format")
     if document.get("lane") != {"harness": HARNESS, "role": ROLE, "intent": INTENT}:
         raise RuntimeError(f"{path}: snapshot is not the fixed Goose lane")
     components = document.get("components")
-    if document["format"] == FORMAT and not isinstance(components, dict):
+    if document["format"] in {FORMAT, GROUPED_FORMAT} and not isinstance(
+        components, dict
+    ):
         raise RuntimeError(f"{path}: grouped snapshot components must be a mapping")
     if document["format"] == LEGACY_FORMAT and not isinstance(components, list):
         raise RuntimeError(f"{path}: legacy snapshot components must be an array")
+    if document["format"] == FORMAT and not isinstance(document.get("skills"), dict):
+        raise RuntimeError(f"{path}: collapsed snapshot skills must be a mapping")
     list(_snapshot_component_rows(document))
+    _snapshot_skill_records(document)
     return document
 
 
-def _snapshot_component_rows(
+def _snapshot_base_component_rows(
     snapshot: dict[str, object],
 ) -> Iterable[dict[str, object]]:
     components = snapshot.get("components")
@@ -664,6 +813,89 @@ def _snapshot_component_rows(
                 row["kind"] = kind
                 row["eager"] = eager
                 yield row
+
+
+def _snapshot_skill_records(
+    snapshot: dict[str, object],
+) -> dict[str, dict[str, object]]:
+    skills = snapshot.get("skills")
+    if isinstance(skills, dict):
+        records: dict[str, dict[str, object]] = {}
+        for skill_key in sorted(skills):
+            raw = skills[skill_key]
+            if (
+                not isinstance(skill_key, str)
+                or "/" not in skill_key
+                or not isinstance(raw, dict)
+                or raw.get("class") not in SKILL_CLASS_KINDS
+                or not isinstance(raw.get("source"), str)
+                or not isinstance(raw.get("delivery"), str)
+                or not isinstance(raw.get("eager"), dict)
+                or not isinstance(raw.get("lazy"), dict)
+            ):
+                raise RuntimeError(f"snapshot skill {skill_key!r} is malformed")
+            records[skill_key] = raw
+        return records
+    skill_rows = [
+        raw
+        for raw in _snapshot_base_component_rows(snapshot)
+        if str(raw.get("id", "")).startswith("skill:")
+    ]
+    return _skill_records_from_rows(skill_rows)
+
+
+def _expanded_skill_rows(
+    records: dict[str, dict[str, object]],
+) -> Iterable[dict[str, object]]:
+    for skill_key in sorted(records):
+        owner, separator, skill_id = skill_key.partition("/")
+        if not separator:
+            raise RuntimeError(f"snapshot skill key is malformed: {skill_key}")
+        record = records[skill_key]
+        skill_class = str(record["class"])
+        frontmatter_kind, body_kind, resource_kind = SKILL_CLASS_KINDS[skill_class]
+        eager = record["eager"]
+        lazy = record["lazy"]
+        assert isinstance(eager, dict) and isinstance(lazy, dict)
+        common = {
+            "owner": owner,
+            "source": record["source"],
+            "delivery": record["delivery"],
+        }
+        yield {
+            "id": f"skill:{owner}:{skill_id}:frontmatter",
+            "kind": frontmatter_kind,
+            "eager": True,
+            "bytes": int(eager.get("bytes", 0)),
+            "tokens": int(eager.get("tokens", 0)),
+            "sha256": eager.get("sha256"),
+            **common,
+        }
+        yield {
+            "id": f"skill:{owner}:{skill_id}:body",
+            "kind": body_kind,
+            "eager": False,
+            "bytes": int(lazy.get("body_bytes", 0)),
+            "tokens": int(lazy.get("body_tokens", 0)),
+            **common,
+        }
+        if int(lazy.get("resources", 0)):
+            yield {
+                "id": f"skill:{owner}:{skill_id}:resources",
+                "kind": resource_kind,
+                "eager": False,
+                "bytes": int(lazy.get("resource_bytes", 0)),
+                "tokens": int(lazy.get("resource_tokens", 0)),
+                **common,
+            }
+
+
+def _snapshot_component_rows(
+    snapshot: dict[str, object],
+) -> Iterable[dict[str, object]]:
+    yield from _snapshot_base_component_rows(snapshot)
+    if isinstance(snapshot.get("skills"), dict):
+        yield from _expanded_skill_rows(_snapshot_skill_records(snapshot))
 
 
 def _component_kind_totals(snapshot: dict[str, object], eager: bool) -> list[tuple[str, int, int]]:
@@ -709,7 +941,24 @@ def _snapshot_components(snapshot: dict[str, object]) -> dict[str, dict[str, obj
     for raw in _snapshot_component_rows(snapshot):
         if not isinstance(raw.get("id"), str):
             raise RuntimeError("snapshot contains a malformed component")
+        if str(raw["id"]).startswith("skill:"):
+            continue
         out[str(raw["id"])] = raw
+    for skill_key, record in _snapshot_skill_records(snapshot).items():
+        eager = record["eager"]
+        lazy = record["lazy"]
+        assert isinstance(eager, dict) and isinstance(lazy, dict)
+        component_id = f"skill:{skill_key}"
+        out[component_id] = {
+            "id": component_id,
+            "kind": "skill",
+            "class": record["class"],
+            "source": record["source"],
+            "delivery": record["delivery"],
+            "eager": dict(eager),
+            "lazy": dict(lazy),
+            "tokens": int(eager.get("tokens", 0)) + int(lazy.get("tokens", 0)),
+        }
     return out
 
 

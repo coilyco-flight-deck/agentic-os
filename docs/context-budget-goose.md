@@ -24,11 +24,12 @@ The snapshot separates:
 * **MCP schemas** - zero eager schemas. The mcporter inventory is recorded as
   deferred registrations without copying configuration or querying a server.
 
-The YAML artifact groups components first by **eager** or **lazy** delivery,
-then by component kind. Each row records its owner, stable source path,
-delivery path, bytes, token proxy, and content hash. Stable ordering and the
-absence of timestamps and absolute source locators make identical inputs
-produce the same payload hash.
+The YAML artifact groups non-skill components by **eager** or **lazy** delivery
+and kind. Each skill appears once under `skills`, with its class, source,
+delivery path, eager frontmatter measurement, and lazy body/resource
+measurement. The lazy block retains the resource count and an aggregate
+payload hash. Stable ordering and the absence of timestamps and absolute
+source locators make identical inputs produce the same payload hash.
 
 The shared AGENTS inventory supplies the cascade and preserves a source that
 arrives through both global and repository delivery paths as two occurrences.
