@@ -1,13 +1,13 @@
-# Agent-compose AOS provider
+# Agent-compose AOS capability provider
 
-AOS publishes reusable skills and personality bodies for agent-compose. The
-provider is local and deterministic. A consumer reads the checkout directly
-and fetches no context over the network.
+AOS publishes reusable ordinary and role-composed skills for agent-compose.
+The provider is local and deterministic. A consumer reads the checkout
+directly and fetches no context over the network.
 
 ## Ownership boundary
 
-* **AOS** - owns ordinary skills, role-scoped skills, role bindings, and the shared personality bodies.
-* **agent-compose** - owns roles, compatibility, seats, names, pronouns, colors, selection, and materialization.
+* **AOS** - owns ordinary skills, role-scoped skills, and role bindings.
+* **agent-compose** - owns roles, compatibility, seats, identity, colors, the personality invariant and definitions, selection, and materialization.
 * **Ward** - owns executable authority, permissions, credentials, and runtime risk controls.
 
 Shared role and skill names join the first two layers without moving authority
@@ -16,9 +16,8 @@ into knowledge content.
 ## Provider contract
 
 Agent-compose infers every ordinary skill from `.agents/skills/`. Every role
-receives those skills, apart from inactive personality bodies. It separately
-reads `.agents/roles.kdl` and selects only the current role's sources from
-`.agents/composed/`.
+receives those skills. It separately reads `.agents/roles.kdl` and selects
+only the current role's sources from `.agents/composed/`.
 
 Composed sources use `COMPOSED.md`, never `SKILL.md`. Agent-compose renames the
 selected entrypoint to `SKILL.md` while building the role's isolated bundle.
@@ -26,17 +25,14 @@ Unselected role sources leave no catalog metadata or trace in that bundle.
 See [role-composed skills](role-composed-skills.md) for the complete contract.
 
 The compose request supplies the stable source id `aos-public`, so adding an
-ordinary skill or role binding needs no parallel hand-authored provider
-inventory.
-
-Each personality directory carries one canonical `SKILL.md` with its presence,
-attention, tempo, voice, and balance definition.
+ordinary skill or role binding needs no parallel provider inventory.
 
 Agent-compose activates the complete ordered personality meld for a selected
 role. A request cannot select an arbitrary trait or change compatibility.
-Agent-compose owns canonical role-to-personality bindings. AOS commits a narrow
-alignment board that verifies each selected body and the actual bundle
-manifest without selecting runtime behavior. See
+Agent-compose embeds the invariant and all 16 canonical definition trees under
+its `person:kai` source. AOS commits a narrow alignment board that verifies the
+ordered meld and skill ids in measured bundles without selecting runtime
+behavior. See
 [role-orientation projections](role-orientation-projections.md).
 
 ## Local consumer use
@@ -51,14 +47,13 @@ compose {
 }
 ```
 
-`compiled` delivery joins the selected canonical `SKILL.md` bodies into one
-document. Native delivery preserves the selected skill directories. Both modes
-always carry the shared invariant as source instructions.
+`compiled` delivery joins selected `SKILL.md` bodies into one document. Native
+delivery preserves selected skill directories. Both modes carry the embedded
+invariant and personality definitions without an AOS personality provider.
 
-Host convergence points `roster_sources` at the AOS checkout. The roster
-artifact supplies seat dispatch and linked personality definitions to the
-global cascade. Container composition uses the same provider to build one
-immutable selected bundle.
+Host convergence needs no `roster_sources` entry for personalities. Optional
+roster sources remain overlay inputs. Container composition admits the AOS
+root for capabilities and uses the embedded person source for personalities.
 
 ## Behavioral boundary
 
@@ -71,5 +66,5 @@ personality theater.
 ## See also
 
 * [Agents and sessions](features-agents-sessions.md) - host context composition.
-* [Role surface tiers](role-surface-tiers.md) - the separate authority boundary.
+* [Role surface tiers](role-surface-tiers.md) - the authority boundary.
 * [docs/FEATURES.md](FEATURES.md) - shipped AOS capability inventory.

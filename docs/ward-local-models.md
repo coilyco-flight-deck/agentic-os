@@ -40,8 +40,9 @@ orientation.
 
 `ward exec sync-role-seats` projects named seat identity into Ward.
 `ward exec sync-role-personalities` projects ordered personality melds and
-validates AOS bodies for context measurement. Both commands fail closed and
-never make AOSH a runtime dependency. See
+their conventional skill ids for context measurement. Agent-compose owns the
+definitions. Both commands fail closed and never make AOSH a runtime
+dependency. See
 [role-orientation projections](role-orientation-projections.md) for the
 complete boundary.
 

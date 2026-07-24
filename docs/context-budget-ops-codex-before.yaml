@@ -22,15 +22,15 @@ mcp:
 totals:
   eager:
     components: 71
-    bytes: 58218
-    tokens: 14580
+    bytes: 58152
+    tokens: 14564
   lazy:
     components: 242
     bytes: 509458
     tokens: 126332
 breakdown:
   eager:
-    agents-cascade: {components: 3, bytes: 41372, tokens: 10343}
+    agents-cascade: {components: 3, bytes: 41306, tokens: 10327}
     ordinary-skill-frontmatter: {components: 63, bytes: 14534, tokens: 3657}
     personality-frontmatter: {components: 3, bytes: 482, tokens: 122}
     role-composed-frontmatter: {components: 1, bytes: 194, tokens: 49}
@@ -48,9 +48,9 @@ components:
       owner: coilyco-flight-deck/agentic-os
       source: coilyco-flight-deck/agentic-os:AGENTS.md
       delivery: global-composed
-      bytes: 20272
-      tokens: 5068
-      sha256: 83ee1f30b4a68c92f82457d7d73d200375aaa91d6524c7324eaf61ed05c96aa5
+      bytes: 20239
+      tokens: 5060
+      sha256: 1ae351a6bdb556daf11c41610ddf16b150424a2edf083d5f45afdf55ca76e9dd
     - id: agents:001:AGENTS.codex.md
       owner: coilyco-flight-deck/agentic-os
       source: coilyco-flight-deck/agentic-os:AGENTS.codex.md
@@ -62,12 +62,12 @@ components:
       owner: coilyco-flight-deck/agentic-os
       source: coilyco-flight-deck/agentic-os:AGENTS.md
       delivery: repo-cascade
-      bytes: 20272
-      tokens: 5068
-      sha256: 83ee1f30b4a68c92f82457d7d73d200375aaa91d6524c7324eaf61ed05c96aa5
+      bytes: 20239
+      tokens: 5060
+      sha256: 1ae351a6bdb556daf11c41610ddf16b150424a2edf083d5f45afdf55ca76e9dd
     role-instructions:
     - id: instructions:role
-      owner: agent-compose+aos-public
+      owner: agent-compose+person:kai+aos-public
       source: bundle:content/instructions.md
       delivery: .codex/AGENTS.md
       bytes: 1636
@@ -114,9 +114,6 @@ skills:
   aos-public/kai-gish: {class: ordinary, eager: 86, lazy: 1905, resources: 1}
   aos-public/kai-git-workflow: {class: ordinary, eager: 26, lazy: 2440, resources: 3}
   aos-public/kai-tech-prefs: {class: ordinary, eager: 51, lazy: 1952, resources: 5}
-  aos-public/personality-grounded: {class: personality, eager: 39, lazy: 350, resources: 0}
-  aos-public/personality-protective: {class: personality, eager: 43, lazy: 366, resources: 0}
-  aos-public/personality-reflective: {class: personality, eager: 40, lazy: 346, resources: 0}
   aos-public/repo-agentic-os: {class: ordinary, eager: 56, lazy: 93, resources: 0}
   aos-public/repo-infrastructure: {class: ordinary, eager: 56, lazy: 93, resources: 0}
   aos-public/tooling-agent-workflows: {class: ordinary, eager: 53, lazy: 1642, resources: 4}
@@ -150,4 +147,7 @@ skills:
   aos-public/writing-system-improvement-vocab: {class: ordinary, eager: 70, lazy: 1105, resources: 1}
   aos-public/writing-to-issues: {class: ordinary, eager: 69, lazy: 852, resources: 1}
   aos-public/writing-voice-guide-linter: {class: ordinary, eager: 53, lazy: 981, resources: 1}
-payload_hash: 7da50d475a9c3eb92a5b43a0fdba58aef42a26943e2583eef0b5a2f24b3d47f0
+  person:kai/personality-grounded: {class: personality, eager: 39, lazy: 350, resources: 0}
+  person:kai/personality-protective: {class: personality, eager: 43, lazy: 366, resources: 0}
+  person:kai/personality-reflective: {class: personality, eager: 40, lazy: 346, resources: 0}
+payload_hash: 896a0be9b431a303b303a69392579f728adbfa120bc2b39533e1bd54ebf24eb8

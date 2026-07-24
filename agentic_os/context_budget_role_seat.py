@@ -33,6 +33,8 @@ from agentic_os.role_personality_sync import (
 
 FORMAT = "agentic-os.role-seat-context.v1"
 SOURCE_ID = "aos-public"
+PERSON_SOURCE_ID = "person:kai"
+PERSON_SOURCE_SEGMENT = urllib.parse.quote(PERSON_SOURCE_ID, safe="")
 SLUG_RE = re.compile(r"^[a-z][a-z0-9-]*$")
 ROSTER_SEAT_RE = re.compile(
     r"(?m)^- If you are (?P<seat>[a-z][a-z0-9-]*) "
@@ -387,6 +389,12 @@ def _validate_manifest_personalities(
 def _canonical_skill(
     provider: Path, source_id: str, skill_id: str
 ) -> tuple[str, str, Path | None]:
+    if urllib.parse.unquote(source_id) == PERSON_SOURCE_ID:
+        if not skill_id.startswith("personality-"):
+            raise RuntimeError(
+                f"bundle person source contains non-personality skill {skill_id}"
+            )
+        return "personality", PERSON_SOURCE_ID, None
     if source_id != SOURCE_ID:
         return "external-skill", source_id, None
     ordinary = provider / ".agents" / "skills" / skill_id
@@ -614,7 +622,10 @@ def _skill_records_from_rows(
 ) -> dict[str, dict[str, object]]:
     buckets: dict[str, list[dict[str, object]]] = defaultdict(list)
     for raw in rows:
-        owner, skill_id, _stage = _skill_component_identity(raw.get("id"))
+        _source, skill_id, _stage = _skill_component_identity(raw.get("id"))
+        owner = raw.get("owner")
+        if not isinstance(owner, str) or not owner:
+            raise RuntimeError("skill component has no owner")
         buckets[f"{owner}/{skill_id}"].append(raw)
 
     records: dict[str, dict[str, object]] = {}
@@ -713,7 +724,7 @@ def build_snapshot(
         _component(
             "instructions:role",
             "role-instructions",
-            "agent-compose+aos-public",
+            "agent-compose+person:kai+aos-public",
             "bundle:content/instructions.md",
             projection.instructions_delivery,
             True,

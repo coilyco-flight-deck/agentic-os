@@ -148,7 +148,7 @@ repos:
         pass_filenames: false
         stages: [pre-commit]
       - id: role-personality-board
-        name: AOS role personalities and bodies match AOSH
+        name: AOS role personalities match AOSH
         entry: python -m agentic_os.role_personality_sync --check --if-present
         language: python
         additional_dependencies: [pyyaml]

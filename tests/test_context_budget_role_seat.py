@@ -51,16 +51,6 @@ def provider_fixture(root: Path) -> Path:
         "---\n"
         "# Remediate\n",
     )
-    for personality in FIXTURE_PERSONALITIES:
-        skill_id = role_personality_sync.personality_skill_id(personality)
-        write(
-            provider / ".agents" / "skills" / skill_id / "SKILL.md",
-            "---\n"
-            f"name: {skill_id}\n"
-            f"description: Bring {personality} attention.\n"
-            "---\n"
-            f"# {personality}\n",
-        )
     write(
         provider / role_personality_sync.PROJECTION_PATH,
         json.dumps(
@@ -131,7 +121,7 @@ def bundle_fixture(root: Path) -> Path:
             bundle
             / "content"
             / "skills"
-            / "aos-public"
+            / context.PERSON_SOURCE_SEGMENT
             / skill_id
             / "SKILL.md",
             "---\n"
@@ -345,7 +335,7 @@ def test_build_snapshot_separates_eager_and_lazy_components(tmp_path: Path) -> N
     skills = first["skills"]
     assert isinstance(skills, dict)
     expected_personality_skills = [
-        "aos-public/"
+        "person:kai/"
         + role_personality_sync.personality_skill_id(personality)
         for personality in FIXTURE_PERSONALITIES
     ]
@@ -445,7 +435,11 @@ def test_snapshot_rejects_missing_personality_skill_body(
         FIXTURE_PERSONALITIES[0]
     )
     shutil.rmtree(
-        bundle / "content" / "skills" / "aos-public" / missing
+        bundle
+        / "content"
+        / "skills"
+        / context.PERSON_SOURCE_SEGMENT
+        / missing
     )
 
     with pytest.raises(RuntimeError, match="personality skills differ"):

@@ -30,15 +30,11 @@ missing, or unconfigured seats fail closed.
 `ward exec sync-role-personalities` writes
 [`role-personalities.json`](../aos/role-personalities.json). The generated board
 preserves every role's ordered personality meld and maps each personality slug
-to its conventional AOS `personality-*` skill.
-
-The sync requires every selected personality to provide:
-
-* a full `SKILL.md` with matching name and description
-* the one shared personality invariant
+to its conventional agent-compose `personality-*` skill id.
 
 The board does not select runtime personality. Agent-compose continues to do
-that from its person configuration.
+that from its embedded person source, which also owns the invariant and full
+definitions.
 
 ## Context verification
 
@@ -63,6 +59,6 @@ change without moving ownership into AOS.
 
 ## See also
 
-* [Agent-compose AOS provider](personality-provider.md) - personality bodies and behavioral boundary.
+* [Agent-compose AOS provider](personality-provider.md) - capability and behavioral boundary.
 * [Role-seat context snapshots](context-budget-role-seat.md) - measured output contract.
 * [AOSH projections](ward-local-models.md) - all authoring-time projection surfaces.

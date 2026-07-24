@@ -15,9 +15,10 @@ The measurement compares the bundle's ordered personality meld and selected
 personality skill ids with the committed
 [AOS role-personality projection](../aos/role-personalities.json), then reads
 the generated files. The snapshot records that validated meld under
-`bundle.personalities`. The seat's agent executable does not need to be
-installed. The command never invokes an agent, inference, a backend model,
-hardware, an endpoint, or another live service.
+`bundle.personalities`. Personality skills are attributed to `person:kai`.
+The seat's agent executable does not need to be installed. The command never
+invokes an agent, inference, a backend model, hardware, an endpoint, or another
+live service.
 
 The AOS checkout is the default provider, repository, and CWD. `--provider`,
 `--repo`, and `--cwd` make those inputs explicit for fixtures or reproduction.

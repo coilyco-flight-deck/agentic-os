@@ -1,4 +1,4 @@
-"""Project AOSH role personalities into an AOS provider-alignment artifact."""
+"""Project AOSH role personalities into an AOS measurement-alignment artifact."""
 
 from __future__ import annotations
 
@@ -7,7 +7,6 @@ import json
 import sys
 from pathlib import Path
 
-from agentic_os.generators.generate_agent_compose import _split_frontmatter
 from agentic_os.role_seat_sync import (
     DEFAULT_AOSH_ROOT,
     DEFAULT_ROLES,
@@ -22,13 +21,11 @@ from agentic_os.role_seat_sync import (
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PROJECTION_PATH = Path("aos") / "role-personalities.json"
 DEFAULT_OUTPUT = REPO_ROOT / PROJECTION_PATH
-DEFAULT_SKILLS_ROOT = REPO_ROOT / ".agents" / "skills"
 FORMAT = "agentic-os.role-personality-board.v1"
-INVARIANT_PATH = Path("personality-shared") / "INVARIANT.md"
 
 
 class RolePersonalitySyncError(RuntimeError):
-    """An AOSH personality projection or AOS provider invariant is invalid."""
+    """An AOSH personality projection or AOS measurement board is invalid."""
 
 
 def personality_skill_id(personality: str) -> str:
@@ -44,44 +41,6 @@ def _ordered_personalities(orientation: RoleOrientation) -> tuple[str, ...]:
                 ordered.append(personality)
                 seen.add(personality)
     return tuple(ordered)
-
-
-def validate_catalog(
-    orientation: RoleOrientation,
-    skills_root: Path,
-) -> None:
-    invariant = skills_root / INVARIANT_PATH
-    try:
-        invariant_text = invariant.read_text(encoding="utf-8")
-    except OSError as exc:
-        raise RolePersonalitySyncError(f"read {invariant}: {exc}") from exc
-    if not invariant_text.strip():
-        raise RolePersonalitySyncError(f"{invariant}: invariant must be non-empty")
-
-    for personality in _ordered_personalities(orientation):
-        skill_id = personality_skill_id(personality)
-        skill_root = skills_root / skill_id
-        entrypoint = skill_root / "SKILL.md"
-        try:
-            entrypoint_text = entrypoint.read_text(encoding="utf-8")
-        except OSError as exc:
-            raise RolePersonalitySyncError(
-                f"AOSH personality {personality} lacks AOS body {skill_root}: {exc}"
-            ) from exc
-        metadata, body = _split_frontmatter(entrypoint_text)
-        if metadata.get("name") != skill_id:
-            raise RolePersonalitySyncError(
-                f"{entrypoint}: name must be {skill_id}"
-            )
-        description = metadata.get("description")
-        if not isinstance(description, str) or not description.strip():
-            raise RolePersonalitySyncError(
-                f"{entrypoint}: description must be non-empty text"
-            )
-        if not body.strip():
-            raise RolePersonalitySyncError(
-                f"{skill_root}: SKILL.md body must be non-empty"
-            )
 
 
 def render_projection(orientation: RoleOrientation) -> str:
@@ -185,14 +144,12 @@ def run(
     output: Path,
     *,
     roles_path: Path = DEFAULT_ROLES,
-    skills_root: Path = DEFAULT_SKILLS_ROOT,
     check: bool,
 ) -> int:
     try:
         orientation = load_orientation(aosh_root, roles_path=roles_path)
     except RoleSeatSyncError as exc:
         raise RolePersonalitySyncError(str(exc)) from exc
-    validate_catalog(orientation, skills_root)
     expected = render_projection(orientation)
     try:
         current = output.read_text(encoding="utf-8")
@@ -202,7 +159,7 @@ def run(
         raise RolePersonalitySyncError(f"read {output}: {exc}") from exc
     if current == expected:
         print(
-            "ok: AOS role personalities match AOSH and the personality catalog "
+            "ok: AOS role personalities match AOSH "
             f"({len(orientation.roles)} roles, "
             f"{len(_ordered_personalities(orientation))} personalities)"
         )
@@ -240,7 +197,6 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--aosh-root", type=Path, default=DEFAULT_AOSH_ROOT)
     parser.add_argument("--roles", type=Path, default=DEFAULT_ROLES)
-    parser.add_argument("--skills-root", type=Path, default=DEFAULT_SKILLS_ROOT)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     args = parser.parse_args(argv)
 
@@ -252,7 +208,6 @@ def main(argv: list[str] | None = None) -> int:
             args.aosh_root,
             args.output,
             roles_path=args.roles,
-            skills_root=args.skills_root,
             check=args.check,
         )
     except RolePersonalitySyncError as exc:
