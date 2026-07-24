@@ -9,8 +9,8 @@ doc_goal: Define the standalone AOS container launcher, its workspace and substr
 aos --role engineer acompose -- codex
 ```
 
-The command after `--` is preserved exactly. Its executable selects the agent-compose
-layout unless `--layout` names one explicitly. `--role` and `--delivery` become a normal request.
+The command after `--` is preserved exactly. Its executable selects the agent-compose layout unless `--layout` names one explicitly.
+The [check-in adapter](aos-acompose-checkin.md) owns a bounded invocation while `--role` and `--delivery` become a normal request.
 
 The container accepts and ignores legacy `--density full` from an old launcher. Brief density is removed.
 

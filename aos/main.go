@@ -18,7 +18,15 @@ const (
 )
 
 func main() {
-	cmd := &cli.Command{
+	cmd := newCommand()
+	if err := cmd.Run(context.Background(), os.Args); err != nil {
+		fmt.Fprintf(os.Stderr, "aos: %v\n", err)
+		os.Exit(1)
+	}
+}
+
+func newCommand() *cli.Command {
+	return &cli.Command{
 		Name:    "aos",
 		Usage:   "launch AOS runtime containers",
 		Version: version,
@@ -26,6 +34,10 @@ func main() {
 			&cli.StringFlag{
 				Name:  "role",
 				Usage: "agent-compose role selected for the container",
+			},
+			&cli.StringFlag{
+				Name:  "agent",
+				Usage: "agent adapter used by ergonomic launch commands",
 			},
 			&cli.StringFlag{
 				Name:  "image",
@@ -87,6 +99,11 @@ func main() {
 				Action:    runAcompose,
 			},
 			{
+				Name:   "acompose-checkin",
+				Usage:  "run an agent-specific composed-role check-in",
+				Action: runAcomposeCheckin,
+			},
+			{
 				Name:      "_container-acompose",
 				Hidden:    true,
 				ArgsUsage: "-- <harness> [args...]",
@@ -108,10 +125,6 @@ func main() {
 			},
 		},
 	}
-	if err := cmd.Run(context.Background(), os.Args); err != nil {
-		fmt.Fprintf(os.Stderr, "aos: %v\n", err)
-		os.Exit(1)
-	}
 }
 
 func runAcompose(ctx context.Context, cmd *cli.Command) error {
@@ -126,13 +139,42 @@ func runAcompose(ctx context.Context, cmd *cli.Command) error {
 	if len(command) == 0 {
 		return fmt.Errorf("acompose needs a command after `--`")
 	}
-	cwd, err := filepath.Abs(".")
-	if err != nil {
-		return fmt.Errorf("resolve current working directory: %w", err)
-	}
 	layout, err := resolveLayout(cmd.String("layout"), command[0])
 	if err != nil {
 		return err
+	}
+	return runComposedLaunch(ctx, cmd, role, layout, command, cmd.Bool("no-substrate"))
+}
+
+func runAcomposeCheckin(ctx context.Context, cmd *cli.Command) error {
+	if err := validateLegacyDensity(cmd.String("density")); err != nil {
+		return err
+	}
+	role := strings.TrimSpace(cmd.String("role"))
+	if role == "" {
+		return fmt.Errorf("acompose-checkin needs --role")
+	}
+	spec, err := resolveAcomposeCheckin(cmd.String("agent"))
+	if err != nil {
+		return err
+	}
+	if layout := strings.TrimSpace(cmd.String("layout")); layout != "" && layout != spec.Layout {
+		return fmt.Errorf("--agent %s conflicts with --layout %s", spec.Agent, layout)
+	}
+	return runComposedLaunch(ctx, cmd, role, spec.Layout, spec.Command, true)
+}
+
+func runComposedLaunch(
+	ctx context.Context,
+	cmd *cli.Command,
+	role string,
+	layout string,
+	command []string,
+	noSubstrate bool,
+) error {
+	cwd, err := filepath.Abs(".")
+	if err != nil {
+		return fmt.Errorf("resolve current working directory: %w", err)
 	}
 	uid, gid := hostIdentity()
 	authMounts := []authMount{}
@@ -149,7 +191,7 @@ func runAcompose(ctx context.Context, cmd *cli.Command) error {
 		UID:           uid,
 		GID:           gid,
 		TTY:           isTerminal(os.Stdin),
-		NoSubstrate:   cmd.Bool("no-substrate"),
+		NoSubstrate:   noSubstrate,
 		AuthMounts:    authMounts,
 		ForwardedEnvs: forwardedEnvironment(),
 	})

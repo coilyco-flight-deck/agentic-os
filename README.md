@@ -52,6 +52,12 @@ agent role, and then runs the selected harness:
 aos --role engineer acompose -- codex
 ```
 
+For a bounded role check-in, AOS owns the agent's non-interactive defaults:
+
+```bash
+aos --role engineer --agent codex acompose-checkin
+```
+
 The released binary also resolves the committed model-opaque default for a
 role-intent lane:
 
