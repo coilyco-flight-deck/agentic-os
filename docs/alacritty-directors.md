@@ -4,6 +4,18 @@
 Alacritty window. Agent-compose supplies canonical identity, agentic-os renders
 the terminal brand, and Ward remains the terminal-agnostic child command.
 
+## Base configuration
+
+[`alacritty/alacritty.toml`](../alacritty/alacritty.toml) carries the portable
+Sombra palette, opaque window treatment, padding, font size, live reload, and
+copy-only OSC 52 policy. It deliberately leaves shell selection, startup
+directory, and scrollback at the owning host or Alacritty defaults. It also
+defines no tabs, panes, or terminal multiplexer.
+
+The host-local root config may import or copy this baseline, then add only its
+local shell and startup directory. Infrastructure owns converging that layout
+across native director hosts.
+
 ## Launch
 
 The repository-scoped entry point is:

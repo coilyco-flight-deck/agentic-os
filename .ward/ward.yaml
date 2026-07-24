@@ -1,6 +1,9 @@
 # Per-repo command allowlist. Add verbs here as they emerge.
 
 commands:
+  alacritty-config-check:
+    run: alacritty migrate --dry-run --config-file alacritty/alacritty.toml
+    description: "Validate the shared Alacritty configuration against the installed Alacritty schema."
   agent-terminal:
     run: go run -C agent-terminal .
     description: "Launch one agent-compose branded Alacritty director window. Pass role, seat, task title, and a child command after `--`; use `--dry-run` to inspect without opening a window."

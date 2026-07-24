@@ -11,6 +11,7 @@ transitional Warp configuration remains available on Mac and Windows.
 ## Layout
 
 - `shell/` - shared `common.sh` plus thin `zshrc` + `bashrc`, so bash and zsh match. `warp.zsh` is the zsh-only Warp dispatcher.
+- `alacritty/` - portable Sombra appearance and terminal security defaults, with host preferences left to the local wrapper.
 - `agent-terminal/` - static agent-compose identity branding for one Alacritty director window.
 - `warp/` - transitional Warp config (`settings.toml`, `tab_configs/`) plus the `ward exec warp` Go module.
 - `aos/` - the standalone Go container launcher for composed agents and the shared runtime substrate.
