@@ -19,6 +19,7 @@ roles {
     role qa {
         composed-skill tooling-qa-adversarial-verification
         composed-skill tooling-qa-state-machine-verification
+        composed-skill tooling-qa-visual-verification
         // BEGIN generated role-intent harness routes
         intent code-review {
             harness aider
@@ -35,6 +36,9 @@ roles {
         // END generated role-intent harness routes
     }
     role ops {
+        composed-skill tooling-ops-change-risk-modeling
+        composed-skill tooling-ops-dynamic-systems-diagnosis
+        composed-skill tooling-ops-incident-command
         composed-skill tooling-ops-live-remediation
         // BEGIN generated role-intent harness routes
         intent ops-investigation {
@@ -47,6 +51,7 @@ roles {
     }
     role pm {
         composed-skill tooling-pm-program-decomposition
+        composed-skill tooling-pm-product-signal-triangulation
         // BEGIN generated role-intent harness routes
         intent strategic-planning {
             harness hermes
@@ -70,6 +75,8 @@ roles {
     }
     role social {
         composed-skill writing-social-editorial-loop
+        composed-skill writing-social-cultural-reading
+        composed-skill writing-social-trust-boundaries
         // BEGIN generated role-intent harness routes
         intent message-composition {
             harness mixpost
@@ -81,6 +88,7 @@ roles {
     }
     role sales {
         composed-skill tooling-sales-discovery
+        composed-skill tooling-sales-negotiation-architecture
         // BEGIN generated role-intent harness routes
         intent research-synthesis {
             harness hermes
@@ -92,6 +100,7 @@ roles {
     }
     role customer-success {
         composed-skill tooling-customer-success-signal-routing
+        composed-skill tooling-customer-success-trust-repair
         // BEGIN generated role-intent harness routes
         intent knowledge-retrieval {
             harness rasa
