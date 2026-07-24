@@ -4,14 +4,13 @@ description: |
   already-pushed draft tier into the release tags. Extracted from the old
   monolithic publish-dev-base job (aos#491) so workflows can run one job per
   tier with `needs:` expressing the real tier DAG: a flake in one tier costs
-  that tier and its dependents, never the whole family. The base and graft
-  tiers this tier consumes must already be pushed under the same tag by the
-  upstream jobs. scripts/dev-base-build.py resolves their refs from the folder
-  layout.
+  that tier and its dependents, never the whole family. Language tiers build
+  independently from Ubuntu. The graft tiers consumed by full must already be
+  pushed under the same tag by upstream jobs.
 
 inputs:
   tier:
-    description: "Tier folder name under docker/dev-base (core, lang-node, ...)."
+    description: "Published image tier (lang-node, lang-go, ..., full)."
     required: true
   tag:
     description: "Release tag to stamp onto the tier image."

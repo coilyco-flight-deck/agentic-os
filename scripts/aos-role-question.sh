@@ -80,7 +80,7 @@ mode="${1:-}"
 role="${2:-}"
 model="${3:-qwen3.6:35b}"
 aos_bin="${AOS_BIN:-./aos/aos}"
-aos_image="${AOS_IMAGE:-agentic-os:core-aos-local}"
+aos_image="${AOS_IMAGE:-agentic-os:lang-node-aos-local}"
 
 [ "$#" -ge 2 ] || usage
 question="$(question_for "$role")"

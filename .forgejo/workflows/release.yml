@@ -49,7 +49,6 @@ on:
         type: choice
         options:
           - all
-          - core
           - lang-node
           - lang-go
           - lang-dotnet
@@ -119,35 +118,8 @@ jobs:
         with:
           bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
-  retag-core:
-    needs: [plan-release]
-    if: ${{ needs.plan-release.outputs.tag != '' && (github.event_name != 'workflow_dispatch' || contains('all,core,lang-node,lang-go,lang-dotnet,lang-rust,lang-python,full', github.event.inputs.tier)) }}
-    runs-on: docker
-    timeout-minutes: 120
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: ./actions/publish-dev-base-tier
-        with:
-          mode: promote
-          tier: core
-          tag: ${{ needs.plan-release.outputs.tag }}
-          source-tag: ${{ needs.plan-release.outputs.draft_tag }}
-          alias: ${{ github.ref_name }}
-          extra-aliases: latest
-          registry-token: ${{ secrets.REGISTRY_TOKEN }}
-          build-timeout: 110m
-
-      - name: Alert Telegram on main failure
-        if: ${{ failure() && github.ref == 'refs/heads/release' }}
-        continue-on-error: true
-        uses: ./actions/telegram-alert
-        with:
-          bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
-
   retag-lang-node:
-    needs: [plan-release, retag-core]
+    needs: [plan-release]
     if: ${{ needs.plan-release.outputs.tag != '' && (github.event_name != 'workflow_dispatch' || contains('all,lang-node', github.event.inputs.tier)) }}
     runs-on: docker
     timeout-minutes: 90
@@ -174,7 +146,7 @@ jobs:
           chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
 
   retag-lang-go:
-    needs: [plan-release, retag-core]
+    needs: [plan-release]
     if: ${{ needs.plan-release.outputs.tag != '' && (github.event_name != 'workflow_dispatch' || contains('all,lang-go,full', github.event.inputs.tier)) }}
     runs-on: docker
     timeout-minutes: 90
@@ -201,7 +173,7 @@ jobs:
           chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
 
   retag-lang-dotnet:
-    needs: [plan-release, retag-core]
+    needs: [plan-release]
     if: ${{ needs.plan-release.outputs.tag != '' && (github.event_name != 'workflow_dispatch' || contains('all,lang-dotnet,full', github.event.inputs.tier)) }}
     runs-on: docker
     timeout-minutes: 90
@@ -228,7 +200,7 @@ jobs:
           chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
 
   retag-lang-rust:
-    needs: [plan-release, retag-core]
+    needs: [plan-release]
     if: ${{ needs.plan-release.outputs.tag != '' && (github.event_name != 'workflow_dispatch' || contains('all,lang-rust,full', github.event.inputs.tier)) }}
     runs-on: docker
     timeout-minutes: 90
@@ -255,7 +227,7 @@ jobs:
           chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
 
   retag-lang-python:
-    needs: [plan-release, retag-core]
+    needs: [plan-release]
     if: ${{ needs.plan-release.outputs.tag != '' && (github.event_name != 'workflow_dispatch' || contains('all,lang-python,full', github.event.inputs.tier)) }}
     runs-on: docker
     timeout-minutes: 90
@@ -311,7 +283,6 @@ jobs:
   release:
     needs:
       - plan-release
-      - retag-core
       - retag-lang-node
       - retag-lang-go
       - retag-lang-dotnet

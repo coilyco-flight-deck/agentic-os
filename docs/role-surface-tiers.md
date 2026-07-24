@@ -26,7 +26,7 @@ as drift against this map instead of silently disabling a role.
 
 * **guardfile bindings** - [.ward/roles.kdl](../.ward/roles.kdl), authored here - which guarded verb families a shipped role mounts. The Forgejo read/write tiers and the ops guardfiles under [aws](../.ward/guardfile.aws.kdl) and [tailscale](../.ward/guardfile.tailscale.kdl) are the clearest examples. Per ward#578 the tailnet and `~/.aws` reach of a role container keys off these bindings.
 * **role presets** - ward's tree - tagline, capabilities, modes, posture. Stripped from the aos overlay on 2026-07-10 (commit 566f42f) by design, never re-authored here.
-* **image binaries** - [docker/dev-base/](dev-base-image-tiering.md), authored here - whether `aws`, `kubectl`, `helm`, `tailscale`, `tailscaled`, and the Docker client exist on disk. They land in `core` and flow into every parallel `lang-*` image plus `full`. The `ops` role remains a permission and bring-up boundary, not an image tag.
+* **image binaries** - [docker/dev-base/](dev-base-image-tiering.md), authored here - whether `aws`, `kubectl`, `helm`, `tailscale`, `tailscaled`, and the Docker client exist on disk. The common installer bakes them independently into every Ubuntu-based `lang-*` image, and `full` inherits them through `lang-rust`. The `ops` role remains a permission and bring-up boundary, not an image tag.
 * **container bring-up** - ward's tree - whether creds and daemons are live: the `~/.aws` dir, a kubeconfig, `tailscaled` process/auth/socket wiring, `FORGEJO_TOKEN`, and the `WARD_CONTEXT_LEVEL` context slice. A binary existing says nothing about this layer.
 
 The 2026-07-10 incident: guardfiles still compiled in, but the binaries,
@@ -48,6 +48,6 @@ specgen also-grant convenience is agentic-os#446.
 ## See also
 
 * [ward-specs.md](ward-specs.md) - the bundle these guardfiles ship in.
-* [dev-base-image-tiering.md](dev-base-image-tiering.md) - the image tier split.
+* [dev-base-image-tiering.md](dev-base-image-tiering.md) - the image topology.
 * [ward-ops-forgejo-reference.md](ward-ops-forgejo-reference.md) - the committed forgejo surface render.
 * [ward-ops-aws-reference.md](ward-ops-aws-reference.md) - the committed AWS surface render.

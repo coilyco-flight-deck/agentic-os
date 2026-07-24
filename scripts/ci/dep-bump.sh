@@ -16,7 +16,7 @@ git config user.email "coilyco-ops@coilysiren.me"
 while IFS="$(printf '\t')" read -r name current latest; do
   [ -z "$name" ] && continue
   python3 scripts/dep-bump.py apply --arg "$name" --version "$latest"
-  git add docker/dev-base/*/Dockerfile
+  git add docker/dev-base
   git commit -m "chore(dev-base): auto-bump ${name} ${current} -> ${latest} (agentic-os#272)"
 done < /tmp/dep-bump-plan.tsv
 

@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-image="${IMAGE_BASE}:${TAG}"
+image="${IMAGE_BASE}:lang-rust-${TAG}"
 for platform in linux/amd64 linux/arm64; do
   echo "verifying ${image} on ${platform}"
   docker run --rm --platform "$platform" --entrypoint bash "$image" \

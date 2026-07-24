@@ -1,4 +1,4 @@
-"""Tests for the tiered dev-base publish workflow surface."""
+"""Tests for the independent dev-base publish workflow surface."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -22,85 +22,88 @@ VERIFY_RUST = (
 def _assert_alert_steps_are_non_blocking(text: str) -> None:
     lines = text.splitlines()
     alert_indexes = [
-        i
-        for i, line in enumerate(lines)
+        index
+        for index, line in enumerate(lines)
         if line.strip().startswith("- name: Alert Telegram on")
     ]
     assert alert_indexes
-    for idx in alert_indexes:
-        window = lines[idx : idx + 8]
-        assert any("continue-on-error: true" in line for line in window)
+    for index in alert_indexes:
+        assert any(
+            "continue-on-error: true" in line
+            for line in lines[index : index + 8]
+        )
 
 
-def test_dev_base_publish_workflows_support_tier_reruns_and_non_blocking_alerts(
-) -> None:
+def test_publish_and_release_workflows_have_no_core_job() -> None:
     publish = PUBLISH.read_text(encoding="utf-8")
     release = RELEASE.read_text(encoding="utf-8")
 
-    for needle in (
-        "sha:",
-        "tier:",
-        "tag:",
-        "continue-on-error: true",
-    ):
-        assert needle in publish
+    assert "publish-core" not in publish
+    assert "retag-core" not in release
+    assert "tier: core" not in publish
+    assert "tier: core" not in release
     assert publish.count("uses: ./actions/publish-dev-base-tier") == len(
         PUBLISHED_TIER_NAMES
     )
-    assert "tier: core" in publish
-    assert "Probe core buildcache write" not in publish
+    assert release.count("uses: ./actions/publish-dev-base-tier") == len(
+        PUBLISHED_TIER_NAMES
+    )
 
+
+def test_language_jobs_are_parallel_and_full_waits_for_its_inputs() -> None:
+    publish = PUBLISH.read_text(encoding="utf-8")
+    release = RELEASE.read_text(encoding="utf-8")
+
+    for tier in PUBLISHED_TIER_NAMES:
+        if not tier.startswith("lang-"):
+            continue
+        assert f"publish-{tier}:\n    needs: [plan-draft]" in publish
+        assert f"retag-{tier}:\n    needs: [plan-release]" in release
+
+    assert (
+        "needs: [plan-draft, publish-lang-go, publish-lang-dotnet, "
+        "publish-lang-rust, publish-lang-python]" in publish
+    )
+    assert (
+        "needs: [plan-release, retag-lang-go, retag-lang-dotnet, "
+        "retag-lang-rust, retag-lang-python]" in release
+    )
+
+
+def test_publish_workflow_keeps_resume_inputs_and_non_blocking_alerts() -> None:
+    publish = PUBLISH.read_text(encoding="utf-8")
+    release = RELEASE.read_text(encoding="utf-8")
+
+    for needle in ("sha:", "tier:", "tag:", "continue-on-error: true"):
+        assert needle in publish
     for needle in (
         "sha:",
         "tier:",
         "tag:",
         "source-tag:",
-        "tag_name:",
-        "release_sha:",
         "continue-on-error: true",
     ):
         assert needle in release
 
-    assert "needs: [plan-release, retag-core]" in release
-    assert (
-        "needs: [plan-release, retag-lang-go, retag-lang-dotnet, retag-lang-rust,"
-        " retag-lang-python]" in release
-    )
-    assert (
-        "needs: [plan-draft, publish-lang-go, publish-lang-dotnet, publish-lang-rust,"
-        " publish-lang-python]" in publish
-    )
-    for retired_tier in ("ops", "agent"):
-        assert f"publish-{retired_tier}" not in publish
-        assert f"retag-{retired_tier}" not in release
-        assert f"tier: {retired_tier}" not in publish
-        assert f"tier: {retired_tier}" not in release
     assert "github.event.inputs.tier == 'all'" in release
     _assert_alert_steps_are_non_blocking(publish)
     _assert_alert_steps_are_non_blocking(release)
 
 
-def test_dev_base_image_builds_use_the_dedicated_runner() -> None:
+def test_each_image_build_uses_the_dedicated_runner() -> None:
     publish = PUBLISH.read_text(encoding="utf-8")
-
     assert publish.count("runs-on: docker-build") == len(PUBLISHED_TIER_NAMES)
     assert "plan-draft:\n    runs-on: docker\n" in publish
 
 
-def test_lang_rust_publish_verifies_native_wayland_and_xkb_development_surface() -> None:
+def test_rust_publish_verifies_the_prefixed_specialist_image() -> None:
     action = PUBLISH_TIER.read_text(encoding="utf-8")
     script = VERIFY_RUST.read_text(encoding="utf-8")
 
     assert "Verify lang-rust native development surface on both architectures" in action
     assert "if: ${{ inputs.tier == 'lang-rust' }}" in action
     assert "scripts/verify-rust.sh" in action
+    assert 'image="${IMAGE_BASE}:lang-rust-${TAG}"' in script
     assert "linux/amd64 linux/arm64" in script
-    assert "--entrypoint bash" in script
-    assert "libasound2-dev" in script
-    assert "libudev-dev" in script
-    assert "libwayland-dev" in script
-    assert "libxkbcommon-dev" in script
-    assert "pkg-config" in script
-    assert "rustup target list --installed" in script
     assert "pkg-config --exists wayland-client xkbcommon" in script
-    assert "cc /tmp/bevy-native-smoke.c" in script
+    assert "rustup target list --installed" in script

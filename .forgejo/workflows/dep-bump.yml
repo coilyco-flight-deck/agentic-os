@@ -1,5 +1,5 @@
 # Scheduled dev-base dependency auto-bump. Resolves each pinned tool in
-# docker/dev-base/<tier>/Dockerfile against its upstream latest release and, for every
+# the dev-base Dockerfiles against upstream latest releases and, for every
 # pin that drifted, commits one ARG bump and pushes to main. The push then rides
 # the two-stage flow: promote.yml gates, republishes the image family, and
 # fast-forwards `release`, while release.yml remains the manual retry hook for

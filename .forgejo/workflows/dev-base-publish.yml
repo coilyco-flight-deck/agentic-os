@@ -21,7 +21,6 @@ on:
         type: choice
         options:
           - all
-          - core
           - lang-node
           - lang-go
           - lang-dotnet
@@ -67,33 +66,8 @@ jobs:
           bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
 
-  publish-core:
-    needs: [plan-draft]
-    if: ${{ github.event_name != 'workflow_dispatch' || contains('all,core,lang-node,lang-go,lang-dotnet,lang-rust,lang-python,full', github.event.inputs.tier) }}
-    runs-on: docker-build
-    timeout-minutes: 120
-    steps:
-      - name: Acquire core publish source
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - uses: ./actions/publish-dev-base-tier
-        with:
-          tier: core
-          tag: ${{ needs.plan-draft.outputs.draft_tag }}
-          registry-token: ${{ secrets.REGISTRY_TOKEN }}
-
-      - name: Alert Telegram on release failure
-        if: ${{ failure() && github.ref == 'refs/heads/release' }}
-        continue-on-error: true
-        uses: ./actions/telegram-alert
-        with:
-          bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
-
   publish-lang-node:
-    needs: [plan-draft, publish-core]
+    needs: [plan-draft]
     if: ${{ github.event_name != 'workflow_dispatch' || contains('all,lang-node', github.event.inputs.tier) }}
     runs-on: docker-build
     timeout-minutes: 120
@@ -113,7 +87,7 @@ jobs:
           chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
 
   publish-lang-go:
-    needs: [plan-draft, publish-core]
+    needs: [plan-draft]
     if: ${{ github.event_name != 'workflow_dispatch' || contains('all,lang-go,full', github.event.inputs.tier) }}
     runs-on: docker-build
     timeout-minutes: 120
@@ -133,7 +107,7 @@ jobs:
           chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
 
   publish-lang-dotnet:
-    needs: [plan-draft, publish-core]
+    needs: [plan-draft]
     if: ${{ github.event_name != 'workflow_dispatch' || contains('all,lang-dotnet,full', github.event.inputs.tier) }}
     runs-on: docker-build
     timeout-minutes: 120
@@ -153,7 +127,7 @@ jobs:
           chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
 
   publish-lang-rust:
-    needs: [plan-draft, publish-core]
+    needs: [plan-draft]
     if: ${{ github.event_name != 'workflow_dispatch' || contains('all,lang-rust,full', github.event.inputs.tier) }}
     runs-on: docker-build
     timeout-minutes: 120
@@ -173,7 +147,7 @@ jobs:
           chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
 
   publish-lang-python:
-    needs: [plan-draft, publish-core]
+    needs: [plan-draft]
     if: ${{ github.event_name != 'workflow_dispatch' || contains('all,lang-python,full', github.event.inputs.tier) }}
     runs-on: docker-build
     timeout-minutes: 120

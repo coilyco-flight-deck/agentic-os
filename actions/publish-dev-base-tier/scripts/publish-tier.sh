@@ -57,9 +57,9 @@ if run_logged "${publish_cmd[@]}"; then
 else
   rc=$?
 fi
-if [ "$TIER" = "core" ] && [ -n "$summary_file" ]; then
+if [ -n "$summary_file" ]; then
   {
-    echo "### core publish failure"
+    echo "### ${TIER} publish failure"
     echo ""
     echo "- mode: ${MODE}"
     echo "- tier: ${TIER}"

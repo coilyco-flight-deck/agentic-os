@@ -7,7 +7,7 @@
 #
 # The ward-doctor job is the standalone guardfile-load gate: guardfiles are
 # config, so their validity check is ward loading them, never repo tests
-# re-encoding their content. It is the same doctor the core image build runs
+# re-encoding their content. It is the same doctor every language image runs
 # (the aos#452 fail-closed path), moved up to commit time so a broken bundle
 # cannot reach main.
 
