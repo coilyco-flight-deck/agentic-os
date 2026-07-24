@@ -1,9 +1,10 @@
-"""Capture and compare the fixed structural Goose context baseline."""
+"""Capture and compare structural context for one role and seat."""
 
 from __future__ import annotations
 
 import hashlib
 import json
+import re
 import shutil
 import subprocess
 import tempfile
@@ -20,22 +21,17 @@ from agentic_os.agents_context_inventory import (
     Scenario,
     active_cascade,
     discover_repositories,
-    load_scenarios,
 )
 from agentic_os.context_budget_tokens import TOKENIZER_NOTE, count_tokens
 from agentic_os.generators.generate_agent_compose import _split_frontmatter
 
-FORMAT = "agentic-os.goose-context.v4"
-COLLAPSED_FORMAT = "agentic-os.goose-context.v3"
-GROUPED_FORMAT = "agentic-os.goose-context.v2"
-LEGACY_FORMAT = "agentic-os.goose-context.v1"
-HARNESS = "goose"
-ROLE = "ops"
-INTENT = "operational-decision"
+FORMAT = "agentic-os.role-seat-context.v1"
 SOURCE_ID = "aos-public"
-INSTRUCTIONS_LOAD_POINT = ".config/goose/.goosehints"
-SKILLS_LOAD_POINT = ".agents/skills"
-REPO_ROOT = Path(__file__).resolve().parents[1]
+SLUG_RE = re.compile(r"^[a-z][a-z0-9-]*$")
+ROSTER_SEAT_RE = re.compile(
+    r"(?m)^- If you are (?P<seat>[a-z][a-z0-9-]*) "
+    r"running the (?P<role>[a-z][a-z0-9-]*) role:"
+)
 
 SKILL_CLASS_KINDS = {
     "ordinary": (
@@ -106,6 +102,15 @@ class Component:
         }
 
 
+@dataclass(frozen=True)
+class ProjectedLayout:
+    """Seat-specific home projection entry points."""
+
+    instructions: Path
+    instructions_delivery: str
+    skills_delivery: str
+
+
 def _component(
     component_id: str,
     kind: str,
@@ -131,22 +136,78 @@ def _component(
     )
 
 
-def validate_goose_route(board_path: Path) -> Scenario:
-    """Fail unless the committed fixed role and intent still select Goose."""
+def _validate_slug(value: str, label: str) -> None:
+    if not SLUG_RE.fullmatch(value):
+        raise RuntimeError(f"{label} must be a lowercase slug, found {value!r}")
+
+
+def validate_role_seat(roster_path: Path, role: str, seat: str) -> None:
+    """Fail unless agent-compose's generated roster contains the requested pair."""
+    _validate_slug(role, "role")
+    _validate_slug(seat, "seat")
     try:
-        matches = [
-            scenario
-            for scenario in load_scenarios(board_path)
-            if scenario.role == ROLE and scenario.intent == INTENT
-        ]
-    except InventoryError as exc:
-        raise RuntimeError(str(exc)) from exc
-    if len(matches) != 1 or matches[0].harness != HARNESS:
-        harnesses = [scenario.harness for scenario in matches]
-        raise RuntimeError(
-            f"{board_path}: {ROLE}/{INTENT} must select {HARNESS}, found {harnesses}"
+        text = roster_path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise RuntimeError(f"read agent-compose roster {roster_path}: {exc}") from exc
+    seats = {
+        (match.group("role"), match.group("seat"))
+        for match in ROSTER_SEAT_RE.finditer(text)
+    }
+    if not seats:
+        raise RuntimeError(f"{roster_path}: generated roster contains no role seats")
+    if (role, seat) not in seats:
+        available = sorted(
+            candidate
+            for candidate_role, candidate in seats
+            if candidate_role == role
         )
-    return matches[0]
+        raise RuntimeError(
+            f"{roster_path}: role {role} has no {seat} seat, found {available}"
+        )
+
+
+def _load_projection(projected_root: Path, seat: str) -> ProjectedLayout:
+    manifest_path = projected_root / ".agent-compose" / "projection.json"
+    try:
+        document = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise RuntimeError(f"read agent-compose projection {manifest_path}: {exc}") from exc
+    if document.get("layout") != seat:
+        raise RuntimeError(f"{manifest_path}: expected layout {seat}")
+    files = document.get("files")
+    if not isinstance(files, list) or not all(isinstance(item, str) for item in files):
+        raise RuntimeError(f"{manifest_path}: projection files must be text paths")
+
+    instruction_paths = [
+        item
+        for item in files
+        if Path(item).name in {"AGENTS.md", "CLAUDE.md"}
+        and "skills" not in Path(item).parts
+    ]
+    skill_roots = {
+        Path(*Path(item).parts[: Path(item).parts.index("skills") + 1]).as_posix()
+        for item in files
+        if "skills" in Path(item).parts
+    }
+    if len(instruction_paths) != 1 or len(skill_roots) != 1:
+        raise RuntimeError(
+            f"{manifest_path}: expected one instruction file and one skill root"
+        )
+    instructions_delivery = instruction_paths[0]
+    skills_delivery = next(iter(skill_roots))
+    instructions = _safe_child_path(
+        projected_root, instructions_delivery, "projection instructions"
+    )
+    projected_skills = _safe_child_path(
+        projected_root, skills_delivery, "projection skills root"
+    )
+    if not instructions.is_file() or not projected_skills.is_dir():
+        raise RuntimeError(f"{manifest_path}: projected entry points are missing")
+    return ProjectedLayout(
+        instructions=instructions,
+        instructions_delivery=instructions_delivery,
+        skills_delivery=skills_delivery,
+    )
 
 
 def repository_identity(repo: Path) -> str:
@@ -201,7 +262,7 @@ def _agents_components(
             "but have different roots"
         )
 
-    with tempfile.TemporaryDirectory(prefix="aos-goose-agents-") as temp:
+    with tempfile.TemporaryDirectory(prefix="aos-role-seat-agents-") as temp:
         inventory_root = Path(temp)
         projects_root = inventory_root / "projects"
         try:
@@ -227,7 +288,7 @@ def _agents_components(
                 cwd=cwd_label,
             )
         except (InventoryError, OSError) as exc:
-            raise RuntimeError(f"inventory Goose AGENTS cascade: {exc}") from exc
+            raise RuntimeError(f"inventory role-seat AGENTS cascade: {exc}") from exc
 
     components: list[Component] = []
     for index, source in enumerate(cascade["sources"]):
@@ -250,18 +311,18 @@ def _agents_components(
     return components
 
 
-def _safe_bundle_path(bundle: Path, relative: object, label: str) -> Path:
+def _safe_child_path(root: Path, relative: object, label: str) -> Path:
     if not isinstance(relative, str) or not relative or Path(relative).is_absolute():
-        raise RuntimeError(f"bundle manifest has invalid {label}")
-    candidate = (bundle / relative).resolve()
+        raise RuntimeError(f"invalid {label}")
+    candidate = (root / relative).resolve()
     try:
-        candidate.relative_to(bundle.resolve())
+        candidate.relative_to(root.resolve())
     except ValueError as exc:
-        raise RuntimeError(f"bundle manifest {label} escapes the bundle") from exc
+        raise RuntimeError(f"{label} escapes its root") from exc
     return candidate
 
 
-def _load_manifest(bundle: Path) -> tuple[dict[str, object], Path, Path]:
+def _load_manifest(bundle: Path, role: str) -> tuple[dict[str, object], Path, Path]:
     manifest_path = bundle / "manifest.json"
     try:
         document = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -269,15 +330,15 @@ def _load_manifest(bundle: Path) -> tuple[dict[str, object], Path, Path]:
         raise RuntimeError(f"read bundle manifest {manifest_path}: {exc}") from exc
     if document.get("format") != "agent-compose.bundle":
         raise RuntimeError(f"{manifest_path}: unsupported bundle format")
-    if document.get("role") != ROLE:
-        raise RuntimeError(f"{manifest_path}: expected role {ROLE}")
+    if document.get("role") != role:
+        raise RuntimeError(f"{manifest_path}: expected role {role}")
     delivery = document.get("delivery")
     if not isinstance(delivery, dict) or delivery.get("mode") != "native-skills":
         raise RuntimeError(f"{manifest_path}: expected native-skills delivery")
-    instructions = _safe_bundle_path(
+    instructions = _safe_child_path(
         bundle, delivery.get("instructions"), "delivery.instructions"
     )
-    skills_root = _safe_bundle_path(
+    skills_root = _safe_child_path(
         bundle, delivery.get("skills_root"), "delivery.skills_root"
     )
     if not instructions.is_file() or not skills_root.is_dir():
@@ -351,7 +412,7 @@ def _skill_entrypoint(
 
 
 def _bundle_skill_components(
-    skills_root: Path, provider: Path
+    skills_root: Path, provider: Path, skills_delivery: str
 ) -> tuple[list[Component], set[str]]:
     components: list[Component] = []
     selected_ids: set[str] = set()
@@ -371,7 +432,7 @@ def _bundle_skill_components(
                 )
             else:
                 source_entrypoint = f"provider:.agents/skills/{skill_id}/SKILL.md"
-            delivery_entrypoint = f"{SKILLS_LOAD_POINT}/{skill_id}/SKILL.md"
+            delivery_entrypoint = f"{skills_delivery}/{skill_id}/SKILL.md"
             components.extend(
                 _skill_entrypoint(
                     skill_dir,
@@ -398,7 +459,7 @@ def _bundle_skill_components(
                         f"{kind}-resource",
                         owner,
                         source,
-                        f"{SKILLS_LOAD_POINT}/{skill_id}/{relative}",
+                        f"{skills_delivery}/{skill_id}/{relative}",
                         False,
                         resource.read_bytes(),
                     )
@@ -407,19 +468,19 @@ def _bundle_skill_components(
 
 
 def _plugin_skill_components(
-    roots: Iterable[Path], selected_ids: set[str]
+    roots: Iterable[Path], selected_ids: set[str], skills_delivery: str
 ) -> list[Component]:
     components: list[Component] = []
     for index, root in enumerate(sorted(path.resolve() for path in roots)):
         if not root.is_dir():
-            raise RuntimeError(f"Goose skill root does not exist: {root}")
+            raise RuntimeError(f"skill root does not exist: {root}")
         root_label = f"skill-root-{index}"
         for skill_dir in sorted(path for path in root.iterdir() if path.is_dir()):
             if not (skill_dir / "SKILL.md").is_file():
                 continue
             skill_id = skill_dir.name
             if skill_id in selected_ids:
-                raise RuntimeError(f"Goose skill id {skill_id} is delivered more than once")
+                raise RuntimeError(f"skill id {skill_id} is delivered more than once")
             selected_ids.add(skill_id)
             entrypoint = f"{root_label}:{skill_id}/SKILL.md"
             components.extend(
@@ -429,7 +490,7 @@ def _plugin_skill_components(
                     kind_prefix="plugin-skill",
                     owner=root_label,
                     source_entrypoint=entrypoint,
-                    delivery_entrypoint=f"{SKILLS_LOAD_POINT}/{skill_id}/SKILL.md",
+                    delivery_entrypoint=f"{skills_delivery}/{skill_id}/SKILL.md",
                 )
             )
             for resource in sorted(
@@ -442,7 +503,7 @@ def _plugin_skill_components(
                         "plugin-skill-resource",
                         root_label,
                         f"{root_label}:{skill_id}/{relative}",
-                        f"{SKILLS_LOAD_POINT}/{skill_id}/{relative}",
+                        f"{skills_delivery}/{skill_id}/{relative}",
                         False,
                         resource.read_bytes(),
                     )
@@ -451,7 +512,7 @@ def _plugin_skill_components(
 
 
 def read_mcporter_server_names(path: Path) -> list[str]:
-    """Read only stable server names. Goose receives no eager schemas from this file."""
+    """Read only stable server names. Seats receive no eager schemas from this file."""
     if not path.is_file():
         return []
     try:
@@ -585,29 +646,37 @@ def _component_breakdown(
 
 def build_snapshot(
     bundle: Path,
+    projected_root: Path,
     provider: Path,
     repo: Path,
     cwd: Path,
     *,
+    role: str,
+    seat: str,
     plugin_roots: Iterable[Path] = (),
     mcp_servers: Iterable[str] = (),
 ) -> dict[str, object]:
-    """Build one deterministic snapshot from a verified native bundle."""
+    """Build one deterministic snapshot from a verified role-seat projection."""
+    _validate_slug(role, "role")
+    _validate_slug(seat, "seat")
     provider = provider.resolve()
     repo = repo.resolve()
     cwd = cwd.resolve()
     provider_identity = repository_identity(provider)
     repo_identity = repository_identity(repo)
-    scenario = validate_goose_route(provider / "aos" / "role-harnesses.json")
-    manifest, instructions, skills_root = _load_manifest(bundle.resolve())
+    scenario = Scenario(role=role, intent="context-measurement", harness=seat)
+    manifest, instructions, skills_root = _load_manifest(bundle.resolve(), role)
+    projection = _load_projection(projected_root.resolve(), seat)
+    if projection.instructions.read_bytes() != instructions.read_bytes():
+        raise RuntimeError("projected role instructions differ from the verified bundle")
 
     components = [
         _component(
-            "instructions:goose",
+            "instructions:role",
             "role-instructions",
             "agent-compose+aos-public",
             "bundle:content/instructions.md",
-            INSTRUCTIONS_LOAD_POINT,
+            projection.instructions_delivery,
             True,
             instructions.read_bytes(),
         )
@@ -623,9 +692,19 @@ def build_snapshot(
         )
     )
 
-    bundle_components, selected_ids = _bundle_skill_components(skills_root, provider)
+    bundle_components, selected_ids = _bundle_skill_components(
+        skills_root,
+        provider,
+        projection.skills_delivery,
+    )
     components.extend(bundle_components)
-    components.extend(_plugin_skill_components(plugin_roots, selected_ids))
+    components.extend(
+        _plugin_skill_components(
+            plugin_roots,
+            selected_ids,
+            projection.skills_delivery,
+        )
+    )
     servers = sorted(set(mcp_servers))
     if servers:
         components.append(
@@ -653,7 +732,7 @@ def build_snapshot(
     ]
     document: dict[str, object] = {
         "format": FORMAT,
-        "lane": {"harness": HARNESS, "role": ROLE, "intent": INTENT},
+        "subject": {"role": role, "seat": seat},
         "provider": provider_identity,
         "repository": repo_identity,
         "cwd": cwd_label,
@@ -690,11 +769,11 @@ def build_snapshot(
     return document
 
 
-def _request_text(provider_root: str) -> str:
+def _request_text(provider_root: str, role: str) -> str:
     root = json.dumps(provider_root)
     return (
         "compose {\n"
-        f'    role "{ROLE}"\n'
+        f'    role "{role}"\n'
         '    delivery "native-skills"\n'
         '    density "full"\n'
         f'    source "{SOURCE_ID}" root={root} required=#true\n'
@@ -707,16 +786,19 @@ def capture_snapshot(
     repo: Path,
     cwd: Path,
     *,
+    role: str,
+    seat: str,
     agent_compose: str,
     plugin_roots: Iterable[Path] = (),
     mcporter_path: Path,
 ) -> dict[str, object]:
-    """Materialize the fixed bundle locally, then measure it without inference."""
+    """Materialize and project one role-seat context without invoking an agent."""
+    _validate_slug(role, "role")
+    _validate_slug(seat, "seat")
     executable = shutil.which(agent_compose)
     if executable is None:
         raise RuntimeError(f"agent-compose executable not found: {agent_compose}")
-    validate_goose_route(provider / "aos" / "role-harnesses.json")
-    with tempfile.TemporaryDirectory(prefix="aos-goose-context-") as temp:
+    with tempfile.TemporaryDirectory(prefix="aos-role-seat-context-") as temp:
         root = Path(temp)
         staged_provider = root / "provider"
         try:
@@ -725,28 +807,62 @@ def capture_snapshot(
             raise RuntimeError(f"stage AOS provider {provider}: {exc}") from exc
         request = root / "request.kdl"
         output = root / "bundles"
-        request.write_text(_request_text("provider"), encoding="utf-8")
+        roster = root / "roster"
+        projected = root / "projected"
+        request.write_text(_request_text("provider", role), encoding="utf-8")
         try:
+            subprocess.run(
+                [executable, "roster", "--out", str(roster), str(staged_provider)],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            validate_role_seat(roster / "AGENTS.COMPOSE.md", role, seat)
             process = subprocess.run(
                 [executable, "compose", "--out", str(output), str(request)],
                 capture_output=True,
                 text=True,
                 check=True,
+                cwd=root,
             )
         except (OSError, subprocess.CalledProcessError) as exc:
             detail = exc.stderr.strip() if isinstance(exc, subprocess.CalledProcessError) else str(exc)
-            raise RuntimeError(f"agent-compose failed to build the Goose bundle: {detail}") from exc
+            raise RuntimeError(f"agent-compose failed to resolve role-seat context: {detail}") from exc
         manifests = sorted(output.glob("*/manifest.json"))
         if len(manifests) != 1:
             raise RuntimeError(
                 "agent-compose did not produce exactly one bundle manifest "
                 f"(found {len(manifests)}; output={process.stdout.strip()!r})"
             )
+        bundle = manifests[0].parent
+        try:
+            subprocess.run(
+                [
+                    executable,
+                    "project",
+                    "--layout",
+                    seat,
+                    "--target",
+                    str(projected),
+                    "--scope",
+                    "home",
+                    str(bundle),
+                ],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+        except (OSError, subprocess.CalledProcessError) as exc:
+            detail = exc.stderr.strip() if isinstance(exc, subprocess.CalledProcessError) else str(exc)
+            raise RuntimeError(f"agent-compose failed to project seat {seat}: {detail}") from exc
         return build_snapshot(
-            manifests[0].parent,
+            bundle,
+            projected,
             provider,
             repo,
             cwd,
+            role=role,
+            seat=seat,
             plugin_roots=plugin_roots,
             mcp_servers=read_mcporter_server_names(mcporter_path),
         )
@@ -754,9 +870,9 @@ def capture_snapshot(
 
 def write_snapshot(path: Path, snapshot: dict[str, object]) -> None:
     if path.suffix.lower() not in {".yaml", ".yml"}:
-        raise RuntimeError("Goose context snapshots must use a .yaml or .yml path")
+        raise RuntimeError("role-seat context snapshots must use a .yaml or .yml path")
     if snapshot.get("format") != FORMAT:
-        raise RuntimeError("only the current grouped Goose snapshot format can be written")
+        raise RuntimeError("only the current role-seat snapshot format can be written")
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
         yaml.dump(
@@ -775,32 +891,26 @@ def load_snapshot(path: Path) -> dict[str, object]:
     try:
         document = yaml.safe_load(path.read_text(encoding="utf-8"))
     except (OSError, yaml.YAMLError) as exc:
-        raise RuntimeError(f"read Goose context snapshot {path}: {exc}") from exc
+        raise RuntimeError(f"read role-seat context snapshot {path}: {exc}") from exc
     if not isinstance(document, dict):
-        raise RuntimeError(f"{path}: Goose context snapshot must be a mapping")
-    if document.get("format") not in {
-        FORMAT,
-        COLLAPSED_FORMAT,
-        GROUPED_FORMAT,
-        LEGACY_FORMAT,
-    }:
-        raise RuntimeError(f"{path}: unsupported Goose context snapshot format")
-    if document.get("lane") != {"harness": HARNESS, "role": ROLE, "intent": INTENT}:
-        raise RuntimeError(f"{path}: snapshot is not the fixed Goose lane")
-    components = document.get("components")
-    if document["format"] in {
-        FORMAT,
-        COLLAPSED_FORMAT,
-        GROUPED_FORMAT,
-    } and not isinstance(components, dict):
-        raise RuntimeError(f"{path}: grouped snapshot components must be a mapping")
-    if document["format"] == LEGACY_FORMAT and not isinstance(components, list):
-        raise RuntimeError(f"{path}: legacy snapshot components must be an array")
-    if document["format"] in {FORMAT, COLLAPSED_FORMAT} and not isinstance(
-        document.get("skills"), dict
+        raise RuntimeError(f"{path}: role-seat context snapshot must be a mapping")
+    if document.get("format") != FORMAT:
+        raise RuntimeError(f"{path}: unsupported role-seat context snapshot format")
+    subject = document.get("subject")
+    if (
+        not isinstance(subject, dict)
+        or not isinstance(subject.get("role"), str)
+        or not isinstance(subject.get("seat"), str)
     ):
+        raise RuntimeError(f"{path}: snapshot subject must name a role and seat")
+    _validate_slug(subject["role"], "snapshot role")
+    _validate_slug(subject["seat"], "snapshot seat")
+    components = document.get("components")
+    if not isinstance(components, dict):
+        raise RuntimeError(f"{path}: grouped snapshot components must be a mapping")
+    if not isinstance(document.get("skills"), dict):
         raise RuntimeError(f"{path}: collapsed snapshot skills must be a mapping")
-    if document["format"] == FORMAT and not isinstance(document.get("breakdown"), dict):
+    if not isinstance(document.get("breakdown"), dict):
         raise RuntimeError(f"{path}: snapshot breakdown must be a mapping")
     list(_snapshot_component_rows(document))
     _snapshot_skill_records(document)
@@ -811,12 +921,6 @@ def _snapshot_base_component_rows(
     snapshot: dict[str, object],
 ) -> Iterable[dict[str, object]]:
     components = snapshot.get("components")
-    if isinstance(components, list):
-        for raw in components:
-            if not isinstance(raw, dict):
-                raise RuntimeError("snapshot contains a malformed component")
-            yield raw
-        return
     if not isinstance(components, dict) or set(components) != {"eager", "lazy"}:
         raise RuntimeError("snapshot component groups must be eager and lazy")
     for eager, delivery_class in ((True, "eager"), (False, "lazy")):
@@ -840,100 +944,32 @@ def _snapshot_skill_records(
     snapshot: dict[str, object],
 ) -> dict[str, dict[str, object]]:
     skills = snapshot.get("skills")
-    if isinstance(skills, dict):
-        records: dict[str, dict[str, object]] = {}
-        for skill_key in sorted(skills):
-            raw = skills[skill_key]
-            if not isinstance(skill_key, str) or "/" not in skill_key or not isinstance(
-                raw, dict
-            ):
-                raise RuntimeError(f"snapshot skill {skill_key!r} is malformed")
-            if snapshot.get("format") == FORMAT:
-                if (
-                    raw.get("class") not in SKILL_CLASS_KINDS
-                    or not isinstance(raw.get("eager"), int)
-                    or not isinstance(raw.get("lazy"), int)
-                    or not isinstance(raw.get("resources"), int)
-                ):
-                    raise RuntimeError(f"snapshot skill {skill_key!r} is malformed")
-                records[skill_key] = raw
-                continue
-            eager = raw.get("eager")
-            lazy = raw.get("lazy")
-            if (
-                raw.get("class") not in SKILL_CLASS_KINDS
-                or not isinstance(eager, dict)
-                or not isinstance(lazy, dict)
-            ):
-                raise RuntimeError(f"snapshot skill {skill_key!r} is malformed")
-            records[skill_key] = {
-                "class": raw["class"],
-                "eager": int(eager.get("tokens", 0)),
-                "lazy": int(lazy.get("tokens", 0)),
-                "resources": int(lazy.get("resources", 0)),
-            }
-        return records
-    skill_rows = [
-        raw
-        for raw in _snapshot_base_component_rows(snapshot)
-        if str(raw.get("id", "")).startswith("skill:")
-    ]
-    return _skill_records_from_rows(skill_rows)
-
-
-def _expanded_skill_rows(
-    records: dict[str, dict[str, object]],
-) -> Iterable[dict[str, object]]:
-    for skill_key in sorted(records):
-        owner, separator, skill_id = skill_key.partition("/")
-        if not separator:
-            raise RuntimeError(f"snapshot skill key is malformed: {skill_key}")
-        record = records[skill_key]
-        skill_class = str(record["class"])
-        frontmatter_kind, body_kind, resource_kind = SKILL_CLASS_KINDS[skill_class]
-        eager = record["eager"]
-        lazy = record["lazy"]
-        assert isinstance(eager, dict) and isinstance(lazy, dict)
-        common = {
-            "owner": owner,
-            "source": record["source"],
-            "delivery": record["delivery"],
-        }
-        yield {
-            "id": f"skill:{owner}:{skill_id}:frontmatter",
-            "kind": frontmatter_kind,
-            "eager": True,
-            "bytes": int(eager.get("bytes", 0)),
-            "tokens": int(eager.get("tokens", 0)),
-            "sha256": eager.get("sha256"),
-            **common,
-        }
-        yield {
-            "id": f"skill:{owner}:{skill_id}:body",
-            "kind": body_kind,
-            "eager": False,
-            "bytes": int(lazy.get("body_bytes", 0)),
-            "tokens": int(lazy.get("body_tokens", 0)),
-            **common,
-        }
-        if int(lazy.get("resources", 0)):
-            yield {
-                "id": f"skill:{owner}:{skill_id}:resources",
-                "kind": resource_kind,
-                "eager": False,
-                "bytes": int(lazy.get("resource_bytes", 0)),
-                "tokens": int(lazy.get("resource_tokens", 0)),
-                **common,
-            }
+    if not isinstance(skills, dict):
+        raise RuntimeError("snapshot skills must be a mapping")
+    records: dict[str, dict[str, object]] = {}
+    for skill_key in sorted(skills):
+        raw = skills[skill_key]
+        if (
+            not isinstance(skill_key, str)
+            or "/" not in skill_key
+            or not isinstance(raw, dict)
+        ):
+            raise RuntimeError(f"snapshot skill {skill_key!r} is malformed")
+        if (
+            raw.get("class") not in SKILL_CLASS_KINDS
+            or not isinstance(raw.get("eager"), int)
+            or not isinstance(raw.get("lazy"), int)
+            or not isinstance(raw.get("resources"), int)
+        ):
+            raise RuntimeError(f"snapshot skill {skill_key!r} is malformed")
+        records[skill_key] = raw
+    return records
 
 
 def _snapshot_component_rows(
     snapshot: dict[str, object],
 ) -> Iterable[dict[str, object]]:
     yield from _snapshot_base_component_rows(snapshot)
-    skills = snapshot.get("skills")
-    if snapshot.get("format") == COLLAPSED_FORMAT and isinstance(skills, dict):
-        yield from _expanded_skill_rows(skills)
 
 
 def _component_kind_totals(snapshot: dict[str, object], eager: bool) -> list[tuple[str, int, int]]:
@@ -959,13 +995,17 @@ def _component_kind_totals(snapshot: dict[str, object], eager: bool) -> list[tup
 
 
 def render_snapshot(snapshot: dict[str, object]) -> str:
-    lane = snapshot["lane"]
+    subject = snapshot["subject"]
     totals = snapshot["totals"]
     mcp = snapshot["mcp"]
-    assert isinstance(lane, dict) and isinstance(totals, dict) and isinstance(mcp, dict)
+    assert (
+        isinstance(subject, dict)
+        and isinstance(totals, dict)
+        and isinstance(mcp, dict)
+    )
     lines = [
-        "Goose context baseline",
-        f"  lane       {lane['role']} / {lane['intent']} / {lane['harness']}",
+        "Role-seat context baseline",
+        f"  subject    {subject['role']} / {subject['seat']}",
         f"  repository {snapshot['repository']}  cwd {snapshot['cwd']}",
         f"  payload    {snapshot['payload_hash']}",
     ]
@@ -1008,14 +1048,14 @@ def _snapshot_components(snapshot: dict[str, object]) -> dict[str, dict[str, obj
 
 
 def render_delta(before: dict[str, object], after: dict[str, object]) -> str:
-    """Render stable component and total changes for the same fixed lane."""
-    for key in ("lane", "repository", "cwd", "tokenizer"):
+    """Render stable component and total changes for the same role and seat."""
+    for key in ("subject", "repository", "cwd", "tokenizer"):
         if before.get(key) != after.get(key):
             raise RuntimeError(f"cannot compare snapshots with different {key}")
     before_totals = before["totals"]
     after_totals = after["totals"]
     assert isinstance(before_totals, dict) and isinstance(after_totals, dict)
-    lines = ["Goose context delta"]
+    lines = ["Role-seat context delta"]
     for label in ("eager", "lazy"):
         left = before_totals[label]
         right = after_totals[label]

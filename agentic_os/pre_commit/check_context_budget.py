@@ -53,8 +53,8 @@ Usage:
     check-context-budget                  # report every harness vs its budget
     check-context-budget --check          # exit 1 if any harness is over budget
     check-context-budget --claude-budget 12000
-    check-context-budget --goose --snapshot before.yaml
-    check-context-budget --goose --compare before.yaml --snapshot after.yaml
+    check-context-budget --role ops --seat codex --snapshot before.yaml
+    check-context-budget --role ops --seat codex --compare before.yaml --snapshot after.yaml
 """
 from __future__ import annotations
 
@@ -455,50 +455,47 @@ def run(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Report per-harness eager context budget.")
-    parser.add_argument(
-        "--goose",
-        action="store_true",
-        help="capture the fixed ops/operational-decision Goose structural baseline",
-    )
+    parser.add_argument("--role", help="role to measure with --seat")
+    parser.add_argument("--seat", help="agent-compose roster seat to measure with --role")
     parser.add_argument(
         "--provider",
         type=Path,
         default=Path(__file__).resolve().parents[2],
-        help="AOS provider root for --goose (defaults to this checkout)",
+        help="AOS provider root for role-seat measurement (defaults to this checkout)",
     )
     parser.add_argument(
         "--repo",
         type=Path,
         default=Path(__file__).resolve().parents[2],
-        help="repository root whose AGENTS.md cascade --goose measures",
+        help="repository root whose AGENTS.md cascade role-seat mode measures",
     )
     parser.add_argument(
         "--cwd",
         type=Path,
         default=Path(__file__).resolve().parents[2],
-        help="CWD inside --repo for the --goose cascade",
+        help="CWD inside --repo for the role-seat cascade",
     )
     parser.add_argument(
         "--snapshot",
         type=Path,
-        help="write the deterministic grouped --goose YAML snapshot to this path",
+        help="write the deterministic grouped role-seat YAML snapshot to this path",
     )
     parser.add_argument(
         "--compare",
         type=Path,
-        help="compare --goose against a prior snapshot",
+        help="compare role-seat context against a prior snapshot",
     )
     parser.add_argument(
         "--skill-root",
         type=Path,
         action="append",
         default=[],
-        help="extra Goose/plugin skill root to include; repeatable",
+        help="extra seat/plugin skill root to include; repeatable",
     )
     parser.add_argument(
         "--agent-compose",
         default="agent-compose",
-        help="agent-compose executable used to materialize the local Goose bundle",
+        help="agent-compose executable used to materialize and project the role-seat bundle",
     )
     parser.add_argument(
         "--check",
@@ -533,8 +530,10 @@ def main() -> int:
             f"--{harness}-budget", type=int, default=None, help=f"override the {harness} token budget"
         )
     args = parser.parse_args()
-    if args.goose:
-        from agentic_os.context_budget_goose import (
+    if bool(args.role) != bool(args.seat):
+        parser.error("--role and --seat must be provided together")
+    if args.role and args.seat:
+        from agentic_os.context_budget_role_seat import (
             capture_snapshot,
             load_snapshot,
             render_delta,
@@ -547,6 +546,8 @@ def main() -> int:
                 args.provider,
                 args.repo,
                 args.cwd,
+                role=args.role,
+                seat=args.seat,
                 agent_compose=args.agent_compose,
                 plugin_roots=args.skill_root,
                 mcporter_path=args.mcporter,

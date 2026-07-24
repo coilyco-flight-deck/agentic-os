@@ -1,8 +1,7 @@
-format: agentic-os.goose-context.v4
-lane:
-  harness: goose
+format: agentic-os.role-seat-context.v1
+subject:
   role: ops
-  intent: operational-decision
+  seat: codex
 provider: coilyco-flight-deck/agentic-os
 repository: coilyco-flight-deck/agentic-os
 cwd: .
@@ -19,24 +18,24 @@ mcp:
   eager_schema_count: 0
 totals:
   eager:
-    components: 69
-    bytes: 56789
-    tokens: 14223
+    components: 70
+    bytes: 57992
+    tokens: 14524
   lazy:
     components: 244
-    bytes: 506791
-    tokens: 125666
+    bytes: 506923
+    tokens: 125699
 breakdown:
   eager:
-    agents-cascade: {components: 2, bytes: 40544, tokens: 10136}
+    agents-cascade: {components: 3, bytes: 41372, tokens: 10343}
     ordinary-skill-frontmatter: {components: 62, bytes: 14310, tokens: 3601}
     personality-frontmatter: {components: 3, bytes: 482, tokens: 122}
     role-composed-frontmatter: {components: 1, bytes: 194, tokens: 49}
-    role-instructions: {components: 1, bytes: 1259, tokens: 315}
+    role-instructions: {components: 1, bytes: 1634, tokens: 409}
   lazy:
     mcp-server-registration: {components: 1, bytes: 0, tokens: 0}
     ordinary-skill-body: {components: 62, bytes: 134503, tokens: 33631}
-    ordinary-skill-resource: {components: 174, bytes: 368189, tokens: 91008}
+    ordinary-skill-resource: {components: 174, bytes: 368321, tokens: 91041}
     personality-body: {components: 3, bytes: 1614, tokens: 404}
     personality-resource: {components: 3, bytes: 523, tokens: 132}
     role-composed-body: {components: 1, bytes: 1962, tokens: 491}
@@ -50,7 +49,14 @@ components:
       bytes: 20272
       tokens: 5068
       sha256: 83ee1f30b4a68c92f82457d7d73d200375aaa91d6524c7324eaf61ed05c96aa5
-    - id: agents:001:AGENTS.md
+    - id: agents:001:AGENTS.codex.md
+      owner: coilyco-flight-deck/agentic-os
+      source: coilyco-flight-deck/agentic-os:AGENTS.codex.md
+      delivery: global-harness-override
+      bytes: 828
+      tokens: 207
+      sha256: 7b8a00b537db0f74c18f956e07ac025d3e6376feec21fef0f36ff85215576b8a
+    - id: agents:002:AGENTS.md
       owner: coilyco-flight-deck/agentic-os
       source: coilyco-flight-deck/agentic-os:AGENTS.md
       delivery: repo-cascade
@@ -58,13 +64,13 @@ components:
       tokens: 5068
       sha256: 83ee1f30b4a68c92f82457d7d73d200375aaa91d6524c7324eaf61ed05c96aa5
     role-instructions:
-    - id: instructions:goose
+    - id: instructions:role
       owner: agent-compose+aos-public
       source: bundle:content/instructions.md
-      delivery: .config/goose/.goosehints
-      bytes: 1259
-      tokens: 315
-      sha256: fbbe0ce29418d76ef7c01ae4e41caa1b7558ce2d5f9cb6ec72def503cd7c0960
+      delivery: .codex/AGENTS.md
+      bytes: 1634
+      tokens: 409
+      sha256: 969d8481010b0abf066659afee46e1768350b535723b8b8e7ed4c83bc9692f00
   lazy:
     mcp-server-registration:
     - id: mcp:deferred
@@ -117,9 +123,9 @@ skills:
   aos-public/tooling-ffmpeg: {class: ordinary, eager: 50, lazy: 559, resources: 0}
   aos-public/tooling-gpg-ssm: {class: ordinary, eager: 78, lazy: 1376, resources: 3}
   aos-public/tooling-honeycomb-ui: {class: ordinary, eager: 51, lazy: 2494, resources: 4}
-  aos-public/tooling-image-zoom: {class: ordinary, eager: 44, lazy: 949, resources: 1}
+  aos-public/tooling-image-zoom: {class: ordinary, eager: 44, lazy: 975, resources: 1}
   aos-public/tooling-imagemagick: {class: ordinary, eager: 50, lazy: 492, resources: 0}
-  aos-public/tooling-issue-prioritization: {class: ordinary, eager: 118, lazy: 3962, resources: 5}
+  aos-public/tooling-issue-prioritization: {class: ordinary, eager: 118, lazy: 3969, resources: 5}
   aos-public/tooling-mcp-servers: {class: ordinary, eager: 36, lazy: 1793, resources: 3}
   aos-public/tooling-ops-live-remediation: {class: role-composed, eager: 49, lazy: 491, resources: 0}
   aos-public/tooling-product-brainstorming: {class: ordinary, eager: 80, lazy: 6646, resources: 10}
@@ -141,4 +147,4 @@ skills:
   aos-public/writing-system-improvement-vocab: {class: ordinary, eager: 70, lazy: 1105, resources: 1}
   aos-public/writing-to-issues: {class: ordinary, eager: 69, lazy: 852, resources: 1}
   aos-public/writing-voice-guide-linter: {class: ordinary, eager: 53, lazy: 981, resources: 1}
-payload_hash: fbb590b1a87408c0a1276a1fb718873d7ccad2cc6f8c4085631f6d57cc5b58f1
+payload_hash: 31345d4afbffd2cdacc235b703035e833b3963c5c5619202bc1faca573e3acb0

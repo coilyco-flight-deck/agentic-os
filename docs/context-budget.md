@@ -6,8 +6,8 @@ per-source attribution. It is an on-demand tool (the `ward context-budget`
 verb), not a pre-commit hook, so it carries no weight in the universal commit
 path and is free to grow heavier measurement later.
 
-The [fixed Goose snapshot mode](context-budget-goose.md) measures one
-representative open-source lane before and after the ordinary-skill refactor.
+The [role-seat snapshot mode](context-budget-role-seat.md) measures any
+agent-compose role and seat without requiring that seat's agent executable.
 
 ## What it measures
 
@@ -72,5 +72,5 @@ points at the shared inventory projected into each native harness registry.
 ## See also
 
 - [features-agents-sessions.md](features-agents-sessions.md) - agent-compose, the composer this measures.
-- [role-composed-skills.md](role-composed-skills.md) - role-gated skills selected into the Goose bundle.
+- [role-composed-skills.md](role-composed-skills.md) - role-gated skills selected into a role bundle.
 - [.ward/ward.yaml](../.ward/ward.yaml) - allowlisted commands.
