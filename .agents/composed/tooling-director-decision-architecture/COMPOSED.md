@@ -1,6 +1,7 @@
 ---
 name: tooling-director-decision-architecture
 description: Use when director turns explored options into a consequential decision and handoff. Captures stakes, evidence, reversibility, dissent, ownership, and revisit triggers.
+low-context: required
 ---
 
 # Decision architecture

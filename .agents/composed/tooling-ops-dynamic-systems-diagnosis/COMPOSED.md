@@ -1,6 +1,7 @@
 ---
 name: tooling-ops-dynamic-systems-diagnosis
 description: Use when ops diagnoses ambiguous, intermittent, or distributed system behavior. Builds competing causal models, chooses discriminating signals, and preserves attribution.
+low-context: required
 ---
 
 # Dynamic systems diagnosis

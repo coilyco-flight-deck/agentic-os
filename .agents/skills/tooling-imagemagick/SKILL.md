@@ -1,6 +1,7 @@
 ---
 name: tooling-imagemagick
 description: Inspect and transform raster images with ImageMagick. Use for conversion, resizing, cropping, rotation, composition, montage, annotation, metadata handling, or pixel comparison.
+low-context: required
 license: ImageMagick
 compatibility: Requires ImageMagick 7 (`magick`) or ImageMagick 6 command tools.
 metadata:

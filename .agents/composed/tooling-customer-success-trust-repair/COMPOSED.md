@@ -1,6 +1,7 @@
 ---
 name: tooling-customer-success-trust-repair
 description: Use after a customer-facing failure, broken promise, or repeated unresolved issue. Repairs trust through impact acknowledgment, bounded ownership, evidence, and kept commitments.
+low-context: required
 ---
 
 # Customer trust repair

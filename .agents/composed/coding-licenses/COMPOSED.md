@@ -1,6 +1,7 @@
 ---
 name: coding-licenses
 description: Kai's licensing policy - MIT for shareable, AGPL-3.0 for deployment-of-one, proprietary for private. Triggers - license, LICENSE, MIT, AGPL, GPL, copyright, SPDX, what license.
+low-context: required
 ---
 
 # coding-licenses

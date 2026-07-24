@@ -1,6 +1,7 @@
 ---
 name: coding-cloudformation
 description: CloudFormation - AWS-native IaC, a situational leaf of coding-shape-iac. Terraform is the default over CFN for new AWS work. Stub - fill later.
+low-context: optional
 ---
 
 # coding-cloudformation

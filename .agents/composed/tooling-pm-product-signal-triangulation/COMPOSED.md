@@ -1,6 +1,7 @@
 ---
 name: tooling-pm-product-signal-triangulation
 description: Use when PM must reconcile qualitative, behavioral, commercial, and support signals into a product decision. Tests independence, bias, convergence, and missing evidence.
+low-context: optional
 ---
 
 # Product-signal triangulation

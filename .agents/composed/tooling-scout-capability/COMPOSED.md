@@ -1,6 +1,7 @@
 ---
 name: tooling-scout-capability
 description: Inbound half of the scout pair. Capability gap analysis for skills and MCP servers - what to ADD. Sweeps repos, hydrates against skillsmp and glama, security-audits silver/gold tiers, installs one-issue-one-commit. Paired with tooling-scout-displacement (what to SHED).
+low-context: optional
 ---
 
 # scout-capability

@@ -1,6 +1,7 @@
 ---
 name: coding-shape-cloud
 description: Category umbrella for cloud infrastructure work. AWS primary, GCP secondary, Azure tertiary. Defaults - region pinned per project, IAM not keys, IaC over click-ops, secrets in native param stores.
+low-context: optional
 ---
 
 # coding-shape-cloud

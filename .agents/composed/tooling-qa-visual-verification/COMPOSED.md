@@ -1,6 +1,7 @@
 ---
 name: tooling-qa-visual-verification
 description: Use when QA verifies visual behavior or investigates screenshot diffs. Stabilizes capture, separates pixel change from product defect, and governs baseline evidence.
+low-context: optional
 ---
 
 # Visual verification

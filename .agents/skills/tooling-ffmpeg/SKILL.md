@@ -1,6 +1,7 @@
 ---
 name: tooling-ffmpeg
 description: Inspect and transform audio or video with FFmpeg and ffprobe. Use for transcoding, trimming, remuxing, frame or audio extraction, filters, subtitles, thumbnails, and media diagnostics.
+low-context: required
 license: LGPL-2.1-or-later
 compatibility: Requires `ffmpeg` and `ffprobe`.
 metadata:

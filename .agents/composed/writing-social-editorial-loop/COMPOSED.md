@@ -1,6 +1,7 @@
 ---
 name: writing-social-editorial-loop
 description: Use when social turns one theme, launch, or finding into an editorial sequence and learns from response. Separates post jobs, channel adaptation, reply boundaries, and signal analysis.
+low-context: required
 ---
 
 # Social editorial loop

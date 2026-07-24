@@ -1,6 +1,7 @@
 ---
 name: coding-javascript-react
 description: React subskill of coding-javascript. Kai dislikes React. Forced-only - existing codebases, work constraints. Prefer Vue, Svelte, HTMX, or plain DOM for new projects.
+low-context: required
 ---
 
 # coding-javascript-react

@@ -1,6 +1,7 @@
 ---
 name: writing-public-repos
 description: Writing rules for public coilysiren/ repos, especially Eco - frame from public sources, no internal paths. Triggers - eco, eco-mods, EcoModKit, public repo, commit message, README, blog.
+low-context: required
 ---
 
 # Writing in public coilysiren/ repos

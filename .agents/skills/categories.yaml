@@ -68,3 +68,4 @@ forbidden_body_strings: []
 max_skill_md_lines: 500
 max_skill_md_bytes: 10000
 max_description_bytes: 500
+require_low_context: true

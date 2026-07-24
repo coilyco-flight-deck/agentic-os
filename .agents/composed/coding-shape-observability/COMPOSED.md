@@ -1,6 +1,7 @@
 ---
 name: coding-shape-observability
 description: Category umbrella for observability work across vendors - metrics, traces, logs, dashboards, alerting, SLOs. Current edge is OpenTelemetry plus LLM consumers of observability data.
+low-context: optional
 ---
 
 # coding-shape-observability

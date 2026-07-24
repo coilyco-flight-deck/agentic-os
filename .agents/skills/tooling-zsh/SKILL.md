@@ -1,6 +1,7 @@
 ---
 name: tooling-zsh
 description: Zsh + bash are Kai's shells (zsh+Warp interactive, bash for ssh/non-interactive). One shared agentic-os/shell/common.sh sourced by both, thin zshrc/bashrc entries add prompt+completion. Use when drafting shell commands, editing agentic-os/shell/*, configuring PATH or prompt, loading AWS secrets via ssm-load, debugging shell startup. Triggers - zsh, bash, zshrc, bashrc, .zshrc, .bashrc, $PATH, common.sh, ssm-load, vcs_info, prompt, Warp.
+low-context: required
 ---
 
 # Shell (zsh + bash)

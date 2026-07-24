@@ -1,6 +1,7 @@
 ---
 name: writing-to-issues
 description: Break a plan, PRD, or oversized issue into independently-grabbable tracer-bullet vertical slices, tagged HITL/AFK. Also fires when a session opens with a bare oversized issue ref. Triggers - convert to issues, make tickets, break this down, decompose, split #N.
+low-context: required
 ---
 
 # To Issues

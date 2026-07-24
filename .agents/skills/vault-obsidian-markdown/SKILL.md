@@ -1,6 +1,7 @@
 ---
 name: vault-obsidian-markdown
 description: Create and edit Obsidian Flavored Markdown - wikilinks, embeds, callouts, properties. Use for .md files in Obsidian, or when wikilinks, callouts, frontmatter, tags, or embeds come up.
+low-context: required
 ---
 
 # Obsidian Flavored Markdown Skill

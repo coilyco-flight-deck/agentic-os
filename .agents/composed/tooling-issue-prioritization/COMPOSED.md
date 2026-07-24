@@ -1,6 +1,7 @@
 ---
 name: tooling-issue-prioritization
-description: Tier and prune an issue backlog - P0-P4 tier definitions (P4 is the icebox/lowest tier), a target distribution as ranges, percentile-cut assignment that lands within the bands, pruning, and a second orthogonal automation-mode axis (headless/interactive/consult). Triggers - prioritize, prioritization, triage the backlog, P0/P1/P2/P3/P4, backlog ratio, icebox, burn down the backlog, tier the issues, automation mode, eligibility to dispatch.
+description: Tier and prune an issue backlog - P0-P4 definitions, target ranges, percentile-cut assignment, and an automation-mode axis (headless/interactive/consult). Triggers - prioritize, triage the backlog, P0/P1/P2/P3/P4, backlog ratio, icebox, burn down the backlog, tier the issues, automation mode, eligibility to dispatch.
+low-context: required
 ---
 
 # Issue Prioritization

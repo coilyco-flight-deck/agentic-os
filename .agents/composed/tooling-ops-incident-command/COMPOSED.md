@@ -1,6 +1,7 @@
 ---
 name: tooling-ops-incident-command
 description: Use when ops coordinates a multi-party production incident. Separates command, operations, communications, and recordkeeping while maintaining objectives and transfer state.
+low-context: required
 ---
 
 # Incident command

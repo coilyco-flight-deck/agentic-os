@@ -1,6 +1,7 @@
 ---
 name: writing-system-improvement-vocab
 description: Distinguishes self-healing, self-improving, continuous comprehension, and meta-improvement on locus of agency and what gets changed. Triggers - self-healing, meta-improvement, fix the bug vs fix the system, improvement loci, reliability vocab.
+low-context: optional
 ---
 
 # System-improvement vocab

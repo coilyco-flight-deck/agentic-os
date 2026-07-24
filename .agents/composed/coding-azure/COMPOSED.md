@@ -1,6 +1,7 @@
 ---
 name: coding-azure
 description: Azure umbrella skill. Tertiary cloud - reach for it when a job already runs there or when Azure OpenAI is specifically required. AWS is Kai's default for new infra.
+low-context: required
 ---
 
 # coding-azure

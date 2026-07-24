@@ -1,6 +1,7 @@
 ---
 name: tooling-advisor-causal-claim-audit
 description: Use when advisor evaluates whether evidence supports a causal claim. Forces an estimand, causal graph, identification assumptions, refutation, and calibrated causal language.
+low-context: optional
 ---
 
 # Causal claim audit
@@ -69,8 +70,7 @@ evidence support it. Otherwise she reports an association or prediction.
 
 ## Method provenance
 
-The separation of model, identification, estimation, and refutation follows
-the [DoWhy causal-inference workflow](https://www.pywhy.org/dowhy/).
+The separation of model, identification, estimation, and refutation follows the [DoWhy causal-inference workflow](https://www.pywhy.org/dowhy/).
 
 ## Evaluation target
 

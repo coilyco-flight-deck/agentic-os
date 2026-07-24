@@ -1,6 +1,7 @@
 ---
 name: coding-gcp
 description: GCP umbrella skill. Secondary cloud - reach for it when a job already runs there. AWS is Kai's default for new infra.
+low-context: required
 ---
 
 # coding-gcp

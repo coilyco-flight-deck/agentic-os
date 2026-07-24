@@ -1,6 +1,7 @@
 ---
 name: tooling-sales-discovery
 description: Use when sales must discover and qualify a real customer problem before pitching. Produces a deal-evidence record, disqualifiers, open questions, and a mutual next step.
+low-context: required
 ---
 
 # Evidence-led sales discovery

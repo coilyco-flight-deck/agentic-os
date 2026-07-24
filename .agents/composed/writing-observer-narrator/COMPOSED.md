@@ -1,6 +1,7 @@
 ---
 name: writing-observer-narrator
 description: Persona archetype for voice/text surfaces where the speaker is a passive observer-narrator, not an active agent. Constraints - observer not actor, single audience never named, passive voice past or future tense, neutral and unopinionated, methodologically specific. Triggers - persona, voice persona, narrator, observer.
+low-context: required
 ---
 
 # writing-observer-narrator

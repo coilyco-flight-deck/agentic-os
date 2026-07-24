@@ -1,6 +1,7 @@
 ---
 name: coding-pulumi
 description: Pulumi - code-first IaC (real languages instead of HCL), a situational leaf of coding-shape-iac. Reach for it only when a project already commits to it. Stub - fill later.
+low-context: optional
 ---
 
 # coding-pulumi

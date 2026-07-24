@@ -1,6 +1,7 @@
 ---
 name: tooling-tailscale
 description: Run Tailscale alongside a second host VPN by containerizing it on Docker Desktop for macOS or Windows - userspace/SOCKS5 mode keeps SSH and tailnet reach out of the host route table. Use when two VPNs fight over host routing, or wiring Tailscale SSH to a peer behind a host VPN. Triggers - tailscale, tailnet, vpn coexistence, tailscale ssh, two vpns, wireguard utun conflict, ward-tailnet, tailscale-proxy socks5.
+low-context: required
 ---
 
 # Tailscale

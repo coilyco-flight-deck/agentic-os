@@ -1,6 +1,7 @@
 ---
 name: repo-agentic-os
 description: Kai cross-platform dotfiles - nushell config, in-process SSM secrets loader, shared aliases. Triggers - agentic-os, agentic-os-public, aos, in-process-ssm-loader, public-dotfiles, shared-aliases, zsh-config
+low-context: required
 ---
 
 # repo-agentic-os

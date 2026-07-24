@@ -1,6 +1,7 @@
 ---
 name: tooling-designer-cognitive-walkthrough
 description: Use when designer evaluates whether a first-time or infrequent user can complete a concrete task. Walks intent, action visibility, goal mapping, and feedback step by step.
+low-context: optional
 ---
 
 # Cognitive walkthrough

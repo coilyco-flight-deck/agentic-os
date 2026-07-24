@@ -1,6 +1,7 @@
 ---
 name: coding-go
 description: Umbrella for Go work across repos. Carries Kai's defaults (Go 1.22+, urfave/cli over cobra/kong, Charm stack for TUI, slog for logging) so agents inherit them before reaching for generic Go.
+low-context: required
 seed:
   kind: language
   language: go
