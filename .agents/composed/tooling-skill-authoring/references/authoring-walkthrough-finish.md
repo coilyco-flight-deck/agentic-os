@@ -46,7 +46,7 @@ Both run automatically in pre-commit. Run them by hand during iteration to keep 
 
 ## Wrap-up
 
-* Refresh the skill mount (`make refresh-symlinks`) to update the harness skills-dir symlinks (`~/.claude/skills/<name>`, `~/.codex/skills/<name>`).
+* Refresh the applicable harness projection. The fleet refresh updates Claude's `.claude/skills/<name>` surface and canonical catalog links. Bare agent-compose convergence updates Codex's `~/.agents/skills/<name>` user surface.
 * Restart your harness so the loader picks up the new skill.
 * File the GitHub issue first if you haven't (every commit closes one).
 * Commit, push to main, the commit message closes the issue.

@@ -47,7 +47,8 @@ and the qwen BPE needs its vocab assets, so v1 ships a hermetic proxy behind
 absolute but consistent across harnesses, which a zero-sum budget needs.
 
 Budgets and skill roots are global (host-wide, not repo-scoped): module defaults,
-overridable by `budgets:` / `skill_roots:` in agent-compose.yaml or CLI flags.
+the modern `skill_load_points:` projection, the legacy `skill_roots:` override,
+and CLI flags determine them.
 
 Usage:
     check-context-budget                  # report every harness vs its budget
@@ -93,8 +94,13 @@ DEFAULT_BUDGETS = {"claude": 13_000, "codex": 6_000, "opencode": 5_000}
 # plugins, relative = expanded against cwd + workspace repos (docs/context-budget.md).
 DEFAULT_SKILL_ROOTS = {
     "claude": ["~/.claude/plugins", ".claude/skills"],
-    "codex": ["~/.codex/skills", ".codex/skills"],
+    "codex": ["~/.agents/skills", ".agents/skills"],
     "opencode": ["~/.agents/skills", ".agents/skills"],
+}
+
+DEFAULT_SKILL_LOAD_POINTS = {
+    "codex": "~/.agents/skills",
+    "opencode": "~/.agents/skills",
 }
 
 class TierWalk(NamedTuple):
@@ -280,13 +286,32 @@ def plan_from_config(
 
 
 def skill_roots_from_config(config_path: Path) -> dict[str, list[str]]:
-    """Per-harness skill roots: module defaults overlaid by config `skill_roots:`."""
+    """Resolve defaults, modern load points, then legacy explicit root overrides."""
     roots = {h: list(r) for h, r in DEFAULT_SKILL_ROOTS.items()}
     if not config_path.is_file():
         return roots
-    raw = load_config(config_path).get("skill_roots")
-    if isinstance(raw, dict):
-        for harness, value in raw.items():
+    config = load_config(config_path)
+
+    load_points = config.get("skill_load_points")
+    if isinstance(load_points, dict):
+        for harness, value in load_points.items():
+            if not isinstance(value, str) or not value.strip():
+                continue
+            name = str(harness)
+            current = roots.get(name, [])
+            default_point = DEFAULT_SKILL_LOAD_POINTS.get(name)
+            if default_point is None:
+                current = [value, *current]
+            else:
+                current = [
+                    value if root == default_point else root
+                    for root in current
+                ]
+            roots[name] = list(dict.fromkeys(current))
+
+    explicit_roots = config.get("skill_roots")
+    if isinstance(explicit_roots, dict):
+        for harness, value in explicit_roots.items():
             if isinstance(value, list):
                 roots[str(harness)] = [str(v) for v in value]
     return roots

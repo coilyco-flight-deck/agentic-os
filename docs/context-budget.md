@@ -36,10 +36,10 @@ reachable working-dir/reference tiers - see [context-tiers.md](context-tiers.md)
 
 ### Skill scope follows the CWD
 
-`mount-skills.sh` exposes plugin skills plus the skills scoped to the
-CWD. Relative roots expand across the workspace and resolved paths dedupe, so
-the report is a workspace-union worst case. A single-repo session sees fewer.
-Defaults come from `DEFAULT_SKILL_ROOTS`; `skill_roots:` overrides them.
+Skill roots can be global or CWD-scoped. Relative roots expand across the
+workspace and dedupe by resolved path. `DEFAULT_SKILL_ROOTS` supplies defaults.
+Agent-compose's `skill_load_points:` replaces a harness global root. Legacy
+`skill_roots:` remains an explicit override.
 
 ## Why per-harness budgets differ
 
