@@ -1,6 +1,7 @@
 ---
 name: tooling-skill-authoring
 description: Author, place, prune, and validate skills. Covers admission, ordinary vs composed scope, triggers, structure, why-encoding, and deterministic helpers.
+low-context: optional
 ---
 
 # Skill authoring
@@ -38,6 +39,9 @@ Runbooks and partial-failure playbooks stay central. Requirements live in
 Create an ordinary source with `SKILL.md`, or a role-scoped source with
 `COMPOSED.md`. Both use the same `name` and `description` frontmatter. Bind
 each role-scoped source in `.agents/roles.kdl`.
+
+Classify low-context admission per skill. Missing metadata defaults to
+`required`. See the [model-class policy](../../../docs/skill-model-classes.md).
 
 Run the validator before committing for fast feedback:
 

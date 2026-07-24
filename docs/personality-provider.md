@@ -27,6 +27,9 @@ See [role-composed skills](role-composed-skills.md) for the complete contract.
 The compose request supplies the stable source id `aos-public`, so adding an
 ordinary skill or role binding needs no parallel provider inventory.
 
+Skill frontmatter owns the [model-class decision](skill-model-classes.md).
+Role selection runs first, so pruning never widens the role boundary.
+
 The provider also publishes `.agents/harnesses.yaml` as the canonical
 model-opaque registry of agent and harness identity, source links, and
 compatible intents. AOSH consumes a generated mirror for offline scoring while
