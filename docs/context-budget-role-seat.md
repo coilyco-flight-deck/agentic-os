@@ -42,8 +42,9 @@ payload hash.
 The shared AGENTS inventory preserves a source that arrives through both global
 and repository delivery paths as two occurrences.
 
-The checked-in
-[ops/codex baseline](context-budget-role-seat-before.yaml) is the current
+Concrete snapshot files use
+`context-budget-<role>-<seat>-<phase>.yaml`. The checked-in
+[ops/codex baseline](context-budget-ops-codex-before.yaml) is the current
 comparison point.
 
 ## Capture and compare
@@ -52,15 +53,15 @@ Capture the `ops/codex` baseline:
 
 ```sh
 ward exec context-budget -- --role ops --seat codex \
-  --snapshot docs/context-budget-role-seat-before.yaml
+  --snapshot docs/context-budget-ops-codex-before.yaml
 ```
 
 After a refactor, render the component and total delta:
 
 ```sh
 ward exec context-budget -- --role ops --seat codex \
-  --compare docs/context-budget-role-seat-before.yaml \
-  --snapshot /tmp/role-seat-context-after.yaml
+  --compare docs/context-budget-ops-codex-before.yaml \
+  --snapshot /tmp/context-budget-ops-codex-after.yaml
 ```
 
 `--skill-root` adds a seat or plugin skill root when the projected runtime

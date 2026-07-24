@@ -53,8 +53,9 @@ Usage:
     check-context-budget                  # report every harness vs its budget
     check-context-budget --check          # exit 1 if any harness is over budget
     check-context-budget --claude-budget 12000
-    check-context-budget --role ops --seat codex --snapshot before.yaml
-    check-context-budget --role ops --seat codex --compare before.yaml --snapshot after.yaml
+    check-context-budget --role ops --seat codex --snapshot context-budget-ops-codex-before.yaml
+    check-context-budget --role ops --seat codex --compare context-budget-ops-codex-before.yaml \
+        --snapshot context-budget-ops-codex-after.yaml
 """
 from __future__ import annotations
 
