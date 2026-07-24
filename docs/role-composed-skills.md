@@ -43,10 +43,11 @@ Every canonical agent-compose role has a block and at least one composed
 source.
 
 The complete `coding-*` family is composed for engineer, director, QA, and ops.
-Designer receives only the JavaScript pair. Other roles receive none.
+Designer receives only the JavaScript pair. Community receives only the
+Discord architecture source.
 
 Specialist sources add role-specific methods across advisor, designer, QA,
-ops, PM, social, sales, and customer-success.
+ops, PM, social, community, sales, and customer-success.
 
 The [principal workflow matrix](role-composed-principal-methods.md) records the broader role-gated method catalog and handoffs.
 
@@ -55,7 +56,6 @@ The [principal workflow matrix](role-composed-principal-methods.md) records the 
 Agent-compose selects ordinary skills for every role, then adds only the
 current role's composed allowlist. It copies each selected source into the
 isolated output and renames `COMPOSED.md` to `SKILL.md`.
-
 No unselected composed source appears in the role's skill catalog, files,
 manifest, or selection trace. This makes the boundary about context load and
 role focus, not lightweight routing hints.

@@ -31,6 +31,11 @@ selections:
       agent: mixpost
     channel-publishing:
       agent: elizaos
+  community:
+    knowledge-retrieval:
+      agent: rasa
+    conversation-management:
+      agent: elizaos
   sales:
     research-synthesis:
       agent: hermes

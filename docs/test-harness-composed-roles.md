@@ -47,6 +47,7 @@ ward exec aos-role-question -- local ops
 ward exec aos-role-question -- local pm
 ward exec aos-role-question -- local designer
 ward exec aos-role-question -- local social
+ward exec aos-role-question -- local community
 ward exec aos-role-question -- local sales
 ward exec aos-role-question -- local customer-success
 ```
@@ -57,11 +58,12 @@ probe never supplies the expected role name in the prompt.
 
 ## First complete run
 
-On 2026-07-23, authenticated designer Codex and all ten Goose role combinations
-returned the expected role marker and a substantive answer. An exploratory
-OpenCode path reached the selected model but produced no completion within ten
-minutes, while direct inference stayed healthy. Goose remains the operational
-local one-shot harness for this matrix.
+On 2026-07-23, authenticated designer Codex and the original ten Goose role
+combinations returned the expected role marker and a substantive answer. The
+community probe was added later and has not changed that historical result. An
+exploratory OpenCode path reached the selected model but produced no completion
+within ten minutes, while direct inference stayed healthy. Goose remains the
+operational local one-shot harness for this matrix.
 
 ## Related
 

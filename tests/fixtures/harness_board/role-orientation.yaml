@@ -43,6 +43,10 @@ roles:
     purpose: "Publish messages."
     personalities: [playful]
     seats: []
+  community:
+    purpose: "Support a community."
+    personalities: [nurturing]
+    seats: []
   sales:
     purpose: "Support sales."
     personalities: [charming]

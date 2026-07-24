@@ -15,8 +15,8 @@ import (
 
 const (
 	harnessBoardFormat    = "agentic-os.role-harness-board.v1"
-	harnessBoardRoleCount = 10
-	harnessBoardLaneCount = 16
+	harnessBoardRoleCount = 11
+	harnessBoardLaneCount = 18
 )
 
 //go:embed role-harnesses.json

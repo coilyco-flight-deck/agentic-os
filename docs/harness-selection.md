@@ -6,7 +6,7 @@ model, server, score, fallback, and hardware selection remain separate concerns.
 
 ## Confirmed board
 
-The committed board contains ten roles and sixteen lanes:
+The committed board contains eleven roles and eighteen lanes:
 
 * **engineer** - `autonomous-coding` uses `openhands`.
 * **director** - `strategic-planning` uses `plandex`.
@@ -16,6 +16,7 @@ The committed board contains ten roles and sixteen lanes:
 * **pm** - `strategic-planning` uses `hermes`. `project-coordination` uses `plane`.
 * **designer** - `product-shaping` uses `penpot`. `design-production` uses `aosx`.
 * **social** - `message-composition` uses `mixpost`. `channel-publishing` uses `elizaos`.
+* **community** - `knowledge-retrieval` uses `rasa`. `conversation-management` uses `elizaos`.
 * **sales** - `research-synthesis` uses `hermes`. `conversation-management` uses `elizaos`.
 * **customer-success** - `knowledge-retrieval` and `conversation-management` both use `rasa`.
 
@@ -61,7 +62,6 @@ The sync also writes [`role-harnesses.json`](../aos/role-harnesses.json) as the
 compiled view embedded by the standalone `aos` binary. The JSON does not become
 a second hand-owned source. The drift check requires both generated views to
 match the AOS capability registry joined with the same AOSH selection board.
-
 Run `ward exec sync-harness-board` after the AOS registry or an AOSH selection changes. Run
 `ward exec sync-harness-board -- --check` for a read-only drift check. Local
 pre-commit performs the same check when the sibling AOSH checkout exists.

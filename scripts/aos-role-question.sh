@@ -27,10 +27,13 @@ question_for() {
             echo "A cross-repository feature needs design, implementation, and rollout. Break it into the smallest dependency-aware milestones."
             ;;
         designer)
-            echo "A ten-role agent launcher must hide backend model identity. Shape the smallest clear role-selection interaction, including its default and failure state."
+            echo "An eleven-role agent launcher must hide backend model identity. Shape the smallest clear role-selection interaction, including its default and failure state."
             ;;
         social)
             echo "Draft a restrained launch note for role-scoped agent skills and name one signal that would show the message helped."
+            ;;
+        community)
+            echo "A Discord newcomer asks a repeated setup question in a busy channel. Give a welcoming grounded answer, one useful next step, and the condition for a human handoff."
             ;;
         sales)
             echo "A prospect says agent tooling feels too risky. Give one discovery question, one useful proof point, and one next step without pressure."

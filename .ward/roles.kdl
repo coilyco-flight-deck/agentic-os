@@ -169,6 +169,8 @@ roles {
     role designer {}
     // social: social media leads and analysis
     role social {}
+    // community: welcome, orient, support, and connect an online community
+    role community {}
     // sales: brings in the money
     role sales {}
     // customer-success: onboarding, support, retention, and customer research

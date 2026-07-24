@@ -17,6 +17,8 @@ roles:
     intents: [product-shaping, design-production]
   social:
     intents: [message-composition, channel-publishing]
+  community:
+    intents: [knowledge-retrieval, conversation-management]
   sales:
     intents: [research-synthesis, conversation-management]
   customer-success:

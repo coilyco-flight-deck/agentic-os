@@ -18,6 +18,8 @@ the role allowlists in [`.agents/roles.kdl`](../.agents/roles.kdl).
 * **Designer** - product brainstorming in addition to the frontend coding
   pair.
 * **Social, sales, and customer-success** - observer voice and voice linting.
+* **Community** - Discord hosting and architecture, cultural reading, trust
+  boundaries, and customer-signal routing.
 
 ## Handoffs
 
@@ -25,6 +27,10 @@ PM owns scout discovery, ranking, and portfolio recommendations. Engineer or
 ops owns supply-chain verification, installation, implementation, validation,
 and landing. PM records returned evidence and outcomes without inheriting
 execution authority.
+
+Community owns routine member interaction and a clean handoff. Human stewards
+retain moderation decisions, while customer-success, PM, ops, and engineering
+receive signals that belong to their work.
 
 Composition grants knowledge only. Ward and the active role surface still
 control tools, credentials, and write authority.

@@ -225,6 +225,7 @@ def repository_identity(repo: Path) -> str:
             ["git", "-C", str(repo), "config", "--get", "remote.origin.url"],
             capture_output=True,
             text=True,
+            encoding="utf-8",
             check=True,
         )
     except (OSError, subprocess.CalledProcessError):
@@ -878,6 +879,7 @@ def capture_snapshot(
                 [executable, "roster", "--out", str(roster), str(staged_provider)],
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
                 check=True,
             )
             validate_role_seat(roster / "AGENTS.COMPOSE.md", role, seat)
@@ -885,6 +887,7 @@ def capture_snapshot(
                 [executable, "compose", "--out", str(output), str(request)],
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
                 check=True,
                 cwd=root,
             )
@@ -913,6 +916,7 @@ def capture_snapshot(
                 ],
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
                 check=True,
             )
         except (OSError, subprocess.CalledProcessError) as exc:

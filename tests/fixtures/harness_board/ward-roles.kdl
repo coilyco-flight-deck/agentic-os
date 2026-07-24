@@ -32,6 +32,8 @@ roles {
     }
     role social {
     }
+    role community {
+    }
     role sales {
     }
     role customer-success {

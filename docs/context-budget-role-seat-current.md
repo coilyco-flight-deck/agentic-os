@@ -1,9 +1,10 @@
 # Current role-seat context inventory
 
-This snapshot measures every canonical role in Claude and Codex at AOS commit
+The original ten role snapshots were measured in Claude and Codex at AOS commit
 [`4bfa715`](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/commit/4bfa715).
-It uses agent-compose 0.36.0 and the deterministic characters-divided-by-four
-token proxy against this AOS checkout.
+The community admission is measured from the implementation for
+[aos#737](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/issues/737).
+All entries use the deterministic characters-divided-by-four token proxy.
 
 Each role reports Codex eager, Claude eager, shared lazy, then composed source
 count. Lazy totals match across seats.
@@ -26,21 +27,14 @@ count. Lazy totals match across seats.
 * **PM** - [Codex 12,771](context-budget-pm-codex-current.yaml), [Claude 12,933](context-budget-pm-claude-current.yaml), lazy 52,473, 11 composed.
 * **Designer** - [Codex 12,257](context-budget-designer-codex-current.yaml), [Claude 12,419](context-budget-designer-claude-current.yaml), lazy 24,160, 5 composed.
 * **Social** - [Codex 12,308](context-budget-social-codex-current.yaml), [Claude 12,470](context-budget-social-claude-current.yaml), lazy 20,117, 5 composed.
+* **Community** - [Codex 12,214](context-budget-community-codex-current.yaml), [Claude 12,376](context-budget-community-claude-current.yaml), lazy 28,462,
+  5 composed.
 * **Sales** - [Codex 12,229](context-budget-sales-codex-current.yaml), [Claude 12,391](context-budget-sales-claude-current.yaml), lazy 19,492, 4 composed.
 * **Customer success** - [Codex 12,301](context-budget-customer-success-codex-current.yaml), [Claude 12,463](context-budget-customer-success-claude-current.yaml), lazy 19,594,
   4 composed.
 
-## Latest pruning delta
-
-The comparison point is the immediately preceding provider commit,
-[`8489a02`](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/commit/8489a02).
-
-* **Director, engineer, QA, and ops** - each shed 221 eager and 1,403 lazy
-  tokens plus five composed sources.
-* **Other six roles** - unchanged by the Azure, CloudFormation, GCP, Pulumi,
-  and Ruby source deletion.
-* **AGENTS follow-up** - later command-handover cleanup shed another 248 eager
-  tokens from every seat.
+Community sees 12 ordinary sources because its Discord host method is
+role-composed. The original snapshots predate that promotion and report 13.
 
 ## Cumulative tracked baseline
 

@@ -196,6 +196,22 @@ roles {
         }
         // END generated role-intent harness routes
     }
+    role community {
+        // BEGIN generated role-intent harness routes
+        intent knowledge-retrieval {
+            harness rasa
+        }
+        intent conversation-management {
+            harness elizaos
+        }
+        // END generated role-intent harness routes
+
+        composed-skill coding-discord-bot-architect
+        composed-skill tooling-discord-community-host
+        composed-skill tooling-customer-success-signal-routing
+        composed-skill writing-social-cultural-reading
+        composed-skill writing-social-trust-boundaries
+    }
     role sales {
         composed-skill tooling-sales-discovery
         composed-skill tooling-sales-negotiation-architecture
