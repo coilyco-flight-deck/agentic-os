@@ -22,7 +22,8 @@ Name it `test-harness-<agent>.md`, link it from this parent's index, and follow 
 - **Mechanism** - exactly how to invoke this agent for one-shot probing, with the gotchas (auth, flags, host).
 - **Usage** - the concrete commands, single and batch.
 - **First prod-test findings** - run the probe battery once and record what it surfaced, organized by: tool use (what fires, what returns real output), iteration discipline (does it thrash), self-knowledge (model/host self-report accuracy), instruction-following (brevity, format), context window (claimed vs real).
-- **Related** - the agent profile skill, the bound model tier, this parent.
+- **Related** - the harness-selection authority, runtime configuration, and
+  this parent.
 
 Keep it public-safe: no tower FQDN or opaque ids (use placeholders, resolve at runtime). Findings are point-in-time - date the model/version they were taken against.
 
@@ -37,4 +38,3 @@ Keep it public-safe: no tower FQDN or opaque ids (use placeholders, resolve at r
 ## Related
 
 - [harness-selection.md](harness-selection.md) - picking a harness and model tier.
-- [agents-goose](../.agents/skills/agents-goose/SKILL.md), [agents-claude](../.agents/skills/agents-claude/SKILL.md) and siblings - the harness profiles.

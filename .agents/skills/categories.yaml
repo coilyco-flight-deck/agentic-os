@@ -34,16 +34,10 @@ categories:
     prefix: kai-
     enforce_status: false
 
-  # ---- Model + agent capability/scope profiles (thin) ----
+  # ---- Model capability/scope profiles (thin) ----
   # role: thin caps these at 1/4 the intended Markdown size (1000 bytes /
-  # 20 lines) for the small-local-model surface. See the agents/models block
+  # 20 lines) for the small-local-model surface. See the models block
   # in agentic-os-kai's categories.yaml and docs/harness-selection.md.
-
-  - id: agents
-    kind: prefix
-    prefix: agents-
-    role: thin
-    enforce_status: false
 
   - id: models
     kind: prefix

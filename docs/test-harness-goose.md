@@ -2,7 +2,12 @@
 
 Part of the [test-harness](test-harness.md) doc family - one per agent.
 
-`scripts/goose-ask.sh` (ward verb `goose-ask`) is a minimal probe harness for the [Goose](../.agents/skills/agents-goose/SKILL.md) agent. It runs one-shot questions through `goose run --no-session`, strips the startup banner, times each call, and tees a full raw transcript under `~/.cache/agentic-os/goose-ask/<timestamp>.log`. The goal is to interrogate a Goose+model pairing before trusting it with real work.
+`scripts/goose-ask.sh` (ward verb `goose-ask`) is a minimal probe harness for
+the [Goose](harness-selection.md) agent. It runs one-shot questions through
+`goose run --no-session`, strips the startup banner, times each call, and tees
+a full raw transcript under
+`~/.cache/agentic-os/goose-ask/<timestamp>.log`. The goal is to interrogate a
+Goose+model pairing before trusting it with real work.
 
 The standalone `goose-health` probe was not kept here. Its tower/Ollama reachability and residency checks belong in the always-on agent-health heartbeat in `infrastructure`, which is the canonical place for the serving-layer view.
 
@@ -36,6 +41,5 @@ Run against `qwen3-coder:30b` via Ollama on `kai-tower-3026` over tailnet, Goose
 ## Related
 
 - [test-harness](test-harness.md) - the parent doc family and authoring convention.
-- [agents-goose](../.agents/skills/agents-goose/SKILL.md) - the harness profile.
 - `models-qwen-coder` - the bound model tier.
 - [harness-selection.md](harness-selection.md) - picking a harness and model tier.

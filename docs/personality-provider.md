@@ -31,6 +31,8 @@ The provider also publishes `.agents/harnesses.yaml` as the canonical
 model-opaque registry of agent and harness identity, source links, and
 compatible intents. AOSH consumes a generated mirror for offline scoring while
 retaining role joins, lane selections, models, and backend routes.
+Harness identity remains registry data rather than ordinary skill entries, so
+every role does not pay a duplicate catalog routing cost.
 
 Agent-compose activates the complete ordered personality meld for a selected
 role. A request cannot select an arbitrary trait or change compatibility.
