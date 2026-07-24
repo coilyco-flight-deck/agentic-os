@@ -1,4 +1,4 @@
-// ward ops tailscale - the tailnet live-observe surface as an allowlist
+// Role-scoped Ward tailnet live-observe surface as an allowlist
 // (cli-guard execverb, exec dialect). Wraps the image-baked
 // `/usr/local/bin/tailscale` client so a live-observe surface can
 // answer "is the tailnet up, is the peer reachable" itself instead of handing
