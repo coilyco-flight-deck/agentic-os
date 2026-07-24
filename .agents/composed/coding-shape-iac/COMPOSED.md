@@ -1,6 +1,6 @@
 ---
 name: coding-shape-iac
-description: Category umbrella for infrastructure-as-code. The Ansible / Terraform / Kubernetes trifecta is Kai's full-coverage model - Terraform hits APIs, Ansible converges hosts, Kubernetes orchestrates containers. Pulumi and CloudFormation are situational leaves.
+description: Category umbrella for infrastructure-as-code. The Ansible / Terraform / Kubernetes trifecta is Kai's full-coverage model - Terraform hits APIs, Ansible converges hosts, Kubernetes orchestrates containers.
 low-context: optional
 ---
 
@@ -17,11 +17,6 @@ Ansible, Terraform, and Kubernetes together cover Kai's whole infrastructure sur
 - **Kubernetes - orchestrates containers.** Declarative scheduling and lifecycle of containerized workloads. The portable compute layer. See `coding-kubernetes`.
 
 Pick by substrate: API resource -> Terraform, host or service state -> Ansible, containerized workload -> Kubernetes. Most real systems use all three, each on the leg it fits.
-
-## Situational leaves
-
-- `coding-pulumi` - code-first IaC (real languages instead of HCL). Reach for it only when a project already commits to it. **Stub - fill later.**
-- `coding-cloudformation` - AWS-native IaC. Reach for it when an existing stack lives there or a service only ships CFN. Terraform is the default over CFN for new AWS work. **Stub - fill later.**
 
 ## Cross-cutting principles
 

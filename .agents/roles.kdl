@@ -2,20 +2,15 @@ roles {
     role engineer {
         composed-skill coding-ansible
         composed-skill coding-aws
-        composed-skill coding-azure
-        composed-skill coding-cloudformation
         composed-skill coding-csharp
         composed-skill coding-discord-bot-architect
-        composed-skill coding-gcp
         composed-skill coding-git
         composed-skill coding-go
         composed-skill coding-javascript
         composed-skill coding-javascript-react
         composed-skill coding-kubernetes
         composed-skill coding-licenses
-        composed-skill coding-pulumi
         composed-skill coding-python
-        composed-skill coding-ruby
         composed-skill coding-rust
         composed-skill coding-shape-cli
         composed-skill coding-shape-cloud
@@ -37,20 +32,15 @@ roles {
     role director {
         composed-skill coding-ansible
         composed-skill coding-aws
-        composed-skill coding-azure
-        composed-skill coding-cloudformation
         composed-skill coding-csharp
         composed-skill coding-discord-bot-architect
-        composed-skill coding-gcp
         composed-skill coding-git
         composed-skill coding-go
         composed-skill coding-javascript
         composed-skill coding-javascript-react
         composed-skill coding-kubernetes
         composed-skill coding-licenses
-        composed-skill coding-pulumi
         composed-skill coding-python
-        composed-skill coding-ruby
         composed-skill coding-rust
         composed-skill coding-shape-cli
         composed-skill coding-shape-cloud
@@ -81,20 +71,15 @@ roles {
     role qa {
         composed-skill coding-ansible
         composed-skill coding-aws
-        composed-skill coding-azure
-        composed-skill coding-cloudformation
         composed-skill coding-csharp
         composed-skill coding-discord-bot-architect
-        composed-skill coding-gcp
         composed-skill coding-git
         composed-skill coding-go
         composed-skill coding-javascript
         composed-skill coding-javascript-react
         composed-skill coding-kubernetes
         composed-skill coding-licenses
-        composed-skill coding-pulumi
         composed-skill coding-python
-        composed-skill coding-ruby
         composed-skill coding-rust
         composed-skill coding-shape-cli
         composed-skill coding-shape-cloud
@@ -127,20 +112,15 @@ roles {
     role ops {
         composed-skill coding-ansible
         composed-skill coding-aws
-        composed-skill coding-azure
-        composed-skill coding-cloudformation
         composed-skill coding-csharp
         composed-skill coding-discord-bot-architect
-        composed-skill coding-gcp
         composed-skill coding-git
         composed-skill coding-go
         composed-skill coding-javascript
         composed-skill coding-javascript-react
         composed-skill coding-kubernetes
         composed-skill coding-licenses
-        composed-skill coding-pulumi
         composed-skill coding-python
-        composed-skill coding-ruby
         composed-skill coding-rust
         composed-skill coding-shape-cli
         composed-skill coding-shape-cloud

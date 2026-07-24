@@ -39,13 +39,12 @@ Apply the rule by capability, not by source directory:
   architecture or specialist methods, and long-horizon work a low-context
   model is not expected to perform.
 
-The current provider has 71 explicit decisions. Optional sources are the
-Claude-in-Chrome and agent-facing CLI adapters, the CloudFormation and Pulumi
-stubs, Discord bot architecture, every `coding-shape-*` architecture umbrella,
-causal-claim audit, cognitive walkthrough, product-signal triangulation,
-product brainstorming, state-machine and visual QA methods, negotiation
-architecture, all three scout methods, skill authoring, and system-improvement
-vocabulary. Every other source is required.
+The current provider has 66 explicit decisions. Optional sources are the
+Claude-in-Chrome and agent-facing CLI adapters, Discord bot architecture,
+every `coding-shape-*` architecture umbrella, causal-claim audit, cognitive
+walkthrough, product-signal triangulation, product brainstorming, state-machine
+and visual QA methods, negotiation architecture, all three scout methods, skill
+authoring, and system-improvement vocabulary. Every other source is required.
 
 ## Composition
 

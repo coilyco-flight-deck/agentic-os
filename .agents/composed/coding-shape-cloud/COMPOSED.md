@@ -12,11 +12,11 @@ Umbrella for any work that targets a public cloud. Cross-cuts AWS, GCP, Azure, a
 
 Multi-cloud experience across all three majors. AWS is Kai's default for new infra. GCP comes from Bluelink (GCP-primary, K8s on GKE). Azure comes from Textio (Azure OpenAI plus a BGP VPN back to AWS).
 
-## Per-cloud skills
+## Cloud posture
 
 - `coding-aws` - **primary** cloud. Homelab adjacent (SSM, Route53), default for new infra.
-- `coding-gcp` - **secondary**. Reach for when an existing job lives there or for GCP-only services (BigQuery, Vertex AI, Cloud Run for thin POCs).
-- `coding-azure` - **tertiary**. Reach for when Azure OpenAI is specifically required, or when an existing system already lives there.
+- GCP and Azure are existing-system-only surfaces. Follow the target project's
+  own conventions when work requires either one.
 
 ## Cross-cloud principles
 

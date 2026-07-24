@@ -12,6 +12,5 @@ SEED_LANGUAGES: dict[str, dict] = {
     'go': {"skill": 'coding-go', "extensions": ['.go']},
     'javascript': {"skill": 'coding-javascript', "extensions": ['.js', '.mjs', '.cjs', '.jsx', '.ts', '.tsx']},
     'python': {"skill": 'coding-python', "extensions": ['.py', '.pyi']},
-    'ruby': {"skill": 'coding-ruby', "extensions": ['.rb']},
     'rust': {"skill": 'coding-rust', "extensions": ['.rs']},
 }
