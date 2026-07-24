@@ -48,7 +48,7 @@ def test_publish_and_release_workflows_have_no_core_job() -> None:
     )
 
 
-def test_language_builds_are_serialized_and_full_waits_for_the_matrix() -> None:
+def test_language_builds_match_runner_capacity_and_full_waits_for_the_matrix() -> None:
     publish = PUBLISH.read_text(encoding="utf-8")
     release = RELEASE.read_text(encoding="utf-8")
 
@@ -59,7 +59,7 @@ def test_language_builds_are_serialized_and_full_waits_for_the_matrix() -> None:
         assert f"retag-{tier}:\n    needs: [plan-release]" in release
 
     assert "publish-languages:\n    name: publish-${{ matrix.tier }}" in publish
-    assert "max-parallel: 1" in publish
+    assert "max-parallel: 4" in publish
     assert "tier: ${{ matrix.tier }}" in publish
     assert "needs: [plan-draft, publish-languages]" in publish
     assert (

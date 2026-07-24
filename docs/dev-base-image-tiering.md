@@ -48,8 +48,8 @@ same-release registry images through explicit build arguments.
 ## Release flow
 
 * `promote.yml` gates `main` and fast-forwards `release`.
-* `dev-base-publish.yml` serializes the draft language exports on the shared
-  builder, then publishes `full`.
+* `dev-base-publish.yml` runs up to four draft language exports on the dedicated
+  image-build runner, matching its configured capacity, then publishes `full`.
 * `release.yml` retags those draft manifests and creates the release only after
   every image succeeds.
 * Manual dispatches can target one tier closure. See
