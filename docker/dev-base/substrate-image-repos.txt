@@ -1,9 +1,2 @@
-# TODO: change to full URLs so that some of these can be github canonical
 coilysiren/coilysiren
-coilysiren/inbox
-coilyco-flight-deck/.github
 coilyco-flight-deck/agentic-os
-# TODO: allow private substrate repos
-# coilyco-bridge/.github
-# coilyco-bridge/agentic-os-kai
-# coilyco-bridge/lore
