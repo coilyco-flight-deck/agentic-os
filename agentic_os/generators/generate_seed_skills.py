@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """Seed-skill definitions: which skills propagate into target repos.
 
-qwen-opencode's per-repo context management wants a small amount of language context
-living inside each target repo (for a Python repo, a pointer to how Kai writes
-Python). A skill opts into that propagation with a ``seed:`` block in its
-SKILL.md frontmatter:
+qwen-opencode's per-repo context management wants a small amount of language
+context living inside each target repo. A composed coding source opts into
+that propagation with a ``seed:`` block in its COMPOSED.md frontmatter:
 
     seed:
       kind: always                    # seed into every target repo (baseline)
@@ -14,17 +13,18 @@ SKILL.md frontmatter:
       language: python
       extensions: [".py", ".pyi"]     # seed into repos containing these files
 
-agentic-os is the source of truth: the ``coding-<lang>`` skills carry the
-frontmatter. But the ``seed-skills`` hook runs in consumer repos that have no
-checkout of these skills, so the table is generated into ``seed_skills_data.py``
-(shipped in the package) by ``generate-seed-skills``. ``check-seed-skills-drift``
-fails if that generated file is stale, and is dogfooded in agentic-os only.
+agentic-os is the source of truth. The role-gated ``coding-<lang>`` sources
+carry the frontmatter. The ``seed-skills`` hook runs in consumer repos without
+this source tree, so ``generate-seed-skills`` writes the table into
+``seed_skills_data.py`` for the package. ``check-seed-skills-drift`` fails when
+that generated file is stale and is dogfooded in agentic-os only.
 
 Downstream repos reference a seeded skill by its canonical path,
 ``.agents/skills/coding-python/SKILL.md`` (as a relative ref or under the full
-``forgejo.coilysiren.me/coilyco-flight-deck/agentic-os`` URL). ``canonical_ref``
-builds the path tail used for the presence check; ``suggested_url`` builds the
-full Forgejo URL shown in guidance.
+``forgejo.coilysiren.me/coilyco-flight-deck/agentic-os`` URL). The presence
+check also accepts the canonical composed source path. ``canonical_ref`` builds
+the delivered path tail, ``source_ref`` builds the source path tail, and
+``suggested_url`` builds the full Forgejo URL shown in guidance.
 
 Schema and rollout: see docs/skill-discipline-authoring-shipping.md.
 """
@@ -40,23 +40,27 @@ from agentic_os.pre_commit.check_skill import parse_frontmatter
 TRACKER = "docs/skill-discipline-authoring-shipping.md"
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
-SKILLS_DIR = _REPO_ROOT / ".agents" / "skills"
+COMPOSED_SKILLS_DIR = _REPO_ROOT / ".agents" / "composed"
 DATA_PATH = Path(__file__).resolve().parents[1] / "seed_skills_data.py"
 
-# Path prefix every consumer reference shares. The presence check matches this
-# tail so a relative ref, a raw Forgejo URL, or a src/branch URL all satisfy it.
-SKILLS_PREFIX = ".agents/skills"
+DELIVERED_SKILLS_PREFIX = ".agents/skills"
+SOURCE_SKILLS_PREFIX = ".agents/composed"
 CANONICAL_REPO = "forgejo.coilysiren.me/coilyco-flight-deck/agentic-os"
 
 
 def canonical_ref(skill: str) -> str:
     """The path tail a target repo must reference for this skill to count."""
-    return f"{SKILLS_PREFIX}/{skill}/SKILL.md"
+    return f"{DELIVERED_SKILLS_PREFIX}/{skill}/SKILL.md"
+
+
+def source_ref(skill: str) -> str:
+    """The canonical role-composed source path for a seed skill."""
+    return f"{SOURCE_SKILLS_PREFIX}/{skill}/COMPOSED.md"
 
 
 def suggested_url(skill: str) -> str:
     """Full Forgejo URL shown in guidance when a reference is missing."""
-    return f"https://{CANONICAL_REPO}/src/branch/main/{canonical_ref(skill)}"
+    return f"https://{CANONICAL_REPO}/src/branch/main/{source_ref(skill)}"
 
 
 def _parse_seed_block(name: str, seed: object) -> tuple[str, dict | None]:
@@ -88,9 +92,9 @@ def _parse_seed_block(name: str, seed: object) -> tuple[str, dict | None]:
 
 
 def iter_seed_skills(
-    skills_dir: Path = SKILLS_DIR,
+    composed_dir: Path = COMPOSED_SKILLS_DIR,
 ) -> tuple[list[str], dict[str, dict]]:
-    """Scan skill frontmatter, return (always_skills, languages).
+    """Scan composed coding frontmatter, return (always_skills, languages).
 
     ``always_skills`` is a sorted list of skill folder names with
     ``seed.kind: always``. ``languages`` maps language id -> {"skill", "extensions"}.
@@ -100,8 +104,8 @@ def iter_seed_skills(
     always: list[str] = []
     languages: dict[str, dict] = {}
     ext_owner: dict[str, str] = {}
-    for skill_dir in sorted(p for p in skills_dir.iterdir() if p.is_dir()):
-        md = skill_dir / "SKILL.md"
+    for skill_dir in sorted(p for p in composed_dir.iterdir() if p.is_dir()):
+        md = skill_dir / "COMPOSED.md"
         if not md.is_file():
             continue
         fm, _ = parse_frontmatter(md.read_text(encoding="utf-8"))
@@ -132,7 +136,7 @@ def iter_seed_skills(
 def render_data_module(always: list[str], languages: dict[str, dict]) -> str:
     """Deterministic source for seed_skills_data.py. No timestamps."""
     lines = [
-        '"""Generated by `generate-seed-skills` from skill frontmatter.',
+        '"""Generated by `generate-seed-skills` from composed skill frontmatter.',
         "",
         "Do not edit by hand. Run `generate-seed-skills` after changing a",
         "skill's seed: frontmatter; check-seed-skills-drift fails on staleness.",
@@ -166,8 +170,10 @@ def load_data() -> tuple[list[str], dict[str, dict]]:
     return list(data.SEED_ALWAYS), dict(data.SEED_LANGUAGES)
 
 
-def generate(skills_dir: Path = SKILLS_DIR, data_path: Path = DATA_PATH) -> int:
-    always, languages = iter_seed_skills(skills_dir)
+def generate(
+    composed_dir: Path = COMPOSED_SKILLS_DIR, data_path: Path = DATA_PATH
+) -> int:
+    always, languages = iter_seed_skills(composed_dir)
     data_path.write_text(render_data_module(always, languages), encoding="utf-8")
     print(
         f"generate-seed-skills: wrote {data_path.name} "
@@ -177,9 +183,9 @@ def generate(skills_dir: Path = SKILLS_DIR, data_path: Path = DATA_PATH) -> int:
 
 
 def check_drift(
-    skills_dir: Path = SKILLS_DIR, data_path: Path = DATA_PATH
+    composed_dir: Path = COMPOSED_SKILLS_DIR, data_path: Path = DATA_PATH
 ) -> int:
-    always, languages = iter_seed_skills(skills_dir)
+    always, languages = iter_seed_skills(composed_dir)
     expected = render_data_module(always, languages)
     actual = data_path.read_text(encoding="utf-8") if data_path.exists() else ""
     if actual == expected:

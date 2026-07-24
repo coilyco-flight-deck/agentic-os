@@ -11,7 +11,7 @@ This lists shipped capabilities, not files.
 - **Karabiner key bindings** - complex modifications for the external keyboard and Remote Desktop.
 - [Agents and sessions](features-agents-sessions.md) - self-name, session pulse, status line, and harness policy.
 - [Agent-compose provider](personality-provider.md) - ordinary and role-composed skills, the public harness capability registry, and measurement alignment.
-- [Role-composed skills](role-composed-skills.md) - deep, role-gated knowledge.
+- [Role-composed skills](role-composed-skills.md) - role-gated specialist and coding knowledge.
 - [AOS launcher](aos-cli.md) - released Go containers and embedded defaults.
 - [aguard](aguard.md) - canonical guarded operator CLI in the full image.
 - [Code review skill](../.agents/skills/tooling-code-review/SKILL.md) - in-container review stance.

@@ -22,7 +22,7 @@ web server, http server, rest api, graphql, fastapi, flask, django, sanic, starl
 - **OpenAPI from day one.** `/openapi.json` exists, accurate, kept in sync with handlers. Cross-link to the JSON-twin discoverability rule in `kai-tech-prefs` (in agentic-os-kai).
 - **Async I/O when there's I/O.** Sync handlers only when there's nothing to overlap.
 - **Structured errors.** Return shaped JSON for 4xx/5xx, not bare strings.
-- **Prometheus metrics from day one.** `/metrics` endpoint, request duration histograms, error counters. See [`coding-shape-observability`](../../skills/coding-shape-observability/SKILL.md).
+- **Prometheus metrics from day one.** `/metrics` endpoint, request duration histograms, error counters. See `coding-shape-observability`.
 - **Healthcheck split.** `/healthz` for liveness, `/readyz` for readiness. Don't conflate.
 - **CORS configured explicitly.** Wide-open `*` is usually wrong.
 - **Auth at the edge.** Middleware/gateway, not per-handler.
@@ -40,6 +40,6 @@ Building a new HTTP server, refactoring an existing one, or designing the API su
 
 ## See also
 
-- [`coding-shape-observability`](../../skills/coding-shape-observability/SKILL.md) - metrics/tracing wiring.
-- [`coding-kubernetes`](../../skills/coding-kubernetes/SKILL.md) - deploy target for most servers Kai writes.
+- `coding-shape-observability` - metrics/tracing wiring.
+- `coding-kubernetes` - deploy target for most servers Kai writes.
 - `kai-tech-prefs` (in agentic-os-kai) - JSON-twin discoverability rule.

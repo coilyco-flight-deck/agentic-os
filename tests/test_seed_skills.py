@@ -8,25 +8,27 @@ import pytest
 from agentic_os.generators import generate_seed_skills as seed_skills
 
 
-def _make_skill(skills_dir: Path, name: str, seed_block: str | None) -> None:
-    d = skills_dir / name
+def _make_skill(composed_dir: Path, name: str, seed_block: str | None) -> None:
+    d = composed_dir / name
     d.mkdir(parents=True)
     fm = f"name: {name}\ndescription: x\n"
     if seed_block is not None:
         fm += seed_block
-    (d / "SKILL.md").write_text(f"---\n{fm}---\n\n# {name}\n", encoding="utf-8")
+    (d / "COMPOSED.md").write_text(
+        f"---\n{fm}---\n\n# {name}\n", encoding="utf-8"
+    )
 
 
 def test_iter_collects_always_and_languages(tmp_path: Path) -> None:
-    skills = tmp_path / "skills"
-    _make_skill(skills, "coding-git", "seed:\n  kind: always\n")
+    composed = tmp_path / "composed"
+    _make_skill(composed, "coding-git", "seed:\n  kind: always\n")
     _make_skill(
-        skills,
+        composed,
         "coding-python",
         "seed:\n  kind: language\n  language: python\n  extensions: [.py, .pyi]\n",
     )
-    _make_skill(skills, "coding-plain", None)  # no seed: ignored
-    always, languages = seed_skills.iter_seed_skills(skills)
+    _make_skill(composed, "coding-plain", None)  # no seed: ignored
+    always, languages = seed_skills.iter_seed_skills(composed)
     assert always == ["coding-git"]
     assert languages == {
         "python": {"skill": "coding-python", "extensions": [".py", ".pyi"]}
@@ -34,45 +36,45 @@ def test_iter_collects_always_and_languages(tmp_path: Path) -> None:
 
 
 def test_iter_rejects_bad_kind(tmp_path: Path) -> None:
-    skills = tmp_path / "skills"
-    _make_skill(skills, "coding-x", "seed:\n  kind: nonsense\n")
+    composed = tmp_path / "composed"
+    _make_skill(composed, "coding-x", "seed:\n  kind: nonsense\n")
     with pytest.raises(ValueError, match="seed.kind"):
-        seed_skills.iter_seed_skills(skills)
+        seed_skills.iter_seed_skills(composed)
 
 
 def test_iter_rejects_language_without_extensions(tmp_path: Path) -> None:
-    skills = tmp_path / "skills"
-    _make_skill(skills, "coding-x", "seed:\n  kind: language\n  language: x\n")
+    composed = tmp_path / "composed"
+    _make_skill(composed, "coding-x", "seed:\n  kind: language\n  language: x\n")
     with pytest.raises(ValueError, match="extensions"):
-        seed_skills.iter_seed_skills(skills)
+        seed_skills.iter_seed_skills(composed)
 
 
 def test_iter_rejects_duplicate_language(tmp_path: Path) -> None:
-    skills = tmp_path / "skills"
+    composed = tmp_path / "composed"
     _make_skill(
-        skills, "coding-a",
+        composed, "coding-a",
         "seed:\n  kind: language\n  language: py\n  extensions: [.a]\n",
     )
     _make_skill(
-        skills, "coding-b",
+        composed, "coding-b",
         "seed:\n  kind: language\n  language: py\n  extensions: [.b]\n",
     )
     with pytest.raises(ValueError, match="claimed by both"):
-        seed_skills.iter_seed_skills(skills)
+        seed_skills.iter_seed_skills(composed)
 
 
 def test_iter_rejects_duplicate_extension(tmp_path: Path) -> None:
-    skills = tmp_path / "skills"
+    composed = tmp_path / "composed"
     _make_skill(
-        skills, "coding-a",
+        composed, "coding-a",
         "seed:\n  kind: language\n  language: a\n  extensions: [.x]\n",
     )
     _make_skill(
-        skills, "coding-b",
+        composed, "coding-b",
         "seed:\n  kind: language\n  language: b\n  extensions: [.x]\n",
     )
     with pytest.raises(ValueError, match="extension '.x'"):
-        seed_skills.iter_seed_skills(skills)
+        seed_skills.iter_seed_skills(composed)
 
 
 def test_render_is_importable_and_roundtrips() -> None:
@@ -86,16 +88,26 @@ def test_render_is_importable_and_roundtrips() -> None:
 
 
 def test_generate_then_check_drift_passes(tmp_path: Path) -> None:
-    skills = tmp_path / "skills"
-    _make_skill(skills, "coding-git", "seed:\n  kind: always\n")
+    composed = tmp_path / "composed"
+    _make_skill(composed, "coding-git", "seed:\n  kind: always\n")
     data_path = tmp_path / "seed_skills_data.py"
-    assert seed_skills.generate(skills, data_path) == 0
-    assert seed_skills.check_drift(skills, data_path) == 0
+    assert seed_skills.generate(composed, data_path) == 0
+    assert seed_skills.check_drift(composed, data_path) == 0
 
 
 def test_check_drift_fails_when_stale(tmp_path: Path) -> None:
-    skills = tmp_path / "skills"
-    _make_skill(skills, "coding-git", "seed:\n  kind: always\n")
+    composed = tmp_path / "composed"
+    _make_skill(composed, "coding-git", "seed:\n  kind: always\n")
     data_path = tmp_path / "seed_skills_data.py"
     data_path.write_text("SEED_ALWAYS = []\nSEED_LANGUAGES = {}\n", encoding="utf-8")
-    assert seed_skills.check_drift(skills, data_path) == 1
+    assert seed_skills.check_drift(composed, data_path) == 1
+
+
+def test_source_ref_points_to_composed_entrypoint() -> None:
+    assert (
+        seed_skills.source_ref("coding-python")
+        == ".agents/composed/coding-python/COMPOSED.md"
+    )
+    assert seed_skills.suggested_url("coding-python").endswith(
+        "/.agents/composed/coding-python/COMPOSED.md"
+    )

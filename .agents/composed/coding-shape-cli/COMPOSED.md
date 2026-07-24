@@ -48,6 +48,6 @@ Designing or building a new CLI, refactoring an existing one, or wrapping a sub-
 
 ## See also
 
-- [`coding-shape-tui`](../../skills/coding-shape-tui/SKILL.md) - if the CLI grows an interactive surface.
+- `coding-shape-tui` - if the CLI grows an interactive surface.
 - `ward-discipline` (in ward) - the load-bearing case study.
 - `kai-tech-prefs` (in agentic-os-kai) - urfave/cli + Charm + no-shortened-names rules.

@@ -8,9 +8,9 @@ Each `coilysiren/*` repo pins canonical hook IDs via `rev:`. The active set cove
 
 ## Seed-skill propagation
 
-qwen-opencode's per-repo context management wants a little language context living inside each target repo (for a Python repo, a pointer to how Kai writes Python). The `coding-<lang>` skills declare how they propagate with a `seed:` frontmatter block: `kind: always` (the `coding-git` baseline, seeded into every repo) or `kind: language` with `language` + `extensions` (seeded into repos containing those files). Target repos reference a seeded skill by its canonical path, e.g. `.agents/skills/coding-python/SKILL.md`.
+qwen-opencode's per-repo context management wants a little language context living inside each target repo (for a Python repo, a pointer to how Kai writes Python). The composed `coding-<lang>` sources declare how they propagate with a `seed:` frontmatter block: `kind: always` (the `coding-git` baseline, seeded into every repo) or `kind: language` with `language` + `extensions` (seeded into repos containing those files). Target repos reference the delivered path, e.g. `.agents/skills/coding-python/SKILL.md`, or the canonical `.agents/composed/coding-python/COMPOSED.md` source.
 
-The frontmatter is the source of truth. `generate-seed-skills` renders it into `agentic_os/seed_skills_data.py`, shipped in the package so consumer repos enforce the `seed-skills` hook offline, and `check-seed-skills-drift` (dogfooded in `agentic-os` only) fails if that table goes stale. This repo ships the validator half only: the actual copying of skills into target repos is Ansible's job.
+The composed frontmatter is the source of truth. `generate-seed-skills` renders it into `agentic_os/seed_skills_data.py`, shipped in the package so consumer repos enforce the `seed-skills` hook offline, and `check-seed-skills-drift` (dogfooded in `agentic-os` only) fails if that table goes stale. This repo ships the validator half only: the actual copying and `COMPOSED.md` to `SKILL.md` promotion in target repos is Ansible's job.
 
 ## Diagnostic + utility helpers
 

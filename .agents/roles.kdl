@@ -1,7 +1,29 @@
 roles {
     role engineer {
+        composed-skill coding-ansible
+        composed-skill coding-aws
+        composed-skill coding-azure
+        composed-skill coding-cloudformation
+        composed-skill coding-csharp
+        composed-skill coding-discord-bot-architect
+        composed-skill coding-gcp
+        composed-skill coding-git
+        composed-skill coding-go
+        composed-skill coding-javascript
+        composed-skill coding-javascript-react
+        composed-skill coding-kubernetes
+        composed-skill coding-licenses
+        composed-skill coding-pulumi
+        composed-skill coding-python
+        composed-skill coding-ruby
+        composed-skill coding-rust
         composed-skill coding-shape-cli
+        composed-skill coding-shape-cloud
+        composed-skill coding-shape-iac
+        composed-skill coding-shape-observability
+        composed-skill coding-shape-tui
         composed-skill coding-shape-web-server
+        composed-skill coding-terraform
         // BEGIN generated role-intent harness routes
         intent autonomous-coding {
             harness openhands
@@ -9,6 +31,30 @@ roles {
         // END generated role-intent harness routes
     }
     role director {
+        composed-skill coding-ansible
+        composed-skill coding-aws
+        composed-skill coding-azure
+        composed-skill coding-cloudformation
+        composed-skill coding-csharp
+        composed-skill coding-discord-bot-architect
+        composed-skill coding-gcp
+        composed-skill coding-git
+        composed-skill coding-go
+        composed-skill coding-javascript
+        composed-skill coding-javascript-react
+        composed-skill coding-kubernetes
+        composed-skill coding-licenses
+        composed-skill coding-pulumi
+        composed-skill coding-python
+        composed-skill coding-ruby
+        composed-skill coding-rust
+        composed-skill coding-shape-cli
+        composed-skill coding-shape-cloud
+        composed-skill coding-shape-iac
+        composed-skill coding-shape-observability
+        composed-skill coding-shape-tui
+        composed-skill coding-shape-web-server
+        composed-skill coding-terraform
         composed-skill tooling-director-decision-architecture
         // BEGIN generated role-intent harness routes
         intent strategic-planning {
@@ -17,6 +63,30 @@ roles {
         // END generated role-intent harness routes
     }
     role qa {
+        composed-skill coding-ansible
+        composed-skill coding-aws
+        composed-skill coding-azure
+        composed-skill coding-cloudformation
+        composed-skill coding-csharp
+        composed-skill coding-discord-bot-architect
+        composed-skill coding-gcp
+        composed-skill coding-git
+        composed-skill coding-go
+        composed-skill coding-javascript
+        composed-skill coding-javascript-react
+        composed-skill coding-kubernetes
+        composed-skill coding-licenses
+        composed-skill coding-pulumi
+        composed-skill coding-python
+        composed-skill coding-ruby
+        composed-skill coding-rust
+        composed-skill coding-shape-cli
+        composed-skill coding-shape-cloud
+        composed-skill coding-shape-iac
+        composed-skill coding-shape-observability
+        composed-skill coding-shape-tui
+        composed-skill coding-shape-web-server
+        composed-skill coding-terraform
         composed-skill tooling-qa-adversarial-verification
         composed-skill tooling-qa-state-machine-verification
         composed-skill tooling-qa-visual-verification
@@ -36,6 +106,30 @@ roles {
         // END generated role-intent harness routes
     }
     role ops {
+        composed-skill coding-ansible
+        composed-skill coding-aws
+        composed-skill coding-azure
+        composed-skill coding-cloudformation
+        composed-skill coding-csharp
+        composed-skill coding-discord-bot-architect
+        composed-skill coding-gcp
+        composed-skill coding-git
+        composed-skill coding-go
+        composed-skill coding-javascript
+        composed-skill coding-javascript-react
+        composed-skill coding-kubernetes
+        composed-skill coding-licenses
+        composed-skill coding-pulumi
+        composed-skill coding-python
+        composed-skill coding-ruby
+        composed-skill coding-rust
+        composed-skill coding-shape-cli
+        composed-skill coding-shape-cloud
+        composed-skill coding-shape-iac
+        composed-skill coding-shape-observability
+        composed-skill coding-shape-tui
+        composed-skill coding-shape-web-server
+        composed-skill coding-terraform
         composed-skill tooling-ops-change-risk-modeling
         composed-skill tooling-ops-dynamic-systems-diagnosis
         composed-skill tooling-ops-incident-command
@@ -62,6 +156,8 @@ roles {
         // END generated role-intent harness routes
     }
     role designer {
+        composed-skill coding-javascript
+        composed-skill coding-javascript-react
         composed-skill tooling-designer-cognitive-walkthrough
         composed-skill tooling-designer-interaction-shaping
         // BEGIN generated role-intent harness routes

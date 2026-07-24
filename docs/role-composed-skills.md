@@ -42,12 +42,13 @@ roles, duplicate bindings, unknown roles, and missing sources fail composition.
 Every canonical agent-compose role has a block and at least one composed
 source.
 
-Role foundations span all ten roles. Deeper specialist sources currently add
-causal-claim auditing for advisor, cognitive walkthroughs for designer,
-state-machine and visual verification for QA, dynamic diagnosis, change-risk
-modeling, and incident command for ops, and signal triangulation for PM. Social
-adds cultural reading and trust boundaries. Sales adds negotiation architecture,
-and customer-success adds trust repair.
+The complete `coding-*` family is composed for engineer, director, QA, and ops.
+Designer receives only the JavaScript pair. Other roles receive none.
+
+Specialist sources add causal-claim auditing for advisor, cognitive walkthroughs
+for designer, state-machine and visual verification for QA, dynamic diagnosis,
+change-risk modeling and incident command for ops, and signal triangulation for
+PM. Social adds cultural reading and trust boundaries. Sales adds negotiation architecture, and customer-success adds trust repair.
 
 ## Composition
 

@@ -37,6 +37,13 @@ def test_referenced_skills_matches_canonical_path() -> None:
     }
 
 
+def test_referenced_skills_matches_composed_source_path() -> None:
+    doc = "see .agents/composed/coding-python/COMPOSED.md for details"
+    assert csk.referenced_skills([doc], ["coding-python", "coding-git"]) == {
+        "coding-python"
+    }
+
+
 def _setup(monkeypatch: pytest.MonkeyPatch, root: Path, pyproject: str) -> None:
     (root / "pyproject.toml").write_text(pyproject, encoding="utf-8")
     monkeypatch.chdir(root)
