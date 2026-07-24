@@ -66,6 +66,7 @@ roles {
         composed-skill tooling-scout-autonomy
         composed-skill tooling-scout-capability
         composed-skill tooling-scout-displacement
+        composed-skill tooling-skill-authoring
         composed-skill tooling-supply-chain-audit
         composed-skill writing-observer-narrator
         composed-skill writing-system-improvement-vocab
@@ -172,6 +173,7 @@ roles {
         composed-skill tooling-scout-autonomy
         composed-skill tooling-scout-capability
         composed-skill tooling-scout-displacement
+        composed-skill tooling-skill-authoring
         composed-skill writing-observer-narrator
         composed-skill writing-to-issues
         composed-skill writing-voice-guide-linter

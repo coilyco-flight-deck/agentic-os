@@ -14,7 +14,7 @@ Twelve prefix families and five exact-name skills. Pick the prefix up front; the
   `writing-to-issues`, and the social writing family).
 * `personality-*` - role-neutral presence, attention, tempo, and voice for agent-compose personality providers.
 * `home-*` - smart-home control at My House (hue, sonos, cast).
-* `tooling-*` - agent-ecosystem meta (`tooling-skillsmp`, the scout family,
+* `tooling-*` - agent-ecosystem meta (the scout family,
   `tooling-supply-chain-audit`, and role-specific methods). Meta-tooling may
   stay in the personal prefix when it encodes operating-context discipline.
 * `vault-*` - Obsidian vault tooling (cli, markdown rules, vault rules).

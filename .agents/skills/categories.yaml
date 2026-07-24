@@ -57,11 +57,6 @@ categories:
 
   # ---- Exact-name skills ----
 
-  - id: claude-code-render
-    kind: exact
-    exact: claude-code-render
-    enforce_status: false
-
 # ---- Global checks ----
 
 forbidden_body_strings: []

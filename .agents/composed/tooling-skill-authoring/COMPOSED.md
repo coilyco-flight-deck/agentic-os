@@ -5,6 +5,11 @@ description: Author, place, prune, and validate skills. Covers admission, ordina
 
 # Skill authoring
 
+Director and PM use this method to decide whether a capability deserves a
+skill, where it belongs, and what contract an implementation role receives.
+When repository changes are required, the active role hands the bounded source
+change to engineer rather than transferring this whole catalog.
+
 ## Handbook
 
 Start with [skill admission](references/admission.md) and

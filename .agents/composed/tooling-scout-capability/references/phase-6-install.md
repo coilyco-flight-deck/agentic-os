@@ -1,14 +1,17 @@
 # Phase 6 - Install approved entries
 
 PM does not perform this phase. PM hands each approved entry, its phase 4
-evidence, and the placement recommendation to engineer. Engineer follows
-`kai-git-workflow` and the target repository's resolved landing workflow.
+evidence, and the `tooling-skill-authoring` admission and placement record to
+engineer. Engineer follows `kai-git-workflow` and the target repository's
+resolved landing workflow.
 
 **Skills:**
 
-- Run the `tooling-skill-authoring` admission and placement tests.
-- Choose ordinary `.agents/skills/<name>/SKILL.md` or role-scoped
-  `.agents/composed/<name>/COMPOSED.md` from the intended audience.
+- Verify that PM supplied a complete admission result and an audience-backed
+  ordinary or role-scoped placement. Stop and return an inconsistent or
+  incomplete record instead of silently redesigning it.
+- Implement ordinary `.agents/skills/<name>/SKILL.md` or role-scoped
+  `.agents/composed/<name>/COMPOSED.md` as the placement record specifies.
 - Preserve source provenance and copy any required resources.
 - File the repository issue, validate the catalog, commit with the issue
   closure trailer, and push through the resolved workflow.

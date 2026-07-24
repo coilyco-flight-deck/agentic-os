@@ -7,14 +7,14 @@ the role allowlists in [`.agents/roles.kdl`](../.agents/roles.kdl).
 
 * **Director** - Git workflow, supply-chain audit, brainstorming,
   prioritization, all scouts, observer voice, voice linting,
-  system-improvement vocabulary, and issue decomposition.
+  system-improvement vocabulary, issue decomposition, and skill authoring.
 * **Engineer** - Git workflow, supply-chain audit, public-repository writing,
   and system-improvement vocabulary.
 * **QA** - Git workflow, code review, and public-repository writing.
 * **Ops** - Git workflow, supply-chain audit, and system-improvement
   vocabulary.
 * **PM** - brainstorming, prioritization, all scouts, observer voice, voice
-  linting, and issue decomposition.
+  linting, issue decomposition, and skill authoring.
 * **Designer** - product brainstorming in addition to the frontend coding
   pair.
 * **Social, sales, and customer-success** - observer voice and voice linting.
@@ -28,6 +28,12 @@ execution authority.
 
 Composition grants knowledge only. Ward and the active role surface still
 control tools, credentials, and write authority.
+
+Role composition is the current coarse gate for skill authoring. Frontier
+model refinement follows
+[agent-compose#70](https://forgejo.coilysiren.me/coilyco-flight-deck/agent-compose/issues/70)
+and
+[agentic-os#716](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/issues/716).
 
 ## See also
 

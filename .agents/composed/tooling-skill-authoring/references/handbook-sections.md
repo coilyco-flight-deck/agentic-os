@@ -2,7 +2,9 @@
 
 ## 4. The status line (under H1, where enforced)
 
-Status enforcement is per-category. See [`categories.yaml`](../../categories.yaml) for which categories enforce it. The format when enforced:
+Status enforcement is per-category. See
+[`categories.yaml`](../../../skills/categories.yaml) for which categories
+enforce it. The format when enforced:
 
 ```markdown
 # <Title>

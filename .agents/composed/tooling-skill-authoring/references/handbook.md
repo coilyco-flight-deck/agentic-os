@@ -5,7 +5,12 @@ a provider repo's ordinary and role-composed skill sources. Read the linked
 sections cold and you can recreate the taxonomy, entrypoint shapes, validators,
 templates, pre-commit wiring, cross-link rules, and category process.
 
-This handbook is paired with [`categories.yaml`](../../categories.yaml) (at `.agents/skills/categories.yaml`), the machine-readable spec consumed by the `coilyco-flight-deck/agentic-os` skill-discipline validator. When the two disagree, the YAML is authoritative for the validator and these files should be updated to match.
+This handbook is paired with
+[`categories.yaml`](../../../skills/categories.yaml) (at
+`.agents/skills/categories.yaml`), the machine-readable spec consumed by the
+`coilyco-flight-deck/agentic-os` skill-discipline validator. When the two
+disagree, the YAML is authoritative for the validator and these files should
+be updated to match.
 
 The handbook is split into topical references so each stays under the documentation-layout caps. Read the one you need:
 
