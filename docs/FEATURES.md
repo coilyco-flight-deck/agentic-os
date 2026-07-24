@@ -24,7 +24,7 @@ This lists shipped capabilities, not files.
 - [Forgejo runner-token fetch overlay](forgejo-runner-token.md) - guarded runner registration-token minting via fetch leaves.
 - [Forgejo Actions rerun bridge](forgejo-actions-rerun.md) - guarded run-id rerun helper that falls back to dispatch, plus fetch mirror.
 - [Forgejo org-repo bootstrap](forgejo-org-repo-bootstrap.md) - admin helper to create or reconcile org repos for GitHub profile mirrors.
-- [ward bundle](ward-specs.md) - launch policy, guarded surfaces, AOSH-selected Goose routing, and AOS-local OpenCode policy.
+- [ward bundle](ward-specs.md) - guarded surfaces, AOSH seat identity and Goose routing, AOS-local OpenCode policy.
 - [Ward profile assets home](ward-profile-assets.md) - AOS profile/config inputs for Ward's `ProfileProvider`.
 - [Role surface tiers](role-surface-tiers.md) - the intended per-role container capability tiers.
 - [Cross-repo tooling and release](features-release-tooling.md) - hooks, diagnostics, promotion, retries, reruns.

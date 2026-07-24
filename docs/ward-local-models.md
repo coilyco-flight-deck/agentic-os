@@ -1,9 +1,9 @@
 # AOSH projections into AOS
 
-AOSH owns hand selection and backend routing. AOS consumes two narrow,
-authoring-time projections. Both commands read a sibling AOSH checkout, write an
-AOS-owned artifact, and commit that result. Shipped AOS runtimes never fetch
-config upward from AOSH.
+AOSH owns hand selection, role-seat identity, and backend routing. AOS consumes
+three narrow, authoring-time projections. Each command reads a sibling AOSH
+checkout, writes an AOS-owned artifact, and commits that result. Shipped AOS
+runtimes never fetch config upward from AOSH.
 
 ## Role-intent harness board
 
@@ -30,6 +30,24 @@ Run `ward exec sync-harness-board -- --check` for a read-only drift check. The
 local pre-commit suite runs it with `--if-present`. A missing sibling AOSH
 checkout skips visibly, while missing or malformed files inside a present
 checkout fail closed.
+
+## Role-seat agent identity
+
+AOSH's `role-orientation.yaml` snapshot owns each named role and harness seat.
+`ward exec sync-role-seats` projects only a seat's harness, display name, and
+pronouns into marker-bounded `agent` identity fields in
+[`.ward/roles.kdl`](../.ward/roles.kdl). AOS continues to own each role's
+guardfiles, model, reasoning effort, and other execution policy.
+
+The sync requires every AOSH role to match an AOS canonical role. Every
+projected seat must also have an existing Ward agent block in that role, so a
+new harness cannot silently become executable. Duplicate, malformed, missing,
+or unconfigured seats fail closed.
+
+Run `ward exec sync-role-seats -- --check` for a read-only drift check. Local
+pre-commit uses the same visible-skip behavior as the other AOSH projections.
+The checked-in Ward bundle consumes the projected identity at runtime. Ward
+never fetches `role-orientation.yaml`.
 
 ## Local model overlay
 
