@@ -52,6 +52,10 @@ Concrete snapshot files use
 [ops/codex baseline](context-budget-ops-codex-before.yaml) is the current
 comparison point.
 
+The [current all-seat inventory](context-budget-role-seat-current.md) records
+the compact mobile-review surface for every canonical role in the Claude and
+Codex native seats.
+
 ## Capture and compare
 
 Capture the `ops/codex` baseline:
