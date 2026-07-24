@@ -6,7 +6,7 @@ ARG UV_VERSION=0.11.26
 ARG GO_VERSION=1.26.5
 ARG DOTNET_VERSION=10.0.301
 ARG TRUNK_VERSION=0.21.14
-ARG AGENT_COMPOSE_VERSION=0.24.0
+ARG AGENT_COMPOSE_VERSION=0.36.0
 ARG WARD_VERSION=0.775.0-tmp
 ARG SPECGEN_VERSION=0.119.0
 ARG NODE_VERSION=22.23.1
@@ -306,6 +306,14 @@ RUN set -eux; \
     python --version; \
     pipenv --version; \
     aguard --version; \
+    roster_dir=$(mktemp -d); \
+    agent-compose version; \
+    agent-compose roster --out "${roster_dir}"; \
+    jq -e '.source == "person:kai" and (.role_order | length > 0) and (.personalities | length > 0)' \
+      "${roster_dir}/person.json" >/dev/null; \
+    test -s "${roster_dir}/AGENTS.COMPOSE.md"; \
+    test -n "$(find "${roster_dir}/personalities" -type f -name '*.md' -print -quit)"; \
+    rm -rf "${roster_dir}"; \
     python3 -m agentic_os.forgejo_actions_list --help >/dev/null; \
     ward --version; \
     CLIGUARD_NO_SANDBOX=1 ward doctor

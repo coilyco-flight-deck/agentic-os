@@ -159,6 +159,31 @@ def test_mcporter_resolver_reads_npm_latest(monkeypatch) -> None:
     assert seen["url"] == "https://registry.npmjs.org/mcporter/latest"
 
 
+def test_agent_compose_is_auto_bumped_from_canonical_forgejo_releases() -> None:
+    script = _load_script()
+    assert "AGENT_COMPOSE_VERSION" in script.RESOLVERS
+
+
+def test_agent_compose_resolver_reads_latest_stable_release(monkeypatch) -> None:
+    script = _load_script()
+    seen: dict[str, str] = {}
+
+    def fake_get_json(url: str) -> object:
+        seen["url"] = url
+        return [
+            {"draft": False, "prerelease": True, "tag_name": "v0.37.0"},
+            {"draft": False, "prerelease": False, "tag_name": "v0.36.0"},
+            {"draft": False, "prerelease": False, "tag_name": "v0.9.0"},
+        ]
+
+    monkeypatch.setattr(script, "_get_json", fake_get_json)
+    assert script._resolve_agent_compose() == "0.36.0"
+    assert seen["url"] == (
+        "https://forgejo.coilysiren.me/api/v1/repos/"
+        "coilyco-flight-deck/agent-compose/releases?limit=50"
+    )
+
+
 def test_gh_resolver_reads_the_latest_release(monkeypatch) -> None:
     script = _load_script()
     seen: dict[str, str] = {}

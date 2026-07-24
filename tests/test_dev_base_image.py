@@ -57,6 +57,8 @@ def test_full_dockerfile_contains_every_language_and_operator_surface() -> None:
         "python --version",
         "pipenv --version",
         "aguard --version",
+        "agent-compose version",
+        "agent-compose roster",
     ):
         assert command in text
     assert "specgen-linux-${TARGETARCH}" in text

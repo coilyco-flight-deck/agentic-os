@@ -19,11 +19,12 @@ Stdlib only (urllib, no `requests`) so it runs on a bare Forgejo runner with jus
 API drops that one tool from the plan, it never blocks the others.
 
 Version policy: bumps stay on the pinned line where crossing it is risky. Node
-tracks the latest release of its currently-pinned major (no surprise major jump);
-uv/go/aws-cli/claude/mcporter/codex/goose/gh/helm/kubectl/yq track the latest
-stable upstream release (mcporter off npm, everything else off a GitHub
-Releases/tags feed). Ward is manual until raw ward releases become trustworthy
-staging inputs and aos owns the prod/N-1 promotion.
+tracks the latest release of its currently-pinned major (no surprise major jump).
+agent-compose tracks canonical Forgejo releases. uv/go/aws-cli/claude/mcporter/
+codex/goose/gh/helm/kubectl/yq track the latest stable upstream release
+(mcporter off npm, everything else off a GitHub Releases/tags feed). Ward is
+manual until raw ward releases become trustworthy staging inputs and aos owns
+the prod/N-1 promotion.
 
 Usage:
     python3 scripts/dep-bump.py plan            # TSV: NAME<TAB>CURRENT<TAB>LATEST
@@ -47,6 +48,7 @@ from agentic_os.dev_base import DEV_BASE_ROOT, TIER_SPECS
 DOCKERFILE = DEV_BASE_ROOT
 
 GITHUB_API = "https://api.github.com"
+FORGEJO_API = "https://forgejo.coilysiren.me/api/v1"
 _TIMEOUT = 30
 
 
@@ -155,6 +157,19 @@ def _gh_tag(repo: str, tag_re: re.Pattern[str]) -> str | None:
     return pick_highest(cands)
 
 
+def _forgejo_release(repo: str, tag_re: re.Pattern[str]) -> str | None:
+    """Highest stable canonical Forgejo release tag matching `tag_re` group 1."""
+    data = _get_json(f"{FORGEJO_API}/repos/{repo}/releases?limit=50")
+    cands = []
+    for rel in data:  # type: ignore[union-attr]
+        if rel.get("draft") or rel.get("prerelease"):
+            continue
+        match = tag_re.match(rel.get("tag_name", ""))
+        if match:
+            cands.append(match.group(1))
+    return pick_highest(cands)
+
+
 def _resolve_uv() -> str | None:
     return _gh_release("astral-sh/uv", re.compile(r"^v?(\d+\.\d+\.\d+)$"))
 
@@ -190,6 +205,13 @@ def _resolve_claude() -> str | None:
 def _resolve_mcporter() -> str | None:
     data = _get_json("https://registry.npmjs.org/mcporter/latest")
     return data.get("version")  # type: ignore[union-attr]
+
+
+def _resolve_agent_compose() -> str | None:
+    return _forgejo_release(
+        "coilyco-flight-deck/agent-compose",
+        re.compile(r"^v(\d+\.\d+\.\d+)$"),
+    )
 
 
 def _resolve_codex() -> str | None:
@@ -253,6 +275,7 @@ RESOLVERS: dict[str, Callable[..., str | None]] = {
     "AWSCLI_VERSION": _resolve_awscli,
     "CLAUDE_VERSION": _resolve_claude,
     "MCPORTER_VERSION": _resolve_mcporter,
+    "AGENT_COMPOSE_VERSION": _resolve_agent_compose,
     "CODEX_VERSION": _resolve_codex,
     "GOOSE_VERSION": _resolve_goose,
     "GH_VERSION": _resolve_gh,

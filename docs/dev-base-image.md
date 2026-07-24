@@ -17,8 +17,11 @@ every supported language toolchain:
 * Python, pip, and `pipenv`
 
 The image also carries `aos`, Ward for role-scoped orchestration, `aguard` for
-operator commands, and the repository's packaged Aguard Python bridges.
-Full-only gate tools include `golangci-lint`, `trufflehog`, and `kdlfmt`.
+operator commands, agent-compose with its embedded `person:kai` source, and the
+repository's packaged Aguard Python bridges. The image build renders a roster
+and checks the generated person snapshot plus personality definitions, proving
+that the installed binary is self-contained. Full-only gate tools include
+`golangci-lint`, `trufflehog`, and `kdlfmt`.
 
 ## Build and publication
 
