@@ -47,10 +47,9 @@ payload hash.
 The shared AGENTS inventory preserves a source that arrives through both global
 and repository delivery paths as two occurrences.
 
-Concrete snapshot files use
-`context-budget-<role>-<seat>-<phase>.yaml`. The checked-in
-[ops/codex baseline](context-budget-ops-codex-before.yaml) is the current
-comparison point.
+Snapshots use `context-budget-<role>-<seat>-<phase>.yaml`. The
+[ops/codex baseline](context-budget-ops-codex-before.yaml) is historical, and
+the [current snapshot](context-budget-ops-codex-after.yaml) is post-pruning.
 
 The [current all-seat inventory](context-budget-role-seat-current.md) records
 the compact mobile-review surface for every canonical role in the Claude and
@@ -58,19 +57,20 @@ Codex native seats.
 
 ## Capture and compare
 
-Capture the `ops/codex` baseline:
+The historical `ops/codex` baseline was captured with:
 
 ```sh
 ward exec context-budget -- --role ops --seat codex \
   --snapshot docs/context-budget-ops-codex-before.yaml
 ```
 
-After a refactor, render the component and total delta:
+After a refactor, render the component and total delta into the current
+checkpoint:
 
 ```sh
 ward exec context-budget -- --role ops --seat codex \
   --compare docs/context-budget-ops-codex-before.yaml \
-  --snapshot /tmp/context-budget-ops-codex-after.yaml
+  --snapshot docs/context-budget-ops-codex-after.yaml
 ```
 
 `--skill-root` adds a seat or plugin skill root when the projected runtime

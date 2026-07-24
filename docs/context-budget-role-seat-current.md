@@ -2,8 +2,8 @@
 
 This review snapshot measures every canonical role in the Claude and Codex
 native seats at AOS commit
-[`8888cb2`](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/commit/8888cb29fbecdfad7c1c10c75cd1c37168f10757).
-It uses agent-compose 0.30.0 and the deterministic characters-divided-by-four
+[`1529af7`](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/commit/1529af7).
+It uses agent-compose 0.36.0 and the deterministic characters-divided-by-four
 token proxy. The provider, repository, and CWD are this AOS checkout.
 
 Each role line reports Codex eager, Claude eager, shared lazy, then the number
@@ -19,29 +19,37 @@ of role-composed sources. Lazy totals match across the two native seats.
 
 ## Roles
 
-* **Director** - Codex 14,035, Claude 14,197, lazy 89,624, 37 composed.
-* **Engineer** - Codex 13,392, Claude 13,554, lazy 53,751, 28 composed.
-* **QA** - Codex 13,478, Claude 13,640, lazy 47,834, 30 composed.
-* **Advisor** - Codex 12,088, Claude 12,250, lazy 16,128, 2 composed.
-* **Ops** - Codex 13,559, Claude 13,721, lazy 55,994, 31 composed.
-* **PM** - Codex 12,799, Claude 12,961, lazy 51,571, 11 composed.
-* **Designer** - Codex 12,248, Claude 12,410, lazy 23,470, 5 composed.
-* **Social** - Codex 12,296, Claude 12,458, lazy 19,427, 5 composed.
-* **Sales** - Codex 12,228, Claude 12,390, lazy 18,802, 4 composed.
-* **Customer success** - Codex 12,294, Claude 12,456, lazy 18,904,
+* **Director** - Codex 13,974, Claude 14,136, lazy 88,433, 32 composed.
+* **Engineer** - Codex 13,359, Claude 13,521, lazy 52,348, 23 composed.
+* **QA** - Codex 13,448, Claude 13,610, lazy 46,431, 25 composed.
+* **Advisor** - Codex 12,281, Claude 12,443, lazy 16,128, 2 composed.
+* **Ops** - Codex 13,530, Claude 13,692, lazy 54,591, 26 composed.
+* **PM** - Codex 12,958, Claude 13,120, lazy 51,783, 11 composed.
+* **Designer** - Codex 12,444, Claude 12,606, lazy 23,470, 5 composed.
+* **Social** - Codex 12,495, Claude 12,657, lazy 19,427, 5 composed.
+* **Sales** - Codex 12,416, Claude 12,578, lazy 18,802, 4 composed.
+* **Customer success** - Codex 12,488, Claude 12,650, lazy 18,904,
   4 composed.
 
 ## Latest pruning delta
 
 The comparison point is the immediately preceding provider commit,
-[`afb0b33`](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/commit/afb0b336e7b3b20e3570953f1c528d69d67e5fa6).
+[`8489a02`](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/commit/8489a02).
 
-* **Director and PM** - each shed 131 eager and 22,734 lazy tokens while
-  retaining `tooling-skill-authoring`.
-* **Other eight roles** - each shed 175 eager and 35,078 lazy tokens.
-* **Universal ordinary surface** - fell from 926 to 751 eager tokens and
-  48,842 to 13,764 lazy tokens.
-* **Warp** - fell from 4,416 to 317 lazy tokens and from six resources to zero.
+* **Director, engineer, QA, and ops** - each shed 221 eager and 1,403 lazy
+  tokens plus five composed sources.
+* **Other six roles** - unchanged by the Azure, CloudFormation, GCP, Pulumi,
+  and Ruby source deletion.
+
+## Cumulative tracked baseline
+
+The checked-in ops/Codex baseline now has a paired
+[current snapshot](context-budget-ops-codex-after.yaml).
+
+* **Eager** - fell from 14,564 to 13,530 tokens, a reduction of 1,034.
+* **Lazy** - fell from 126,332 to 54,591 tokens, a reduction of 71,741.
+* **Components** - added five, removed 31, and changed 23 across the full
+  pruning interval.
 
 ## Interpretation
 
@@ -54,5 +62,9 @@ load.
 
 * [Role-seat snapshot contract](context-budget-role-seat.md) - capture,
   comparison, and failure rules.
+* [Historical ops/Codex baseline](context-budget-ops-codex-before.yaml) -
+  machine-readable comparison source.
+* [Current ops/Codex snapshot](context-budget-ops-codex-after.yaml) -
+  machine-readable post-pruning checkpoint.
 * [Context-budget report](context-budget.md) - component definitions and token
   proxy.
