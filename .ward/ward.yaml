@@ -59,8 +59,8 @@ commands:
     run: uv run python scripts/dev-base-build.py --registry agentic-os --tag aos-local build
     description: "Build the full local image as agentic-os:aos-local for standalone `aos` smoke testing."
   aos-container-smoke:
-    run: ./aos/aos --role engineer --image agentic-os:aos-local acompose -- codex --version
-    description: "Launch the full local image through `aos`, compose the engineer Codex HOME, hydrate substrate, and print the in-container Codex version."
+    run: go run -C aos . --role engineer --layout codex --image agentic-os:aos-local acompose -- sh testdata/codex-smoke.sh
+    description: "Launch the full local image through `aos`, compose the engineer Codex HOME, verify its container-boundary defaults, hydrate substrate, and print the in-container Codex version."
   aos-designer-smoke:
     run: ./aos/aos --role designer --layout codex --image agentic-os:aos-local --auth=false --no-substrate acompose -- sh scripts/aos-designer-smoke.sh
     description: "Launch the full local image as the designer Codex variant and verify its projected AGENTS.md briefing, selected composed skill, entry-point promotion, and role isolation."

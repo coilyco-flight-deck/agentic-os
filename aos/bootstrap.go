@@ -100,6 +100,9 @@ func prepareContainer(
 	if err := composeHome(ctx, opts, provider, runner); err != nil {
 		return execSpec{}, err
 	}
+	if err := stageHarnessDefaults(opts.Layout, opts.AgentHome, opts.Workspace); err != nil {
+		return execSpec{}, err
+	}
 	if err := stageHarnessAuth(opts.Layout, opts.AgentHome); err != nil {
 		return execSpec{}, err
 	}
@@ -339,6 +342,37 @@ func findSingleBundle(root string) (string, error) {
 		return "", fmt.Errorf("agent-compose wrote %d verified bundle candidates under %s, want 1", len(bundles), root)
 	}
 	return bundles[0], nil
+}
+
+// stageHarnessDefaults carries container-boundary settings that the selected
+// harness cannot infer from the projected role context (agentic-os#723).
+func stageHarnessDefaults(layout, home, workspace string) error {
+	if layout != "codex" {
+		return nil
+	}
+	if strings.TrimSpace(workspace) == "" {
+		return fmt.Errorf("codex workspace must not be empty")
+	}
+	dir := filepath.Join(home, ".codex")
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		return fmt.Errorf("create codex config directory: %w", err)
+	}
+	body := "# Written by the AOS container bootstrap: the container is the security boundary.\n" +
+		"approval_policy = \"never\"\n" +
+		"sandbox_mode = \"danger-full-access\"\n\n" +
+		"# Trust the exact bind-mounted workspace selected by the host launcher.\n" +
+		"[projects." + tomlBasicString(workspace) + "]\n" +
+		"trust_level = \"trusted\"\n"
+	if err := os.WriteFile(filepath.Join(dir, "config.toml"), []byte(body), 0o644); err != nil {
+		return fmt.Errorf("write codex config: %w", err)
+	}
+	return nil
+}
+
+func tomlBasicString(value string) string {
+	value = strings.ReplaceAll(value, `\`, `\\`)
+	value = strings.ReplaceAll(value, `"`, `\"`)
+	return `"` + value + `"`
 }
 
 func stageHarnessAuth(layout, home string) error {

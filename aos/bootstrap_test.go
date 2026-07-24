@@ -140,6 +140,25 @@ func TestPrepareContainerHydratesSubstrateAndProjectsHome(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(home, ".codex", "AGENTS.md")); err != nil {
 		t.Fatalf("composed Codex HOME is absent: %v", err)
 	}
+	config, err := os.ReadFile(filepath.Join(home, ".codex", "config.toml"))
+	if err != nil {
+		t.Fatalf("Codex container defaults are absent: %v", err)
+	}
+	for _, want := range []string{
+		`approval_policy = "never"`,
+		`sandbox_mode = "danger-full-access"`,
+		"[projects." + tomlBasicString(filepath.Join(root, "workspace")) + "]",
+		`trust_level = "trusted"`,
+	} {
+		if !strings.Contains(string(config), want) {
+			t.Errorf("Codex config missing %q:\n%s", want, config)
+		}
+	}
+	for _, unwanted := range []string{"model =", "model_reasoning_effort", "model_verbosity"} {
+		if strings.Contains(string(config), unwanted) {
+			t.Errorf("Codex config must remain model-opaque, found %q:\n%s", unwanted, config)
+		}
+	}
 	for _, path := range []string{
 		filepath.Join(substrate, "coilyco-flight-deck", "agentic-os"),
 		filepath.Join(substrate, "coilyco-flight-deck", "ward"),
@@ -180,6 +199,30 @@ func TestPrepareContainerHydratesSubstrateAndProjectsHome(t *testing.T) {
 		if strings.HasPrefix(command, "ward ") || command == "ward" {
 			t.Fatalf("Ward command leaked into container bootstrap:\n%s", joined)
 		}
+	}
+}
+
+func TestStageHarnessDefaultsEscapesCodexWorkspaceAndIgnoresOtherLayouts(t *testing.T) {
+	t.Parallel()
+	home := t.TempDir()
+	workspace := `/workspace/repo\"quoted`
+	if err := stageHarnessDefaults("codex", home, workspace); err != nil {
+		t.Fatal(err)
+	}
+	config, err := os.ReadFile(filepath.Join(home, ".codex", "config.toml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := `[projects."/workspace/repo\\\"quoted"]`; !strings.Contains(string(config), want) {
+		t.Fatalf("Codex config did not safely quote the workspace, want %q:\n%s", want, config)
+	}
+
+	otherHome := t.TempDir()
+	if err := stageHarnessDefaults("claude", otherHome, workspace); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(otherHome, ".codex", "config.toml")); !os.IsNotExist(err) {
+		t.Fatalf("non-Codex layout received Codex defaults: %v", err)
 	}
 }
 

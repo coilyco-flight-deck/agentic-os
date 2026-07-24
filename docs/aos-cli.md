@@ -20,10 +20,10 @@ Every launch supplies the same runtime base:
 
 * CWD mounts read-write at `/workspace/<cwd-name>` and becomes the workdir.
 * `aos-substrate-cache` mounts at `/var/cache/aos/git`.
-* The image manifest hydrates fresh reference trees under
-  `/substrate/<owner>/<repo>`.
-* The selected harness's known auth file mounts read-only when present. AOS
-  copies it into the ephemeral HOME before dropping privileges.
+* The image hydrates fresh reference trees under `/substrate/<owner>/<repo>`.
+* AOS copies the selected harness's read-only auth into the ephemeral HOME.
+* Codex receives no inner approval prompts, a full-access inner sandbox, and
+  trust for the exact workspace. AOS leaves model and reasoning settings unset.
 * Present API-key environment variables cross by name, never by rendered value.
 * The Docker socket, AWS config, host HOME, and Git credentials do not mount.
 
