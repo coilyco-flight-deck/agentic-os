@@ -22,8 +22,8 @@ Every launch supplies the same runtime base:
 * `aos-substrate-cache` mounts at `/var/cache/aos/git`.
 * The image hydrates fresh reference trees under `/substrate/<owner>/<repo>`.
 * AOS copies the selected harness's read-only auth into the ephemeral HOME.
-* Codex receives no inner approval prompts, a full-access inner sandbox, and
-  trust for the exact workspace. AOS leaves model and reasoning settings unset.
+* Codex trusts the exact workspace, skips inner approvals, uses its full-access
+  inner sandbox, defaults to Terra-medium, and hides rate-limit model nudges.
 * Present API-key environment variables cross by name, never by rendered value.
 * The Docker socket, AWS config, host HOME, and Git credentials do not mount.
 

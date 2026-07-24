@@ -145,8 +145,12 @@ func TestPrepareContainerHydratesSubstrateAndProjectsHome(t *testing.T) {
 		t.Fatalf("Codex container defaults are absent: %v", err)
 	}
 	for _, want := range []string{
+		`model = "gpt-5.6-terra"`,
+		`model_reasoning_effort = "medium"`,
 		`approval_policy = "never"`,
 		`sandbox_mode = "danger-full-access"`,
+		`[notice]`,
+		`hide_rate_limit_model_nudge = true`,
 		"[projects." + tomlBasicString(filepath.Join(root, "workspace")) + "]",
 		`trust_level = "trusted"`,
 	} {
@@ -154,10 +158,8 @@ func TestPrepareContainerHydratesSubstrateAndProjectsHome(t *testing.T) {
 			t.Errorf("Codex config missing %q:\n%s", want, config)
 		}
 	}
-	for _, unwanted := range []string{"model =", "model_reasoning_effort", "model_verbosity"} {
-		if strings.Contains(string(config), unwanted) {
-			t.Errorf("Codex config must remain model-opaque, found %q:\n%s", unwanted, config)
-		}
+	if strings.Contains(string(config), "model_verbosity") {
+		t.Errorf("Codex config must leave model verbosity unset:\n%s", config)
 	}
 	for _, path := range []string{
 		filepath.Join(substrate, "coilyco-flight-deck", "agentic-os"),
@@ -213,8 +215,15 @@ func TestStageHarnessDefaultsEscapesCodexWorkspaceAndIgnoresOtherLayouts(t *test
 	if err != nil {
 		t.Fatal(err)
 	}
-	if want := `[projects."/workspace/repo\\\"quoted"]`; !strings.Contains(string(config), want) {
-		t.Fatalf("Codex config did not safely quote the workspace, want %q:\n%s", want, config)
+	for _, want := range []string{
+		`model = "gpt-5.6-terra"`,
+		`model_reasoning_effort = "medium"`,
+		`hide_rate_limit_model_nudge = true`,
+		`[projects."/workspace/repo\\\"quoted"]`,
+	} {
+		if !strings.Contains(string(config), want) {
+			t.Errorf("Codex config missing %q:\n%s", want, config)
+		}
 	}
 
 	otherHome := t.TempDir()

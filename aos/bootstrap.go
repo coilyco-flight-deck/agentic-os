@@ -344,8 +344,8 @@ func findSingleBundle(root string) (string, error) {
 	return bundles[0], nil
 }
 
-// stageHarnessDefaults carries container-boundary settings that the selected
-// harness cannot infer from the projected role context (agentic-os#723).
+// stageHarnessDefaults carries container-boundary settings that the selected harness
+// cannot infer from projected role context (agentic-os#723, agentic-os#724).
 func stageHarnessDefaults(layout, home, workspace string) error {
 	if layout != "codex" {
 		return nil
@@ -358,8 +358,12 @@ func stageHarnessDefaults(layout, home, workspace string) error {
 		return fmt.Errorf("create codex config directory: %w", err)
 	}
 	body := "# Written by the AOS container bootstrap: the container is the security boundary.\n" +
+		"model = \"gpt-5.6-terra\"\n" +
+		"model_reasoning_effort = \"medium\"\n" +
 		"approval_policy = \"never\"\n" +
 		"sandbox_mode = \"danger-full-access\"\n\n" +
+		"[notice]\n" +
+		"hide_rate_limit_model_nudge = true\n\n" +
 		"# Trust the exact bind-mounted workspace selected by the host launcher.\n" +
 		"[projects." + tomlBasicString(workspace) + "]\n" +
 		"trust_level = \"trusted\"\n"
