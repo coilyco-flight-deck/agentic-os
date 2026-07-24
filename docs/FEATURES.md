@@ -13,7 +13,7 @@ This lists shipped capabilities, not files.
 - [Agent-compose personalities](personality-provider.md) - invariant plus 16 full/brief bodies.
 - [Role-composed skills](role-composed-skills.md) - deep, role-gated knowledge.
 - [AOS launcher](aos-cli.md) - released Go containers and embedded defaults.
-- [aguard](aguard.md) - specgen guarded-ops CLI.
+- [aguard](aguard.md) - guarded-ops CLI.
 - [Code review skill](../.agents/skills/tooling-code-review/SKILL.md) - in-container review stance.
 - [Code review contract](../CODE-REVIEW.md) - review invariants.
 - [Harness selection](harness-selection.md) - 10-role agent-compose and AOS board.
