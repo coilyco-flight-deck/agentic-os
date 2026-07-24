@@ -63,8 +63,8 @@ Every paragraph receives one deterministic classification and destination:
 * **duplicate** - deletion candidate.
 * **documentation-only** - repository docs.
 
-These are audit candidates, not automatic edits. Infrastructure #607 consumes
-the inventory and lands each reviewed product change through its owner repo.
+The [committed baseline](agents-context-inventory-snapshot.md) is a pre-rollout
+audit. Infrastructure #607 lands each reviewed product change through its owner.
 
 ## Machine contract
 

@@ -216,6 +216,7 @@ def test_report_is_stable_and_markdown_uses_flat_prose(
     assert "## Active cascades" in markdown
     assert "| --- |" not in markdown
     assert "coilyco-bridge/missing" in markdown
+    assert first["active_cascades"][0]["payload_hash"][:12] not in markdown
 
 
 def test_build_report_rejects_current_repo_outside_inventory(

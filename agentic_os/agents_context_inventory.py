@@ -676,7 +676,7 @@ def render_markdown(report: dict[str, Any]) -> str:
         lines.append(
             f"* **{cascade['role']}/{cascade['intent']}** - "
             f"{cascade['harness']} - {len(cascade['sources'])} sources - "
-            f"{cascade['tokens']} tokens - `{cascade['payload_hash'][:12]}`"
+            f"{cascade['tokens']} tokens"
         )
         for source in cascade["sources"]:
             lines.append(
