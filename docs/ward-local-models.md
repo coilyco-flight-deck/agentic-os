@@ -1,11 +1,10 @@
 # AOSH projections into AOS
 
-AOSH owns hand selection and backend routing, and temporarily mirrors
-agent-compose's public role orientation. AOS owns the reusable public harness
-capability registry and consumes four narrow, authoring-time projections. Each
-command reads only the AOSH state needed for that projection, writes an
-AOS-owned artifact, and commits that result. Shipped AOS runtimes never fetch
-config upward from AOSH.
+AOSH owns hand selection, backend routing, and the temporary seat mirror.
+Agent-compose owns public role orientation. AOS owns the reusable public
+harness capability registry and consumes narrow, authoring-time projections
+from each owner. Each command writes an AOS-owned artifact, and shipped AOS
+runtimes never fetch config upward.
 
 ## Role-intent harness board
 
@@ -37,15 +36,11 @@ malformed files inside a present AOSH checkout fail closed.
 
 ## Role orientation
 
-Until agent-compose#49 emits the complete person artifact, AOSH's
-`role-orientation.yaml` snapshot is the authoring bridge for public role
-orientation.
-
-`ward exec sync-role-seats` projects named seat identity into Ward.
+`ward exec sync-role-seats` projects named seat identity from AOSH into Ward.
 `ward exec sync-role-personalities` projects ordered personality melds and
-their conventional skill ids for context measurement. Agent-compose owns the
-definitions. Both commands fail closed and never make AOSH a runtime
-dependency. See
+their canonical skill ids from agent-compose's emitted person snapshot for
+context measurement. Both commands fail closed and create no runtime
+dependency on either authoring source. See
 [role-orientation projections](role-orientation-projections.md) for the
 complete boundary.
 

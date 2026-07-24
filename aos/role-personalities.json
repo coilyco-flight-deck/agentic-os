@@ -1,6 +1,6 @@
 {
   "format": "agentic-os.role-personality-board.v1",
-  "role_count": 10,
+  "role_count": 11,
   "personality_count": 16,
   "roles": [
     {
@@ -65,6 +65,14 @@
         "quirky",
         "playful",
         "optimistic"
+      ]
+    },
+    {
+      "role": "community",
+      "personalities": [
+        "nurturing",
+        "diplomatic",
+        "playful"
       ]
     },
     {
@@ -138,16 +146,16 @@
       "skill": "personality-optimistic"
     },
     {
+      "personality": "nurturing",
+      "skill": "personality-nurturing"
+    },
+    {
       "personality": "charming",
       "skill": "personality-charming"
     },
     {
       "personality": "energetic",
       "skill": "personality-energetic"
-    },
-    {
-      "personality": "nurturing",
-      "skill": "personality-nurturing"
     }
   ]
 }

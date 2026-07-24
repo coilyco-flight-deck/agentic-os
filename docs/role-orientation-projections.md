@@ -4,15 +4,17 @@ AOS consumes public role orientation at authoring time while agent-compose
 remains the canonical owner of roles, personalities, and seats. Shipped AOS
 runtimes never fetch configuration from AOSH.
 
-## Temporary source
+## Canonical source
 
-Agent-compose#49 will make normal convergence emit its complete structured
-person artifact. Until that lands, AOSH's `role-orientation.yaml` mirrors the
-needed public fields from agent-compose's embedded person configuration.
+Normal agent-compose convergence emits its complete structured person snapshot
+at `~/.agent-compose/sources/personality/person.json`. The AOS personality sync
+reads the `agent-compose.person-snapshot.v2` role order, ordered melds, and
+canonical skill bindings directly. `--person-snapshot` accepts another emitted
+artifact for isolated authoring and tests.
 
-The AOS sync reads only role slugs, ordered personalities, and named seats.
-Purpose text is not projected. Models, endpoints, hardware, permissions, and
-private routing never cross this boundary.
+Purpose text, briefings, seats, identity primitives, models, endpoints,
+hardware, permissions, and private routing are not copied into the alignment
+board.
 
 ## Named seats
 
@@ -29,8 +31,8 @@ missing, or unconfigured seats fail closed.
 
 `ward exec sync-role-personalities` writes
 [`role-personalities.json`](../aos/role-personalities.json). The generated board
-preserves every role's ordered personality meld and maps each personality slug
-to its conventional agent-compose `personality-*` skill id.
+preserves every role's canonical order and ordered personality meld, then maps
+each personality slug to its agent-compose `personality-*` skill id.
 
 The board does not select runtime personality. Agent-compose continues to do
 that from its embedded person source, which also owns the invariant and full
@@ -49,13 +51,11 @@ the configuration, while the measurement invokes no agent or model.
 
 ## Drift checks
 
-Run `ward exec sync-role-seats -- --check` and `ward exec
-sync-role-personalities -- --check` for read-only verification. Local
-pre-commit runs both with visible skip behavior when the sibling AOSH checkout
-is absent. A present but malformed source always fails.
-
-When agent-compose#49 replaces the temporary AOSH snapshot, the sync input can
-change without moving ownership into AOS.
+Run `ward exec sync-role-seats -- --check` against the AOSH seat mirror. Run
+`ward exec sync-role-personalities -- --check` after agent-compose convergence
+for read-only personality verification. Local pre-commit visibly skips the
+personality check when the generated snapshot is absent. A present but
+malformed snapshot always fails.
 
 ## See also
 

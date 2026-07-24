@@ -1,67 +1,167 @@
-"""Project AOSH role personalities into an AOS measurement-alignment artifact."""
+"""Project agent-compose role personalities into an AOS alignment artifact."""
 
 from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
+from dataclasses import dataclass
 from pathlib import Path
-
-from agentic_os.role_seat_sync import (
-    DEFAULT_AOSH_ROOT,
-    DEFAULT_ROLES,
-    ORIENTATION_PATH,
-    RoleOrientation,
-    RoleSeatSyncError,
-    SLUG_RE,
-    load_orientation,
-)
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PROJECTION_PATH = Path("aos") / "role-personalities.json"
 DEFAULT_OUTPUT = REPO_ROOT / PROJECTION_PATH
+DEFAULT_PERSON_SNAPSHOT = (
+    Path.home() / ".agent-compose" / "sources" / "personality" / "person.json"
+)
 FORMAT = "agentic-os.role-personality-board.v1"
+PERSON_SNAPSHOT_FORMAT = "agent-compose.person-snapshot.v2"
+PERSON_SNAPSHOT_SCHEMA_VERSION = 2
+SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 
 
 class RolePersonalitySyncError(RuntimeError):
-    """An AOSH personality projection or AOS measurement board is invalid."""
+    """An agent-compose person snapshot or AOS alignment board is invalid."""
+
+
+@dataclass(frozen=True)
+class RolePersonalities:
+    role: str
+    personalities: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class PersonSnapshot:
+    roles: tuple[RolePersonalities, ...]
+    skills: tuple[tuple[str, str], ...]
 
 
 def personality_skill_id(personality: str) -> str:
     return f"personality-{personality}"
 
 
-def _ordered_personalities(orientation: RoleOrientation) -> tuple[str, ...]:
-    ordered: list[str] = []
-    seen: set[str] = set()
-    for role in orientation.roles:
-        for personality in role.personalities:
-            if personality not in seen:
-                ordered.append(personality)
-                seen.add(personality)
-    return tuple(ordered)
+def _mapping(value: object, label: str) -> dict[str, object]:
+    if not isinstance(value, dict) or not all(
+        isinstance(key, str) for key in value
+    ):
+        raise RolePersonalitySyncError(f"{label} must be a string-keyed mapping")
+    return value
 
 
-def render_projection(orientation: RoleOrientation) -> str:
-    personalities = _ordered_personalities(orientation)
+def _slug(value: object, label: str) -> str:
+    if not isinstance(value, str) or not SLUG_RE.fullmatch(value):
+        raise RolePersonalitySyncError(f"{label} must be a lowercase slug")
+    return value
+
+
+def load_person_snapshot(path: Path) -> PersonSnapshot:
+    try:
+        document = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise RolePersonalitySyncError(f"read {path}: {exc}") from exc
+    if (
+        not isinstance(document, dict)
+        or document.get("format") != PERSON_SNAPSHOT_FORMAT
+        or document.get("schema_version") != PERSON_SNAPSHOT_SCHEMA_VERSION
+    ):
+        raise RolePersonalitySyncError(
+            f"{path}: expected {PERSON_SNAPSHOT_FORMAT} schema "
+            f"{PERSON_SNAPSHOT_SCHEMA_VERSION}"
+        )
+
+    role_order = document.get("role_order")
+    raw_roles = _mapping(document.get("roles"), f"{path}: roles")
+    raw_personalities = _mapping(
+        document.get("personalities"), f"{path}: personalities"
+    )
+    if (
+        not isinstance(role_order, list)
+        or not role_order
+        or not all(isinstance(role, str) for role in role_order)
+    ):
+        raise RolePersonalitySyncError(f"{path}: role_order is malformed")
+    ordered_roles = tuple(
+        _slug(role, f"{path}: role_order entry") for role in role_order
+    )
+    if (
+        len(set(ordered_roles)) != len(ordered_roles)
+        or set(ordered_roles) != set(raw_roles)
+    ):
+        raise RolePersonalitySyncError(
+            f"{path}: role_order does not cover roles exactly"
+        )
+
+    roles: list[RolePersonalities] = []
+    selected: list[str] = []
+    selected_set: set[str] = set()
+    for role in ordered_roles:
+        raw_role = _mapping(raw_roles[role], f"{path}: role {role}")
+        raw_meld = raw_role.get("personalities")
+        if (
+            not isinstance(raw_meld, list)
+            or not 2 <= len(raw_meld) <= 3
+            or not all(isinstance(value, str) for value in raw_meld)
+        ):
+            raise RolePersonalitySyncError(
+                f"{path}: role {role} personalities are malformed"
+            )
+        meld = tuple(
+            _slug(value, f"{path}: role {role} personality")
+            for value in raw_meld
+        )
+        if len(set(meld)) != len(meld):
+            raise RolePersonalitySyncError(
+                f"{path}: role {role} repeats a personality"
+            )
+        roles.append(RolePersonalities(role=role, personalities=meld))
+        for personality in meld:
+            if personality not in selected_set:
+                selected.append(personality)
+                selected_set.add(personality)
+
+    personality_slugs = {
+        _slug(personality, f"{path}: personality key")
+        for personality in raw_personalities
+    }
+    if personality_slugs != selected_set:
+        raise RolePersonalitySyncError(
+            f"{path}: personality catalog does not match role selections"
+        )
+    skills: list[tuple[str, str]] = []
+    for personality in selected:
+        raw_personality = _mapping(
+            raw_personalities[personality],
+            f"{path}: personality {personality}",
+        )
+        skill = raw_personality.get("skill")
+        if skill != personality_skill_id(personality):
+            raise RolePersonalitySyncError(
+                f"{path}: personality {personality} has invalid skill binding"
+            )
+        skills.append((personality, skill))
+    return PersonSnapshot(roles=tuple(roles), skills=tuple(skills))
+
+
+def render_projection(snapshot: PersonSnapshot) -> str:
     payload = {
         "format": FORMAT,
-        "role_count": len(orientation.roles),
-        "personality_count": len(personalities),
+        "role_count": len(snapshot.roles),
+        "personality_count": len(snapshot.skills),
         "roles": [
             {
                 "role": role.role,
                 "personalities": list(role.personalities),
             }
-            for role in orientation.roles
+            for role in snapshot.roles
         ],
         "skills": [
             {
                 "personality": personality,
-                "skill": personality_skill_id(personality),
+                "skill": skill,
             }
-            for personality in personalities
+            for personality, skill in snapshot.skills
         ],
     }
     return json.dumps(payload, indent=2) + "\n"
@@ -139,18 +239,9 @@ def load_projection(path: Path) -> dict[str, tuple[str, ...]]:
     return role_map
 
 
-def run(
-    aosh_root: Path,
-    output: Path,
-    *,
-    roles_path: Path = DEFAULT_ROLES,
-    check: bool,
-) -> int:
-    try:
-        orientation = load_orientation(aosh_root, roles_path=roles_path)
-    except RoleSeatSyncError as exc:
-        raise RolePersonalitySyncError(str(exc)) from exc
-    expected = render_projection(orientation)
+def run(person_snapshot: Path, output: Path, *, check: bool) -> int:
+    snapshot = load_person_snapshot(person_snapshot)
+    expected = render_projection(snapshot)
     try:
         current = output.read_text(encoding="utf-8")
     except FileNotFoundError:
@@ -159,14 +250,13 @@ def run(
         raise RolePersonalitySyncError(f"read {output}: {exc}") from exc
     if current == expected:
         print(
-            "ok: AOS role personalities match AOSH "
-            f"({len(orientation.roles)} roles, "
-            f"{len(_ordered_personalities(orientation))} personalities)"
+            "ok: AOS role personalities match agent-compose "
+            f"({len(snapshot.roles)} roles, {len(snapshot.skills)} personalities)"
         )
         return 0
     if check:
         print(
-            f"drift: {output} does not match {aosh_root / ORIENTATION_PATH}",
+            f"drift: {output} does not match {person_snapshot}",
             file=sys.stderr,
         )
         print(
@@ -179,7 +269,7 @@ def run(
         output.write_text(expected, encoding="utf-8")
     except OSError as exc:
         raise RolePersonalitySyncError(f"write {output}: {exc}") from exc
-    print(f"updated {output} from {aosh_root / ORIENTATION_PATH}")
+    print(f"updated {output} from {person_snapshot}")
     return 0
 
 
@@ -193,21 +283,26 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--if-present",
         action="store_true",
-        help="skip when the default sibling AOSH checkout is absent",
+        help="skip when the default agent-compose person snapshot is absent",
     )
-    parser.add_argument("--aosh-root", type=Path, default=DEFAULT_AOSH_ROOT)
-    parser.add_argument("--roles", type=Path, default=DEFAULT_ROLES)
+    parser.add_argument(
+        "--person-snapshot",
+        type=Path,
+        default=DEFAULT_PERSON_SNAPSHOT,
+    )
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     args = parser.parse_args(argv)
 
-    if args.if_present and not args.aosh_root.exists():
-        print(f"skip: AOSH checkout is absent at {args.aosh_root}")
+    if args.if_present and not args.person_snapshot.exists():
+        print(
+            "skip: agent-compose person snapshot is absent at "
+            f"{args.person_snapshot}"
+        )
         return 0
     try:
         return run(
-            args.aosh_root,
+            args.person_snapshot,
             args.output,
-            roles_path=args.roles,
             check=args.check,
         )
     except RolePersonalitySyncError as exc:

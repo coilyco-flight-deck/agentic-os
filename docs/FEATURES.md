@@ -11,13 +11,13 @@ This lists shipped capabilities, not files.
 - [Speech helper](aos-say.md) - `aos-say` client plus relay for status speech.
 - **Karabiner key bindings** - complex modifications for the external keyboard and Remote Desktop.
 - [Agents and sessions](features-agents-sessions.md) - self-name, session pulse, status line, and harness policy.
-- [Agent-compose provider](personality-provider.md) - ordinary and role-composed skills with per-skill low-context policy, the public harness capability registry, and measurement alignment.
+- [Agent-compose provider](personality-provider.md) - scoped skills, Discord community hosting, the public harness registry, and personality alignment.
 - [Role-composed skills](role-composed-skills.md) - role-gated specialist and coding knowledge.
 - [AOS launcher](aos-cli.md) - released Go containers and embedded defaults, including [agent-specific composed-role check-ins](aos-acompose-checkin.md).
 - [aguard](aguard.md) - canonical guarded operator CLI in the full image.
 - [Code review skill](../.agents/composed/tooling-code-review/COMPOSED.md) - QA-only in-container review stance.
 - [Code review contract](../CODE-REVIEW.md) - review invariants.
-- [Harness selection](harness-selection.md) - 10-role agent-compose and AOS board.
+- [Harness selection](harness-selection.md) - 10-role execution-routing board, separate from the 11-role personality alignment board.
 - [Test harnesses](test-harness.md) - agent/model smokes and composed-role probes.
 - [Issue-corpus discovery index](issue-corpus.md) - offline corpus render plus live Forgejo lookup.
 - [Forgejo Actions log bridge](forgejo-actions-logs.md) - plaintext helper for live workflow logs, plus fetch mirror.
