@@ -1,4 +1,4 @@
-"""Project AOSH's role-intent harness board into AOS's Ward profile and launcher."""
+"""Compile AOS harness mappings with AOSH role selections for AOS consumers."""
 
 from __future__ import annotations
 
@@ -17,10 +17,10 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_AOSH_ROOT = REPO_ROOT.parents[1] / "coilyco-bridge" / "agentic-os-hardware"
 DEFAULT_ROLES = REPO_ROOT / ".agents" / "roles.kdl"
 DEFAULT_AGENT_ROLES = DEFAULT_ROLES
+DEFAULT_HARNESSES = REPO_ROOT / ".agents" / "harnesses.yaml"
 DEFAULT_OUTPUT = REPO_ROOT / "aos" / "role-harnesses.json"
 ROLES_PATH = Path("roles.yaml")
 SELECTIONS_PATH = Path("agent-selections.yaml")
-HARNESSES_PATH = Path("harnesses.yaml")
 FORMAT = "agentic-os.role-harness-board.v1"
 EXPECTED_ROLE_COUNT = 10
 EXPECTED_LANE_COUNT = 16
@@ -34,7 +34,7 @@ ROLE_ROUTES_END = "// END generated role-intent harness routes"
 
 
 class BoardSyncError(RuntimeError):
-    """An AOSH source or AOS projection invariant is invalid."""
+    """A harness-board source or AOS projection invariant is invalid."""
 
 
 @dataclass(frozen=True)
@@ -107,11 +107,14 @@ def _check_keys(actual: object, expected: set[str], label: str) -> None:
 
 
 def load_board(
-    aosh_root: Path, *, roles_path: Path = DEFAULT_ROLES
+    aosh_root: Path,
+    *,
+    roles_path: Path = DEFAULT_ROLES,
+    harnesses_path: Path = DEFAULT_HARNESSES,
 ) -> HarnessBoard:
     roles_file = aosh_root / ROLES_PATH
     selections_file = aosh_root / SELECTIONS_PATH
-    harnesses_file = aosh_root / HARNESSES_PATH
+    harnesses_file = harnesses_path
     role_document = _load_yaml(roles_file)
     selection_document = _load_yaml(selections_file)
     harness_document = _load_yaml(harnesses_file)
@@ -341,9 +344,14 @@ def run(
     *,
     roles_path: Path = DEFAULT_ROLES,
     agent_roles_path: Path = DEFAULT_AGENT_ROLES,
+    harnesses_path: Path = DEFAULT_HARNESSES,
     check: bool,
 ) -> int:
-    board = load_board(aosh_root, roles_path=roles_path)
+    board = load_board(
+        aosh_root,
+        roles_path=roles_path,
+        harnesses_path=harnesses_path,
+    )
     expected_output = render_board(board)
     try:
         current_output = output.read_text(encoding="utf-8")
@@ -371,14 +379,15 @@ def run(
     ]
     if not drift:
         print(
-            "ok: AOS role-intent harness defaults match AOSH "
+            "ok: AOS harness registry and AOSH selections match projections "
             f"({len(board.roles)} roles, {board.lane_count} lanes)"
         )
         return 0
     if check:
         for path in drift:
             print(
-                f"drift: {path} does not match {aosh_root / SELECTIONS_PATH}",
+                f"drift: {path} does not match "
+                f"{aosh_root / SELECTIONS_PATH} with {harnesses_path}",
                 file=sys.stderr,
             )
         print("run `ward exec sync-harness-board` from the AOS checkout", file=sys.stderr)
@@ -391,7 +400,7 @@ def run(
         raise BoardSyncError(f"write harness-board projection: {exc}") from exc
     print(
         f"updated {agent_roles_path} and {output} from "
-        f"{aosh_root / SELECTIONS_PATH}"
+        f"{aosh_root / SELECTIONS_PATH} with {harnesses_path}"
     )
     return 0
 
@@ -409,6 +418,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--aosh-root", type=Path, default=DEFAULT_AOSH_ROOT)
     parser.add_argument("--roles", type=Path, default=DEFAULT_ROLES)
     parser.add_argument("--agent-roles", type=Path, default=DEFAULT_AGENT_ROLES)
+    parser.add_argument("--harnesses", type=Path, default=DEFAULT_HARNESSES)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     args = parser.parse_args(argv)
 
@@ -421,6 +431,7 @@ def main(argv: list[str] | None = None) -> int:
             args.output,
             roles_path=args.roles,
             agent_roles_path=args.agent_roles,
+            harnesses_path=args.harnesses,
             check=args.check,
         )
     except BoardSyncError as exc:

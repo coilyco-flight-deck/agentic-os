@@ -1,16 +1,19 @@
 # AOSH projections into AOS
 
 AOSH owns hand selection and backend routing, and temporarily mirrors
-agent-compose's public role orientation. AOS consumes four narrow,
-authoring-time projections. Each command reads a sibling AOSH checkout, writes
-an AOS-owned artifact, and commits that result. Shipped AOS runtimes never fetch
+agent-compose's public role orientation. AOS owns the reusable public harness
+capability registry and consumes four narrow, authoring-time projections. Each
+command reads only the AOSH state needed for that projection, writes an
+AOS-owned artifact, and commits that result. Shipped AOS runtimes never fetch
 config upward from AOSH.
 
 ## Role-intent harness board
 
-AOSH's hand-owned `roles.yaml`, `agent-selections.yaml`, and `harnesses.yaml`
-define the model-opaque board. `ward exec sync-harness-board` validates all ten
-roles and sixteen lanes, then rewrites generated `intent` children inside the
+AOS's hand-owned [`.agents/harnesses.yaml`](../.agents/harnesses.yaml) defines
+public harness identity and intent compatibility. AOSH's hand-owned
+`roles.yaml` and `agent-selections.yaml` define the model-opaque role joins and
+lane choices. `ward exec sync-harness-board` validates their combined ten roles
+and sixteen lanes, then rewrites generated `intent` children inside the
 agent-compose provider roles in [`.agents/roles.kdl`](../.agents/roles.kdl).
 The same run updates
 [`role-harnesses.json`](../aos/role-harnesses.json) as the compiled launcher
@@ -29,8 +32,8 @@ harness argument.
 
 Run `ward exec sync-harness-board -- --check` for a read-only drift check. The
 local pre-commit suite runs it with `--if-present`. A missing sibling AOSH
-checkout skips visibly, while missing or malformed files inside a present
-checkout fail closed.
+checkout skips visibly. The AOS registry is always required, while missing or
+malformed files inside a present AOSH checkout fail closed.
 
 ## Role orientation
 

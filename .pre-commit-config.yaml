@@ -132,7 +132,7 @@ repos:
         pass_filenames: false
         stages: [pre-commit]
       - id: role-harness-board
-        name: AOS role-intent harness defaults match AOSH
+        name: AOS harness registry and AOSH selections match projections
         entry: python -m agentic_os.harness_board_sync --check --if-present
         language: python
         additional_dependencies: [pyyaml]

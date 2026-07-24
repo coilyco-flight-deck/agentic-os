@@ -72,7 +72,7 @@ commands:
     description: "Sync AOSH's selected Goose route into `.ward/agents.kdl`. OpenCode remains AOS-local backend policy. `-- --check` compares the synced overlay with the selected, provisioned roster and fails on drift. See docs/ward-local-models.md."
   sync-harness-board:
     run: uv run python -m agentic_os.harness_board_sync
-    description: "Project AOSH's model-opaque role-intent harness selections into `.agents/roles.kdl`, plus the compiled `aos/role-harnesses.json` launcher view. `-- --check` reports drift without writing. See docs/ward-local-models.md."
+    description: "Join AOS's canonical `.agents/harnesses.yaml` capability registry with AOSH's model-opaque role-intent selections, then project `.agents/roles.kdl` and the compiled `aos/role-harnesses.json` launcher view. `-- --check` reports drift without writing. See docs/ward-local-models.md."
   sync-role-seats:
     run: uv run python -m agentic_os.role_seat_sync
     description: "Project AOSH's public-safe role-seat names and pronouns into marker-bounded agent identity blocks in `.ward/roles.kdl`. `-- --check` reports drift without writing. See docs/ward-local-models.md."

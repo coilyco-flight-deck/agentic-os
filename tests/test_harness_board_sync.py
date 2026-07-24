@@ -15,13 +15,15 @@ FIXTURE_ROOT = Path(__file__).parent / "fixtures" / "harness_board"
 
 
 @pytest.fixture
-def board_sources(tmp_path: Path) -> tuple[Path, Path, Path]:
+def board_sources(tmp_path: Path) -> tuple[Path, Path, Path, Path]:
     aosh_root = tmp_path / "aosh"
     shutil.copytree(FIXTURE_ROOT, aosh_root)
+    harnesses_path = tmp_path / "harnesses.yaml"
+    shutil.move(aosh_root / "harnesses.yaml", harnesses_path)
     roles_path = aosh_root / "roles.kdl"
     agent_roles_path = tmp_path / "agent-roles.kdl"
     agent_roles_path.write_text(roles_path.read_text(encoding="utf-8"), encoding="utf-8")
-    return aosh_root, roles_path, agent_roles_path
+    return aosh_root, roles_path, agent_roles_path, harnesses_path
 
 
 def _rewrite_yaml(path: Path, mutate: Callable[[dict[str, object]], None]) -> None:
@@ -32,11 +34,15 @@ def _rewrite_yaml(path: Path, mutate: Callable[[dict[str, object]], None]) -> No
 
 
 def test_fixture_renders_deterministic_model_opaque_projection(
-    board_sources: tuple[Path, Path, Path],
+    board_sources: tuple[Path, Path, Path, Path],
 ) -> None:
-    aosh_root, roles_path, agent_roles_path = board_sources
+    aosh_root, roles_path, agent_roles_path, harnesses_path = board_sources
 
-    board = harness_board_sync.load_board(aosh_root, roles_path=roles_path)
+    board = harness_board_sync.load_board(
+        aosh_root,
+        roles_path=roles_path,
+        harnesses_path=harnesses_path,
+    )
     rendered = harness_board_sync.render_board(board)
     rendered_agent = harness_board_sync.merge_agent_roles(
         agent_roles_path.read_text(encoding="utf-8"),
@@ -71,13 +77,17 @@ def test_fixture_renders_deterministic_model_opaque_projection(
 
 @pytest.mark.parametrize("drift_target", ["json", "agent-kdl"])
 def test_check_reports_drift_without_writing(
-    board_sources: tuple[Path, Path, Path],
+    board_sources: tuple[Path, Path, Path, Path],
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
     drift_target: str,
 ) -> None:
-    aosh_root, roles_path, agent_roles_path = board_sources
-    board = harness_board_sync.load_board(aosh_root, roles_path=roles_path)
+    aosh_root, roles_path, agent_roles_path, harnesses_path = board_sources
+    board = harness_board_sync.load_board(
+        aosh_root,
+        roles_path=roles_path,
+        harnesses_path=harnesses_path,
+    )
     output = tmp_path / "role-harnesses.json"
     output.write_text(harness_board_sync.render_board(board), encoding="utf-8")
     if drift_target == "json":
@@ -100,6 +110,7 @@ def test_check_reports_drift_without_writing(
             output,
             roles_path=roles_path,
             agent_roles_path=agent_roles_path,
+            harnesses_path=harnesses_path,
             check=True,
         )
         == 1
@@ -112,9 +123,9 @@ def test_check_reports_drift_without_writing(
 
 
 def test_sync_writes_then_check_passes(
-    board_sources: tuple[Path, Path, Path], tmp_path: Path
+    board_sources: tuple[Path, Path, Path, Path], tmp_path: Path
 ) -> None:
-    aosh_root, roles_path, agent_roles_path = board_sources
+    aosh_root, roles_path, agent_roles_path, harnesses_path = board_sources
     output = tmp_path / "role-harnesses.json"
 
     assert (
@@ -123,13 +134,18 @@ def test_sync_writes_then_check_passes(
             output,
             roles_path=roles_path,
             agent_roles_path=agent_roles_path,
+            harnesses_path=harnesses_path,
             check=False,
         )
         == 0
     )
     projected_roles = agent_roles_path.read_text(encoding="utf-8")
     assert projected_roles.startswith("roles {\n")
-    board = harness_board_sync.load_board(aosh_root, roles_path=roles_path)
+    board = harness_board_sync.load_board(
+        aosh_root,
+        roles_path=roles_path,
+        harnesses_path=harnesses_path,
+    )
     assert (
         projected_roles.count(harness_board_sync.ROLE_ROUTES_BEGIN)
         == len(board.roles)
@@ -146,6 +162,7 @@ def test_sync_writes_then_check_passes(
             output,
             roles_path=roles_path,
             agent_roles_path=agent_roles_path,
+            harnesses_path=harnesses_path,
             check=True,
         )
         == 0
@@ -172,10 +189,10 @@ def test_if_present_skips_only_an_absent_checkout(
 
 
 def test_present_incomplete_checkout_fails_closed(
-    board_sources: tuple[Path, Path, Path],
+    board_sources: tuple[Path, Path, Path, Path],
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    aosh_root, roles_path, agent_roles_path = board_sources
+    aosh_root, roles_path, agent_roles_path, harnesses_path = board_sources
     (aosh_root / harness_board_sync.SELECTIONS_PATH).unlink()
 
     assert (
@@ -189,6 +206,8 @@ def test_present_incomplete_checkout_fails_closed(
                 str(roles_path),
                 "--agent-roles",
                 str(agent_roles_path),
+                "--harnesses",
+                str(harnesses_path),
             ]
         )
         == 2
@@ -196,11 +215,25 @@ def test_present_incomplete_checkout_fails_closed(
     assert "harness-board-sync: read" in capsys.readouterr().err
 
 
+def test_missing_aos_harness_registry_fails_closed(
+    board_sources: tuple[Path, Path, Path, Path],
+) -> None:
+    aosh_root, roles_path, _, harnesses_path = board_sources
+    harnesses_path.unlink()
+
+    with pytest.raises(harness_board_sync.BoardSyncError, match="read"):
+        harness_board_sync.load_board(
+            aosh_root,
+            roles_path=roles_path,
+            harnesses_path=harnesses_path,
+        )
+
+
 @pytest.mark.parametrize("failure", ["missing-lane", "rationale", "incompatible"])
 def test_malformed_selections_fail_closed(
-    board_sources: tuple[Path, Path, Path], failure: str
+    board_sources: tuple[Path, Path, Path, Path], failure: str
 ) -> None:
-    aosh_root, roles_path, _ = board_sources
+    aosh_root, roles_path, _, harnesses_path = board_sources
     selections_path = aosh_root / harness_board_sync.SELECTIONS_PATH
 
     def mutate(document: dict[str, object]) -> None:
@@ -220,13 +253,17 @@ def test_malformed_selections_fail_closed(
     _rewrite_yaml(selections_path, mutate)
 
     with pytest.raises(harness_board_sync.BoardSyncError):
-        harness_board_sync.load_board(aosh_root, roles_path=roles_path)
+        harness_board_sync.load_board(
+            aosh_root,
+            roles_path=roles_path,
+            harnesses_path=harnesses_path,
+        )
 
 
 def test_unattended_intent_belongs_only_to_engineer(
-    board_sources: tuple[Path, Path, Path],
+    board_sources: tuple[Path, Path, Path, Path],
 ) -> None:
-    aosh_root, roles_path, _ = board_sources
+    aosh_root, roles_path, _, harnesses_path = board_sources
 
     def mutate_roles(document: dict[str, object]) -> None:
         roles = document["roles"]
@@ -244,14 +281,22 @@ def test_unattended_intent_belongs_only_to_engineer(
     _rewrite_yaml(aosh_root / harness_board_sync.SELECTIONS_PATH, mutate_selections)
 
     with pytest.raises(harness_board_sync.BoardSyncError, match="exclusively"):
-        harness_board_sync.load_board(aosh_root, roles_path=roles_path)
+        harness_board_sync.load_board(
+            aosh_root,
+            roles_path=roles_path,
+            harnesses_path=harnesses_path,
+        )
 
 
 def test_merge_agent_roles_rejects_malformed_generated_markers(
-    board_sources: tuple[Path, Path, Path],
+    board_sources: tuple[Path, Path, Path, Path],
 ) -> None:
-    aosh_root, roles_path, agent_roles_path = board_sources
-    board = harness_board_sync.load_board(aosh_root, roles_path=roles_path)
+    aosh_root, roles_path, agent_roles_path, harnesses_path = board_sources
+    board = harness_board_sync.load_board(
+        aosh_root,
+        roles_path=roles_path,
+        harnesses_path=harnesses_path,
+    )
     current = agent_roles_path.read_text(encoding="utf-8")
     first_role = board.roles[0].role
     malformed = current.replace(
@@ -270,10 +315,14 @@ def test_merge_agent_roles_rejects_malformed_generated_markers(
 
 
 def test_merge_agent_roles_migrates_legacy_sibling_registry(
-    board_sources: tuple[Path, Path, Path],
+    board_sources: tuple[Path, Path, Path, Path],
 ) -> None:
-    aosh_root, roles_path, agent_roles_path = board_sources
-    board = harness_board_sync.load_board(aosh_root, roles_path=roles_path)
+    aosh_root, roles_path, agent_roles_path, harnesses_path = board_sources
+    board = harness_board_sync.load_board(
+        aosh_root,
+        roles_path=roles_path,
+        harnesses_path=harnesses_path,
+    )
     legacy = (
         agent_roles_path.read_text(encoding="utf-8").rstrip()
         + "\n\n"

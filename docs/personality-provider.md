@@ -6,8 +6,8 @@ directly and fetches no context over the network.
 
 ## Ownership boundary
 
-* **AOS** - owns ordinary skills, role-scoped skills, and role bindings.
-* **agent-compose** - owns roles, compatibility, seats, identity, colors, the personality invariant and definitions, selection, and materialization.
+* **AOS** - owns ordinary skills, role-scoped skills, role bindings, and the public agent and harness capability registry.
+* **agent-compose** - owns roles, personality compatibility, seats, identity, colors, the personality invariant and definitions, selection, and materialization.
 * **Ward** - owns executable authority, permissions, credentials, and runtime risk controls.
 
 Shared role and skill names join the first two layers without moving authority
@@ -26,6 +26,11 @@ See [role-composed skills](role-composed-skills.md) for the complete contract.
 
 The compose request supplies the stable source id `aos-public`, so adding an
 ordinary skill or role binding needs no parallel provider inventory.
+
+The provider also publishes `.agents/harnesses.yaml` as the canonical
+model-opaque registry of agent and harness identity, source links, and
+compatible intents. AOSH consumes a generated mirror for offline scoring while
+retaining role joins, lane selections, models, and backend routes.
 
 Agent-compose activates the complete ordered personality meld for a selected
 role. A request cannot select an arbitrary trait or change compatibility.
