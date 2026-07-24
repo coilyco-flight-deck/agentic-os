@@ -3,7 +3,9 @@ package main
 import (
 	"bytes"
 	"context"
+	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -19,7 +21,12 @@ func TestResolveAcomposeCheckinCodex(t *testing.T) {
 		t.Fatalf("resolveAcomposeCheckin() = %#v", spec)
 	}
 	want := []string{
-		"codex",
+		"bash",
+		"-o",
+		"pipefail",
+		"-c",
+		acomposeCheckinScript,
+		"aos-acompose-checkin",
 		"exec",
 		"--ephemeral",
 		"--sandbox",
@@ -65,12 +72,56 @@ func TestAcomposeCheckinCodexDryRun(t *testing.T) {
 		"--role engineer",
 		"--layout codex",
 		"--no-substrate",
-		"-- codex exec --ephemeral --sandbox read-only --skip-git-repo-check --color never",
+		"-- bash -o pipefail -c",
+		"aos-acompose-checkin exec --ephemeral --sandbox read-only",
 		acomposeCheckinPrompt,
 	} {
 		if !strings.Contains(rendered, want) {
 			t.Errorf("dry-run missing %q:\n%s", want, rendered)
 		}
+	}
+}
+
+func TestAcomposeCheckinScriptRendersTranscriptAndPreservesFailure(t *testing.T) {
+	t.Parallel()
+	fakeCodex := `codex() {
+	printf '%s\n' \
+		'OpenAI Codex' \
+		'--------' \
+		'workdir: /workspace' \
+		'--------' \
+		'user' \
+		'prompt' \
+		'warning: fallback' \
+		'codex' \
+		'ROLE-CONFIRMED: engineer' \
+		'tokens used' \
+		'7' >&2
+	printf '%s\n' 'duplicate final stdout'
+	return 17
+}
+`
+	command := exec.Command(
+		"bash",
+		"-o",
+		"pipefail",
+		"-c",
+		fakeCodex+acomposeCheckinScript,
+		"aos-acompose-checkin-test",
+	)
+	output, err := command.Output()
+	var exitError *exec.ExitError
+	if !errors.As(err, &exitError) || exitError.ExitCode() != 17 {
+		t.Fatalf("check-in formatter error = %v", err)
+	}
+	want := "\nOpenAI Codex\n\n--------\n\nworkdir: /workspace\n\n--------\n\n" +
+		"user\nprompt\n\nwarning: fallback\n\ncodex\nROLE-CONFIRMED: engineer\n\n" +
+		"tokens used\n7\n\n"
+	if string(output) != want {
+		t.Fatalf("check-in transcript:\n%q\nwant:\n%q", output, want)
+	}
+	if strings.Contains(string(output), "duplicate final stdout") {
+		t.Fatal("check-in transcript included duplicate final stdout")
 	}
 }
 

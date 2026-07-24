@@ -30,6 +30,10 @@ The prompt forbids tool use and asks the agent to begin with
 prints the response without interpreting it. The role-question harness remains
 the assertion path for an automated pass or fail.
 
+The diagnostic transcript stays streaming in emission order. A duplicated
+final stdout copy is suppressed. Blank lines frame the transcript, each Codex
+section divider, and each prompt, warning, response, or token block.
+
 ## Inspection
 
 Global `--image`, `--delivery`, `--auth`, and `--dry-run` behavior still
