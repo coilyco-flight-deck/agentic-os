@@ -43,7 +43,6 @@ func TestBuildLaunchPlanMountsCWDAndRunsInternalCompose(t *testing.T) {
 		Image:         "agentic-os:test",
 		Role:          "engineer",
 		Layout:        "codex",
-		Density:       "full",
 		Delivery:      "native-skills",
 		CWD:           cwd,
 		Command:       []string{"codex", "exec", "fix it"},
@@ -97,7 +96,6 @@ func TestBuildLaunchPlanCanSkipSubstrate(t *testing.T) {
 		Image:       "agentic-os:test",
 		Role:        "advisor",
 		Layout:      "claude",
-		Density:     "brief",
 		Delivery:    "compiled",
 		CWD:         t.TempDir(),
 		Command:     []string{"claude"},
@@ -127,7 +125,6 @@ func TestShellJoinDoesNotExposeForwardedEnvironmentValues(t *testing.T) {
 		Image:         "agentic-os:test",
 		Role:          "engineer",
 		Layout:        "codex",
-		Density:       "full",
 		Delivery:      "native-skills",
 		CWD:           t.TempDir(),
 		Command:       []string{"codex"},
@@ -144,6 +141,18 @@ func TestShellJoinDoesNotExposeForwardedEnvironmentValues(t *testing.T) {
 	}
 	if !strings.Contains(rendered, "--env OPENAI_API_KEY") {
 		t.Fatalf("dry-run omitted environment name: %s", rendered)
+	}
+}
+
+func TestValidateLegacyDensity(t *testing.T) {
+	t.Parallel()
+	for _, value := range []string{"", "full", " full "} {
+		if err := validateLegacyDensity(value); err != nil {
+			t.Fatalf("legacy density %q failed: %v", value, err)
+		}
+	}
+	if err := validateLegacyDensity("brief"); err == nil {
+		t.Fatal("retired brief density passed validation")
 	}
 }
 
