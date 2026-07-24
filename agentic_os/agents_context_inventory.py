@@ -506,6 +506,10 @@ def active_cascade(
 ) -> dict[str, Any]:
     """Return source references for one role/harness lane in delivery order."""
     by_repo = {repo.full_name: repo for repo in repositories}
+    if current_repo not in by_repo:
+        raise InventoryError(
+            f"current repository {current_repo!r} is not present in the inventory"
+        )
     documents = _document_map(repositories)
     sources: list[dict[str, Any]] = []
 
@@ -528,20 +532,18 @@ def active_cascade(
         f"{GLOBAL_BASE_REPO}:AGENTS.{scenario.harness}.md",
         "global-harness-override",
     )
-    repo = by_repo.get(current_repo)
-    if repo is not None:
-        active_paths = _active_repo_paths(cwd)
-        if scenario.harness == "claude":
-            for agents_path in active_paths:
-                parent = Path(agents_path).parent
-                bridge = (
-                    "CLAUDE.md"
-                    if parent == Path(".")
-                    else (parent / "CLAUDE.md").as_posix()
-                )
-                append(f"{current_repo}:{bridge}", "repo-cascade-bridge")
+    active_paths = _active_repo_paths(cwd)
+    if scenario.harness == "claude":
         for agents_path in active_paths:
-            append(f"{current_repo}:{agents_path}", "repo-cascade")
+            parent = Path(agents_path).parent
+            bridge = (
+                "CLAUDE.md"
+                if parent == Path(".")
+                else (parent / "CLAUDE.md").as_posix()
+            )
+            append(f"{current_repo}:{bridge}", "repo-cascade-bridge")
+    for agents_path in active_paths:
+        append(f"{current_repo}:{agents_path}", "repo-cascade")
 
     payload_material = "\n".join(
         f"{source['delivery_path']}:{source['content_hash']}" for source in sources

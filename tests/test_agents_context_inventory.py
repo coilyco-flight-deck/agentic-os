@@ -218,6 +218,22 @@ def test_report_is_stable_and_markdown_uses_flat_prose(
     assert "coilyco-bridge/missing" in markdown
 
 
+def test_build_report_rejects_current_repo_outside_inventory(
+    context_fleet: dict[str, Path],
+) -> None:
+    with pytest.raises(
+        inventory.InventoryError,
+        match="current repository 'example/not-managed' is not present",
+    ):
+        inventory.build_report(
+            context_fleet["substrate"],
+            context_fleet["fleet"],
+            context_fleet["projects"],
+            board=context_fleet["board"],
+            current_repo="example/not-managed",
+        )
+
+
 def test_bare_manifest_entry_resolves_only_a_named_repo(tmp_path: Path) -> None:
     projects = tmp_path / "projects"
     _write(projects / "org" / "aos" / "AGENTS.md", "# AOS\n\nRules.\n")
@@ -274,6 +290,33 @@ def test_cli_check_reports_incomplete_inventory(
     captured = capsys.readouterr()
     assert '"format": "agentic-os.agents-context-inventory.v1"' in captured.out
     assert "incomplete: coilyco-bridge/missing" in captured.err
+
+
+def test_cli_rejects_current_repo_outside_inventory(
+    context_fleet: dict[str, Path], capsys: pytest.CaptureFixture[str]
+) -> None:
+    rc = inventory.main(
+        [
+            "--fleet-manifest",
+            str(context_fleet["fleet"]),
+            "--substrate-manifest",
+            str(context_fleet["substrate"]),
+            "--projects-root",
+            str(context_fleet["projects"]),
+            "--board",
+            str(context_fleet["board"]),
+            "--current-repo",
+            "example/not-managed",
+        ]
+    )
+
+    assert rc == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert (
+        "current repository 'example/not-managed' is not present in the inventory"
+        in captured.err
+    )
 
 
 def test_manifest_rejects_conflicting_visibility(tmp_path: Path) -> None:
