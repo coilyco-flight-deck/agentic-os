@@ -31,6 +31,10 @@ ward exec agent-terminal -- \
   --repo coilyco-flight-deck/agentic-os
 ```
 
+`--working-directory` defaults to `$PROJECTS_ROOT`, with `~/projects` as the
+portable fallback. A caller passes the flag explicitly when one director should
+open inside a specific checkout.
+
 The launcher calls `agent-compose overlay --json`, validates
 `agent-compose.overlay.v1`, and derives:
 

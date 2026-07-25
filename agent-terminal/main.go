@@ -61,6 +61,17 @@ func main() {
 	}
 }
 
+func defaultWorkingDirectory() string {
+	if projectsRoot := strings.TrimSpace(os.Getenv("PROJECTS_ROOT")); projectsRoot != "" {
+		return projectsRoot
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "."
+	}
+	return filepath.Join(home, "projects")
+}
+
 func newCommand(deps commandDeps) *cli.Command {
 	return &cli.Command{
 		Name:      "agent-terminal",
@@ -75,7 +86,11 @@ func newCommand(deps commandDeps) *cli.Command {
 				Usage: "caller-supplied renderer expression",
 			},
 			&cli.StringFlag{Name: "task-title", Usage: "human-readable repository or issue label"},
-			&cli.StringFlag{Name: "working-directory", Value: ".", Usage: "director working directory"},
+			&cli.StringFlag{
+				Name:  "working-directory",
+				Value: defaultWorkingDirectory(),
+				Usage: "director working directory (defaults to the projects root)",
+			},
 			&cli.StringFlag{
 				Name:    "agent-compose-bin",
 				Value:   defaultOverlayBin,

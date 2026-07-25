@@ -28,18 +28,34 @@ def _bash_path(path: Path) -> str:
     return proc.stdout.strip()
 
 
-def _interactive_shell_pwd(home: Path, startup_dir: Path | None = None) -> str:
+def _native_path(path: Path) -> str:
+    return path.as_posix() if os.name == "nt" else str(path)
+
+
+def _interactive_shell_pwd(
+    home: Path,
+    startup_dir: Path | None = None,
+    *,
+    projects_root: Path | None = None,
+    repo_root: Path = REPO_ROOT,
+    cwd: Path | None = None,
+) -> str:
     env = os.environ.copy()
     env.pop("WARP_STARTUP_DIR", None)
+    env.pop("PROJECTS_ROOT", None)
     env.update(
         {
             "HOME": _bash_path(home),
             "PATH": "/usr/bin:/bin",
-            "AOS_REPO_ROOT": _bash_path(REPO_ROOT),
+            # Git for Windows receives this value while MSYS_NO_PATHCONV may be
+            # inherited, so keep the drive-qualified native form.
+            "AOS_REPO_ROOT": _native_path(repo_root),
         }
     )
     if startup_dir is not None:
         env["WARP_STARTUP_DIR"] = _bash_path(startup_dir)
+    if projects_root is not None:
+        env["PROJECTS_ROOT"] = _bash_path(projects_root)
 
     proc = subprocess.run(
         [
@@ -50,7 +66,7 @@ def _interactive_shell_pwd(home: Path, startup_dir: Path | None = None) -> str:
             "-ic",
             'printf "%s" "$PWD"',
         ],
-        cwd=home,
+        cwd=cwd or home,
         check=True,
         capture_output=True,
         text=True,
@@ -75,3 +91,37 @@ def test_interactive_shell_honors_startup_dir_override(tmp_path: Path) -> None:
     startup_dir.mkdir()
 
     assert _interactive_shell_pwd(home, startup_dir) == _bash_path(startup_dir)
+
+
+def test_interactive_shell_honors_projects_root_override(tmp_path: Path) -> None:
+    home = tmp_path / "home"
+    projects = tmp_path / "workspace"
+    home.mkdir()
+    projects.mkdir()
+
+    assert _interactive_shell_pwd(home, projects_root=projects) == _bash_path(projects)
+
+
+def test_interactive_shell_derives_projects_root_from_aos_checkout(tmp_path: Path) -> None:
+    home = tmp_path / "home"
+    projects = tmp_path / "projects"
+    repo = projects / "coilyco-flight-deck" / "agentic-os"
+    home.mkdir()
+    repo.mkdir(parents=True)
+    subprocess.run(
+        ["git", "init", str(repo)],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    assert _interactive_shell_pwd(home, repo_root=repo) == _bash_path(projects)
+
+
+def test_interactive_shell_preserves_explicit_working_directory(tmp_path: Path) -> None:
+    home = tmp_path / "home"
+    projects = home / "projects"
+    checkout = projects / "coilyco-flight-deck" / "agentic-os"
+    checkout.mkdir(parents=True)
+
+    assert _interactive_shell_pwd(home, cwd=checkout) == _bash_path(checkout)

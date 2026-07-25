@@ -39,6 +39,30 @@ _siren_aos_repo_root() {
   return 1
 }
 
+_siren_projects_root() {
+  local repo root
+  if [ -n "${PROJECTS_ROOT:-}" ]; then
+    root="$PROJECTS_ROOT"
+  elif [ -d "$HOME/projects" ]; then
+    root="$HOME/projects"
+  else
+    repo=$(_siren_aos_repo_root) || repo=""
+    if [ -n "$repo" ]; then
+      root="$(cd "$repo/../.." && pwd -P)"
+    else
+      root="$HOME/projects"
+    fi
+  fi
+  # Native Windows tools need a drive-qualified value, while Git Bash accepts
+  # the same mixed-slash form for shell paths.
+  if command -v cygpath >/dev/null 2>&1; then
+    root=$(cygpath -m "$root") || return 1
+  fi
+  printf '%s\n' "$root"
+}
+
+export PROJECTS_ROOT="$(_siren_projects_root)"
+
 # Host shells read the bundle live from the checkout (file://): a pull applies
 # immediately, and launch needs no pin, gitsync, or credential. See docs/ward-specs.md.
 _siren_ward_config_ref() {
@@ -64,7 +88,7 @@ if [ -z "${_SIREN_SHELL_ENV:-}" ]; then
   export _SIREN_SHELL_ENV=1
 
   # ward owns the whole workspace root (the security boundary, all orgs).
-  export WARD_LOCKDOWN_ROOT="$HOME/projects"
+  export WARD_LOCKDOWN_ROOT="$PROJECTS_ROOT"
 
   # Prepend $1 to PATH if it's a real dir and not already present.
   _siren_path_prepend() {
@@ -283,8 +307,10 @@ git-pr-title() {
 }
 
 apply-aos-common() {
+  local repo
+  repo=$(_siren_aos_repo_root) || return 1
   # shellcheck disable=SC1091
-  source "$HOME/projects/coilyco-flight-deck/agentic-os/shell/common.sh"
+  source "$repo/shell/common.sh"
 }
 
 # Exec from a WSL shell into native Windows PowerShell: SSH-into-WSL sessions skip
@@ -427,7 +453,7 @@ ssm-get() {
 # startup directory, matching Warp's default new-tab directory.
 case $- in
   *i*)
-    _siren_startup_dir="${WARP_STARTUP_DIR:-$HOME/projects}"
+    _siren_startup_dir="${WARP_STARTUP_DIR:-$PROJECTS_ROOT}"
     if [ "$PWD" = "$HOME" ] && [ -d "$_siren_startup_dir" ]; then
       cd "$_siren_startup_dir"
     fi

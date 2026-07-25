@@ -44,6 +44,28 @@ func directorRequest() launchRequest {
 	}
 }
 
+func TestDefaultWorkingDirectoryUsesProjectsRoot(t *testing.T) {
+	projects := t.TempDir()
+	t.Setenv("PROJECTS_ROOT", projects)
+
+	if got := defaultWorkingDirectory(); got != projects {
+		t.Fatalf("defaultWorkingDirectory() = %q, want %q", got, projects)
+	}
+}
+
+func TestDefaultWorkingDirectoryFallsBackToHomeProjects(t *testing.T) {
+	t.Setenv("PROJECTS_ROOT", "")
+	home, err := os.UserHomeDir()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := filepath.Join(home, "projects")
+	if got := defaultWorkingDirectory(); got != want {
+		t.Fatalf("defaultWorkingDirectory() = %q, want %q", got, want)
+	}
+}
+
 func TestBuildLaunchPlanUsesCanonicalIdentity(t *testing.T) {
 	request := directorRequest()
 	request.AlacrittyBin = "alacritty-preview"

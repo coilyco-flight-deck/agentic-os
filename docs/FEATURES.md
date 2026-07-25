@@ -7,7 +7,7 @@ This lists shipped capabilities, not files.
 ## Inventory
 
 - [Shell and secrets](features-shell-secrets.md) - shared shell setup, Warp, SSM, GPG, and repo gate.
-- [Branded director terminal](alacritty-directors.md) - Sombra plus static agent-compose identity in one Alacritty window.
+- [Branded director terminal](alacritty-directors.md) - Sombra Alacritty director with a projects-root default and explicit cwd override.
 - [Alacritty workspace](zellij-workspace.md) - persistent Zellij, vertical tabs, panes, and direct shortcuts.
 - [Speech helper](aos-say.md) - `aos-say` client plus relay for status speech.
 - **Karabiner key bindings** - complex modifications for the external keyboard and Remote Desktop.
