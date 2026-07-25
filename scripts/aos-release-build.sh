@@ -76,10 +76,6 @@ build_aguard() {
     fi
 
     cp -R "$repo_root/.specgen" "$source"
-    gzip -dc "$source/aguard/forgejo.swagger.lock.json.gz" \
-        > "$source/aguard/forgejo.swagger.lock.json"
-    mv "$source/aguard/forgejo.swagger.lock.json" \
-        "$source/aguard/forgejo.swagger.lock.json.gz"
     python3 - "$source/specverb.lock" "$source/go.mod" "$source/go.sum" <<'PY'
 import json
 import pathlib

@@ -76,7 +76,7 @@ def test_native_release_wrapper_embeds_the_actions_bridge() -> None:
     assert "//go:embed payload/aguard payload/agentic_os/*" in text
     assert "PYTHONPATH=" in text
     build = (ROOT / "scripts" / "aos-release-build.sh").read_text(encoding="utf-8")
-    assert "gzip -dc" in build
+    assert "gzip -dc" not in build
     for module in (
         "forgejo_actions_list.py",
         "forgejo_actions_logs.py",
