@@ -504,6 +504,7 @@ def active_cascade(
     *,
     current_repo: str,
     cwd: str,
+    include_global_composed: bool = True,
 ) -> dict[str, Any]:
     """Return source references for one role/harness lane in delivery order."""
     by_repo = {repo.full_name: repo for repo in repositories}
@@ -528,11 +529,12 @@ def active_cascade(
             }
         )
 
-    append(f"{GLOBAL_BASE_REPO}:AGENTS.md", "global-composed")
-    append(
-        f"{GLOBAL_BASE_REPO}:AGENTS.{scenario.harness}.md",
-        "global-harness-override",
-    )
+    if include_global_composed:
+        append(f"{GLOBAL_BASE_REPO}:AGENTS.md", "global-composed")
+        append(
+            f"{GLOBAL_BASE_REPO}:AGENTS.{scenario.harness}.md",
+            "global-harness-override",
+        )
     active_paths = _active_repo_paths(cwd)
     if scenario.harness == "claude":
         for agents_path in active_paths:

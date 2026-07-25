@@ -256,7 +256,7 @@ def test_agents_inventory_rejects_outside_cwd(tmp_path: Path) -> None:
         )
 
 
-def test_agents_inventory_preserves_global_and_repo_delivery_paths(
+def test_agents_inventory_omits_global_context_already_measured_by_projection(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -287,13 +287,12 @@ def test_agents_inventory_preserves_global_and_repo_delivery_paths(
     ]
 
     assert [item["delivery"] for item in components] == [
-        "global-composed",
         "repo-cascade",
         "repo-cascade",
     ]
-    assert [item["source"] for item in components[:2]] == [
+    assert [item["source"] for item in components] == [
         "coilyco-flight-deck/agentic-os:AGENTS.md",
-        "coilyco-flight-deck/agentic-os:AGENTS.md",
+        "coilyco-flight-deck/agentic-os:nested/AGENTS.md",
     ]
 
 

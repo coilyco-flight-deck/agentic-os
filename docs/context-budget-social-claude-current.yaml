@@ -22,20 +22,20 @@ mcp:
   eager_schema_count: 0
 totals:
   eager:
-    components: 26
-    bytes: 51684
-    tokens: 12927
+    components: 24
+    bytes: 30902
+    tokens: 7731
   lazy:
     components: 50
     bytes: 78028
     tokens: 19520
 breakdown:
   eager:
-    agents-cascade: {components: 4, bytes: 40959, tokens: 10241}
+    agents-cascade: {components: 2, bytes: 19860, tokens: 4966}
     ordinary-skill-frontmatter: {components: 13, bytes: 3210, tokens: 807}
     personality-frontmatter: {components: 3, bytes: 445, tokens: 113}
     role-composed-frontmatter: {components: 5, bytes: 1185, tokens: 298}
-    role-instructions: {components: 1, bytes: 5885, tokens: 1468}
+    role-instructions: {components: 1, bytes: 6202, tokens: 1547}
   lazy:
     mcp-server-registration: {components: 1, bytes: 0, tokens: 0}
     ordinary-skill-body: {components: 13, bytes: 22033, tokens: 5506}
@@ -46,42 +46,28 @@ breakdown:
 components:
   eager:
     agents-cascade:
-    - id: agents:000:AGENTS.md
-      owner: coilyco-flight-deck/agentic-os
-      source: coilyco-flight-deck/agentic-os:AGENTS.md
-      delivery: global-composed
-      bytes: 19743
-      tokens: 4936
-      sha256: 7331191c1474d8329dc34df262177970cc8753e95b3ca22feccf399130ba3bef
-    - id: agents:001:AGENTS.claude.md
-      owner: coilyco-flight-deck/agentic-os
-      source: coilyco-flight-deck/agentic-os:AGENTS.claude.md
-      delivery: global-harness-override
-      bytes: 1462
-      tokens: 366
-      sha256: 2e0f4081fba5a03230d0397cad478f393e225e9d5982940dbb4ab1e804132430
-    - id: agents:002:CLAUDE.md
+    - id: agents:000:CLAUDE.md
       owner: coilyco-flight-deck/agentic-os
       source: coilyco-flight-deck/agentic-os:CLAUDE.md
       delivery: repo-cascade-bridge
       bytes: 11
       tokens: 3
       sha256: 336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49
-    - id: agents:003:AGENTS.md
+    - id: agents:001:AGENTS.md
       owner: coilyco-flight-deck/agentic-os
       source: coilyco-flight-deck/agentic-os:AGENTS.md
       delivery: repo-cascade
-      bytes: 19743
-      tokens: 4936
-      sha256: 7331191c1474d8329dc34df262177970cc8753e95b3ca22feccf399130ba3bef
+      bytes: 19849
+      tokens: 4963
+      sha256: c8e1a94a58d3042c42a0011074c656743e51a490b5b17e5bb4e5d1ef2ac4c35b
     role-instructions:
     - id: instructions:role
       owner: agent-compose+person:kai+aos-public
       source: bundle:content/instructions.md
       delivery: .claude/CLAUDE.md
-      bytes: 5885
-      tokens: 1468
-      sha256: 1106d725cae0a430e3161369d273f13b13f58cf4ac45bd70057adf4c4b39e904
+      bytes: 6202
+      tokens: 1547
+      sha256: 5654e23c1dd8996325a8e1b78d2397ac41dad9e693fcfc2e0276972ea7fd4bf2
   lazy:
     mcp-server-registration:
     - id: mcp:deferred
@@ -113,4 +99,4 @@ skills:
   person:kai/personality-optimistic: {class: personality, eager: 37, lazy: 363, resources: 0}
   person:kai/personality-playful: {class: personality, eager: 37, lazy: 352, resources: 0}
   person:kai/personality-quirky: {class: personality, eager: 39, lazy: 337, resources: 0}
-payload_hash: bc18d542113b328a6eb8a64ca07dcedd31b98eb2ce9a10d92472bf4b0c5cb411
+payload_hash: 366a25933a17a62cbbea143f8e2e69bce5662d01ced21fef508c0528f1853ad1

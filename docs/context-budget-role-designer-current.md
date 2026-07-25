@@ -4,12 +4,12 @@
 # Current designer context budget
 
 * **Frontier designer** -
-  [Claude 12,912](context-budget-designer-claude-current.yaml),
-  [Codex 12,750](context-budget-designer-codex-current.yaml), lazy 23,563, 5 composed.
+  [Claude 7,663](context-budget-designer-claude-current.yaml),
+  [Codex 7,660](context-budget-designer-codex-current.yaml), lazy 23,600, 5 composed.
 * **Low-context designer** -
-  [Goose 12,302](context-budget-designer-goose-current.yaml),
-  [OpenCode 12,302](context-budget-designer-opencode-current.yaml), lazy 13,102, 3 composed.
-* **Low-context diff** - eager saves 448 to 610 tokens, lazy saves 10,461 tokens, composed sources 5 -> 3.
+  [Goose 7,419](context-budget-designer-goose-current.yaml),
+  [OpenCode 7,419](context-budget-designer-opencode-current.yaml), lazy 13,139, 3 composed.
+* **Low-context diff** - eager saves 241 to 244 tokens, lazy saves 10,461 tokens, composed sources 5 -> 3.
 
 The programmatic diff compares every frontier seat with every low-context seat.
 

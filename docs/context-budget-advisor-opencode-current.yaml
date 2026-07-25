@@ -22,20 +22,20 @@ mcp:
   eager_schema_count: 0
 totals:
   eager:
-    components: 18
-    bytes: 48709
-    tokens: 12180
+    components: 17
+    bytes: 29406
+    tokens: 7355
   lazy:
     components: 33
     bytes: 49270
     tokens: 12323
 breakdown:
   eager:
-    agents-cascade: {components: 2, bytes: 39486, tokens: 9872}
+    agents-cascade: {components: 1, bytes: 19849, tokens: 4963}
     ordinary-skill-frontmatter: {components: 11, bytes: 2781, tokens: 699}
     personality-frontmatter: {components: 3, bytes: 462, tokens: 117}
     role-composed-frontmatter: {components: 1, bytes: 206, tokens: 52}
-    role-instructions: {components: 1, bytes: 5774, tokens: 1440}
+    role-instructions: {components: 1, bytes: 6108, tokens: 1524}
   lazy:
     mcp-server-registration: {components: 1, bytes: 0, tokens: 0}
     ordinary-skill-body: {components: 11, bytes: 19031, tokens: 4755}
@@ -48,25 +48,18 @@ components:
     - id: agents:000:AGENTS.md
       owner: coilyco-flight-deck/agentic-os
       source: coilyco-flight-deck/agentic-os:AGENTS.md
-      delivery: global-composed
-      bytes: 19743
-      tokens: 4936
-      sha256: 7331191c1474d8329dc34df262177970cc8753e95b3ca22feccf399130ba3bef
-    - id: agents:001:AGENTS.md
-      owner: coilyco-flight-deck/agentic-os
-      source: coilyco-flight-deck/agentic-os:AGENTS.md
       delivery: repo-cascade
-      bytes: 19743
-      tokens: 4936
-      sha256: 7331191c1474d8329dc34df262177970cc8753e95b3ca22feccf399130ba3bef
+      bytes: 19849
+      tokens: 4963
+      sha256: c8e1a94a58d3042c42a0011074c656743e51a490b5b17e5bb4e5d1ef2ac4c35b
     role-instructions:
     - id: instructions:role
       owner: agent-compose+person:kai+aos-public
       source: bundle:content/instructions.md
       delivery: .config/opencode/AGENTS.md
-      bytes: 5774
-      tokens: 1440
-      sha256: ce8d6165dfb14533a09285fbe13e647556f9b46f42dada41fbc939e816d49c96
+      bytes: 6108
+      tokens: 1524
+      sha256: a09cb8cb30c4673930a0d306fbad0e9df4d75e63e7c6e011cc7514bef6f3d3c4
   lazy:
     mcp-server-registration:
     - id: mcp:deferred
@@ -92,4 +85,4 @@ skills:
   person:kai/personality-candid: {class: personality, eager: 38, lazy: 334, resources: 0}
   person:kai/personality-curious: {class: personality, eager: 39, lazy: 337, resources: 0}
   person:kai/personality-reflective: {class: personality, eager: 40, lazy: 346, resources: 0}
-payload_hash: f89f8a0167ca2efb5639f5522a8a680427500408e702acce9c090a953d1e7e97
+payload_hash: 6ff31ab29c6d05496e632e63845f1db1445fe0690c1de9517aaf511d194276c8

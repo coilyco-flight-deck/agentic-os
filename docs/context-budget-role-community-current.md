@@ -4,12 +4,12 @@
 # Current community context budget
 
 * **Frontier community** -
-  [Claude 12,913](context-budget-community-claude-current.yaml),
-  [Codex 12,751](context-budget-community-codex-current.yaml), lazy 28,555, 5 composed.
+  [Claude 7,638](context-budget-community-claude-current.yaml),
+  [Codex 7,635](context-budget-community-codex-current.yaml), lazy 28,577, 5 composed.
 * **Low-context community** -
-  [Goose 12,394](context-budget-community-goose-current.yaml),
-  [OpenCode 12,394](context-budget-community-opencode-current.yaml), lazy 14,344, 4 composed.
-* **Low-context diff** - eager saves 357 to 519 tokens, lazy saves 14,211 tokens, composed sources 5 -> 4.
+  [Goose 7,485](context-budget-community-goose-current.yaml),
+  [OpenCode 7,485](context-budget-community-opencode-current.yaml), lazy 14,366, 4 composed.
+* **Low-context diff** - eager saves 150 to 153 tokens, lazy saves 14,211 tokens, composed sources 5 -> 4.
 
 The programmatic diff compares every frontier seat with every low-context seat.
 

@@ -4,12 +4,12 @@
 # Current customer success context budget
 
 * **Frontier customer success** -
-  [Claude 12,941](context-budget-customer-success-claude-current.yaml),
-  [Codex 12,779](context-budget-customer-success-codex-current.yaml), lazy 18,997, 4 composed.
+  [Claude 7,730](context-budget-customer-success-claude-current.yaml),
+  [Codex 7,727](context-budget-customer-success-codex-current.yaml), lazy 19,019, 4 composed.
 * **Low-context customer success** -
-  [Goose 12,464](context-budget-customer-success-goose-current.yaml),
-  [OpenCode 12,464](context-budget-customer-success-opencode-current.yaml), lazy 15,939, 4 composed.
-* **Low-context diff** - eager saves 315 to 477 tokens, lazy saves 3,058 tokens, composed sources 4 -> 4.
+  [Goose 7,619](context-budget-customer-success-goose-current.yaml),
+  [OpenCode 7,619](context-budget-customer-success-opencode-current.yaml), lazy 15,961, 4 composed.
+* **Low-context diff** - eager saves 108 to 111 tokens, lazy saves 3,058 tokens, composed sources 4 -> 4.
 
 The programmatic diff compares every frontier seat with every low-context seat.
 

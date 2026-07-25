@@ -22,66 +22,52 @@ mcp:
   eager_schema_count: 0
 totals:
   eager:
-    components: 26
-    bytes: 51628
-    tokens: 12912
+    components: 24
+    bytes: 30631
+    tokens: 7663
   lazy:
     components: 56
-    bytes: 94305
-    tokens: 23563
+    bytes: 94452
+    tokens: 23600
 breakdown:
   eager:
-    agents-cascade: {components: 4, bytes: 40959, tokens: 10241}
+    agents-cascade: {components: 2, bytes: 19860, tokens: 4966}
     ordinary-skill-frontmatter: {components: 13, bytes: 3210, tokens: 807}
     personality-frontmatter: {components: 3, bytes: 442, tokens: 112}
     role-composed-frontmatter: {components: 5, bytes: 1120, tokens: 282}
-    role-instructions: {components: 1, bytes: 5897, tokens: 1470}
+    role-instructions: {components: 1, bytes: 5999, tokens: 1496}
   lazy:
     mcp-server-registration: {components: 1, bytes: 0, tokens: 0}
     ordinary-skill-body: {components: 13, bytes: 22033, tokens: 5506}
     ordinary-skill-resource: {components: 24, bytes: 33367, tokens: 8351}
-    personality-body: {components: 3, bytes: 4276, tokens: 1070}
+    personality-body: {components: 3, bytes: 4423, tokens: 1107}
     role-composed-body: {components: 5, bytes: 10908, tokens: 2729}
     role-composed-resource: {components: 10, bytes: 23721, tokens: 5907}
 components:
   eager:
     agents-cascade:
-    - id: agents:000:AGENTS.md
-      owner: coilyco-flight-deck/agentic-os
-      source: coilyco-flight-deck/agentic-os:AGENTS.md
-      delivery: global-composed
-      bytes: 19743
-      tokens: 4936
-      sha256: 7331191c1474d8329dc34df262177970cc8753e95b3ca22feccf399130ba3bef
-    - id: agents:001:AGENTS.claude.md
-      owner: coilyco-flight-deck/agentic-os
-      source: coilyco-flight-deck/agentic-os:AGENTS.claude.md
-      delivery: global-harness-override
-      bytes: 1462
-      tokens: 366
-      sha256: 2e0f4081fba5a03230d0397cad478f393e225e9d5982940dbb4ab1e804132430
-    - id: agents:002:CLAUDE.md
+    - id: agents:000:CLAUDE.md
       owner: coilyco-flight-deck/agentic-os
       source: coilyco-flight-deck/agentic-os:CLAUDE.md
       delivery: repo-cascade-bridge
       bytes: 11
       tokens: 3
       sha256: 336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49
-    - id: agents:003:AGENTS.md
+    - id: agents:001:AGENTS.md
       owner: coilyco-flight-deck/agentic-os
       source: coilyco-flight-deck/agentic-os:AGENTS.md
       delivery: repo-cascade
-      bytes: 19743
-      tokens: 4936
-      sha256: 7331191c1474d8329dc34df262177970cc8753e95b3ca22feccf399130ba3bef
+      bytes: 19849
+      tokens: 4963
+      sha256: c8e1a94a58d3042c42a0011074c656743e51a490b5b17e5bb4e5d1ef2ac4c35b
     role-instructions:
     - id: instructions:role
       owner: agent-compose+person:kai+aos-public
       source: bundle:content/instructions.md
       delivery: .claude/CLAUDE.md
-      bytes: 5897
-      tokens: 1470
-      sha256: f1dafd3437603d4f6183ca78cd5728f49009a9824a5f7601627157164f43dd6e
+      bytes: 5999
+      tokens: 1496
+      sha256: fea84a757973da4feeab71580bddb045a3b297e73f34d17bc4fc56418cb40a09
   lazy:
     mcp-server-registration:
     - id: mcp:deferred
@@ -110,7 +96,7 @@ skills:
   aos-public/tooling-warp: {class: ordinary, eager: 39, lazy: 317, resources: 0}
   aos-public/tooling-zsh: {class: ordinary, eager: 114, lazy: 787, resources: 0}
   aos-public/vault-obsidian-markdown: {class: ordinary, eager: 52, lazy: 2286, resources: 6}
-  person:kai/personality-imaginative: {class: personality, eager: 40, lazy: 362, resources: 0}
+  person:kai/personality-imaginative: {class: personality, eager: 40, lazy: 399, resources: 0}
   person:kai/personality-playful: {class: personality, eager: 37, lazy: 352, resources: 0}
   person:kai/personality-warm: {class: personality, eager: 35, lazy: 356, resources: 0}
-payload_hash: 23b5f37013ca00a212cb1bc9b9923f60d88175093897c65e682d73ec7ee7a4c0
+payload_hash: afc4bcd004f51d1a8b943b47ff16b330ca0b2c94516054126547570395131430

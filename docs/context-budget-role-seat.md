@@ -44,8 +44,8 @@ payload hash remains content-sensitive. Stable ordering and the absence of
 timestamps and absolute source locators make identical inputs produce the same
 payload hash.
 
-The shared AGENTS inventory preserves a source that arrives through both global
-and repository delivery paths as two occurrences.
+The shared inventory describes global and repository delivery. Role-seat snapshots
+omit projected global context and retain the repository root-to-CWD AGENTS cascade.
 
 Snapshots use `context-budget-<role>-<seat>-<phase>.yaml`. The
 [ops/codex baseline](context-budget-ops-codex-before.yaml) is historical.

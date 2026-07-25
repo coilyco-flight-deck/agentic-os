@@ -340,6 +340,7 @@ def _agents_components(
                 scenario,
                 current_repo=repo_identity,
                 cwd=cwd_label,
+                include_global_composed=False,
             )
         except (InventoryError, OSError) as exc:
             raise RuntimeError(f"inventory role-seat AGENTS cascade: {exc}") from exc
