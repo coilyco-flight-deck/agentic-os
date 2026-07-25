@@ -8,6 +8,7 @@ This lists shipped capabilities, not files.
 
 - [Shell and secret handling](features-shell-secrets.md) - shared shell setup, Warp config, SSM secrets, GPG bootstrap, repo gate.
 - [Branded director terminal](alacritty-directors.md) - shared Sombra baseline plus static agent-compose identity projected into one Alacritty window.
+- [Crash-resilient Alacritty workspace](zellij-workspace.md) - Zellij session persistence, vertical tabs, panes, and migration-friendly shortcuts behind Alacritty.
 - [Speech helper](aos-say.md) - `aos-say` client plus relay for status speech.
 - **Karabiner key bindings** - complex modifications for the external keyboard and Remote Desktop.
 - [Agents and sessions](features-agents-sessions.md) - self-name, session pulse, status line, and harness policy.

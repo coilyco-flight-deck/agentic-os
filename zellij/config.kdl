@@ -1,0 +1,47 @@
+// Portable Zellij defaults. Infrastructure adds the host-local shell path.
+
+default_layout "vertical-tabs"
+default_mode "normal"
+
+on_force_close "detach"
+session_serialization true
+serialization_interval 1
+serialize_pane_viewport true
+scrollback_lines_to_serialize 10000
+scroll_buffer_size 10000
+
+mouse_mode true
+copy_on_select true
+pane_frames true
+mirror_session false
+support_kitty_keyboard_protocol true
+
+web_server false
+web_sharing "disabled"
+show_startup_tips false
+show_release_notes false
+
+keybinds {
+    shared_except "locked" {
+        // Closing a terminal client must leave the shared workspace alive.
+        bind "Ctrl q" { Detach; }
+
+        // Familiar terminal shortcuts alongside Zellij's native modal keys.
+        bind "Ctrl Shift t" { NewTab; SwitchToMode "Normal"; }
+        bind "Ctrl Tab" { GoToNextTab; SwitchToMode "Normal"; }
+        bind "Ctrl Shift Tab" { GoToPreviousTab; SwitchToMode "Normal"; }
+        bind "Ctrl Shift d" { NewPane "Down"; SwitchToMode "Normal"; }
+        bind "Ctrl Shift e" { NewPane "Right"; SwitchToMode "Normal"; }
+        bind "Ctrl Shift f" { ToggleFocusFullscreen; SwitchToMode "Normal"; }
+
+        bind "Alt 1" { GoToTab 1; SwitchToMode "Normal"; }
+        bind "Alt 2" { GoToTab 2; SwitchToMode "Normal"; }
+        bind "Alt 3" { GoToTab 3; SwitchToMode "Normal"; }
+        bind "Alt 4" { GoToTab 4; SwitchToMode "Normal"; }
+        bind "Alt 5" { GoToTab 5; SwitchToMode "Normal"; }
+        bind "Alt 6" { GoToTab 6; SwitchToMode "Normal"; }
+        bind "Alt 7" { GoToTab 7; SwitchToMode "Normal"; }
+        bind "Alt 8" { GoToTab 8; SwitchToMode "Normal"; }
+        bind "Alt 9" { GoToTab 9; SwitchToMode "Normal"; }
+    }
+}

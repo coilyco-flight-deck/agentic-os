@@ -20,7 +20,19 @@ Pull secrets directly into the shell environment, never to disk. `ssm-load` read
 
 ## Cross-platform terminal
 
-Single Warp config tree rendered into the host's Warp config dir - `~/.warp-preview/` on the Mac daily driver (Preview channel; Stable at `~/.warp/` is the fallback, selectable with `--channel`) and `~/.warp/` on Windows. The repo wins over cloud sync (`is_settings_sync_enabled = false`) so theme, font, vertical tabs, AI/agent toggles, and the secret-redaction regex list stay reproducible across hosts. The redaction surface covers IPv4/IPv6, MAC, AWS keys, GitHub tokens (every variant), Stripe, Firebase, JWT, OpenAI/Anthropic/Fireworks/Google keys, Slack tokens, phone numbers.
+Alacritty supplies the portable Sombra rendering baseline. Zellij supplies the
+long-lived workspace, vertical tabs, panes, and session serialization. The
+[workspace walkthrough](zellij-workspace.md) carries the recovery behavior and
+daily controls.
+
+The transitional Warp config tree still renders into `~/.warp-preview/` on the
+Mac daily driver (Preview channel, with Stable at `~/.warp/` selectable through
+`--channel`) and `~/.warp/` on Windows. The repo wins over cloud sync
+(`is_settings_sync_enabled = false`) so theme, font, vertical tabs, AI and agent
+toggles, and the secret-redaction regex list stay reproducible across hosts.
+The redaction surface covers IPv4 and IPv6, MAC, AWS keys, GitHub tokens,
+Stripe, Firebase, JWT, OpenAI, Anthropic, Fireworks, Google keys, Slack tokens,
+and phone numbers.
 
 ## GPG signing without disk-cached passphrases
 

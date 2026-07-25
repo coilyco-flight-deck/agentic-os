@@ -4,6 +4,9 @@ commands:
   alacritty-config-check:
     run: alacritty migrate --dry-run --config-file alacritty/alacritty.toml
     description: "Validate the shared Alacritty configuration against the installed Alacritty schema."
+  zellij-config-check:
+    run: zellij --config-dir zellij setup --check
+    description: "Validate the portable Zellij configuration and vertical-tabs layout against the installed Zellij schema."
   agent-terminal:
     run: go run -C agent-terminal .
     description: "Launch one agent-compose branded Alacritty director window. Pass role, seat, task title, and a child command after `--`; use `--dry-run` to inspect without opening a window."
