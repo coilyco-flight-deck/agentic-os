@@ -26,9 +26,8 @@ transfers permissions or unions authority between tools.
   private staged home.
 * `--guarded` - AOS attaches its `aosguard` binary and generated native skill.
 
-The flags stay independent. `--warded` alone uses Ward's embedded role
-context. Either context capability can join it. All three flags enable the
-full launch.
+The flags stay independent. `--warded` alone uses Ward's embedded role context.
+Either context capability can join it. All three flags enable the full launch.
 
 Without `--warded`, AOS owns one standalone container. Arguments after `--`
 become arguments to the selected agent:
@@ -56,6 +55,7 @@ agents, and translated Ward flags before starting a container.
 
 ## Standalone contract
 
+* The moving default image is pulled before each launch. Custom images keep Docker's local behavior.
 * CWD mounts read-write at `/workspace/<cwd-name>` and becomes the workdir.
 * Composition hydrates the baked provider through `aos-substrate-cache`.
 * AOS copies the selected harness's known read-only auth into ephemeral HOME.
