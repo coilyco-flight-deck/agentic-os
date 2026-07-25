@@ -1,12 +1,11 @@
 # Role-intent harness selection
 
-AOS publishes a model-opaque default harness for every supported role-intent
-lane. Harness selection answers which work surface receives a task. Backend
-model, server, score, fallback, and hardware selection remain separate concerns.
+AOS publishes a model-opaque default harness for every supported role-intent lane.
+Harness selection answers which work surface receives a task. Backend model, server, score, fallback, and hardware selection remain separate concerns.
 
 ## Confirmed board
 
-The committed board contains eleven roles and eighteen lanes:
+The committed board contains twelve roles and nineteen lanes:
 
 * **engineer** - `autonomous-coding` uses `openhands`.
 * **director** - `strategic-planning` uses `plandex`.
@@ -19,6 +18,7 @@ The committed board contains eleven roles and eighteen lanes:
 * **community** - `knowledge-retrieval` uses `rasa`. `conversation-management` uses `elizaos`.
 * **sales** - `research-synthesis` uses `hermes`. `conversation-management` uses `elizaos`.
 * **customer-success** - `knowledge-retrieval` and `conversation-management` both use `rasa`.
+* **ceo** - `strategic-planning` uses `hermes`.
 
 Engineer is the sole unattended lane. Every role declares one or two intents,
 and every lane has exactly one selected harness.

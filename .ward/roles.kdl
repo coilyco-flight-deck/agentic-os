@@ -179,4 +179,30 @@ roles {
     role sales {}
     // customer-success: onboarding, support, retention, and customer research
     role customer-success {}
+    // ceo: operate Kai's real project portfolio and allocate attention across it
+    role ceo {
+        // guardfiles for day to day read (defaults)
+        guardfile "guardfile.forgejo.read.kdl"
+        guardfile "guardfile.forgejo.readactions.kdl"
+        // guardfiles for portfolio governance
+        guardfile "guardfile.forgejo.write.kdl"
+        guardfile "guardfile.forgejo.merge.kdl"
+        // make the agents as smart as they come
+        agent claude {
+            model claude-fable-5
+            // BEGIN generated AOSH role-seat identity
+            name "fabled executive"
+            pronouns she
+            // END generated AOSH role-seat identity
+            reasoning-effort xhigh
+        }
+        agent codex {
+            model gpt-5.6-sol
+            // BEGIN generated AOSH role-seat identity
+            name "solar executive"
+            pronouns he
+            // END generated AOSH role-seat identity
+            reasoning-effort xhigh
+        }
+    }
 }

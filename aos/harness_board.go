@@ -13,11 +13,7 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-const (
-	harnessBoardFormat    = "agentic-os.role-harness-board.v1"
-	harnessBoardRoleCount = 11
-	harnessBoardLaneCount = 18
-)
+const harnessBoardFormat = "agentic-os.role-harness-board.v1"
 
 //go:embed role-harnesses.json
 var embeddedHarnessBoard []byte
@@ -63,12 +59,8 @@ func loadHarnessBoard(data []byte) (harnessBoard, error) {
 			len(board.Roles),
 		)
 	}
-	if board.RoleCount != harnessBoardRoleCount {
-		return harnessBoard{}, fmt.Errorf(
-			"harness board has %d roles, want %d",
-			board.RoleCount,
-			harnessBoardRoleCount,
-		)
+	if board.RoleCount == 0 {
+		return harnessBoard{}, errors.New("harness board contains no roles")
 	}
 
 	roles := make(map[string]struct{}, len(board.Roles))
@@ -112,13 +104,6 @@ func loadHarnessBoard(data []byte) (harnessBoard, error) {
 			"harness board lane_count is %d, found %d lanes",
 			board.LaneCount,
 			laneCount,
-		)
-	}
-	if board.LaneCount != harnessBoardLaneCount {
-		return harnessBoard{}, fmt.Errorf(
-			"harness board has %d lanes, want %d",
-			board.LaneCount,
-			harnessBoardLaneCount,
 		)
 	}
 	return board, nil

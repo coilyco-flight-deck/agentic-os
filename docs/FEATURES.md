@@ -18,7 +18,7 @@ This lists shipped capabilities, not files.
 - [aguard](aguard.md) - canonical guarded operator CLI in the full image and paired native AOS releases.
 - [Code review skill](../.agents/composed/tooling-code-review/COMPOSED.md) - QA-only in-container review stance.
 - [Code review contract](../CODE-REVIEW.md) - review invariants.
-- [Harness selection](harness-selection.md) - 11-role execution-routing and personality-alignment boards.
+- [Harness selection](harness-selection.md) - 12-role execution-routing and personality-alignment boards.
 - [Test harnesses](test-harness.md) - agent/model smokes and composed-role probes.
 - [Issue-corpus discovery index](issue-corpus.md) - offline corpus render plus live Forgejo lookup.
 - [Forgejo Actions log bridge](forgejo-actions-logs.md) - plaintext helper for live workflow logs, plus fetch mirror.

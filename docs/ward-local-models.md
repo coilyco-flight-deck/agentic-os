@@ -11,8 +11,8 @@ runtimes never fetch config upward.
 AOS's hand-owned [`.agents/harnesses.yaml`](../.agents/harnesses.yaml) defines
 public harness identity and intent compatibility. AOSH's hand-owned
 `roles.yaml` and `agent-selections.yaml` define the model-opaque role joins and
-lane choices. `ward exec sync-harness-board` validates their combined eleven
-roles and eighteen lanes, then rewrites generated `intent` children inside the
+lane choices. `ward exec sync-harness-board` validates their combined twelve
+roles and nineteen lanes, then rewrites generated `intent` children inside the
 agent-compose provider roles in [`.agents/roles.kdl`](../.agents/roles.kdl).
 The same run updates
 [`role-harnesses.json`](../aos/role-harnesses.json) as the compiled launcher

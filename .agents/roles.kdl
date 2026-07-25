@@ -240,4 +240,20 @@ roles {
         }
         // END generated role-intent harness routes
     }
+    role ceo {
+        composed-skill tooling-director-decision-architecture
+        composed-skill tooling-issue-prioritization
+        composed-skill tooling-pm-product-signal-triangulation
+        composed-skill tooling-pm-program-decomposition
+        composed-skill tooling-product-brainstorming
+        composed-skill tooling-scout-autonomy
+        composed-skill tooling-scout-capability
+        composed-skill tooling-scout-displacement
+        composed-skill writing-to-issues
+        // BEGIN generated role-intent harness routes
+        intent strategic-planning {
+            harness hermes
+        }
+        // END generated role-intent harness routes
+    }
 }

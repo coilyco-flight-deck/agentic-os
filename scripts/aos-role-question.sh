@@ -27,7 +27,7 @@ question_for() {
             echo "A cross-repository feature needs design, implementation, and rollout. Break it into the smallest dependency-aware milestones."
             ;;
         designer)
-            echo "An eleven-role agent launcher must hide backend model identity. Shape the smallest clear role-selection interaction, including its default and failure state."
+            echo "A twelve-role agent launcher must hide backend model identity. Shape the smallest clear role-selection interaction, including its default and failure state."
             ;;
         social)
             echo "Draft a restrained launch note for role-scoped agent skills and name one signal that would show the message helped."
@@ -40,6 +40,9 @@ question_for() {
             ;;
         customer-success)
             echo "A new user cannot find the skill assigned to her role. Give the immediate support response and the product signal that should be routed upstream."
+            ;;
+        ceo)
+            echo "Several Flight Deck repositories claim overlapping portfolio priority. Name the evidence needed, make the smallest reversible allocation decision, and delegate the bounded outcomes."
             ;;
         *)
             echo "aos role question: unknown role $1" >&2

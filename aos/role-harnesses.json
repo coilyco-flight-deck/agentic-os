@@ -1,8 +1,8 @@
 {
   "format": "agentic-os.role-harness-board.v1",
   "role_source": "coilyco-flight-deck/agent-compose:internal/person/person.kdl",
-  "role_count": 11,
-  "lane_count": 18,
+  "role_count": 12,
+  "lane_count": 19,
   "roles": [
     {
       "role": "engineer",
@@ -128,6 +128,15 @@
         {
           "intent": "conversation-management",
           "harness": "rasa"
+        }
+      ]
+    },
+    {
+      "role": "ceo",
+      "intents": [
+        {
+          "intent": "strategic-planning",
+          "harness": "hermes"
         }
       ]
     }

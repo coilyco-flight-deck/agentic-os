@@ -50,6 +50,7 @@ ward exec aos-role-question -- local social
 ward exec aos-role-question -- local community
 ward exec aos-role-question -- local sales
 ward exec aos-role-question -- local customer-success
+ward exec aos-role-question -- local ceo
 ```
 
 Each question targets the role's actual work, such as adversarial verification

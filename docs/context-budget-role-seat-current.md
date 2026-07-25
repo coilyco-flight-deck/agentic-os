@@ -1,8 +1,9 @@
 # Current role-class context inventory
 
-The 11 canonical roles are measured in all four AOS native layouts. Claude and
+The 12 canonical roles are measured in all four AOS native layouts. Claude and
 Codex use the frontier catalog. Goose and OpenCode use the low-context catalog.
-The snapshots were generated with released agent-compose `v0.47.0`. Every
+The original eleven role sets were generated with released agent-compose
+`v0.47.0`. The CEO set uses the matching source that introduced the role. Every
 entry uses the deterministic characters-divided-by-four token proxy.
 The role reports and their frontier-to-low-context diffs are generated from
 those snapshots with `ward exec gen-context-budget-role-reports`. A diff range
@@ -23,12 +24,13 @@ compares every frontier seat with every low-context seat.
 * [Sales](context-budget-role-sales-current.md) - frontier and low-context.
 * [Customer success](context-budget-role-customer-success-current.md) -
   frontier and low-context.
+* [CEO](context-budget-role-ceo-current.md) - frontier and low-context.
 
 Goose and OpenCode have equal token totals because each receives the same
 catalog and AGENTS cascade. Their projection paths and payload hashes remain
 distinct.
 
-## Shared surface
+## Original shared surface baseline
 
 * **AGENTS cascade** - Codex 10,079 eager tokens, Claude 10,241, Goose and
   OpenCode 9,872.

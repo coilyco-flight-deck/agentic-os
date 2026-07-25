@@ -1,6 +1,6 @@
 {
   "format": "agentic-os.role-personality-board.v1",
-  "role_count": 11,
+  "role_count": 12,
   "personality_count": 16,
   "roles": [
     {
@@ -89,6 +89,14 @@
         "nurturing",
         "diplomatic",
         "optimistic"
+      ]
+    },
+    {
+      "role": "ceo",
+      "personalities": [
+        "bold",
+        "grounded",
+        "protective"
       ]
     }
   ],

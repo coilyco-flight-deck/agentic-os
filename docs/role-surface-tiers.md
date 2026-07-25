@@ -1,17 +1,17 @@
 # Role surface tiers
 
-The intended capability surface each `ward agent` container role carries, made
-deliberate after the 2026-07-10 permissions rollback stripped the live-observe
-surfaces below operational need (agentic-os#447). This is the reviewed
-definition. A live surface that differs from it is drift to fix.
+This is the reviewed capability surface for each `ward agent` container role.
+It restores the live-observe access removed below operational need on 2026-07-10
+(agentic-os#447). A live surface that differs from it is drift to fix.
 
 ## Tiers
 
 * **engineer** - forgejo read + actions read + write + guarded observe - lands code and diagnoses without live mutation.
 * **qa** - forgejo read + actions read + write + guarded observe - inspects candidates and grounds verdicts in observed evidence.
-* **advisor** - personal overlay role, not shipped in the public bundle - forgejo read + actions read + aws/ssm + tailnet live-observe. The live-observe pair (tailnet + `~/.aws`) stays the documented default for that overlay.
+* **advisor** - personal overlay, not public - forgejo read + actions read + aws/ssm + tailnet live-observe. Tailnet + `~/.aws` remains its default.
 * **director** - forgejo read + actions read + write + aws/ssm + kubectl + runner-token mint + tailnet live-observe - drives the headless lane and fronts incident recovery.
 * **ops** - forgejo read + actions read + write + aws/ssm + kubectl + runner-token mint + tailnet live-observe - live system maintenance, the widest tier.
+* **ceo** - forgejo read + actions read + write + merge - portfolio governance without live remediation.
 
 Runner-token mint is `aguard ops forgejo actions generate-runner-token`
 for operators. Ward separately mounts the

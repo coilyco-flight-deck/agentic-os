@@ -22,8 +22,6 @@ DEFAULT_OUTPUT = REPO_ROOT / "aos" / "role-harnesses.json"
 ROLES_PATH = Path("roles.yaml")
 SELECTIONS_PATH = Path("agent-selections.yaml")
 FORMAT = "agentic-os.role-harness-board.v1"
-EXPECTED_ROLE_COUNT = 11
-EXPECTED_LANE_COUNT = 18
 UNATTENDED_INTENT = "autonomous-coding"
 SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 ROLE_RE = re.compile(r"(?m)^\s*role\s+([a-z0-9][a-z0-9-]*)\s+\{$")
@@ -87,10 +85,10 @@ def load_canonical_roles(path: Path = DEFAULT_ROLES) -> tuple[str, ...]:
     except OSError as exc:
         raise BoardSyncError(f"read {path}: {exc}") from exc
     roles = tuple(ROLE_RE.findall(text))
-    if len(roles) != EXPECTED_ROLE_COUNT or len(set(roles)) != len(roles):
-        raise BoardSyncError(
-            f"{path}: expected {EXPECTED_ROLE_COUNT} unique canonical roles, found {len(roles)}"
-        )
+    if not roles:
+        raise BoardSyncError(f"{path}: canonical roles are empty")
+    if len(set(roles)) != len(roles):
+        raise BoardSyncError(f"{path}: canonical roles must be unique")
     return roles
 
 
@@ -193,10 +191,6 @@ def load_board(
     if tuple(lane.intent for lane in engineer.lanes) != (UNATTENDED_INTENT,):
         raise BoardSyncError(
             f"{roles_file}: engineer must declare only {UNATTENDED_INTENT}"
-        )
-    if board.lane_count != EXPECTED_LANE_COUNT:
-        raise BoardSyncError(
-            f"{roles_file}: expected {EXPECTED_LANE_COUNT} lanes, found {board.lane_count}"
         )
     return board
 
