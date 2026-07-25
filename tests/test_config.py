@@ -246,6 +246,23 @@ def test_iter_workspace_repos_skips_hidden(tmp_path: Path) -> None:
     assert [r.name for r in repos] == ["repo-a"]
 
 
+def test_iter_workspace_repos_skips_human_workdirs(tmp_path: Path) -> None:
+    _make_repo(tmp_path / "coilysiren" / "repo-a")
+    _make_repo(tmp_path / "coilysiren" / "repo-a-workdir")
+    _make_repo(tmp_path / "coilysiren" / "repo-a-workdirs")
+    repos = iter_workspace_repos(tmp_path)
+    assert [r.name for r in repos] == ["repo-a", "repo-a-workdirs"]
+
+
+def test_iter_workspace_repos_skips_human_workdirs_in_single_org_root(
+    tmp_path: Path,
+) -> None:
+    _make_repo(tmp_path / "repo-a")
+    _make_repo(tmp_path / "repo-a-workdir")
+    repos = iter_workspace_repos(tmp_path)
+    assert [r.name for r in repos] == ["repo-a"]
+
+
 def test_iter_workspace_repos_skips_non_git_dirs(tmp_path: Path) -> None:
     _make_repo(tmp_path / "coilysiren" / "repo-a")
     (tmp_path / "coilysiren" / "not-a-repo").mkdir(parents=True)

@@ -121,6 +121,10 @@ Before the first mutation in any native checkout, the agent inspects the worktre
 
 The agent leaves the original checkout exactly as found. The agent never absorbs foreign changes into its commit or uses stash as a substitute for isolation. If the agent cannot create a separate worktree safely, the agent stops before any mutation and reports the exact blocker. The remote-checkpoint rule applies to the new worktree and its task branch.
 
+### Human-only workdirs
+
+A checkout whose directory basename ends in `-workdir` is reserved for Kai's manual work. Agents treat it as outside the workspace: agents do not inspect, enter, edit, validate, format, stage, stash, or include it in fleet or recursive tooling. If an agent launches inside one, the agent stops before inspecting repository contents and moves to the canonical checkout or an agent-owned linked worktree.
+
 ### Run until a wall worth a human
 
 Proceed autonomously on anything reversible. Stop only for a destructive, irreversible, or externally-visible action (force-push, data loss, a post or email on the user's behalf, a public surface), or a genuine multi-path fork where the wrong choice is costly to undo. Everything short of that wall: pick the sensible default, name it inline in one line ("picking X because Y"), and keep going. A 5-second "no, do X" after the fact is cheaper than a run parked for an hour waiting on a question the user could have answered either way. Batch any genuine questions and surface them at the end with the work already done, not mid-run.
