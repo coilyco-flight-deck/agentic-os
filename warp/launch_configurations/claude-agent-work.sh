@@ -7,7 +7,7 @@ set -u
 
 QUEUE_DIR=/tmp/ward-agent-queue
 LOCK_DIR="${QUEUE_DIR}/.lock"
-PROJECTS_ROOT="${HOME}/projects/coilysiren"
+PROJECTS_ROOT="${PROJECTS_ROOT:-${HOME}/projects}"
 
 soft_fail() {
   printf '%s\n' "$1"
