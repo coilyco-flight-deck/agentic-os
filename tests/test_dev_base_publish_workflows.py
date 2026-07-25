@@ -9,6 +9,13 @@ ROOT = Path(__file__).resolve().parent.parent
 PUBLISH = ROOT / ".forgejo" / "workflows" / "dev-base-publish.yml"
 RELEASE = ROOT / ".forgejo" / "workflows" / "release.yml"
 PUBLISH_ACTION = ROOT / "actions" / "publish-dev-base" / "action.yml"
+INSTALL_DOCKER = (
+    ROOT
+    / "actions"
+    / "publish-dev-base"
+    / "scripts"
+    / "install-docker.sh"
+)
 VERIFY_FULL = (
     ROOT
     / "actions"
@@ -68,6 +75,29 @@ def test_full_image_build_uses_the_dedicated_runner() -> None:
     assert "publish-full:" in publish
     assert "needs: [plan-draft]" in publish
     assert "plan-draft:\n    runs-on: docker\n" in publish
+
+
+def test_shared_docker_bootstrap_retries_downloads_without_partial_files() -> None:
+    script = INSTALL_DOCKER.read_text(encoding="utf-8")
+
+    assert script.count("curl \\") == 1
+    for option in (
+        "--retry ",
+        "--retry-all-errors",
+        "--retry-delay ",
+        "--remove-on-error",
+        "-fsSL",
+    ):
+        assert option in script
+    for source in (
+        "download.docker.com/linux/static/stable/x86_64/",
+        "download.docker.com/linux/static/stable/x86_64/docker-${docker_cli_ver}.tgz",
+        "github.com/docker/buildx/releases/download/${BUILDX_VERSION}/",
+    ):
+        assert source in script
+    assert "actions/install-docker-buildx" not in PUBLISH_ACTION.read_text(
+        encoding="utf-8"
+    )
 
 
 def test_publish_action_verifies_every_toolchain_and_aguard() -> None:
