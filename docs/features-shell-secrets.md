@@ -25,14 +25,10 @@ long-lived workspace, vertical tabs, panes, and session serialization. The
 [workspace walkthrough](zellij-workspace.md) carries the recovery behavior and
 daily controls.
 
-The transitional Warp config tree still renders into `~/.warp-preview/` on the
-Mac daily driver (Preview channel, with Stable at `~/.warp/` selectable through
-`--channel`) and `~/.warp/` on Windows. The repo wins over cloud sync
-(`is_settings_sync_enabled = false`) so theme, font, vertical tabs, AI and agent
-toggles, and the secret-redaction regex list stay reproducible across hosts.
-The redaction surface covers IPv4 and IPv6, MAC, AWS keys, GitHub tokens,
-Stripe, Firebase, JWT, OpenAI, Anthropic, Fireworks, Google keys, Slack tokens,
-and phone numbers.
+Transitional Warp config still renders into `~/.warp-preview/` on Mac or
+`~/.warp/` on Windows. Repo state disables cloud sync and owns its theme,
+vertical tabs, agent toggles, and redaction rules for network identifiers,
+credentials, tokens, keys, JWTs, and phone numbers.
 
 ## GPG signing without disk-cached passphrases
 
