@@ -46,8 +46,8 @@ The complete `coding-*` family is composed for engineer, director, QA, and ops.
 Designer receives only the JavaScript pair. Community receives only the
 Discord architecture source.
 
-Specialist sources add role-specific methods across advisor, designer, QA,
-ops, PM, social, community, sales, and customer-success.
+CEO receives OSS stewardship, platform strategy, and developer-tool adoption methods. Specialist sources also serve advisor,
+designer, QA, ops, PM, social, community, sales, and customer-success.
 
 The [principal workflow matrix](role-composed-principal-methods.md) records the broader role-gated method catalog and handoffs.
 

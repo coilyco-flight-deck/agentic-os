@@ -22,26 +22,26 @@ mcp:
   eager_schema_count: 0
 totals:
   eager:
-    components: 27
-    bytes: 32081
-    tokens: 8025
+    components: 30
+    bytes: 32731
+    tokens: 8189
   lazy:
-    components: 79
-    bytes: 147788
-    tokens: 36913
+    components: 82
+    bytes: 157027
+    tokens: 39224
 breakdown:
   eager:
     agents-cascade: {components: 2, bytes: 19860, tokens: 4966}
     ordinary-skill-frontmatter: {components: 12, bytes: 2986, tokens: 751}
     personality-frontmatter: {components: 3, bytes: 474, tokens: 120}
-    role-composed-frontmatter: {components: 9, bytes: 2446, tokens: 613}
+    role-composed-frontmatter: {components: 12, bytes: 3096, tokens: 777}
     role-instructions: {components: 1, bytes: 6315, tokens: 1575}
   lazy:
     mcp-server-registration: {components: 1, bytes: 0, tokens: 0}
     ordinary-skill-body: {components: 12, bytes: 21699, tokens: 5422}
     ordinary-skill-resource: {components: 24, bytes: 33367, tokens: 8351}
     personality-body: {components: 3, bytes: 4169, tokens: 1043}
-    role-composed-body: {components: 9, bytes: 26024, tokens: 6504}
+    role-composed-body: {components: 12, bytes: 35263, tokens: 8815}
     role-composed-resource: {components: 30, bytes: 62529, tokens: 15593}
 components:
   eager:
@@ -81,6 +81,9 @@ skills:
   aos-public/kai-tech-prefs: {class: ordinary, eager: 51, lazy: 1936, resources: 5}
   aos-public/repo-agentic-os: {class: ordinary, eager: 56, lazy: 93, resources: 0}
   aos-public/tooling-agent-workflows: {class: ordinary, eager: 53, lazy: 1642, resources: 4}
+  aos-public/tooling-ceo-developer-tool-adoption: {class: role-composed, eager: 58, lazy: 829, resources: 0}
+  aos-public/tooling-ceo-oss-stewardship: {class: role-composed, eager: 56, lazy: 722, resources: 0}
+  aos-public/tooling-ceo-platform-strategy: {class: role-composed, eager: 50, lazy: 760, resources: 0}
   aos-public/tooling-claude-in-chrome: {class: ordinary, eager: 55, lazy: 1416, resources: 3}
   aos-public/tooling-director-decision-architecture: {class: role-composed, eager: 52, lazy: 516, resources: 0}
   aos-public/tooling-ffmpeg: {class: ordinary, eager: 50, lazy: 559, resources: 0}
@@ -102,4 +105,4 @@ skills:
   person:kai/personality-bold: {class: personality, eager: 38, lazy: 327, resources: 0}
   person:kai/personality-grounded: {class: personality, eager: 39, lazy: 350, resources: 0}
   person:kai/personality-protective: {class: personality, eager: 43, lazy: 366, resources: 0}
-payload_hash: 24f85dc0ec36109ec7c8bb912f4fb46f85e916f93a75d08c98e508e85719d1d1
+payload_hash: 081f96d46d7def24238e120398f2a4666e53e032f4ad0b734d67fc43c49e6dcb

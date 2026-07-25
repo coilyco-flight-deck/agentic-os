@@ -241,6 +241,9 @@ roles {
         // END generated role-intent harness routes
     }
     role ceo {
+        composed-skill tooling-ceo-developer-tool-adoption
+        composed-skill tooling-ceo-oss-stewardship
+        composed-skill tooling-ceo-platform-strategy
         composed-skill tooling-director-decision-architecture
         composed-skill tooling-issue-prioritization
         composed-skill tooling-pm-product-signal-triangulation

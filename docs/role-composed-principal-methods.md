@@ -5,6 +5,9 @@ the role allowlists in [`.agents/roles.kdl`](../.agents/roles.kdl).
 
 ## Matrix
 
+* **CEO** - OSS stewardship, platform strategy, developer-tool adoption,
+  decision architecture, prioritization, product signals, issue decomposition,
+  brainstorming, scouts, and issue writing.
 * **Director** - Git workflow, supply-chain audit, brainstorming,
   prioritization, all scouts, observer voice, voice linting,
   system-improvement vocabulary, issue decomposition, and skill authoring.

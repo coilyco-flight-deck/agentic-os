@@ -4,12 +4,12 @@
 # Current ceo context budget
 
 * **Frontier ceo** -
-  [Claude 8,025](context-budget-ceo-claude-current.yaml),
-  [Codex 8,022](context-budget-ceo-codex-current.yaml), lazy 36,913, 9 composed.
+  [Claude 8,189](context-budget-ceo-claude-current.yaml),
+  [Codex 8,186](context-budget-ceo-codex-current.yaml), lazy 39,224, 12 composed.
 * **Low-context ceo** -
   [Goose 7,557](context-budget-ceo-goose-current.yaml),
   [OpenCode 7,557](context-budget-ceo-opencode-current.yaml), lazy 17,657, 4 composed.
-* **Low-context diff** - eager saves 465 to 468 tokens, lazy saves 19,256 tokens, composed sources 9 -> 4.
+* **Low-context diff** - eager saves 629 to 632 tokens, lazy saves 21,567 tokens, composed sources 12 -> 4.
 
 The programmatic diff compares every frontier seat with every low-context seat.
 
