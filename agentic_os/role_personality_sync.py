@@ -17,8 +17,8 @@ DEFAULT_PERSON_SNAPSHOT = (
     Path.home() / ".agent-compose" / "sources" / "personality" / "person.json"
 )
 FORMAT = "agentic-os.role-personality-board.v1"
-PERSON_SNAPSHOT_FORMAT = "agent-compose.person-snapshot.v2"
-PERSON_SNAPSHOT_SCHEMA_VERSION = 2
+PERSON_SNAPSHOT_FORMAT = "agent-compose.person-snapshot.v3"
+PERSON_SNAPSHOT_SCHEMA_VERSION = 3
 SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 
 

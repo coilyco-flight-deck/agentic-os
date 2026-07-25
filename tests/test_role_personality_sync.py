@@ -18,6 +18,7 @@ def _person_snapshot() -> dict[str, object]:
         "roles": {
             "builder": {
                 "personalities": ["curious", "grounded"],
+                "supported_model_classes": ["frontier"],
             },
             "guide": {
                 "personalities": ["playful", "diplomatic"],

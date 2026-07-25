@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -9,8 +10,9 @@ import (
 )
 
 type fakeCommandRunner struct {
-	commands []string
-	request  string
+	commands   []string
+	request    string
+	composeErr error
 }
 
 func (f *fakeCommandRunner) Run(_ context.Context, name string, args ...string) error {
@@ -31,6 +33,9 @@ func (f *fakeCommandRunner) Run(_ context.Context, name string, args ...string) 
 			return err
 		}
 		f.request = string(data)
+		if f.composeErr != nil {
+			return f.composeErr
+		}
 		out := args[3]
 		bundle := filepath.Join(out, "0123456789abcdef")
 		if err := os.MkdirAll(bundle, 0o755); err != nil {
@@ -46,6 +51,34 @@ func (f *fakeCommandRunner) Run(_ context.Context, name string, args ...string) 
 		return os.WriteFile(filepath.Join(target, ".codex", "AGENTS.md"), []byte("composed\n"), 0o644)
 	}
 	return nil
+}
+
+func TestComposeHomeSurfacesRoleCompatibilityFailure(t *testing.T) {
+	t.Parallel()
+	runner := &fakeCommandRunner{
+		composeErr: errors.New(`role "ceo" requires a frontier model`),
+	}
+	opts := bootstrapOptions{
+		Role:            "ceo",
+		Layout:          "goose",
+		Delivery:        "native-skills",
+		AgentHome:       t.TempDir(),
+		AgentComposeBin: "agent-compose",
+	}
+	err := composeHome(context.Background(), opts, t.TempDir(), runner)
+	if err == nil || !strings.Contains(
+		err.Error(),
+		`compose role ceo: role "ceo" requires a frontier model`,
+	) {
+		t.Fatalf("compose error = %v", err)
+	}
+	modelClass, modelErr := modelClassForLayout(opts.Layout)
+	if modelErr != nil {
+		t.Fatal(modelErr)
+	}
+	if !strings.Contains(runner.request, `model-class "`+modelClass+`"`) {
+		t.Fatalf("compose request omitted selected model class:\n%s", runner.request)
+	}
 }
 
 func TestLoadSubstrateRepos(t *testing.T) {

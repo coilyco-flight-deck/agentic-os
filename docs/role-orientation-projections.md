@@ -8,13 +8,13 @@ runtimes never fetch configuration from AOSH.
 
 Normal agent-compose convergence emits its complete structured person snapshot
 at `~/.agent-compose/sources/personality/person.json`. The AOS personality sync
-reads the `agent-compose.person-snapshot.v2` role order, ordered melds, and
+reads the `agent-compose.person-snapshot.v3` role order, ordered melds, and
 canonical skill bindings directly. `--person-snapshot` accepts another emitted
 artifact for isolated authoring and tests.
 
-Purpose text, briefings, seats, identity primitives, models, endpoints,
-hardware, permissions, and private routing are not copied into the alignment
-board.
+Purpose text, briefings, seats, identity primitives, model compatibility,
+endpoints, hardware, permissions, and private routing are not copied into the
+alignment board.
 
 ## Named seats
 

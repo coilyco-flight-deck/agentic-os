@@ -12,6 +12,7 @@ aos --role engineer acompose -- codex
 The command after `--` is preserved exactly. Its executable selects the agent-compose layout unless `--layout` names one explicitly.
 The [check-in adapter](aos-acompose-checkin.md) owns a bounded invocation while `--role` and `--delivery` become a normal request.
 Claude and Codex compose the frontier catalog. The open-source Goose and OpenCode layouts compose the low-context catalog, keeping required skills and removing sources marked optional for smaller models.
+Agent-compose rejects a role whose embedded policy does not support the selected class. CEO therefore fails closed on Goose and OpenCode before AOS writes a bundle.
 
 The container accepts and ignores legacy `--density full` from an old launcher. Brief density is removed.
 
