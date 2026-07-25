@@ -1,6 +1,9 @@
 # shellcheck shell=bash
 # Shared bash + zsh init (bash/zsh common subset). See docs/features-shell-secrets.md.
 
+# shared-environment: begin
+# Keep this block declarative. The rendered Windows PowerShell profile parses
+# these export assignments directly so it does not need to launch Bash.
 export ANSIBLE_FORCE_COLOR=1
 export LANG=en_US.UTF-8
 export EDITOR=code
@@ -13,6 +16,11 @@ export AWS_PAGER=""
 export BAT_PAGER=""
 export HISTSIZE=100000
 export SAVEHIST=100000
+# Dev-base image for `ward agent` dispatch: point host shells at the moving
+# release alias.
+export WARD_AGENT_IMAGE="forgejo.coilysiren.me/coilyco-flight-deck/agentic-os"
+export WARD_AGENT_TAG="release"
+# shared-environment: end
 
 _siren_aos_repo_root() {
   local repo source_dir
@@ -76,11 +84,6 @@ _siren_ward_config_ref() {
 }
 
 export WARD_CONFIG_REF="$(_siren_ward_config_ref)"
-
-# Dev-base image for `ward agent` dispatch: point host shells at the moving
-# release alias.
-export WARD_AGENT_IMAGE="forgejo.coilysiren.me/coilyco-flight-deck/agentic-os"
-export WARD_AGENT_TAG="release"
 
 # Env + PATH are inherited, so run once per terminal tree: the exported guard is
 # the "has this run in this terminal yet?" check. Aliases/functions always define.
