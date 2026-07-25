@@ -1,16 +1,25 @@
-# Current role-seat context inventory
+# Current role-class context inventory
 
 The 11 canonical roles are measured in all four AOS native layouts. Claude and
 Codex use the frontier catalog. Goose and OpenCode use the low-context catalog.
 The snapshots were generated with released agent-compose `v0.47.0`. Every
 entry uses the deterministic characters-divided-by-four token proxy.
 
-## Class inventories
+## Roles
 
-* [Frontier seats](context-budget-role-seat-frontier-current.md) - Claude and
-  Codex snapshots, eager totals, shared lazy totals, and composed counts.
-* [Low-context seats](context-budget-role-seat-low-context-current.md) - Goose
-  and OpenCode snapshots with optional skill sources removed.
+* [Director](context-budget-role-director-current.md) - frontier and low-context.
+* [Engineer](context-budget-role-engineer-current.md) - frontier and low-context.
+* [QA](context-budget-role-qa-current.md) - frontier and low-context.
+* [Advisor](context-budget-role-advisor-current.md) - frontier and low-context.
+* [Ops](context-budget-role-ops-current.md) - frontier and low-context.
+* [PM](context-budget-role-pm-current.md) - frontier and low-context.
+* [Designer](context-budget-role-designer-current.md) - frontier and low-context.
+* [Social](context-budget-role-social-current.md) - frontier and low-context.
+* [Community](context-budget-role-community-current.md) - frontier and
+  low-context.
+* [Sales](context-budget-role-sales-current.md) - frontier and low-context.
+* [Customer success](context-budget-role-customer-success-current.md) -
+  frontier and low-context.
 
 Goose and OpenCode have equal token totals because each receives the same
 catalog and AGENTS cascade. Their projection paths and payload hashes remain

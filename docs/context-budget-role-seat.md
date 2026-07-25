@@ -49,11 +49,11 @@ and repository delivery paths as two occurrences.
 
 Snapshots use `context-budget-<role>-<seat>-<phase>.yaml`. The
 [ops/codex baseline](context-budget-ops-codex-before.yaml) is historical.
-Every current role-seat snapshot is linked from the all-seat inventory.
+Every current role-seat snapshot is linked from its role report.
 
-The [current all-seat inventory](context-budget-role-seat-current.md) records
-the compact mobile-review surface for every canonical role in the Claude,
-Codex, Goose, and OpenCode native seats.
+The [current role-class inventory](context-budget-role-seat-current.md) links
+one report per canonical role. Each report presents the frontier Claude and
+Codex measurements beside the low-context Goose and OpenCode measurements.
 
 ## Capture and compare
 
