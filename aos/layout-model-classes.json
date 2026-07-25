@@ -1,0 +1,9 @@
+{
+  "format": "agentic-os.layout-model-classes.v1",
+  "layouts": {
+    "claude": "frontier",
+    "codex": "frontier",
+    "goose": "low-context",
+    "opencode": "low-context"
+  }
+}

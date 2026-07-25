@@ -1,57 +1,52 @@
 # Current role-seat context inventory
 
-The original ten role snapshots were measured in Claude and Codex at AOS commit
-[`4bfa715`](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/commit/4bfa715).
-The community admission is measured from the implementation for
-[aos#737](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/issues/737).
-All entries use the deterministic characters-divided-by-four token proxy.
+The 11 canonical roles are measured in all four AOS native layouts. Claude and
+Codex use the frontier catalog. Goose and OpenCode use the low-context catalog.
+The snapshots were generated with released agent-compose `v0.47.0`. Every
+entry uses the deterministic characters-divided-by-four token proxy.
 
-Each role reports Codex eager, Claude eager, shared lazy, then composed source
-count. Lazy totals match across seats.
+## Class inventories
+
+* [Frontier seats](context-budget-role-seat-frontier-current.md) - Claude and
+  Codex snapshots, eager totals, shared lazy totals, and composed counts.
+* [Low-context seats](context-budget-role-seat-low-context-current.md) - Goose
+  and OpenCode snapshots with optional skill sources removed.
+
+Goose and OpenCode have equal token totals because each receives the same
+catalog and AGENTS cascade. Their projection paths and payload hashes remain
+distinct.
 
 ## Shared surface
 
-* **AGENTS cascade** - Codex 10,079 eager tokens, Claude 10,241.
-* **Ordinary skills** - 812 eager and 14,454 lazy tokens across 13 sources.
+* **AGENTS cascade** - Codex 10,079 eager tokens, Claude 10,241, Goose and
+  OpenCode 9,872.
+* **Frontier ordinary skills** - 807 eager and 13,857 lazy tokens across 13
+  sources.
+* **Low-context ordinary skills** - 699 eager and 10,799 lazy tokens across 11
+  sources.
 * **MCP** - zero eager schemas and 12 deferred server registrations.
-* **Seat difference** - Claude adds 162 eager tokens through one additional
-  AGENTS cascade component.
-
-## Roles
-
-* **Director** - [Codex 13,787](context-budget-director-codex-current.yaml), [Claude 13,949](context-budget-director-claude-current.yaml), lazy 89,123, 32 composed.
-* **Engineer** - [Codex 13,172](context-budget-engineer-codex-current.yaml), [Claude 13,334](context-budget-engineer-claude-current.yaml), lazy 53,038, 23 composed.
-* **QA** - [Codex 13,261](context-budget-qa-codex-current.yaml), [Claude 13,423](context-budget-qa-claude-current.yaml), lazy 47,121, 25 composed.
-* **Advisor** - [Codex 12,094](context-budget-advisor-codex-current.yaml), [Claude 12,256](context-budget-advisor-claude-current.yaml), lazy 16,818, 2 composed.
-* **Ops** - [Codex 13,343](context-budget-ops-codex-current.yaml), [Claude 13,505](context-budget-ops-claude-current.yaml), lazy 55,281, 26 composed.
-* **PM** - [Codex 12,771](context-budget-pm-codex-current.yaml), [Claude 12,933](context-budget-pm-claude-current.yaml), lazy 52,473, 11 composed.
-* **Designer** - [Codex 12,257](context-budget-designer-codex-current.yaml), [Claude 12,419](context-budget-designer-claude-current.yaml), lazy 24,160, 5 composed.
-* **Social** - [Codex 12,308](context-budget-social-codex-current.yaml), [Claude 12,470](context-budget-social-claude-current.yaml), lazy 20,117, 5 composed.
-* **Community** - [Codex 12,214](context-budget-community-codex-current.yaml), [Claude 12,376](context-budget-community-claude-current.yaml), lazy 28,462,
-  5 composed.
-* **Sales** - [Codex 12,229](context-budget-sales-codex-current.yaml), [Claude 12,391](context-budget-sales-claude-current.yaml), lazy 19,492, 4 composed.
-* **Customer success** - [Codex 12,301](context-budget-customer-success-codex-current.yaml), [Claude 12,463](context-budget-customer-success-claude-current.yaml), lazy 19,594,
-  4 composed.
-
-Community sees 12 ordinary sources because its Discord host method is
-role-composed. The original snapshots predate that promotion and report 13.
+* **Seat difference** - Claude adds 162 eager tokens over Codex through one
+  additional AGENTS cascade component. Goose and OpenCode omit the two
+  frontier-only ordinary sources and harness-specific AGENTS overrides.
 
 ## Cumulative tracked baseline
 
-The checked-in ops/Codex baseline now has a paired
+The checked-in ops/Codex baseline has a paired
 [current snapshot](context-budget-ops-codex-current.yaml).
 
-* **Eager** - fell from 14,564 to 13,343 tokens, a reduction of 1,221.
-* **Lazy** - fell from 126,332 to 55,281 tokens, a reduction of 71,051.
-* **Components** - added five, removed 31, and changed 23 across the full
+* **Eager** - fell from 14,564 to 13,823 tokens, a reduction of 741.
+* **Lazy** - fell from 126,332 to 54,684 tokens, a reduction of 71,648.
+* **Components** - added five, removed 30, and changed 25 across the full
   pruning interval.
 
 ## Interpretation
 
-The AGENTS cascade is now the dominant eager cost. Role-composed metadata ranges
-from a small specialist set for advisor through the intentionally broad
-director catalog. Lazy totals describe available retrieval, not startup prompt
-load.
+The AGENTS cascade is the dominant eager cost in every seat. Low-context
+selection substantially cuts lazy retrieval and trims eager routing metadata,
+but the inherited AGENTS surface keeps every OSS role above the legacy
+5,000-token generic harness budget. Role-composed metadata ranges from a small
+advisor set through the broad director catalog. Lazy totals describe available
+retrieval, not startup prompt load.
 
 ## See also
 
@@ -59,7 +54,5 @@ load.
   comparison, and failure rules.
 * [Historical ops/Codex baseline](context-budget-ops-codex-before.yaml) -
   machine-readable comparison source.
-* [Current ops/Codex snapshot](context-budget-ops-codex-current.yaml) -
-  machine-readable post-pruning checkpoint.
 * [Context-budget report](context-budget.md) - component definitions and token
   proxy.

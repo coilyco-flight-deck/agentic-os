@@ -8,6 +8,7 @@ cwd: .
 tokenizer: tokens = chars/4 proxy (v1, swap for the qwen tokenizer later)
 bundle:
   format: agent-compose.bundle
+  model_class: frontier
   personalities:
   - curious
   - grounded
@@ -22,22 +23,22 @@ mcp:
 totals:
   eager:
     components: 44
-    bytes: 53277
-    tokens: 13334
+    bytes: 55314
+    tokens: 13843
   lazy:
     components: 122
-    bytes: 212275
-    tokens: 53038
+    bytes: 209888
+    tokens: 52441
 breakdown:
   eager:
     agents-cascade: {components: 4, bytes: 40959, tokens: 10241}
-    ordinary-skill-frontmatter: {components: 13, bytes: 3229, tokens: 812}
+    ordinary-skill-frontmatter: {components: 13, bytes: 3210, tokens: 807}
     personality-frontmatter: {components: 3, bytes: 471, tokens: 119}
     role-composed-frontmatter: {components: 23, bytes: 4600, tokens: 1161}
-    role-instructions: {components: 1, bytes: 4018, tokens: 1001}
+    role-instructions: {components: 1, bytes: 6074, tokens: 1515}
   lazy:
     mcp-server-registration: {components: 1, bytes: 0, tokens: 0}
-    ordinary-skill-body: {components: 13, bytes: 24420, tokens: 6103}
+    ordinary-skill-body: {components: 13, bytes: 22033, tokens: 5506}
     ordinary-skill-resource: {components: 24, bytes: 33367, tokens: 8351}
     personality-body: {components: 3, bytes: 4179, tokens: 1046}
     role-composed-body: {components: 23, bytes: 51941, tokens: 12987}
@@ -78,9 +79,9 @@ components:
       owner: agent-compose+person:kai+aos-public
       source: bundle:content/instructions.md
       delivery: .claude/CLAUDE.md
-      bytes: 4018
-      tokens: 1001
-      sha256: 9413a875a5965af9df0ed262b4fcb66e108dd608012417504de10fe74706c0d2
+      bytes: 6074
+      tokens: 1515
+      sha256: 6f6f8cbbd0a9d06c947e4e5c02cecdf321ee41baa1679742e66fb0fdcd085342
   lazy:
     mcp-server-registration:
     - id: mcp:deferred
@@ -113,9 +114,9 @@ skills:
   aos-public/kai-git-workflow: {class: role-composed, eager: 36, lazy: 2364, resources: 3}
   aos-public/kai-tech-prefs: {class: ordinary, eager: 51, lazy: 1936, resources: 5}
   aos-public/repo-agentic-os: {class: ordinary, eager: 56, lazy: 93, resources: 0}
+  aos-public/repo-infrastructure: {class: ordinary, eager: 56, lazy: 93, resources: 0}
   aos-public/tooling-agent-workflows: {class: ordinary, eager: 53, lazy: 1642, resources: 4}
   aos-public/tooling-claude-in-chrome: {class: ordinary, eager: 55, lazy: 1416, resources: 3}
-  aos-public/tooling-discord-community-host: {class: ordinary, eager: 61, lazy: 690, resources: 0}
   aos-public/tooling-ffmpeg: {class: ordinary, eager: 50, lazy: 559, resources: 0}
   aos-public/tooling-gpg-ssm: {class: ordinary, eager: 78, lazy: 1376, resources: 3}
   aos-public/tooling-image-zoom: {class: ordinary, eager: 44, lazy: 975, resources: 1}
@@ -130,4 +131,4 @@ skills:
   person:kai/personality-curious: {class: personality, eager: 39, lazy: 337, resources: 0}
   person:kai/personality-grounded: {class: personality, eager: 39, lazy: 350, resources: 0}
   person:kai/personality-meticulous: {class: personality, eager: 41, lazy: 359, resources: 0}
-payload_hash: 869147dee164ee83473083c49050ba202e9c098682c542796183b64a45bf8808
+payload_hash: 23d57b7c25c4ba7c9d8c5bff960a8fd5c0b75778423b95e70a169569de237473

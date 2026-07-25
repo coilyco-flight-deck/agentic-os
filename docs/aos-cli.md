@@ -11,6 +11,7 @@ aos --role engineer acompose -- codex
 
 The command after `--` is preserved exactly. Its executable selects the agent-compose layout unless `--layout` names one explicitly.
 The [check-in adapter](aos-acompose-checkin.md) owns a bounded invocation while `--role` and `--delivery` become a normal request.
+Claude and Codex compose the frontier catalog. The open-source Goose and OpenCode layouts compose the low-context catalog, keeping required skills and removing sources marked optional for smaller models.
 
 The container accepts and ignores legacy `--density full` from an old launcher. Brief density is removed.
 
@@ -27,9 +28,7 @@ Every launch supplies the same runtime base:
 * Present API-key environment variables cross by name, never by rendered value.
 * The Docker socket, AWS config, host HOME, and Git credentials do not mount.
 
-Root performs bootstrap only. The harness runs as the host uid and gid with an
-ephemeral `/home/aos`, keeping a Linux bind-mounted workspace writable while
-the root-owned substrate stays read-only.
+Root performs bootstrap only. The harness runs as the host uid and gid with an ephemeral `/home/aos`, keeping a Linux bind-mounted workspace writable while the root-owned substrate stays read-only.
 
 ## Composition flow
 
@@ -37,7 +36,7 @@ The image carries self-contained `agent-compose`, its `acompose` alias, and the
 AOS capability provider inside the baked substrate seed. Container bootstrap:
 
 1. refreshes the shared mirrors and materializes reference checkouts
-2. composes the requested role
+2. composes the requested role for the selected layout's model class
 3. verifies the immutable bundle
 4. projects it with `project --scope home` and execs the command after `--`
 

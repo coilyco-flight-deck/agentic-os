@@ -1,14 +1,14 @@
 # Role-seat context snapshots
 
-The context-budget report measures a requested `(role, seat)` pair. The role
-selects the composed briefing and role-scoped skills. The seat selects the
-agent-compose projection layout and the AGENTS-family cascade for that seat.
+The context-budget report measures a requested `(role, seat)` pair. The role selects the composed briefing and role-scoped skills. The seat selects one of
+AOS's four agent-compose projection layouts and its AGENTS-family cascade.
 Harness routing and intent selection are not measurement inputs.
 
 The command asks the local `agent-compose` binary to perform three operations:
 
-* `roster` validates that the requested seat exists under the requested role.
-* `compose` builds the role's exact `native-skills` bundle.
+* `roster` validates that the requested role exists.
+* `compose` builds the role's exact `native-skills` bundle. Claude and Codex
+  request the frontier class. Goose and OpenCode request the low-context class.
 * `project` materializes that bundle into the seat's home-scope load points.
 
 The measurement compares the bundle's ordered personality meld and selected
@@ -52,8 +52,8 @@ Snapshots use `context-budget-<role>-<seat>-<phase>.yaml`. The
 Every current role-seat snapshot is linked from the all-seat inventory.
 
 The [current all-seat inventory](context-budget-role-seat-current.md) records
-the compact mobile-review surface for every canonical role in the Claude and
-Codex native seats.
+the compact mobile-review surface for every canonical role in the Claude,
+Codex, Goose, and OpenCode native seats.
 
 ## Capture and compare
 
@@ -74,7 +74,7 @@ ward exec context-budget -- --role ops --seat codex \
 ```
 
 `--skill-root` adds a seat or plugin skill root when the projected runtime
-declares one outside the verified bundle. Duplicate skill ids, an unknown
-role-seat pair, personality drift, a malformed provider, a wrong bundle role,
-an unsafe projected entry point, or a mismatched comparison subject fails
-closed.
+declares one outside the verified bundle. Duplicate skill ids, an unknown role
+or AOS seat, a model-class mismatch, personality drift, a malformed provider,
+a wrong bundle role, an unsafe projected entry point, or a mismatched
+comparison subject fails closed.

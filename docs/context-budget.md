@@ -2,9 +2,8 @@
 
 `check-context-budget` reports the eager startup context each agent harness
 loads at session start, per harness, against a per-harness token budget, with
-per-source attribution. It is an on-demand tool (the `ward context-budget`
-verb), not a pre-commit hook, so it carries no weight in the universal commit
-path and is free to grow heavier measurement later.
+per-source attribution. The on-demand `ward context-budget` verb stays outside
+the universal commit path and may grow heavier measurement later.
 
 The [role-seat snapshot mode](context-budget-role-seat.md) measures any
 agent-compose role and seat without requiring that seat's agent executable.
@@ -52,8 +51,9 @@ The budgets are not one number. They encode three distinct failure modes:
 - **codex** - its native MCP schemas are deferred, so the eager MCP surface is
   ~0 and the budget only bounds the composed doc. Sweep blow-out is runtime
   accumulation a static report cannot govern.
-- **opencode** - a small local qwen model, curated hardest, so its budget is
-  tightest.
+- **goose and opencode** - AOS treats both open-source layouts as low-context.
+  Their small local models receive the pruned skill catalog and share the
+  tightest budget.
 
 ## Token counting
 

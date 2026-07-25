@@ -88,18 +88,25 @@ from agentic_os.generators.generate_agent_compose import (
 
 # Whole-baseline (doc + skills) budgets, not laws. Tune via agent-compose.yaml
 # `budgets:` / CLI flags; per-harness rationale in docs/context-budget.md.
-DEFAULT_BUDGETS = {"claude": 13_000, "codex": 6_000, "opencode": 5_000}
+DEFAULT_BUDGETS = {
+    "claude": 13_000,
+    "codex": 6_000,
+    "goose": 5_000,
+    "opencode": 5_000,
+}
 
 # Per-harness skill roots scanned for SKILL.md frontmatter; absolute = global
 # plugins, relative = expanded against cwd + workspace repos (docs/context-budget.md).
 DEFAULT_SKILL_ROOTS = {
     "claude": ["~/.claude/plugins", ".claude/skills"],
     "codex": ["~/.agents/skills", ".agents/skills"],
+    "goose": ["~/.agents/skills", ".agents/skills"],
     "opencode": ["~/.agents/skills", ".agents/skills"],
 }
 
 DEFAULT_SKILL_LOAD_POINTS = {
     "codex": "~/.agents/skills",
+    "goose": "~/.agents/skills",
     "opencode": "~/.agents/skills",
 }
 

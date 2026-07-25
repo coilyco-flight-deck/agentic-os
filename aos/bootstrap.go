@@ -272,6 +272,10 @@ func composeHome(
 	provider string,
 	runner commandRunner,
 ) error {
+	modelClass, err := modelClassForLayout(opts.Layout)
+	if err != nil {
+		return err
+	}
 	request, err := os.CreateTemp(provider, ".aos-compose-*.kdl")
 	if err != nil {
 		return fmt.Errorf("create compose request: %w", err)
@@ -281,6 +285,7 @@ func composeHome(
 	body := "compose {\n" +
 		"    role " + strconv.Quote(opts.Role) + "\n" +
 		"    delivery " + strconv.Quote(opts.Delivery) + "\n" +
+		"    model-class " + strconv.Quote(modelClass) + "\n" +
 		"    source \"aos-public\" root=\".\" required=#true\n" +
 		"}\n"
 	if _, err := io.WriteString(request, body); err != nil {

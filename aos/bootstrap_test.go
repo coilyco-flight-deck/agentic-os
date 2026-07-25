@@ -173,9 +173,14 @@ func TestPrepareContainerHydratesSubstrateAndProjectsHome(t *testing.T) {
 			t.Fatalf("substrate path remained writable: %s %o", path, info.Mode().Perm())
 		}
 	}
+	modelClass, err := modelClassForLayout("codex")
+	if err != nil {
+		t.Fatal(err)
+	}
 	for _, want := range []string{
 		`role "engineer"`,
 		`delivery "native-skills"`,
+		`model-class "` + modelClass + `"`,
 		`source "aos-public" root="." required=#true`,
 	} {
 		if !strings.Contains(runner.request, want) {
@@ -200,6 +205,40 @@ func TestPrepareContainerHydratesSubstrateAndProjectsHome(t *testing.T) {
 	for _, command := range runner.commands {
 		if strings.HasPrefix(command, "ward ") || command == "ward" {
 			t.Fatalf("Ward command leaked into container bootstrap:\n%s", joined)
+		}
+	}
+}
+
+func TestModelClassForLayout(t *testing.T) {
+	t.Parallel()
+	layouts, err := loadLayoutModelClasses(embeddedLayoutModelClasses)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for layout, want := range layouts {
+		got, err := modelClassForLayout(layout)
+		if err != nil {
+			t.Fatalf("modelClassForLayout(%q): %v", layout, err)
+		}
+		if got != want {
+			t.Fatalf("modelClassForLayout(%q) = %q, want %q", layout, got, want)
+		}
+	}
+	if _, err := modelClassForLayout("unknown"); err == nil {
+		t.Fatal("modelClassForLayout accepted an unknown layout")
+	}
+}
+
+func TestLoadLayoutModelClassesRejectsMalformedRegistry(t *testing.T) {
+	t.Parallel()
+	for _, data := range [][]byte{
+		[]byte(`{}`),
+		[]byte(`{"format":"agentic-os.layout-model-classes.v1","layouts":{}}`),
+		[]byte(`{"format":"agentic-os.layout-model-classes.v1","layouts":{"test":"unknown"}}`),
+		[]byte(`{"format":"agentic-os.layout-model-classes.v1","layouts":{"test":"frontier"}} trailing`),
+	} {
+		if _, err := loadLayoutModelClasses(data); err == nil {
+			t.Fatalf("loadLayoutModelClasses accepted %q", data)
 		}
 	}
 }

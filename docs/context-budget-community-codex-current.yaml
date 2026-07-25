@@ -8,6 +8,7 @@ cwd: .
 tokenizer: tokens = chars/4 proxy (v1, swap for the qwen tokenizer later)
 bundle:
   format: agent-compose.bundle
+  model_class: frontier
   personalities:
   - nurturing
   - diplomatic
@@ -21,23 +22,23 @@ mcp:
   eager_schema_count: 0
 totals:
   eager:
-    components: 24
-    bytes: 48835
-    tokens: 12214
+    components: 25
+    bytes: 50983
+    tokens: 12751
   lazy:
-    components: 74
-    bytes: 113885
-    tokens: 28462
+    components: 75
+    bytes: 114257
+    tokens: 28555
 breakdown:
   eager:
     agents-cascade: {components: 3, bytes: 40314, tokens: 10079}
-    ordinary-skill-frontmatter: {components: 12, bytes: 2986, tokens: 751}
+    ordinary-skill-frontmatter: {components: 13, bytes: 3210, tokens: 807}
     personality-frontmatter: {components: 3, bytes: 454, tokens: 115}
     role-composed-frontmatter: {components: 5, bytes: 1033, tokens: 260}
-    role-instructions: {components: 1, bytes: 4048, tokens: 1009}
+    role-instructions: {components: 1, bytes: 5972, tokens: 1490}
   lazy:
     mcp-server-registration: {components: 1, bytes: 0, tokens: 0}
-    ordinary-skill-body: {components: 12, bytes: 21661, tokens: 5413}
+    ordinary-skill-body: {components: 13, bytes: 22033, tokens: 5506}
     ordinary-skill-resource: {components: 24, bytes: 33367, tokens: 8351}
     personality-body: {components: 3, bytes: 4240, tokens: 1061}
     role-composed-body: {components: 5, bytes: 11363, tokens: 2843}
@@ -71,9 +72,9 @@ components:
       owner: agent-compose+person:kai+aos-public
       source: bundle:content/instructions.md
       delivery: .codex/AGENTS.md
-      bytes: 4048
-      tokens: 1009
-      sha256: 924e7d5f9b4bf00754d9c478f09de133c3cf39195a9a05824d4d7801b5c83814
+      bytes: 5972
+      tokens: 1490
+      sha256: fbf160ff7793c9dbfaabe5039a5027f7bdc321a2f7e406e0c0e1fabcb4058ad8
   lazy:
     mcp-server-registration:
     - id: mcp:deferred
@@ -87,6 +88,7 @@ skills:
   aos-public/coding-discord-bot-architect: {class: role-composed, eager: 42, lazy: 11153, resources: 29}
   aos-public/kai-tech-prefs: {class: ordinary, eager: 51, lazy: 1936, resources: 5}
   aos-public/repo-agentic-os: {class: ordinary, eager: 56, lazy: 93, resources: 0}
+  aos-public/repo-infrastructure: {class: ordinary, eager: 56, lazy: 93, resources: 0}
   aos-public/tooling-agent-workflows: {class: ordinary, eager: 53, lazy: 1642, resources: 4}
   aos-public/tooling-claude-in-chrome: {class: ordinary, eager: 55, lazy: 1416, resources: 3}
   aos-public/tooling-customer-success-signal-routing: {class: role-composed, eager: 53, lazy: 540, resources: 0}
@@ -104,4 +106,4 @@ skills:
   person:kai/personality-diplomatic: {class: personality, eager: 39, lazy: 358, resources: 0}
   person:kai/personality-nurturing: {class: personality, eager: 39, lazy: 351, resources: 0}
   person:kai/personality-playful: {class: personality, eager: 37, lazy: 352, resources: 0}
-payload_hash: 28c4ed60627266b743db79c212a393924428de5265f1c9f86c477996b6ba7aee
+payload_hash: 8a640074158f1436a58663880f14e1ce6637bd6c182f5bb1209151e0fa29dac0

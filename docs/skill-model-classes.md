@@ -53,6 +53,9 @@ catalog. Low-context requests then exclude only explicitly optional sources.
 Excluded sources appear in the selection trace and do not appear in the bundle
 manifest or projected skill tree.
 
+AOS owns the runtime choice. Claude and Codex request `frontier`. Goose and
+OpenCode request `low-context`.
+
 This metadata controls knowledge selection only. Ward continues to own command,
 credential, mount, network, and runtime authority.
 

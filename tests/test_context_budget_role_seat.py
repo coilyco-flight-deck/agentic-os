@@ -79,7 +79,9 @@ def provider_fixture(root: Path) -> Path:
     return provider
 
 
-def bundle_fixture(root: Path) -> Path:
+def bundle_fixture(root: Path, *, model_class: str | None = None) -> Path:
+    if model_class is None:
+        model_class = context.model_class_for_seat("codex")
     bundle = root / "bundle"
     write(
         bundle / "manifest.json",
@@ -87,6 +89,7 @@ def bundle_fixture(root: Path) -> Path:
             {
                 "format": "agent-compose.bundle",
                 "role": "ops",
+                "model_class": model_class,
                 "personalities": list(FIXTURE_PERSONALITIES),
                 "sources": ["person:kai", "aos-public"],
                 "delivery": {
@@ -153,6 +156,12 @@ def projection_fixture(
     if seat == "claude":
         instructions = ".claude/CLAUDE.md"
         skills = ".claude/skills"
+    elif seat == "goose":
+        instructions = ".config/goose/.goosehints"
+        skills = ".agents/skills"
+    elif seat == "opencode":
+        instructions = ".config/opencode/AGENTS.md"
+        skills = ".agents/skills"
     else:
         instructions = f".{seat}/AGENTS.md"
         skills = ".agents/skills"
@@ -194,7 +203,7 @@ def build_fixture_snapshot(
     mcp_servers: list[str] | None = None,
 ) -> dict[str, object]:
     provider = provider_fixture(root)
-    bundle = bundle_fixture(root)
+    bundle = bundle_fixture(root, model_class=context.model_class_for_seat(seat))
     projected = projection_fixture(root, bundle, seat=seat)
     repo, cwd = repo_fixture(root)
     return context.build_snapshot(
@@ -210,7 +219,9 @@ def build_fixture_snapshot(
     )
 
 
-def test_validate_role_seat_requires_generated_roster_pair(tmp_path: Path) -> None:
+def test_validate_role_seat_requires_generated_role_and_aos_layout(
+    tmp_path: Path,
+) -> None:
     roster = tmp_path / "AGENTS.COMPOSE.md"
     write(
         roster,
@@ -220,9 +231,12 @@ def test_validate_role_seat_requires_generated_roster_pair(tmp_path: Path) -> No
     )
 
     context.validate_role_seat(roster, "ops", "codex")
+    context.validate_role_seat(roster, "ops", "goose")
 
-    with pytest.raises(RuntimeError, match="role ops has no goose seat"):
-        context.validate_role_seat(roster, "ops", "goose")
+    with pytest.raises(RuntimeError, match="role qa is absent"):
+        context.validate_role_seat(roster, "qa", "goose")
+    with pytest.raises(RuntimeError, match="unsupported AOS seat"):
+        context.validate_role_seat(roster, "ops", "aider")
 
 
 def test_agents_inventory_rejects_outside_cwd(tmp_path: Path) -> None:
@@ -314,6 +328,7 @@ def test_build_snapshot_separates_eager_and_lazy_components(tmp_path: Path) -> N
 
     assert first == second
     assert first["subject"] == {"role": "ops", "seat": "codex"}
+    assert first["bundle"]["model_class"] == context.model_class_for_seat("codex")
     assert first["bundle"]["personalities"] == list(FIXTURE_PERSONALITIES)
     assert first["cwd"] == "nested/deeper"
     assert first["mcp"] == {
@@ -370,12 +385,45 @@ def test_build_snapshot_separates_eager_and_lazy_components(tmp_path: Path) -> N
     assert first["totals"]["lazy"]["tokens"] > 0
 
 
-def test_projection_changes_seat_specific_load_points(tmp_path: Path) -> None:
-    snapshot = build_fixture_snapshot(tmp_path, seat="claude")
+@pytest.mark.parametrize(
+    ("seat", "delivery"),
+    [
+        ("claude", ".claude/CLAUDE.md"),
+        ("goose", ".config/goose/.goosehints"),
+        ("opencode", ".config/opencode/AGENTS.md"),
+    ],
+)
+def test_projection_changes_seat_specific_load_points(
+    tmp_path: Path,
+    seat: str,
+    delivery: str,
+) -> None:
+    snapshot = build_fixture_snapshot(tmp_path, seat=seat)
     components = {item["id"]: item for item in component_rows(snapshot)}
 
-    assert snapshot["subject"] == {"role": "ops", "seat": "claude"}
-    assert components["instructions:role"]["delivery"] == ".claude/CLAUDE.md"
+    assert snapshot["subject"] == {"role": "ops", "seat": seat}
+    assert snapshot["bundle"]["model_class"] == context.model_class_for_seat(seat)
+    assert components["instructions:role"]["delivery"] == delivery
+
+
+def test_snapshot_rejects_wrong_model_class(tmp_path: Path) -> None:
+    provider = provider_fixture(tmp_path)
+    bundle = bundle_fixture(
+        tmp_path, model_class=context.model_class_for_seat("codex")
+    )
+    projected = projection_fixture(tmp_path, bundle, seat="goose")
+    repo, cwd = repo_fixture(tmp_path)
+
+    with pytest.raises(RuntimeError, match="expected model class low-context"):
+        context.build_snapshot(
+            bundle,
+            projected,
+            provider,
+            repo,
+            cwd,
+            role="ops",
+            seat="goose",
+        )
 
 
 def test_snapshot_rejects_wrong_bundle_role(tmp_path: Path) -> None:
@@ -563,6 +611,12 @@ def test_capture_requires_only_agent_compose_executable(
     assert snapshot["subject"] == {"role": "ops", "seat": "codex"}
     assert executable_lookups == ["agent-compose"]
     assert operations == ["roster", "compose", "project"]
+
+
+def test_request_uses_aos_layout_model_class() -> None:
+    for seat, model_class in context.load_aos_layout_model_classes().items():
+        request = context._request_text("provider", "ops", seat)
+        assert f'model-class "{model_class}"' in request
 
 
 def test_plugin_skill_collision_fails_closed(tmp_path: Path) -> None:

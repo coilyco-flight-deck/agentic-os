@@ -11,6 +11,7 @@ import tempfile
 import urllib.parse
 from collections import defaultdict
 from dataclasses import dataclass
+from functools import cache
 from pathlib import Path
 from typing import Iterable
 
@@ -40,6 +41,10 @@ ROSTER_SEAT_RE = re.compile(
     r"(?m)^- If you are (?P<seat>[a-z][a-z0-9-]*) "
     r"running the (?P<role>[a-z][a-z0-9-]*) role:"
 )
+AOS_LAYOUT_MODEL_CLASSES_PATH = (
+    Path(__file__).resolve().parents[1] / "aos" / "layout-model-classes.json"
+)
+AOS_LAYOUT_MODEL_CLASSES_FORMAT = "agentic-os.layout-model-classes.v1"
 
 SKILL_CLASS_KINDS = {
     "ordinary": (
@@ -149,28 +154,68 @@ def _validate_slug(value: str, label: str) -> None:
         raise RuntimeError(f"{label} must be a lowercase slug, found {value!r}")
 
 
-def validate_role_seat(roster_path: Path, role: str, seat: str) -> None:
-    """Fail unless agent-compose's generated roster contains the requested pair."""
-    _validate_slug(role, "role")
+@cache
+def load_aos_layout_model_classes() -> dict[str, str]:
+    """Read and validate the AOS-owned layout model-class registry."""
+    try:
+        document = json.loads(AOS_LAYOUT_MODEL_CLASSES_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise RuntimeError(
+            f"read AOS layout model classes {AOS_LAYOUT_MODEL_CLASSES_PATH}: {exc}"
+        ) from exc
+    if (
+        not isinstance(document, dict)
+        or document.get("format") != AOS_LAYOUT_MODEL_CLASSES_FORMAT
+        or set(document) != {"format", "layouts"}
+        or not isinstance(document.get("layouts"), dict)
+        or not document["layouts"]
+    ):
+        raise RuntimeError(
+            f"{AOS_LAYOUT_MODEL_CLASSES_PATH}: malformed layout model class registry"
+        )
+    layouts: dict[str, str] = {}
+    for raw_layout, raw_model_class in document["layouts"].items():
+        if not isinstance(raw_layout, str):
+            raise RuntimeError(
+                f"{AOS_LAYOUT_MODEL_CLASSES_PATH}: layout names must be text"
+            )
+        _validate_slug(raw_layout, "AOS layout")
+        if raw_model_class not in {"frontier", "low-context"}:
+            raise RuntimeError(
+                f"{AOS_LAYOUT_MODEL_CLASSES_PATH}: layout {raw_layout!r} has "
+                f"unsupported model class {raw_model_class!r}"
+            )
+        layouts[raw_layout] = raw_model_class
+    return layouts
+
+
+def model_class_for_seat(seat: str) -> str:
+    """Return the AOS-owned model class for one supported projection layout."""
     _validate_slug(seat, "seat")
+    layouts = load_aos_layout_model_classes()
+    try:
+        return layouts[seat]
+    except KeyError as exc:
+        supported = ", ".join(sorted(layouts))
+        raise RuntimeError(
+            f"unsupported AOS seat {seat!r}, expected one of: {supported}"
+        ) from exc
+
+
+def validate_role_seat(roster_path: Path, role: str, seat: str) -> None:
+    """Fail unless the role exists and the seat is an AOS projection layout."""
+    _validate_slug(role, "role")
+    model_class_for_seat(seat)
     try:
         text = roster_path.read_text(encoding="utf-8")
     except OSError as exc:
         raise RuntimeError(f"read agent-compose roster {roster_path}: {exc}") from exc
-    seats = {
-        (match.group("role"), match.group("seat"))
-        for match in ROSTER_SEAT_RE.finditer(text)
-    }
-    if not seats:
+    roles = {match.group("role") for match in ROSTER_SEAT_RE.finditer(text)}
+    if not roles:
         raise RuntimeError(f"{roster_path}: generated roster contains no role seats")
-    if (role, seat) not in seats:
-        available = sorted(
-            candidate
-            for candidate_role, candidate in seats
-            if candidate_role == role
-        )
+    if role not in roles:
         raise RuntimeError(
-            f"{roster_path}: role {role} has no {seat} seat, found {available}"
+            f"{roster_path}: role {role} is absent, found {sorted(roles)}"
         )
 
 
@@ -189,7 +234,7 @@ def _load_projection(projected_root: Path, seat: str) -> ProjectedLayout:
     instruction_paths = [
         item
         for item in files
-        if Path(item).name in {"AGENTS.md", "CLAUDE.md"}
+        if Path(item).name in {"AGENTS.md", "CLAUDE.md", ".goosehints"}
         and "skills" not in Path(item).parts
     ]
     skill_roots = {
@@ -331,7 +376,9 @@ def _safe_child_path(root: Path, relative: object, label: str) -> Path:
     return candidate
 
 
-def _load_manifest(bundle: Path, role: str) -> tuple[dict[str, object], Path, Path]:
+def _load_manifest(
+    bundle: Path, role: str, model_class: str
+) -> tuple[dict[str, object], Path, Path]:
     manifest_path = bundle / "manifest.json"
     try:
         document = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -341,6 +388,8 @@ def _load_manifest(bundle: Path, role: str) -> tuple[dict[str, object], Path, Pa
         raise RuntimeError(f"{manifest_path}: unsupported bundle format")
     if document.get("role") != role:
         raise RuntimeError(f"{manifest_path}: expected role {role}")
+    if document.get("model_class") != model_class:
+        raise RuntimeError(f"{manifest_path}: expected model class {model_class}")
     delivery = document.get("delivery")
     if not isinstance(delivery, dict) or delivery.get("mode") != "native-skills":
         raise RuntimeError(f"{manifest_path}: expected native-skills delivery")
@@ -714,8 +763,11 @@ def build_snapshot(
     cwd = cwd.resolve()
     provider_identity = repository_identity(provider)
     repo_identity = repository_identity(repo)
+    model_class = model_class_for_seat(seat)
     scenario = Scenario(role=role, intent="context-measurement", harness=seat)
-    manifest, instructions, skills_root = _load_manifest(bundle.resolve(), role)
+    manifest, instructions, skills_root = _load_manifest(
+        bundle.resolve(), role, model_class
+    )
     personalities = _validate_manifest_personalities(provider, manifest, role)
     projection = _load_projection(projected_root.resolve(), seat)
     if projection.instructions.read_bytes() != instructions.read_bytes():
@@ -804,6 +856,7 @@ def build_snapshot(
         "tokenizer": TOKENIZER_NOTE,
         "bundle": {
             "format": manifest["format"],
+            "model_class": model_class,
             "personalities": list(personalities),
             "sources": manifest.get("sources", []),
         },
@@ -834,12 +887,14 @@ def build_snapshot(
     return document
 
 
-def _request_text(provider_root: str, role: str) -> str:
+def _request_text(provider_root: str, role: str, seat: str) -> str:
     root = json.dumps(provider_root)
+    model_class = model_class_for_seat(seat)
     return (
         "compose {\n"
         f'    role "{role}"\n'
         '    delivery "native-skills"\n'
+        f'    model-class "{model_class}"\n'
         f'    source "{SOURCE_ID}" root={root} required=#true\n'
         "}\n"
     )
@@ -873,7 +928,7 @@ def capture_snapshot(
         output = root / "bundles"
         roster = root / "roster"
         projected = root / "projected"
-        request.write_text(_request_text("provider", role), encoding="utf-8")
+        request.write_text(_request_text("provider", role, seat), encoding="utf-8")
         try:
             subprocess.run(
                 [executable, "roster", "--out", str(roster), str(staged_provider)],
