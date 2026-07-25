@@ -20,9 +20,9 @@ agentic-os on `pull-request-and-merge` (canonical ward#508 spellings).
 This is the one place a shipped tool (ward) consumes runtime config authored in
 a reference repo (aos), a deliberate exception to AGENTS.md's config-placement
 corollary. The bundle is Kai's single coilyco deployment, not fleet config
-every ward user melds. Forgejo is split into role-facing read, write, admin,
-merge, Actions-read, and runner-token guardfiles. The operator monolith moved
-to [Aguard](aguard.md). Ward keeps only the dynamically selected role policy.
+every ward user melds. Forgejo has role-facing read, write, admin, merge,
+Actions-read, and runner-token guardfiles. The operator monolith moved to
+[Aguard](aguard.md). Ward keeps only the dynamically selected role policy.
 The exception is stated in [AGENTS.md](../AGENTS.md).
 
 See [role overlays](ward-specs-overrides.md) and
@@ -63,6 +63,9 @@ The bundle uses source binary names that Ward reroots to the selected role
 command at runtime. Role-only Forgejo tier files use `aos-agent`. Operational
 automation and human operators use `aguard ops ...` instead of loading the Ward
 bundle directly.
+
+Engineer/QA bind [observe](../.ward/guardfile.observe.kdl). Director/ops keep
+[kubectl](../.ward/guardfile.kubectl.kdl), blocking deploy/rollback inheritance.
 
 Landing policy lives in [`.ward/repos.kdl`](../.ward/repos.kdl). Its workflow
 block keeps the coilyco PR-gated repos explicit.
