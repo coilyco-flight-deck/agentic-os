@@ -31,7 +31,7 @@ This lists shipped capabilities, not files.
 - [Cross-repo tooling and release](features-release-tooling.md) - hooks, diagnostics, promotion, retries, reruns.
 - [Telegram CI failure alerts](telegram-ci-alerts.md) - reusable red-channel alerting for failing jobs.
 - [dev-base image](dev-base-image.md) - one full Ubuntu image with every language toolchain.
-- [CI parity in dev-base](ci-in-dev-base.md) - CI runs inside the pinned dev-base image.
+- [CI parity in dev-base](ci-in-dev-base.md) - CI runs inside the moving :release dev-base image.
 - [Pull-request CI gate](ci-in-dev-base.md) - the live `ci` workflow that runs `pytest` on pull requests.
 - [AGENTS pointer](features-agents-pointer.md) - generated sibling-repo workspace pointer.
 - [Encoded leak guard](leak-guard.md) - hex-encoded leak-term detector.

@@ -1,12 +1,12 @@
-# CI parity: run app CI inside the pinned dev-base
+# CI parity: run app CI inside the release dev-base
 
-Every app's CI runs **inside the pinned [dev-base image](dev-base-image.md),
+Every app's CI runs **inside the moving `:release` [dev-base image](dev-base-image.md),
 through the same `ward exec` verbs the agents run**, so a green CI means "a
 headless agent can actually land this," not "it passed in some other
 environment" (agentic-os#328).
 
-The current contract pins the one full dev-base image per app. The same image
-contains every supported language toolchain.
+The current contract follows the one promoted full dev-base image. The same
+image contains every supported language toolchain.
 
 ## The motivating failure
 
@@ -22,7 +22,7 @@ environment regressions fail **loudly, on a PR**, before any container dispatche
 Each app CI job runs in the dev-base container and invokes the app's own gate
 verbs instead of hand-rolled `uv run` steps:
 
-- `container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:<pinned-tag>`
+- `container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release`
 - `ward exec test` / `ward exec lint` / `ward exec smoke` - the same verbs a
   dispatched agent runs. Each app defines these in its own `.ward/ward.yaml`.
 
@@ -36,28 +36,25 @@ repos. The live gate installs the validated ward pin first, then runs `pytest`
 plus `pre-commit run --all-files`, matching the release gate so a PR cannot pass
 what main would refuse.
 
-## Pinned, not the moving alias
+## Promoted moving alias
 
-CI pins an explicit `vX.Y.Z` tag, never the moving `:release` alias, so a run is
-reproducible and adopting a newer dev-base is a **deliberate** bump - which
-itself re-validates every app on the next rollout - not silent drift.
+CI uses the moving `:release` alias, never the compatibility-only `:latest`
+alias. Each run consumes the newest successfully promoted full image, matching
+the default used by the AOS launcher.
 
-## The pinned-tag source of truth
+## The release source of truth
 
 <!-- freshness: as-of=2026-07-05 decay-class=pointer half-life=slow -->
-The pin derives from the declared image specification through
-[`scripts/dev-base-build.py`](../scripts/dev-base-build.py). That helper turns
-the release tag into the literal `agentic-os:<tag>` ref, so there is no
-checked-in JSON map of identical refs to drift.
-[dev-base-image.md](dev-base-image.md) covers how those tags publish.
+The release pipeline promotes the successfully published full image to
+`agentic-os:release`, so consumers share one registry-owned source of truth.
+[dev-base-image.md](dev-base-image.md) covers how that alias publishes.
 
 ## Authoring vs rollout
 
-aos **authors** the convention and the pinned tag. It does not reach into other
-repos. An ansible/template rollout in `infrastructure` **reads** the tag file
-and templates it into each app's workflow as a literal `container:` tag, per the
-authoring-vs-rollout law. An app CI never fetches the tag downward at run time -
-it carries a rendered literal, bumped only when the rollout re-runs.
+aos **authors** the convention and publishes the alias. It does not reach into
+other repos. An infrastructure rollout templates the literal `:release` ref
+into each app's workflow, per the authoring-vs-rollout law. The registry resolves
+that alias when the app CI starts.
 
 ## Rollout unit
 
@@ -68,7 +65,7 @@ ward verbs pass inside dev-base and parity holds green.
 
 ## See also
 
-- [dev-base container image](dev-base-image.md) - the image CI pins.
+- [dev-base container image](dev-base-image.md) - the image CI follows.
 - [dev-base auto-bump](dev-base-auto-bump.md) - how pinned tool `ARG`s refresh.
-- [dev-base image](dev-base-image.md) - the full image and pinning contract.
+- [dev-base image](dev-base-image.md) - the full image and release contract.
 - [FEATURES.md](FEATURES.md) - the feature inventory this lands in.
