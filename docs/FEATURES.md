@@ -34,7 +34,7 @@ This lists shipped capabilities, not files.
 - [Pull-request CI gate](ci-in-dev-base.md) - the live `ci` workflow that runs `pytest` on pull requests.
 - [AGENTS pointer](features-agents-pointer.md) - generated sibling-repo workspace pointer.
 - [Encoded leak guard](leak-guard.md) - hex-encoded leak-term detector.
-- [Context budget](context-budget.md) - eager costs and role-seat snapshots.
+- [Context budget](context-budget.md) - role-seat budgets and generated class diffs.
 - [AGENTS inventory](agents-context-inventory.md) - fleet corpus and cascades.
 - [Mount eligibility](mount-eligibility-manifest.md) - per-harness repository allowlist.
 - [Catalog caps reference](catalog-caps-reference.md) - generated numeric caps for validators.

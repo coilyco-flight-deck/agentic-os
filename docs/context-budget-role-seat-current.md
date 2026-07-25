@@ -4,6 +4,9 @@ The 11 canonical roles are measured in all four AOS native layouts. Claude and
 Codex use the frontier catalog. Goose and OpenCode use the low-context catalog.
 The snapshots were generated with released agent-compose `v0.47.0`. Every
 entry uses the deterministic characters-divided-by-four token proxy.
+The role reports and their frontier-to-low-context diffs are generated from
+those snapshots with `ward exec gen-context-budget-role-reports`. A diff range
+compares every frontier seat with every low-context seat.
 
 ## Roles
 

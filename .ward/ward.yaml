@@ -172,6 +172,9 @@ commands:
   gen-caps-reference:
     run: uv run python -m agentic_os.generators.generate_caps_reference
     description: "Regenerate docs/catalog-caps-reference.md from the code-comments / documentation-layout validator constants. Run after changing a cap constant; check-caps-reference-drift fails on staleness. Docs and skills point at this render instead of restating a number."
+  gen-context-budget-role-reports:
+    run: uv run python -m agentic_os.generators.generate_context_budget_role_reports
+    description: "Regenerate the role-centered frontier vs low-context budget reports and their programmatic diffs from the checked-in role-seat YAML snapshots. Pass `-- --check` to report drift without writing. See docs/context-budget-role-seat.md."
   agent-compose:
     run: uv run python -m agentic_os.generators.generate_agent_compose
     description: "Recompose the global agent-context files (~/.config/agent-compose/COMPOSED.<harness>.md) from the declared sources and re-point each harness load-point symlink. No-op without ~/.config/agent-compose/agent-compose.yaml. --dry-run prints the plan; --check fails on drift."
