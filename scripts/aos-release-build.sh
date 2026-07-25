@@ -86,6 +86,12 @@ pathlib.Path(sys.argv[2]).write_text("\n".join(lock["goMod"]) + "\n", encoding="
 pathlib.Path(sys.argv[3]).write_text("\n".join(lock["goSum"]) + "\n", encoding="utf-8")
 PY
     "$specgen" --project-root "$source" gen --out "$source/main.go"
+    # Specgen materialization decodes gzip locks before embedding. This direct
+    # cross-build stages decoded input only after `gen` reads the encoded lock.
+    gzip -dc "$source/aguard/forgejo.swagger.lock.json.gz" \
+        > "$source/aguard/forgejo.swagger.lock.json"
+    mv "$source/aguard/forgejo.swagger.lock.json" \
+        "$source/aguard/forgejo.swagger.lock.json.gz"
     (
         cd "$source"
         GOPROXY=direct GOSUMDB=off GOPRIVATE=forgejo.coilysiren.me \

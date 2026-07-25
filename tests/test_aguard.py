@@ -76,7 +76,12 @@ def test_native_release_wrapper_embeds_the_actions_bridge() -> None:
     assert "//go:embed payload/aguard payload/agentic_os/*" in text
     assert "PYTHONPATH=" in text
     build = (ROOT / "scripts" / "aos-release-build.sh").read_text(encoding="utf-8")
-    assert "gzip -dc" not in build
+    generate = build.index('"$specgen" --project-root "$source" gen')
+    decode = build.index(
+        'gzip -dc "$source/aguard/forgejo.swagger.lock.json.gz"'
+    )
+    compile_binary = build.index('go build -trimpath -ldflags "-s -w -X main.Version=')
+    assert generate < decode < compile_binary
     for module in (
         "forgejo_actions_list.py",
         "forgejo_actions_logs.py",

@@ -103,6 +103,6 @@ def test_release_workflow_derives_assets_from_dist() -> None:
     assert "scripts/ci/aos-cli-release.sh" in workflow
     assert "ward exec aos-release-build" in workflow_script
     assert "ward exec aos-release-package" in workflow_script
-    assert "ops actions runs --help" in (ROOT / "scripts" / "check-aos-release.sh").read_text(
-        encoding="utf-8"
-    )
+    release_check = (ROOT / "scripts" / "check-aos-release.sh").read_text(encoding="utf-8")
+    assert 'grep -Fx "aguard version $version"' in release_check
+    assert "ops actions --help" in release_check

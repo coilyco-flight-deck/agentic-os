@@ -49,9 +49,9 @@ if [ -n "$native_aos" ]; then
     (
         cd "$smoke_dir"
         "$native_aguard" --help >/dev/null
-        "$native_aguard" --version | grep -Fx "$version" >/dev/null
+        "$native_aguard" --version | grep -Fx "aguard version $version" >/dev/null
         "$native_aguard" ops aws --help >/dev/null
-        "$native_aguard" ops actions runs --help >/dev/null
+        "$native_aguard" ops actions --help >/dev/null
     )
 fi
 
