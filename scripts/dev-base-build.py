@@ -262,8 +262,6 @@ def _build_plan(
                 "--build-context",
                 "aos-cli=aos",
                 "--build-context",
-                "aos-ward-specs=.ward",
-                "--build-context",
                 "aosguard-spec=.specgen",
                 "--build-context",
                 "aosguard-python=agentic_os",

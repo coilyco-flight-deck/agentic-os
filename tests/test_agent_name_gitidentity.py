@@ -1,10 +1,4 @@
-"""Tests for the dev-base agent-name.sh `gitidentity` mode (agentic-os#244).
-
-The status line and session banner still carry the agent self-name, but the git
-committer identity now resolves to the coilyco-ops bot account so Forgejo links
-the commit to the deployment identity instead of an example fallback. These
-drive the baked container script via subprocess.
-"""
+"""Tests for the dev-base agent-name.sh `gitidentity` mode (agentic-os#244)."""
 from __future__ import annotations
 
 import subprocess
@@ -12,6 +6,8 @@ from pathlib import Path
 
 SCRIPT = Path(__file__).resolve().parent.parent / "docker" / "dev-base" / "agent-name.sh"
 PAYLOAD = '{"session_id":"AbC123xyz"}'
+DEPLOYMENT_NAME = "deployment-bot"
+DEPLOYMENT_EMAIL = "deployment-bot@example.com"
 
 
 def _run(
@@ -28,6 +24,8 @@ def _run(
         "PATH": "/usr/bin:/bin",
         "GIT_CONFIG_GLOBAL": str(home / ".gitconfig"),
         "GIT_CONFIG_SYSTEM": "/dev/null",
+        "WARD_GIT_NAME": DEPLOYMENT_NAME,
+        "WARD_GIT_EMAIL": DEPLOYMENT_EMAIL,
     }
     # WARD_CONTAINER_NAME drives the container-name suffix; leave it unset to
     # exercise the native-host / self-suppress path (agentic-os#296).
@@ -81,8 +79,8 @@ def _git_effective(key: str, home: Path, system_config: Path | None = None) -> s
 
 def test_gitidentity_sets_bot_committer_identity_when_unconfigured(tmp_path: Path) -> None:
     _run("gitidentity", tmp_path)
-    assert _git_global("user.name", tmp_path) == "coilyco-ops"
-    assert _git_global("user.email", tmp_path) == "coilyco-ops@coilysiren.me"
+    assert _git_global("user.name", tmp_path) == DEPLOYMENT_NAME
+    assert _git_global("user.email", tmp_path) == DEPLOYMENT_EMAIL
 
 
 def test_gitidentity_honors_baked_git_identity(tmp_path: Path) -> None:

@@ -65,9 +65,6 @@ def test_full_dockerfile_contains_every_language_and_operator_surface() -> None:
     assert "sha256sum -c -" in text
     assert "COPY --from=aosguard-spec" in text
     assert "COPY --from=aosguard-python" in text
-    assert "COPY --from=aos-ward-specs" in text
-    assert "go run ./cmd/ward-policy-bake" in text
-    assert "--bundle /tmp/aos-ward-specs" in text
     assert "--skills-out /opt/agentic-os/aosguard-skill" in text
     assert (
         "COPY --from=dev-base-tool-builder /opt/agentic-os/aosguard-skill "
@@ -85,6 +82,20 @@ def test_substrate_seed_parser_accepts_windows_line_endings() -> None:
     text = INSTALL_COMMON.read_text(encoding="utf-8")
 
     assert "ref=${ref%$'\\r'}" in text
+
+
+def test_deployment_identity_has_one_image_owned_source() -> None:
+    dockerfile = DOCKERFILE.read_text(encoding="utf-8")
+    install = INSTALL_COMMON.read_text(encoding="utf-8")
+    entrypoint = (DEV_BASE_ROOT / "ward-shell-entrypoint.sh").read_text(encoding="utf-8")
+
+    for name, ward_name in (
+        ("AOS_GIT_NAME", "WARD_GIT_NAME"),
+        ("AOS_GIT_EMAIL", "WARD_GIT_EMAIL"),
+    ):
+        assert dockerfile.count(f"{name}=") == 1
+        assert f"${{{name}:?" in install
+        assert f'export {ward_name}="${{{name}:?' in entrypoint
 
 
 def test_version_defaults_have_one_owning_source() -> None:
@@ -144,7 +155,6 @@ def test_local_build_targets_full_with_all_named_contexts(monkeypatch) -> None:
     assert "TARGETARCH=amd64" in build
     assert "WARD_CONFIG_REF_COMMIT=commit" in build
     assert "aos-cli=aos" in build
-    assert "aos-ward-specs=.ward" in build
     assert "aosguard-spec=.specgen" in build
     assert "aosguard-python=agentic_os" in build
     assert build[build.index("--target") + 1] == "dev-base-full"

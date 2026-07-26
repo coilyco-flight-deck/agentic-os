@@ -24,7 +24,14 @@ Route every dev command through ward, which reads [`.ward/ward.yaml`](.ward/ward
 
 This repo ships and dogfoods the catalog pre-commit suite (catalog-trifecta, documentation-layout, code-comments, catalog-block, check-skills, check-composed-skills, dead-cross-links, repo-pointer-skills, trufflehog). Run `pre-commit run --all-files` before committing. Per-repo opt-outs (excludes, cap overrides) live under `[tool.agentic-os.*]` in `pyproject.toml`.
 
-**Tests never encode config values.** A tunable lives in one owning source. Config validity belongs to the loader (`ward doctor` gates `.ward` in ci and promote), so tests never assert guardfile or KDL content, and CI enumerates no list a wildcard can derive.
+**Tests never encode or reinterpret configuration.** A tunable lives in one
+owning source. Do not add consumer-, service-, or repo-specific test programs
+whose assertions restate a guardfile, KDL file, manifest, workflow, or other
+configuration. The owning loader tests its behavior with fixtures and validates
+real configuration through its schema, lint, render, or doctor surface (`ward
+doctor` gates `.ward` in ci and promote). Consumer repos invoke that surface
+instead of building a second parser or contract test. CI derives inventories
+from the owning loader or a wildcard instead of maintaining a duplicate list.
 
 ## Safety
 
@@ -44,11 +51,11 @@ The **trigger** for a rollout is a push, not a hand-run publish, keeping it in a
 
 **Corollary** - a reference-implementation repo authors zero config that a shipped tool consumes at runtime. Fleet config that every user of the tool melds to their own values belongs down in the tool's build-time authoring layer (authored, compiled, embedded), not up in the reference repo. The reference repo may hold a clearly-marked reference copy of a config file as documentation, never a thing the tool fetches.
 
-**Carved exception (aos#332).** ward's coilyco [`.ward/`](.ward/) spec bundle inverts this: **authored here**, overlaid into ward's release. It is Kai's **single** deployment, not the per-user meld config the corollary fences off (that stays in ward-kdl). Full reasoning: [docs/ward-specs.md](docs/ward-specs.md).
+**Deployment boundary (aos#332).** The coilyco [`.ward/`](.ward/) spec bundle and dev-base identity are authored here for Kai's single deployment. The AOS image exposes them through Ward's provider-neutral runtime seams. Ward source and releases never import or bake this deployment config. Full reasoning: [docs/ward-specs.md](docs/ward-specs.md).
 
 The layer gradient this keys off (churn and host-awareness rising together, a clone/use breakpoint at each): cli-guard (engine, external contributors, no upstream knowledge), then ward-kdl (the meld layer - every ward user rewrites this to their own config), then ward (the product, shipped coherent to external users), then aos (reference impl + public docs - only Kai clones it, others copy-paste from it), then infra (nobody clones it but Kai).
 
-Config splits on three axes, each a distinct owner: **permission/surface** (ward-kdl guardfiles, dialect 1), **fleet tuning** (identity, model, endpoint, attribution, roster defaults - ward-kdl dialect 2, embedded), and **operator-local preference** (per-host, hand-edited, not embedded, parsed from a local source). One parser may serve two sources. The axes stay distinct owners.
+Config splits on three axes, each a distinct owner: **permission/surface** (ward-kdl guardfiles, dialect 1), **deployment tuning** (identity, model, endpoint, attribution, roster defaults - AOS bundle and image environment), and **operator-local preference** (per-host, hand-edited, not embedded, parsed from a local source). One parser may serve two sources. The axes stay distinct owners.
 
 ### Skills
 

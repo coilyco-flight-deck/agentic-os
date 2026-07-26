@@ -43,8 +43,10 @@ Every managed version has one default `ARG` in the Dockerfile.
 `ward exec dep-bump -- apply --arg NAME --version VERSION` rewrites one owning
 declaration.
 
-Source ownership follows the tool boundary. The image pins versions but does
-not redefine Ward configuration, aosguard policy, or agent-compose source data.
+Source ownership follows the tool boundary. The image owns this deployment's
+Git identity and its entrypoint maps that identity onto Ward's provider-neutral
+`WARD_GIT_*` environment contract before container bootstrap. The image does
+not redefine Ward policy, aosguard policy, or agent-compose source data.
 
 ## See also
 

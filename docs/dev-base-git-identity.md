@@ -8,36 +8,37 @@ links the commit to the coilyco-ops account instead of an example fallback.
 
 ## What runs
 
-Every language target bakes the bot identity into git's system config through
+The Dockerfile owns `AOS_GIT_NAME` and `AOS_GIT_EMAIL` once. Every language
+target writes them into Git's system config through
 [`install-common.sh`](../docker/dev-base/install-common.sh), so every user
-inherits `coilyco-ops <coilyco-ops@coilysiren.me>` without a runtime write. The
-baked [`agent-name.sh`](../docker/dev-base/agent-name.sh) still
+inherits the deployment identity without a runtime write. The
+[`ward-shell-entrypoint.sh`](../docker/dev-base/ward-shell-entrypoint.sh) maps
+the same image-owned values onto Ward's provider-neutral `WARD_GIT_*` transport
+seam before Ward bootstraps the container. The baked
+[`agent-name.sh`](../docker/dev-base/agent-name.sh) still
 carries a `gitidentity` mode as a fallback for older or custom images, and the
 policy-tier [`managed-settings.json`](../docker/dev-base/claude-managed-settings.json)
 wires it as a second `SessionStart` hook, right after the self-name banner.
 
-## Why SessionStart, not the ward entrypoint
+## Why SessionStart remains
 
 SessionStart is the earliest the self-name banner and bot identity hook can run
-with the full environment in place. The distinguishing `<tag>` is derived from
-the `session_id`, which the ward entrypoint cannot know before the agent starts.
-The hook now backfills only when the image or runtime environment lacks the
-baked identity, so it respects the Dockerfile-owned config instead of
-overwriting it.
+with the full agent environment in place. The distinguishing `<tag>` is derived
+from the `session_id`, which the entrypoint cannot know before the agent starts.
+The identity hook backfills only when the system config is absent, so it
+respects the Dockerfile-owned config instead of overwriting it.
 
 ## Why the bot identity is explicit
 
 The committer identity must not drift back to ward's example bot defaults. The
-image-level config now owns the default, with `WARD_GIT_NAME` and
-`WARD_GIT_EMAIL` as override knobs for custom image builds or fallback writes.
+image-level `AOS_GIT_NAME` and `AOS_GIT_EMAIL` config owns the deployment
+identity. Ward carries those values only through its generic runtime contract.
 
 ## Scope and limits
 
 - **Best-effort.** A git failure is swallowed so it never breaks session start.
-- **claude only today.** The stamp rides claude's policy-tier settings; other
-  harnesses still need their own hook path if they want the same bot identity.
-  A cross-harness stamp would belong in ward's entrypoint, where every harness
-  passes through.
+- **all warded harnesses.** The entrypoint establishes the image-owned identity
+  before any harness starts. Claude's SessionStart hook remains a fallback.
 - **Dockerfile owns the baseline.** The runtime hook is fallback only.
 
 ## See also
