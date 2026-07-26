@@ -50,19 +50,22 @@ path, and the packaging step walks `.ward/` recursively while excluding
 `.ward/ward.yaml`, so new bundle files land automatically and the overlay input
 stays clean.
 
-## How ward consumes it
+## How Ward consumes it
 
-ward keeps one neutral shipped binary and selects the coilyco bundle at launch
-through `WARD_CONFIG_REF` for the guarded edge surfaces. The published
-`ward-specs-<tag>.tar.gz` remains the canonical bundle artifact and checksum
-target, but the live config path is the runtime `WARD_CONFIG_REF` seam, not a
-bespoke rebuild from the asset. Ward's embedded image stays neutral, while
-[`defaults.kdl`](../.ward/defaults.kdl) selects the aos image and tag.
+Ward's native agent control plane bakes AOS-authored policy at release time.
+Ward promotion verifies a pinned `ward-specs-<tag>.tar.gz`, then combines
+the bundle's [`agents.kdl`](../.ward/agents.kdl) and
+[`roles.kdl`](../.ward/roles.kdl) into the fleet policy. Missing or invalid
+input fails the release rather than shipping a neutral identity.
+
+`WARD_CONFIG_REF` no longer selects native agent policy. The Ward-to-Aguard
+operator cutover gave guarded operator surfaces to Aguard. Ward retained this
+baked role and launch policy for agent orchestration.
+[`defaults.kdl`](../.ward/defaults.kdl) still selects the AOS image and tag.
 
 The bundle uses source binary names that Ward reroots to the selected role
 command at runtime. Role-only Forgejo tier files use `aos-agent`. Operational
-automation and human operators use `aguard ops ...` instead of loading the Ward
-bundle directly.
+automation and human operators use `aguard ops ...`.
 
 Engineer/QA bind [observe](../.ward/guardfile.observe.kdl). Director/ops keep
 [kubectl](../.ward/guardfile.kubectl.kdl), blocking deploy/rollback inheritance.
@@ -70,8 +73,6 @@ Engineer/QA bind [observe](../.ward/guardfile.observe.kdl). Director/ops keep
 Landing policy lives in [`.ward/repos.kdl`](../.ward/repos.kdl). Its workflow
 block keeps the coilyco PR-gated repos explicit.
 
-Host shells and the container entrypoint point `WARD_CONFIG_REF` at the
-checkout's `.ward/` live (`file://`): no commit pin to rot in a long-lived
-terminal, no gitsync or git credential at launch (the stale-pin fail-closed
-chain behind aos#452/aos#472). Only the dev-base image build bakes a
-commit-pinned ref, the fallback without a seeded checkout.
+Host shells and the container entrypoint do not steer Ward's native policy.
+The release-time pin is the reproducible boundary between AOS authorship and
+Ward consumption.
