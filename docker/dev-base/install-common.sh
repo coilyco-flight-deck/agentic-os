@@ -248,8 +248,8 @@ rm /tmp/tailscale.tgz
 tailscale version
 tailscaled --version
 
-git config --system user.name "${WARD_GIT_NAME:-coilyco-ops}"
-git config --system user.email "${WARD_GIT_EMAIL:-coilyco-ops@coilysiren.me}"
+git config --system user.name "${AOS_GIT_NAME:?AOS_GIT_NAME is required}"
+git config --system user.email "${AOS_GIT_EMAIL:?AOS_GIT_EMAIL is required}"
 git config --system --list --show-origin \
   | grep -E 'file:/etc/gitconfig[[:space:]]+user\.(name|email)='
 install -d /etc/claude-code /home/ubuntu/.ward/audit /opt/substrate-seed

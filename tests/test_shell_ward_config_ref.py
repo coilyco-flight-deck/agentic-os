@@ -76,8 +76,13 @@ def test_container_entrypoint_seeds_the_read_only_surface_env(tmp_path: Path) ->
         {
             "HOME": str(tmp_path / "home"),
             "PATH": "/usr/bin:/bin",
+            "AOS_REPO_ROOT": "",
             "FORGEJO_WORKSPACE": str(REPO_ROOT),
             "WARD_READONLY": "1",
+            "AOS_GIT_NAME": "deployment-bot",
+            "AOS_GIT_EMAIL": "deployment-bot@example.com",
+            "WARD_GIT_NAME": "neutral-default",
+            "WARD_GIT_EMAIL": "neutral-default@example.com",
         }
     )
     entrypoint = REPO_ROOT / "docker" / "dev-base" / "ward-shell-entrypoint.sh"
@@ -87,7 +92,7 @@ def test_container_entrypoint_seeds_the_read_only_surface_env(tmp_path: Path) ->
             str(entrypoint),
             "bash",
             "-lc",
-            'printf "%s\n%s" "$AOS_REPO_ROOT" "$WARD_CONFIG_REF"',
+            'printf "%s\n%s\n%s\n%s" "$AOS_REPO_ROOT" "$WARD_CONFIG_REF" "$WARD_GIT_NAME" "$WARD_GIT_EMAIL"',
         ],
         cwd=foreign,
         check=True,
@@ -96,8 +101,10 @@ def test_container_entrypoint_seeds_the_read_only_surface_env(tmp_path: Path) ->
         env=env,
     )
 
-    root, ref = proc.stdout.splitlines()
+    root, ref, git_name, git_email = proc.stdout.splitlines()
     assert root == str(REPO_ROOT)
     # The entrypoint reads the seeded checkout's bundle live too - no in-container
     # gitsync, credentials, or config-bundle cache (the ward#1086 FETCH_HEAD class).
     assert ref == f"file://{root}/.ward"
+    assert git_name == env["AOS_GIT_NAME"]
+    assert git_email == env["AOS_GIT_EMAIL"]

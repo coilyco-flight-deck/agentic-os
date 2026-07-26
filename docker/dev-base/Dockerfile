@@ -168,6 +168,8 @@ ENV PATH=/usr/local/go/bin:/usr/local/node/bin:/usr/local/dotnet:/usr/local/carg
     DOTNET_ROOT=/usr/local/dotnet \
     DOTNET_CLI_TELEMETRY_OPTOUT=1 \
     DOTNET_NOLOGO=1 \
+    AOS_GIT_NAME=coilyco-ops \
+    AOS_GIT_EMAIL=coilyco-ops@coilysiren.me \
     PYTHONPATH=/opt/agentic-os/python
 
 LABEL org.opencontainers.image.source="https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os" \

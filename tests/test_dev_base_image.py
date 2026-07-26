@@ -73,6 +73,20 @@ def test_substrate_seed_parser_accepts_windows_line_endings() -> None:
     assert "ref=${ref%$'\\r'}" in text
 
 
+def test_deployment_identity_has_one_image_owned_source() -> None:
+    dockerfile = DOCKERFILE.read_text(encoding="utf-8")
+    install = INSTALL_COMMON.read_text(encoding="utf-8")
+    entrypoint = (DEV_BASE_ROOT / "ward-shell-entrypoint.sh").read_text(encoding="utf-8")
+
+    for name, ward_name in (
+        ("AOS_GIT_NAME", "WARD_GIT_NAME"),
+        ("AOS_GIT_EMAIL", "WARD_GIT_EMAIL"),
+    ):
+        assert dockerfile.count(f"{name}=") == 1
+        assert f"${{{name}:?" in install
+        assert f'export {ward_name}="${{{name}:?' in entrypoint
+
+
 def test_version_defaults_have_one_owning_source() -> None:
     text = DOCKERFILE.read_text(encoding="utf-8")
     for name in (

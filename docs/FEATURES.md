@@ -25,12 +25,12 @@ This lists shipped capabilities, not files.
 - [Forgejo Actions list bridge](forgejo-actions-listing.md) - safe first-page helper for Actions run/task inspection.
 - [Forgejo runner-token fetch overlay](forgejo-runner-token.md) - guarded runner registration-token minting via fetch leaves.
 - [Forgejo Actions rerun bridge](forgejo-actions-rerun.md) - guarded reruns with dispatch fallback and fetch mirror.
-- [ward bundle](ward-specs.md) - guarded surfaces, AOSH seat identity and Goose routing, AOS-local OpenCode policy.
+- [ward bundle](ward-specs.md) - AOS runtime policy and identity, never baked into Ward.
 - [Ward profile assets home](ward-profile-assets.md) - AOS profile/config inputs for Ward's `ProfileProvider`.
 - [Role surface tiers](role-surface-tiers.md) - guarded Engineer/QA observation and wider Director/Ops tiers.
 - [Cross-repo tooling and release](features-release-tooling.md) - hooks, diagnostics, promotion, retries, reruns.
 - [Telegram CI failure alerts](telegram-ci-alerts.md) - reusable red-channel alerting for failing jobs.
-- [dev-base image](dev-base-image.md) - one full Ubuntu image with every language toolchain.
+- [dev-base image](dev-base-image.md) - full Ubuntu toolchain image with AOS-owned Git identity.
 - [CI parity in dev-base](ci-in-dev-base.md) - CI runs inside the moving :release dev-base image.
 - [Pull-request CI gate](ci-in-dev-base.md) - the live `ci` workflow that runs `pytest` on pull requests.
 - [AGENTS pointer](features-agents-pointer.md) - generated sibling-repo workspace pointer.
