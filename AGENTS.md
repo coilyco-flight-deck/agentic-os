@@ -24,7 +24,14 @@ Route every dev command through ward, which reads [`.ward/ward.yaml`](.ward/ward
 
 This repo ships and dogfoods the catalog pre-commit suite (catalog-trifecta, documentation-layout, code-comments, catalog-block, check-skills, check-composed-skills, dead-cross-links, repo-pointer-skills, trufflehog). Run `pre-commit run --all-files` before committing. Per-repo opt-outs (excludes, cap overrides) live under `[tool.agentic-os.*]` in `pyproject.toml`.
 
-**Tests never encode config values.** A tunable lives in one owning source. Config validity belongs to the loader (`ward doctor` gates `.ward` in ci and promote), so tests never assert guardfile or KDL content, and CI enumerates no list a wildcard can derive.
+**Tests never encode or reinterpret configuration.** A tunable lives in one
+owning source. Do not add consumer-, service-, or repo-specific test programs
+whose assertions restate a guardfile, KDL file, manifest, workflow, or other
+configuration. The owning loader tests its behavior with fixtures and validates
+real configuration through its schema, lint, render, or doctor surface (`ward
+doctor` gates `.ward` in ci and promote). Consumer repos invoke that surface
+instead of building a second parser or contract test. CI derives inventories
+from the owning loader or a wildcard instead of maintaining a duplicate list.
 
 ## Safety
 
