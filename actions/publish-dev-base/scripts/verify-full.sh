@@ -23,6 +23,8 @@ for platform in linux/amd64 linux/arm64; do
       python --version
       pipenv --version
       aosguard --version
+      test -s /opt/agentic-os/aosguard-skill/aosguard/SKILL.md
+      test -s /opt/agentic-os/aosguard-skill/aosguard/references/commands.yaml
       pkg-config --exists wayland-client xkbcommon
       printf "%s\\n" \
         "#include <wayland-client.h>" \

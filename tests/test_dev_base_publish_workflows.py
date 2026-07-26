@@ -117,5 +117,7 @@ def test_publish_action_verifies_every_toolchain_and_aosguard() -> None:
         "cargo --version",
         "python --version",
         "aosguard --version",
+        "test -s /opt/agentic-os/aosguard-skill/aosguard/SKILL.md",
+        "test -s /opt/agentic-os/aosguard-skill/aosguard/references/commands.yaml",
     ):
         assert command in script

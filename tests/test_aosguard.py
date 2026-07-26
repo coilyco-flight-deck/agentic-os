@@ -11,6 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 PROJECT = ROOT / ".specgen"
 SOURCE = PROJECT / "aosguard"
+GENERATED_SKILL = ROOT / ".agents" / "generated" / "aosguard"
 EXPECTED_MEMBERS = {
     "actions.kdl",
     "aws.kdl",
@@ -65,8 +66,27 @@ def test_aosguard_forgejo_lock_is_encoded_json() -> None:
 
 def test_aosguard_dependency_lock_is_committed() -> None:
     lock = json.loads((PROJECT / "specverb.lock").read_text(encoding="utf-8"))
-    assert lock["cliGuard"].startswith("v")
+    assert lock["cliGuard"] == "v0.121.0"
     assert not list(SOURCE.glob("*.md"))
+
+
+def test_aosguard_native_skill_is_generated_from_the_merged_tree() -> None:
+    skill = (GENERATED_SKILL / "SKILL.md").read_text(encoding="utf-8")
+    commands = (GENERATED_SKILL / "references" / "commands.yaml").read_text(
+        encoding="utf-8"
+    )
+
+    assert "name: aosguard" in skill
+    assert "`references/commands.yaml`" in skill
+    for path in (
+        "- actions",
+        "- aws",
+        "- forgejo",
+        "- kubectl",
+        "- tailscale",
+    ):
+        assert path in commands
+    assert "permission" not in skill.lower()
 
 
 def test_native_release_wrapper_embeds_the_actions_bridge() -> None:

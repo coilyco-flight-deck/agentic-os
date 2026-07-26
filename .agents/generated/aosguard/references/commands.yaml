@@ -1,0 +1,1399 @@
+commands:
+    - path:
+        - aosguard
+        - ops
+        - actions
+        - logs
+      summary: 'exec: python3 -m agentic_os.forgejo_actions_logs - stream plaintext Actions job logs from the live Forgejo web route'
+    - path:
+        - aosguard
+        - ops
+        - actions
+        - rerun
+      summary: 'exec: python3 -m agentic_os.forgejo_actions_rerun rerun - rerun an existing workflow run, falling back to dispatch for the same ref'
+    - path:
+        - aosguard
+        - ops
+        - actions
+        - rerun-failed-jobs
+      summary: 'exec: python3 -m agentic_os.forgejo_actions_rerun rerun-failed-jobs - rerun failed jobs when supported, falling back to dispatch for the same ref'
+    - path:
+        - aosguard
+        - ops
+        - actions
+        - runs
+      summary: 'exec: python3 -m agentic_os.forgejo_actions_list runs - list Forgejo Actions runs with a safe page-1 default'
+    - path:
+        - aosguard
+        - ops
+        - actions
+        - tasks
+      summary: 'exec: python3 -m agentic_os.forgejo_actions_list tasks - list Forgejo Actions tasks with a safe page-1 default'
+    - path:
+        - aosguard
+        - ops
+        - aws
+        - ec2
+        - describe-instances
+      summary: 'exec: aws ec2 describe-instances'
+    - path:
+        - aosguard
+        - ops
+        - aws
+        - ec2
+        - describe-security-groups
+      summary: 'exec: aws ec2 describe-security-groups'
+    - path:
+        - aosguard
+        - ops
+        - aws
+        - s3
+        - cp
+      summary: 'exec: aws s3 cp'
+    - path:
+        - aosguard
+        - ops
+        - aws
+        - s3
+        - ls
+      summary: 'exec: aws s3 ls'
+    - path:
+        - aosguard
+        - ops
+        - aws
+        - s3
+        - sync
+      summary: 'exec: aws s3 sync'
+    - path:
+        - aosguard
+        - ops
+        - aws
+        - secretsmanager
+        - get-secret-value
+      summary: 'exec: aws secretsmanager get-secret-value'
+    - path:
+        - aosguard
+        - ops
+        - aws
+        - secretsmanager
+        - list-secrets
+      summary: 'exec: aws secretsmanager list-secrets'
+    - path:
+        - aosguard
+        - ops
+        - aws
+        - ssm
+        - get-parameter
+      summary: 'exec: aws ssm get-parameter'
+    - path:
+        - aosguard
+        - ops
+        - aws
+        - ssm
+        - get-parameters-by-path
+      summary: 'exec: aws ssm get-parameters-by-path'
+    - path:
+        - aosguard
+        - ops
+        - aws
+        - ssm
+        - put-parameter
+      summary: 'exec: aws ssm put-parameter - create or overwrite an SSM parameter from an absolute file source without placing its value in argv'
+    - path:
+        - aosguard
+        - ops
+        - aws
+        - sts
+        - get-caller-identity
+      summary: 'exec: aws sts get-caller-identity'
+    - path:
+        - aosguard
+        - ops
+        - aws
+        - sts
+        - get-session-token
+      summary: 'exec: aws sts get-session-token'
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - action
+        - move-issue
+      summary: Move an issue to another repo (copy title/body, back-link, close source). Never deletes.
+      flags:
+        - --dry-run
+        - --output
+        - --query
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - action-run
+        - get
+      summary: GET /repos/{owner}/{repo}/actions/runs/{run_id}
+      flags:
+        - --dry-run
+        - --output
+        - --query
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - action-run
+        - list
+      summary: List Actions runs with a safe page-1 default.
+      flags:
+        - --dry-run
+        - --limit
+        - --output
+        - --query
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - branch
+        - list
+      summary: GET /repos/{owner}/{repo}/branches
+      flags:
+        - --dry-run
+        - --limit
+        - --output
+        - --page
+        - --query
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - commit
+        - list
+      summary: GET /repos/{owner}/{repo}/commits
+      flags:
+        - --dry-run
+        - --files
+        - --limit
+        - --not
+        - --output
+        - --page
+        - --path
+        - --query
+        - --sha
+        - --stat
+        - --verification
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - commit
+        - list-statuses
+      summary: GET /repos/{owner}/{repo}/commits/{ref}/statuses
+      flags:
+        - --dry-run
+        - --limit
+        - --output
+        - --page
+        - --query
+        - --sort
+        - --state
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - commit
+        - status
+      summary: GET /repos/{owner}/{repo}/commits/{ref}/status
+      flags:
+        - --dry-run
+        - --limit
+        - --output
+        - --page
+        - --query
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - describe
+      summary: print the mounted surface as a readable reference
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - fetch
+        - actions-logs
+      summary: 'HTTP fetch: actions logs'
+      flags:
+        - --dry-run
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - fetch
+        - actions-rerun
+      summary: 'HTTP fetch: actions rerun'
+      flags:
+        - --dry-run
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - fetch
+        - actions-rerun-failed-jobs
+      summary: 'HTTP fetch: actions rerun-failed-jobs'
+      flags:
+        - --dry-run
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - fetch
+        - generate-runner-token-global
+      summary: 'HTTP fetch: generate-runner-token global'
+      flags:
+        - --dry-run
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - fetch
+        - generate-runner-token-org
+      summary: 'HTTP fetch: generate-runner-token org'
+      flags:
+        - --dry-run
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - fetch
+        - generate-runner-token-repo
+      summary: 'HTTP fetch: generate-runner-token repo'
+      flags:
+        - --dry-run
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - issue
+        - close
+      summary: PATCH /repos/{owner}/{repo}/issues/{index}
+      flags:
+        - --dry-run
+        - --output
+        - --query
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - issue
+        - comment
+      summary: 'Post a comment on an issue, warning when the issue is closed (ward#380). Shadows the generated `issue comment` leaf (same 3-arg + --body signature): it GETs the issue to read its state, posts the comment, then `fail-when`s on state==''closed'' so commenting on a closed issue exits non-zero instead of passing silently. The comment IS still created - the non-zero exit and the issue body in the output are the warning that the target was closed, not a block on the post. Renders {comment, issue} together like every mount call action.'
+      flags:
+        - --body
+        - --dry-run
+        - --output
+        - --query
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - issue
+        - create
+      summary: POST /repos/{owner}/{repo}/issues
+      flags:
+        - --assignee
+        - --assignees
+        - --body
+        - --body-file
+        - --closed
+        - --dry-run
+        - --due_date
+        - --labels
+        - --milestone
+        - --output
+        - --query
+        - --ref
+        - --title
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - issue
+        - delete
+      summary: denied by policy
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - issue
+        - edit
+      summary: PATCH /repos/{owner}/{repo}/issues/{index}
+      flags:
+        - --assignee
+        - --assignees
+        - --body
+        - --body-file
+        - --dry-run
+        - --due_date
+        - --milestone
+        - --output
+        - --query
+        - --ref
+        - --state
+        - --title
+        - --unset_due_date
+        - --updated_at
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - issue
+        - get
+      summary: GET /repos/{owner}/{repo}/issues/{index}
+      flags:
+        - --dry-run
+        - --output
+        - --query
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - issue
+        - list
+      summary: GET /repos/{owner}/{repo}/issues
+      flags:
+        - --assigned_by
+        - --before
+        - --created_by
+        - --dry-run
+        - --labels
+        - --limit
+        - --mentioned_by
+        - --milestones
+        - --output
+        - --page
+        - --q
+        - --query
+        - --since
+        - --sort
+        - --state
+        - --type
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - issue
+        - list-all
+      summary: List all issues by auto-paginating issue list.
+      flags:
+        - --assigned_by
+        - --before
+        - --created_by
+        - --dry-run
+        - --labels
+        - --limit
+        - --mentioned_by
+        - --milestones
+        - --output
+        - --q
+        - --query
+        - --since
+        - --sort
+        - --state
+        - --type
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - issue
+        - reopen
+      summary: PATCH /repos/{owner}/{repo}/issues/{index}
+      flags:
+        - --dry-run
+        - --output
+        - --query
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - issue
+        - search
+      summary: GET /repos/issues/search
+      flags:
+        - --assigned
+        - --before
+        - --created
+        - --dry-run
+        - --labels
+        - --limit
+        - --mentioned
+        - --milestones
+        - --output
+        - --owner
+        - --page
+        - --priority_repo_id
+        - --q
+        - --query
+        - --review_requested
+        - --reviewed
+        - --since
+        - --sort
+        - --state
+        - --team
+        - --type
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - issue
+        - view
+      summary: 'View an issue with its full comment thread (issue + comments). Shadows the generated `issue view` (same 3-arg signature) so a view never misses the comments - the ward#170 failure mode where an agent reads the body and skips the thread. ward#225: ward''s CLI renders this through a lean projection that collapses every commenter to its login literal, so a multi-comment issue no longer repeats each commenter''s full profile once per comment; the guardfile shape is unchanged.'
+      flags:
+        - --dry-run
+        - --output
+        - --query
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - issue-comment
+        - delete
+      summary: DELETE /repos/{owner}/{repo}/issues/comments/{id} (destructive)
+      flags:
+        - --dry-run
+        - --output
+        - --query
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - issue-comment
+        - list
+      summary: GET /repos/{owner}/{repo}/issues/{index}/comments
+      flags:
+        - --before
+        - --dry-run
+        - --output
+        - --query
+        - --since
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - issue-label
+        - add
+      summary: POST /repos/{owner}/{repo}/issues/{index}/labels
+      flags:
+        - --body-file
+        - --dry-run
+        - --labels
+        - --output
+        - --query
+        - --updated_at
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - issue-label
+        - list
+      summary: GET /repos/{owner}/{repo}/issues/{index}/labels
+      flags:
+        - --dry-run
+        - --output
+        - --query
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - issue-label
+        - remove
+      summary: DELETE /repos/{owner}/{repo}/issues/{index}/labels/{identifier}
+      flags:
+        - --body-file
+        - --dry-run
+        - --output
+        - --query
+        - --updated_at
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - issue-label
+        - set
+      summary: PUT /repos/{owner}/{repo}/issues/{index}/labels
+      flags:
+        - --body-file
+        - --dry-run
+        - --labels
+        - --output
+        - --query
+        - --updated_at
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - label
+        - create
+      summary: denied by policy
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - label
+        - edit
+      summary: denied by policy
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - milestone
+        - close
+      summary: PATCH /repos/{owner}/{repo}/milestones/{id}
+      flags:
+        - --dry-run
+        - --output
+        - --query
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - milestone
+        - create
+      summary: POST /repos/{owner}/{repo}/milestones
+      flags:
+        - --body-file
+        - --description
+        - --dry-run
+        - --due_on
+        - --output
+        - --query
+        - --state
+        - --title
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - milestone
+        - delete
+      summary: DELETE /repos/{owner}/{repo}/milestones/{id} (destructive)
+      flags:
+        - --dry-run
+        - --output
+        - --query
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - milestone
+        - edit
+      summary: PATCH /repos/{owner}/{repo}/milestones/{id}
+      flags:
+        - --body-file
+        - --description
+        - --dry-run
+        - --due_on
+        - --output
+        - --query
+        - --state
+        - --title
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - milestone
+        - get
+      summary: GET /repos/{owner}/{repo}/milestones/{id}
+      flags:
+        - --dry-run
+        - --output
+        - --query
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - milestone
+        - list
+      summary: GET /repos/{owner}/{repo}/milestones
+      flags:
+        - --dry-run
+        - --limit
+        - --name
+        - --output
+        - --page
+        - --query
+        - --state
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - milestone
+        - reopen
+      summary: PATCH /repos/{owner}/{repo}/milestones/{id}
+      flags:
+        - --dry-run
+        - --output
+        - --query
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - org
+        - create
+      summary: denied by policy
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - org
+        - delete
+      summary: denied by policy
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - org
+        - get
+      summary: GET /orgs/{org}
+      flags:
+        - --dry-run
+        - --output
+        - --query
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - org
+        - list
+      summary: GET /orgs
+      flags:
+        - --dry-run
+        - --limit
+        - --output
+        - --page
+        - --query
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - org-label
+        - create
+      summary: POST /orgs/{org}/labels
+      flags:
+        - --body-file
+        - --color
+        - --description
+        - --dry-run
+        - --exclusive
+        - --is_archived
+        - --name
+        - --output
+        - --query
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - org-label
+        - delete
+      summary: DELETE /orgs/{org}/labels/{id} (destructive)
+      flags:
+        - --dry-run
+        - --output
+        - --query
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - org-label
+        - edit
+      summary: PATCH /orgs/{org}/labels/{id}
+      flags:
+        - --body-file
+        - --color
+        - --description
+        - --dry-run
+        - --exclusive
+        - --is_archived
+        - --name
+        - --output
+        - --query
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - org-label
+        - get
+      summary: GET /orgs/{org}/labels/{id}
+      flags:
+        - --dry-run
+        - --output
+        - --query
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - org-label
+        - list
+      summary: GET /orgs/{org}/labels
+      flags:
+        - --dry-run
+        - --limit
+        - --output
+        - --page
+        - --query
+        - --sort
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - org-member
+        - list
+      summary: GET /orgs/{org}/members
+      flags:
+        - --dry-run
+        - --limit
+        - --output
+        - --page
+        - --query
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - org-repo
+        - create
+      summary: POST /orgs/{org}/repos
+      flags:
+        - --auto_init
+        - --body-file
+        - --default_branch
+        - --description
+        - --dry-run
+        - --gitignores
+        - --issue_labels
+        - --license
+        - --name
+        - --object_format_name
+        - --output
+        - --private
+        - --query
+        - --readme
+        - --template
+        - --trust_model
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - org-repo
+        - list
+      summary: GET /orgs/{org}/repos
+      flags:
+        - --dry-run
+        - --limit
+        - --output
+        - --page
+        - --query
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - pr
+        - close
+      summary: PATCH /repos/{owner}/{repo}/pulls/{index}
+      flags:
+        - --dry-run
+        - --output
+        - --query
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - pr
+        - commits
+      summary: GET /repos/{owner}/{repo}/pulls/{index}/commits
+      flags:
+        - --dry-run
+        - --files
+        - --limit
+        - --output
+        - --page
+        - --query
+        - --verification
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - pr
+        - create
+      summary: POST /repos/{owner}/{repo}/pulls
+      flags:
+        - --assignee
+        - --assignees
+        - --base
+        - --body
+        - --body-file
+        - --dry-run
+        - --due_date
+        - --head
+        - --labels
+        - --milestone
+        - --output
+        - --query
+        - --title
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - pr
+        - edit
+      summary: PATCH /repos/{owner}/{repo}/pulls/{index}
+      flags:
+        - --allow_maintainer_edit
+        - --assignee
+        - --assignees
+        - --base
+        - --body
+        - --body-file
+        - --dry-run
+        - --due_date
+        - --labels
+        - --milestone
+        - --output
+        - --query
+        - --state
+        - --title
+        - --unset_due_date
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - pr
+        - files
+      summary: GET /repos/{owner}/{repo}/pulls/{index}/files
+      flags:
+        - --dry-run
+        - --limit
+        - --output
+        - --page
+        - --query
+        - --skip-to
+        - --whitespace
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - pr
+        - list
+      summary: GET /repos/{owner}/{repo}/pulls
+      flags:
+        - --dry-run
+        - --limit
+        - --milestone
+        - --output
+        - --page
+        - --poster
+        - --query
+        - --sort
+        - --state
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - pr
+        - reopen
+      summary: PATCH /repos/{owner}/{repo}/pulls/{index}
+      flags:
+        - --dry-run
+        - --output
+        - --query
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - pr
+        - update
+      summary: POST /repos/{owner}/{repo}/pulls/{index}/update
+      flags:
+        - --dry-run
+        - --output
+        - --query
+        - --style
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - pr
+        - view
+      summary: GET /repos/{owner}/{repo}/pulls/{index}
+      flags:
+        - --dry-run
+        - --output
+        - --query
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - release
+        - create
+      summary: POST /repos/{owner}/{repo}/releases
+      flags:
+        - --body
+        - --body-file
+        - --draft
+        - --dry-run
+        - --hide_archive_links
+        - --name
+        - --output
+        - --prerelease
+        - --query
+        - --tag_name
+        - --target_commitish
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - release
+        - delete
+      summary: DELETE /repos/{owner}/{repo}/releases/{id} (destructive)
+      flags:
+        - --dry-run
+        - --output
+        - --query
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - release
+        - edit
+      summary: PATCH /repos/{owner}/{repo}/releases/{id}
+      flags:
+        - --body
+        - --body-file
+        - --draft
+        - --dry-run
+        - --hide_archive_links
+        - --name
+        - --output
+        - --prerelease
+        - --query
+        - --tag_name
+        - --target_commitish
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - release
+        - get
+      summary: GET /repos/{owner}/{repo}/releases/{id}
+      flags:
+        - --dry-run
+        - --output
+        - --query
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - release
+        - list
+      summary: GET /repos/{owner}/{repo}/releases
+      flags:
+        - --draft
+        - --dry-run
+        - --limit
+        - --output
+        - --page
+        - --pre-release
+        - --q
+        - --query
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - release
+        - upload-asset
+      summary: POST /repos/{owner}/{repo}/releases/{id}/assets
+      flags:
+        - --attachment
+        - --dry-run
+        - --external_url
+        - --name
+        - --output
+        - --query
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - repo
+        - archive
+      summary: denied by policy
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - repo
+        - create
+      summary: POST /user/repos
+      flags:
+        - --auto_init
+        - --body-file
+        - --default_branch
+        - --description
+        - --dry-run
+        - --gitignores
+        - --issue_labels
+        - --license
+        - --name
+        - --object_format_name
+        - --output
+        - --private
+        - --query
+        - --readme
+        - --template
+        - --trust_model
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - repo
+        - delete
+      summary: DELETE /repos/{owner}/{repo} (destructive)
+      flags:
+        - --dry-run
+        - --output
+        - --query
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - repo
+        - edit
+      summary: PATCH /repos/{owner}/{repo}
+      flags:
+        - --allow_fast_forward_only_merge
+        - --allow_manual_merge
+        - --allow_merge_commits
+        - --allow_rebase
+        - --allow_rebase_explicit
+        - --allow_rebase_update
+        - --allow_squash_merge
+        - --archived
+        - --autodetect_manual_merge
+        - --body-file
+        - --default_allow_maintainer_edit
+        - --default_branch
+        - --default_delete_branch_after_merge
+        - --default_merge_style
+        - --default_update_style
+        - --description
+        - --dry-run
+        - --enable_prune
+        - --globally_editable_wiki
+        - --has_actions
+        - --has_issues
+        - --has_packages
+        - --has_projects
+        - --has_pull_requests
+        - --has_releases
+        - --has_wiki
+        - --ignore_whitespace_conflicts
+        - --mirror_interval
+        - --name
+        - --output
+        - --private
+        - --query
+        - --template
+        - --website
+        - --wiki_branch
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - repo
+        - fork
+      summary: denied by policy
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - repo
+        - get
+      summary: GET /repos/{owner}/{repo}
+      flags:
+        - --dry-run
+        - --output
+        - --query
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - repo
+        - search
+      summary: GET /repos/search
+      flags:
+        - --archived
+        - --dry-run
+        - --exclusive
+        - --includeDesc
+        - --is_private
+        - --limit
+        - --mode
+        - --order
+        - --output
+        - --page
+        - --priority_owner_id
+        - --private
+        - --q
+        - --query
+        - --sort
+        - --starredBy
+        - --team_id
+        - --template
+        - --topic
+        - --uid
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - repo
+        - unarchive
+      summary: denied by policy
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - tag
+        - list
+      summary: GET /repos/{owner}/{repo}/tags
+      flags:
+        - --dry-run
+        - --limit
+        - --output
+        - --page
+        - --query
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - tasks
+        - list
+      summary: list Forgejo Actions tasks with a safe page-1 default
+      flags:
+        - --dry-run
+        - --limit
+        - --output
+        - --query
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - topic
+        - search
+      summary: GET /topics/search
+      flags:
+        - --dry-run
+        - --limit
+        - --output
+        - --page
+        - --q
+        - --query
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - user
+        - search
+      summary: GET /users/search
+      flags:
+        - --dry-run
+        - --limit
+        - --output
+        - --page
+        - --q
+        - --query
+        - --sort
+        - --uid
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - user-repo
+        - list
+      summary: GET /users/{username}/repos
+      flags:
+        - --dry-run
+        - --limit
+        - --output
+        - --page
+        - --query
+    - path:
+        - aosguard
+        - ops
+        - forgejo
+        - workflow
+        - dispatch
+      summary: POST /repos/{owner}/{repo}/actions/workflows/{workflowfilename}/dispatches
+      flags:
+        - --body-file
+        - --dry-run
+        - --output
+        - --query
+        - --ref
+        - --return_run_info
+    - path:
+        - aosguard
+        - ops
+        - kubectl
+        - api-resources
+      summary: 'exec: kubectl api-resources - list served resource types'
+    - path:
+        - aosguard
+        - ops
+        - kubectl
+        - api-versions
+      summary: 'exec: kubectl api-versions - list served API group/versions'
+    - path:
+        - aosguard
+        - ops
+        - kubectl
+        - apply
+      summary: 'exec: kubectl apply - apply manifests; -f <file> or -k <kustomize dir>'
+    - path:
+        - aosguard
+        - ops
+        - kubectl
+        - cluster-info
+      summary: 'exec: kubectl cluster-info - control-plane + addon endpoints'
+    - path:
+        - aosguard
+        - ops
+        - kubectl
+        - config
+        - current-context
+      summary: 'exec: kubectl config current-context - name of the active kubeconfig context'
+    - path:
+        - aosguard
+        - ops
+        - kubectl
+        - config
+        - get-contexts
+      summary: 'exec: kubectl config get-contexts - list kubeconfig contexts (no secrets)'
+    - path:
+        - aosguard
+        - ops
+        - kubectl
+        - describe
+      summary: 'exec: kubectl describe - detailed resource state; pass type + name'
+    - path:
+        - aosguard
+        - ops
+        - kubectl
+        - diff
+      summary: 'exec: kubectl diff - preview an apply: server-side dry-run diff of a manifest vs live state; -f <file> or -k <kustomize dir>'
+    - path:
+        - aosguard
+        - ops
+        - kubectl
+        - events
+      summary: 'exec: kubectl events - cluster events; --for to scope to a resource'
+    - path:
+        - aosguard
+        - ops
+        - kubectl
+        - explain
+      summary: 'exec: kubectl explain - schema docs for a resource type'
+    - path:
+        - aosguard
+        - ops
+        - kubectl
+        - get
+      summary: 'exec: kubectl get - list/show resources; pass type + name as args'
+    - path:
+        - aosguard
+        - ops
+        - kubectl
+        - logs
+      summary: 'exec: kubectl logs - pod/container logs; -f to follow, --previous for prior'
+    - path:
+        - aosguard
+        - ops
+        - kubectl
+        - rollout
+        - history
+      summary: 'exec: kubectl rollout history - revision history for a workload'
+    - path:
+        - aosguard
+        - ops
+        - kubectl
+        - rollout
+        - restart
+      summary: 'exec: kubectl rollout restart - trigger a rolling restart'
+    - path:
+        - aosguard
+        - ops
+        - kubectl
+        - rollout
+        - status
+      summary: 'exec: kubectl rollout status - watch a rollout to completion'
+    - path:
+        - aosguard
+        - ops
+        - kubectl
+        - rollout
+        - undo
+      summary: 'exec: kubectl rollout undo - roll a workload back to a prior revision'
+    - path:
+        - aosguard
+        - ops
+        - kubectl
+        - scale
+      summary: 'exec: kubectl scale - set replica count on a workload'
+    - path:
+        - aosguard
+        - ops
+        - kubectl
+        - top
+      summary: 'exec: kubectl top - resource usage; pass `pod` or `node`'
+    - path:
+        - aosguard
+        - ops
+        - kubectl
+        - version
+      summary: 'exec: kubectl version - client + server version'
+    - path:
+        - aosguard
+        - ops
+        - tailscale
+        - dns
+        - status
+      summary: 'exec: /usr/local/bin/tailscale dns status - MagicDNS resolver state'
+    - path:
+        - aosguard
+        - ops
+        - tailscale
+        - ip
+      summary: 'exec: /usr/local/bin/tailscale ip - this node''s tailnet IPs (-4 / -6 to narrow)'
+    - path:
+        - aosguard
+        - ops
+        - tailscale
+        - netcheck
+      summary: 'exec: /usr/local/bin/tailscale netcheck - network conditions report: DERP latency, NAT, UDP reach'
+    - path:
+        - aosguard
+        - ops
+        - tailscale
+        - ping
+      summary: 'exec: /usr/local/bin/tailscale ping - tailnet-layer reachability probe to a peer; pass host or IP'
+    - path:
+        - aosguard
+        - ops
+        - tailscale
+        - status
+      summary: 'exec: /usr/local/bin/tailscale status - tailnet state: peers, this node, and whether tailscaled is up'
+    - path:
+        - aosguard
+        - ops
+        - tailscale
+        - version
+      summary: 'exec: /usr/local/bin/tailscale version - client + daemon version'
+    - path:
+        - aosguard
+        - ops
+        - tailscale
+        - whois
+      summary: 'exec: /usr/local/bin/tailscale whois - identify the tailnet node behind an IP'

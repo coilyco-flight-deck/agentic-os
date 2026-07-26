@@ -65,6 +65,17 @@ def test_full_dockerfile_contains_every_language_and_operator_surface() -> None:
     assert "sha256sum -c -" in text
     assert "COPY --from=aosguard-spec" in text
     assert "COPY --from=aosguard-python" in text
+    assert "--skills-out /opt/agentic-os/aosguard-skill" in text
+    assert (
+        "COPY --from=dev-base-tool-builder /opt/agentic-os/aosguard-skill "
+        "/opt/agentic-os/aosguard-skill"
+    ) in text
+    assert text.count(
+        "test -s /opt/agentic-os/aosguard-skill/aosguard/SKILL.md"
+    ) == 2
+    assert text.count(
+        "test -s /opt/agentic-os/aosguard-skill/aosguard/references/commands.yaml"
+    ) == 2
 
 
 def test_substrate_seed_parser_accepts_windows_line_endings() -> None:
