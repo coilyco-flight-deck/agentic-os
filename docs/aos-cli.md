@@ -68,20 +68,10 @@ Composition verifies the immutable role bundle and projects it with
 
 ## Validation and release
 
-Run `ward exec aos-test` for the Go suite and
-`ward exec aos-composition-dry-run -- owner/repo#267 --print` for the full
-no-container plan. After building `agentic-os:aos-local`, these commands
-exercise both lifecycle shapes:
-
-```bash
-ward exec aos-composition-smoke -- owner/repo#267
-ward exec aos-standalone-composition-smoke
-```
-
-The first command materializes the context bundle but leaves Ward in print
-mode. The second command runs the selected agent's version command in one
-standalone container. The [CLI release pipeline](aos-cli-release.md) publishes
-checksummed binaries plus Homebrew and Scoop metadata from every main push.
+`ward exec aos-test` runs Go. The `aos-composition-dry-run`,
+`aos-composition-smoke`, and `aos-standalone-composition-smoke` Ward verbs
+cover both lifecycle shapes. The [CLI release pipeline](aos-cli-release.md)
+publishes checksummed binaries plus Homebrew and Scoop metadata.
 
 ## See also
 
