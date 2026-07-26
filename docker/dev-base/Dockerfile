@@ -34,8 +34,6 @@ ARG SPECGEN_VERSION
 ARG TARGETARCH
 ARG DEBIAN_FRONTEND=noninteractive
 
-COPY --from=aos-ward-specs . /tmp/aos-ward-specs
-
 ENV PATH=/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
@@ -69,6 +67,8 @@ RUN set -eux; \
     tar -xzf /tmp/go.tar.gz -C /usr/local; \
     rm /tmp/go.tar.gz; \
     go version
+
+COPY --from=aos-ward-specs . /tmp/aos-ward-specs
 
 RUN set -eux; \
     export GOPATH=/tmp/gobuild GOCACHE=/tmp/gocache \
