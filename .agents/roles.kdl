@@ -208,9 +208,6 @@ roles {
 
         composed-skill coding-discord-bot-architect
         composed-skill tooling-discord-community-host
-        composed-skill tooling-customer-success-signal-routing
-        composed-skill writing-social-cultural-reading
-        composed-skill writing-social-trust-boundaries
     }
     role sales {
         composed-skill tooling-sales-discovery
