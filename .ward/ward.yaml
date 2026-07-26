@@ -73,6 +73,9 @@ commands:
   aos-composition-dry-run:
     run: ./aos/aos --agent codex --role engineer --warded --composed --guarded --dry-run --
     description: "Render the unified Ward, agent-compose, and aosguard launch without starting Docker. Pass the Ward issue or freeform arguments after `--`."
+  aos-composition-smoke:
+    run: sh scripts/aos-composition-smoke.sh
+    description: "Materialize the full local context bundle and render Ward's launch without starting an agent container. Pass the Ward issue or freeform arguments after `--`."
   aosguard-lock:
     run: sh scripts/aosguard-lock.sh
     description: "Refresh aosguard's vendored API snapshot and frozen cli-guard dependency graph with the packaged specgen driver."
