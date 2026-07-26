@@ -18,7 +18,7 @@ Public hosts and work laptops import this base only. Personal machines may compo
 
 Route every dev command through ward, which reads [`.ward/ward.yaml`](.ward/ward.yaml). Agents invoke `ward <verb>`, not bare `make` / `uv` / `python` / `npm` / `cargo` / `dotnet`. Add new verbs to that file before invoking them.
 
-**Operator verbs** (forgejo, aws/ssm, tailscale, kubectl, ...) live in **aguard**, surfaced as `aguard ops <area> ...` from the full dev-base image. Enumerate them with `aguard ops <area> describe` or `--help` - never guess an operator-verb name from prior. Ward retains role-scoped agent policy and repository development commands. The old `coily ops` and human-facing `ward ops` spellings are retired.
+**Operator verbs** (forgejo, aws/ssm, tailscale, kubectl, ...) live in **aosguard**, surfaced as `aosguard ops <area> ...` from the full dev-base image. Enumerate them with `aosguard ops <area> describe` or `--help` - never guess an operator-verb name from prior. Ward retains role-scoped agent policy and repository development commands. The old `coily ops` and human-facing `ward ops` spellings are retired.
 
 ## Validation
 
@@ -67,7 +67,7 @@ Conventional-commits 1.0.0 and Forgejo issue references are encouraged house sty
 * `pull-request-and-merge` - open a PR for the director lane. Merge only after the issue thread shows `workflow: pull-request-and-merge`, `WARD-OUTCOME: done`, and a passed review summary.
 * `remote-branch-only` - push a branch and stop. No PR or merge authority.
 
-A read-only clone cannot push itself, so push or merge workflows need a writable surface. Track landed work by issue state and commits on `main`. `aguard ops forgejo pr list` and `pr view` are allowed. Merge stays gated.
+A read-only clone cannot push itself, so push or merge workflows need a writable surface. Track landed work by issue state and commits on `main`. `aosguard ops forgejo pr list` and `pr view` are allowed. Merge stays gated.
 
 ## Agent rules
 

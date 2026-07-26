@@ -70,18 +70,21 @@ commands:
   aos-dry-run:
     run: ./aos/aos --role engineer --dry-run acompose -- codex --version
     description: "Render the default standalone composed-container launch without starting Docker."
-  aguard-lock:
-    run: sh scripts/aguard-lock.sh
-    description: "Refresh aguard's vendored API snapshot and frozen cli-guard dependency graph with the packaged specgen driver."
-  aguard-build:
-    run: specgen --project-root .specgen build --out dist/aguard
-    description: "Materialize the standalone aguard operator CLI from the independent .specgen snapshot."
-  aguard-release-fmt:
-    run: gofmt -w aguard-release
-    description: "Format the native Aguard release wrapper."
-  aguard-run:
+  aos-composition-dry-run:
+    run: ./aos/aos --agent codex --role engineer --warded --composed --guarded --dry-run --
+    description: "Render the unified Ward, agent-compose, and aosguard launch without starting Docker. Pass the Ward issue or freeform arguments after `--`."
+  aosguard-lock:
+    run: sh scripts/aosguard-lock.sh
+    description: "Refresh aosguard's vendored API snapshot and frozen cli-guard dependency graph with the packaged specgen driver."
+  aosguard-build:
+    run: specgen --project-root .specgen --skills-out .agents/generated build --out dist/aosguard
+    description: "Materialize the standalone aosguard operator CLI and native generated skill from the independent .specgen snapshot."
+  aosguard-release-fmt:
+    run: gofmt -w aosguard-release
+    description: "Format the native AOSguard release wrapper."
+  aosguard-run:
     run: specgen --project-root .specgen run --
-    description: "Materialize and run aguard from the independent .specgen snapshot, passing arguments after `--`."
+    description: "Materialize and run aosguard from the independent .specgen snapshot, passing arguments after `--`."
   aos-image-build:
     run: uv run python scripts/dev-base-build.py --registry agentic-os --tag aos-local build
     description: "Build the full local image as agentic-os:aos-local for standalone `aos` smoke testing."
@@ -174,7 +177,7 @@ commands:
     description: "Converge public-safe Claude Code preferences without clobbering local settings."
   gen-repo-pointer-skill:
     run: uv run python -m agentic_os.generators.generate_repo_pointer_skill
-    description: "Generate a repo-<name> pointer skill from repository metadata. Pipe `aguard ops forgejo repo view --repo coilysiren/<name> --json` into it with `<name> --from-json -`, or pass --description/--topic. See docs/features-agents-pointer.md."
+    description: "Generate a repo-<name> pointer skill from repository metadata. Pipe `aosguard ops forgejo repo view --repo coilysiren/<name> --json` into it with `<name> --from-json -`, or pass --description/--topic. See docs/features-agents-pointer.md."
   gen-seed-skills:
     run: uv run python -m agentic_os.generators.generate_seed_skills
     description: "Regenerate agentic_os/seed_skills_data.py from seed: frontmatter on the composed coding-<lang> sources. Run after editing a seed block; check-seed-skills-drift fails on staleness. See docs/skill-discipline-authoring-shipping.md."

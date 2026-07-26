@@ -7,8 +7,8 @@ ARG GO_VERSION=1.26.5
 ARG DOTNET_VERSION=10.0.301
 ARG TRUNK_VERSION=0.21.14
 ARG AGENT_COMPOSE_VERSION=0.57.0
-ARG WARD_VERSION=0.775.0-tmp
-ARG SPECGEN_VERSION=0.119.0
+ARG WARD_VERSION=0.816.0
+ARG SPECGEN_VERSION=0.121.0
 ARG NODE_VERSION=22.23.1
 ARG CLAUDE_VERSION=2.1.206
 ARG MCPORTER_VERSION=0.12.3
@@ -120,14 +120,17 @@ RUN set -eux; \
     rm "/tmp/${specgen_asset}" /tmp/specgen-SHA256SUMS; \
     specgen --version
 
-COPY --from=aguard-spec . /tmp/aguard-spec
+COPY --from=aosguard-spec . /tmp/aosguard-spec
 RUN set -eux; \
-    specgen --project-root /tmp/aguard-spec build \
+    specgen --project-root /tmp/aosguard-spec \
+      --skills-out /opt/agentic-os/aosguard-skill build \
       --set-version "dev-base" \
-      --out /usr/local/bin/aguard; \
-    chmod 0755 /usr/local/bin/aguard; \
-    rm -rf /tmp/aguard-spec; \
-    aguard --version
+      --out /usr/local/bin/aosguard; \
+    chmod 0755 /usr/local/bin/aosguard; \
+    test -s /opt/agentic-os/aosguard-skill/aosguard/SKILL.md; \
+    test -s /opt/agentic-os/aosguard-skill/aosguard/references/commands.yaml; \
+    rm -rf /tmp/aosguard-spec; \
+    aosguard --version
 
 FROM ubuntu:24.04 AS dev-base-full
 ARG UV_VERSION
@@ -290,8 +293,9 @@ COPY --chmod=0644 claude-managed-settings.json /etc/claude-code/managed-settings
 COPY --chmod=0644 substrate-image-repos.txt /opt/agentic-os/substrate-repos.txt
 COPY --from=dev-base-tool-builder /usr/local/bin/ward /usr/local/bin/ward
 COPY --from=dev-base-tool-builder /usr/local/bin/aos /usr/local/bin/aos
-COPY --from=dev-base-tool-builder /usr/local/bin/aguard /usr/local/bin/aguard
-COPY --from=aguard-python . /opt/agentic-os/python/agentic_os/
+COPY --from=dev-base-tool-builder /usr/local/bin/aosguard /usr/local/bin/aosguard
+COPY --from=dev-base-tool-builder /opt/agentic-os/aosguard-skill /opt/agentic-os/aosguard-skill
+COPY --from=aosguard-python . /opt/agentic-os/python/agentic_os/
 
 ARG WARD_CONFIG_REF_COMMIT
 ENV WARD_CONFIG_REF=forgejo.coilysiren.me/coilyco-flight-deck/agentic-os@${WARD_CONFIG_REF_COMMIT}//.ward
@@ -305,7 +309,9 @@ RUN set -eux; \
     rustup target list --installed | grep -q wasm32-unknown-unknown; \
     python --version; \
     pipenv --version; \
-    aguard --version; \
+    aosguard --version; \
+    test -s /opt/agentic-os/aosguard-skill/aosguard/SKILL.md; \
+    test -s /opt/agentic-os/aosguard-skill/aosguard/references/commands.yaml; \
     roster_dir=$(mktemp -d); \
     agent-compose version; \
     agent-compose roster --out "${roster_dir}"; \

@@ -28,10 +28,10 @@ def artifact_name(target: str) -> str:
     return f"aos-{goos}-{goarch}{suffix}"
 
 
-def aguard_artifact_name(target: str) -> str:
+def aosguard_artifact_name(target: str) -> str:
     goos, goarch = target.split("/")
     suffix = ".exe" if goos == "windows" else ""
-    return f"aguard-{goos}-{goarch}{suffix}"
+    return f"aosguard-{goos}-{goarch}{suffix}"
 
 
 def test_release_target_manifest_is_safe_and_unique() -> None:
@@ -48,8 +48,8 @@ def test_packaging_covers_every_release_binary(tmp_path: Path) -> None:
     for target in release_targets():
         name = artifact_name(target)
         (tmp_path / name).write_bytes(f"fixture:{target}".encode())
-        aguard_name = aguard_artifact_name(target)
-        (tmp_path / aguard_name).write_bytes(f"aguard:{target}".encode())
+        aosguard_name = aosguard_artifact_name(target)
+        (tmp_path / aosguard_name).write_bytes(f"aosguard:{target}".encode())
 
     version = "aos-v1.2.3"
     env = os.environ | {
@@ -69,15 +69,15 @@ def test_packaging_covers_every_release_binary(tmp_path: Path) -> None:
     for target in release_targets():
         digest = hashlib.sha256((tmp_path / artifact_name(target)).read_bytes()).hexdigest()
         assert digest in rendered
-        aguard_digest = hashlib.sha256(
-            (tmp_path / aguard_artifact_name(target)).read_bytes()
+        aosguard_digest = hashlib.sha256(
+            (tmp_path / aosguard_artifact_name(target)).read_bytes()
         ).hexdigest()
-        assert aguard_digest in rendered
+        assert aosguard_digest in rendered
 
     assert manifest["version"] == version.removeprefix("aos-v")
     assert f"/releases/download/{version}/" in rendered
-    assert "aguard-windows-amd64.exe" in manifest["architecture"]["64bit"]["bin"][1][0]
-    assert "resource(\"aguard\")" in formula
+    assert "aosguard-windows-amd64.exe" in manifest["architecture"]["64bit"]["bin"][1][0]
+    assert "resource(\"aosguard\")" in formula
 
 
 def test_release_workflow_derives_assets_from_dist() -> None:
@@ -93,9 +93,9 @@ def test_release_workflow_derives_assets_from_dist() -> None:
 
     assert "for asset in dist/*" in workflow_script
     assert "release-targets.txt" in builder
-    assert "build_aguard" in builder
+    assert "build_aosguard" in builder
     assert "specverb.lock" in builder
-    assert "aguard-*" in builder
+    assert "aosguard-*" in builder
     assert 'host_suffix=".exe"' in builder
     assert "shasum -a 256 -c -" in builder
     assert "go env GOOS | tr -d" in builder
@@ -104,5 +104,5 @@ def test_release_workflow_derives_assets_from_dist() -> None:
     assert "ward exec aos-release-build" in workflow_script
     assert "ward exec aos-release-package" in workflow_script
     release_check = (ROOT / "scripts" / "check-aos-release.sh").read_text(encoding="utf-8")
-    assert 'grep -Fx "aguard version $version"' in release_check
+    assert 'grep -Fx "aosguard version $version"' in release_check
     assert "ops actions --help" in release_check

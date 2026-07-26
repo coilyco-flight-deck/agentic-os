@@ -27,17 +27,31 @@ func main() {
 
 func newCommand() *cli.Command {
 	return &cli.Command{
-		Name:    "aos",
-		Usage:   "launch AOS runtime containers",
-		Version: version,
+		Name:      "aos",
+		Usage:     "compose independent agent runtime capabilities",
+		ArgsUsage: "[-- <launch arguments...>]",
+		Version:   version,
+		Action:    runIntegratedLaunch,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:  "role",
-				Usage: "agent-compose role selected for the container",
+				Usage: "shared role slug selected across enabled capabilities",
 			},
 			&cli.StringFlag{
 				Name:  "agent",
-				Usage: "agent adapter used by ergonomic launch commands",
+				Usage: "agent harness selected for the launch",
+			},
+			&cli.BoolFlag{
+				Name:  "warded",
+				Usage: "delegate the runtime lifecycle and authority boundary to Ward",
+			},
+			&cli.BoolFlag{
+				Name:  "composed",
+				Usage: "materialize the selected agent-compose role context",
+			},
+			&cli.BoolFlag{
+				Name:  "guarded",
+				Usage: "attach the AOS-specific aosguard binary and generated skill",
 			},
 			&cli.StringFlag{
 				Name:  "image",
@@ -123,6 +137,25 @@ func newCommand() *cli.Command {
 				},
 				Action: runContainerAcompose,
 			},
+			{
+				Name:   "_container-context-bundle",
+				Hidden: true,
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:     "output",
+						Required: true,
+					},
+					&cli.IntFlag{
+						Name:     "uid",
+						Required: true,
+					},
+					&cli.IntFlag{
+						Name:     "gid",
+						Required: true,
+					},
+				},
+				Action: runContainerContextBundle,
+			},
 		},
 	}
 }
@@ -186,6 +219,7 @@ func runComposedLaunch(
 		Role:          role,
 		Layout:        layout,
 		Delivery:      cmd.String("delivery"),
+		Composed:      true,
 		CWD:           cwd,
 		Command:       command,
 		UID:           uid,
@@ -228,6 +262,8 @@ func runContainerAcompose(ctx context.Context, cmd *cli.Command) error {
 		Role:        role,
 		Layout:      layout,
 		Delivery:    cmd.String("delivery"),
+		Composed:    cmd.Bool("composed"),
+		Guarded:     cmd.Bool("guarded"),
 		Workspace:   cmd.String("workspace"),
 		UID:         cmd.Int("uid"),
 		GID:         cmd.Int("gid"),

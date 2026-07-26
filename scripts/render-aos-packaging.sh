@@ -27,14 +27,14 @@ darwin_arm64=$(sha "$dist/aos-darwin-arm64")
 linux_amd64=$(sha "$dist/aos-linux-amd64")
 linux_arm64=$(sha "$dist/aos-linux-arm64")
 windows_amd64=$(sha "$dist/aos-windows-amd64.exe")
-aguard_darwin_arm64=$(sha "$dist/aguard-darwin-arm64")
-aguard_linux_amd64=$(sha "$dist/aguard-linux-amd64")
-aguard_linux_arm64=$(sha "$dist/aguard-linux-arm64")
-aguard_windows_amd64=$(sha "$dist/aguard-windows-amd64.exe")
+aosguard_darwin_arm64=$(sha "$dist/aosguard-darwin-arm64")
+aosguard_linux_amd64=$(sha "$dist/aosguard-linux-amd64")
+aosguard_linux_arm64=$(sha "$dist/aosguard-linux-arm64")
+aosguard_windows_amd64=$(sha "$dist/aosguard-windows-amd64.exe")
 
 cat > "$dist/aos.rb" <<EOF
 class Aos < Formula
-  desc "Standalone composed-agent container launcher for Agentic OS"
+  desc "Agent runtime composition root for Agentic OS"
   homepage "https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os"
   version "${bare}"
   license "MIT"
@@ -43,9 +43,9 @@ class Aos < Formula
     on_arm do
       url "${base}/aos-darwin-arm64"
       sha256 "${darwin_arm64}"
-      resource "aguard" do
-        url "${base}/aguard-darwin-arm64"
-        sha256 "${aguard_darwin_arm64}"
+      resource "aosguard" do
+        url "${base}/aosguard-darwin-arm64"
+        sha256 "${aosguard_darwin_arm64}"
       end
     end
   end
@@ -53,29 +53,29 @@ class Aos < Formula
     on_intel do
       url "${base}/aos-linux-amd64"
       sha256 "${linux_amd64}"
-      resource "aguard" do
-        url "${base}/aguard-linux-amd64"
-        sha256 "${aguard_linux_amd64}"
+      resource "aosguard" do
+        url "${base}/aosguard-linux-amd64"
+        sha256 "${aosguard_linux_amd64}"
       end
     end
     on_arm do
       url "${base}/aos-linux-arm64"
       sha256 "${linux_arm64}"
-      resource "aguard" do
-        url "${base}/aguard-linux-arm64"
-        sha256 "${aguard_linux_arm64}"
+      resource "aosguard" do
+        url "${base}/aosguard-linux-arm64"
+        sha256 "${aosguard_linux_arm64}"
       end
     end
   end
 
   def install
     bin.install Dir["aos-*"].first => "aos"
-    resource("aguard").stage { bin.install Dir["aguard-*"].first => "aguard" }
+    resource("aosguard").stage { bin.install Dir["aosguard-*"].first => "aosguard" }
   end
 
   test do
     assert_match version.to_s, shell_output("#{bin}/aos version")
-    assert_match version.to_s, shell_output("#{bin}/aguard --version")
+    assert_match version.to_s, shell_output("#{bin}/aosguard --version")
   end
 end
 EOF
@@ -83,7 +83,7 @@ EOF
 cat > "$dist/aos.json" <<EOF
 {
     "version": "${bare}",
-    "description": "Standalone composed-agent container launcher for Agentic OS",
+    "description": "Agent runtime composition root for Agentic OS",
     "homepage": "https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os",
     "license": "MIT",
     "architecture": {
@@ -92,12 +92,12 @@ cat > "$dist/aos.json" <<EOF
             "hash": "${windows_amd64}",
             "bin": [
                 ["aos-windows-amd64.exe", "aos"],
-                ["aguard-windows-amd64.exe", "aguard"]
+                ["aosguard-windows-amd64.exe", "aosguard"]
             ]
         }
     },
     "pre_install": [
-        "Invoke-WebRequest -Uri '${base}/aguard-windows-amd64.exe' -OutFile \"\$dir/aguard-windows-amd64.exe\"; if ((Get-FileHash \"\$dir/aguard-windows-amd64.exe\" -Algorithm SHA256).Hash -ne '${aguard_windows_amd64}') { throw 'aguard checksum mismatch' }"
+        "Invoke-WebRequest -Uri '${base}/aosguard-windows-amd64.exe' -OutFile \"\$dir/aosguard-windows-amd64.exe\"; if ((Get-FileHash \"\$dir/aosguard-windows-amd64.exe\" -Algorithm SHA256).Hash -ne '${aosguard_windows_amd64}') { throw 'aosguard checksum mismatch' }"
     ]
 }
 EOF

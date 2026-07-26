@@ -20,6 +20,8 @@ const (
 	defaultAgentHome         = "/home/aos"
 	noSubstrateProviderRoot  = "/tmp/aos-provider"
 	aosProviderRef           = "coilyco-flight-deck/agentic-os"
+	defaultAOSGuardBinary    = "/usr/local/bin/aosguard"
+	defaultAOSGuardSkill     = "/opt/agentic-os/aosguard-skill/aosguard"
 )
 
 type commandRunner interface {
@@ -43,6 +45,8 @@ type bootstrapOptions struct {
 	Role              string
 	Layout            string
 	Delivery          string
+	Composed          bool
+	Guarded           bool
 	Workspace         string
 	UID               int
 	GID               int
@@ -54,6 +58,8 @@ type bootstrapOptions struct {
 	SubstrateRoot     string
 	AgentHome         string
 	AgentComposeBin   string
+	AOSGuardBinary    string
+	AOSGuardSkill     string
 }
 
 type execSpec struct {
@@ -83,22 +89,32 @@ func prepareContainer(
 	if len(opts.Command) == 0 {
 		return execSpec{}, fmt.Errorf("container command must not be empty")
 	}
+	if !opts.Composed && !opts.Guarded {
+		return execSpec{}, fmt.Errorf("container launch needs composed context, guarded tools, or both")
+	}
 	if opts.UID < 0 || opts.GID < 0 {
 		return execSpec{}, fmt.Errorf("uid and gid must be non-negative")
-	}
-	repos, err := loadSubstrateRepos(opts.SubstrateManifest)
-	if err != nil {
-		return execSpec{}, err
-	}
-	provider, err := prepareSubstrate(ctx, opts, repos, runner)
-	if err != nil {
-		return execSpec{}, err
 	}
 	if err := os.MkdirAll(opts.AgentHome, 0o755); err != nil {
 		return execSpec{}, fmt.Errorf("create agent HOME: %w", err)
 	}
-	if err := composeHome(ctx, opts, provider, runner); err != nil {
-		return execSpec{}, err
+	if opts.Composed {
+		repos, err := loadSubstrateRepos(opts.SubstrateManifest)
+		if err != nil {
+			return execSpec{}, err
+		}
+		provider, err := prepareSubstrate(ctx, opts, repos, runner)
+		if err != nil {
+			return execSpec{}, err
+		}
+		if err := composeHome(ctx, opts, provider, runner); err != nil {
+			return execSpec{}, err
+		}
+	}
+	if opts.Guarded {
+		if err := stageAOSGuardContext(opts.Layout, opts.Role, opts.AgentHome, opts.AOSGuardSkill); err != nil {
+			return execSpec{}, err
+		}
 	}
 	if err := stageHarnessDefaults(opts.Layout, opts.AgentHome, opts.Workspace); err != nil {
 		return execSpec{}, err
@@ -109,7 +125,7 @@ func prepareContainer(
 	if err := chownTree(opts.AgentHome, opts.UID, opts.GID); err != nil {
 		return execSpec{}, fmt.Errorf("hand off agent HOME: %w", err)
 	}
-	if !opts.NoSubstrate {
+	if opts.Composed && !opts.NoSubstrate {
 		if err := makeTreeReadOnly(opts.SubstrateRoot); err != nil {
 			return execSpec{}, fmt.Errorf("make substrate read-only: %w", err)
 		}
@@ -145,7 +161,71 @@ func bootstrapDefaults(opts bootstrapOptions) bootstrapOptions {
 	if opts.AgentComposeBin == "" {
 		opts.AgentComposeBin = "agent-compose"
 	}
+	if opts.AOSGuardBinary == "" {
+		opts.AOSGuardBinary = defaultAOSGuardBinary
+	}
+	if opts.AOSGuardSkill == "" {
+		opts.AOSGuardSkill = defaultAOSGuardSkill
+	}
 	return opts
+}
+
+func selectedContextLayout(layout string) (instruction, skills string, err error) {
+	switch strings.TrimSpace(layout) {
+	case "claude":
+		return ".claude/CLAUDE.md", ".claude/skills", nil
+	case "codex":
+		return ".codex/AGENTS.md", ".agents/skills", nil
+	case "goose":
+		return ".config/goose/.goosehints", ".agents/skills", nil
+	case "opencode":
+		return ".config/opencode/AGENTS.md", ".agents/skills", nil
+	default:
+		return "", "", fmt.Errorf("AOS has no staged-home layout for agent %q", layout)
+	}
+}
+
+func stageAOSGuardContext(layout, role, home, source string) error {
+	instruction, skills, err := selectedContextLayout(layout)
+	if err != nil {
+		return err
+	}
+	instructionPath := filepath.Join(home, filepath.FromSlash(instruction))
+	if _, err := os.Stat(instructionPath); os.IsNotExist(err) {
+		if err := os.MkdirAll(filepath.Dir(instructionPath), 0o755); err != nil {
+			return fmt.Errorf("create guarded instruction directory: %w", err)
+		}
+		body := "# AOS guarded launch context\n\n" +
+			"AOS attached the `aosguard` operator tool and its generated skill. " +
+			"The selected role slug is `" + role + "`. " +
+			"The role slug selects context only and grants no authority.\n"
+		if err := os.WriteFile(instructionPath, []byte(body), 0o644); err != nil {
+			return fmt.Errorf("write guarded instruction: %w", err)
+		}
+	} else if err != nil {
+		return fmt.Errorf("inspect selected instruction file: %w", err)
+	}
+
+	info, err := os.Stat(source)
+	if err != nil {
+		return fmt.Errorf("inspect generated aosguard skill: %w", err)
+	}
+	if !info.IsDir() {
+		return fmt.Errorf("generated aosguard skill %s is not a directory", source)
+	}
+	target := filepath.Join(home, filepath.FromSlash(skills), "aosguard")
+	if _, err := os.Lstat(target); err == nil {
+		return fmt.Errorf("refusing to replace composed skill at %s", target)
+	} else if !os.IsNotExist(err) {
+		return fmt.Errorf("inspect aosguard skill target: %w", err)
+	}
+	if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+		return fmt.Errorf("create selected skill root: %w", err)
+	}
+	if err := os.CopyFS(target, os.DirFS(source)); err != nil {
+		return fmt.Errorf("stage generated aosguard skill: %w", err)
+	}
+	return nil
 }
 
 func loadSubstrateRepos(path string) ([]substrateRepo, error) {
@@ -450,10 +530,7 @@ func chownTree(root string, uid, gid int) error {
 		if walkErr != nil {
 			return walkErr
 		}
-		if entry.Type()&os.ModeSymlink != 0 {
-			return os.Lchown(path, uid, gid)
-		}
-		return os.Chown(path, uid, gid)
+		return chownPath(path, entry.Type()&os.ModeSymlink != 0, uid, gid)
 	})
 }
 

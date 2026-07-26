@@ -7,12 +7,12 @@ when `limit` is present. The native `action-run list` wrapper also pins `page=1`
 when a caller passes `--limit`, because Forgejo can ignore that limit on the
 runs endpoint unless the page is explicit.
 
-Use Aguard for live inspection:
+Use AOSguard for live inspection:
 
-- `aguard ops forgejo action-run list <owner> <repo> --limit N`
-- `aguard ops forgejo tasks list <owner> <repo> --limit N`
-- `aguard ops actions runs <owner> <repo> [--page 1] [--limit N]`
-- `aguard ops actions tasks <owner> <repo> [--page 1] [--limit N]`
+- `aosguard ops forgejo action-run list <owner> <repo> --limit N`
+- `aosguard ops forgejo tasks list <owner> <repo> --limit N`
+- `aosguard ops actions runs <owner> <repo> [--page 1] [--limit N]`
+- `aosguard ops actions tasks <owner> <repo> [--page 1] [--limit N]`
 
 Raw API examples should include `page=1` whenever they include `limit`:
 
@@ -22,4 +22,4 @@ Raw API examples should include `page=1` whenever they include `limit`:
 See also:
 
 - [Forgejo Actions log bridge](forgejo-actions-logs.md)
-- [Aguard](aguard.md)
+- [AOSguard](aosguard.md)

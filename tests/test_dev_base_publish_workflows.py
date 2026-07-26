@@ -100,7 +100,7 @@ def test_shared_docker_bootstrap_retries_downloads_without_partial_files() -> No
     )
 
 
-def test_publish_action_verifies_every_toolchain_and_aguard() -> None:
+def test_publish_action_verifies_every_toolchain_and_aosguard() -> None:
     action = PUBLISH_ACTION.read_text(encoding="utf-8")
     script = VERIFY_FULL.read_text(encoding="utf-8")
 
@@ -116,6 +116,6 @@ def test_publish_action_verifies_every_toolchain_and_aguard() -> None:
         "dotnet --list-sdks",
         "cargo --version",
         "python --version",
-        "aguard --version",
+        "aosguard --version",
     ):
         assert command in script

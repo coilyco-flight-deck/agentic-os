@@ -11,6 +11,13 @@ func hostIdentity() (int, int) {
 	return os.Getuid(), os.Getgid()
 }
 
+func chownPath(path string, symlink bool, uid, gid int) error {
+	if symlink {
+		return os.Lchown(path, uid, gid)
+	}
+	return os.Chown(path, uid, gid)
+}
+
 func execAs(uid, gid int, spec execSpec) error {
 	path, err := lookPath(spec.Command[0])
 	if err != nil {

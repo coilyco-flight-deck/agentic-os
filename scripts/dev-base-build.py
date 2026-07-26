@@ -262,9 +262,9 @@ def _build_plan(
                 "--build-context",
                 "aos-cli=aos",
                 "--build-context",
-                "aguard-spec=.specgen",
+                "aosguard-spec=.specgen",
                 "--build-context",
-                "aguard-python=agentic_os",
+                "aosguard-python=agentic_os",
             ]
         )
         if push:

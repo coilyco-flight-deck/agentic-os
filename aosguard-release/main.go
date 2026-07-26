@@ -1,4 +1,4 @@
-// Package main launches the generated Aguard binary with its bundled bridge.
+// Package main launches the generated AOSguard binary with its bundled bridge.
 package main
 
 import (
@@ -10,7 +10,7 @@ import (
 	"runtime"
 )
 
-//go:embed payload/aguard payload/agentic_os/*
+//go:embed payload/aosguard payload/agentic_os/*
 var payload embed.FS
 
 func writePayload(root string) error {
@@ -23,7 +23,7 @@ func writePayload(root string) error {
 			return err
 		}
 		destination := filepath.Join(root, relative)
-		if relative == "aguard" && runtime.GOOS == "windows" {
+		if relative == "aosguard" && runtime.GOOS == "windows" {
 			destination += ".exe"
 		}
 		if entry.IsDir() {
@@ -34,7 +34,7 @@ func writePayload(root string) error {
 			return err
 		}
 		mode := fs.FileMode(0o644)
-		if relative == "aguard" {
+		if relative == "aosguard" {
 			mode = 0o755
 		}
 		return os.WriteFile(destination, contents, mode)
@@ -42,7 +42,7 @@ func writePayload(root string) error {
 }
 
 func main() {
-	temporary, err := os.MkdirTemp("", "aguard-")
+	temporary, err := os.MkdirTemp("", "aosguard-")
 	if err != nil {
 		panic(err)
 	}
@@ -52,7 +52,7 @@ func main() {
 		panic(err)
 	}
 
-	binary := filepath.Join(temporary, "aguard")
+	binary := filepath.Join(temporary, "aosguard")
 	if runtime.GOOS == "windows" {
 		binary += ".exe"
 	}

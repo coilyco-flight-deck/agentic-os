@@ -1,5 +1,5 @@
 #!/bin/sh
-# Cross-compile version-stamped aos and aguard binaries from the target manifest.
+# Cross-compile version-stamped aos and aosguard binaries from the target manifest.
 set -eu
 
 repo_root=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
@@ -62,14 +62,14 @@ download_specgen() {
     chmod 0755 "$specgen"
 }
 
-build_aguard() {
+build_aosguard() {
     target=$1
     goos=${target%%/*}
     goarch=${target#*/}
-    source="$release_build/aguard-source-${goos}-${goarch}"
-    raw="$release_build/aguard"
-    wrapper="$release_build/aguard-release"
-    out="$dist/aguard-${goos}-${goarch}"
+    source="$release_build/aosguard-source-${goos}-${goarch}"
+    raw="$release_build/aosguard"
+    wrapper="$release_build/aosguard-release"
+    out="$dist/aosguard-${goos}-${goarch}"
     if [ "$goos" = "windows" ]; then
         raw="${raw}.exe"
         out="${out}.exe"
@@ -88,19 +88,19 @@ PY
     "$specgen" --project-root "$source" gen --out "$source/main.go"
     # Specgen materialization decodes gzip locks before embedding. This direct
     # cross-build stages decoded input only after `gen` reads the encoded lock.
-    gzip -dc "$source/aguard/forgejo.swagger.lock.json.gz" \
-        > "$source/aguard/forgejo.swagger.lock.json"
-    mv "$source/aguard/forgejo.swagger.lock.json" \
-        "$source/aguard/forgejo.swagger.lock.json.gz"
+    gzip -dc "$source/aosguard/forgejo.swagger.lock.json.gz" \
+        > "$source/aosguard/forgejo.swagger.lock.json"
+    mv "$source/aosguard/forgejo.swagger.lock.json" \
+        "$source/aosguard/forgejo.swagger.lock.json.gz"
     (
         cd "$source"
         GOPROXY=direct GOSUMDB=off GOPRIVATE=forgejo.coilysiren.me \
             GOOS="$goos" GOARCH="$goarch" CGO_ENABLED=0 \
             go build -trimpath -ldflags "-s -w -X main.Version=${version}" -o "$raw" .
     )
-    cp -R "$repo_root/aguard-release" "$wrapper"
+    cp -R "$repo_root/aosguard-release" "$wrapper"
     mkdir -p "$wrapper/payload/agentic_os"
-    cp "$raw" "$wrapper/payload/aguard"
+    cp "$raw" "$wrapper/payload/aosguard"
     cp "$repo_root/agentic_os/__init__.py" \
         "$repo_root/agentic_os/forgejo_actions_list.py" \
         "$repo_root/agentic_os/forgejo_actions_logs.py" \
@@ -153,13 +153,13 @@ while IFS= read -r target || [ -n "$target" ]; do
             go build -trimpath -ldflags "-s -w -X main.version=${version}" \
             -o "$out" .
     )
-    build_aguard "$target"
+    build_aosguard "$target"
     echo "$out"
 done < "$targets"
 
 (
     cd "$dist"
-    for asset in aos-* aguard-*; do
+    for asset in aos-* aosguard-*; do
         checksum "$asset"
     done > SHA256SUMS
 )

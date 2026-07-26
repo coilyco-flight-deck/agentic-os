@@ -6,8 +6,8 @@
 // CRUD moves to org-labels, a cross-repo issue search and a move-issue action
 // land, and every path-{owner} leaf is scoped to coily* owners. Repo-level label
 // create/edit are additionally policy-disabled per ward#107 (dup P0-P4 prevention).
-// Auto-resolution per cli-guard#147. See ../../docs/aguard.md.
-wrap aguard ops forgejo {
+// Auto-resolution per cli-guard#147. See ../../docs/aosguard.md.
+wrap aosguard ops forgejo {
     spec forgejo.swagger.v1.json
     base-url "forgejo.coilysiren.me/api/v1"
     // Auth as the coilyco-ops bot, not a personal PAT (ward#151), so automated
@@ -531,6 +531,6 @@ wrap aguard ops forgejo {
 
     // Back-link footer: doc-link regenerates a `## See also` section
     // into this guardfile's reference doc, so it survives every rebuild wipe-proof.
-    doc-link "../../docs/aguard.md" aguard.md "the standalone CLI source and authority boundary"
+    doc-link "../../docs/aosguard.md" aosguard.md "the standalone CLI source and authority boundary"
     doc-link "../../AGENTS.md" AGENTS.md "the workflow rules that keep read access and merge authority separate"
 }

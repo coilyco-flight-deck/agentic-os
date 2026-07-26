@@ -1,7 +1,7 @@
-// Aguard's repository-local Forgejo Actions bridges. The upstream API contract
+// AOSguard's repository-local Forgejo Actions bridges. The upstream API contract
 // omits the live log and rerun controls, so these narrow Python modules share
 // one command group and the coilyco-ops bot token.
-wrap aguard ops actions {
+wrap aosguard ops actions {
     exec python3 {
         env FORGEJO_TOKEN {
             value ssm "/forgejo/coilyco-ops/api-token"

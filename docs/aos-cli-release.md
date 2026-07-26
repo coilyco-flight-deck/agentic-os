@@ -14,7 +14,7 @@ Every push to canonical `main` queues
 
 1. runs Python, Go, and pre-commit validation
 2. bumps the CLI minor version without reading commit-message signals
-3. cross-compiles matching `aos` and `aguard` binaries for every target in
+3. cross-compiles matching `aos` and `aosguard` binaries for every target in
    `aos/release-targets.txt`
 4. stamps the tag into `aos version`
 5. renders checksums, Homebrew, and Scoop metadata
@@ -22,7 +22,7 @@ Every push to canonical `main` queues
 7. replaces every release asset from the clean `dist/` directory
 8. updates the tap and bucket when their write tokens are present
 
-Release assets pair `aos-*` with `aguard-*` on Darwin arm64, Linux amd64 and
+Release assets pair `aos-*` with `aosguard-*` on Darwin arm64, Linux amd64 and
 arm64, and Windows amd64. `SHA256SUMS`, `aos.rb`, and `aos.json` cover the
 whole paired set.
 
@@ -42,7 +42,7 @@ scoop bucket add coilyco https://forgejo.coilysiren.me/coilyco-flight-deck/scoop
 scoop install coilyco/aos
 ```
 
-Both package managers install `aos` and `aguard`. The Aguard release binary
+Both package managers install `aos` and `aosguard`. The `aosguard` release binary
 contains its generated operator CLI and the Forgejo Actions bridge, so it works
 from an empty directory without a checkout, Ward, ward-kdl, or specgen.
 

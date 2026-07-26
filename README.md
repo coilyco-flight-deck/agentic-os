@@ -15,7 +15,7 @@ while the transitional Warp configuration remains available.
 - `zellij/` - portable session defaults, familiar direct shortcuts, and the vertical-tabs layout.
 - `agent-terminal/` - static agent-compose identity branding for one Alacritty director window.
 - `warp/` - transitional Warp config (`settings.toml`, `tab_configs/`) plus the `ward exec warp` Go module.
-- `aos/` - the standalone Go container launcher for composed agents and the shared runtime substrate.
+- `aos/` - the Go composition root for standalone and Ward-governed agent launches.
 - `aos-say/` - the `ward exec aos-say` Go module for the speech helper client and relay.
 - `karabiner/` - Karabiner-Elements complex modification assets (`brew install --cask karabiner-elements`), symlinked into the local Karabiner config tree.
 - `scripts/` - portable utilities (gpg-ssm wrapper, agent-name + session-pulse hooks, aws-config lint).
@@ -50,9 +50,19 @@ Agent self-name + session-pulse hooks, per-host steps, and gpg wiring: [docs/ins
 
 ## aos CLI
 
-The standalone launcher always carries the current directory into the AOS
-dev-base image, hydrates its baked read-only substrate, composes the requested
-agent role, and then runs the selected harness:
+AOS composes independent Ward, agent-compose, and aosguard capabilities behind
+one launch surface:
+
+```bash
+aos --agent codex --role engineer --warded --composed --guarded -- owner/repo#267
+```
+
+AOS translates the shared role and selected capabilities. Ward remains the
+Docker Compose and authority owner, agent-compose remains the context producer,
+and cli-guard/specgen remains the guarded-tool generator. The role name selects
+context in each layer and never unions authority.
+
+The original standalone composed-container command remains available:
 
 ```bash
 aos --role engineer acompose -- codex
@@ -71,8 +81,9 @@ role-intent lane:
 aos --role director harness-default --intent strategic-planning
 ```
 
-Ward is not part of this path. See the [CLI and substrate contract](docs/aos-cli.md).
-Homebrew and Scoop install both `aos` and `aguard`. Direct release binaries and
+Ward is not part of that standalone path. See the
+[launch and handoff contract](docs/aos-cli.md).
+Homebrew and Scoop install both `aos` and `aosguard`. Direct release binaries and
 the paired native update path are documented in the [CLI release walkthrough](docs/aos-cli-release.md).
 
 ## Secrets pattern

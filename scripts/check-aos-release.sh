@@ -33,10 +33,10 @@ grep -F "version \"${bare}\"" "$dist/aos.rb" >/dev/null
 grep -F "\"version\": \"${bare}\"" "$dist/aos.json" >/dev/null
 
 case "$(uname -s)/$(uname -m)" in
-    Darwin/arm64) native_aos="$dist/aos-darwin-arm64"; native_aguard="$dist/aguard-darwin-arm64" ;;
-    Linux/x86_64) native_aos="$dist/aos-linux-amd64"; native_aguard="$dist/aguard-linux-amd64" ;;
-    Linux/aarch64 | Linux/arm64) native_aos="$dist/aos-linux-arm64"; native_aguard="$dist/aguard-linux-arm64" ;;
-    *) native_aos=""; native_aguard="" ;;
+    Darwin/arm64) native_aos="$dist/aos-darwin-arm64"; native_aosguard="$dist/aosguard-darwin-arm64" ;;
+    Linux/x86_64) native_aos="$dist/aos-linux-amd64"; native_aosguard="$dist/aosguard-linux-amd64" ;;
+    Linux/aarch64 | Linux/arm64) native_aos="$dist/aos-linux-arm64"; native_aosguard="$dist/aosguard-linux-arm64" ;;
+    *) native_aos=""; native_aosguard="" ;;
 esac
 if [ -n "$native_aos" ]; then
     actual=$("$native_aos" version)
@@ -48,11 +48,11 @@ if [ -n "$native_aos" ]; then
     trap 'rm -rf "$smoke_dir"' EXIT HUP INT TERM
     (
         cd "$smoke_dir"
-        "$native_aguard" --help >/dev/null
-        "$native_aguard" --version | grep -Fx "aguard version $version" >/dev/null
-        "$native_aguard" ops aws --help >/dev/null
-        "$native_aguard" ops actions --help >/dev/null
+        "$native_aosguard" --help >/dev/null
+        "$native_aosguard" --version | grep -Fx "aosguard version $version" >/dev/null
+        "$native_aosguard" ops aws --help >/dev/null
+        "$native_aosguard" ops actions --help >/dev/null
     )
 fi
 
-echo "verified aos and aguard release $version"
+echo "verified aos and aosguard release $version"

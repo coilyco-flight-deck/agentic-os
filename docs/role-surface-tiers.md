@@ -13,7 +13,7 @@ It restores the live-observe access removed below operational need on 2026-07-10
 * **ops** - forgejo read + actions read + write + aws/ssm + kubectl + runner-token mint + tailnet live-observe - live system maintenance, the widest tier.
 * **ceo** - forgejo read + actions read + write + merge - portfolio governance without live remediation.
 
-Runner-token mint is `aguard ops forgejo actions generate-runner-token`
+Runner-token mint is `aosguard ops forgejo actions generate-runner-token`
 for operators. Ward separately mounts the
 [role guardfile](../.ward/guardfile.forgejo.runnertoken.kdl) for director and
 ops containers. It stays out of the fleet-wide
@@ -37,7 +37,7 @@ as drift against this map instead of silently disabling a role.
 
 * **guardfile bindings** - [.ward/roles.kdl](../.ward/roles.kdl), authored here - which guarded verb families a role mounts. Examples are the Engineer/QA observe tier, Forgejo tiers, and ops guardfiles under [aws](../.ward/guardfile.aws.kdl) and [tailscale](../.ward/guardfile.tailscale.kdl). Per ward#578, tailnet and `~/.aws` reach keys off these bindings.
 * **role presets** - ward's tree - tagline, capabilities, modes, posture. Stripped from the aos overlay on 2026-07-10 (commit 566f42f) by design, never re-authored here.
-* **image binaries** - [docker/dev-base/](dev-base-image.md), authored here - whether language toolchains, `aguard`, `aws`, `kubectl`, `helm`, `tailscale`, `tailscaled`, and the Docker client exist on disk. The one full image contains them all. The `ops` role remains a permission and bring-up boundary, not an image tag.
+* **image binaries** - [docker/dev-base/](dev-base-image.md), authored here - whether language toolchains, `aosguard`, `aws`, `kubectl`, `helm`, `tailscale`, `tailscaled`, and the Docker client exist on disk. The one full image contains them all. The `ops` role remains a permission and bring-up boundary, not an image tag.
 * **container bring-up** - ward's tree - whether creds and daemons are live: the `~/.aws` dir, a kubeconfig, `tailscaled` process/auth/socket wiring, `FORGEJO_TOKEN`, and the `WARD_CONTEXT_LEVEL` context slice. A binary existing says nothing about this layer.
 
 The 2026-07-10 incident: guardfiles still compiled in, but the binaries,
@@ -60,4 +60,4 @@ specgen also-grant convenience is agentic-os#446.
 
 * [ward-specs.md](ward-specs.md) - the bundle these guardfiles ship in.
 * [dev-base-image.md](dev-base-image.md) - the full image contract.
-* [aguard.md](aguard.md) - the operator surface.
+* [aosguard.md](aosguard.md) - the operator surface.

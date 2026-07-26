@@ -36,6 +36,8 @@ type launchOptions struct {
 	Role          string
 	Layout        string
 	Delivery      string
+	Composed      bool
+	Guarded       bool
 	CWD           string
 	Command       []string
 	UID           int
@@ -80,6 +82,9 @@ func buildLaunchPlan(opts launchOptions) (launchPlan, error) {
 	if len(opts.Command) == 0 {
 		return launchPlan{}, fmt.Errorf("launch command must not be empty")
 	}
+	if !opts.Composed && !opts.Guarded {
+		return launchPlan{}, fmt.Errorf("standalone launch needs --composed, --guarded, or both")
+	}
 	if opts.UID < 0 || opts.GID < 0 {
 		return launchPlan{}, fmt.Errorf("uid and gid must be non-negative")
 	}
@@ -102,7 +107,14 @@ func buildLaunchPlan(opts launchOptions) (launchPlan, error) {
 		"--label", "aos.container=1",
 		"--label", "aos.role="+opts.Role,
 		"--mount", "type=bind,source="+cwd+",target="+workspace,
-		"--mount", "type=volume,source="+substrateVolume+",target="+containerCacheRoot,
+	)
+	if opts.Composed {
+		args = append(
+			args,
+			"--mount", "type=volume,source="+substrateVolume+",target="+containerCacheRoot,
+		)
+	}
+	args = append(args,
 		"--tmpfs", defaultAgentHome+":rw,exec,size="+runtimeTmpfsSize,
 		"--tmpfs", "/tmp:rw,exec,size="+runtimeTmpfsSize,
 		"--workdir", workspace,
@@ -122,6 +134,12 @@ func buildLaunchPlan(opts launchOptions) (launchPlan, error) {
 		"--layout", opts.Layout,
 		"--delivery", opts.Delivery,
 	)
+	if opts.Composed {
+		args = append(args, "--composed")
+	}
+	if opts.Guarded {
+		args = append(args, "--guarded")
+	}
 	if opts.NoSubstrate {
 		args = append(args, "--no-substrate")
 	}

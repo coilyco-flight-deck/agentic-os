@@ -1,6 +1,6 @@
 # Forgejo runner-token fetch overlay
 
-`aguard ops forgejo actions generate-runner-token` mints a Forgejo Actions runner
+`aosguard ops forgejo actions generate-runner-token` mints a Forgejo Actions runner
 registration token from the guarded surface. The HTTP request itself lives in
 [`.ward/guardfile.forgejo.runnertoken.kdl`](../.ward/guardfile.forgejo.runnertoken.kdl)
 as three declarative fetch leaves, one per scope:

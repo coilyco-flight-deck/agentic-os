@@ -1,12 +1,12 @@
 # Forgejo Actions log bridge
 
-`aguard ops actions logs` calls the packaged
+`aosguard ops actions logs` calls the packaged
 `agentic_os.forgejo_actions_logs` module. It fetches the live plaintext job log
 for a PR status target and prints it raw to stdout. Ward retains a separate
 role-scoped bridge for agent containers.
 
 The companion specverb fetch overlay in
-[Aguard's Forgejo spec](../.specgen/aguard/forgejo.kdl) pins the dead
+[AOSguard's Forgejo spec](../.specgen/aosguard/forgejo.kdl) pins the dead
 Forgejo API log route from agentic-os#473. PR #529 replaced that route with
 the live web UI helper below, and this fetch mirror keeps the dead shape
 documented instead of hand-coding another raw HTTP call.
@@ -38,6 +38,6 @@ The resolved log route is:
 
 See also:
 
-- [aguard.md](aguard.md)
+- [aosguard.md](aosguard.md)
 - [Forgejo Actions rerun bridge](forgejo-actions-rerun.md)
 - [Cross-repo tooling and release](FEATURES.md)

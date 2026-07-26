@@ -16,18 +16,18 @@ every supported language toolchain:
 * Rust, wasm, `trunk`, and native Bevy/Winit development libraries
 * Python, pip, and `pipenv`
 
-The image also carries `aos`, Ward for role-scoped orchestration, `aguard` for
+The image also carries `aos`, Ward for role-scoped orchestration, `aosguard` for
 operator commands, agent-compose with its embedded `person:kai` source, and the
-repository's packaged Aguard Python bridges. The image build renders a roster
-and checks the generated person snapshot plus personality definitions, proving
-that the installed binary is self-contained. Full-only gate tools include
-`golangci-lint`, `trufflehog`, and `kdlfmt`.
+repository's packaged aosguard Python bridges. The image build renders
+aosguard's native agent skill, renders an agent-compose roster, and checks the
+generated person snapshot plus personality definitions. Full-only gate tools
+include `golangci-lint`, `trufflehog`, and `kdlfmt`.
 
 ## Build and publication
 
 `ward exec dev-base-build` builds `agentic-os:dev-base-local`.
 [`scripts/dev-base-build.py`](../scripts/dev-base-build.py) supplies the AOS
-CLI, Aguard spec, and Aguard Python package as named Docker contexts.
+CLI, aosguard spec, and aosguard Python package as named Docker contexts.
 
 [`dev-base-publish.yml`](../.forgejo/workflows/dev-base-publish.yml) builds one
 multi-architecture draft manifest after the release branch advances.
@@ -44,7 +44,7 @@ Every managed version has one default `ARG` in the Dockerfile.
 declaration.
 
 Source ownership follows the tool boundary. The image pins versions but does
-not redefine Ward configuration, Aguard policy, or agent-compose source data.
+not redefine Ward configuration, aosguard policy, or agent-compose source data.
 
 ## See also
 

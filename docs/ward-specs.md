@@ -22,7 +22,7 @@ a reference repo (aos), a deliberate exception to AGENTS.md's config-placement
 corollary. The bundle is Kai's single coilyco deployment, not fleet config
 every ward user melds. Forgejo has role-facing read, write, admin, merge,
 Actions-read, and runner-token guardfiles. The operator monolith moved to
-[Aguard](aguard.md). Ward keeps only the dynamically selected role policy.
+[AOSguard](aosguard.md). Ward keeps only the dynamically selected role policy.
 The exception is stated in [AGENTS.md](../AGENTS.md).
 
 See [role overlays](ward-specs-overrides.md) and
@@ -58,14 +58,14 @@ the bundle's [`agents.kdl`](../.ward/agents.kdl) and
 [`roles.kdl`](../.ward/roles.kdl) into the fleet policy. Missing or invalid
 input fails the release rather than shipping a neutral identity.
 
-`WARD_CONFIG_REF` no longer selects native agent policy. The Ward-to-Aguard
-operator cutover gave guarded operator surfaces to Aguard. Ward retained this
+`WARD_CONFIG_REF` no longer selects native agent policy. The Ward-to-AOSguard
+operator cutover gave guarded operator surfaces to AOSguard. Ward retained this
 baked role and launch policy for agent orchestration.
 [`defaults.kdl`](../.ward/defaults.kdl) still selects the AOS image and tag.
 
 The bundle uses source binary names that Ward reroots to the selected role
 command at runtime. Role-only Forgejo tier files use `aos-agent`. Operational
-automation and human operators use `aguard ops ...`.
+automation and human operators use `aosguard ops ...`.
 
 Engineer/QA bind [observe](../.ward/guardfile.observe.kdl). Director/ops keep
 [kubectl](../.ward/guardfile.kubectl.kdl), blocking deploy/rollback inheritance.

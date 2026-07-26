@@ -22,7 +22,7 @@ for platform in linux/amd64 linux/arm64; do
       dotnet --list-sdks
       python --version
       pipenv --version
-      aguard --version
+      aosguard --version
       pkg-config --exists wayland-client xkbcommon
       printf "%s\\n" \
         "#include <wayland-client.h>" \

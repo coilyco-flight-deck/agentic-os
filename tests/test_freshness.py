@@ -28,7 +28,7 @@ def _run(monkeypatch: pytest.MonkeyPatch, root: Path, *args: str, today: date = 
 
 
 def test_parse_well_formed_marker() -> None:
-    text = '<!-- freshness: as-of=2026-06-24 decay-class=derived half-life=fast source="aguard ops forgejo describe" -->'
+    text = '<!-- freshness: as-of=2026-06-24 decay-class=derived half-life=fast source="aosguard ops forgejo describe" -->'
     markers = freshness.parse_markers(text, Path("docs/x.md"))
     assert len(markers) == 1
     m = markers[0]
@@ -36,7 +36,7 @@ def test_parse_well_formed_marker() -> None:
     assert m.as_of == date(2026, 6, 24)
     assert m.decay_class == "derived"
     assert m.half_life == "fast"
-    assert m.source == "aguard ops forgejo describe"
+    assert m.source == "aosguard ops forgejo describe"
 
 
 def test_marker_may_wrap_across_lines() -> None:
