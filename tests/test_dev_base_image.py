@@ -65,6 +65,9 @@ def test_full_dockerfile_contains_every_language_and_operator_surface() -> None:
     assert "sha256sum -c -" in text
     assert "COPY --from=aosguard-spec" in text
     assert "COPY --from=aosguard-python" in text
+    assert "COPY --from=aos-ward-specs" in text
+    assert "go run ./cmd/ward-policy-bake" in text
+    assert "--bundle /tmp/aos-ward-specs" in text
     assert "--skills-out /opt/agentic-os/aosguard-skill" in text
     assert (
         "COPY --from=dev-base-tool-builder /opt/agentic-os/aosguard-skill "
@@ -141,6 +144,7 @@ def test_local_build_targets_full_with_all_named_contexts(monkeypatch) -> None:
     assert "TARGETARCH=amd64" in build
     assert "WARD_CONFIG_REF_COMMIT=commit" in build
     assert "aos-cli=aos" in build
+    assert "aos-ward-specs=.ward" in build
     assert "aosguard-spec=.specgen" in build
     assert "aosguard-python=agentic_os" in build
     assert build[build.index("--target") + 1] == "dev-base-full"

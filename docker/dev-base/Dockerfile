@@ -34,6 +34,8 @@ ARG SPECGEN_VERSION
 ARG TARGETARCH
 ARG DEBIAN_FRONTEND=noninteractive
 
+COPY --from=aos-ward-specs . /tmp/aos-ward-specs
+
 ENV PATH=/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
@@ -81,6 +83,9 @@ RUN set -eux; \
       sleep 5; \
     done; \
     cd /tmp/ward-src; \
+    go run ./cmd/ward-policy-bake \
+      --bundle /tmp/aos-ward-specs \
+      --output ./cmd/ward/fleetassets/fleet.generated.kdl; \
     for attempt in 1 2 3; do \
       if timeout 240 go mod download; then break; fi; \
       [ "$attempt" -eq 3 ] && { echo "go mod download failed after 3 attempts" >&2; exit 1; }; \
@@ -90,7 +95,7 @@ RUN set -eux; \
       -o /usr/local/bin/ward ./cmd/ward; \
     chmod 0755 /usr/local/bin/ward; \
     cd /; \
-    rm -rf /tmp/ward-src /tmp/gobuild /tmp/gocache; \
+    rm -rf /tmp/ward-src /tmp/aos-ward-specs /tmp/gobuild /tmp/gocache; \
     ward --version
 
 WORKDIR /tmp/aos-src
