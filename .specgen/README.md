@@ -1,5 +1,4 @@
 # aosguard specgen project
 
-Independent `aosguard` source project. `specgen` merges the members into the
-binary and renders its native skill only when AOS supplies `--skills-out`.
+Independent `aosguard` source. Specgen merges its members and renders a native skill only with `--skills-out`.
 See [the walkthrough](../docs/aosguard.md).

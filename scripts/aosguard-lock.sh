@@ -8,5 +8,5 @@ cd "$repo_root"
 specgen_bin=${SPECGEN_BIN:-specgen}
 "$specgen_bin" \
     --project-root .specgen \
-    --skills-out .agents/generated \
+    --skills-out dist/skills \
     lock

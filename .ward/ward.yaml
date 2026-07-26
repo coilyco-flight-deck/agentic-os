@@ -77,7 +77,7 @@ commands:
     run: sh scripts/aosguard-lock.sh
     description: "Refresh aosguard's vendored API snapshot and frozen cli-guard dependency graph with the packaged specgen driver."
   aosguard-build:
-    run: specgen --project-root .specgen --skills-out .agents/generated build --out dist/aosguard
+    run: specgen --project-root .specgen --skills-out dist/skills build --out dist/aosguard
     description: "Materialize the standalone aosguard operator CLI and native generated skill from the independent .specgen snapshot."
   aosguard-release-fmt:
     run: gofmt -w aosguard-release
