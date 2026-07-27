@@ -48,6 +48,23 @@
       "type": "object",
       "x-go-package": "forgejo.org/services/context"
     },
+    "APIInvalidTopicsError": {
+      "properties": {
+        "invalidTopics": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "x-go-name": "InvalidTopics"
+        },
+        "message": {
+          "type": "string",
+          "x-go-name": "Message"
+        }
+      },
+      "type": "object",
+      "x-go-package": "forgejo.org/services/context"
+    },
     "APINotFound": {
       "properties": {
         "errors": {
@@ -2335,6 +2352,21 @@
           },
           "type": "array",
           "x-go-name": "Teams"
+        }
+      },
+      "type": "object",
+      "x-go-package": "forgejo.org/modules/structs"
+    },
+    "RepoTopicOptions": {
+      "description": "RepoTopicOptions a collection of repo topic names",
+      "properties": {
+        "topics": {
+          "description": "list of topic names",
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "x-go-name": "Topics"
         }
       },
       "type": "object",
@@ -6131,6 +6163,52 @@
         ]
       }
     },
+    "/repos/{owner}/{repo}/topics": {
+      "put": {
+        "operationId": "repoUpdateTopics",
+        "parameters": [
+          {
+            "description": "owner of the repo",
+            "in": "path",
+            "name": "owner",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "name of the repo",
+            "in": "path",
+            "name": "repo",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "schema": {
+              "$ref": "#/definitions/RepoTopicOptions"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/responses/empty"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          },
+          "422": {
+            "$ref": "#/responses/invalidTopicsError"
+          }
+        },
+        "summary": "Replace list of topics for a repository",
+        "tags": [
+          "repository"
+        ]
+      }
+    },
     "/topics/search": {
       "get": {
         "operationId": "topicSearch",
@@ -6692,6 +6770,12 @@
       "description": "APIInternalServerError is an error that is raised when an internal server error occurs",
       "schema": {
         "$ref": "#/definitions/APIInternalServerError"
+      }
+    },
+    "invalidTopicsError": {
+      "description": "APIInvalidTopicsError is error format response to invalid topics",
+      "schema": {
+        "$ref": "#/definitions/APIInvalidTopicsError"
       }
     },
     "notFound": {

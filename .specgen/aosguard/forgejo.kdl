@@ -27,6 +27,10 @@ wrap aosguard ops forgejo {
     }
     can create repo
     can edit repo
+    can replace-all repo-topic {
+        op repoUpdateTopics
+        describe "replace the complete repository topic set (PUT /repos/{owner}/{repo}/topics); repeat --topics for each retained topic"
+    }
     can delete repo {
         describe "irreversible: deletes the repo and all its data"
     }

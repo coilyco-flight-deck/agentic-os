@@ -15,7 +15,8 @@ The snapshot carries operator-facing Forgejo, AWS, kubectl, Tailscale, combined
 Actions bridge, and runner-token fetch leaves. The Actions bridge lives at
 `aosguard ops actions` so its exec transport does not shadow the spec-backed
 `aosguard ops forgejo` group. The snapshot excludes Ward's role-scoped agent
-policy.
+policy. Forgejo metadata includes `repo-topic replace-all <owner> <repo>`,
+whose repeated `--topics` values become the repository's complete topic set.
 
 Ward selects role policy dynamically. Specgen merges every member with the same
 `wrap` identity into one static binary. Copying every Ward role source into

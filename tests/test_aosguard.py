@@ -4,8 +4,12 @@ from __future__ import annotations
 
 import gzip
 import json
+import os
 import re
+import subprocess
 from pathlib import Path
+
+import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -18,6 +22,27 @@ EXPECTED_MEMBERS = {
     "kubectl.kdl",
     "tailscale.kdl",
 }
+
+
+@pytest.fixture(scope="module")
+def aosguard_binary(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    suffix = ".exe" if os.name == "nt" else ""
+    binary = tmp_path_factory.mktemp("aosguard") / f"aosguard{suffix}"
+    subprocess.run(
+        [
+            "specgen",
+            "--project-root",
+            str(PROJECT),
+            "build",
+            "--out",
+            str(binary),
+        ],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return binary
 
 
 def test_aosguard_has_one_static_binary_group() -> None:
@@ -65,7 +90,10 @@ def test_aosguard_forgejo_lock_is_encoded_json() -> None:
 
 def test_aosguard_dependency_lock_is_committed() -> None:
     lock = json.loads((PROJECT / "specverb.lock").read_text(encoding="utf-8"))
-    assert lock["cliGuard"] == "v0.121.0"
+    cli_guard = lock["cliGuard"]
+    assert re.fullmatch(r"v\d+\.\d+\.\d+", cli_guard)
+    assert f"cli-guard {cli_guard}" in "\n".join(lock["goMod"])
+    assert any(f"cli-guard {cli_guard} " in line for line in lock["goSum"])
     assert not list(SOURCE.glob("*.md"))
 
 
@@ -103,3 +131,58 @@ def test_native_release_wrapper_embeds_the_actions_bridge() -> None:
         "forgejo_actions_web.py",
     ):
         assert f'"$repo_root/agentic_os/{module}"' in build
+
+
+def test_repo_topic_replace_all_dry_run_builds_put_body(
+    aosguard_binary: Path,
+) -> None:
+    result = subprocess.run(
+        [
+            str(aosguard_binary),
+            "ops",
+            "forgejo",
+            "repo-topic",
+            "replace-all",
+            "coilyco-example",
+            "sample",
+            "--topics",
+            "release-ready",
+            "--topics",
+            "documentation",
+            "--dry-run",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    assert "method: PUT" in result.stdout
+    assert "/repos/coilyco-example/sample/topics" in result.stdout
+    assert "release-ready" in result.stdout
+    assert "documentation" in result.stdout
+    assert "Authorization: token <redacted>" in result.stdout
+
+
+def test_repo_topic_replace_all_rejects_out_of_scope_owner(
+    aosguard_binary: Path,
+) -> None:
+    result = subprocess.run(
+        [
+            str(aosguard_binary),
+            "ops",
+            "forgejo",
+            "repo-topic",
+            "replace-all",
+            "outside-example",
+            "sample",
+            "--topics",
+            "documentation",
+            "--dry-run",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode != 0
+    assert 'owner="outside-example" is outside the allowed scope' in result.stderr
