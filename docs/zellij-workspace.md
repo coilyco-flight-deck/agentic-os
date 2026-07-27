@@ -6,9 +6,8 @@ client therefore leaves the shell processes and their working directories in
 the Zellij server.
 
 The default session is named `main`. Every ordinary Alacritty window attaches
-to it, creating it only when it does not exist. Zellij renders tabs vertically
-through the pinned `cfal/zellij-vertical-tabs` WebAssembly plugin. The plugin is
-an ordinary Zellij extension, not a terminal fork.
+to it, creating it only when it does not exist. Zellij uses its native tab bar,
+so the terminal keeps its full width instead of reserving a sidebar.
 
 ## Daily controls
 
@@ -26,9 +25,8 @@ Zellij's native modal controls remain available. `Ctrl+T` enters tab mode,
 `Ctrl+P` enters pane mode, and `Ctrl+O` enters session mode. The one-row status
 bar shows the actions available in the active mode.
 
-Mouse clicks select vertical tabs. Dragging over terminal text selects and
-copies it. Hold `Shift` while using the mouse when an application inside a pane
-needs the raw mouse event.
+Dragging over terminal text selects and copies it. Hold `Shift` while using the
+mouse when an application inside a pane needs the raw mouse event.
 
 ## Recovery
 
@@ -43,7 +41,5 @@ window. Killing the Zellij session is an explicit administrative action.
 ## Ownership
 
 [`zellij/config.kdl`](../zellij/config.kdl) owns portable behavior and keyboard
-bindings. [`zellij/layouts/vertical-tabs.kdl`](../zellij/layouts/vertical-tabs.kdl)
-owns the vertical layout. Infrastructure installs Zellij, pins and verifies the
-plugin binary, adds the native Git Bash path, grants the plugin's narrow
-permissions, and renders the host-local Alacritty entry point.
+bindings. Infrastructure installs Zellij, adds the native Git Bash path, and
+renders the host-local Alacritty entry point.

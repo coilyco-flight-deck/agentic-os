@@ -23,13 +23,13 @@ Pull secrets directly into the shell environment, never to disk. `ssm-load` read
 ## Cross-platform terminal
 
 Alacritty supplies the portable Sombra rendering baseline. Zellij supplies the
-long-lived workspace, vertical tabs, panes, and session serialization. The
+long-lived workspace, tabs, panes, and session serialization. The
 [workspace walkthrough](zellij-workspace.md) carries the recovery behavior and
 daily controls.
 
 Transitional Warp config still renders into `~/.warp-preview/` on Mac or
 `~/.warp/` on Windows. Repo state disables cloud sync and owns its theme,
-vertical tabs, agent toggles, and redaction rules for network identifiers,
+native tabs, agent toggles, and redaction rules for network identifiers,
 credentials, tokens, keys, JWTs, and phone numbers.
 
 ## GPG signing without disk-cached passphrases

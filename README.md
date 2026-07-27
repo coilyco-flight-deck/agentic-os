@@ -12,7 +12,7 @@ while the transitional Warp configuration remains available.
 
 - `shell/` - shared `common.sh` plus thin `zshrc` + `bashrc`, so bash and zsh match. `warp.zsh` is the zsh-only Warp dispatcher.
 - `alacritty/` - portable Sombra appearance and terminal security defaults, with host preferences left to the local wrapper.
-- `zellij/` - portable session defaults, familiar direct shortcuts, and the vertical-tabs layout.
+- `zellij/` - portable session defaults and familiar direct shortcuts.
 - `agent-terminal/` - static agent-compose identity branding for one Alacritty director window.
 - `warp/` - transitional Warp config (`settings.toml`, `tab_configs/`) plus the `ward exec warp` Go module.
 - `aos/` - the Go composition root for standalone and Ward-governed agent launches.

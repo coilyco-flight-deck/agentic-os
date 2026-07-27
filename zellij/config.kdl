@@ -1,6 +1,5 @@
 // Portable Zellij defaults. Infrastructure adds the host-local shell path.
 
-default_layout "vertical-tabs"
 default_mode "normal"
 
 on_force_close "detach"
