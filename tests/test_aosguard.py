@@ -74,9 +74,9 @@ def test_aosguard_actions_use_packaged_python_modules() -> None:
         assert (ROOT / "agentic_os" / f"{module}.py").is_file()
 
 
-def test_aosguard_vendored_forgejo_contract_is_json() -> None:
-    vendored = SOURCE / "forgejo.swagger.v1.json"
-    assert json.loads(vendored.read_text(encoding="utf-8"))
+def test_aosguard_vendored_forgejo_contract_is_encoded_json() -> None:
+    vendored = SOURCE / "forgejo.swagger.v1.json.gz"
+    assert json.loads(gzip.decompress(vendored.read_bytes()))
 
 
 def test_aosguard_forgejo_lock_is_encoded_json() -> None:

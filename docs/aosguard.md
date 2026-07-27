@@ -49,9 +49,9 @@ and operators both need is reviewed in both authority contexts.
 
 The Forgejo source is vendored from the pruned deployment contract, so
 `aosguard-lock` refreshes the dependency graph without reaching a live Forgejo
-edge. The source Swagger remains plain JSON for review, while its generated API
-lock is deterministic gzip at `forgejo.swagger.lock.json.gz`. Specgen decodes
-that lock before use. The resulting `specverb.lock` pins cli-guard for
+edge. The source Swagger and its generated API lock use deterministic gzip at
+`forgejo.swagger.v1.json.gz` and `forgejo.swagger.lock.json.gz`. Specgen
+decodes each before use. The resulting `specverb.lock` pins cli-guard for
 reproducible builds.
 
 Specgen no longer emits per-member Markdown. `aosguard-lock` instead refreshes
