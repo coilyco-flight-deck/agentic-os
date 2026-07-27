@@ -44,7 +44,7 @@ scoop install coilyco/aos
 
 Both package managers install `aos` and `aosguard`. The `aosguard` release binary
 contains its generated operator CLI and the Forgejo Actions bridge, so it works
-from an empty directory without a checkout, Ward, ward-kdl, or specgen.
+from an empty directory without a checkout, Ward, or specgen.
 
 Forgejo also serves every checksummed binary directly from the
 [agentic-os releases](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/releases).

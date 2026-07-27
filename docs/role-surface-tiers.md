@@ -21,9 +21,9 @@ ops containers. It stays out of the fleet-wide
 
 ## Read-only observability boundary
 
-[Observe](../.ward/observe.kdl) backs Engineer and QA's
-`ward ops observe`.
-It grants bounded state, logs, events, metrics, health, and rollout status.
+[Observe](../.ward/observe.kdl) is an Engineer/QA policy marker, not a
+`ward ops observe` command. Approved connectors provide bounded state, logs,
+events, metrics, health, and rollout status.
 Secrets, kubeconfig contents, workload execution, port forwarding, deployment,
 rollback, and mutation remain absent.
 

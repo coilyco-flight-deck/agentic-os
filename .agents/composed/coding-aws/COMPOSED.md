@@ -14,7 +14,7 @@ Umbrella for any AWS work.
 - **Auth**: AWS SSO via the default profile. Refresh with `aws sso login` when expired.
 - **Python SDK**: `boto3`. Async via `aioboto3` only when concurrency is load-bearing.
 - **Secrets and config**: SSM Parameter Store, SecureString. Never hardcode opaque ids. See the configs-in-SSM rule in `agentic-os-kai/AGENTS.md`.
-- **CLI**: `ward ops aws ...` for privileged ops (audit-log binding, scope routing). Bare `aws ...` for read-only locals.
+- **CLI**: `aosguard ops aws ...` for guarded operator work. Bare `aws ...` is limited to approved read-only local checks.
 
 ## Conventions
 
@@ -33,5 +33,5 @@ aws, amazon web services, boto3, botocore, awscli, aws-cli, ec2, s3, iam, lambda
 ## See also
 
 - `agentic-os-kai/SSM.md` - parameter inventory.
-- `ward-ops-aws-meta` - ward wrapper rules.
+- `aosguard --help` - live generated command contract.
 - `coding-terraform` - IaC umbrella for AWS infrastructure.

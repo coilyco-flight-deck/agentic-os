@@ -53,9 +53,9 @@ The **trigger** for a rollout is a push, not a hand-run publish, keeping it in a
 
 **Deployment boundary (aos#332).** The coilyco [`.ward/`](.ward/) spec bundle and dev-base identity are authored here for Kai's single deployment. The AOS image exposes them through Ward's provider-neutral runtime seams. Ward source and releases never import or bake this deployment config. Full reasoning: [docs/ward-specs.md](docs/ward-specs.md).
 
-The layer gradient this keys off (churn and host-awareness rising together, a clone/use breakpoint at each): cli-guard (engine, external contributors, no upstream knowledge), then ward-kdl (the meld layer - every ward user rewrites this to their own config), then ward (the product, shipped coherent to external users), then aos (reference impl + public docs - only Kai clones it, others copy-paste from it), then infra (nobody clones it but Kai).
+The layer gradient this keys off (churn and host-awareness rising together, a clone/use breakpoint at each): cli-guard and specgen (generic engines, external contributors, no upstream knowledge), then Ward (the product and native role policy), then aos (AOSguard policy, Kai's Ward deployment bundle, and public docs), then infra (nobody clones it but Kai).
 
-Config splits on three axes, each a distinct owner: **permission/surface** (ward-kdl guardfiles, dialect 1), **deployment tuning** (identity, model, endpoint, attribution, roster defaults - AOS bundle and image environment), and **operator-local preference** (per-host, hand-edited, not embedded, parsed from a local source). One parser may serve two sources. The axes stay distinct owners.
+Config splits on three axes, each a distinct owner: **permission/surface** (AOSguard specs and Ward role bindings), **deployment tuning** (identity, model, endpoint, attribution, roster defaults - AOS bundle and image environment), and **operator-local preference** (per-host, hand-edited, not embedded, parsed from a local source). One parser may serve two sources. The axes stay distinct owners.
 
 ### Skills
 

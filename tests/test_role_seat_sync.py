@@ -55,7 +55,7 @@ def test_fixture_renders_deterministic_role_seat_identity(
         for seat in role.seats:
             assert f"name {json.dumps(seat.name)}" in rendered
             assert f"pronouns {seat.pronouns}" in rendered
-    assert 'guardfile "guardfile.example.kdl"' in rendered
+    assert 'guardfile "example.kdl"' in rendered
     assert "model claude-example" in rendered
     assert "reasoning-effort xhigh" in rendered
     assert '// name "old engineer"' not in rendered

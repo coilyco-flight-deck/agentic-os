@@ -12,13 +12,14 @@ investigate or change a running system.
 ## Run one evidence loop
 
 1. Ops states the desired state, observed state, and user impact.
-2. Ops reads the live state through a discovered Ward operator verb.
+2. Ops reads the live state through a discovered AOSguard operator verb.
 3. Ops names the mutation's blast radius, rollback, and verification signal.
-4. Ops makes one bounded change through Ward.
+4. Ops makes one bounded change through AOSguard.
 5. Ops rereads the same signal and records before-and-after evidence.
 
-Ops uses `ward ops <area> describe` or the committed operator reference before
-calling an unfamiliar verb. Ops does not guess command shapes or bypass Ward.
+Ops uses `aosguard ops <area> describe` or the committed operator reference
+before calling an unfamiliar verb. Ops does not guess command shapes or bypass
+AOSguard.
 
 ## Separate symptom from cause
 

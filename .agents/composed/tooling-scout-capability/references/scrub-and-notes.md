@@ -38,13 +38,9 @@ content. The wrong default is a silent edit. Always ask.
   exposes `search_server`, `get_server`, and `list_attributes`. Phase 2
   uses these connected MCPs as its primary catalogs. The SkillsMP
   `ai-search` endpoint was retired upstream, so the scout never calls it.
-- **CLI fallback:** if a primary MCP is unavailable, use
-  `ward-kdl pkg skillsmp skills search --q <name>` or
-  `ward-kdl pkg glama server {list,get}` against the same registries.
-  The Glama listing paginates with `--after` and `--first`. These
-  wrappers rode `coily pkg` until the ward gating change moved them onto
-  the ward-kdl spec runtime in v0.58.0. The wrappers are fallback
-  transports, not the scout's primary data sources.
+- **Catalog availability:** SkillsMP and Glama MCPs are the scout's catalog
+  transports. If either connected MCP is unavailable, record that source as
+  unavailable rather than substituting a retired Ward or package wrapper.
 - **Speculative entries are the point.** Don't be shy about listing
   things that don't exist yet. The "go bother someone" pathway is a
   primary use of this skill, not a side effect.

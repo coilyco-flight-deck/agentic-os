@@ -1,6 +1,6 @@
 ---
 name: coding-kubernetes
-description: Kubernetes umbrella skill. K3s on kai-server is the homelab cluster. kubectl via ward wrapper. Helm for packaged apps. Plain manifests over Kustomize.
+description: Kubernetes umbrella skill. K3s on kai-server is the homelab cluster. kubectl via AOSguard. Helm for packaged apps. Plain manifests over Kustomize.
 low-context: required
 ---
 
@@ -15,7 +15,7 @@ kubernetes, k8s, k3s, kubectl, helm, manifest, deployment, statefulset, daemonse
 ## Defaults
 
 - **Cluster**: K3s on `kai-server` (homelab). Single-node by design. Tailscale-fronted.
-- **kubectl**: route through `ward ops kubectl` (audit binding, context routing). See `ward-ops-kubectl-meta` (in ward) and `ward-ops-kubectl-usage` for verbs.
+- **kubectl**: route guarded operator work through `aosguard ops kubectl`. Enumerate the live surface with `aosguard ops kubectl describe` or `--help`.
 - **Packaging**: Helm for upstream apps with charts. Plain YAML manifests for Kai's own services. Kustomize is fine when it earns its complexity, not by default.
 - **Secrets**: ExternalSecrets operator + AWS SSM. No raw `Secret` resources committed to git, ever.
 - **Ingress**: Traefik (k3s default).

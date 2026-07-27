@@ -30,7 +30,7 @@ This is the standing, shared box. It runs once with `restart: unless-stopped`, a
 Inject the auth key without writing it to disk:
 
 ```bash
-TS_AUTHKEY="$(ward ops aws ssm get-parameter \
+TS_AUTHKEY="$(aosguard ops aws ssm get-parameter \
   --name /coilysiren/tailscale-proxy/ts-authkey --with-decryption \
   --query 'Parameter.Value' --output text)" docker compose up -d
 ```
@@ -57,7 +57,7 @@ Host kai-server-proxied
 Resolve the peer IP at runtime rather than hardcoding it:
 
 ```bash
-ward ops aws ssm get-parameter --name /coilysiren/kai-server/tailnet-ip \
+aosguard ops aws ssm get-parameter --name /coilysiren/kai-server/tailnet-ip \
   --with-decryption --query 'Parameter.Value' --output text
 ```
 

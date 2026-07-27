@@ -181,9 +181,9 @@ agents_md_max_chars = 12000
     # one wildcard covers a generated file wherever it is emitted.
     ("README.md", ["*.md"], True),
     ("nested/README.md", ["*.md"], True),
-    ("docs/ward-kdl.aws.guardfile.md", ["ward-kdl.*.guardfile.md"], True),
-    ("cmd/ward-kdl/ward-kdl.aws.guardfile.md", ["ward-kdl.*.guardfile.md"], True),
-    ("docs/notes.md", ["ward-kdl.*.guardfile.md"], False),
+    ("docs/generated.aws.md", ["generated.*.md"], True),
+    ("cmd/generated/generated.aws.md", ["generated.*.md"], True),
+    ("docs/notes.md", ["generated.*.md"], False),
     # A slash-less exact filename matches its basename at any depth too.
     ("a/b/.pre-commit-config.yaml", [".pre-commit-config.yaml"], True),
 ])

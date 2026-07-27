@@ -21,10 +21,7 @@ Path semantics (gitignore-style globs over repo-relative POSIX paths):
 A pattern containing a "/" is anchored to the repo root ("docs/*.md"
 matches docs/x.md but not docs/sub/x.md). A pattern with no "/" matches
 the file's basename at any depth, so one wildcard covers a generated file
-wherever it lands - ward's specverb guardfiles, emitted both in docs/ and
-beside the .kdl under cmd/ward-kdl/, collapse to a single
-"ward-kdl.*.guardfile.md" instead of a line per generator. Patterns and paths use forward
-slashes on every platform.
+wherever it lands. Patterns and paths use forward slashes on every platform.
 """
 from __future__ import annotations
 

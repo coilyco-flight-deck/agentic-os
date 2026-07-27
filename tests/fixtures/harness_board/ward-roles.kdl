@@ -1,6 +1,6 @@
 roles {
     role engineer {
-        guardfile "guardfile.example.kdl"
+        guardfile "example.kdl"
         agent claude {
             model claude-example
             // name "old engineer"

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 import textwrap
 from pathlib import Path
@@ -29,7 +30,7 @@ def _run(root: Path) -> subprocess.CompletedProcess[str]:
             f"""\
             #!/usr/bin/env bash
             set -euo pipefail
-            printf '%s\\n' "$*" >> {trufflehog_args!s}
+            printf '%s\\n' "$*" >> {trufflehog_args.as_posix()}
             exclude=""
             while [[ $# -gt 0 ]]; do
               case "$1" in
@@ -42,22 +43,27 @@ def _run(root: Path) -> subprocess.CompletedProcess[str]:
                   ;;
               esac
             done
-            printf '%s\\n' "$exclude" >> {trufflehog_path!s}
+            printf '%s\\n' "$exclude" >> {trufflehog_path.as_posix()}
             if [[ -f "$exclude" ]]; then
-              printf 'yes\\n' >> {trufflehog_exists!s}
+              printf 'yes\\n' >> {trufflehog_exists.as_posix()}
             else
-              printf 'no\\n' >> {trufflehog_exists!s}
+              printf 'no\\n' >> {trufflehog_exists.as_posix()}
             fi
-            cat "$exclude" > {trufflehog_contents!s}
+            cat "$exclude" > {trufflehog_contents.as_posix()}
             exit 0
             """
         ),
     )
 
     env = os.environ.copy()
-    env["PATH"] = f"{bin_dir}:{env['PATH']}"
+    env["PATH"] = f"{bin_dir}{os.pathsep}{env['PATH']}"
+    command = [str(SCRIPT)]
+    if os.name == "nt":
+        bash = shutil.which("bash")
+        assert bash is not None
+        command = [bash, str(SCRIPT)]
     return subprocess.run(
-        [str(SCRIPT)],
+        command,
         cwd=root,
         env=env,
         text=True,

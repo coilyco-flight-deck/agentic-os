@@ -63,5 +63,5 @@ Every repo has `.pre-commit-config.yaml` with offline trufflehog:
 ## More detail
 
 - [GitHub issues as work tracker](references/github-issue-tracker.md) - precedence, close-via-commit, tracker issues stay open, bot-attribution signature.
-- [Privileged ops via ward](references/ward-privileged-ops.md) - read vs write surface, thin pass-throughs, disabling PRs via GraphQL.
+- [Guarded operator work](references/guarded-operator-work.md) - AOSguard discovery, approved bare reads, and the GitHub GraphQL boundary.
 - [Default TODO destination and flake discipline](references/default-todo-and-flake.md) - Forgejo as default tracker, never-ask-just-file, flaky-test rule.
