@@ -128,6 +128,17 @@ Before the first mutation in any native checkout, the agent inspects the worktre
 
 The agent leaves the original checkout exactly as found. The agent never absorbs foreign changes into its commit or uses stash as a substitute for isolation. If the agent cannot create a separate worktree safely, the agent stops before any mutation and reports the exact blocker. The remote-checkpoint rule applies to the new worktree and its task branch.
 
+### Unlisted repository clones stay temporary
+
+Before cloning a repository, the agent checks the host's expected-repositories
+list when that surface is configured. If the repository is not explicitly
+listed as one that belongs on disk, the agent clones it into the local
+operating system's resolved temporary directory with a task-specific basename,
+never under the persistent projects or workspace tree. The agent treats that
+clone as task-scoped and removes it when the work is complete and the
+remote-checkpoint requirements are satisfied. An absent or unreadable list
+does not authorize a persistent checkout.
+
 ### Human-only workdirs
 
 A checkout whose directory basename ends in `-workdir` is reserved for Kai's manual work. Agents treat it as outside the workspace: agents do not inspect, enter, edit, validate, format, stage, stash, or include it in fleet or recursive tooling. If an agent launches inside one, the agent stops before inspecting repository contents and moves to the canonical checkout or an agent-owned linked worktree.
