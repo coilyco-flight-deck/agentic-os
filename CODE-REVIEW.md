@@ -11,6 +11,10 @@ Review the smallest repo-local surface that can fail, and name the invariant it 
 Carry forward fixes for issues that have already recurred, or that showed up
 large enough to stop the work.
 
+* Dev-base manifest inspections stay bounded per call. A Buildx client stall
+  must consume the short retry budget, not the outer image-build budget.
+  Definitive registry 404 responses are immediate checkpoint misses.
+
 ## Update triggers
 
 Refresh this file when the same issue re-occurs or when a work stop exposes a wider pattern.

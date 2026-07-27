@@ -19,6 +19,8 @@ from agentic_os.dev_base import PUBLISHED_TIER_NAMES, REGISTRY_BASE, publish_pla
 
 
 _DIGEST_RE = re.compile(r"^Digest:\s+(sha256:[0-9a-f]+)$", re.MULTILINE)
+_MANIFEST_NOT_FOUND_RE = re.compile(r"\b404 Not Found\b", re.IGNORECASE)
+_MANIFEST_INSPECT_TIMEOUT_SECONDS = 30
 
 
 def _docker_base_command(push: bool, platforms: str | None) -> list[str]:
@@ -72,7 +74,9 @@ def _retry(
     raise last_exc
 
 
-def _inspect_manifest_once(ref: str) -> subprocess.CompletedProcess[str]:
+def _inspect_manifest_once(
+    ref: str, *, allow_missing: bool = False
+) -> subprocess.CompletedProcess[str] | None:
     cmd = ["docker", "buildx", "imagetools", "inspect", ref]
     try:
         probe = subprocess.run(
@@ -80,15 +84,27 @@ def _inspect_manifest_once(ref: str) -> subprocess.CompletedProcess[str]:
             check=False,
             capture_output=True,
             text=True,
+            timeout=_MANIFEST_INSPECT_TIMEOUT_SECONDS,
         )
+    except subprocess.TimeoutExpired as exc:
+        raise subprocess.CalledProcessError(
+            124,
+            cmd,
+            output=exc.stdout,
+            stderr=exc.stderr,
+        ) from exc
     except OSError as exc:
         raise subprocess.CalledProcessError(127, cmd, stderr=str(exc)) from exc
     if probe.returncode != 0:
+        output = getattr(probe, "stdout", "")
+        error = getattr(probe, "stderr", "")
+        if allow_missing and _MANIFEST_NOT_FOUND_RE.search(f"{output}\n{error}"):
+            return None
         raise subprocess.CalledProcessError(
             probe.returncode,
             cmd,
-            output=getattr(probe, "stdout", ""),
-            stderr=getattr(probe, "stderr", ""),
+            output=output,
+            stderr=error,
         )
     return probe
 
@@ -99,11 +115,13 @@ def _inspect_manifest(
     try:
         probe = _retry(
             f"inspect manifest {ref}",
-            lambda: _inspect_manifest_once(ref),
+            lambda: _inspect_manifest_once(ref, allow_missing=True),
             attempts=attempts,
             initial_delay=initial_delay,
         )
     except subprocess.CalledProcessError:
+        return None
+    if probe is None:
         return None
     stdout = getattr(probe, "stdout", "")
     stderr = getattr(probe, "stderr", "")
@@ -316,15 +334,13 @@ def _build_plan(
         if push:
             _retry(
                 f"inspect built image {entry['image']}",
-                lambda: _run(
-                    ["docker", "buildx", "imagetools", "inspect", entry["image"]]
-                ),
+                lambda: _inspect_manifest_once(entry["image"]),
             )
             for alias_image in alias_images:
                 _retry(
                     f"inspect built alias {alias_image}",
-                    lambda alias_image=alias_image: _run(
-                        ["docker", "buildx", "imagetools", "inspect", alias_image]
+                    lambda alias_image=alias_image: _inspect_manifest_once(
+                        alias_image
                     ),
                 )
             write_state = "verified" if _probe_cache_write(buildcache_ref) else "missing"
@@ -376,8 +392,8 @@ def _promote_plan(
         for target_image in target_images:
             _retry(
                 f"inspect promoted image {target_image}",
-                lambda target_image=target_image: _run(
-                    ["docker", "buildx", "imagetools", "inspect", target_image]
+                lambda target_image=target_image: _inspect_manifest_once(
+                    target_image
                 ),
             )
 

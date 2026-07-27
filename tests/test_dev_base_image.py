@@ -232,6 +232,51 @@ def test_manifest_inspect_retries_and_reports_the_digest(monkeypatch, tmp_path) 
     assert "succeeded after attempt 2/3" in summary.read_text(encoding="utf-8")
 
 
+def test_manifest_inspect_treats_registry_404_as_immediate_miss(monkeypatch) -> None:
+    script = _load_script()
+    calls: list[dict[str, object]] = []
+    sleeps: list[int] = []
+
+    class Probe:
+        returncode = 1
+        stdout = ""
+        stderr = "unexpected status from HEAD request: 404 Not Found"
+
+    def run(*_args, **kwargs):
+        calls.append(kwargs)
+        return Probe()
+
+    monkeypatch.setattr(script.subprocess, "run", run)
+    monkeypatch.setattr(script.time, "sleep", lambda seconds: sleeps.append(seconds))
+
+    assert script._inspect_manifest(f"{REGISTRY_BASE}:candidate") is None
+    assert len(calls) == 1
+    assert calls[0]["timeout"] == script._MANIFEST_INSPECT_TIMEOUT_SECONDS
+    assert sleeps == []
+
+
+def test_manifest_inspect_retries_a_timed_out_client(monkeypatch) -> None:
+    script = _load_script()
+    timeouts: list[int] = []
+    sleeps: list[int] = []
+
+    def run(cmd, **kwargs):
+        timeouts.append(kwargs["timeout"])
+        raise script.subprocess.TimeoutExpired(cmd, kwargs["timeout"])
+
+    monkeypatch.setattr(script.subprocess, "run", run)
+    monkeypatch.setattr(script.time, "sleep", lambda seconds: sleeps.append(seconds))
+
+    assert (
+        script._inspect_manifest(
+            f"{REGISTRY_BASE}:candidate", attempts=2, initial_delay=1
+        )
+        is None
+    )
+    assert timeouts == [script._MANIFEST_INSPECT_TIMEOUT_SECONDS] * 2
+    assert sleeps == [1]
+
+
 def test_cmd_check_reports_checkpoint_state(monkeypatch) -> None:
     script = _load_script()
     monkeypatch.setattr(script, "_has_target_checkpoint", lambda *_args: True)
