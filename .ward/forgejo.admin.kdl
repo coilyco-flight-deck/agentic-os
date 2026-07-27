@@ -1,79 +1,49 @@
-// Forgejo WRITE tier - the middle of the read -> write -> admin chain (ward#240),
-// now carrying the real curated surface ported from the monolith (ward#278,
-// Phase 1). The bare `can create *` / `can edit *` wildcards are gone: this tier
-// lists the explicit create/edit leaves of the curated subset instead, so it
-// grants exactly the hand-hardened authoring verbs, not every create/edit-able
-// swagger resource.
+// Forgejo ADMIN tier - the top of the read -> write -> admin chain (ward#240), now
+// carrying the real curated surface ported from the monolith (ward#278, Phase 1).
+// The bare `can delete *` wildcard is gone: this tier lists the explicit delete
+// leaves of the curated subset instead, so it grants exactly the curated
+// destructive verbs, not every delete-able swagger resource.
 //
-// `inherit` pulls in every read-tier grant (the read leaves) AND every read-tier
-// `never` denial (cli-guard v0.72.0 makes deny inherit up), plus the read root's
-// spec/base-url singletons, which this file does not restate. So the label
-// policy-disable, the fork/archive/org denials, and `never delete issue` all stay
-// in force here without restatement. The result is read + curated create/edit: an
-// aos-agent tier member that authors content but never deletes it (no delete
-// leaf is compiled in at this tier - that is admin).
+// `inherit` composes the whole write tier (which itself composes read), so this
+// file only adds the irreversible delete verbs the lower tiers withhold. Every
+// read/write leaf, every `never` denial (deny inherits up, cli-guard v0.72.0),
+// and the spec/base-url singletons all arrive through the chain. The result is
+// the full curated CRUD surface: the aos-agent admin tier mounts what the
+// role bundle mounts (the Phase-2 candidate tracked in ward#92),
+// minus the mutating PR lifecycle, which rides forgejo.merge.kdl
+// outside the chain and binds to the director/engineer/pm roles only
+// (agentic-os#488).
 //
-// Actions are child-local (not inherited, cli-guard v0.72.0), so the read-family
-// actions (list-all issue, view issue) are re-declared verbatim here to keep the
-// tiers monotonic, alongside the write-family actions (move-issue, comment
-// issue). See ../docs/ward-specs.md.
+// "admin" here means the irreversible REST verb (delete), not Forgejo's
+// server-side maintenance verbs.
+//
+// Actions are child-local (not inherited, cli-guard v0.72.0), so all four curated
+// actions are re-declared verbatim here so admin fully matches the monolith
+// surface (ward#278). See ../docs/ward-specs.md.
 wrap aos-agent ops forgejo {
-    inherit "../guardfile.forgejo.read.kdl"
+    inherit "../forgejo.write.kdl"
     // Scope gate: re-declared per tier (harmless dedup) so it reads present in
     // this tier's own guardfile and generated doc.
     restrict owner matches example*
-    // Auth override (ward#331): the in-container broker shells this binary where
-    // there is no SSM, so write reads its token from env.
-    auth header-token {
-        header Authorization
-        prefix "token "
-        value env FORGEJO_TOKEN
+    // repos: the irreversible delete. fork/archive/unarchive stay denied by the
+    // inherited read-tier `never`s.
+    can delete repo {
+        describe "irreversible: deletes the repo and all its data"
     }
-    // repos: create/edit. delete is admin-only. fork/archive/unarchive stay denied
-    // by the inherited read-tier `never`s.
-    can create repo
-    can edit repo
-    can create org-repo {
-        op createOrgRepo
-        describe "create a repo inside an existing org (POST /orgs/{org}/repos). This is the org-scoped sibling of `create repo`, which targets /user/repos, a path the bot lacks write:user for. The example deployment token already carries write:organization, so this is a missing verb, not a missing scope. op pinned because a bare `create org-repo` also matches the deprecated alias. Org create/delete stay human-only. This creates repos within an org, not orgs themselves."
+    // org-labels: delete an org-level label.
+    can delete org-label
+    // milestones: delete a milestone.
+    can delete milestone
+    // releases: delete a release.
+    can delete release
+    // issue-comments: delete a single issue comment by ID, the cleanup path a stale
+    // reservation road-block needed (ward#570). `delete issue` stays denied (inherited).
+    can delete issue-comment {
+        op issueDeleteComment
+        describe "delete a single issue comment by its comment ID (DELETE /repos/{owner}/{repo}/issues/comments/{id}). op pinned for the same reason `list issue-comment` pins issueGetComments - the bare `delete issue-comment` convention does not reach issueDeleteComment. This is the cleanup path a stale reservation road-block needed (ward#570): a `ward agent` launch that dies before its container comes up posts a release-marker comment to retract the hold, but the orphaned `ward-agent-reservation` comment itself could only be removed by hand until this leaf. {owner}-scoped by the example gate above. Irreversible, so it is a targeted-ID delete, never a bulk sweep."
     }
-    // org-labels: create/edit (mint/rename the org taxonomy). Repo-level label
-    // create/edit stay policy-disabled by the inherited read-tier `never`s (ward#107).
-    can create org-label
-    can edit org-label
-    // milestones: create/edit plus the close/reopen fixed-body toggles (the toggles
-    // resolve like edit and carry only `body`).
-    can create milestone
-    can edit milestone
-    can close milestone {
-        body state=closed
-    }
-    can reopen milestone {
-        body state=open
-    }
-    // issues: create/edit/comment plus the close/reopen fixed-body toggles. delete
-    // stays denied by the inherited read-tier `never delete issue`.
-    can create issue
-    can edit issue
-    can comment issue
-    can close issue {
-        body state=closed
-    }
-    can reopen issue {
-        body state=open
-    }
-    // releases, with the multipart asset upload beside them (upload-asset resolves
-    // as create-on the assets sub-collection). delete is admin-only.
-    can create release
-    can edit release
-    can upload-asset release
-    // issue-labels: the compound resource targets the issue's labels sub-collection.
-    // add/set/remove are the membership verbs (POST/PUT/DELETE).
-    can add issue-label
-    can set issue-label
-    can remove issue-label
-    // list-all issue: read-family action re-declared verbatim (child-local) so the
-    // write tier stays a superset of read (ward#278).
+    // list-all issue: read-family action re-declared verbatim (child-local) so admin
+    // stays a superset of the lower tiers and matches the monolith (ward#278).
     action list-all issue {
         describe "List all issues by auto-paginating issue list."
         input owner {
@@ -157,8 +127,8 @@ wrap aos-agent ops forgejo {
             as issues
         }
     }
-    // view issue: read-family shadow action re-declared verbatim (child-local) so
-    // a write-tier view still returns the comment thread (ward#170), matching read.
+    // view issue: read-family shadow action re-declared verbatim (child-local) so an
+    // admin-tier view still returns the comment thread (ward#170), matching read.
     action view issue {
         describe "View an issue with its full comment thread (issue + comments). Shadows the generated `issue view` (same 3-arg signature) so a view never misses the comments - the ward#170 failure mode where an agent reads the body and skips the thread. ward#225: ward's CLI renders this through a lean projection that collapses every commenter to its login literal, so a multi-comment issue no longer repeats each commenter's full profile once per comment; the guardfile shape is unchanged."
         input owner {
@@ -194,7 +164,7 @@ wrap aos-agent ops forgejo {
         }
     }
     // move-issue: copy title/body to a target repo, back-link, then CLOSE the
-    // source (never delete). Its `view issue` call resolves to the inherited leaf.
+    // source (never delete). Write-family action re-declared verbatim (child-local).
     action move-issue {
         describe "Move an issue to another repo (copy title/body, back-link, close source). Never deletes."
         input source {
@@ -242,7 +212,7 @@ wrap aos-agent ops forgejo {
         }
     }
     // comment issue: shadow the leaf so a comment on a CLOSED issue warns instead
-    // of posting silently - get-then-comment with a fail-when over state (ward#380).
+    // of posting silently (ward#380). Write-family action re-declared verbatim.
     action comment issue {
         describe "Post a comment on an issue, warning when the issue is closed (ward#380). Shadows the generated `issue comment` leaf (same 3-arg + --body signature): it GETs the issue to read its state, posts the comment, then `fail-when`s on state=='closed' so commenting on a closed issue exits non-zero instead of passing silently. The comment IS still created - the non-zero exit and the issue body in the output are the warning that the target was closed, not a block on the post. Renders {comment, issue} together like every mount call action."
         input owner {

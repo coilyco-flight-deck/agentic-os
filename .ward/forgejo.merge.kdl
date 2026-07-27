@@ -6,7 +6,7 @@
 // -> admin tier chain: the shared read/write tiers inherit those shared grants, and PR
 // mutation binds to the director, engineer, and pm roles only (roles.kdl), so
 // it rides its own overlay the way the Actions log bridge does. The pr READ
-// side (view/list/files/commits) lives in guardfile.forgejo.read.kdl, which
+// side (view/list/files/commits) lives in forgejo.read.kdl, which
 // those roles already inherit.
 //
 // The merge pair backs the `ward agent director merge` composite - merge only

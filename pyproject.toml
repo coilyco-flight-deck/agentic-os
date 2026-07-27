@@ -153,7 +153,11 @@ slow_days = 365
 [tool.agentic-os.issue-reference-guard]
 enabled = true
 excludes = [
-    ".ward/*.guardfile.kdl",
+    ".ward/aws*.kdl",
+    ".ward/forgejo*.kdl",
+    ".ward/kubectl.kdl",
+    ".ward/observe.kdl",
+    ".ward/tailscale.kdl",
     ".ward/*.lock.json",
     "agentic_os.egg-info/**",
 ]

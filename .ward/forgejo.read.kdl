@@ -1,6 +1,6 @@
 // Forgejo READ tier - the base of the read -> write -> admin chain (ward#240),
 // now carrying the real curated surface ported from the monolith
-// ../guardfile.forgejo.kdl (ward#278, Phase 1). The bare `can get *` /
+// ../forgejo.kdl (ward#278, Phase 1). The bare `can get *` /
 // `can list *` wildcards are gone: they over-granted every get/list-able swagger
 // resource and dropped every curated construct. This tier lists the explicit
 // read-side leaves of the curated subset instead, so the surface is exactly the
@@ -136,7 +136,7 @@ wrap aos-agent ops forgejo {
     // old web-UI-only `never` pair was dead and shadowed up-tier pr leaves.
     can view pr {
         op repoGetPullRequest
-        describe "single PR read (GET /repos/{owner}/{repo}/pulls/{index}). agentic-os#488 replaced the tier's old `never` denial pair here: the monolith had granted pr view/list all along and the live surface served them, so the deny was dead - and, since deny inherits up the read -> write -> admin chain, it would have silently shadowed every pr leaf an upper tier ever grew. Reads live in this tier; the mutating lifecycle (create/edit/close/reopen/update) and merge ride guardfile.forgejo.merge.kdl outside the chain, bound to the director/engineer/pm roles only. op pinned like the monolith's pr leaves - the bare convention does not reach the pulls sub-resources."
+        describe "single PR read (GET /repos/{owner}/{repo}/pulls/{index}). agentic-os#488 replaced the tier's old `never` denial pair here: the monolith had granted pr view/list all along and the live surface served them, so the deny was dead - and, since deny inherits up the read -> write -> admin chain, it would have silently shadowed every pr leaf an upper tier ever grew. Reads live in this tier; the mutating lifecycle (create/edit/close/reopen/update) and merge ride forgejo.merge.kdl outside the chain, bound to the director/engineer/pm roles only. op pinned like the monolith's pr leaves - the bare convention does not reach the pulls sub-resources."
     }
     can list pr {
         op repoListPullRequests

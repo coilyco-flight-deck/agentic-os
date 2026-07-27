@@ -2,16 +2,16 @@ roles {
     // engineer: write code, merge code, stay focused on your goal
     role engineer {
         // guardfiles for day to day read (defaults)
-        guardfile "guardfile.forgejo.read.kdl"
-        guardfile "guardfile.forgejo.readactions.kdl"
+        guardfile "forgejo.read.kdl"
+        guardfile "forgejo.readactions.kdl"
         // guardfiles for dev
-        guardfile "guardfile.forgejo.write.kdl"
-        guardfile "guardfile.forgejo.merge.kdl"
+        guardfile "forgejo.write.kdl"
+        guardfile "forgejo.merge.kdl"
         // bounded live evidence without ops mutation authority
-        guardfile "guardfile.observe.kdl"
+        guardfile "observe.kdl"
         // Keep the role-only overlay after the public AWS source in lexical
         // order. Ward's public exec mount keeps the first shared command path.
-        guardfile "guardfile.aws.role-engineer.kdl"
+        guardfile "aws.role-engineer.kdl"
         // make the agents average everyday fellows
         agent claude {
             model claude-opus-4-8
@@ -33,17 +33,17 @@ roles {
     // director: pair with the human on high level goals
     role director {
         // guardfiles for day to day read (defaults)
-        guardfile "guardfile.forgejo.read.kdl"
-        guardfile "guardfile.forgejo.readactions.kdl"
+        guardfile "forgejo.read.kdl"
+        guardfile "forgejo.readactions.kdl"
         // guardfiles for project management
-        guardfile "guardfile.forgejo.write.kdl"
-        guardfile "guardfile.forgejo.merge.kdl"
+        guardfile "forgejo.write.kdl"
+        guardfile "forgejo.merge.kdl"
         // guardfiles for ops
-        guardfile "guardfile.aws.kdl"
-        guardfile "guardfile.tailscale.kdl"
-        guardfile "guardfile.kubectl.kdl"
-        guardfile "guardfile.forgejo.runnertoken.kdl"
-        guardfile "guardfile.forgejo.runnertoken.exec.kdl"
+        guardfile "aws.kdl"
+        guardfile "tailscale.kdl"
+        guardfile "kubectl.kdl"
+        guardfile "forgejo.runnertoken.kdl"
+        guardfile "forgejo.runnertoken.exec.kdl"
         // make the agents as smart as they come
         agent claude {
             model claude-fable-5
@@ -65,10 +65,10 @@ roles {
     // qa: pair with engineers on polishing code
     role qa {
         // guardfiles for day to day read (defaults)
-        guardfile "guardfile.forgejo.read.kdl"
-        guardfile "guardfile.forgejo.readactions.kdl"
+        guardfile "forgejo.read.kdl"
+        guardfile "forgejo.readactions.kdl"
         // bounded live evidence without ops mutation authority
-        guardfile "guardfile.observe.kdl"
+        guardfile "observe.kdl"
         // make the agents average everyday fellows
         agent claude {
             model claude-opus-4-8
@@ -90,12 +90,12 @@ roles {
     // advisor: in depth research and analysis
     role advisor {
         // guardfiles for day to day read (defaults)
-        guardfile "guardfile.forgejo.read.kdl"
-        guardfile "guardfile.forgejo.readactions.kdl"
+        guardfile "forgejo.read.kdl"
+        guardfile "forgejo.readactions.kdl"
         // guardfiles for ops
-        guardfile "guardfile.aws.kdl"
-        guardfile "guardfile.tailscale.kdl"
-        guardfile "guardfile.kubectl.kdl"
+        guardfile "aws.kdl"
+        guardfile "tailscale.kdl"
+        guardfile "kubectl.kdl"
         // make the agents lil bit smart
         agent claude {
             model claude-fable-5
@@ -117,14 +117,14 @@ roles {
     // ops: investigate live systems and apply modifications and remediation
     role ops {
         // guardfiles for day to day read (defaults)
-        guardfile "guardfile.forgejo.read.kdl"
-        guardfile "guardfile.forgejo.readactions.kdl"
+        guardfile "forgejo.read.kdl"
+        guardfile "forgejo.readactions.kdl"
         // guardfiles for ops
-        guardfile "guardfile.aws.kdl"
-        guardfile "guardfile.tailscale.kdl"
-        guardfile "guardfile.kubectl.kdl"
-        guardfile "guardfile.forgejo.runnertoken.kdl"
-        guardfile "guardfile.forgejo.runnertoken.exec.kdl"
+        guardfile "aws.kdl"
+        guardfile "tailscale.kdl"
+        guardfile "kubectl.kdl"
+        guardfile "forgejo.runnertoken.kdl"
+        guardfile "forgejo.runnertoken.exec.kdl"
         // make the agents as smart as they come
         agent claude {
             model claude-fable-5
@@ -146,11 +146,11 @@ roles {
     // pm: autonomous triage and project management
     role pm {
         // guardfiles for day to day read (defaults)
-        guardfile "guardfile.forgejo.read.kdl"
-        guardfile "guardfile.forgejo.readactions.kdl"
+        guardfile "forgejo.read.kdl"
+        guardfile "forgejo.readactions.kdl"
         // guardfiles for project management
-        guardfile "guardfile.forgejo.write.kdl"
-        guardfile "guardfile.forgejo.merge.kdl"
+        guardfile "forgejo.write.kdl"
+        guardfile "forgejo.merge.kdl"
         // make the agents average everyday fellows
         agent claude {
             model claude-opus-4-8
@@ -182,11 +182,11 @@ roles {
     // ceo: operate Kai's real project portfolio and allocate attention across it
     role ceo {
         // guardfiles for day to day read (defaults)
-        guardfile "guardfile.forgejo.read.kdl"
-        guardfile "guardfile.forgejo.readactions.kdl"
+        guardfile "forgejo.read.kdl"
+        guardfile "forgejo.readactions.kdl"
         // guardfiles for portfolio governance
-        guardfile "guardfile.forgejo.write.kdl"
-        guardfile "guardfile.forgejo.merge.kdl"
+        guardfile "forgejo.write.kdl"
+        guardfile "forgejo.merge.kdl"
         // make the agents as smart as they come
         agent claude {
             model claude-fable-5

@@ -15,13 +15,13 @@ It restores the live-observe access removed below operational need on 2026-07-10
 
 Runner-token mint is `aosguard ops forgejo actions generate-runner-token`
 for operators. Ward separately mounts the
-[role guardfile](../.ward/guardfile.forgejo.runnertoken.kdl) for director and
+[role guardfile](../.ward/forgejo.runnertoken.kdl) for director and
 ops containers. It stays out of the fleet-wide
-[readactions overlay](../.ward/guardfile.forgejo.readactions.kdl).
+[readactions overlay](../.ward/forgejo.readactions.kdl).
 
 ## Read-only observability boundary
 
-[Observe](../.ward/guardfile.observe.kdl) backs Engineer and QA's
+[Observe](../.ward/observe.kdl) backs Engineer and QA's
 `ward ops observe`.
 It grants bounded state, logs, events, metrics, health, and rollout status.
 Secrets, kubeconfig contents, workload execution, port forwarding, deployment,
@@ -35,7 +35,7 @@ granting credentials, shell, deploy, or remediation.
 Each capability is owned by exactly one layer, so a one-layer rollback reads
 as drift against this map instead of silently disabling a role.
 
-* **guardfile bindings** - [.ward/roles.kdl](../.ward/roles.kdl), authored here - which guarded verb families a role mounts. Examples are the Engineer/QA observe tier, Forgejo tiers, and ops guardfiles under [aws](../.ward/guardfile.aws.kdl) and [tailscale](../.ward/guardfile.tailscale.kdl). Per ward#578, tailnet and `~/.aws` reach keys off these bindings.
+* **guardfile bindings** - [.ward/roles.kdl](../.ward/roles.kdl), authored here - which guarded verb families a role mounts. Examples are the Engineer/QA observe tier, Forgejo tiers, and ops guardfiles under [aws](../.ward/aws.kdl) and [tailscale](../.ward/tailscale.kdl). Per ward#578, tailnet and `~/.aws` reach keys off these bindings.
 * **role presets** - ward's tree - tagline, capabilities, modes, posture. Stripped from the aos overlay on 2026-07-10 (commit 566f42f) by design, never re-authored here.
 * **image binaries** - [docker/dev-base/](dev-base-image.md), authored here - whether language toolchains, `aosguard`, `aws`, `kubectl`, `helm`, `tailscale`, `tailscaled`, and the Docker client exist on disk. The one full image contains them all. The `ops` role remains a permission and bring-up boundary, not an image tag.
 * **container bring-up** - ward's tree - whether creds and daemons are live: the `~/.aws` dir, a kubeconfig, `tailscaled` process/auth/socket wiring, `FORGEJO_TOKEN`, and the `WARD_CONTEXT_LEVEL` context slice. A binary existing says nothing about this layer.

@@ -66,8 +66,8 @@ The bundle uses source binary names that Ward reroots to the selected role
 command at runtime. Role-only Forgejo tier files use `aos-agent`. Operational
 automation and human operators use `aosguard ops ...`.
 
-Engineer/QA bind [observe](../.ward/guardfile.observe.kdl). Director/ops keep
-[kubectl](../.ward/guardfile.kubectl.kdl), blocking deploy/rollback inheritance.
+Engineer/QA bind [observe](../.ward/observe.kdl). Director/ops keep
+[kubectl](../.ward/kubectl.kdl), blocking deploy/rollback inheritance.
 
 Landing policy lives in [`.ward/repos.kdl`](../.ward/repos.kdl). Its workflow
 block keeps the coilyco PR-gated repos explicit.

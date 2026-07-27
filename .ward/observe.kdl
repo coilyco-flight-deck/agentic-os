@@ -2,7 +2,7 @@
 //
 // This surface is intentionally separate from ops kubectl. It grants bounded,
 // read-only evidence without inheriting deploy, rollback, or shell-equivalent
-// verbs from guardfile.kubectl.kdl.
+// verbs from kubectl.kdl.
 wrap aos-ward ops observe {
     exec kubectl
 

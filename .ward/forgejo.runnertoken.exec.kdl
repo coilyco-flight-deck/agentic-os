@@ -1,5 +1,5 @@
 // Forgejo runner-token exec bridge. This stays thin on purpose: the HTTP
-// request is owned by guardfile.forgejo.runnertoken.kdl, and this leaf only
+// request is owned by forgejo.runnertoken.kdl, and this leaf only
 // routes the user-facing scope form onto the matching fetch leaf.
 wrap aos-ward ops forgejo {
     exec python3

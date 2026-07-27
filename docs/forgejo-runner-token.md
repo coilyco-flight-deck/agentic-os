@@ -2,7 +2,7 @@
 
 `aosguard ops forgejo actions generate-runner-token` mints a Forgejo Actions runner
 registration token from the guarded surface. The HTTP request itself lives in
-[`.ward/guardfile.forgejo.runnertoken.kdl`](../.ward/guardfile.forgejo.runnertoken.kdl)
+[`.ward/forgejo.runnertoken.kdl`](../.ward/forgejo.runnertoken.kdl)
 as three declarative fetch leaves, one per scope:
 
 - `global` - `/admin/runners/registration-token`
@@ -10,7 +10,7 @@ as three declarative fetch leaves, one per scope:
 - `repo <owner> <repo>` - `/repos/{owner}/{repo}/actions/runners/registration-token`
 
 The thin exec bridge in
-[`.ward/guardfile.forgejo.runnertoken.exec.kdl`](../.ward/guardfile.forgejo.runnertoken.exec.kdl)
+[`.ward/forgejo.runnertoken.exec.kdl`](../.ward/forgejo.runnertoken.exec.kdl)
 routes the scope form through
 [`.ward/forgejo-runner-token.py`](../.ward/forgejo-runner-token.py) onto the
 right fetch leaf. It does not reimplement auth or HTTP.
