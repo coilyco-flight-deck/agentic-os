@@ -1,10 +1,5 @@
 #!/usr/bin/env zsh
 
-if [[ "$SHELL" == *"bash"* ]]; then
-  source "$HOME/.bashrc"
-  exit 0
-fi
-
 _siren_zshrc_source="$(readlink "${(%):-%N}" 2>/dev/null || printf '%s' "${(%):-%N}")"
 _siren_aos_root="$(cd "$(dirname "$_siren_zshrc_source")/.." && pwd -P)"
 export AOS_REPO_ROOT="$_siren_aos_root"
