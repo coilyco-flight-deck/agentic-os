@@ -1,6 +1,6 @@
 ---
 name: tooling-scout-capability
-description: Inbound half of the scout pair. Capability gap analysis for skills and MCP servers - what to ADD. Sweeps repos, hydrates against skillsmp and glama, security-audits silver/gold tiers, installs one-issue-one-commit. Paired with tooling-scout-displacement (what to SHED).
+description: Inbound half of the scout pair. Capability gap analysis for skills and MCP servers - what to ADD. Sweeps repos, uses the SkillsMP and Glama MCPs as primary catalogs, audits silver/gold tiers, and installs one-issue-one-commit. Paired with tooling-scout-displacement (what to SHED).
 low-context: optional
 ---
 
@@ -36,7 +36,7 @@ final per-install commits land in the personal-OS repo. Inbox path:
 ## Phases
 
 - [Phase 1 - Grounded sweep + speculative ideation](references/phase-1-sweep.md) - walk the working surface, build a candidate list, brainstorm what doesn't exist yet.
-- [Phase 2 - Hydration](references/phase-2-hydration.md) - resolve bare names against skillsmp/glama plus an awesome-list backstop, dedup against installs.
+- [Phase 2 - Hydration](references/phase-2-hydration.md) - query the SkillsMP and Glama MCPs first, verify against first-party and curated backstops, dedup against installs.
 - [Phase 3 - Categorize and rank](references/phase-3-rank.md) - semantic categories, global 3:2:1 medal ranking.
 - [Phase 4 - Security audit](references/phase-4-audit.md) - 🥈/🥇 only, supply-chain-audit skill, 🟢🟡🔴 safety prefix (blocked on execution verification).
 - [Phase 5 - Present 🥇🟢 inline](references/phase-5-present.md) - flatten the top tier to chat, explicit-deny approval.

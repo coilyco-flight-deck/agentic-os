@@ -1,34 +1,43 @@
 # Phase 2 - Hydration
 
-For each candidate from phase 1, fetch:
+For each candidate from phase 1, query the native MCP catalogs first:
 
-- Skills: `ward-kdl pkg skillsmp skills search --q <name>` and
-  `ward-kdl pkg skillsmp skills ai-search --q <name>`. Take the top
-  result if it's a strong match; record multiple if ambiguous.
-- MCPs: `ward-kdl pkg glama server list` (paginate with
-  `--after`/`--first`) and `ward-kdl pkg glama server get <namespace>
-  <slug>` for exact matches.
-- **Backstop:** also `WebFetch` 2-3 well-known awesome-lists
+- **Skills:** call the SkillsMP MCP's `search_skills` tool. Try the bare
+  name and one or two intent-oriented query variants, using category,
+  occupation, and language filters when they narrow the result. Take the
+  top result when it is a strong match and record multiple results when
+  the name is ambiguous.
+- **MCP servers:** call the Glama MCP's `search_server` tool, paginating
+  with `after` and `first` when the result set warrants it. Call
+  `get_server` for an exact namespace/slug match. Use `list_attributes`
+  when Glama attributes can narrow a broad category before searching.
+
+SkillsMP and Glama are the primary data sources for this phase. Tool
+namespaces vary by harness, so select these tools from the connected
+SkillsMP and Glama MCP servers rather than assuming a shell wrapper.
+Do not skip the MCP pass because a category looks familiar.
+
+After the MCP pass, cross-check:
+
+- The obvious first-party repository (`<vendor>/mcp-server-<vendor>`,
+  `<vendor>labs/mcp`, and similar) for provenance and current support.
+- Two or three well-known curated lists
   (travisvn/awesome-claude-skills, ComposioHQ/awesome-claude-skills,
-  claudefa.st's MCP list) plus the obvious first-party repo
-  (`<vendor>/mcp-server-<vendor>`, `<vendor>labs/mcp`, etc.) as a
-  sanity check that no established entry was missed by the registries.
+  claudefa.st's MCP list) as a gap-filling backstop.
 
-**Source order depends on the category - backstop-first for infra/vendor:**
+These backstops verify registry results and fill holes. They never replace
+the primary SkillsMP or Glama query.
 
-- **Well-trodden infra/vendor categories** (prometheus, grafana,
-  cloudflare, aws, chrome-devtools, and similar) - hit the awesome-list
-  and first-party repo backstop **FIRST**, glama second. Glama free-text
-  search is recency- and spam-polluted: queries for these categories
-  surface unrelated spam (SuiteCRM, DingTalk, ProposalCraft) and **miss
-  the established first-party servers** (grafana/mcp-grafana,
-  cloudflare/mcp-server-cloudflare, awslabs/mcp,
-  ChromeDevTools/chrome-devtools-mcp). For these, the backstop is the
-  primary source and glama is the supplement.
-- **Niche / long-tail servers** - glama first, backstop second. Glama is
-  better at surfacing the smaller, less-canonical servers that never make
-  it onto an awesome-list, and the spam noise matters less when there is
-  no obvious first-party answer to be drowned out.
+For well-trodden infra and vendor categories such as Prometheus, Grafana,
+Cloudflare, AWS, and Chrome DevTools, always perform the first-party
+cross-check after querying Glama. Glama free-text results can be
+recency- or spam-polluted and can miss an established first-party server.
+For niche and long-tail servers, Glama is often the strongest discovery
+surface, while the backstops may have no entry at all.
+
+If either MCP is unavailable, record `source_status: unavailable` for that
+catalog before using the configured CLI or API wrapper as a transport
+fallback. A fallback does not become the primary source by substitution.
 
 Hydrate each into: `Org / Name / Url / Description (1 sentence)`. Keep
 the original bare name in a `bare_name` field for traceability.

@@ -34,14 +34,17 @@ content. The wrong default is a silent edit. Always ask.
 - **Resume model:** if invoked without a phase argument, look for
   today's checkpoint files and resume from the next phase. If invoked
   with an explicit phase number, run only that phase.
-- **Wrapper paths:** `ward-kdl pkg skillsmp skills {search,ai-search}`
-  and `ward-kdl pkg glama server {list,get}`. These rode `coily pkg`
-  until the ward gating change
-  moved both wrappers onto the ward-kdl spec runtime (landed `ward-kdl`
-  v0.58.0), retiring the coily dependency. The argv gained a resource
-  layer (`skills` / `server`) and the search term is now the `--q` flag
-  (positional under coily); glama directory listing paginates with
-  `--after`/`--first`. Migrated 2026-06-25.
+- **Primary MCP surfaces:** SkillsMP exposes `search_skills`. Glama
+  exposes `search_server`, `get_server`, and `list_attributes`. Phase 2
+  uses these connected MCPs as its primary catalogs. The SkillsMP
+  `ai-search` endpoint was retired upstream, so the scout never calls it.
+- **CLI fallback:** if a primary MCP is unavailable, use
+  `ward-kdl pkg skillsmp skills search --q <name>` or
+  `ward-kdl pkg glama server {list,get}` against the same registries.
+  The Glama listing paginates with `--after` and `--first`. These
+  wrappers rode `coily pkg` until the ward gating change moved them onto
+  the ward-kdl spec runtime in v0.58.0. The wrappers are fallback
+  transports, not the scout's primary data sources.
 - **Speculative entries are the point.** Don't be shy about listing
   things that don't exist yet. The "go bother someone" pathway is a
   primary use of this skill, not a side effect.
