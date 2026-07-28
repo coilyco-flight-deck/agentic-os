@@ -4,7 +4,7 @@ Cross-platform shell, terminal, and secret-handling capabilities.
 
 ## Cross-platform shell
 
-One shared core (`shell/common.sh`) owns shell setup. Zsh (`shell/zshrc`) and Bash (`shell/bashrc`) source it, then add their prompt and completion. The rendered Windows PowerShell profile reads its marked environment exports and derives Windows paths natively, without launching Bash. Setup boots cleanly on Mac, Linux (kai-server), and Windows. It carries identity, history, AWS defaults, commit-addressed `WARD_CONFIG_REF`, `WARD_LOCKDOWN_ROOT`, git helpers, aliases, an `rg` wrapper, and the SSM loader.
+One shared core (`shell/common.sh`) owns shell setup. Zsh (`shell/zshrc`) and Bash (`shell/bashrc`) source it, then add their prompt and completion. The rendered Windows PowerShell profile reads its marked environment exports and derives Windows paths natively, without launching Bash. Setup boots cleanly on Mac, Linux (kai-server), and Windows. It carries identity, history, AWS defaults, commit-addressed `WARD_CONFIG_REF`, `WARD_LOCKDOWN_ROOT`, git helpers, aliases, an `rg` wrapper, and on-demand SSM reads.
 
 The core's env + PATH block runs once per terminal tree, gated by an exported `_SIREN_SHELL_ENV` guard: a nested shell inherits the env and skips re-running brew/pyenv/PATH, while still defining aliases and functions (per-shell, never inherited). Env + PATH load for non-interactive shells too (scripts, ssh exec, the Claude Code Bash tool). Prompt and completion are interactive-only. The core exports `PROJECTS_ROOT`, honoring a set value, then `~/projects`, then deriving the workspace umbrella from the AOS checkout. Both shells auto-cd from `$HOME` to an existing `$WARP_STARTUP_DIR`, or `$PROJECTS_ROOT` when unset. The same operator-local override drives Warp's new-tab directory. Host-specific lines live in untracked `~/.shellrc.local` (shared) or `~/.{bash,zsh}rc.local` (per shell).
 
@@ -17,9 +17,11 @@ real binary starts. A host without the opt-in agent-compose product
 falls back to the real binary. The wrappers apply in any working directory,
 including paths outside a git work tree.
 
-## In-process AWS SSM secret loader
+## On-demand AWS SSM secret reads
 
-Pull secrets directly into the shell environment, never to disk. `ssm-load` reads every SecureString under the configured prefix and `load-env`s them. `ssm-get <name>` fetches a single value to stdout, a memory-only path.
+`ssm-get <name> [profile] [region]` fetches one decrypted parameter to stdout
+without writing it to disk. The shell exposes no bulk parameter-tree loader and
+does not populate secret environment variables at startup.
 
 ## Cross-platform terminal
 

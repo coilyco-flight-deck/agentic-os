@@ -94,14 +94,16 @@ the paired native update path are documented in the [CLI release walkthrough](do
 
 ## Secrets pattern
 
-The current pattern keeps secrets off disk entirely:
+Fetch one parameter only when a command needs it:
 
 ```bash
-ssm-load                          # pull every / parameter into the current shell env
-ssm-get /eco/server-api-token     # fetch one value without storing it
+ssm-get /eco/server-api-token
 ```
 
-No disk write at any point. Same call works on Mac, Linux, Windows. AWS profile defaults to `default`; override with `ssm-load <profile> <region>`. For secrets at shell startup, append `ssm-load` to the end of `shell/common.sh`. The legacy cleartext-on-disk dump (`~/.cache/ssm-env.sh`) was deleted.
+`ssm-get` prints the decrypted value to stdout without writing it to disk. The
+AWS profile defaults to `default`; pass a profile and region as the second and
+third arguments. The bulk shell-environment exporter and the legacy
+cleartext-on-disk dump (`~/.cache/ssm-env.sh`) are removed.
 
 ## agent-compose
 

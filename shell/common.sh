@@ -437,29 +437,7 @@ github-token-load() {
   export HOMEBREW_GITHUB_PACKAGES_TOKEN="$GITHUB_PERSONAL_ACCESS_TOKEN"
 }
 
-# --- In-process AWS SSM secret loader (memory only, never disk) ---
-ssm-load() {
-  local quiet=0
-  if [ "$1" = "--quiet" ]; then
-    quiet=1
-    shift
-  fi
-  local profile="${1:-default}"
-  local region="${2:-us-east-1}"
-  local json count name value key
-  json=$(AWS_PROFILE="$profile" AWS_REGION="$region" \
-    aws ssm get-parameters-by-path --path "/" --recursive --with-decryption \
-    --query 'Parameters[].{Name:Name,Value:Value}' --output json) || return 1
-  while IFS="$(printf '\t')" read -r name value; do
-    key=$(printf '%s' "${name#/}" | tr '/-' '__' | tr '[:lower:]' '[:upper:]')
-    export "$key=$value"
-  done <<EOF
-$(printf '%s' "$json" | jq -r '.[] | [.Name, .Value] | @tsv')
-EOF
-  count=$(printf '%s' "$json" | jq 'length')
-  [ "$quiet" -eq 1 ] || printf 'loaded %s SSM exports into env\n' "$count"
-}
-
+# Fetch one SSM value on demand without persisting it.
 ssm-get() {
   local name="$1"
   local profile="${2:-default}"

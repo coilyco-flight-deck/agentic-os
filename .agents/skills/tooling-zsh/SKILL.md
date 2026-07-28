@@ -1,6 +1,6 @@
 ---
 name: tooling-zsh
-description: Zsh + bash are Kai's shells (zsh+Warp interactive, bash for ssh/non-interactive). One shared agentic-os/shell/common.sh sourced by both, thin zshrc/bashrc entries add prompt+completion. Use when drafting shell commands, editing agentic-os/shell/*, configuring PATH or prompt, loading AWS secrets via ssm-load, debugging shell startup. Triggers - zsh, bash, zshrc, bashrc, .zshrc, .bashrc, $PATH, common.sh, ssm-load, vcs_info, prompt, Warp.
+description: Zsh + bash are Kai's shells (zsh+Warp interactive, bash for ssh/non-interactive). One shared agentic-os/shell/common.sh sourced by both, thin zshrc/bashrc entries add prompt+completion. Use when drafting shell commands, editing agentic-os/shell/*, configuring PATH or prompt, fetching one AWS secret via ssm-get, debugging shell startup. Triggers - zsh, bash, zshrc, bashrc, .zshrc, .bashrc, $PATH, common.sh, ssm-get, vcs_info, prompt, Warp.
 low-context: required
 ---
 
@@ -14,7 +14,7 @@ Canonical files live at `~/projects/coilyco-flight-deck/agentic-os/shell/`, syml
 
 Files:
 
-- `common.sh` - the shared core (bash/zsh common subset). Sets env, per-OS PATH (via `uname -s`), aliases, git helpers, the `rg` wrapper, `ssm-load`/`ssm-get`, resolves `$PROJECTS_ROOT`, and auto-cds to `$WARP_STARTUP_DIR` with the projects root as its fallback. The env + PATH block runs once per terminal tree, gated by the exported `_SIREN_SHELL_ENV` guard; a nested shell inherits the env and skips it but still defines the aliases/functions.
+- `common.sh` - the shared core (bash/zsh common subset). Sets env, per-OS PATH (via `uname -s`), aliases, git helpers, the `rg` wrapper, `ssm-get`, resolves `$PROJECTS_ROOT`, and auto-cds to `$WARP_STARTUP_DIR` with the projects root as its fallback. The env + PATH block runs once per terminal tree, gated by the exported `_SIREN_SHELL_ENV` guard; a nested shell inherits the env and skips it but still defines the aliases/functions.
 - `zshrc` - zsh entry. Sources `common.sh`, then zsh-only: `compinit`, the `vcs_info` siren prompt, `warp.zsh`.
 - `bashrc` - bash entry. Sources `common.sh`, then bash-only: completion, the `PROMPT_COMMAND` siren prompt.
 - `warp.zsh` - the zsh-only `warp` dispatcher + completion.
@@ -28,7 +28,7 @@ Available in any interactive zsh:
 - `rg` - wrapper with `--hidden --glob '!.git' --glob '!*.svg' --glob '!.vscode'`
 - `git-default-branch`, `git-pr-title`, `git-merge-default-branch`, `git-checkpoint`, `git-squash`, `gt-conflicts`
 - `docker-bash <container-name>`, `rg-code <pattern>`, `pull-all-repos`, `count-lines`
-- `ssm-load [profile] [region]`, `ssm-get <name> [profile] [region]`
+- `ssm-get <name> [profile] [region]`
 - `github-token-load` - lazy. Call when something needs `$GITHUB_PERSONAL_ACCESS_TOKEN`; not eager on every shell start.
 
 ## Prompt
