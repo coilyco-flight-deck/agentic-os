@@ -23,7 +23,6 @@ def _run_function(
     tmp_path: Path,
     function: str,
     *args: str,
-    allow_any: bool = True,
     cwd: Path | None = None,
 ) -> subprocess.CompletedProcess[str]:
     env = os.environ.copy()
@@ -34,10 +33,6 @@ def _run_function(
             "_SIREN_SHELL_ENV": "1",
         }
     )
-    if allow_any:
-        env["AOS_ALLOW_ANY"] = "1"
-    else:
-        env.pop("AOS_ALLOW_ANY", None)
     command = " ".join(
         [
             f"source {shlex.quote(str(COMMON_SH))}",
@@ -56,7 +51,7 @@ def _run_function(
     )
 
 
-@pytest.mark.parametrize("harness", ["claude", "codex", "opencode"])
+@pytest.mark.parametrize("harness", ["claude", "codex", "goose", "opencode"])
 def test_agent_cli_launches_through_acompose(
     tmp_path: Path,
     harness: str,
@@ -88,23 +83,22 @@ def test_agent_cli_falls_back_when_acompose_is_unavailable(tmp_path: Path) -> No
     assert result.stdout == "real-codex <one>\nreal-codex <two words>\n"
 
 
-def test_agent_cli_repo_gate_runs_before_acompose(tmp_path: Path) -> None:
+def test_agent_cli_launches_outside_repo(tmp_path: Path) -> None:
     outside_repo = tmp_path / "outside"
     outside_repo.mkdir()
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     _write_executable(
         bin_dir / "acompose",
-        '#!/bin/sh\nprintf "unexpected\\n"\n',
+        '#!/bin/sh\nprintf "<%s>\\n" "$@"\n',
     )
 
     result = _run_function(
         tmp_path,
-        "codex",
-        allow_any=False,
+        "goose",
+        "outside",
         cwd=outside_repo,
     )
 
-    assert result.returncode == 1
-    assert result.stdout == ""
-    assert "codex: refusing to start outside a git repo" in result.stderr
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == "<-->\n<goose>\n<outside>\n"
