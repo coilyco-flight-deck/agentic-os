@@ -18,29 +18,57 @@ import os
 import subprocess
 import sys
 import urllib.request
+from pathlib import Path
 
 FORGEJO_BASE = "https://forgejo.coilysiren.me/api/v1"
 OWNER = "coilyco-flight-deck"
 API_TOKEN_PARAM = "/forgejo/api-token"
+TELEGRAM_DEFAULTS_PATH = (
+    Path(__file__).resolve().parent.parent
+    / "actions"
+    / "telegram-alert"
+    / "defaults.json"
+)
+
+
+def load_secret_sources(path: Path) -> dict[str, str]:
+    """Load Actions-secret to SSM-parameter mappings from an action manifest."""
+    try:
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+        if manifest["schema-version"] != 1:
+            raise ValueError("unsupported schema-version")
+        secrets = manifest["secrets"]
+        sources = {
+            value["actions-secret"]: value["ssm-parameter"]
+            for value in secrets.values()
+        }
+    except (KeyError, OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        raise SystemExit(f"invalid action defaults manifest {path}: {exc}") from exc
+    if not sources or any(
+        not name or not parameter.startswith("/")
+        for name, parameter in sources.items()
+    ):
+        raise SystemExit(f"invalid action secret sources in {path}")
+    return sources
+
+
+TELEGRAM_SECRET_SOURCES = load_secret_sources(TELEGRAM_DEFAULTS_PATH)
 
 # repo -> secret name -> SSM parameter (see SSM.md in agentic-os-kai).
 # Release and package writers use their separately rotated SSM token family.
 MAPPING: dict[str, dict[str, str]] = {
     "agentic-os": {
-        "TELEGRAM_BOT_TOKEN": "/coilysiren/telegram/bot-token",
-        "TELEGRAM_RED_CHAT_ID": "/coilysiren/telegram/red-chat-id",
+        **TELEGRAM_SECRET_SOURCES,
         "CI_RELEASE_TOKEN": "/forgejo/ci-release-token",
         "TAP_WRITE_TOKEN": "/forgejo/tap-bump-token",
         "SCOOP_WRITE_TOKEN": "/forgejo/scoop-write-token",
     },
     "ward": {
-        "TELEGRAM_BOT_TOKEN": "/coilysiren/telegram/bot-token",
-        "TELEGRAM_RED_CHAT_ID": "/coilysiren/telegram/red-chat-id",
+        **TELEGRAM_SECRET_SOURCES,
         "CI_RELEASE_TOKEN": "/forgejo/ci-release-token",
     },
     "cli-guard": {
-        "TELEGRAM_BOT_TOKEN": "/coilysiren/telegram/bot-token",
-        "TELEGRAM_RED_CHAT_ID": "/coilysiren/telegram/red-chat-id",
+        **TELEGRAM_SECRET_SOURCES,
         "CI_RELEASE_TOKEN": "/forgejo/ci-release-token",
     },
 }

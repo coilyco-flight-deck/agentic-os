@@ -29,6 +29,8 @@ Composite Forgejo Actions for the brew release pipeline, each a forgejo-API-only
 - `actions/upload-release-asset` - POST a release asset with bounded lookup, delete, and upload calls.
 - `actions/bump-formula` - rewrite a Homebrew Formula's `url ".."` line to pin the new tag + revision and PUT via forgejo Contents API with bounded lookup and write calls.
 
-Consumed via `uses: coilyco-flight-deck/agentic-os/actions/<name>@main` from a `.forgejo/workflows/*.yml`. Issued `${{ github.token }}` covers writes.
+Forgejo imports use a fully qualified canonical URL:
+`uses: https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/actions/<name>@main`.
+GitHub uses the mirror.
 
 agentic-os dogfoods these actions in `.forgejo/workflows/`, using local `uses: ./actions/...` refs so the repo never waits on its mirror. Release is split so `promote.yml` gates every main push and fast-forwards `release`, `dev-base-publish.yml` publishes the draft full image on the promoted SHA, and `release.yml` stays the manual retry path. PR retriggers need a real tracked diff. Consumer pin is tag-derived (agentic-os#238). Major bumps stay hand-cut via `scripts/release.py`. `workflow_dispatch` re-fires the retry stage on enqueue miss. Walkthrough: [docs/release.md](release.md).
