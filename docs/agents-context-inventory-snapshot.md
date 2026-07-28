@@ -21,7 +21,7 @@
 * **coilyco-bridge/agentic-os-hardware** - aosh - unknown - root AGENTS present - 2 context documents
 * **coilyco-bridge/agentic-os-kai** - product - unknown - root AGENTS present - 5 context documents
 * **coilyco-bridge/deploy** - product - unknown - root AGENTS present - 2 context documents
-* **coilyco-bridge/lore** - product - unknown - root AGENTS present - 2 context documents
+* **coilysiren/lore** - product - unknown - root AGENTS present - 2 context documents
 * **coilyco-flight-deck/.github** - substrate - public - root AGENTS missing - 0 context documents
 * **coilyco-flight-deck/agentic-os** - substrate - public - root AGENTS present - 4 context documents
 * **coilyco-flight-deck/cli-guard** - substrate - public - root AGENTS present - 2 context documents
@@ -114,10 +114,10 @@
 * `coilyco-bridge/deploy:AGENTS.md#p14` - duplicate - deletion - duplicate of `coilyco-bridge/agentic-os-kai:AGENTS.md#p14`
 * `coilyco-bridge/deploy:AGENTS.md#p15` - duplicate - deletion - duplicate of `coilyco-flight-deck/ward:AGENTS.md#p26`
 * `coilyco-bridge/deploy:CLAUDE.md#p1` - duplicate - deletion - duplicate of `coilyco-flight-deck/agentic-os:CLAUDE.md#p1`
-* `coilyco-bridge/lore:AGENTS.md#p1` - duplicate - deletion - duplicate of `coilyco-flight-deck/infrastructure:AGENTS.md#p1`
-* `coilyco-bridge/lore:AGENTS.md#p3` - task-specific - ordinary skill - task or lifecycle vocabulary
-* `coilyco-bridge/lore:AGENTS.md#p4` - documentation-only - repo docs - navigation or explanatory section
-* `coilyco-bridge/lore:AGENTS.md#p10` - task-specific - ordinary skill - task or lifecycle vocabulary
-* `coilyco-bridge/lore:AGENTS.md#p12` - documentation-only - repo docs - navigation or explanatory section
-* `coilyco-bridge/lore:AGENTS.md#p13` - duplicate - deletion - duplicate of `coilyco-bridge/agentic-os-hardware:AGENTS.md#p14`
-* `coilyco-bridge/lore:CLAUDE.md#p1` - duplicate - deletion - duplicate of `coilyco-flight-deck/agentic-os:CLAUDE.md#p1`
+* `coilysiren/lore:AGENTS.md#p1` - duplicate - deletion - duplicate of `coilyco-flight-deck/infrastructure:AGENTS.md#p1`
+* `coilysiren/lore:AGENTS.md#p3` - task-specific - ordinary skill - task or lifecycle vocabulary
+* `coilysiren/lore:AGENTS.md#p4` - documentation-only - repo docs - navigation or explanatory section
+* `coilysiren/lore:AGENTS.md#p10` - task-specific - ordinary skill - task or lifecycle vocabulary
+* `coilysiren/lore:AGENTS.md#p12` - documentation-only - repo docs - navigation or explanatory section
+* `coilysiren/lore:AGENTS.md#p13` - duplicate - deletion - duplicate of `coilyco-bridge/agentic-os-hardware:AGENTS.md#p14`
+* `coilysiren/lore:CLAUDE.md#p1` - duplicate - deletion - duplicate of `coilyco-flight-deck/agentic-os:CLAUDE.md#p1`

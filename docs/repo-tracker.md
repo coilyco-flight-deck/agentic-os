@@ -15,7 +15,7 @@ When every checkout is on the expected list, a green all-clear with the count:
 When checkouts are on disk that the list does not expect, it names them and colors the row (orange for a few, bold red once a lot have piled back on):
 
 ```
-📦 7 to remove: coilyco-bridge/agentic-os-hardware, coilyco-bridge/deploy, coilyco-bridge/lore, coilyco-flight-deck/ward, +3 more
+📦 7 to remove: coilyco-bridge/agentic-os-hardware, coilyco-bridge/deploy, coilysiren/lore, coilyco-flight-deck/ward, +3 more
 ```
 
 The first few stray names are listed; the rest collapse into `+N more`. With no expected list configured, the row degrades to just the count: `📦 15 repos`.
