@@ -33,6 +33,10 @@ The hook stays generic and carries no repo names of its own. Point the conventio
 ln -sf /path/to/your/repos-on-disk.txt ~/.config/agentic-os/repos-on-disk.txt
 ```
 
+[`aos/native-checkout-repos.txt`](../aos/native-checkout-repos.txt) is the
+public native-host base. Private overlays extend that roster from their own
+repositories and publish one flat manifest for the tracker.
+
 ## Fleet-org scope
 
 Only checkouts under **your own orgs** are considered, so third-party upstreams (an external repo you cloned for reference) never read as strays. The fleet orgs come from a list of org names, one per line, resolved from `$AOS_FLEET_ORGS`, else `~/.config/agentic-os/fleet-orgs.txt`. A `<root>/<org>` whose `org` is not on that list is skipped entirely. With no fleet-orgs list, every org is in scope.
