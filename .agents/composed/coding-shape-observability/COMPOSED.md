@@ -17,7 +17,7 @@ observability, o11y, monitoring, metrics, traces, logs, datadog, prometheus, gra
 - **Datadog** - Textio (custom Datadog + Fluent-bit setup), Bluelink-adjacent.
 - **New Relic** - prior platform roles.
 - **Prometheus + Grafana** - homelab default, also Textio-adjacent.
-- **Sentry** - personal stack, every coilysiren/* service ships a DSN.
+- **SigNoz Exceptions** - personal error-tracking pane, fed by OpenTelemetry exception span events.
 - **CloudWatch** - whenever AWS-native is the right reach.
 - **OpenTelemetry** - current edge of work.
 
@@ -28,7 +28,7 @@ observability, o11y, monitoring, metrics, traces, logs, datadog, prometheus, gra
 - **Logs**: structured JSON. One event per line. Correlation IDs in every line.
 - **Dashboards**: Grafana for personal, vendor-native (Datadog/New Relic) when an employer pays for it.
 - **Alerting**: SLO-driven. Burn-rate alerts on multi-window, multi-burn-rate (Google SRE workbook).
-- **Errors**: Sentry. DSN per service in SSM (`/sentry-dsn/<project>` convention). Static exception messages, dynamic context on attributes - never interpolate unbounded values into the message string.
+- **Errors**: SigNoz Exceptions. Record the exception on the active OTel span and mark the span as an error. Static exception types, dynamic context on attributes - never interpolate unbounded values into the type or grouping key.
 
 ## LLM consumers are first-class
 
@@ -43,7 +43,7 @@ When designing new observability surfaces, ask: how does an LLM agent consume th
 - Dashboards without alerts (read-only telemetry).
 - Alerts without runbooks (paging without action).
 - Per-employer vendor lock that doesn't transfer (favor OTel and standard exposition formats).
-- High-cardinality values (file paths, IDs, URLs, user input) in exception messages. Sentry groups and titles on the message, so a per-file message shatters one logical error into thousands of issues and breaks "group similar". Keep the message a closed-set string, push the dynamic data into structured exception attributes or Sentry `extra` / `fingerprint`. Low-cardinality enums (codec, status) are fine to inline.
+- High-cardinality values (file paths, IDs, URLs, user input) in exception types or grouping keys. Keep the type a closed-set string and push dynamic data into structured exception attributes. Low-cardinality enums (codec, status) are fine to inline.
 
 ## When this skill is active
 
@@ -51,4 +51,4 @@ Designing instrumentation, building dashboards, configuring alerts, debugging vi
 
 ## See also
 
-- `agentic-os-kai/SSM.md` - `/sentry-dsn/*` parameter inventory.
+- `coilyco-bridge/deploy/services/ser8-observability/docs/ser8-signoz.md` - canonical SigNoz ingest and exception-grouping contract.
