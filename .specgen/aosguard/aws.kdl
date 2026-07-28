@@ -32,6 +32,11 @@ wrap aosguard ops aws {
         allow-flag --tags
         describe "create or overwrite an SSM parameter from an absolute file source without placing its value in argv"
     }
+    can run ssm delete-parameter {
+        when name matches "/*"
+        allow-flag --name
+        describe "delete one explicitly named SSM parameter"
+    }
     // secrets manager - the --secret-id kwarg is the resource
     can run secretsmanager get-secret-value {
         deny-when secret-id matches *prod*
