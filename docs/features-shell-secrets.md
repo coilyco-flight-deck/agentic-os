@@ -22,10 +22,9 @@ Pull secrets directly into the shell environment, never to disk. `ssm-load` read
 
 ## Cross-platform terminal
 
-Alacritty supplies the portable Sombra rendering baseline. Zellij supplies the
-long-lived workspace, tabs, panes, and session serialization. The
-[workspace walkthrough](zellij-workspace.md) carries the recovery behavior and
-daily controls.
+Alacritty supplies the portable Sombra rendering baseline. On Windows,
+infrastructure renders Git Bash as Alacritty's direct shell and keeps the
+terminal free of an intermediate multiplexer.
 
 Transitional Warp config still renders into `~/.warp-preview/` on Mac or
 `~/.warp/` on Windows. Repo state disables cloud sync and owns its theme,

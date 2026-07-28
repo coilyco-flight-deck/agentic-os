@@ -5,14 +5,13 @@
 
 Cross-platform shell and terminal setup plus cross-repo pre-commit hooks for
 coilysiren/* repos. Zsh runs on Mac and Linux, with Bash through Git for
-Windows. Alacritty and Zellij provide the default crash-resilient workspace,
-while the transitional Warp configuration remains available.
+Windows. Alacritty provides the default direct terminal, while the transitional
+Warp configuration remains available.
 
 ## Layout
 
 - `shell/` - shared `common.sh` plus thin `zshrc` + `bashrc`, so bash and zsh match. `warp.zsh` is the zsh-only Warp dispatcher.
 - `alacritty/` - portable Sombra appearance and terminal security defaults, with host preferences left to the local wrapper.
-- `zellij/` - portable session defaults and familiar direct shortcuts.
 - `agent-terminal/` - static agent-compose identity branding for one Alacritty director window.
 - `warp/` - transitional Warp config (`settings.toml`, `tab_configs/`) plus the `ward exec warp` Go module.
 - `aos/` - the Go composition root for standalone and Ward-governed agent launches.
