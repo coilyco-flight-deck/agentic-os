@@ -217,6 +217,9 @@ commands:
   remint-ci-release-token:
     run: uv run --with boto3 python scripts/remint-ci-release-token.py
     description: "Remint the two-stage promote PAT on the coilyco-ops bot (write:repository + read:user - without read:user Forgejo drops the release enqueue, ward#1117) and overwrite SSM /forgejo/ci-release-token. Values stay in-process. `-- --dry-run` previews. Follow with `ward exec sync-actions-secrets`."
+  remint-registry-read-token:
+    run: uv run --with boto3 python scripts/remint-registry-read-token.py
+    description: "Remint the coilyco-ops read:package token, verify it against the Forgejo registry, and overwrite SSM /forgejo/coilyco-ops/registry-read-token. Values stay in-process. `-- --dry-run` previews."
   agent-id:
     run: uv run python -m agentic_os.agent_id
     description: "Canonical short agent-id generator over the dictatable alphabet (lowercase 2-letter+2-digit, e.g. `ab85`). Bare invocation prints a fresh `secrets`-backed id (`-- -n 5` for more); `-- --seed <s>` prints the deterministic contract id for a seed, `-- --org <forgejo-org>` prints the short container token, `-- --emit-vectors` regenerates agent_id_vectors.json. The cross-repo naming primitive ward and cli-guard's Go port build against. See docs/dictatable-id-alphabet.md."
