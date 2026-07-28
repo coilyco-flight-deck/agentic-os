@@ -2,10 +2,11 @@
 
 set -euo pipefail
 
+repo_root=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)
+
 case "${1:-}" in
   test)
-    ward exec test
-    ward exec pre-commit-all
+    bash "$repo_root/scripts/ci/repo-test-gate.sh"
     ;;
   mirror)
     if [ -z "${PAT}" ]; then

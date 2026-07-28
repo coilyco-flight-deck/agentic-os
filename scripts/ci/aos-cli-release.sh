@@ -2,10 +2,11 @@
 
 set -euo pipefail
 
+repo_root=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)
+
 validate() {
-  ward exec test
+  bash "$repo_root/scripts/ci/repo-test-gate.sh"
   ward exec aos-test
-  ward exec pre-commit-all
 }
 
 build() {

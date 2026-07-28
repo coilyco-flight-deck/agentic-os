@@ -20,7 +20,6 @@ while IFS="$(printf '\t')" read -r name current latest; do
   git commit -m "chore(dev-base): auto-bump ${name} ${current} -> ${latest} (agentic-os#272)"
 done < /tmp/dep-bump-plan.tsv
 
-ward exec test
-ward exec pre-commit-all
+bash scripts/ci/repo-test-gate.sh
 
 git push origin HEAD:main
