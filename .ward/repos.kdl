@@ -10,12 +10,16 @@ repos {
         repo "coilyco-flight-deck/*" forge=forgejo
         repo "coilyco-gaming/*" forge=forgejo
     }
-    burndown default=#true {
+    burndown default=#false {
         // inbox issues are messy and not really burndown shaped
         repo "coilysiren/inbox" #false
         // infra repos are structurally hostile to headless agent work
         repo "coilyco-flight-deck/infrastructure" #false
         repo "coilyco-bridge/deploy" #false
+        // private internal repos can keep autonomous burndown until Ward can
+        // judge issue provenance from the actor instead of repo ownership.
+        repo "coilyco-bridge/agentic-os-kai" #true
+        repo "coilyco-bridge/agentic-os-hardware" #true
     }
 }
 
