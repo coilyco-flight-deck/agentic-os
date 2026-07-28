@@ -4,11 +4,11 @@
 # Current social context budget
 
 * **Frontier social** -
-  [Claude 7,731](context-budget-social-claude-current.yaml),
-  [Codex 7,728](context-budget-social-codex-current.yaml), lazy 19,520, 5 composed.
+  [Claude 8,088](context-budget-social-claude-current.yaml),
+  [Codex 8,085](context-budget-social-codex-current.yaml), lazy 17,147, 5 composed.
 * **Low-context social** -
-  [Goose 7,620](context-budget-social-goose-current.yaml),
-  [OpenCode 7,620](context-budget-social-opencode-current.yaml), lazy 16,462, 5 composed.
+  [Goose 7,977](context-budget-social-goose-current.yaml),
+  [OpenCode 7,977](context-budget-social-opencode-current.yaml), lazy 14,089, 5 composed.
 * **Low-context diff** - eager saves 108 to 111 tokens, lazy saves 3,058 tokens, composed sources 5 -> 5.
 
 The programmatic diff compares every frontier seat with every low-context seat.

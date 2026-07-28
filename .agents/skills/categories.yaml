@@ -24,11 +24,6 @@ categories:
     prefix: writing-
     enforce_status: false
 
-  - id: vault
-    kind: prefix
-    prefix: vault-
-    enforce_status: false
-
   - id: kai
     kind: prefix
     prefix: kai-

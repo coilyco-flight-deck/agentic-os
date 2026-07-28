@@ -6,7 +6,6 @@
 <personal-os-repo>/
 ├── .agents/skills/
 │   ├── <personal-prefix>-<topic>/                            # operating-context rules
-│   ├── daily-<topic>/                          # cron'd inbox routines
 │   ├── ops-social-gws-<verb>/                  # Gmail family
 │   ├── ops-social-google-<topic>/              # Calendar family
 │   ├── ops-eng-sentry-<topic>/                 # Sentry review playbooks
@@ -19,7 +18,6 @@
 │   ├── writing-<topic>/                        # prose / voice / issue authoring
 │   ├── home-<system>/                          # smart-home control
 │   ├── tooling-<topic>/                        # agent-ecosystem meta
-│   ├── vault-<topic>/                          # Obsidian vault tooling
 │   ├── categories.yaml                         # machine-readable spec (root)
 │   └── skill-creator/                          # this skill (handbook + templates)
 │       ├── SKILL.md                            # entrypoint, points at this handbook
@@ -32,8 +30,7 @@
 │       └── COMPOSED.md                         # promoted only for selected roles
 ├── .agents/roles.kdl                           # composed-skill allowlists
 ├── scripts/
-│   ├── check-em-dashes.py                      # local voice-rule hook
-│   └── leak-check.py                           # local private-string denylist
+│   └── check-em-dashes.py                      # local voice-rule hook
 └── .pre-commit-config.yaml                     # subscribes to coilyco-flight-deck/agentic-os hooks + local hooks
 ```
 

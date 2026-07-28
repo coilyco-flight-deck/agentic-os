@@ -2,7 +2,7 @@
 
 Precedence: Kai's own work routes to Forgejo (see the default-todo reference). The rules here apply to repos with an active *GitHub* issue tracker, which are the external-facing repos where external contributors file.
 
-When a coilysiren repo has an active issue tracker, issues are canonical - not vault inbox, not TodoWrite, not memory.
+When a coilysiren repo has an active issue tracker, issues are canonical - not scratch notes, TodoWrite, or harness memory.
 
 - **Open issues for new requests** before starting. Enough detail to act cold, labels matching the repo's scheme, cross-links. **Don't ask first.** When a change in a repo with an active issue tracker needs a closing issue, file it and proceed. The answer is always yes. Only ask if the issue's framing is genuinely ambiguous (scope unclear, multiple plausible repos), not just to confirm filing it.
 - **Close via commit subject** - `fixes #N` / `closes #N` auto-closes on push. For partial/tangential work, use `refs #N` and close manually: `gh issue close N --comment "<sha>: <one-liner>"`.

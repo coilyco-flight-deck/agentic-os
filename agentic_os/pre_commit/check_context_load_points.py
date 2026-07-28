@@ -24,7 +24,7 @@ slice of that framework that is visible inside a single repository:
        always bridges from its load point into the shared doctrine.
 
 Opt out per-repo via config: set `enabled = false` under the
-[tool.agentic-os.context-load-points] section (e.g. an Obsidian vault whose
+[tool.agentic-os.context-load-points] section (e.g. a non-repository notes directory whose
 CLAUDE.md is deliberately a memory file, not a pointer). See
 docs/features-agents-pointer.md for the load-point overview.
 """

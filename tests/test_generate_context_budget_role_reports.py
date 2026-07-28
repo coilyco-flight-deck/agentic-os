@@ -112,5 +112,27 @@ def test_rejects_snapshot_model_class_drift(tmp_path: Path) -> None:
         reports.build_reports(tmp_path, roles=("social",), layouts=layouts)
 
 
+def test_frontier_only_role_omits_low_context_diff(tmp_path: Path) -> None:
+    for seat in ("cloud-a", "cloud-b"):
+        snapshot = _snapshot(
+            "ceo",
+            seat,
+            "frontier",
+            eager=100,
+            lazy=200,
+            composed=5,
+        )
+        path = tmp_path / f"context-budget-ceo-{seat}-current.yaml"
+        path.write_text(json.dumps(snapshot), encoding="utf-8")
+
+    built = reports.build_reports(tmp_path, roles=("ceo",), layouts=TEST_LAYOUTS)
+    rendered = built[tmp_path / "context-budget-role-ceo-current.md"]
+
+    assert "**Frontier ceo**" in rendered
+    assert "**Low-context ceo**" not in rendered
+    assert "Low-context diff" not in rendered
+    assert "Only frontier snapshots are available" in rendered
+
+
 def test_committed_role_reports_are_current() -> None:
     assert reports.check_drift() == 0

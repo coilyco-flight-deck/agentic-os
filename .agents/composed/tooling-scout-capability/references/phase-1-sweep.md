@@ -11,9 +11,8 @@ real signal.
 - Recent commit subjects (`git log --oneline -50`)
 - Open issues (`gh issue list -R <owner>/<repo> --state open --limit 30`)
 
-Plus the vault: the user's notes index, the most
-recent 14 days of inbox content, and any ideas/tasks files
-specifically. Do not deep-read code.
+Plus any user-supplied notes, ideas, or task files that are in scope. Do not
+deep-read code.
 
 For each grounded item, write a one-line candidate: `- {kind}: {bare
 name} - because: {one-sentence rationale tied to a specific repo or

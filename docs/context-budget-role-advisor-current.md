@@ -4,11 +4,11 @@
 # Current advisor context budget
 
 * **Frontier advisor** -
-  [Claude 7,519](context-budget-advisor-claude-current.yaml),
-  [Codex 7,516](context-budget-advisor-codex-current.yaml), lazy 16,221, 2 composed.
+  [Claude 7,916](context-budget-advisor-claude-current.yaml),
+  [Codex 7,913](context-budget-advisor-codex-current.yaml), lazy 13,847, 2 composed.
 * **Low-context advisor** -
-  [Goose 7,355](context-budget-advisor-goose-current.yaml),
-  [OpenCode 7,355](context-budget-advisor-opencode-current.yaml), lazy 12,323, 1 composed.
+  [Goose 7,752](context-budget-advisor-goose-current.yaml),
+  [OpenCode 7,752](context-budget-advisor-opencode-current.yaml), lazy 9,949, 1 composed.
 * **Low-context diff** - eager saves 161 to 164 tokens, lazy saves 3,898 tokens, composed sources 2 -> 1.
 
 The programmatic diff compares every frontier seat with every low-context seat.

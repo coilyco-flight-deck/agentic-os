@@ -8,7 +8,7 @@ in phase 6), do all three steps in this exact order:
 1. **Scrub the candidate from phases 1-6 inbox files.** Either delete the
    line or move it to a `dropped:` section in the phase 6 file, with the
    reject reason and a date stamp.
-2. **If the candidate traces back to a vault source note, ask before
+2. **If the candidate traces back to a user-authored source note, ask before
    touching the source.** A candidate's `because:` rationale may cite
    user-authored notes files. Never auto-edit those.
    Surface the source line and ask whether to remove it.

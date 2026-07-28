@@ -4,11 +4,11 @@
 # Current sales context budget
 
 * **Frontier sales** -
-  [Claude 7,641](context-budget-sales-claude-current.yaml),
-  [Codex 7,638](context-budget-sales-codex-current.yaml), lazy 18,928, 4 composed.
+  [Claude 8,025](context-budget-sales-claude-current.yaml),
+  [Codex 8,022](context-budget-sales-codex-current.yaml), lazy 16,555, 4 composed.
 * **Low-context sales** -
-  [Goose 7,477](context-budget-sales-goose-current.yaml),
-  [OpenCode 7,477](context-budget-sales-opencode-current.yaml), lazy 15,228, 3 composed.
+  [Goose 7,861](context-budget-sales-goose-current.yaml),
+  [OpenCode 7,861](context-budget-sales-opencode-current.yaml), lazy 12,855, 3 composed.
 * **Low-context diff** - eager saves 161 to 164 tokens, lazy saves 3,700 tokens, composed sources 4 -> 3.
 
 The programmatic diff compares every frontier seat with every low-context seat.

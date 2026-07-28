@@ -7,7 +7,7 @@ low-context: required
 # voice-guide-linter
 
 Pre-flight check for prose Kai writes - commits, PRs, READMEs, issues,
-blog posts, vault notes. Catches the high-frequency voice-rule slips
+blog posts, and knowledge notes. Catches the high-frequency voice-rule slips
 before they ship.
 
 ## Procedure
@@ -44,7 +44,7 @@ violation, suitable for pre-commit hook integration.
 - The skill does NOT enforce the "no people's names in public
   artifacts" rule - that needs context the regex doesn't have. Kept
   as a separate human-review concern per AGENTS.
-- Voice guide source: `coilyco-vault/Obsidian Vault/Notes/writing-voice.md`.
+- Voice guide source: the active composed or project-local voice guide.
 - The pronoun rules over-flag by design. Better to surface false
   positives than miss a real slip about Kai.
 - Pre-commit-hook integration is a separate piece of work; the linter

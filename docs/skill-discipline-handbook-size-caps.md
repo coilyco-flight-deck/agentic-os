@@ -13,7 +13,7 @@ Three size caps in `categories.yaml`, all with built-in defaults that apply when
 The validator enforces a hard byte cap, but the practical target should be lower. Treat `description` as routing metadata, not documentation. Codex and Claude both see this text before deciding whether to open the skill body.
 
 * **Pointer skills** - under 160 chars. Use this when the body mostly points at a canonical doc elsewhere.
-* **Normal task skills** - 120-200 chars. Most coding, writing, gaming, vault, and tool-usage skills should fit here.
+* **Normal task skills** - 120-200 chars. Most coding, writing, gaming, and tool-usage skills should fit here.
 * **Complex task skills** - 220-300 chars. Use this for skills with several adjacent trigger phrasings or one important boundary.
 * **Router/meta skills** - 250-400 chars normally. A router earns extra surface only when it prevents many child skills from carrying broad aliases.
 * **Rare exceptions** - 400-500 chars for public-safety, MCP routing, or cross-repo failure handling where false negatives are expensive.

@@ -47,9 +47,8 @@ payload hash.
 The shared inventory describes global and repository delivery. Role-seat snapshots
 omit projected global context and retain the repository root-to-CWD AGENTS cascade.
 
-Snapshots use `context-budget-<role>-<seat>-<phase>.yaml`. The
-[ops/codex baseline](context-budget-ops-codex-before.yaml) is historical.
-Every current role-seat snapshot is linked from its role report.
+Snapshots use `context-budget-<role>-<seat>-<phase>.yaml`. Every current
+role-seat snapshot is linked from its role report.
 
 The [current role-class inventory](context-budget-role-seat-current.md) links
 one report per canonical role. Each report presents the frontier Claude and
@@ -57,19 +56,20 @@ Codex measurements beside the low-context Goose and OpenCode measurements.
 
 ## Capture and compare
 
-The historical `ops/codex` baseline was captured with:
+Capture a role-seat snapshot with:
 
 ```sh
 ward exec context-budget -- --role ops --seat codex \
-  --snapshot docs/context-budget-ops-codex-before.yaml
+  --snapshot docs/context-budget-ops-codex-current.yaml
 ```
 
-After a refactor, render the component and total delta into the current
+To compare a refactor, first copy the current snapshot to a task-scoped
+baseline path. Then render the component and total delta into the current
 checkpoint:
 
 ```sh
 ward exec context-budget -- --role ops --seat codex \
-  --compare docs/context-budget-ops-codex-before.yaml \
+  --compare /tmp/context-budget-ops-codex-baseline.yaml \
   --snapshot docs/context-budget-ops-codex-current.yaml
 ```
 

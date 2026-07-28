@@ -4,12 +4,12 @@
 # Current PM context budget
 
 * **Frontier PM** -
-  [Claude 8,231](context-budget-pm-claude-current.yaml),
-  [Codex 8,228](context-budget-pm-codex-current.yaml), lazy 51,876, 11 composed.
+  [Claude 8,619](context-budget-pm-claude-current.yaml),
+  [Codex 8,616](context-budget-pm-codex-current.yaml), lazy 49,467, 11 composed.
 * **Low-context PM** -
-  [Goose 7,719](context-budget-pm-goose-current.yaml),
-  [OpenCode 7,719](context-budget-pm-opencode-current.yaml), lazy 20,109, 5 composed.
-* **Low-context diff** - eager saves 509 to 512 tokens, lazy saves 31,767 tokens, composed sources 11 -> 5.
+  [Goose 8,104](context-budget-pm-goose-current.yaml),
+  [OpenCode 8,104](context-budget-pm-opencode-current.yaml), lazy 17,729, 5 composed.
+* **Low-context diff** - eager saves 512 to 515 tokens, lazy saves 31,738 tokens, composed sources 11 -> 5.
 
 The programmatic diff compares every frontier seat with every low-context seat.
 

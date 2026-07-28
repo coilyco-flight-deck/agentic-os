@@ -4,11 +4,11 @@
 # Current engineer context budget
 
 * **Frontier engineer** -
-  [Claude 8,738](context-budget-engineer-claude-current.yaml),
-  [Codex 8,735](context-budget-engineer-codex-current.yaml), lazy 52,441, 23 composed.
+  [Claude 9,112](context-budget-engineer-claude-current.yaml),
+  [Codex 9,109](context-budget-engineer-codex-current.yaml), lazy 49,933, 23 composed.
 * **Low-context engineer** -
-  [Goose 8,203](context-budget-engineer-goose-current.yaml),
-  [OpenCode 8,203](context-budget-engineer-opencode-current.yaml), lazy 33,360, 15 composed.
+  [Goose 8,577](context-budget-engineer-goose-current.yaml),
+  [OpenCode 8,577](context-budget-engineer-opencode-current.yaml), lazy 30,852, 15 composed.
 * **Low-context diff** - eager saves 532 to 535 tokens, lazy saves 19,081 tokens, composed sources 23 -> 15.
 
 The programmatic diff compares every frontier seat with every low-context seat.

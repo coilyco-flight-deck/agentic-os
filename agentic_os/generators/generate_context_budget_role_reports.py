@@ -97,9 +97,13 @@ def load_role_snapshots(
             )
         grouped[role][seat] = snapshot
     for role, snapshots in grouped.items():
-        missing = sorted(set(layouts) - set(snapshots))
-        if missing:
-            raise RuntimeError(f"role {role!r} is missing current seats: {', '.join(missing)}")
+        if not snapshots:
+            raise RuntimeError(f"role {role!r} has no current seats")
+        if not any(
+            layouts[seat] == "frontier"
+            for seat in snapshots
+        ):
+            raise RuntimeError(f"role {role!r} has no frontier snapshot")
     return grouped
 
 
@@ -154,10 +158,8 @@ def _class_snapshots(
     selected = [
         (seat, snapshots[seat])
         for seat, declared_class in layouts.items()
-        if declared_class == model_class
+        if declared_class == model_class and seat in snapshots
     ]
-    if not selected:
-        raise RuntimeError(f"model class {model_class!r} has no AOS layouts")
     return selected
 
 
@@ -215,37 +217,6 @@ def render_role_report(
         model_class: _class_snapshots(snapshots, layouts, model_class)
         for model_class in MODEL_CLASSES
     }
-    frontier = by_class["frontier"]
-    low_context = by_class["low-context"]
-    eager_change = _change_text(
-        (
-            _nested_int(snapshot, "totals", "eager", "tokens")
-            for _, snapshot in frontier
-        ),
-        (
-            _nested_int(snapshot, "totals", "eager", "tokens")
-            for _, snapshot in low_context
-        ),
-        "tokens",
-    )
-    lazy_change = _change_text(
-        (
-            _nested_int(snapshot, "totals", "lazy", "tokens")
-            for _, snapshot in frontier
-        ),
-        (
-            _nested_int(snapshot, "totals", "lazy", "tokens")
-            for _, snapshot in low_context
-        ),
-        "tokens",
-    )
-    frontier_composed = _range_text(
-        _composed_count(snapshot) for _, snapshot in frontier
-    )
-    low_composed = _range_text(
-        _composed_count(snapshot) for _, snapshot in low_context
-    )
-
     lines = [
         GENERATED_HEADER.rstrip("\n"),
         "",
@@ -253,14 +224,57 @@ def render_role_report(
         "",
     ]
     for model_class in MODEL_CLASSES:
-        lines.extend(_render_class_line(role, model_class, by_class[model_class]))
-    lines.extend(
-        [
+        if by_class[model_class]:
+            lines.extend(_render_class_line(role, model_class, by_class[model_class]))
+    frontier = by_class["frontier"]
+    low_context = by_class["low-context"]
+    if low_context:
+        eager_change = _change_text(
+            (
+                _nested_int(snapshot, "totals", "eager", "tokens")
+                for _, snapshot in frontier
+            ),
+            (
+                _nested_int(snapshot, "totals", "eager", "tokens")
+                for _, snapshot in low_context
+            ),
+            "tokens",
+        )
+        lazy_change = _change_text(
+            (
+                _nested_int(snapshot, "totals", "lazy", "tokens")
+                for _, snapshot in frontier
+            ),
+            (
+                _nested_int(snapshot, "totals", "lazy", "tokens")
+                for _, snapshot in low_context
+            ),
+            "tokens",
+        )
+        frontier_composed = _range_text(
+            _composed_count(snapshot) for _, snapshot in frontier
+        )
+        low_composed = _range_text(
+            _composed_count(snapshot) for _, snapshot in low_context
+        )
+        lines.extend(
+            [
             f"* **Low-context diff** - eager {eager_change}, lazy {lazy_change}, "
             f"composed sources {frontier_composed} -> {low_composed}.",
             "",
             "The programmatic diff compares every frontier seat with every "
             "low-context seat.",
+            ]
+        )
+    else:
+        lines.extend(
+            [
+                "",
+                "Only frontier snapshots are available for this role.",
+            ]
+        )
+    lines.extend(
+        [
             "",
             "## See also",
             "",

@@ -4,11 +4,11 @@
 # Current QA context budget
 
 * **Frontier QA** -
-  [Claude 8,740](context-budget-qa-claude-current.yaml),
-  [Codex 8,737](context-budget-qa-codex-current.yaml), lazy 46,524, 25 composed.
+  [Claude 9,131](context-budget-qa-claude-current.yaml),
+  [Codex 9,128](context-budget-qa-codex-current.yaml), lazy 44,016, 25 composed.
 * **Low-context QA** -
-  [Goose 8,170](context-budget-qa-goose-current.yaml),
-  [OpenCode 8,170](context-budget-qa-opencode-current.yaml), lazy 27,002, 16 composed.
+  [Goose 8,561](context-budget-qa-goose-current.yaml),
+  [OpenCode 8,561](context-budget-qa-opencode-current.yaml), lazy 24,494, 16 composed.
 * **Low-context diff** - eager saves 567 to 570 tokens, lazy saves 19,522 tokens, composed sources 25 -> 16.
 
 The programmatic diff compares every frontier seat with every low-context seat.

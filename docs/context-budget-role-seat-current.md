@@ -1,13 +1,11 @@
 # Current role-class context inventory
 
-The 12 canonical roles are measured in all four AOS native layouts. Claude and
-Codex use the frontier catalog. Goose and OpenCode use the low-context catalog.
-The original eleven role sets were generated with released agent-compose
-`v0.47.0`. The CEO set uses the matching source that introduced the role. Every
-entry uses the deterministic characters-divided-by-four token proxy.
-The role reports and their frontier-to-low-context diffs are generated from
-those snapshots with `ward exec gen-context-budget-role-reports`. A diff range
-compares every frontier seat with every low-context seat.
+The 12 canonical roles are measured in every compatible AOS native layout.
+Claude and Codex use the frontier catalog. Goose and OpenCode use the
+low-context catalog. CEO is frontier-only. Every entry uses the deterministic
+characters-divided-by-four token proxy. The role reports and available
+frontier-to-low-context diffs are generated from those snapshots with
+`ward exec gen-context-budget-role-reports`.
 
 ## Roles
 
@@ -24,34 +22,11 @@ compares every frontier seat with every low-context seat.
 * [Sales](context-budget-role-sales-current.md) - frontier and low-context.
 * [Customer success](context-budget-role-customer-success-current.md) -
   frontier and low-context.
-* [CEO](context-budget-role-ceo-current.md) - frontier and low-context.
+* [CEO](context-budget-role-ceo-current.md) - frontier only.
 
-Goose and OpenCode have equal token totals because each receives the same
-catalog and AGENTS cascade. Their projection paths and payload hashes remain
-distinct.
-
-## Original shared surface baseline
-
-* **AGENTS cascade** - Codex 10,079 eager tokens, Claude 10,241, Goose and
-  OpenCode 9,872.
-* **Frontier ordinary skills** - 807 eager and 13,857 lazy tokens across 13
-  sources.
-* **Low-context ordinary skills** - 699 eager and 10,799 lazy tokens across 11
-  sources.
-* **MCP** - zero eager schemas and 12 deferred server registrations.
-* **Seat difference** - Claude adds 162 eager tokens over Codex through one
-  additional AGENTS cascade component. Goose and OpenCode omit the two
-  frontier-only ordinary sources and harness-specific AGENTS overrides.
-
-## Cumulative tracked baseline
-
-The checked-in ops/Codex baseline has a paired
-[current snapshot](context-budget-ops-codex-current.yaml).
-
-* **Eager** - fell from 14,564 to 13,823 tokens, a reduction of 741.
-* **Lazy** - fell from 126,332 to 54,684 tokens, a reduction of 71,648.
-* **Components** - added five, removed 30, and changed 25 across the full
-  pruning interval.
+Goose and OpenCode have equal token totals for roles that support both because
+each receives the same catalog and AGENTS cascade. Their projection paths and
+payload hashes remain distinct.
 
 ## Interpretation
 
@@ -66,7 +41,5 @@ retrieval, not startup prompt load.
 
 * [Role-seat snapshot contract](context-budget-role-seat.md) - capture,
   comparison, and failure rules.
-* [Historical ops/Codex baseline](context-budget-ops-codex-before.yaml) -
-  machine-readable comparison source.
 * [Context-budget report](context-budget.md) - component definitions and token
   proxy.

@@ -1,9 +1,8 @@
 # Handbook: Categories
 
-Twelve prefix families and five exact-name skills. Pick the prefix up front; the validator rejects unknown prefixes.
+Pick the prefix up front. The validator rejects unknown prefixes.
 
 * `<personal>-*` (e.g. `kai-*`) - operating context - durable rules about how the user works (preferences, voice, git workflow, repo registry pointers).
-* `daily-*` - cron'd inbox routines - fetch / digest / render shape, write to vault inbox.
 * `ops-social-gws-*` - Gmail family - verb-shaped children plus an `ops-social-gws-shared` parent.
 * `ops-social-google-*` - Calendar family.
 * `ops-eng-sentry-*` - Sentry review playbooks.
@@ -17,7 +16,6 @@ Twelve prefix families and five exact-name skills. Pick the prefix up front; the
 * `tooling-*` - agent-ecosystem meta (the scout family,
   `tooling-supply-chain-audit`, and role-specific methods). Meta-tooling may
   stay in the personal prefix when it encodes operating-context discipline.
-* `vault-*` - Obsidian vault tooling (cli, markdown rules, vault rules).
 * `coding-*` - code-engineering recipes (Discord bot scaffolding, the coding-shape-iac umbrella, git/GitHub PR workflow). Reusable build patterns, not tooling on the agent ecosystem itself.
 
 Exact-name skills (don't fit a prefix):
