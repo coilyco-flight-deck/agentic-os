@@ -10,6 +10,9 @@ set -euo pipefail
 # git invokes helpers with a minimal env, so aws may not be on PATH.
 # Prepend the fleet install dirs: linuxbrew, homebrew, /usr/local, ~/.local.
 export PATH="/home/linuxbrew/.linuxbrew/bin:/opt/homebrew/bin:/usr/local/bin:${HOME}/.local/bin:${PATH}"
+# Ward configuration selects an agent runtime surface. It has no place in this
+# repository-access bootstrap and can interfere with nested credential lookup.
+unset WARD_CONFIG_REF
 
 op="${1:-}"
 [ "$op" = "get" ] || exit 0
