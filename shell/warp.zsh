@@ -1,3 +1,4 @@
+# Temporary attribution rollover marker for agentic-os#773.
 # Warp dispatcher (zsh-only: zsh arrays, parameter expansion flags, compdef).
 # Sourced by shell/zshrc for interactive zsh. See docs/warp.md.
 

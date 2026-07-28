@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Temporary attribution rollover marker for agentic-os#773.
 set -euo pipefail
 
 if [[ $# -lt 3 ]]; then
