@@ -1,4 +1,3 @@
-# Temporary attribution rollover marker for agentic-os#773.
 """Tests for agentic_os.pre_commit.check_code_review_contract."""
 from __future__ import annotations
 

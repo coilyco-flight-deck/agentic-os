@@ -1,4 +1,3 @@
-<!-- Temporary attribution rollover marker for agentic-os#773. -->
 # In-container agent self-name
 
 A host session self-names through a Claude Code SessionStart + statusLine hook

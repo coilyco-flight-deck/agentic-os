@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Temporary attribution rollover marker for agentic-os#773.
 """Enforce the root CODE-REVIEW.md contract.
 
 The root review contract is a catalog surface, not a loose style note. It
