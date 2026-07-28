@@ -60,11 +60,14 @@ type bootstrapOptions struct {
 	AgentComposeBin   string
 	AOSGuardBinary    string
 	AOSGuardSkill     string
+	MCPInventory      string
+	TailnetForwards   []tailnetForward
 }
 
 type execSpec struct {
-	Command     []string
-	Environment []string
+	Command         []string
+	Environment     []string
+	TailnetForwards []tailnetForward
 }
 
 type substrateRepo struct {
@@ -119,6 +122,9 @@ func prepareContainer(
 	if err := stageHarnessDefaults(opts.Layout, opts.AgentHome, opts.Workspace); err != nil {
 		return execSpec{}, err
 	}
+	if err := stageMCPProjection(ctx, opts, runner); err != nil {
+		return execSpec{}, err
+	}
 	if err := stageHarnessAuth(opts.Layout, opts.AgentHome); err != nil {
 		return execSpec{}, err
 	}
@@ -131,7 +137,8 @@ func prepareContainer(
 		}
 	}
 	return execSpec{
-		Command: opts.Command,
+		Command:         opts.Command,
+		TailnetForwards: append([]tailnetForward(nil), opts.TailnetForwards...),
 		Environment: environmentWith(map[string]string{
 			"HOME":            opts.AgentHome,
 			"USER":            "aos",

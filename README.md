@@ -67,6 +67,12 @@ The original standalone composed-container command remains available:
 aos --role engineer acompose -- codex
 ```
 
+That standalone path projects the resolved host mcporter inventory into the
+ephemeral agent home. When configured HTTP MCP endpoints resolve into the
+tailnet, AOS attaches the container to the shared tailnet network and bridges
+those endpoints through the standing proxy without invoking Ward. See the
+[standalone connectivity contract](docs/aos-standalone-connectivity.md).
+
 For a bounded role check-in, AOS owns the agent's non-interactive defaults:
 
 ```bash

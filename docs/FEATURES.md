@@ -13,7 +13,9 @@ This lists shipped capabilities, not files.
 - [Agents and sessions](features-agents-sessions.md) - self-name, session pulse, status line, and harness policy.
 - [Agent-compose provider](personality-provider.md) - scoped skills, community hosting, harness registry, and personality alignment.
 - [Role-composed skills](role-composed-skills.md) - role-gated CEO and specialist knowledge.
-- [AOS launcher](aos-cli.md) - standalone or Ward-governed role, context, and tool composition plus [check-ins](aos-acompose-checkin.md).
+- [AOS launcher](aos-cli.md) - standalone or Ward-governed role, context, tool,
+  [MCP inventory and tailnet](aos-standalone-connectivity.md) composition plus
+  [check-ins](aos-acompose-checkin.md).
 - [aosguard](aosguard.md) - AOS-specific guarded CLI and generated skill.
 - [Code review skill](../.agents/composed/tooling-code-review/COMPOSED.md) - QA-only in-container review stance.
 - [Code review contract](../CODE-REVIEW.md) - review invariants.

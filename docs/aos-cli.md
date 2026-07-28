@@ -59,12 +59,13 @@ agents, and translated Ward flags before starting a container.
 * CWD mounts read-write at `/workspace/<cwd-name>` and becomes the workdir.
 * Composition hydrates the baked provider through `aos-substrate-cache`.
 * AOS copies the selected harness's known read-only auth into ephemeral HOME.
+* [MCP and tailnet projection](aos-standalone-connectivity.md) preserves the native standalone connectivity baseline.
 * Present API-key environment variables cross by name, never rendered value.
 * Docker socket, AWS config, host HOME, and Git credentials do not mount.
 
 Root performs bootstrap only. The harness runs as the host uid and gid.
-Composition verifies the immutable role bundle and projects it with
-`project --scope home`. `--no-substrate` omits unrelated reference trees.
+Composition verifies the immutable role bundle with `project --scope home`.
+`--no-substrate` omits unrelated reference trees.
 
 ## Validation and release
 
@@ -77,4 +78,3 @@ publishes checksummed binaries plus Homebrew and Scoop metadata.
 
 * [Context bundle](aos-context-bundle.md) and [local lane profiles](local-lane-profiles.md) - runtime adapters.
 * [aosguard.md](aosguard.md) - guarded tool and generated skill.
-* [dev-base-image.md](dev-base-image.md) - full image contents.

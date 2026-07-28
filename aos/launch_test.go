@@ -138,6 +138,53 @@ func TestBuildLaunchPlanCanSkipSubstrate(t *testing.T) {
 	}
 }
 
+func TestBuildLaunchPlanProjectsMCPAndJoinsTailnet(t *testing.T) {
+	t.Parallel()
+	forward := tailnetForward{
+		Server:     "internal",
+		TargetHost: "internal.example",
+		TargetPort: 30082,
+		ListenPort: 39000,
+	}
+	plan, err := buildLaunchPlan(launchOptions{
+		Image:           "agentic-os:test",
+		Role:            "engineer",
+		Layout:          "codex",
+		Delivery:        "native-skills",
+		Composed:        true,
+		CWD:             t.TempDir(),
+		Command:         []string{"codex"},
+		UID:             1000,
+		GID:             1000,
+		MCPInventory:    "/host/mcporter.json",
+		TailnetNetwork:  tailnetDockerNetwork,
+		TailnetForwards: []tailnetForward{forward},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	joined := strings.Join(plan.DockerArgs, "\n")
+	for _, want := range []string{
+		"type=bind,source=/host/mcporter.json,target=" + containerMCPInventory + ",readonly",
+		"--network\n" + tailnetDockerNetwork,
+		"--env\nAOS_TAILNET_SOCKS5=" + tailnetSOCKS5URL,
+		"_container-acompose",
+		"--mcp-inventory\n" + containerMCPInventory,
+		"--tailnet-forward",
+	} {
+		if !strings.Contains(joined, want) {
+			t.Errorf("launch plan missing %q:\n%s", want, joined)
+		}
+	}
+	encoded, err := forward.encode()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !containsArg(plan.DockerArgs, encoded) {
+		t.Fatal("launch plan omitted encoded tailnet forward")
+	}
+}
+
 func TestArgvAfterDash(t *testing.T) {
 	t.Parallel()
 	got := argvAfterDash([]string{"aos", "--role", "engineer", "acompose", "--", "codex", "exec"})

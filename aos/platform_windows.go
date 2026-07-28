@@ -15,3 +15,10 @@ func chownPath(_ string, _ bool, _, _ int) error {
 func execAs(_, _ int, _ execSpec) error {
 	return fmt.Errorf("container process replacement is supported only by the Linux image")
 }
+
+func startSOCKSForwarders(_, _ int, spec execSpec) error {
+	if len(spec.TailnetForwards) == 0 {
+		return nil
+	}
+	return fmt.Errorf("tailnet MCP forwarding is supported only by the Linux image")
+}

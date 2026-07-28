@@ -165,21 +165,28 @@ func runStandaloneIntegratedLaunch(
 	if opts.Auth {
 		authMounts = discoverAuthMounts(opts.Agent)
 	}
+	mcp, err := discoverMCPLaunch(ctx)
+	if err != nil {
+		return err
+	}
 	plan, err := buildLaunchPlan(launchOptions{
-		Image:         opts.Image,
-		Role:          opts.Role,
-		Layout:        opts.Agent,
-		Delivery:      opts.Delivery,
-		Composed:      opts.Composed,
-		Guarded:       opts.Guarded,
-		CWD:           cwd,
-		Command:       command,
-		UID:           uid,
-		GID:           gid,
-		TTY:           isTerminal(os.Stdin),
-		NoSubstrate:   opts.NoSubstrate,
-		AuthMounts:    authMounts,
-		ForwardedEnvs: forwardedEnvironment(),
+		Image:           opts.Image,
+		Role:            opts.Role,
+		Layout:          opts.Agent,
+		Delivery:        opts.Delivery,
+		Composed:        opts.Composed,
+		Guarded:         opts.Guarded,
+		CWD:             cwd,
+		Command:         command,
+		UID:             uid,
+		GID:             gid,
+		TTY:             isTerminal(os.Stdin),
+		NoSubstrate:     opts.NoSubstrate,
+		AuthMounts:      authMounts,
+		ForwardedEnvs:   forwardedEnvironment(),
+		MCPInventory:    mcp.Inventory,
+		TailnetNetwork:  mcp.TailnetNetwork,
+		TailnetForwards: mcp.Forwards,
 	})
 	if err != nil {
 		return err

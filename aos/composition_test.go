@@ -182,7 +182,7 @@ func TestIntegratedStandaloneDryRunUsesSelectedAgent(t *testing.T) {
 			t.Errorf("standalone dry run missing %q:\n%s", want, rendered)
 		}
 	}
-	if strings.Contains(rendered, "ward") {
+	if strings.Contains(rendered, "ward agent") {
 		t.Fatalf("standalone dry run invoked Ward:\n%s", rendered)
 	}
 	if strings.Contains(rendered, substrateVolume) {

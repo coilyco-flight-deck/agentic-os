@@ -149,8 +149,41 @@ func newCommand() *cli.Command {
 						Name:     "gid",
 						Required: true,
 					},
+					&cli.StringFlag{
+						Name:   "mcp-inventory",
+						Hidden: true,
+					},
+					&cli.StringSliceFlag{
+						Name:   "tailnet-forward",
+						Hidden: true,
+					},
 				},
 				Action: runContainerAcompose,
+			},
+			{
+				Name:   "_container-socks-forward",
+				Hidden: true,
+				Flags: []cli.Flag{
+					&cli.IntFlag{
+						Name:     "fd",
+						Required: true,
+					},
+					&cli.StringFlag{
+						Name:     "proxy",
+						Required: true,
+					},
+					&cli.StringFlag{
+						Name:     "target",
+						Required: true,
+					},
+				},
+				Action: func(_ context.Context, cmd *cli.Command) error {
+					return runContainerSOCKSForward(
+						cmd.Int("fd"),
+						cmd.String("proxy"),
+						cmd.String("target"),
+					)
+				},
 			},
 			{
 				Name:   "_container-context-bundle",
@@ -229,20 +262,27 @@ func runComposedLaunch(
 	if cmd.Bool("auth") {
 		authMounts = discoverAuthMounts(layout)
 	}
+	mcp, err := discoverMCPLaunch(ctx)
+	if err != nil {
+		return err
+	}
 	plan, err := buildLaunchPlan(launchOptions{
-		Image:         cmd.String("image"),
-		Role:          role,
-		Layout:        layout,
-		Delivery:      cmd.String("delivery"),
-		Composed:      true,
-		CWD:           cwd,
-		Command:       command,
-		UID:           uid,
-		GID:           gid,
-		TTY:           isTerminal(os.Stdin),
-		NoSubstrate:   noSubstrate,
-		AuthMounts:    authMounts,
-		ForwardedEnvs: forwardedEnvironment(),
+		Image:           cmd.String("image"),
+		Role:            role,
+		Layout:          layout,
+		Delivery:        cmd.String("delivery"),
+		Composed:        true,
+		CWD:             cwd,
+		Command:         command,
+		UID:             uid,
+		GID:             gid,
+		TTY:             isTerminal(os.Stdin),
+		NoSubstrate:     noSubstrate,
+		AuthMounts:      authMounts,
+		ForwardedEnvs:   forwardedEnvironment(),
+		MCPInventory:    mcp.Inventory,
+		TailnetNetwork:  mcp.TailnetNetwork,
+		TailnetForwards: mcp.Forwards,
 	})
 	if err != nil {
 		return err
@@ -273,19 +313,28 @@ func runContainerAcompose(ctx context.Context, cmd *cli.Command) error {
 	if err != nil {
 		return err
 	}
+	forwards, err := decodeTailnetForwards(cmd.StringSlice("tailnet-forward"))
+	if err != nil {
+		return err
+	}
 	spec, err := prepareContainer(ctx, bootstrapOptions{
-		Role:        role,
-		Layout:      layout,
-		Delivery:    cmd.String("delivery"),
-		Composed:    cmd.Bool("composed"),
-		Guarded:     cmd.Bool("guarded"),
-		Workspace:   cmd.String("workspace"),
-		UID:         cmd.Int("uid"),
-		GID:         cmd.Int("gid"),
-		Command:     command,
-		NoSubstrate: cmd.Bool("no-substrate"),
+		Role:            role,
+		Layout:          layout,
+		Delivery:        cmd.String("delivery"),
+		Composed:        cmd.Bool("composed"),
+		Guarded:         cmd.Bool("guarded"),
+		Workspace:       cmd.String("workspace"),
+		UID:             cmd.Int("uid"),
+		GID:             cmd.Int("gid"),
+		Command:         command,
+		NoSubstrate:     cmd.Bool("no-substrate"),
+		MCPInventory:    cmd.String("mcp-inventory"),
+		TailnetForwards: forwards,
 	}, osCommandRunner{})
 	if err != nil {
+		return err
+	}
+	if err := startSOCKSForwarders(cmd.Int("uid"), cmd.Int("gid"), spec); err != nil {
 		return err
 	}
 	return execAs(cmd.Int("uid"), cmd.Int("gid"), spec)

@@ -30,6 +30,11 @@ The prompt forbids tool use and asks the agent to begin with
 prints the response without interpreting it. The role-question harness remains
 the assertion path for an automated pass or fail.
 
+The normal standalone bootstrap still projects the host MCP inventory and
+tailnet bridge. The check-in prompt deliberately leaves those tools unused, so
+a successful role confirmation proves identity composition rather than MCP
+health or tailnet reachability.
+
 The diagnostic transcript stays streaming in emission order. A duplicated
 final stdout copy is suppressed. Blank lines frame the transcript, each Codex
 section divider, and each prompt, warning, response, or token block.

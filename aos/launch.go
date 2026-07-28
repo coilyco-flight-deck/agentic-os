@@ -32,20 +32,23 @@ type authMount struct {
 }
 
 type launchOptions struct {
-	Image         string
-	Role          string
-	Layout        string
-	Delivery      string
-	Composed      bool
-	Guarded       bool
-	CWD           string
-	Command       []string
-	UID           int
-	GID           int
-	TTY           bool
-	NoSubstrate   bool
-	AuthMounts    []authMount
-	ForwardedEnvs []string
+	Image           string
+	Role            string
+	Layout          string
+	Delivery        string
+	Composed        bool
+	Guarded         bool
+	CWD             string
+	Command         []string
+	UID             int
+	GID             int
+	TTY             bool
+	NoSubstrate     bool
+	AuthMounts      []authMount
+	ForwardedEnvs   []string
+	MCPInventory    string
+	TailnetNetwork  string
+	TailnetForwards []tailnetForward
 }
 
 type launchPlan struct {
@@ -88,6 +91,12 @@ func buildLaunchPlan(opts launchOptions) (launchPlan, error) {
 	if opts.UID < 0 || opts.GID < 0 {
 		return launchPlan{}, fmt.Errorf("uid and gid must be non-negative")
 	}
+	if len(opts.TailnetForwards) > 0 && opts.MCPInventory == "" {
+		return launchPlan{}, fmt.Errorf("tailnet MCP forwarding needs an MCP inventory")
+	}
+	if len(opts.TailnetForwards) > 0 && opts.TailnetNetwork == "" {
+		return launchPlan{}, fmt.Errorf("tailnet MCP forwarding needs a Docker network")
+	}
 	cwd, err := filepath.Abs(opts.CWD)
 	if err != nil {
 		return launchPlan{}, fmt.Errorf("resolve workspace: %w", err)
@@ -115,6 +124,20 @@ func buildLaunchPlan(opts launchOptions) (launchPlan, error) {
 		args = append(
 			args,
 			"--mount", "type=volume,source="+substrateVolume+",target="+containerCacheRoot,
+		)
+	}
+	if opts.MCPInventory != "" {
+		args = append(
+			args,
+			"--mount",
+			"type=bind,source="+opts.MCPInventory+",target="+containerMCPInventory+",readonly",
+		)
+	}
+	if opts.TailnetNetwork != "" {
+		args = append(
+			args,
+			"--network", opts.TailnetNetwork,
+			"--env", "AOS_TAILNET_SOCKS5="+tailnetSOCKS5URL,
 		)
 	}
 	args = append(args,
@@ -151,8 +174,18 @@ func buildLaunchPlan(opts launchOptions) (launchPlan, error) {
 		"--workspace", workspace,
 		"--uid", fmt.Sprintf("%d", opts.UID),
 		"--gid", fmt.Sprintf("%d", opts.GID),
-		"--",
 	)
+	if opts.MCPInventory != "" {
+		args = append(args, "--mcp-inventory", containerMCPInventory)
+	}
+	for _, forward := range opts.TailnetForwards {
+		encoded, err := forward.encode()
+		if err != nil {
+			return launchPlan{}, fmt.Errorf("encode tailnet forward: %w", err)
+		}
+		args = append(args, "--tailnet-forward", encoded)
+	}
+	args = append(args, "--")
 	args = append(args, opts.Command...)
 	return launchPlan{DockerArgs: args, Workspace: workspace}, nil
 }
