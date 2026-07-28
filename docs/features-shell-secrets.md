@@ -12,8 +12,10 @@ The core's env + PATH block runs once per terminal tree, gated by an exported `_
 
 `claude`, `codex`, and `opencode` are wrapped in shell functions that refuse to launch outside a git work tree. The gate lives in the shell - outside the agent - because a harness boundary can only be widened from outside the agent, never by the agent rewriting its own rules, and the shell is the one chokepoint shared across harnesses, so a single `git rev-parse --is-inside-work-tree` check covers them uniformly. Override deliberately with `AOS_ALLOW_ANY=1` for the intentional elevated-cwd cases (a session above the org dirs, or non-repo automation). Fresh shells land at the workspace root by default. Pointing `WARP_STARTUP_DIR` at a checkout lets an agent CLI launch without a separate `cd`.
 
-The shell functions invoke each real agent binary directly and reapply the gate
-at that shared shell chokepoint. Ward and AOSguard do not own or bypass the
+The shell functions launch each harness through `acompose -- <cli>`, so
+agent-compose converges doctrine, skills, and native MCP registries before the
+real binary starts. A host without the opt-in agent-compose product
+falls back to the real binary. Ward and AOSguard do not own or bypass the
 shell's repository check.
 
 ## In-process AWS SSM secret loader
