@@ -17,7 +17,8 @@ This lists shipped capabilities, not files.
 - [aosguard](aosguard.md) - AOS-specific guarded CLI and generated skill.
 - [Code review skill](../.agents/composed/tooling-code-review/COMPOSED.md) - QA-only in-container review stance.
 - [Code review contract](../CODE-REVIEW.md) - review invariants.
-- [Harness selection](harness-selection.md) - 12-role execution-routing and personality-alignment boards.
+- [Harness selection](harness-selection.md) - 12-role execution-routing board,
+  machine-readable logical lanes, and [local profiles](local-lane-profiles.md).
 - [Test harnesses](test-harness.md) - agent/model smokes and composed-role probes.
 - [Issue-corpus discovery index](issue-corpus.md) - offline corpus render plus live Forgejo lookup.
 - [Forgejo Actions log bridge](forgejo-actions-logs.md) - plaintext helper for live workflow logs, plus fetch mirror.

@@ -25,9 +25,9 @@ hardware, orchestrator, and selection rationale do not cross the boundary.
 The released `aos` binary embeds the compiled JSON view.
 Ward's [`.ward/roles.kdl`](../.ward/roles.kdl) remains execution-only and does
 not consume role-intent harness routes.
-`aos --role ROLE harness-default --intent INTENT` resolves a lane and emits only
-the harness slug. Role remains control-plane provenance and never becomes a
-harness argument.
+`aos --role ROLE lane-default --intent INTENT` emits the harness and stable
+logical route without backend identity. `harness-default` retains its
+harness-only compatibility output. Role stays control-plane provenance.
 
 Run `ward exec sync-harness-board -- --check` for a read-only drift check. The
 local pre-commit suite runs it with `--if-present`. A missing sibling AOSH

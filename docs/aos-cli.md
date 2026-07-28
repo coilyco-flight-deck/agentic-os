@@ -75,6 +75,6 @@ publishes checksummed binaries plus Homebrew and Scoop metadata.
 
 ## See also
 
-* [aos-context-bundle.md](aos-context-bundle.md) - warded adapter and ownership.
+* [Context bundle](aos-context-bundle.md) and [local lane profiles](local-lane-profiles.md) - runtime adapters.
 * [aosguard.md](aosguard.md) - guarded tool and generated skill.
 * [dev-base-image.md](dev-base-image.md) - full image contents.

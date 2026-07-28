@@ -8,12 +8,15 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/urfave/cli/v3"
 )
 
 const harnessBoardFormat = "agentic-os.role-harness-board.v1"
+const localLaneProfileFormat = "agentic-os.local-lane-profile.v1"
 
 //go:embed role-harnesses.json
 var embeddedHarnessBoard []byte
@@ -34,6 +37,13 @@ type harnessBoard struct {
 	RoleCount  int           `json:"role_count"`
 	LaneCount  int           `json:"lane_count"`
 	Roles      []harnessRole `json:"roles"`
+}
+
+type laneProjection struct {
+	Role    string `json:"role"`
+	Intent  string `json:"intent"`
+	Harness string `json:"harness"`
+	Route   string `json:"route"`
 }
 
 func loadHarnessBoard(data []byte) (harnessBoard, error) {
@@ -122,18 +132,31 @@ func ensureJSONEnd(decoder *json.Decoder) error {
 }
 
 func resolveHarnessDefault(board harnessBoard, role, intent string) (string, error) {
+	lane, err := resolveLaneDefault(board, role, intent)
+	if err != nil {
+		return "", err
+	}
+	return lane.Harness, nil
+}
+
+func resolveLaneDefault(board harnessBoard, role, intent string) (laneProjection, error) {
 	for _, candidate := range board.Roles {
 		if candidate.Role != role {
 			continue
 		}
 		for _, lane := range candidate.Intents {
 			if lane.Intent == intent {
-				return lane.Harness, nil
+				return laneProjection{
+					Role:    role,
+					Intent:  intent,
+					Harness: lane.Harness,
+					Route:   role + "/" + intent,
+				}, nil
 			}
 		}
-		return "", fmt.Errorf("role %q has no intent %q", role, intent)
+		return laneProjection{}, fmt.Errorf("role %q has no intent %q", role, intent)
 	}
-	return "", fmt.Errorf("unknown role %q", role)
+	return laneProjection{}, fmt.Errorf("unknown role %q", role)
 }
 
 func runHarnessDefault(_ context.Context, cmd *cli.Command) error {
@@ -154,5 +177,116 @@ func runHarnessDefault(_ context.Context, cmd *cli.Command) error {
 		return err
 	}
 	fmt.Fprintln(cmd.Root().Writer, harness)
+	return nil
+}
+
+func runLaneDefault(_ context.Context, cmd *cli.Command) error {
+	role := strings.TrimSpace(cmd.String("role"))
+	if role == "" {
+		return errors.New("lane-default needs --role")
+	}
+	intent := strings.TrimSpace(cmd.String("intent"))
+	if intent == "" {
+		return errors.New("lane-default needs --intent")
+	}
+	board, err := loadHarnessBoard(embeddedHarnessBoard)
+	if err != nil {
+		return err
+	}
+	lane, err := resolveLaneDefault(board, role, intent)
+	if err != nil {
+		return err
+	}
+	if path := strings.TrimSpace(cmd.String("profile")); path != "" {
+		if err := writeLocalLaneProfile(path, lane); err != nil {
+			return err
+		}
+	}
+	encoder := json.NewEncoder(cmd.Root().Writer)
+	encoder.SetEscapeHTML(false)
+	return encoder.Encode(lane)
+}
+
+func writeLocalLaneProfile(path string, lane laneProjection) error {
+	profile := map[string]any{}
+	mode := os.FileMode(0o600)
+	current, err := os.ReadFile(path)
+	switch {
+	case err == nil:
+		info, statErr := os.Lstat(path)
+		if statErr != nil {
+			return fmt.Errorf("stat local lane profile: %w", statErr)
+		}
+		if !info.Mode().IsRegular() {
+			return errors.New("local lane profile is not a regular file")
+		}
+		mode = info.Mode().Perm()
+		if decodeErr := json.Unmarshal(current, &profile); decodeErr != nil {
+			return fmt.Errorf("decode local lane profile: %w", decodeErr)
+		}
+		if profile["format"] != localLaneProfileFormat {
+			return fmt.Errorf("refuse to replace non-AOS local profile %q", path)
+		}
+	case errors.Is(err, os.ErrNotExist):
+	default:
+		return fmt.Errorf("read local lane profile: %w", err)
+	}
+
+	request, ok := profile["request"].(map[string]any)
+	if profile["request"] != nil && !ok {
+		return errors.New("local lane profile request must be an object")
+	}
+	if !ok {
+		request = map[string]any{}
+	}
+	request["provider"] = "agent-proxy"
+	request["model"] = lane.Route
+	profile["format"] = localLaneProfileFormat
+	profile["role"] = lane.Role
+	profile["intent"] = lane.Intent
+	profile["harness"] = lane.Harness
+	profile["route"] = lane.Route
+	profile["request"] = request
+
+	rendered, err := json.MarshalIndent(profile, "", "  ")
+	if err != nil {
+		return fmt.Errorf("encode local lane profile: %w", err)
+	}
+	rendered = append(rendered, '\n')
+	if bytes.Equal(current, rendered) {
+		return nil
+	}
+	return replaceLocalLaneProfile(path, rendered, mode)
+}
+
+func replaceLocalLaneProfile(path string, rendered []byte, mode os.FileMode) error {
+	directory := filepath.Dir(path)
+	if err := os.MkdirAll(directory, 0o700); err != nil {
+		return fmt.Errorf("create local lane profile directory: %w", err)
+	}
+	file, err := os.CreateTemp(directory, "."+filepath.Base(path)+".*")
+	if err != nil {
+		return fmt.Errorf("create local lane profile staging file: %w", err)
+	}
+	staging := file.Name()
+	defer os.Remove(staging)
+	if err := file.Chmod(mode); err != nil {
+		file.Close()
+		return fmt.Errorf("protect local lane profile staging file: %w", err)
+	}
+	if _, err := file.Write(rendered); err != nil {
+		file.Close()
+		return fmt.Errorf("write local lane profile staging file: %w", err)
+	}
+	if err := file.Sync(); err != nil {
+		file.Close()
+		return fmt.Errorf("sync local lane profile staging file: %w", err)
+	}
+	if err := file.Close(); err != nil {
+		return fmt.Errorf("close local lane profile staging file: %w", err)
+	}
+	if err := os.Rename(staging, path); err != nil {
+		return fmt.Errorf("replace local lane profile: %w", err)
+	}
 	return nil
 }

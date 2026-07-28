@@ -78,6 +78,7 @@ role-intent lane:
 
 ```bash
 aos --role director harness-default --intent strategic-planning
+aos --role director lane-default --intent strategic-planning
 ```
 
 Ward is not part of that standalone path. See the

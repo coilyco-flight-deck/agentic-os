@@ -23,28 +23,24 @@ The committed board contains twelve roles and nineteen lanes:
 Engineer is the sole unattended lane. Every role declares one or two intents,
 and every lane has exactly one selected harness.
 
-## Resolve a default
+## Resolve a lane
 
-The released `aos` binary embeds the committed projection. Its resolver accepts
-role identity at the control-plane boundary and emits only the selected harness
-slug:
+The released `aos` binary resolves a general role plus explicit intent:
+
+```bash
+aos --role director lane-default --intent strategic-planning
+```
+
+It emits only `role`, `intent`, `harness`, and the derived logical `route`.
+`--profile PATH` writes the same choice to an AOS-owned local profile. See
+[local lane profiles](local-lane-profiles.md). The compatibility command:
 
 ```bash
 aos --role director harness-default --intent strategic-planning
 ```
 
-The command prints `plandex`. A harness receives the selected intent through its
-own adapter, never the role used to choose it.
-
-Some selections are terminal agent harnesses. Others are product surfaces such
-as Penpot, Plane, Mixpost, or Rasa. The resolver therefore does not auto-execute
-its result. A launcher or Ward profile consumes the slug and invokes the
-surface-specific adapter. `aos acompose` continues to require an explicit
-container command:
-
-```bash
-aos --role engineer acompose -- codex
-```
+It still prints only `plandex`. The resolver never auto-executes a terminal
+harness or product surface. A launcher or profile invokes the selected adapter.
 
 ## Ownership and synchronization
 
@@ -76,5 +72,6 @@ and role-source provenance. Neither copies backend routing data.
 ## See also
 
 * [AOS composed-container CLI](aos-cli.md) - released launcher behavior.
+* [Local lane profiles](local-lane-profiles.md) - adapter and merge contract.
 * [AOSH projections](ward-local-models.md) - authoring-time sync boundaries.
 * [Role-composed skills](role-composed-skills.md) - role-scoped knowledge.
