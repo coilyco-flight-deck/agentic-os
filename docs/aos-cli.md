@@ -20,11 +20,11 @@ transfers permissions or unions authority between tools.
 
 ## Capability flags
 
-* `--warded` - AOS invokes the host Ward CLI. Ward owns Docker Compose,
-  credentials, lifecycle, and teardown.
+* `--warded` - AOS invokes Ward for Compose, lifecycle, and credentials. Ward
+  keeps the director's raw Forgejo credential in its sibling broker.
 * `--composed` - agent-compose verifies and projects the selected role into a
   private staged home.
-* `--guarded` - AOS attaches its `aosguard` binary and generated native skill.
+* `--guarded` - AOS attaches standalone `aosguard`, which keeps its specgen credential mounts.
 
 The flags stay independent. `--warded` alone uses Ward's embedded role context.
 Either context capability can join it. All three flags enable the full launch.
