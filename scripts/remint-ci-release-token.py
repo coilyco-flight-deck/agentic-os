@@ -11,7 +11,7 @@ what CI pushes should say anyway.
 
 Flow: read the bot password from SSM, replace any prior token of the same
 name, mint with write:repository + read:user, prove attribution works via
-GET /user, then overwrite SSM /forgejo/ci-release-token. Values stay
+GET /user, then overwrite SSM /forgejo/coilyco-ops/ci-release-token. Values stay
 in-process (boto3, urllib) - never disk, argv, or stdout. Follow with
 `ward exec sync-actions-secrets` to fan the new value out to the repos.
 """
@@ -31,7 +31,7 @@ BOT_USER = "coilyco-ops"
 TOKEN_NAME = "ci-release-token"
 SCOPES = ["write:repository", "read:user"]
 PASSWORD_PARAM = "/forgejo/coilyco-ops/password"
-TARGET_PARAM = "/forgejo/ci-release-token"
+TARGET_PARAM = "/forgejo/coilyco-ops/ci-release-token"
 
 
 def api(method: str, path: str, auth: str, body: dict | None = None) -> tuple[int, object]:

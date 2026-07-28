@@ -59,17 +59,17 @@ TELEGRAM_SECRET_SOURCES = load_secret_sources(TELEGRAM_DEFAULTS_PATH)
 MAPPING: dict[str, dict[str, str]] = {
     "agentic-os": {
         **TELEGRAM_SECRET_SOURCES,
-        "CI_RELEASE_TOKEN": "/forgejo/ci-release-token",
-        "TAP_WRITE_TOKEN": "/forgejo/tap-bump-token",
-        "SCOOP_WRITE_TOKEN": "/forgejo/scoop-write-token",
+        "CI_RELEASE_TOKEN": "/forgejo/coilyco-ops/ci-release-token",
+        "TAP_WRITE_TOKEN": "/forgejo/coilyco-ops/tap-bump-token",
+        "SCOOP_WRITE_TOKEN": "/forgejo/coilyco-ops/scoop-write-token",
     },
     "ward": {
         **TELEGRAM_SECRET_SOURCES,
-        "CI_RELEASE_TOKEN": "/forgejo/ci-release-token",
+        "CI_RELEASE_TOKEN": "/forgejo/coilyco-ops/ci-release-token",
     },
     "cli-guard": {
         **TELEGRAM_SECRET_SOURCES,
-        "CI_RELEASE_TOKEN": "/forgejo/ci-release-token",
+        "CI_RELEASE_TOKEN": "/forgejo/coilyco-ops/ci-release-token",
     },
 }
 

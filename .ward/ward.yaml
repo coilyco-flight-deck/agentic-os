@@ -216,7 +216,7 @@ commands:
     description: "Sync Forgejo Actions secrets (Telegram alert creds, release PATs, and package-repository writers) from their SSM sources of truth to the aos + ward + cli-guard repos. Values flow SSM -> Forgejo API in-process, never disk or argv. `FORGEJO_ADMIN_TOKEN` overrides the legacy SSM admin-token source for attended runs. `-- --dry-run` previews the mapping. See docs/release.md."
   remint-ci-release-token:
     run: uv run --with boto3 python scripts/remint-ci-release-token.py
-    description: "Remint the two-stage promote PAT on the coilyco-ops bot (write:repository + read:user - without read:user Forgejo drops the release enqueue, ward#1117) and overwrite SSM /forgejo/ci-release-token. Values stay in-process. `-- --dry-run` previews. Follow with `ward exec sync-actions-secrets`."
+    description: "Remint the two-stage promote PAT on the coilyco-ops bot (write:repository + read:user - without read:user Forgejo drops the release enqueue, ward#1117) and overwrite SSM /forgejo/coilyco-ops/ci-release-token. Values stay in-process. `-- --dry-run` previews. Follow with `ward exec sync-actions-secrets`."
   remint-registry-read-token:
     run: uv run --with boto3 python scripts/remint-registry-read-token.py
     description: "Remint the coilyco-ops read:package token, verify it against the Forgejo registry, and overwrite SSM /forgejo/coilyco-ops/registry-read-token. Values stay in-process. `-- --dry-run` previews."
