@@ -56,7 +56,7 @@
       "personalities": [
         "imaginative",
         "playful",
-        "warm"
+        "editorial"
       ]
     },
     {
@@ -154,6 +154,10 @@
       "skill": "personality-imaginative"
     },
     {
+      "personality": "editorial",
+      "skill": "personality-editorial"
+    },
+    {
       "personality": "quirky",
       "skill": "personality-quirky"
     },
@@ -172,10 +176,6 @@
     {
       "personality": "energetic",
       "skill": "personality-energetic"
-    },
-    {
-      "personality": "editorial",
-      "skill": "personality-editorial"
     }
   ]
 }
