@@ -4,10 +4,10 @@
 AOS-specific. cli-guard and specgen remain generic products, while AOS owns
 this concrete policy snapshot, release name, and launch integration.
 
-Packaged `specgen` discovers the [`.specgen/`](../.specgen/README.md) project,
-materializes generated Go out of band, and emits the `aosguard` binary without
-committed Go build glue. The full dev-base image and native AOS releases build
-from the same source and lock. Homebrew and Scoop install it beside `aos`.
+Packaged `specgen` discovers the [guardfile project](../.specgen/README.md),
+materializes generated Go out of band, and emits `aosguard` without committed
+Go build glue. Dev-base and native AOS releases build from the same source and
+lock. Homebrew and Scoop install it beside `aos`.
 
 ## Authority boundary
 
@@ -44,9 +44,9 @@ help, and `describe` surfaces remain authoritative.
 
 ## Source ownership
 
-`.specgen/aosguard/` owns the operator policy. Ward owns its broker internally.
-Neither product reads policy from the other, and no drift check forces them to
-match.
+`.specgen/guardfiles/aosguard/` owns the operator policy, vendored Swagger
+inputs, and generated API locks. Ward owns its broker internally. Neither
+product reads policy from the other, and no drift check forces them to match.
 
 The Forgejo source is vendored from the pruned deployment contract, so
 `aosguard-lock` refreshes the dependency graph without reaching a live Forgejo

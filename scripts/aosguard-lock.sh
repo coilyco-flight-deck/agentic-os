@@ -7,6 +7,6 @@ cd "$repo_root"
 
 specgen_bin=${SPECGEN_BIN:-specgen}
 "$specgen_bin" \
-    --project-root .specgen \
+    --project-root .specgen/guardfiles \
     --skills-out dist/skills \
     lock

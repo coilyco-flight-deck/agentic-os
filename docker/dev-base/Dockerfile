@@ -120,7 +120,7 @@ RUN set -eux; \
 
 COPY --from=aosguard-spec . /tmp/aosguard-spec
 RUN set -eux; \
-    specgen --project-root /tmp/aosguard-spec \
+    specgen --project-root /tmp/aosguard-spec/guardfiles \
       --skills-out /opt/agentic-os/aosguard-skill build \
       --set-version "dev-base" \
       --out /usr/local/bin/aosguard; \
