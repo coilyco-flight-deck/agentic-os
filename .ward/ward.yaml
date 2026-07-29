@@ -73,6 +73,9 @@ commands:
   aos-composition-smoke:
     run: sh scripts/aos-composition-smoke.sh
     description: "Materialize the full local context bundle and render Ward's launch without starting an agent container. Pass the Ward issue or freeform arguments after `--`."
+  qa-verification-fixture:
+    run: bash scripts/qa-verification-fixture.sh
+    description: "Run one disposable, admitted director-to-engineer-to-QA proof in coilyco-flight-deck/ward-qa-fixture, then stop the run, delete its issue branch, and close its issue. Pass `--preserve-on-failure` only when QA needs the failed branch and issue retained as evidence."
   aos-standalone-composition-smoke:
     run: ./aos/aos --agent codex --role engineer --composed --guarded --image agentic-os:aos-local --auth=false -- --version
     description: "Launch the selected agent in one standalone AOS container with composed context and the aosguard skill, then print the agent version."
@@ -223,6 +226,12 @@ commands:
   agent-id:
     run: uv run python -m agentic_os.agent_id
     description: "Canonical short agent-id generator over the dictatable alphabet (lowercase 2-letter+2-digit, e.g. `ab85`). Bare invocation prints a fresh `secrets`-backed id (`-- -n 5` for more); `-- --seed <s>` prints the deterministic contract id for a seed, `-- --org <forgejo-org>` prints the short container token, `-- --emit-vectors` regenerates agent_id_vectors.json. The cross-repo naming primitive ward and cli-guard's Go port build against. See docs/dictatable-id-alphabet.md."
+
+agent:
+  verification:
+    fixtures:
+      - repository: coilyco-flight-deck/ward-qa-fixture
+        issue-label: qa-fixture
 
 # Catalog metadata for the cross-repo knowledge graph.
 # Schema: ward catalog block tracker.

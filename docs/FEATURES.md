@@ -11,7 +11,7 @@ This lists shipped capabilities, not files.
 - [Speech helper](aos-say.md) - `aos-say` client plus relay for status speech.
 - **Karabiner key bindings** - complex modifications for the external keyboard and Remote Desktop.
 - [Agents and sessions](features-agents-sessions.md) - self-name, session pulse, status line, and harness policy.
-- [Agent-compose provider](personality-provider.md) - scoped skills, community hosting, harness registry, and personality alignment.
+- [Agent-compose provider](personality-provider.md) - scoped skills and personality alignment.
 - [Role-composed skills](role-composed-skills.md) - role-gated CEO and specialist knowledge.
 - [AOS launcher](aos-cli.md) - standalone or Ward-governed role, context, tool,
   [MCP inventory and tailnet](aos-standalone-connectivity.md) composition plus
@@ -19,15 +19,16 @@ This lists shipped capabilities, not files.
 - [aosguard](aosguard.md) - AOS-specific guarded CLI and generated skill.
 - [Code review skill](../.agents/composed/tooling-code-review/COMPOSED.md) - QA-only in-container review stance.
 - [Code review contract](../CODE-REVIEW.md) - review invariants.
-- [Harness selection](harness-selection.md) - 12-role execution-routing board,
-  machine-readable logical lanes, and [local profiles](local-lane-profiles.md).
+- [Harness selection](harness-selection.md) - 12-role routing board and
+  [local profiles](local-lane-profiles.md).
 - [Test harnesses](test-harness.md) - agent/model smokes and composed-role probes.
 - [Issue-corpus discovery index](issue-corpus.md) - offline corpus render plus live Forgejo lookup.
-- [Forgejo Actions log bridge](forgejo-actions-logs.md) - plaintext helper for live workflow logs, plus fetch mirror.
+- [Forgejo Actions log bridge](forgejo-actions-logs.md) - plaintext live logs.
 - [Forgejo Actions list bridge](forgejo-actions-listing.md) - safe first-page helper for Actions run/task inspection.
 - [Forgejo runner-token fetch overlay](forgejo-runner-token.md) - guarded runner registration-token minting via fetch leaves.
 - [Forgejo Actions rerun bridge](forgejo-actions-rerun.md) - guarded reruns with dispatch fallback and fetch mirror.
 - [ward bundle](ward-specs.md) - AOS runtime policy and identity, never baked into Ward.
+- [QA verification fixture](qa-verification-fixture.md) - bounded live director, engineer, and QA proof with terminal cleanup.
 - [Ward profile assets home](ward-profile-assets.md) - AOS profile/config inputs for Ward's `ProfileProvider`.
 - [Role surface tiers](role-surface-tiers.md) - guarded Engineer/QA observation and wider Director/Ops tiers.
 - [Cross-repo tooling and release](features-release-tooling.md) - hooks, diagnostics, promotion, retries, reruns.
