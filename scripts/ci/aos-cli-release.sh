@@ -7,6 +7,7 @@ repo_root=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)
 validate() {
   bash "$repo_root/scripts/ci/repo-test-gate.sh"
   ward exec aos-test
+  ward exec agent-terminal-test
 }
 
 build() {

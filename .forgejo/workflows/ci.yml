@@ -21,9 +21,6 @@ on:
 permissions:
   contents: read
 
-env:
-  WARD_WORKFLOW_VERSION: v0.856.0
-
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -36,7 +33,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Install validated Ward
-        run: scripts/install-workflow-ward.sh "${WARD_WORKFLOW_VERSION}"
+        run: scripts/install-workflow-ward.sh
       - name: Validate the supported Ward YAML contract
         run: CLIGUARD_NO_SANDBOX=1 ward doctor
 
@@ -64,7 +61,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install validated ward for repo gate
-        run: scripts/install-workflow-ward.sh "${WARD_WORKFLOW_VERSION}"
+        run: scripts/install-workflow-ward.sh
 
       - name: Cache pre-commit envs
         uses: actions/cache@v4

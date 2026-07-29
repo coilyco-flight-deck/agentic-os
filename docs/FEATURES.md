@@ -7,15 +7,15 @@ This lists shipped capabilities, not files.
 ## Inventory
 
 - [Shell and secrets](features-shell-secrets.md) - shared shells, Warp, SSM, and GPG.
-- [Branded director terminal](alacritty-directors.md) - Sombra Alacritty director.
+- [Branded director terminal](alacritty-directors.md) - native Sombra Alacritty launcher.
 - [Speech helper](aos-say.md) - `aos-say` client plus relay for status speech.
-- **Karabiner key bindings** - complex modifications for the external keyboard and Remote Desktop.
-- [Agents and sessions](features-agents-sessions.md) - self-name, session pulse, status line, and harness policy.
+- **Karabiner key bindings** - external keyboard and Remote Desktop mappings.
+- [Agents and sessions](features-agents-sessions.md) - self-name, pulses, status, and harness policy.
 - [Agent-compose provider](personality-provider.md) - scoped skills and personality alignment.
 - [Agent tool evaluation](../.agents/skills/tooling-agent-tool-evaluation/SKILL.md) - cross-harness tool evals.
-- [Role-composed skills](role-composed-skills.md) - role-gated CEO and specialist knowledge.
-- [AOS launcher](aos-cli.md) - standalone and Ward role or context
-  with [MCP and tailnet](aos-standalone-connectivity.md),
+- [Role-composed skills](role-composed-skills.md) - role-gated methods and behavioral evaluation.
+- [AOS launcher](aos-cli.md) - role and context composition with
+  [MCP and tailnet](aos-standalone-connectivity.md),
   [role-gated kubeconfig](aos-kubeconfig.md), and
   [check-ins](aos-acompose-checkin.md).
 - [aosguard](aosguard.md) - AOS-specific guarded CLI and generated skill.
@@ -24,15 +24,14 @@ This lists shipped capabilities, not files.
 - [Harness selection](harness-selection.md) - role board, eligibility, Sirens
   routing, and [profiles](local-lane-profiles.md).
 - [Test harnesses](test-harness.md) - agent/model smokes and composed-role probes.
-- [Issue-corpus discovery index](issue-corpus.md) - offline corpus render plus live Forgejo lookup.
-- [Forgejo Actions logs](forgejo-actions-logs.md) - Forgejo 16 API retrieval
-  with visible-ID resolution, bounded raw job bytes, and whole-run ZIPs.
+- [Issue-corpus discovery index](issue-corpus.md) - offline corpus and live Forgejo lookup.
+- [Forgejo Actions logs](forgejo-actions-logs.md) - bounded job logs and whole-run ZIPs.
 - [Forgejo Actions list bridge](forgejo-actions-listing.md) - safe first-page helper for Actions run/task inspection.
 - [Forgejo runner-token fetch overlay](forgejo-runner-token.md) - guarded runner registration-token minting via fetch leaves.
 - [Forgejo Actions rerun bridge](forgejo-actions-rerun.md) - guarded reruns with dispatch fallback and fetch mirror.
 - [Ward integration boundary](ward-specs.md) - fixed Ward workflows,
   AOS-owned harness launch tuning, and no role-derived permission bundle.
-- [QA verification fixture](qa-verification-fixture.md) - bounded live director, engineer, and QA proof with terminal cleanup.
+- [QA verification fixture](qa-verification-fixture.md) - bounded live role proof.
 - [Cross-repo tooling and release](features-release-tooling.md) - hooks, diagnostics, promotion, retries, reruns.
 - [Telegram CI failure alerts](telegram-ci-alerts.md) - reusable red-channel alerting for failing jobs.
 - [dev-base image family](dev-base-image.md) - parallel Ubuntu language images plus the full fan-in surface.

@@ -34,6 +34,12 @@ def aosguard_artifact_name(target: str) -> str:
     return f"aosguard-{goos}-{goarch}{suffix}"
 
 
+def agent_terminal_artifact_name(target: str) -> str:
+    goos, goarch = target.split("/")
+    suffix = ".exe" if goos == "windows" else ""
+    return f"agent-terminal-{goos}-{goarch}{suffix}"
+
+
 def test_release_target_manifest_is_safe_and_unique() -> None:
     targets = release_targets()
 
@@ -50,6 +56,10 @@ def test_packaging_covers_every_release_binary(tmp_path: Path) -> None:
         (tmp_path / name).write_bytes(f"fixture:{target}".encode())
         aosguard_name = aosguard_artifact_name(target)
         (tmp_path / aosguard_name).write_bytes(f"aosguard:{target}".encode())
+        agent_terminal_name = agent_terminal_artifact_name(target)
+        (tmp_path / agent_terminal_name).write_bytes(
+            f"agent-terminal:{target}".encode()
+        )
 
     version = "aos-v1.2.3"
     env = os.environ | {
@@ -73,11 +83,20 @@ def test_packaging_covers_every_release_binary(tmp_path: Path) -> None:
             (tmp_path / aosguard_artifact_name(target)).read_bytes()
         ).hexdigest()
         assert aosguard_digest in rendered
+        agent_terminal_digest = hashlib.sha256(
+            (tmp_path / agent_terminal_artifact_name(target)).read_bytes()
+        ).hexdigest()
+        assert agent_terminal_digest in rendered
 
     assert manifest["version"] == version.removeprefix("aos-v")
     assert f"/releases/download/{version}/" in rendered
     assert "aosguard-windows-amd64.exe" in manifest["architecture"]["64bit"]["bin"][1][0]
+    assert (
+        "agent-terminal-windows-amd64.exe"
+        in manifest["architecture"]["64bit"]["bin"][2][0]
+    )
     assert "resource(\"aosguard\")" in formula
+    assert "resource(\"agent-terminal\")" in formula
 
 
 def test_release_workflow_derives_assets_from_dist() -> None:
@@ -94,8 +113,10 @@ def test_release_workflow_derives_assets_from_dist() -> None:
     assert "for asset in dist/*" in workflow_script
     assert "release-targets.txt" in builder
     assert "build_aosguard" in builder
+    assert "build_agent_terminal" in builder
     assert "specverb.lock" in builder
     assert "aosguard-*" in builder
+    assert "agent-terminal-*" in builder
     assert 'host_suffix=".exe"' in builder
     assert "shasum -a 256 -c -" in builder
     assert "go env GOOS | tr -d" in builder
@@ -103,6 +124,10 @@ def test_release_workflow_derives_assets_from_dist() -> None:
     assert "scripts/ci/aos-cli-release.sh" in workflow
     assert "ward exec aos-release-build" in workflow_script
     assert "ward exec aos-release-package" in workflow_script
+    assert "ward exec agent-terminal-test" in workflow_script
     release_check = (ROOT / "scripts" / "check-aos-release.sh").read_text(encoding="utf-8")
     assert 'grep -Fx "aosguard version $version"' in release_check
+    assert 'grep -Fx "agent-terminal version $version"' in release_check
+    assert "--dry-run" in release_check
+    assert "agent-compose" in release_check
     assert "ops actions --help" in release_check

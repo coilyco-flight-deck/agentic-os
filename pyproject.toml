@@ -69,6 +69,7 @@ check-issue-references = "agentic_os.pre_commit.check_issue_references:main"
 leak-guard-encode = "agentic_os.pre_commit.encode_leak_term:main"
 freshness = "agentic_os.freshness:main"
 agent-id = "agentic_os.agent_id:main"
+prod-install-ref = "agentic_os.prod_install_ref:main"
 
 generate-agents-pointer = "agentic_os.generators.generate_agents_pointer:main"
 generate-agent-compose = "agentic_os.generators.generate_agent_compose:main"

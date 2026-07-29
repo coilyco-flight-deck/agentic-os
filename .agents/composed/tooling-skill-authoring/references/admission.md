@@ -70,10 +70,10 @@ material instead.
 
 ## Evidence and lifecycle
 
-Record the owner and source of truth in or beside the skill. Test both routing
-and task performance. Trigger checks catch descriptions that are vague or
-over-broad. Cold-versus-skilled task checks prove that the body earns its
-context cost.
+Record the owner and source of truth in or beside the skill. Follow the
+[behavioral evaluation loop](evaluation.md) after drafting. Routing checks catch
+vague descriptions, while paired task checks show whether the body earns its
+context cost. Deterministic validators remain required when model calls are skipped.
 
 Audit the catalog periodically for generic duplication, overlap, stale facts,
 wrong audience, and model scaffolding that escaped its intended scope. Delete,

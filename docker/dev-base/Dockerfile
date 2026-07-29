@@ -8,8 +8,8 @@ ARG GO_VERSION=1.26.5
 ARG DOTNET_VERSION=10.0.301
 ARG TRUNK_VERSION=0.21.14
 ARG AGENT_COMPOSE_VERSION=1.38.0
-ARG WARD_VERSION=0.856.0
-ARG SPECGEN_VERSION=0.127.0
+ARG WARD_VERSION=0.861.0
+ARG SPECGEN_VERSION=0.128.0
 ARG NODE_VERSION=22.23.1
 ARG CLAUDE_VERSION=2.1.220
 ARG MCPORTER_VERSION=0.12.3
@@ -120,7 +120,7 @@ RUN set -eux; \
 
 COPY --from=aosguard-spec . /tmp/aosguard-spec
 RUN set -eux; \
-    specgen --project-root /tmp/aosguard-spec \
+    specgen --project-root /tmp/aosguard-spec/guardfiles \
       --skills-out /opt/agentic-os/aosguard-skill build \
       --set-version "dev-base" \
       --out /usr/local/bin/aosguard; \

@@ -1,30 +1,30 @@
 ---
 name: tooling-skill-authoring
-description: Author, place, prune, and validate skills. Covers admission, ordinary vs composed scope, triggers, structure, why-encoding, and deterministic helpers.
+description: Author, evaluate, place, prune, and validate skills. Covers admission, scope, trigger quality, behavioral deltas, structure, provenance, and deterministic gates.
 low-context: optional
+license: Apache-2.0
+metadata:
+  source-url: https://github.com/anthropics/skills/tree/main/skills/skill-creator
 ---
 
 # Skill authoring
 
-Director and PM use this method to decide whether a capability deserves a
-skill, where it belongs, and what contract an implementation role receives.
-When repository changes are required, the active role hands the bounded source
-change to engineer rather than transferring this whole catalog.
+Director and PM use this method to decide whether a capability deserves a skill,
+where it belongs, and what contract an implementation role receives. Repository
+changes go to engineer as a bounded source change, not this whole catalog.
 
 ## Handbook
 
 Start with [skill admission](references/admission.md) and
 [placement](references/placement.md). Structural rules live in the
-[handbook](references/handbook.md), drafting procedure in the
-[authoring walkthrough](references/authoring-walkthrough.md), and shaped
-sources in [`templates/`](templates/).
-
-This entrypoint carries the highest-frequency authoring discipline.
+[handbook](references/handbook.md), with drafting in the
+[authoring walkthrough](references/authoring-walkthrough.md) and behavioral
+checks in the [evaluation loop](references/evaluation.md). Shaped sources live
+in [`templates/`](templates/).
 
 ## Location
 
-Ordinary skills live at `<provider-repo>/.agents/skills/`. They use `SKILL.md`
-and form the harness-discoverable surface.
+Ordinary skills use `SKILL.md` under `<provider-repo>/.agents/skills/`.
 
 Role-scoped sources live at `<provider-repo>/.agents/composed/`. They use
 `COMPOSED.md`, bind in `.agents/roles.kdl`, and become `SKILL.md` only after
@@ -36,9 +36,8 @@ Runbooks and partial-failure playbooks stay central. Requirements live in
 
 ## Authoring
 
-Create an ordinary source with `SKILL.md`, or a role-scoped source with
-`COMPOSED.md`. Both use the same `name` and `description` frontmatter. Bind
-each role-scoped source in `.agents/roles.kdl`.
+Create an ordinary `SKILL.md` or role-scoped `COMPOSED.md`. Both use the same
+`name` and `description` frontmatter. Bind role-scoped sources in `.agents/roles.kdl`.
 
 Classify low-context admission per skill. Missing metadata defaults to
 `required`. See the [model-class policy](../../../docs/skill-model-classes.md).
@@ -77,4 +76,5 @@ Extended rules for runbooks, plugins, and documentation live in
 skill, SKILL.md, COMPOSED.md, composed skill, role-scoped skill, roles.kdl,
 frontmatter, authoring skill, validator, categories.yaml, skill admission,
 skill placement, catalog pruning, model-native knowledge, volatile knowledge,
-specialist upskilling, flat layout, deterministic helpers.
+specialist upskilling, trigger evaluation, behavioral evaluation, false trigger,
+missed trigger, task regression, deterministic helpers.

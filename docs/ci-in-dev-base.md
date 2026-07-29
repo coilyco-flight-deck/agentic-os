@@ -32,9 +32,10 @@ starting point for an app's `.forgejo/workflows/*.yml`.
 This repo's live companion is [`.forgejo/workflows/ci.yml`](../.forgejo/workflows/ci.yml).
 It keeps the workflow name `ci` and the job name `gate`, so Forgejo branch
 protection can require the `ci / gate` status context on `pull-request-and-merge`
-repos. The live gate installs the validated ward pin first, then runs `pytest`
-plus `pre-commit run --all-files`, matching the release gate so a PR cannot pass
-what main would refuse.
+repos. The live gate resolves the generated Ward tag attached to Ward's
+promoted `release` branch, installs that immutable ref, then runs `pytest` plus
+`pre-commit run --all-files`. If tag publication temporarily lags promotion,
+the resolver falls back to the literal `release` ref.
 
 This repo also exposes `ci / build-dev-base`. It derives affected tiers from
 the canonical image specification and builds their one-architecture source

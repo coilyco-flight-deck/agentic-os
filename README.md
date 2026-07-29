@@ -20,6 +20,8 @@ Warp configuration remains available.
 - `scripts/` - portable utilities (gpg-ssm wrapper, agent-name + session-pulse hooks, aws-config lint).
 - `.agents/skills/` - ordinary `SKILL.md` sources that every composed role can discover.
 - `.agents/composed/` - role-scoped `COMPOSED.md` sources that agent-compose promotes only for allowlisted roles.
+- `.specgen/guardfiles/` - recursive specgen project for AOSguard policy and
+  reproducible build locks.
 - `agentic_os/` - packaged hooks, generators, shared config/data, plus the hygiene guardrails that back the pre-commit suite.
 
 Full breakdown: [docs/repo-layout.md](docs/repo-layout.md).
@@ -91,8 +93,9 @@ aos --role director lane-default --intent strategic-planning
 
 Ward is not part of that standalone path. See the
 [launch and handoff contract](docs/aos-cli.md).
-Homebrew and Scoop install both `aos` and `aosguard`. Direct release binaries and
-the paired native update path are documented in the [CLI release walkthrough](docs/aos-cli-release.md).
+Homebrew and Scoop install `aos`, `aosguard`, and `agent-terminal`. Direct
+release binaries and the aligned native update path are documented in the
+[CLI release walkthrough](docs/aos-cli-release.md).
 
 ## Secrets pattern
 
