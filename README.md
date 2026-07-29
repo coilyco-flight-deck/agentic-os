@@ -20,6 +20,8 @@ Warp configuration remains available.
 - `scripts/` - portable utilities (gpg-ssm wrapper, agent-name + session-pulse hooks, aws-config lint).
 - `.agents/skills/` - ordinary `SKILL.md` sources that every composed role can discover.
 - `.agents/composed/` - role-scoped `COMPOSED.md` sources that agent-compose promotes only for allowlisted roles.
+- `.specgen/guardfiles/` - recursive specgen project for AOSguard policy and
+  reproducible build locks.
 - `agentic_os/` - packaged hooks, generators, shared config/data, plus the hygiene guardrails that back the pre-commit suite.
 
 Full breakdown: [docs/repo-layout.md](docs/repo-layout.md).

@@ -13,7 +13,7 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-PROJECT = ROOT / ".specgen"
+PROJECT = ROOT / ".specgen" / "guardfiles"
 SOURCE = PROJECT / "aosguard"
 
 
@@ -97,6 +97,7 @@ def _run_aosguard_aws(
 def test_aosguard_has_one_static_binary_group() -> None:
     members = sorted(SOURCE.rglob("*.kdl"))
     assert members
+    assert not list(PROJECT.glob("*.kdl"))
 
     wraps: set[str] = set()
     for member in members:
@@ -113,7 +114,7 @@ def test_aosguard_actions_use_packaged_python_modules() -> None:
     text = (SOURCE / "actions.kdl").read_text(encoding="utf-8")
 
     assert "exec python3" in text
-    assert ".specgen/aosguard/scripts/" not in text
+    assert ".specgen/guardfiles/aosguard/scripts/" not in text
     for module in (
         "forgejo_actions_list",
         "forgejo_actions_logs",
@@ -173,8 +174,8 @@ def test_native_release_wrapper_embeds_the_actions_bridge() -> None:
     assert "//go:embed payload/aosguard payload/agentic_os/*" in text
     assert "PYTHONPATH=" in text
     build = (ROOT / "scripts" / "aos-release-build.sh").read_text(encoding="utf-8")
-    generate = build.index('"$specgen" --project-root "$source" gen')
-    decode = build.index("find \"$source\" -type f -name '*.lock.json.gz'")
+    generate = build.index('"$specgen" --project-root "$project" gen')
+    decode = build.index("find \"$project\" -type f -name '*.lock.json.gz'")
     compile_binary = build.index('go build -trimpath -ldflags "-s -w -X main.Version=')
     assert generate < decode < compile_binary
     for module in (

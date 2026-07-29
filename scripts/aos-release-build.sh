@@ -76,7 +76,8 @@ build_aosguard() {
     fi
 
     cp -R "$repo_root/.specgen" "$source"
-    python3 - "$source/specverb.lock" "$source/go.mod" "$source/go.sum" <<'PY'
+    project="$source/guardfiles"
+    python3 - "$project/specverb.lock" "$project/go.mod" "$project/go.sum" <<'PY'
 import json
 import pathlib
 import sys
@@ -85,17 +86,17 @@ lock = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
 pathlib.Path(sys.argv[2]).write_text("\n".join(lock["goMod"]) + "\n", encoding="utf-8")
 pathlib.Path(sys.argv[3]).write_text("\n".join(lock["goSum"]) + "\n", encoding="utf-8")
 PY
-    "$specgen" --project-root "$source" gen --out "$source/main.go"
+    "$specgen" --project-root "$project" gen --out "$project/main.go"
     # Specgen materialization decodes gzip locks before embedding. After `gen`,
     # this direct cross-build stages every decoded lock.
-    find "$source" -type f -name '*.lock.json.gz' -print |
+    find "$project" -type f -name '*.lock.json.gz' -print |
         while IFS= read -r encoded_lock; do
             decoded_lock=${encoded_lock%.gz}
             gzip -dc "$encoded_lock" > "$decoded_lock"
             mv "$decoded_lock" "$encoded_lock"
         done
     (
-        cd "$source"
+        cd "$project"
         GOPROXY=direct GOSUMDB=off GOPRIVATE=forgejo.coilysiren.me \
             GOOS="$goos" GOARCH="$goarch" CGO_ENABLED=0 \
             go build -trimpath -ldflags "-s -w -X main.Version=${version}" -o "$raw" .
