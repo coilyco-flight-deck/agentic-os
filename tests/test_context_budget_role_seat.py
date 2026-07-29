@@ -137,6 +137,19 @@ def bundle_fixture(root: Path, *, model_class: str | None = None) -> Path:
         bundle
         / "content"
         / "skills"
+        / context.PERSON_SOURCE_SEGMENT
+        / "role-ops"
+        / "SKILL.md",
+        "---\n"
+        "name: role-ops\n"
+        "description: Adopt the Ops charter.\n"
+        "---\n"
+        "# Ops\n",
+    )
+    write(
+        bundle
+        / "content"
+        / "skills"
         / "aos-public"
         / "alpha"
         / "references"
@@ -222,21 +235,38 @@ def build_fixture_snapshot(
 def test_validate_role_seat_requires_generated_role_and_aos_layout(
     tmp_path: Path,
 ) -> None:
-    roster = tmp_path / "AGENTS.COMPOSE.md"
-    write(
-        roster,
-        "## ops - Operate\n\n"
-        "- If you are codex running the ops role: your name is solar SRE.\n"
-        "- If you are claude running the ops role: your name is fabled SRE.\n",
+    person_snapshot = tmp_path / "person.json"
+    person_snapshot.write_text(
+        json.dumps(
+            {
+                "format": "agent-compose.person-snapshot.v3",
+                "schema_version": 3,
+                "source": "person:fixture",
+                "person": "fixture",
+                "role_order": ["ops"],
+                "roles": {
+                    "ops": {
+                        "personalities": ["protective", "grounded"],
+                    }
+                },
+                "personalities": {
+                    "protective": {"skill": "personality-protective"},
+                    "grounded": {"skill": "personality-grounded"},
+                },
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
     )
 
-    context.validate_role_seat(roster, "ops", "codex")
-    context.validate_role_seat(roster, "ops", "goose")
+    context.validate_role_seat(person_snapshot, "ops", "codex")
+    context.validate_role_seat(person_snapshot, "ops", "goose")
 
     with pytest.raises(RuntimeError, match="role qa is absent"):
-        context.validate_role_seat(roster, "qa", "goose")
+        context.validate_role_seat(person_snapshot, "qa", "goose")
     with pytest.raises(RuntimeError, match="unsupported AOS seat"):
-        context.validate_role_seat(roster, "ops", "aider")
+        context.validate_role_seat(person_snapshot, "ops", "aider")
 
 
 def test_agents_inventory_rejects_outside_cwd(tmp_path: Path) -> None:
@@ -357,6 +387,7 @@ def test_build_snapshot_separates_eager_and_lazy_components(tmp_path: Path) -> N
         [
             "aos-public/alpha",
             "aos-public/tooling-ops-live-remediation",
+            "person:kai/role-ops",
             *expected_personality_skills,
             "skill-root-0/plugin-tool",
         ]
@@ -368,6 +399,7 @@ def test_build_snapshot_separates_eager_and_lazy_components(tmp_path: Path) -> N
     assert alpha["lazy"] > 0
     assert alpha["resources"] == 1
     assert skills["aos-public/tooling-ops-live-remediation"]["class"] == "role-composed"
+    assert skills["person:kai/role-ops"]["class"] == "role"
     assert all(
         skills[skill_id]["class"] == "personality"
         for skill_id in expected_personality_skills

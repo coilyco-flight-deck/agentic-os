@@ -169,6 +169,32 @@ roles {
             reasoning-effort high
         }
     }
+    // technical-writer: turn verified technical work into accurate, usable documentation
+    role technical-writer {
+        // guardfiles for day to day read (defaults)
+        guardfile "forgejo.read.kdl"
+        guardfile "forgejo.readactions.kdl"
+        // guardfiles for documentation work
+        guardfile "forgejo.write.kdl"
+        guardfile "forgejo.merge.kdl"
+        // make the agents average everyday fellows
+        agent claude {
+            model claude-opus-4-8
+            // BEGIN generated AOSH role-seat identity
+            name "opal technical writer"
+            pronouns she
+            // END generated AOSH role-seat identity
+            reasoning-effort high
+        }
+        agent codex {
+            model gpt-5.6-terra
+            // BEGIN generated AOSH role-seat identity
+            name "terran technical writer"
+            pronouns he
+            // END generated AOSH role-seat identity
+            reasoning-effort high
+        }
+    }
     // designer: shape product interactions and produce design artifacts
     role designer {}
     // social: social media leads and analysis
