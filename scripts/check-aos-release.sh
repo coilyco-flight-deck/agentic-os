@@ -1,5 +1,5 @@
 #!/bin/sh
-# Verify checksums, package metadata, and the native release binary.
+# Verify checksums, package metadata, and the native release binaries.
 set -eu
 
 repo_root=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
@@ -18,7 +18,7 @@ bare=${version#aos-v}
 
 target_count=$(awk '!/^[[:space:]]*(#|$)/ { count++ } END { print count+0 }' \
     "$repo_root/aos/release-targets.txt")
-target_count=$((target_count * 2))
+target_count=$((target_count * 3))
 checksum_count=$(wc -l < "$dist/SHA256SUMS" | tr -d ' ')
 if [ "$target_count" -ne "$checksum_count" ]; then
     echo "checksum count does not match release target count" >&2
@@ -33,10 +33,26 @@ grep -F "version \"${bare}\"" "$dist/aos.rb" >/dev/null
 grep -F "\"version\": \"${bare}\"" "$dist/aos.json" >/dev/null
 
 case "$(uname -s)/$(uname -m)" in
-    Darwin/arm64) native_aos="$dist/aos-darwin-arm64"; native_aosguard="$dist/aosguard-darwin-arm64" ;;
-    Linux/x86_64) native_aos="$dist/aos-linux-amd64"; native_aosguard="$dist/aosguard-linux-amd64" ;;
-    Linux/aarch64 | Linux/arm64) native_aos="$dist/aos-linux-arm64"; native_aosguard="$dist/aosguard-linux-arm64" ;;
-    *) native_aos=""; native_aosguard="" ;;
+    Darwin/arm64)
+        native_aos="$dist/aos-darwin-arm64"
+        native_aosguard="$dist/aosguard-darwin-arm64"
+        native_agent_terminal="$dist/agent-terminal-darwin-arm64"
+        ;;
+    Linux/x86_64)
+        native_aos="$dist/aos-linux-amd64"
+        native_aosguard="$dist/aosguard-linux-amd64"
+        native_agent_terminal="$dist/agent-terminal-linux-amd64"
+        ;;
+    Linux/aarch64 | Linux/arm64)
+        native_aos="$dist/aos-linux-arm64"
+        native_aosguard="$dist/aosguard-linux-arm64"
+        native_agent_terminal="$dist/agent-terminal-linux-arm64"
+        ;;
+    *)
+        native_aos=""
+        native_aosguard=""
+        native_agent_terminal=""
+        ;;
 esac
 if [ -n "$native_aos" ]; then
     actual=$("$native_aos" version)
@@ -52,7 +68,34 @@ if [ -n "$native_aos" ]; then
         "$native_aosguard" --version | grep -Fx "aosguard version $version" >/dev/null
         "$native_aosguard" ops aws --help >/dev/null
         "$native_aosguard" ops actions --help >/dev/null
+        "$native_agent_terminal" --help >/dev/null
+        "$native_agent_terminal" --version |
+            grep -Fx "agent-terminal version $version" >/dev/null
+
+        cp "$repo_root/agent-terminal/testdata/agent-compose" .
+        cp "$repo_root/agent-terminal/testdata/director-overlay.json" .
+        chmod 0755 agent-compose
+        "$native_agent_terminal" \
+            --role director \
+            --seat codex \
+            --expression acting \
+            --task-title agentic-os-release-smoke \
+            --working-directory "$smoke_dir" \
+            --agent-compose-bin "$smoke_dir/agent-compose" \
+            --dry-run \
+            -- printf ready > launch.json
+        python3 - "$smoke_dir/launch.json" "$smoke_dir" <<'PY'
+import json
+import pathlib
+import sys
+
+plan = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+assert plan["format"] == "agent-terminal.launch.v1"
+assert plan["working_directory"] == sys.argv[2]
+assert plan["executable"] == "alacritty"
+assert plan["arguments"][-3:] == ["-e", "printf", "ready"]
+PY
     )
 fi
 
-echo "verified aos and aosguard release $version"
+echo "verified aos, aosguard, and agent-terminal release $version"

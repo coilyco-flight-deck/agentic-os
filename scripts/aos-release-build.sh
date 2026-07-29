@@ -1,5 +1,5 @@
 #!/bin/sh
-# Cross-compile version-stamped aos and aosguard binaries from the target manifest.
+# Cross-compile the version-stamped native AOS binaries from the target manifest.
 set -eu
 
 repo_root=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
@@ -119,6 +119,27 @@ PY
     echo "$out"
 }
 
+build_agent_terminal() {
+    target=$1
+    goos=${target%%/*}
+    goarch=${target#*/}
+    out="$dist/agent-terminal-${goos}-${goarch}"
+    if [ "$goos" = "windows" ]; then
+        out="${out}.exe"
+    fi
+    if [ -e "$out" ]; then
+        echo "duplicate release output: $out" >&2
+        exit 1
+    fi
+    (
+        cd "$repo_root/agent-terminal"
+        GOOS="$goos" GOARCH="$goarch" CGO_ENABLED=0 \
+            go build -trimpath -ldflags "-s -w -X main.version=${version}" \
+            -o "$out" .
+    )
+    echo "$out"
+}
+
 mkdir -p "$dist"
 release_build=$(mktemp -d)
 trap 'rm -rf "$release_build"' EXIT HUP INT TERM
@@ -156,13 +177,14 @@ while IFS= read -r target || [ -n "$target" ]; do
             go build -trimpath -ldflags "-s -w -X main.version=${version}" \
             -o "$out" .
     )
+    build_agent_terminal "$target"
     build_aosguard "$target"
     echo "$out"
 done < "$targets"
 
 (
     cd "$dist"
-    for asset in aos-* aosguard-*; do
+    for asset in agent-terminal-* aos-* aosguard-*; do
         checksum "$asset"
     done > SHA256SUMS
 )
