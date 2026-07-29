@@ -42,9 +42,9 @@ roles, duplicate bindings, unknown roles, and missing sources fail composition.
 Every canonical agent-compose role has a block and at least one composed
 source.
 
-The complete `coding-*` family is composed for engineer, director, QA, and ops.
-Designer receives only the JavaScript pair. Community receives only the
-Discord architecture source.
+The complete `coding-*` family and `mcp-server-patterns` are composed for engineer,
+director, QA, and ops. `design-system` is composed for designer, engineer, and QA.
+Community receives only the Discord architecture source.
 
 CEO receives OSS stewardship, platform strategy, and developer-tool adoption methods. Specialist sources also serve advisor,
 designer, QA, ops, PM, social, community, sales, and customer-success.

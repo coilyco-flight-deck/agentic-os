@@ -19,7 +19,9 @@ roles {
         composed-skill coding-shape-tui
         composed-skill coding-shape-web-server
         composed-skill coding-terraform
+        composed-skill design-system
         composed-skill kai-git-workflow
+        composed-skill mcp-server-patterns
         composed-skill tooling-supply-chain-audit
         composed-skill writing-public-repos
         composed-skill writing-system-improvement-vocab
@@ -50,6 +52,7 @@ roles {
         composed-skill coding-shape-web-server
         composed-skill coding-terraform
         composed-skill kai-git-workflow
+        composed-skill mcp-server-patterns
         composed-skill tooling-director-decision-architecture
         composed-skill tooling-issue-prioritization
         composed-skill tooling-product-brainstorming
@@ -88,7 +91,9 @@ roles {
         composed-skill coding-shape-tui
         composed-skill coding-shape-web-server
         composed-skill coding-terraform
+        composed-skill design-system
         composed-skill kai-git-workflow
+        composed-skill mcp-server-patterns
         composed-skill tooling-code-review
         composed-skill tooling-qa-adversarial-verification
         composed-skill tooling-qa-state-machine-verification
@@ -130,6 +135,7 @@ roles {
         composed-skill coding-shape-web-server
         composed-skill coding-terraform
         composed-skill kai-git-workflow
+        composed-skill mcp-server-patterns
         composed-skill tooling-ops-change-risk-modeling
         composed-skill tooling-ops-dynamic-systems-diagnosis
         composed-skill tooling-ops-incident-command
@@ -169,6 +175,7 @@ roles {
     role designer {
         composed-skill coding-javascript
         composed-skill coding-javascript-react
+        composed-skill design-system
         composed-skill tooling-designer-cognitive-walkthrough
         composed-skill tooling-designer-interaction-shaping
         composed-skill tooling-product-brainstorming
