@@ -58,8 +58,10 @@ aos --agent codex --role engineer --warded --composed --guarded -- owner/repo#26
 
 AOS translates the shared role and selected capabilities. Ward remains the
 fixed workflow and container lifecycle owner, agent-compose remains the context producer,
-and cli-guard/specgen remains the guarded-tool generator. The role name selects
-context in each layer and never unions authority.
+and cli-guard/specgen remains the guarded-tool generator. Matching role names
+never union authority between those layers. AOS applies its own bounded
+standalone runtime gates, including
+[kubeconfig projection](docs/aos-kubeconfig.md).
 
 The original standalone composed-container command remains available:
 

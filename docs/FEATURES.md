@@ -15,6 +15,7 @@ This lists shipped capabilities, not files.
 - [Role-composed skills](role-composed-skills.md) - role-gated CEO and specialist knowledge.
 - [AOS launcher](aos-cli.md) - standalone or Ward-governed role, context, tool,
   [MCP inventory and tailnet](aos-standalone-connectivity.md) composition plus
+  [role-gated kubeconfig](aos-kubeconfig.md) projection and
   [check-ins](aos-acompose-checkin.md).
 - [aosguard](aosguard.md) - AOS-specific guarded CLI and generated skill.
 - [Code review skill](../.agents/composed/tooling-code-review/COMPOSED.md) - QA-only in-container review stance.

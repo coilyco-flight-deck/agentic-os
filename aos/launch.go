@@ -17,6 +17,7 @@ const (
 	containerWorkspaceRoot = "/workspace"
 	containerCacheRoot     = "/var/cache/aos/git"
 	containerAuthRoot      = "/run/aos/auth"
+	containerKubeconfig    = "/run/aos/kubeconfig"
 	substrateVolume        = "aos-substrate-cache"
 	runtimeTmpfsSize       = "512m"
 )
@@ -46,6 +47,7 @@ type launchOptions struct {
 	NoSubstrate     bool
 	AuthMounts      []authMount
 	ForwardedEnvs   []string
+	Kubeconfig      string
 	MCPInventory    string
 	TailnetNetwork  string
 	TailnetForwards []tailnetForward
@@ -97,6 +99,10 @@ func buildLaunchPlan(opts launchOptions) (launchPlan, error) {
 	if len(opts.TailnetForwards) > 0 && opts.TailnetNetwork == "" {
 		return launchPlan{}, fmt.Errorf("tailnet MCP forwarding needs a Docker network")
 	}
+	kubeconfig, err := resolveKubeconfigMount(opts.Role, opts.Kubeconfig)
+	if err != nil {
+		return launchPlan{}, err
+	}
 	cwd, err := filepath.Abs(opts.CWD)
 	if err != nil {
 		return launchPlan{}, fmt.Errorf("resolve workspace: %w", err)
@@ -131,6 +137,14 @@ func buildLaunchPlan(opts launchOptions) (launchPlan, error) {
 			args,
 			"--mount",
 			"type=bind,source="+opts.MCPInventory+",target="+containerMCPInventory+",readonly",
+		)
+	}
+	if kubeconfig != "" {
+		args = append(
+			args,
+			"--mount",
+			"type=bind,source="+kubeconfig+",target="+containerKubeconfig+",readonly",
+			"--env", "KUBECONFIG="+containerKubeconfig,
 		)
 	}
 	if opts.TailnetNetwork != "" {

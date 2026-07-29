@@ -47,6 +47,14 @@ dials the proxy for every new connection.
 The infrastructure tailscale-proxy role owns proxy convergence. AOS neither
 starts nor repairs that service.
 
+## Kubeconfig coexistence
+
+An authorized standalone launch can add the
+[operator-selected kubeconfig mount](aos-kubeconfig.md) while retaining the
+same MCP inventory, `ward-tailnet` attachment, SOCKS environment, and endpoint
+forwarders. Kubeconfig projection does not infer cluster transport from the
+credential document.
+
 ## Security and authority
 
 The host inventory is operator configuration, not role policy. Projection adds
@@ -57,4 +65,5 @@ owner of Ward runtime policy when `--warded` is present.
 ## See also
 
 * [AOS launch CLI](aos-cli.md) - launch flags and container contract.
+* [AOS kubeconfig projection](aos-kubeconfig.md) - role-gated live credentials.
 * [Tooling Tailscale skill](../.agents/skills/tooling-tailscale/SKILL.md) - shared proxy and Docker network contract.
