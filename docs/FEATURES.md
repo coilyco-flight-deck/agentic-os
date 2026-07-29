@@ -23,7 +23,8 @@ This lists shipped capabilities, not files.
   routing, and [profiles](local-lane-profiles.md).
 - [Test harnesses](test-harness.md) - agent/model smokes and composed-role probes.
 - [Issue-corpus discovery index](issue-corpus.md) - offline corpus render plus live Forgejo lookup.
-- [Forgejo Actions log bridge](forgejo-actions-logs.md) - plaintext live logs.
+- [Forgejo Actions logs](forgejo-actions-logs.md) - Forgejo 16 API retrieval
+  with visible-ID resolution, bounded raw job bytes, and whole-run ZIPs.
 - [Forgejo Actions list bridge](forgejo-actions-listing.md) - safe first-page helper for Actions run/task inspection.
 - [Forgejo runner-token fetch overlay](forgejo-runner-token.md) - guarded runner registration-token minting via fetch leaves.
 - [Forgejo Actions rerun bridge](forgejo-actions-rerun.md) - guarded reruns with dispatch fallback and fetch mirror.

@@ -1,43 +1,79 @@
-# Forgejo Actions log bridge
+# Forgejo Actions logs
 
-`aosguard ops actions logs` calls the packaged
-`agentic_os.forgejo_actions_logs` module. It fetches the live plaintext job log
-for a PR status target and prints it raw to stdout. Ward retains a separate
-role-scoped bridge for agent containers.
+`aosguard ops actions logs` fetches workflow-run and job logs through Forgejo's
+official REST API. It requires Forgejo 16.0 or newer. It does not read HTML,
+call web routes, use browser cookies, or synthesize log text.
 
-The companion specverb fetch overlay in
-[AOSguard's Forgejo spec](../.specgen/aosguard/forgejo.kdl) pins the dead
-Forgejo API log route from agentic-os#473. PR #529 replaced that route with
-the live web UI helper below, and this fetch mirror keeps the dead shape
-documented instead of hand-coding another raw HTTP call.
+## Resolved command
 
-Why the bridge still exists:
+```text
+aosguard ops actions logs <owner> <repo> <run> [job] [attempt] [--max-bytes N]
+```
 
-- Forgejo 15.0.2 exposes the Actions metadata in swagger, but not this log
-  route.
-- The module preserves the owner gate and uses Basic auth against the job page
-  and its `logCursors` POST, and it does not JSON-render the response body.
-- The operator command is independent of the current repository directory.
+```bash
+aosguard ops actions logs coilyco-flight-deck agentic-os 2766 > run-2766.zip
+aosguard ops actions logs coilyco-flight-deck agentic-os 2766 0
+aosguard ops actions logs coilyco-flight-deck agentic-os 2766 0 2
+```
 
-The visible status target uses the repository run index and job index, for
-example `/actions/runs/886/jobs/0`.
+The examples select a whole run, visible job index 0, and its attempt 2.
 
-Mapping:
+Supported identifiers:
 
-- `886` is the run index from the status `target_url`.
-- `0` is the job index from the status `target_url`.
-- The bridge opens `/coilyco-flight-deck/agentic-os/actions/runs/886/jobs/0/attempt/1`.
-- The page exposes `data-run-id` for the internal run id.
-- The page exposes the job list, and the entry at job index `0` provides the
-  internal job id.
-- The bridge then fetches the plaintext log stream with those internal ids.
+* Repository - separate `<owner> <repo>` names, never a database ID.
+* Run - the visible number from `/actions/runs/2766`, or `id:<n>`.
+* Job - zero-based visible index, exact name, `name:<exact-name>`, or `id:<n>`.
+  The `name:` prefix disambiguates a numeric name.
+* Attempt - positive 1-based number. Omit it for Forgejo's latest attempt.
 
-The resolved log route is:
+The resolver filters runs by visible number, reads that run's job list, and then
+calls the log endpoint. Callers do not need internal run, job, or task IDs.
 
-`GET` and `POST` `/repos/{owner}/{repo}/actions/runs/{run}/jobs/{job}/attempt/{attempt}`
+## Bytes and bounds
 
-See also:
+Single-job output is the exact body from
+`GET /repos/{owner}/{repo}/actions/jobs/{job_id}/logs`. AOS requests successive
+byte ranges without decoding them, so empty and non-UTF-8 logs remain exact.
 
-- [aosguard.md](aosguard.md)
-- [Forgejo Actions rerun bridge](forgejo-actions-rerun.md)
-- [Cross-repo tooling and release](FEATURES.md)
+Whole-run output is the exact ZIP from
+`GET /repos/{owner}/{repo}/actions/runs/{run_id}/logs`. Forgejo may add
+`.MISSING` markers for jobs that have not started or whose logs expired.
+
+Both forms buffer at most 64 MiB by default and leave stdout empty when that
+bound is exceeded. `--max-bytes` selects another positive bound. Successful
+stdout is raw log or ZIP data. Diagnostics and warnings go to stderr.
+
+## Typed states
+
+* Running log with bytes - exit 0, exact snapshot, `running_log` warning.
+* Completed log - exit 0 with exact bytes.
+* Running log not ready - `running_log`, exit 75.
+* Expired completed job log - `expired_log`, exit 69.
+* Completed job that never executed - `log_unavailable`, exit 69.
+* Missing run, job, or attempt - `missing_*`, exit 66.
+* Authorization failure - `authorization_failure`, exit 77.
+* Output above the bound - `too_large`, exit 65.
+
+Whole-run ZIPs remain successful with `.MISSING` entries. AOS reads only those
+small markers and warns without changing the archive bytes.
+
+## Direct guarded leaves
+
+```text
+aosguard ops forgejo action-run-job list <owner> <repo> <internal-run-id>
+aosguard ops forgejo action-job logs <owner> <repo> <internal-job-id> [--attempt N]
+aosguard ops forgejo action-run logs <owner> <repo> <internal-run-id>
+```
+
+These expose the official API directly. Use the resolved command for an Actions URL or job name.
+
+## Prior bridge
+
+The HTML log-cursor implementation and fixtures are removed. The shared web
+helper remains only for reruns. `agentic-os#415` is closed and superseded.
+
+## See also
+
+* [aosguard](aosguard.md)
+* [Forgejo Actions rerun bridge](forgejo-actions-rerun.md)
+* [Forgejo Actions list bridge](forgejo-actions-listing.md)
