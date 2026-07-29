@@ -27,9 +27,9 @@ wrap aosguard ops forgejo {
     }
     can create repo
     can edit repo
-    can replace-all repo-topic {
+    never replace-all repo-topic {
         op repoUpdateTopics
-        describe "replace the complete repository topic set (PUT /repos/{owner}/{repo}/topics); repeat --topics for each retained topic"
+        message "repository topic replacement requires an attended admin credential; use `aosguard ops forgejo-admin repo-topic replace-all`"
     }
     can delete repo {
         describe "irreversible: deletes the repo and all its data"

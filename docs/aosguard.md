@@ -15,9 +15,11 @@ The snapshot carries operator-facing Forgejo, AWS, kubectl, Tailscale, Actions,
 and runner-token leaves. AWS SSM permits single reads, file-backed writes, and
 named deletions. Actions lives at `aosguard ops actions` so its exec transport
 does not shadow `aosguard ops forgejo`. The snapshot excludes Ward role policy.
-Forgejo metadata includes
-`repo-topic replace-all <owner> <repo>`, whose repeated `--topics` values
-become the repository's complete topic set.
+Forgejo metadata includes the attended `forgejo-admin repo-topic replace-all`
+leaf, whose repeated `--topics` values become the repository's complete topic
+set. The ordinary Forgejo wrapper keeps the coilyco-ops bot token for reads and
+writes. The admin wrapper reads `FORGEJO_ADMIN_TOKEN` from the environment so
+an attended credential never enters argv, logs, or tracked configuration.
 
 Ward's fixed broker and AOSguard's static operator surface are independent.
 Specgen merges AOSguard policy into one static binary. Neither surface imports

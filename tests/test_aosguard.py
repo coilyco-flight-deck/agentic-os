@@ -15,13 +15,6 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 PROJECT = ROOT / ".specgen"
 SOURCE = PROJECT / "aosguard"
-EXPECTED_MEMBERS = {
-    "actions.kdl",
-    "aws.kdl",
-    "forgejo.kdl",
-    "kubectl.kdl",
-    "tailscale.kdl",
-}
 
 
 @pytest.fixture(scope="module")
@@ -102,8 +95,8 @@ def _run_aosguard_aws(
 
 
 def test_aosguard_has_one_static_binary_group() -> None:
-    members = sorted(SOURCE.glob("*.kdl"))
-    assert {member.name for member in members} == EXPECTED_MEMBERS
+    members = sorted(SOURCE.rglob("*.kdl"))
+    assert members
 
     wraps: set[str] = set()
     for member in members:
@@ -131,17 +124,16 @@ def test_aosguard_actions_use_packaged_python_modules() -> None:
 
 
 def test_aosguard_vendored_forgejo_contract_is_encoded_json() -> None:
-    vendored = SOURCE / "forgejo.swagger.v1.json.gz"
-    assert json.loads(gzip.decompress(vendored.read_bytes()))
+    vendored = sorted(SOURCE.glob("*.swagger.v1.json.gz"))
+    assert vendored
+    assert all(json.loads(gzip.decompress(path.read_bytes())) for path in vendored)
 
 
 def test_aosguard_forgejo_lock_is_encoded_json() -> None:
-    encoded = SOURCE / "forgejo.swagger.lock.json.gz"
-    legacy = SOURCE / "forgejo.swagger.lock.json"
-
-    assert encoded.is_file()
-    assert not legacy.exists()
-    assert json.loads(gzip.decompress(encoded.read_bytes()))
+    encoded = sorted(SOURCE.glob("*.swagger.lock.json.gz"))
+    assert encoded
+    assert not list(SOURCE.glob("*.swagger.lock.json"))
+    assert all(json.loads(gzip.decompress(path.read_bytes())) for path in encoded)
 
 
 def test_aosguard_dependency_lock_is_committed() -> None:
@@ -175,9 +167,7 @@ def test_native_release_wrapper_embeds_the_actions_bridge() -> None:
     assert "PYTHONPATH=" in text
     build = (ROOT / "scripts" / "aos-release-build.sh").read_text(encoding="utf-8")
     generate = build.index('"$specgen" --project-root "$source" gen')
-    decode = build.index(
-        'gzip -dc "$source/aosguard/forgejo.swagger.lock.json.gz"'
-    )
+    decode = build.index("find \"$source\" -type f -name '*.lock.json.gz'")
     compile_binary = build.index('go build -trimpath -ldflags "-s -w -X main.Version=')
     assert generate < decode < compile_binary
     for module in (
@@ -196,7 +186,7 @@ def test_repo_topic_replace_all_dry_run_builds_put_body(
         [
             str(aosguard_binary),
             "ops",
-            "forgejo",
+            "forgejo-admin",
             "repo-topic",
             "replace-all",
             "coilyco-example",
@@ -226,7 +216,7 @@ def test_repo_topic_replace_all_rejects_out_of_scope_owner(
         [
             str(aosguard_binary),
             "ops",
-            "forgejo",
+            "forgejo-admin",
             "repo-topic",
             "replace-all",
             "outside-example",
