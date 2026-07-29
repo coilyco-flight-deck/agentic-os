@@ -20,8 +20,8 @@ transfers permissions or unions authority between tools.
 
 ## Capability flags
 
-* `--warded` - AOS invokes Ward for Compose, lifecycle, and credentials. Ward
-  keeps the director's raw Forgejo credential in its sibling broker.
+* `--warded` - AOS invokes Ward for Compose, lifecycle, and
+  [credential handoff](aos-ward-credentials.md).
 * `--composed` - agent-compose verifies and projects the selected role into a
   private staged home.
 * `--guarded` - AOS attaches standalone `aosguard`, which keeps its specgen credential mounts.

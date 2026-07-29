@@ -203,6 +203,14 @@ func runWardedLaunch(
 	cmd *cli.Command,
 	opts integratedLaunchOptions,
 ) error {
+	var launchEnvironment []string
+	if !opts.DryRun {
+		var err error
+		launchEnvironment, err = wardLaunchEnvironment(ctx)
+		if err != nil {
+			return err
+		}
+	}
 	bundlePath := ""
 	if opts.Composed || opts.Guarded {
 		if opts.DryRun {
@@ -258,7 +266,7 @@ func runWardedLaunch(
 		return fmt.Errorf("--warded needs Ward on the host PATH: %w", err)
 	}
 	plan.Command = wardPath
-	return hostCommand(ctx, plan.Command, plan.Args...)
+	return hostCommand(ctx, plan.Command, launchEnvironment, plan.Args...)
 }
 
 func buildWardLaunchPlan(opts integratedLaunchOptions, bundlePath string) wardLaunchPlan {
@@ -291,8 +299,14 @@ func resolveWardWithContextContract(ctx context.Context) (string, error) {
 	return wardPath, nil
 }
 
-func runHostCommand(ctx context.Context, name string, args ...string) error {
+func runHostCommand(
+	ctx context.Context,
+	name string,
+	environment []string,
+	args ...string,
+) error {
 	command := exec.CommandContext(ctx, name, args...)
+	command.Env = environment
 	command.Stdin = os.Stdin
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
