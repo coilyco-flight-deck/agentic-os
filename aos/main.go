@@ -85,6 +85,10 @@ func newCommand() *cli.Command {
 				Value: true,
 				Usage: "stage the selected harness's known host auth file when present",
 			},
+			&cli.StringFlag{
+				Name:  "kubeconfig",
+				Usage: "operator-selected host kubeconfig for an authorized standalone role",
+			},
 		},
 		Commands: []*cli.Command{
 			{
@@ -280,6 +284,7 @@ func runComposedLaunch(
 		NoSubstrate:     noSubstrate,
 		AuthMounts:      authMounts,
 		ForwardedEnvs:   forwardedEnvironment(),
+		Kubeconfig:      cmd.String("kubeconfig"),
 		MCPInventory:    mcp.Inventory,
 		TailnetNetwork:  mcp.TailnetNetwork,
 		TailnetForwards: mcp.Forwards,

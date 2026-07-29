@@ -205,7 +205,8 @@ func stageAOSGuardContext(layout, role, home, source string) error {
 		body := "# AOS guarded launch context\n\n" +
 			"AOS attached the `aosguard` operator tool and its generated skill. " +
 			"The selected role slug is `" + role + "`. " +
-			"The role slug selects context only and grants no authority.\n"
+			"The role slug grants no authority by itself. " +
+			"Runtime mounts and guarded tools remain separately selected.\n"
 		if err := os.WriteFile(instructionPath, []byte(body), 0o644); err != nil {
 			return fmt.Errorf("write guarded instruction: %w", err)
 		}

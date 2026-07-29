@@ -28,6 +28,7 @@ type integratedLaunchOptions struct {
 	Guarded     bool
 	NoSubstrate bool
 	Auth        bool
+	Kubeconfig  string
 	DryRun      bool
 	Arguments   []string
 }
@@ -53,6 +54,7 @@ func runIntegratedLaunch(ctx context.Context, cmd *cli.Command) error {
 		Guarded:     cmd.Bool("guarded"),
 		NoSubstrate: cmd.Bool("no-substrate"),
 		Auth:        cmd.Bool("auth"),
+		Kubeconfig:  cmd.String("kubeconfig"),
 		DryRun:      cmd.Bool("dry-run"),
 		Arguments:   cmd.Args().Slice(),
 	}
@@ -97,6 +99,11 @@ func validateIntegratedLaunch(opts integratedLaunchOptions) error {
 		return fmt.Errorf("--no-substrate needs --composed")
 	}
 	if opts.Warded {
+		if opts.Kubeconfig != "" {
+			return fmt.Errorf(
+				"--kubeconfig is available only for standalone launches because Ward owns warded runtime mounts",
+			)
+		}
 		switch opts.Role {
 		case "director", "qa", "engineer":
 		default:
@@ -185,6 +192,7 @@ func runStandaloneIntegratedLaunch(
 		NoSubstrate:     opts.NoSubstrate,
 		AuthMounts:      authMounts,
 		ForwardedEnvs:   forwardedEnvironment(),
+		Kubeconfig:      opts.Kubeconfig,
 		MCPInventory:    mcp.Inventory,
 		TailnetNetwork:  mcp.TailnetNetwork,
 		TailnetForwards: mcp.Forwards,

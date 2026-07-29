@@ -20,8 +20,10 @@ YAML through Ward's loader.
   deployment defaults, and the immutable context-bundle adapter.
 * Ward receives the fixed workflow role, selected harness and image, original
   work request, explicit harness environment, broker credential, and optional
-  context bundle. A role slug selects composition. Standalone AOS may also use
-  it for launch tuning. It grants no permissions.
+  context bundle. In the warded path, a role slug selects composition and grants
+  no permissions. Standalone AOS may also use it for launch tuning and its own
+  bounded [kubeconfig projection](aos-kubeconfig.md). That standalone gate does
+  not transfer a grant into Ward.
 * AOSguard owns the independent generated operator surface and its credential
   mounts. Ward neither imports nor configures it.
 
@@ -40,8 +42,10 @@ follows:
 * Role behavior and composed skills remain in `.agents/roles.kdl`.
 * Seat names and pronouns remain canonical in agent-compose. AOS does not
   duplicate its person registry.
-* Role-derived grants were retired rather than moved. Ward workflows and the
-  separately selected AOSguard surface now determine executable authority.
+* Role-derived command grants were retired rather than moved. Ward workflows
+  and the separately selected AOSguard surface determine executable authority.
+  AOS owns only its bounded standalone runtime inputs, including kubeconfig
+  projection.
 
 ## Release and validation
 

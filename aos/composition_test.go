@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -82,6 +83,14 @@ func TestValidateIntegratedLaunchMatrix(t *testing.T) {
 				Guarded: true, NoSubstrate: true,
 			},
 			want: "needs --composed",
+		},
+		{
+			name: "warded kubeconfig",
+			opts: integratedLaunchOptions{
+				Image: "aos:test", Role: "director", Agent: "codex",
+				Warded: true, Kubeconfig: "/host/config",
+			},
+			want: "only for standalone launches",
 		},
 	}
 	for _, test := range invalid {
@@ -277,5 +286,40 @@ func TestIntegratedStandaloneComposedDryRunUsesNoWard(t *testing.T) {
 	}
 	if strings.Contains(rendered, "ward agent") {
 		t.Fatalf("standalone composed dry run invoked Ward:\n%s", rendered)
+	}
+}
+
+func TestIntegratedStandaloneKubeconfigDryRun(t *testing.T) {
+	t.Parallel()
+	kubeconfig := writeTestKubeconfig(
+		t,
+		filepath.Join(t.TempDir(), "operator config", "cluster config.yaml"),
+	)
+	command := newCommand()
+	var output bytes.Buffer
+	command.Writer = &output
+	command.ErrWriter = &output
+	err := command.Run(context.Background(), []string{
+		"aos",
+		"--agent", "codex",
+		"--role", "ops",
+		"--image", "aos:test",
+		"--composed",
+		"--kubeconfig", kubeconfig,
+		"--dry-run",
+		"--",
+		"--version",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	rendered := output.String()
+	for _, want := range []string{
+		"source=" + kubeconfig + ",target=" + containerKubeconfig + ",readonly",
+		"KUBECONFIG=" + containerKubeconfig,
+	} {
+		if !strings.Contains(rendered, want) {
+			t.Errorf("standalone dry run missing %q:\n%s", want, rendered)
+		}
 	}
 }

@@ -15,8 +15,9 @@ aos \
   -- owner/repo#267
 ```
 
-The shared role slug selects context only. A matching name never transfers
-permissions or unions authority between tools.
+The shared role slug selects context across enabled capabilities and never
+transfers authority between tools. Standalone AOS separately applies bounded
+access gates such as [kubeconfig projection](aos-kubeconfig.md).
 
 ## Capability flags
 
@@ -58,6 +59,7 @@ agents, and translated Ward flags before starting a container.
 * Composition hydrates the baked provider through `aos-substrate-cache`.
 * AOS copies the selected harness's known read-only auth into ephemeral HOME.
 * [MCP and tailnet projection](aos-standalone-connectivity.md) preserves the native standalone connectivity baseline.
+* [Role-gated kubeconfig projection](aos-kubeconfig.md) mounts one explicit operator-selected source read-only for standalone director and ops launches.
 * Present API-key environment variables cross by name, never rendered value.
 * Docker socket, AWS config, host HOME, and Git credentials do not mount.
 

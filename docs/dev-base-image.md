@@ -28,6 +28,11 @@ aosguard's native agent skill, renders an agent-compose roster, and checks the
 generated person snapshot plus personality definitions. Linuxbrew is not part
 of any image.
 
+The common surface includes `kubectl`, but image builds own no host mounts,
+kubeconfig, or cluster transport. The standalone AOS launcher may add an
+[operator-selected kubeconfig](aos-kubeconfig.md) for an authorized role.
+Language images remain artifacts with no host-specific mount logic.
+
 [`docker/dev-base/full/Dockerfile`](../docker/dev-base/full/Dockerfile) starts
 from the same-release Rust image and grafts Go, .NET, and Python tooling from
 their same-release images. Node is already present in the common surface. The

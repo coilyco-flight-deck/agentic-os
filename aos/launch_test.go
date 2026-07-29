@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -185,6 +186,128 @@ func TestBuildLaunchPlanProjectsMCPAndJoinsTailnet(t *testing.T) {
 	}
 }
 
+func TestBuildLaunchPlanMountsKubeconfigWithTailnet(t *testing.T) {
+	t.Parallel()
+	kubeconfig := writeTestKubeconfig(
+		t,
+		filepath.Join(t.TempDir(), "operator config", "cluster config.yaml"),
+	)
+	plan, err := buildLaunchPlan(launchOptions{
+		Image:          "agentic-os:test",
+		Role:           "ops",
+		Layout:         "codex",
+		Delivery:       "native-skills",
+		Composed:       true,
+		CWD:            t.TempDir(),
+		Command:        []string{"codex"},
+		UID:            1000,
+		GID:            1000,
+		Kubeconfig:     kubeconfig,
+		MCPInventory:   "/host/mcporter.json",
+		TailnetNetwork: tailnetDockerNetwork,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	joined := strings.Join(plan.DockerArgs, "\n")
+	for _, want := range []string{
+		"type=bind,source=" + kubeconfig + ",target=" + containerKubeconfig + ",readonly",
+		"--env\nKUBECONFIG=" + containerKubeconfig,
+		"--network\n" + tailnetDockerNetwork,
+		"--env\nAOS_TAILNET_SOCKS5=" + tailnetSOCKS5URL,
+	} {
+		if !strings.Contains(joined, want) {
+			t.Errorf("launch plan missing %q:\n%s", want, joined)
+		}
+	}
+}
+
+func TestBuildLaunchPlanRejectsInvalidKubeconfigForAuthorizedRoles(t *testing.T) {
+	t.Parallel()
+	t.Run("missing", func(t *testing.T) {
+		t.Parallel()
+		_, err := buildLaunchPlan(launchOptions{
+			Image: "agentic-os:test", Role: "director", Layout: "codex",
+			Delivery: "native-skills", Composed: true, CWD: t.TempDir(),
+			Command: []string{"codex"}, UID: 1000, GID: 1000,
+			Kubeconfig: filepath.Join(t.TempDir(), "missing.yaml"),
+		})
+		if err == nil || !strings.Contains(err.Error(), "does not exist") {
+			t.Fatalf("error = %v, want missing kubeconfig error", err)
+		}
+	})
+	t.Run("malformed", func(t *testing.T) {
+		t.Parallel()
+		path := filepath.Join(t.TempDir(), "malformed.yaml")
+		if err := os.WriteFile(path, []byte("apiVersion: [\n"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		_, err := buildLaunchPlan(launchOptions{
+			Image: "agentic-os:test", Role: "ops", Layout: "codex",
+			Delivery: "native-skills", Composed: true, CWD: t.TempDir(),
+			Command: []string{"codex"}, UID: 1000, GID: 1000,
+			Kubeconfig: path,
+		})
+		if err == nil || !strings.Contains(err.Error(), "is malformed") {
+			t.Fatalf("error = %v, want malformed kubeconfig error", err)
+		}
+	})
+	t.Run("not regular", func(t *testing.T) {
+		t.Parallel()
+		path := t.TempDir()
+		_, err := buildLaunchPlan(launchOptions{
+			Image: "agentic-os:test", Role: "ops", Layout: "codex",
+			Delivery: "native-skills", Composed: true, CWD: t.TempDir(),
+			Command: []string{"codex"}, UID: 1000, GID: 1000,
+			Kubeconfig: path,
+		})
+		if err == nil || !strings.Contains(err.Error(), "is not a regular file") {
+			t.Fatalf("error = %v, want regular-file kubeconfig error", err)
+		}
+	})
+	t.Run("multiple documents", func(t *testing.T) {
+		t.Parallel()
+		path := filepath.Join(t.TempDir(), "multiple.yaml")
+		body := "apiVersion: v1\nkind: Config\n---\napiVersion: v1\nkind: Config\n"
+		if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		_, err := buildLaunchPlan(launchOptions{
+			Image: "agentic-os:test", Role: "ops", Layout: "codex",
+			Delivery: "native-skills", Composed: true, CWD: t.TempDir(),
+			Command: []string{"codex"}, UID: 1000, GID: 1000,
+			Kubeconfig: path,
+		})
+		if err == nil || !strings.Contains(err.Error(), "is malformed") {
+			t.Fatalf("error = %v, want multiple-document kubeconfig error", err)
+		}
+	})
+}
+
+func TestBuildLaunchPlanOmitsKubeconfigForSealedRoles(t *testing.T) {
+	t.Parallel()
+	for _, role := range []string{"engineer", "qa"} {
+		role := role
+		t.Run(role, func(t *testing.T) {
+			t.Parallel()
+			source := filepath.Join(t.TempDir(), "intentionally absent.yaml")
+			plan, err := buildLaunchPlan(launchOptions{
+				Image: "agentic-os:test", Role: role, Layout: "codex",
+				Delivery: "native-skills", Composed: true, CWD: t.TempDir(),
+				Command: []string{"codex"}, UID: 1000, GID: 1000,
+				Kubeconfig: source,
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			joined := strings.Join(plan.DockerArgs, "\n")
+			if strings.Contains(joined, source) || strings.Contains(joined, "KUBECONFIG") {
+				t.Fatalf("%s launch received kubeconfig projection:\n%s", role, joined)
+			}
+		})
+	}
+}
+
 func TestArgvAfterDash(t *testing.T) {
 	t.Parallel()
 	got := argvAfterDash([]string{"aos", "--role", "engineer", "acompose", "--", "codex", "exec"})
@@ -238,4 +361,31 @@ func containsArg(args []string, want string) bool {
 		}
 	}
 	return false
+}
+
+func writeTestKubeconfig(t *testing.T, path string) string {
+	t.Helper()
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	body := "apiVersion: v1\n" +
+		"kind: Config\n" +
+		"clusters:\n" +
+		"  - name: local\n" +
+		"    cluster:\n" +
+		"      server: https://cluster.example.invalid\n" +
+		"contexts:\n" +
+		"  - name: local\n" +
+		"    context:\n" +
+		"      cluster: local\n" +
+		"      user: operator\n" +
+		"current-context: local\n" +
+		"users:\n" +
+		"  - name: operator\n" +
+		"    user:\n" +
+		"      token: test-token\n"
+	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	return path
 }
