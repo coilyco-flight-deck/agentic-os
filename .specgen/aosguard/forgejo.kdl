@@ -303,6 +303,18 @@ wrap aosguard ops forgejo {
         op ActionRun
         describe "single Actions run with its status and conclusion (GET /repos/{owner}/{repo}/actions/runs/{run_id}). op pinned to the upstream ActionRun id."
     }
+    can list action-run-job {
+        op ListActionRunJobs
+        describe "jobs belonging to one Actions run (GET /repos/{owner}/{repo}/actions/runs/{run_id}/jobs)"
+    }
+    can logs action-job {
+        op repoGetActionJobLogs
+        describe "exact plaintext bytes for one Actions job, with optional attempt and byte ranges (Forgejo 16)"
+    }
+    can logs action-run {
+        op repoGetActionRunLogs
+        describe "exact ZIP bytes containing every job log in one Actions run (Forgejo 16)"
+    }
     action list action-run {
         describe "List Actions runs with a safe page-1 default."
         input owner {
@@ -490,14 +502,7 @@ wrap aosguard ops forgejo {
         }
         fail-when "$issue.state == 'closed'"
     }
-    // fetch mirrors for the dead Forgejo Actions API routes. agentic-os#473
-    // documented these routes as 404s, and issue #530 asked for the fetch form.
-    fetch "actions logs" {
-        method "GET"
-        path "/repos/{owner}/{repo}/actions/runs/{run}/jobs/{job}/attempt/{attempt}/logs"
-        output "raw"
-        when first input matches coily*
-    }
+    // Rerun fetch mirrors remain until Forgejo exposes their routes in Swagger.
     fetch "actions rerun" {
         method "POST"
         path "/repos/{owner}/{repo}/actions/runs/{run}/rerun"

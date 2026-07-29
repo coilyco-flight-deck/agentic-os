@@ -1,6 +1,6 @@
-// AOSguard's repository-local Forgejo Actions bridges. The upstream API contract
-// omits the live log and rerun controls, so these narrow Python modules share
-// one command group and the coilyco-ops bot token.
+// AOSguard's repository-local Forgejo Actions resolvers and rerun bridges.
+// These narrow Python modules share one command group and the coilyco-ops bot
+// token.
 wrap aosguard ops actions {
     exec python3 {
         env FORGEJO_TOKEN {
@@ -11,7 +11,7 @@ wrap aosguard ops actions {
     can run logs {
         argv "-m" "agentic_os.forgejo_actions_logs"
         when arg0 matches coily*
-        describe "stream plaintext Actions job logs from the live Forgejo web route"
+        describe "fetch bounded whole-run ZIP or single-job log bytes through the Forgejo 16 API"
     }
     can run runs {
         argv "-m" "agentic_os.forgejo_actions_list" "runs"

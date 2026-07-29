@@ -132,7 +132,11 @@ def test_aosguard_actions_use_packaged_python_modules() -> None:
 
 def test_aosguard_vendored_forgejo_contract_is_encoded_json() -> None:
     vendored = SOURCE / "forgejo.swagger.v1.json.gz"
-    assert json.loads(gzip.decompress(vendored.read_bytes()))
+    contract = json.loads(gzip.decompress(vendored.read_bytes()))
+
+    assert contract["info"]["version"].startswith("16.")
+    assert "/repos/{owner}/{repo}/actions/jobs/{job_id}/logs" in contract["paths"]
+    assert "/repos/{owner}/{repo}/actions/runs/{run_id}/logs" in contract["paths"]
 
 
 def test_aosguard_forgejo_lock_is_encoded_json() -> None:
@@ -242,6 +246,53 @@ def test_repo_topic_replace_all_rejects_out_of_scope_owner(
 
     assert result.returncode != 0
     assert 'owner="outside-example" is outside the allowed scope' in result.stderr
+
+
+@pytest.mark.parametrize(
+    ("resource", "identifier", "extra", "expected_path"),
+    [
+        (
+            "action-job",
+            "9134",
+            ("--attempt", "2"),
+            "/repos/coilyco-example/sample/actions/jobs/9134/logs?attempt=2",
+        ),
+        (
+            "action-run",
+            "6281",
+            (),
+            "/repos/coilyco-example/sample/actions/runs/6281/logs",
+        ),
+    ],
+)
+def test_forgejo_v16_log_leaves_resolve_official_routes(
+    aosguard_binary: Path,
+    resource: str,
+    identifier: str,
+    extra: tuple[str, ...],
+    expected_path: str,
+) -> None:
+    result = subprocess.run(
+        [
+            str(aosguard_binary),
+            "ops",
+            "forgejo",
+            resource,
+            "logs",
+            "coilyco-example",
+            "sample",
+            identifier,
+            *extra,
+            "--dry-run",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    assert "method: GET" in result.stdout
+    assert expected_path in result.stdout
+    assert "Authorization: token <redacted>" in result.stdout
 
 
 def test_aws_put_parameter_creates_and_overwrites_without_value_disclosure(
