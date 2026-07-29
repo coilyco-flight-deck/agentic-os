@@ -30,9 +30,6 @@ on:
 permissions:
   contents: write
 
-env:
-  WARD_WORKFLOW_VERSION: v0.856.0
-
 jobs:
   bump:
     runs-on: docker
@@ -45,7 +42,7 @@ jobs:
           token: ${{ secrets.DEP_BUMP_TOKEN || github.token }}
 
       - name: Install validated ward for repo gate
-        run: scripts/install-workflow-ward.sh "${WARD_WORKFLOW_VERSION}"
+        run: scripts/install-workflow-ward.sh
 
       - name: Cache pre-commit envs
         uses: actions/cache@v4

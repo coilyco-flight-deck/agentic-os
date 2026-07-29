@@ -227,11 +227,27 @@ def test_yq_resolver_reads_the_latest_release(monkeypatch) -> None:
     assert script._resolve_yq() == "4.53.3"
 
 
-def test_ward_binary_is_manual_until_aos_validates_prod_channel() -> None:
-    # Raw ward releases are staging until release assets are executable-smoked and
-    # aos promotes a candidate as prod/N-1, so dep-bump must not chase latest.
+def test_guard_and_ward_follow_the_promoted_release_channel() -> None:
+    # Raw releases remain staging. The managed pins follow only tags attached to
+    # each product's promoted release branch.
     script = _load_script()
-    assert "WARD_VERSION" not in script.RESOLVERS
+    assert "SPECGEN_VERSION" in script.RESOLVERS
+    assert "WARD_VERSION" in script.RESOLVERS
+
+
+def test_promoted_version_strips_the_product_tag_prefix(monkeypatch) -> None:
+    script = _load_script()
+    seen: list[str] = []
+
+    def fake_resolve(product: str, *, fetch_json) -> str:
+        seen.append(product)
+        return {"guard": "v0.128.0", "ward": "v0.860.0"}[product]
+
+    monkeypatch.setattr(script, "resolve_release_ref", fake_resolve)
+
+    assert script._resolve_specgen() == "0.128.0"
+    assert script._resolve_ward() == "0.860.0"
+    assert seen == ["guard", "ward"]
 
 
 def test_dotnet_is_auto_bumped_and_stays_on_its_channel() -> None:

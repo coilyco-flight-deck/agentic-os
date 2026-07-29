@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ref="${1:?usage: install-workflow-ward.sh <ward-ref> [output-path]}"
+repo_root=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
+ref="${1:-$(
+  PYTHONPATH="${repo_root}${PYTHONPATH:+:${PYTHONPATH}}" \
+    python3 -m agentic_os.prod_install_ref ward
+)}"
 out="${2:-/usr/local/bin/ward}"
 tmpdir="$(mktemp -d)"
 

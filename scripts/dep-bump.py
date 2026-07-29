@@ -20,11 +20,10 @@ API drops that one tool from the plan, it never blocks the others.
 
 Version policy: bumps stay on the pinned line where crossing it is risky. Node
 tracks the latest release of its currently-pinned major (no surprise major jump).
-agent-compose tracks canonical Forgejo releases. uv/go/aws-cli/claude/mcporter/
+agent-compose tracks canonical Forgejo releases. Guard and Ward track the exact
+generated tag at their promoted release branches. uv/go/aws-cli/claude/mcporter/
 codex/goose/gh/helm/kubectl/yq track the latest stable upstream release
-(mcporter off npm, everything else off a GitHub Releases/tags feed). Ward is
-manual until raw ward releases become trustworthy staging inputs and aos owns
-the prod/N-1 promotion.
+(mcporter off npm, everything else off a GitHub Releases/tags feed).
 
 Usage:
     python3 scripts/dep-bump.py plan            # TSV: NAME<TAB>CURRENT<TAB>LATEST
@@ -44,6 +43,7 @@ from pathlib import Path
 from typing import Callable
 
 from agentic_os.dev_base import DEV_BASE_ROOT
+from agentic_os.prod_install_ref import resolve_release_ref
 
 DOCKERFILE = DEV_BASE_ROOT
 
@@ -213,6 +213,20 @@ def _resolve_agent_compose() -> str | None:
     )
 
 
+def _resolve_promoted_version(product: str) -> str | None:
+    ref = resolve_release_ref(product, fetch_json=_get_json)
+    match = re.fullmatch(r"(?:aos-)?v(\d+\.\d+\.\d+)", ref)
+    return match.group(1) if match is not None else None
+
+
+def _resolve_specgen() -> str | None:
+    return _resolve_promoted_version("guard")
+
+
+def _resolve_ward() -> str | None:
+    return _resolve_promoted_version("ward")
+
+
 def _resolve_codex() -> str | None:
     # Tags are rust-vX.Y.Z with rust-vX.Y.Z-alpha.N prereleases interleaved.
     return _gh_release("openai/codex", re.compile(r"^rust-v(\d+\.\d+\.\d+)$"))
@@ -266,7 +280,7 @@ def _resolve_dotnet(current: str) -> str | None:
 
 
 # Resolver per ARG. No resolver means never auto-bumped.
-# Node stays on major; ward opts out until aos validates prod/N-1.
+# Node stays on major; guard and Ward follow their promoted release commits.
 RESOLVERS: dict[str, Callable[..., str | None]] = {
     "UV_VERSION": _resolve_uv,
     "NODE_VERSION": _resolve_node,
@@ -275,6 +289,8 @@ RESOLVERS: dict[str, Callable[..., str | None]] = {
     "CLAUDE_VERSION": _resolve_claude,
     "MCPORTER_VERSION": _resolve_mcporter,
     "AGENT_COMPOSE_VERSION": _resolve_agent_compose,
+    "SPECGEN_VERSION": _resolve_specgen,
+    "WARD_VERSION": _resolve_ward,
     "CODEX_VERSION": _resolve_codex,
     "GOOSE_VERSION": _resolve_goose,
     "GH_VERSION": _resolve_gh,

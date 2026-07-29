@@ -36,12 +36,13 @@ before it pushes, so a bad pin leaves the run red and stops before `main`.
   Tailscale resolves against its `pkgs.tailscale.com/stable` feed (not GitHub
   tags, which interleave the unstable odd-minor releases). A hand-edited `ARG`
   wins until upstream passes it.
-- **Three deliberate opt-outs.** `GOLANGCI_LINT_VERSION`, `KDLFMT_VERSION`, and
-  `WARD_VERSION` have no resolver, so auto-bump never touches them
-  (agentic-os#292). Lint/format pins must match consumer CI. Ward is manual while
-  raw releases are staging: aos should advance prod/N-1 only after validating
-  candidate N against the real released AOS launch surface. `docker buildx` and `wasm-pack`
-  stay job-local, so dev-base does not claim them.
+- **Promoted internal tools.** `SPECGEN_VERSION` and `WARD_VERSION` resolve the
+  generated `v*` tag attached to each repository's `release` branch. Raw tags
+  ahead of that commit remain staging and never enter the production image.
+- **Two deliberate opt-outs.** `GOLANGCI_LINT_VERSION` and `KDLFMT_VERSION` have
+  no resolver, so auto-bump never touches them (agentic-os#292). Their pins must
+  match consumer CI. `docker buildx` and `wasm-pack` stay job-local, so dev-base
+  does not claim them.
 - **Fail-soft.** A resolver whose upstream is unreachable or has reshaped its API
   drops from that run with a warning. It never blocks the other bumps.
 

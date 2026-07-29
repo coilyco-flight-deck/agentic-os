@@ -26,9 +26,6 @@ concurrency:
 permissions:
   contents: write
 
-env:
-  WARD_WORKFLOW_VERSION: v0.856.0
-
 jobs:
   release:
     runs-on: docker
@@ -43,7 +40,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install validated Ward for release gate
-        run: scripts/install-workflow-ward.sh "${WARD_WORKFLOW_VERSION}"
+        run: scripts/install-workflow-ward.sh
 
       - name: Cache pre-commit envs
         uses: actions/cache@v4

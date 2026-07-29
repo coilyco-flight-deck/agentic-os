@@ -18,6 +18,9 @@ Single-purpose validators for cryptic failure modes. These plus [`ward context-b
 
 - `ward aws-config` - catches the `[profile default]` trap (SDKs read `[default]`; a misplaced region surfaces later as a useless `NoRegion`).
 - `ward ssm-path` - checks parameter paths against the `/<org>/<repo>/<tier>/<tail>` schema before IAM/KMS, where a malformed path silently misses every tier policy.
+- `ward exec prod-install-ref -- guard|ward|aos` - returns the immutable
+  generated product tag attached to the promoted `release` branch. It returns
+  the literal `release` ref when promotion has no matching tag yet.
 - GPG signing doctor that walks every check needed to diagnose `failed to sign the data` and names the likely fix per failure mode.
 
 ## Forgejo-canonical release actions

@@ -10,7 +10,8 @@ def test_pull_request_ci_workflow_exposes_branch_protection_context() -> None:
     workflow = (ROOT / ".forgejo" / "workflows" / "ci.yml").read_text()
     assert "name: ci" in workflow
     assert "pull_request:" in workflow
-    assert 'scripts/install-workflow-ward.sh "${WARD_WORKFLOW_VERSION}"' in workflow
+    assert workflow.count("scripts/install-workflow-ward.sh") == 2
+    assert "WARD_WORKFLOW_VERSION" not in workflow
     assert "build-dev-base:" in workflow
     assert "runs-on: docker-build" in workflow
     assert "uses: ./actions/dev-base-build" in workflow
