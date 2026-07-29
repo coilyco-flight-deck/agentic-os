@@ -29,7 +29,7 @@ var settingMaps = []settingMap{
 	{"terminal.input.alias_expansion_enabled", "AliasExpansionEnabled", kindBool, true, ""},
 	{"terminal.input.completions_open_while_typing", "CompletionsOpenWhileTyping", kindBool, true, ""},
 	{"workflows.show_global_workflows_in_universal_search", "ShowGlobalWorkflowsInUniversalSearch", kindBool, true, ""},
-	{"appearance.vertical_tabs.enabled", "UseVerticalTabs", kindBool, true, ""},
+	{"appearance.vertical_tabs.enabled", "UseVerticalTabs", kindBool, false, ""},
 	{"agents.mcp_servers.file_based_mcp_enabled", "FileBasedMcpEnabled", kindBool, false, ""},
 	{"agents.profiles.agent_mode_execute_readonly_commands", "AgentModeExecuteReadonlyCommands", kindBool, false, ""},
 	{"agents.warp_agent.is_any_ai_enabled", "IsAnyAIEnabled", kindBool, false, ""},

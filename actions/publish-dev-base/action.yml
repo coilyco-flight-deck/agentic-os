@@ -1,0 +1,118 @@
+name: "Publish one dev-base tier"
+description: |
+  Build and push one multi-arch language or full image, or retag an
+  already-pushed draft tier into the release tags.
+
+inputs:
+  tier:
+    description: "Published image tier."
+    required: true
+  tag:
+    description: "Release tag to stamp onto the tier image."
+    required: true
+  alias:
+    description: "Optional moving alias tag pushed alongside the stamped tag."
+    required: false
+    default: ""
+  extra-aliases:
+    description: "Optional whitespace-separated alias tags appended after alias."
+    required: false
+    default: ""
+  mode:
+    description: "Operation mode: build pushes the image, promote retags source-tag."
+    required: false
+    default: "build"
+  source-tag:
+    description: "Existing source tag used by promote mode."
+    required: false
+    default: ""
+  registry-token:
+    description: "Forgejo PAT with write:package for the registry login."
+    required: true
+  image-base:
+    description: "Registry image base."
+    required: false
+    default: "forgejo.coilysiren.me/coilyco-flight-deck/agentic-os"
+  platforms:
+    description: "Platforms for the buildx publish."
+    required: false
+    default: "linux/amd64,linux/arm64"
+  build-timeout:
+    description: "Inner timeout(1) guard around the image build."
+    required: false
+    default: "110m"
+  uv-version:
+    description: "uv version installed on the bare runner."
+    required: false
+    default: "0.12.0"
+  buildx-version:
+    description: "docker buildx plugin version installed on the bare runner."
+    required: false
+    default: "v0.34.1"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install uv
+      shell: bash
+      env:
+        UV_VERSION: ${{ inputs.uv-version }}
+      run: bash "${GITHUB_ACTION_PATH}/scripts/install-uv.sh"
+
+    - name: Install docker CLI + buildx plugin
+      shell: bash
+      env:
+        BUILDX_VERSION: ${{ inputs.buildx-version }}
+      run: bash "${GITHUB_ACTION_PATH}/scripts/install-docker.sh"
+
+    - name: Resolve docker host
+      shell: bash
+      run: bash "${GITHUB_ACTION_PATH}/scripts/resolve-docker-host.sh"
+
+    - name: Registry login
+      shell: bash
+      env:
+        REGISTRY_TOKEN: ${{ inputs.registry-token }}
+      run: bash "${GITHUB_ACTION_PATH}/scripts/registry-login.sh"
+
+    - name: Check whether the image already landed
+      id: checkpoint
+      shell: bash
+      env:
+        MODE: ${{ inputs.mode }}
+        TIER: ${{ inputs.tier }}
+        TAG: ${{ inputs.tag }}
+        ALIAS: ${{ inputs.alias }}
+        EXTRA_ALIASES: ${{ inputs.extra-aliases }}
+        SOURCE_TAG: ${{ inputs.source-tag }}
+        IMAGE_BASE: ${{ inputs.image-base }}
+      run: bash "${GITHUB_ACTION_PATH}/scripts/checkpoint.sh"
+
+    - name: Set up qemu + reuse the persistent buildx builder
+      if: ${{ inputs.mode == 'build' && steps.checkpoint.outputs.skip_publish != 'true' }}
+      shell: bash
+      run: bash "${GITHUB_ACTION_PATH}/scripts/setup-builder.sh"
+
+    - name: Publish or promote the image
+      if: ${{ steps.checkpoint.outputs.skip_publish != 'true' }}
+      shell: bash
+      env:
+        MODE: ${{ inputs.mode }}
+        TIER: ${{ inputs.tier }}
+        TAG: ${{ inputs.tag }}
+        ALIAS: ${{ inputs.alias }}
+        EXTRA_ALIASES: ${{ inputs.extra-aliases }}
+        SOURCE_TAG: ${{ inputs.source-tag }}
+        IMAGE_BASE: ${{ inputs.image-base }}
+        PLATFORMS: ${{ inputs.platforms }}
+        BUILD_TIMEOUT: ${{ inputs.build-timeout }}
+      run: bash "${GITHUB_ACTION_PATH}/scripts/publish-image.sh"
+
+    - name: Verify the full development surface on both architectures
+      if: ${{ inputs.tier == 'full' }}
+      shell: bash
+      env:
+        IMAGE_BASE: ${{ inputs.image-base }}
+        TAG: ${{ inputs.tag }}
+        PLATFORMS: ${{ inputs.platforms }}
+      run: bash "${GITHUB_ACTION_PATH}/scripts/verify-full.sh"

@@ -13,6 +13,7 @@ import (
 type templateData struct {
 	RepoRoot      string
 	WorkspaceDir  string
+	ProjectsDir   string
 	StartupDir    string
 	ThemePath     string
 	TabConfigPath string
@@ -24,6 +25,7 @@ func newTemplateData(h *HostPaths) templateData {
 	return templateData{
 		RepoRoot:      filepath.ToSlash(h.RepoRoot),
 		WorkspaceDir:  filepath.ToSlash(h.WorkspaceDir),
+		ProjectsDir:   filepath.ToSlash(filepath.Dir(h.WorkspaceDir)),
 		StartupDir:    filepath.ToSlash(h.StartupDir),
 		ThemePath:     filepath.ToSlash(h.ThemePath),
 		TabConfigPath: filepath.ToSlash(h.TabConfigPath),

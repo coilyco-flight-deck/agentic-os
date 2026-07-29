@@ -8,7 +8,7 @@
 
 **gpg-agent cache reuse.** After the first successful sign in a session, gpg-agent caches the unlocked key in memory. Subsequent signs hit the cache, not SSM, provided `default-cache-ttl` in `gpg-agent.conf` is set long enough (recommended ~1yr).
 
-**Fail-fast credential gate.** Before fetching from SSM, the wrapper runs `ward ops aws sts get-caller-identity`. If AWS creds are expired or missing, the error message names the next command: `Run 'aws sso login' and retry.` Opaque "failed to fetch" errors are a design smell here - the gate exists so the user knows exactly what to run.
+**Fail-fast credential gate.** Before fetching from SSM, the wrapper runs `aosguard ops aws sts get-caller-identity`. If AWS creds are expired or missing, the error message names the next command: `Run 'aws sso login' and retry.` Opaque "failed to fetch" errors are a design smell here - the gate exists so the user knows exactly what to run.
 
 ## Git Bash carve-out
 

@@ -14,7 +14,8 @@ For each repo checked out under ~/projects/<org>/<name> across every org dir
      documentation-layout, code-comments, check-skills, dead-cross-links,
      skill-discipline).
   3. Insert/refresh the managed block: the agentic-os hook set plus the
-     standard hygiene hooks, actionlint, shellcheck, and typos.
+     standard hygiene hooks, actionlint, Forgejo Runner validation, shellcheck,
+     and typos.
   4. Run `pre-commit install --hook-type pre-commit --hook-type commit-msg
      --hook-type prepare-commit-msg`.
 
@@ -124,7 +125,10 @@ PRECOMMIT_HOOKS = [
 
 ACTIONLINT_REPO_URL = "https://github.com/rhysd/actionlint"
 ACTIONLINT_REV = "v1.7.12"
-ACTIONLINT_FILES = r"^\.forgejo/workflows/.*\.(ya?ml)$"
+FORGEJO_WORKFLOW_FILES = r"^\.forgejo/workflows/.*\.(ya?ml)$"
+
+FORGEJO_RUNNER_REPO_URL = "https://code.forgejo.org/forgejo/runner"
+FORGEJO_RUNNER_REV = "v12.10.1"
 
 SHELLCHECK_REPO_URL = "https://github.com/shellcheck-py/shellcheck-py"
 SHELLCHECK_REV = "v0.11.0.1"
@@ -136,6 +140,7 @@ TYPOS_REV = "v1.48.0"
 MANAGED_REPO_URLS = [
     PRECOMMIT_HOOKS_REPO_URL,
     ACTIONLINT_REPO_URL,
+    FORGEJO_RUNNER_REPO_URL,
     SHELLCHECK_REPO_URL,
     TYPOS_REPO_URL,
 ]
@@ -171,6 +176,7 @@ DEFAULT_HOOK_IDS = [
     "documentation-layout",
     "context-load-points",
     "code-comments",
+    "source-doc-refs",
     "catalog-block-present",
     "check-skills",
     "dead-cross-links",
@@ -232,7 +238,11 @@ def managed_block(rev: str, hook_ids: list[str] | None = None) -> str:
     hooks:
       # Forgejo workflows use GitHub Actions syntax; no exclude split is needed yet.
       - id: actionlint
-        files: {ACTIONLINT_FILES}
+        files: {FORGEJO_WORKFLOW_FILES}
+  - repo: {FORGEJO_RUNNER_REPO_URL}
+    rev: {FORGEJO_RUNNER_REV}
+    hooks:
+      - id: forgejo-runner-validate
   - repo: {SHELLCHECK_REPO_URL}
     rev: {SHELLCHECK_REV}
     hooks:
@@ -315,21 +325,23 @@ def upsert_managed_block(
         config_path.write_text(empty_config_template(rev, hook_ids))
         return "created", 0
 
-    text = config_path.read_text()
-    text, legacy_removed = strip_legacy_blocks(text)
-
+    original_text = config_path.read_text()
     block = managed_block(rev, hook_ids)
-    if BEGIN_MARKER in text and END_MARKER in text:
-        before, _, rest = text.partition(BEGIN_MARKER)
+    if BEGIN_MARKER in original_text and END_MARKER in original_text:
+        before, _, rest = original_text.partition(BEGIN_MARKER)
         _, _, after = rest.partition(END_MARKER)
+        before, removed_before = strip_legacy_blocks(before)
+        after, removed_after = strip_legacy_blocks(after)
+        legacy_removed = removed_before + removed_after
         before = before.rstrip()
         after = after.lstrip("\n")
         new_text = before + "\n\n" + block + (after if after else "")
-        if new_text == config_path.read_text():
+        if new_text == original_text:
             return "unchanged", legacy_removed
         config_path.write_text(new_text)
         return "updated", legacy_removed
 
+    text, legacy_removed = strip_legacy_blocks(original_text)
     if not text.endswith("\n"):
         text += "\n"
     text += block

@@ -1,0 +1,12 @@
+**
+!.dockerignore
+!Dockerfile
+!agent-name.sh
+!claude-managed-settings.json
+!install-common.sh
+!statusline.sh
+!statusline.d
+!statusline.d/**
+!substrate-image-repos.txt
+!verify-common.sh
+!ward-shell-entrypoint.sh

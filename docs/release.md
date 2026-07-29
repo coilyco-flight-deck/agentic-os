@@ -1,51 +1,44 @@
 # Release pipeline
 
-Two-stage Forgejo-canonical release (ward#1117 / aos#469). Stage 1:
-`promote.yml` gates every `main` push, publishes the dev-base family under
-`draft-${sha}`, performs the fallible release publication, and only then
-fast-forwards `release` with `CI_RELEASE_TOKEN`. Stage 2: `release.yml` is now
-manual retry only under a no-cancel queue, so retries stay sequenced and never
-gate the branch. `main` stays yolo-able. `release` is
-last-known-good. Forgejo owns the release and tag per
-[forgejo-github-mirror-contract.md](forgejo-github-mirror-contract.md).
-`promote.yml` computes semver, retags the draft image family to `vX.Y.Z`,
-`:release`, and `:latest`, verifies those manifests, creates the git/release
-tag, uploads the ward-specs asset, then cuts the release branch. The queue
-owns semver, so pushes cannot race. `release.yml` keeps the same logic as a
-manual retry path, but it no longer runs on push.
-The shared [`actions/dev-base-build`](../actions/dev-base-build/action.yml)
-composite handles the build/verify half. `ci.yml` runs it build-only on pull
-requests, so dev-base and `ward doctor` fail before merge.
+Three-stage Forgejo-canonical release (ward#1117 / aos#469). Stage 1:
+`promote.yml` gates every `main` push and fast-forwards `release` with
+`CI_RELEASE_TOKEN`. Stage 2: `dev-base-publish.yml` publishes the five draft
+language images in parallel, then the full fan-in image under `draft-${sha}` on
+the promoted SHA. Its manual dispatch path can resume one tier or the whole
+graph. Stage 3: `release.yml`
+is manual retry only under a no-cancel queue, so retries stay sequenced and
+never gate the branch. `main` stays yolo-able. `release` is last-known-good.
+Forgejo owns the release and tag per [forgejo-github-mirror-contract.md](forgejo-github-mirror-contract.md).
+
+`promote.yml` only computes the repo gate and advances the branch. The draft
+publish workflow keeps image availability separate from branch promotion.
+`release.yml` is the manual retry path and no longer runs on push. Its language
+and full retag jobs wait for the draft source tags. Dispatches can override
+`sha`, `tag`, and `source-tag` to resume the publish or retag.
 `draft-*` tags are commit-scoped staging refs for Forgejo package cleanup
 rules. `:latest` is a compatibility alias for `:release`.
 
-agentic-os is consumed as pre-commit hooks pinned by `rev:` tag, so the only
-release artifact is the git tag.
+The root `v*` train serves hook pins and the dev-base image. The standalone CLI
+publishes binaries and packages on its independent `aos-v*` train. See
+[aos-cli-release.md](aos-cli-release.md).
 
 ## Why not release-please
-
-release-please is PR-driven, and `coilysiren/agentic-os` has
-`hasPullRequestsEnabled = false` on GitHub (the no-PR-on-GitHub stance). Rather
-than port release-please to Forgejo, agentic-os reuses the forgejo-API-only
-composite actions it already ships for the rest of the fleet. No PR, no
-manifest config, no GitHub API calls.
+release-please is PR-driven, and `coilysiren/agentic-os` disables GitHub PRs. Rather than port it to Forgejo, agentic-os reuses its forgejo-API-only release actions.
 
 ## Version bump
 
-`actions/tag-bump` runs with no bump input, so every push-to-main release is a
-minor bump. Commit messages are never parsed. For a major, run
-`scripts/release.py --bump major` to cut `vN.0.0` by hand (its commit carries
-`[skip ci]`). The actions are referenced locally (`uses: ./actions/...`).
+`actions/tag-bump` runs with no bump input, so every push-to-main release is minor. Commit messages are never parsed. For a major, run `scripts/release.py --bump major` to cut `vN.0.0` by hand (`[skip ci]`). The actions are referenced locally (`uses: ./actions/...`).
 
 `actions/tag-bump` also has a compute-only mode: derive the next semver first,
 create the public tag and Forgejo release only at the end.
 
 ## Manual re-run (enqueue-miss recovery)
 
-A `workflow_dispatch` re-fires either stage by hand, no dummy commit -
-dispatch against the `release` ref for publication retries or the `main` ref
-for a promotion retry. It is the recovery lever for agentic-os#240 (missed
-enqueue). Its `bump` input defaults to `minor`.
+A `workflow_dispatch` re-fires the publication retry stage by hand, no dummy
+commit - dispatch against the `release` ref when the draft images already
+exist and the release publication needs a retry. It is the recovery lever for
+agentic-os#240 (missed enqueue). Its `bump` input defaults to `minor`, and the
+image controls can resume one release closure at a time.
 
 ## Consumer pin (derived from the tag)
 

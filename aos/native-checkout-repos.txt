@@ -1,0 +1,9 @@
+# Public long-lived native-host checkouts under $PROJECTS_ROOT/<owner>/<repo>.
+# This roster is independent of docker/dev-base/substrate-image-repos.txt,
+# which controls the read-only substrate baked into the dev-base image.
+# Private overlays extend this list from their own repositories.
+#
+# Format: owner/name, one per line.
+coilysiren/coilysiren
+coilyco-flight-deck/agentic-os
+coilyco-flight-deck/infrastructure

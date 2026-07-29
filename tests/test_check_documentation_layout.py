@@ -10,6 +10,8 @@ from pathlib import Path
 import agentic_os.config as config
 import agentic_os.pre_commit.check_documentation_layout as docs_layout
 from agentic_os.pre_commit.check_documentation_layout import (
+    AGENTS_DEFAULT_MAX_CHARS,
+    AGENTS_DEFAULT_MAX_LINES,
     FEATURES_MAX_CHARS,
     FEATURES_MAX_LINES,
     MAX_MARKDOWN_CHARS,
@@ -32,16 +34,14 @@ def test_features_gets_the_tighter_cap() -> None:
     )
     assert FEATURES_MAX_LINES < TRIFECTA_MAX_LINES
     assert FEATURES_MAX_CHARS < TRIFECTA_MAX_CHARS
-    # README.md and AGENTS.md default to the broader overview cap but carry a
-    # per-repo opt-up, so with no config set they resolve to at least that cap.
+    # README.md uses the overview cap and carries a per-repo opt-up.
     readme_lines, readme_chars = caps_for(Path("README.md"))
     assert readme_lines >= TRIFECTA_MAX_LINES
     assert readme_chars >= TRIFECTA_MAX_CHARS
-    # AGENTS.md is at least the overview cap (its default); a per-repo config
-    # override may lift it further, so assert the floor rather than equality.
+    # AGENTS.md has a larger default and may opt higher per repo.
     agents_lines, agents_chars = caps_for(Path("AGENTS.md"))
-    assert agents_lines >= TRIFECTA_MAX_LINES
-    assert agents_chars >= MAX_MARKDOWN_CHARS
+    assert agents_lines >= AGENTS_DEFAULT_MAX_LINES
+    assert agents_chars >= AGENTS_DEFAULT_MAX_CHARS
 
 
 def test_non_trifecta_markdown_keeps_the_standard_cap() -> None:
@@ -108,6 +108,20 @@ def test_top_level_skill_md_is_clean(tmp_path: Path) -> None:
     for name in ("a", "b", "c"):
         write(tmp_path / ".agents" / "skills" / name / "SKILL.md")
     assert check_skill_flatness(tmp_path) == []
+
+
+def test_top_level_composed_md_is_clean(tmp_path: Path) -> None:
+    write(tmp_path / ".agents" / "composed" / "my-skill" / "COMPOSED.md")
+    assert check_skill_flatness(tmp_path) == []
+
+
+def test_nested_composed_md_is_flagged(tmp_path: Path) -> None:
+    skill = tmp_path / ".agents" / "composed" / "my-skill"
+    write(skill / "COMPOSED.md")
+    write(skill / "sub-skill" / "COMPOSED.md")
+    problems = check_skill_flatness(tmp_path)
+    assert len(problems) == 1
+    assert "nested COMPOSED.md" in problems[0]
 
 
 def test_nested_skill_md_can_be_excluded(tmp_path: Path) -> None:
@@ -236,29 +250,28 @@ def test_root_absolute_back_link_is_reciprocal(tmp_path: Path) -> None:
     assert validate_module_readme(Path("ansible/README.md"), tmp_path) == []
 
 
-# Generated-guardfile exclusion mirrors ward's specverb guardfiles: a wildcard
-# must reach both REPO_ROOT (the tree walk) and config.REPO_ROOT (the excludes).
+# Generated-document exclusion checks that a wildcard reaches both REPO_ROOT
+# (the tree walk) and config.REPO_ROOT (the excludes).
 
 def _point_repo_root_at(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setattr(docs_layout, "REPO_ROOT", tmp_path)
     monkeypatch.setattr(config, "REPO_ROOT", tmp_path)
 
 
-def _write_guardfiles(tmp_path: Path) -> None:
-    # Oversized (> 80-line cap) generated docs, emitted both at docs/ and beside
-    # the .kdl under cmd/ward-kdl/ - the two paths ward's driver writes to.
-    big = "# Guardfile\n" + "\n".join(f"verb {i}" for i in range(120))
+def _write_generated_docs(tmp_path: Path) -> None:
+    # Oversized (> 80-line cap) generated docs emitted at two locations.
+    big = "# Generated reference\n" + "\n".join(f"verb {i}" for i in range(120))
     for gen in ("aws", "open-webui", "forgejo"):
-        write(tmp_path / "docs" / f"ward-kdl.{gen}.guardfile.md", big)
-        write(tmp_path / "cmd" / "ward-kdl" / f"ward-kdl.{gen}.guardfile.md", big)
+        write(tmp_path / "docs" / f"generated.{gen}.md", big)
+        write(tmp_path / "cmd" / "generated" / f"generated.{gen}.md", big)
 
 
 def test_wildcard_exclude_clears_generated_guardfiles(tmp_path: Path, monkeypatch) -> None:
-    _write_guardfiles(tmp_path)
+    _write_generated_docs(tmp_path)
     write(
         tmp_path / "pyproject.toml",
         "[tool.agentic-os.documentation-layout]\n"
-        'excludes = ["ward-kdl.*.guardfile.md"]\n',
+        'excludes = ["generated.*.md"]\n',
     )
     _point_repo_root_at(tmp_path, monkeypatch)
     # One slash-less wildcard silences both the location rule (for the cmd/
@@ -268,11 +281,11 @@ def test_wildcard_exclude_clears_generated_guardfiles(tmp_path: Path, monkeypatc
 
 
 def test_generated_guardfiles_flagged_without_exclude(tmp_path: Path, monkeypatch) -> None:
-    _write_guardfiles(tmp_path)
+    _write_generated_docs(tmp_path)
     _point_repo_root_at(tmp_path, monkeypatch)
     # Sanity check the exclude is doing the work: the cmd/ copies are mislocated
     # and every copy is oversized when nothing is excluded.
     locations = docs_layout.check_markdown_locations()
     sizes = docs_layout.check_markdown_sizes()
-    assert any("cmd/ward-kdl/ward-kdl.aws.guardfile.md" in v for v in locations)
+    assert any("cmd/generated/generated.aws.md" in v for v in locations)
     assert len(sizes) >= len(("aws", "open-webui", "forgejo")) * 2

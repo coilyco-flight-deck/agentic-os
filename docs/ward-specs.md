@@ -1,69 +1,57 @@
-# Ward Spec Bundle
+---
+doc_goal: Define the reduced AOS to Ward integration boundary.
+---
+# AOS and Ward boundary
 
-The coilyco ward bundle lives in [`.ward/`](../.ward/), flattened beside
-`.ward/ward.yaml`. It carries the Forgejo guardfiles, the Actions log and list
-bridges, the rerun bridge, the runner-token fetch overlay, the specverb fetch
-mirrors for the dead log/rerun API routes, aws/tailscale/kubectl exec
-guardfiles, the agents manifest, the role catalog, and the repos bundle,
-including its landing-policy block. The upstream Forgejo OpenAPI spec is no
-longer tracked as a committed blob in aos.
+Ward owns fixed workflow commands, container isolation, lifecycle, repository
+workflow mechanics, and its fixed broker. AOS does not ship a Ward role bundle.
 
-## Direction of truth
+The only Ward-consumed AOS file is [`.ward/ward.yaml`](../.ward/ward.yaml). It
+declares repository development commands, the AOS image and release channel,
+and the supported verification fixture input. `ward doctor` validates that
+YAML through Ward's loader.
 
-**aos is the source of truth for the coilyco ward-specs bundle.** Since the
-ward#503 producer cutover (2026-07-07), coilyco deployment values are authored
-here and flow down into ward at release time, not the reverse. This replaces
-the older shape where ward held the canonical values and aos mirrored them.
-When a coilyco fleet, guardfile, role-catalog, or spec-lock value changes,
-change it here in aos's `.ward/` and let a push republish the bundle. The
-launch defaults stay spelled out here too: fleet `merge-remote-main`, with
-cli-guard, ward, and agentic-os on `pull-request-and-merge` (canonical
-ward#508 spellings).
+## Ownership
 
-This is the one place a shipped tool (ward) consumes runtime config authored in
-a reference repo (aos), a deliberate exception to AGENTS.md's config-placement
-corollary. The bundle is Kai's single coilyco deployment, not fleet config
-every ward user melds. Forgejo splits into a compatibility monolith for the
-current `ward ops forgejo` runtime surface plus role-facing read, write, and
-admin tier guardfiles. The raw Actions log bridge, list bridge, rerun bridge,
-the runner-token overlay, and the fetch mirrors for the dead log/rerun API
-routes stay here as coilyco-specific overlays because the upstream swagger
-omits the live log, list, and rerun routes and the current renderer stays
-JSON-first. The exception is stated in [AGENTS.md](../AGENTS.md).
+* Agent-compose owns behavioral roles, seats, identity, personalities, and
+  composed skills in [`.agents/roles.kdl`](../.agents/roles.kdl).
+* AOS owns the selected harness, concrete launch tuning in
+  [`harness_launch_profiles.json`](../aos/harness_launch_profiles.json), image,
+  deployment defaults, and the immutable context-bundle adapter.
+* Ward receives the fixed workflow role, selected harness and image, original
+  work request, explicit harness environment, broker credential, and optional
+  context bundle. A role slug selects composition. Standalone AOS may also use
+  it for launch tuning. It grants no permissions.
+* AOSguard owns the independent generated operator surface and its credential
+  mounts. Ward neither imports nor configures it.
 
-See [ward-specs-overrides.md](ward-specs-overrides.md) for the agent overlay.
+There are no AOS Ward role guardfiles, KDL defaults, broker grants, topology,
+network reach, or release-bundle assets. The former `.ward` concerns moved as
+follows:
 
-## Profile asset home
+* Image, release channel, and this repository's landing workflow moved from
+  `defaults.kdl` and `repos.kdl` to `.ward/ward.yaml`.
+* Models, reasoning effort, verbosity, and local harness defaults moved from
+  `agents.kdl` and `roles.kdl` to the embedded AOS launch-profile registry.
+  Standalone AOS launches may select its role tuning. Ward-bound launches
+  receive only the registry's harness-level defaults through Ward's explicit
+  `WARD_*` environment seam, so a Ward workflow role cannot change those
+  inputs.
+* Role behavior and composed skills remain in `.agents/roles.kdl`.
+* Seat names and pronouns remain canonical in agent-compose. AOS does not
+  duplicate its person registry.
+* Role-derived grants were retired rather than moved. Ward workflows and the
+  separately selected AOSguard surface now determine executable authority.
 
-When Ward consumes typed profile data, AOS owns the surviving profile and
-config assets under [ward-profile-assets.md](ward-profile-assets.md).
+## Release and validation
 
-## Release asset
+AOS releases do not attach a Ward-spec archive. The dev-base image carries the
+released `ward`, `aos`, and `aosguard` binaries without a checkout-derived
+Ward configuration reference. The declared Go and Python suites include the
+standalone composed, standalone guarded, and combined context-bundle paths.
 
-Every aos release attaches the bundle as `ward-specs-<tag>.tar.gz` (plus a
-`.sha256` sidecar) via the release publication job in
-[`.forgejo/workflows/promote.yml`](../.forgejo/workflows/promote.yml), with
-[`.forgejo/workflows/release.yml`](../.forgejo/workflows/release.yml) kept as a
-manual retry path. The
-tarball is deterministic, so the checksum a downstream pins is reproducible from
-the tag. Ward's build sites pin that URL + `sha256` rather than a raw tracked
-path, and the packaging step walks `.ward/` recursively while excluding
-`.ward/ward.yaml`, so new bundle files land automatically and the overlay input
-stays clean.
+## See also
 
-## How ward consumes it
-
-ward keeps one neutral shipped binary and selects the coilyco bundle at launch
-through `WARD_CONFIG_REF` for the guarded edge surfaces. The published
-`ward-specs-<tag>.tar.gz` remains the canonical bundle artifact and checksum
-target, but the live config path is the runtime `WARD_CONFIG_REF` seam, not a
-bespoke rebuild from the asset.
-
-Landing policy lives in [`.ward/repos.kdl`](../.ward/repos.kdl). Its workflow
-block keeps the coilyco PR-gated repos explicit.
-
-Host shells and the container entrypoint point `WARD_CONFIG_REF` at the
-checkout's `.ward/` live (`file://`): no commit pin to rot in a long-lived
-terminal, no gitsync or git credential at launch (the stale-pin fail-closed
-chain behind aos#452/aos#472). Only the dev-base image build bakes a
-commit-pinned ref, the fallback without a seeded checkout.
+* [AOS launch CLI](aos-cli.md)
+* [AOS context-bundle adapter](aos-context-bundle.md)
+* [aosguard](aosguard.md)

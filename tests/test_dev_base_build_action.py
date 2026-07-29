@@ -1,81 +1,92 @@
-"""Guard the shared dev-base build/verify action and the PR workflow.
+"""Guard pull-request dev-base validation against publication drift."""
 
-The agentic-os#452 incident was main going red on a publish step no PR ever
-exercised. The prevention (agentic-os#454) is one build/verify definition in
-actions/dev-base-build that ci.yml runs build-only on pull requests. These
-tests pin that PR-side build so it cannot silently drift back apart from the
-workflow that validates it.
-"""
 from __future__ import annotations
 
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parent.parent
-ACTION = ROOT / "actions" / "dev-base-build" / "action.yml"
-CI = ROOT / ".forgejo" / "workflows" / "ci.yml"
-RELEASE = ROOT / ".forgejo" / "workflows" / "release.yml"
+VALIDATE_ACTION = ROOT / "actions" / "dev-base-build" / "action.yml"
+PUBLISH_ACTION = ROOT / "actions" / "publish-dev-base" / "action.yml"
+PUBLISH_IMAGE = (
+    ROOT / "actions" / "publish-dev-base" / "scripts" / "publish-image.sh"
+)
+SETUP_BUILDER = (
+    ROOT / "actions" / "publish-dev-base" / "scripts" / "setup-builder.sh"
+)
+VERIFY_FULL = (
+    ROOT / "actions" / "publish-dev-base" / "scripts" / "verify-full.sh"
+)
+PLAN = ROOT / "actions" / "dev-base-build" / "scripts" / "plan.sh"
+BUILD = ROOT / "actions" / "dev-base-build" / "scripts" / "build.sh"
+CLEANUP = ROOT / "actions" / "dev-base-build" / "scripts" / "cleanup.sh"
 
 
-def test_action_defaults_to_build_only() -> None:
-    text = ACTION.read_text(encoding="utf-8")
-    assert "push:" in text
-    assert 'default: "false"' in text
-    assert "scripts/dev-base-build.py" in text
+def test_validation_action_has_no_registry_write_surface() -> None:
+    text = VALIDATE_ACTION.read_text(encoding="utf-8")
+
+    assert "registry-token" not in text
+    assert "registry_token" not in text
+    assert "REGISTRY_TOKEN" not in text
+    assert "docker login" not in text
+    assert "--push" not in text
+    assert "secrets." not in text
 
 
-def test_action_retries_the_job_local_bootstrap_downloads() -> None:
-    text = ACTION.read_text(encoding="utf-8")
-    assert "--retry 5 --retry-all-errors --retry-delay 5" in text
-    assert "uv installer download attempt" in text
-    assert "docker version listing download attempt" in text
-    assert "docker CLI download attempt" in text
-    assert "buildx plugin download attempt" in text
+def test_validation_and_publication_share_build_definitions() -> None:
+    validate = VALIDATE_ACTION.read_text(encoding="utf-8")
+    publish = PUBLISH_ACTION.read_text(encoding="utf-8")
+    publish_image = PUBLISH_IMAGE.read_text(encoding="utf-8")
+
+    for script in (
+        "scripts/install-uv.sh",
+        "scripts/install-docker.sh",
+        "scripts/resolve-docker-host.sh",
+        "scripts/setup-builder.sh",
+        "scripts/verify-full.sh",
+    ):
+        assert script in validate
+        assert script in publish
+    assert "scripts/dev-base-build.py" in PLAN.read_text(encoding="utf-8")
+    assert "scripts/dev-base-build.py" in BUILD.read_text(encoding="utf-8")
+    assert "scripts/dev-base-build.py" in publish_image
 
 
-def test_action_guards_every_publish_side_effect_behind_push() -> None:
-    text = ACTION.read_text(encoding="utf-8")
-    guard = 'if [ "${PUSH}" != "true" ]'
-    # Login/builder bootstrap and manifest verify both bail out first on
-    # build-only runs.
-    assert text.count(guard) == 2
-    assert text.index(guard) < text.index("docker login forgejo.coilysiren.me")
-    # The build step adds the push flags only inside the push branch.
-    assert 'if [ "${PUSH}" = "true" ]' in text
-    assert "args+=( --push --platforms" in text
+def test_validation_loads_one_local_platform_and_uses_the_affected_plan() -> None:
+    plan = PLAN.read_text(encoding="utf-8")
+    build = BUILD.read_text(encoding="utf-8")
+
+    assert "affected" in plan
+    assert "--base \"$BASE_SHA\"" in plan
+    assert "--load" in build
+    assert '--platforms "$PLATFORM"' in build
+    assert '--tiers "${tiers[@]}"' in build
+    assert "INSTALL_BINFMT: \"false\"" in VALIDATE_ACTION.read_text(
+        encoding="utf-8"
+    )
 
 
-def test_action_bounds_the_build_like_the_old_publish_step() -> None:
-    text = ACTION.read_text(encoding="utf-8")
-    assert "timeout --preserve-status --kill-after=5m 120m" in text
+def test_validation_bounds_the_persistent_builder_cache() -> None:
+    action = VALIDATE_ACTION.read_text(encoding="utf-8")
+    cleanup = CLEANUP.read_text(encoding="utf-8")
+
+    assert "cache-max:" in action
+    assert "docker buildx prune" in cleanup
+    assert "--builder aos-pr-builder" in cleanup
+    assert '--max-used-space "$CACHE_MAX"' in cleanup
 
 
-def test_action_derives_verify_refs_from_the_plan() -> None:
-    text = ACTION.read_text(encoding="utf-8")
-    assert "plan" in text
-    assert '"tiers"' in text
-    # The old hand-maintained suffix list is gone from the verify loop.
-    assert "for suffix in core lang-node" not in text
+def test_shared_builder_keeps_publication_multi_arch_capability() -> None:
+    text = SETUP_BUILDER.read_text(encoding="utf-8")
+
+    assert 'builder_name="${BUILDER_NAME:-aosbuilder}"' in text
+    assert '${INSTALL_BINFMT:-true}' in text
+    assert "tonistiigi/binfmt --install all" in text
 
 
-def test_ci_uses_the_one_build_definition() -> None:
-    release = RELEASE.read_text(encoding="utf-8")
-    ci = CI.read_text(encoding="utf-8")
-    assert "uses: ./actions/dev-base-build" in ci
-    assert "uses: ./actions/publish-dev-base-tier" in release
-    # Neither workflow invokes the build helper inline anymore.
-    assert "scripts/dev-base-build.py" not in release
-    assert "scripts/dev-base-build.py" not in ci
+def test_shared_full_verification_accepts_one_or_many_platforms() -> None:
+    text = VERIFY_FULL.read_text(encoding="utf-8")
 
-
-def test_ci_stays_build_only() -> None:
-    release = RELEASE.read_text(encoding="utf-8")
-    ci = CI.read_text(encoding="utf-8")
-    assert 'push: "true"' not in ci
-    assert "secrets.REGISTRY_TOKEN" not in ci
-    assert "registry-token: ${{ secrets.REGISTRY_TOKEN }}" in release
-
-
-def test_ci_cleanup_handles_a_runner_without_docker() -> None:
-    ci = CI.read_text(encoding="utf-8")
-    assert "command -v docker >/dev/null 2>&1 || exit 0" in ci
+    assert "PLATFORMS:-linux/amd64,linux/arm64" in text
+    assert 'for platform in "${platforms[@]}"' in text
+    assert 'docker run --rm --platform "$platform"' in text

@@ -1,6 +1,7 @@
 ---
 name: tooling-claude-in-chrome
 description: Drive live Chrome via the Claude_in_Chrome MCP for logged-in web automation. Use JS over mouse (mouse trips the chrome-extension boundary). Never leave forms dirty (Leave site? modal wedges it).
+low-context: optional
 ---
 
 # claude-in-chrome

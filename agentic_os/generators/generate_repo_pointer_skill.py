@@ -15,7 +15,7 @@ supply repo metadata however it likes. The canonical source is Forgejo, whose
 `repo view --json` returns both the description and the topics array in one
 payload. The CLI reads that JSON from stdin:
 
-    ward ops forgejo repo view --repo coilysiren/<name> --json \
+    aosguard ops forgejo repo view --repo coilysiren/<name> --json \
         | python -m agentic_os.generators.generate_repo_pointer_skill <name> --from-json - --repo-root <repo>
 
 `--from-json` also accepts the GitHub `gh repo view --json
@@ -93,7 +93,12 @@ def build_description(raw_description: str, name: str, topics: list[str]) -> str
 DEFAULT_ORG = "coilysiren"
 
 
-def render_skill(name: str, description: str, org: str = DEFAULT_ORG) -> str:
+def render_skill(
+    name: str,
+    description: str,
+    org: str = DEFAULT_ORG,
+    low_context: str | None = None,
+) -> str:
     """Render the full SKILL.md text for `repo-<name>` from a final description.
 
     Pure and deterministic: the validator re-renders from the committed file's
@@ -107,8 +112,11 @@ def render_skill(name: str, description: str, org: str = DEFAULT_ORG) -> str:
     pointer path tracks the real checkout. See scripts/sweep-precommit.py.
     """
     skill_name = f"{SKILL_PREFIX}{name}"
+    frontmatter_fields = {"name": skill_name, "description": description}
+    if low_context is not None:
+        frontmatter_fields["low-context"] = low_context
     frontmatter = yaml.safe_dump(
-        {"name": skill_name, "description": description},
+        frontmatter_fields,
         sort_keys=False,
         allow_unicode=True,
         width=1_000_000,
@@ -170,6 +178,7 @@ def check_drift(skill_dir_name: str, text: str, org: str = DEFAULT_ORG) -> list[
             f"match directory name {skill_dir_name!r}"
         )
     description = str(fm.get("description") or "")
+    low_context = fm.get("low-context")
     if _EMOJI_RE.search(description):
         problems.append(
             f"{skill_dir_name}/SKILL.md: description contains emoji. Regenerate."
@@ -182,8 +191,12 @@ def check_drift(skill_dir_name: str, text: str, org: str = DEFAULT_ORG) -> list[
         problems.append(
             f"{skill_dir_name}/SKILL.md: description has no 'Triggers - ' line. Regenerate."
         )
+    if low_context is not None and low_context not in {"required", "optional"}:
+        problems.append(
+            f"{skill_dir_name}/SKILL.md: low-context must be 'required' or 'optional'."
+        )
 
-    expected = render_skill(bare, description, org)
+    expected = render_skill(bare, description, org, low_context)
     if text != expected:
         problems.append(
             f"{skill_dir_name}/SKILL.md: body or frontmatter drifted from generator "
@@ -247,6 +260,11 @@ def main(argv: list[str] | None = None) -> int:
         help="A GitHub topic. Repeatable. Used with --description.",
     )
     parser.add_argument(
+        "--low-context",
+        choices=("required", "optional"),
+        help="Optional explicit low-context policy for this pointer skill.",
+    )
+    parser.add_argument(
         "--print",
         action="store_true",
         help="Print to stdout instead of writing the SKILL.md file.",
@@ -266,7 +284,7 @@ def main(argv: list[str] | None = None) -> int:
         "repo-pointer-skills", "org", DEFAULT_ORG, repo_root=Path(ns.repo_root)
     )
     final_description = build_description(description, ns.name, topics)
-    content = render_skill(ns.name, final_description, org)
+    content = render_skill(ns.name, final_description, org, ns.low_context)
 
     if ns.print:
         sys.stdout.write(content)

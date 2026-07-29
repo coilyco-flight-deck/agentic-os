@@ -18,13 +18,20 @@ Public hosts and work laptops import this base only. Personal machines may compo
 
 Route every dev command through ward, which reads [`.ward/ward.yaml`](.ward/ward.yaml). Agents invoke `ward <verb>`, not bare `make` / `uv` / `python` / `npm` / `cargo` / `dotnet`. Add new verbs to that file before invoking them.
 
-**Operator verbs** (forgejo, aws/ssm, tailscale, kubectl, ...) live in **ward-kdl**, surfaced as `ward ops <area> ...`. Enumerate them with `ward ops <area> describe` or `--help`, or read the committed render at [`docs/ward-ops-forgejo-reference.md`](docs/ward-ops-forgejo-reference.md) - never guess an operator-verb name from prior. The old `coily ops` spelling is retired (agentic-os#261); `coily` is gone.
+**Operator verbs** (forgejo, aws/ssm, tailscale, kubectl, ...) live in **aosguard**, surfaced as `aosguard ops <area> ...` from the full dev-base image. Enumerate them with `aosguard ops <area> describe` or `--help` - never guess an operator-verb name from prior. Ward retains fixed workflow policy and repository development commands. The old `coily ops` and human-facing `ward ops` spellings are retired.
 
 ## Validation
 
-This repo ships and dogfoods the catalog pre-commit suite (catalog-trifecta, documentation-layout, code-comments, catalog-block, check-skills, dead-cross-links, repo-pointer-skills, trufflehog). Run `pre-commit run --all-files` before committing. Per-repo opt-outs (excludes, cap overrides) live under `[tool.agentic-os.*]` in `pyproject.toml`.
+This repo ships and dogfoods the catalog pre-commit suite (catalog-trifecta, documentation-layout, code-comments, catalog-block, check-skills, check-composed-skills, dead-cross-links, repo-pointer-skills, trufflehog). Run `pre-commit run --all-files` before committing. Per-repo opt-outs (excludes, cap overrides) live under `[tool.agentic-os.*]` in `pyproject.toml`.
 
-**Tests never encode config values.** A tunable lives in one owning source. Config validity belongs to the loader (`ward doctor` gates `.ward` in ci and promote), so tests never assert guardfile or KDL content, and CI enumerates no list a wildcard can derive.
+**Tests never encode or reinterpret configuration.** A tunable lives in one
+owning source. Do not add consumer-, service-, or repo-specific test programs
+whose assertions restate a guardfile, KDL file, manifest, workflow, or other
+configuration. The owning loader tests its behavior with fixtures and validates
+real configuration through its schema, lint, render, or doctor surface (`ward
+doctor` gates `.ward` in ci and promote). Consumer repos invoke that surface
+instead of building a second parser or contract test. CI derives inventories
+from the owning loader or a wildcard instead of maintaining a duplicate list.
 
 ## Safety
 
@@ -36,7 +43,7 @@ Keep every artifact public-safe: messages, chat, code, commits, PRs, and public 
 
 Anything that fits as a pre-commit validation is **authored** here in agentic-os (the `agentic_os/check_*.py` validator plus its `.pre-commit-hooks.yaml` entry). Its **fleet rollout** - the thing that fans it across every checkout - lives in infrastructure/ansible, never here. The same split applies to any fleet-wide mutation: the tool or logic is authored in its home repo, and an ansible role is the rollout. Install-time mass mutation never belongs in `ward setup` or a brew post-install. Homebrew installs the binary and stops. Ansible converges the fleet.
 
-The **trigger** for a rollout is a push, not a hand-run publish, keeping it in agent scope. When work needs the dev-base image family rebuilt (a Dockerfile, entrypoint, or pinned-`ARG` edit), the agent authors it and pushes to main - the `publish-dev-base` job in [`release.yml`](.forgejo/workflows/release.yml) rebuilds each tier and pushes the release tag plus the moving `:release` branch alias. It holds no registry creds, runs no `buildx --push`: the publish is a CI consequence of the landed commit, like the tag. So "needs the image republished" is **in** scope (author, push, let CI publish), not a NO-GO wall - reserve it for a deliverable that cannot reduce to a push.
+The **trigger** for a rollout is a push, not a hand-run publish, keeping it in agent scope. When work needs the dev-base image family rebuilt (a Dockerfile, entrypoint, or pinned-`ARG` edit), the agent authors it and pushes to main - the `dev-base-publish` workflow builds the parallel Ubuntu language images and their full fan-in image, and the release workflow promotes their tags plus the moving full-image `:release` alias. It holds no registry creds, runs no `buildx --push`: the publish is a CI consequence of the landed commit, like the tag. So "needs the image republished" is **in** scope (author, push, let CI publish), not a NO-GO wall - reserve it for a deliverable that cannot reduce to a push.
 
 ### Config placement
 
@@ -44,15 +51,29 @@ The **trigger** for a rollout is a push, not a hand-run publish, keeping it in a
 
 **Corollary** - a reference-implementation repo authors zero config that a shipped tool consumes at runtime. Fleet config that every user of the tool melds to their own values belongs down in the tool's build-time authoring layer (authored, compiled, embedded), not up in the reference repo. The reference repo may hold a clearly-marked reference copy of a config file as documentation, never a thing the tool fetches.
 
-**Carved exception (aos#332).** ward's coilyco [`.ward/`](.ward/) spec bundle inverts this: **authored here**, overlaid into ward's release. It is Kai's **single** deployment, not the per-user meld config the corollary fences off (that stays in ward-kdl). Full reasoning: [docs/ward-specs.md](docs/ward-specs.md).
+**Deployment boundary (aos#778).** AOS owns agent-compose inputs, harness
+selection, deployment identity, and standalone AOSguard policy. Ward owns fixed
+workflows and its broker. AOS does not ship a Ward role-policy or KDL bundle.
+Only the supported YAML in [`.ward/ward.yaml`](.ward/ward.yaml) remains for
+repository command and fixture declaration. Full reasoning:
+[docs/ward-specs.md](docs/ward-specs.md).
 
-The layer gradient this keys off (churn and host-awareness rising together, a clone/use breakpoint at each): cli-guard (engine, external contributors, no upstream knowledge), then ward-kdl (the meld layer - every ward user rewrites this to their own config), then ward (the product, shipped coherent to external users), then aos (reference impl + public docs - only Kai clones it, others copy-paste from it), then infra (nobody clones it but Kai).
+The layer gradient this keys off (churn and host-awareness rising together, a clone/use breakpoint at each): cli-guard and specgen (generic engines, external contributors, no upstream knowledge), then Ward (fixed workflows and broker), then aos (AOSguard policy, composition inputs, and public docs), then infra (nobody clones it but Kai).
 
-Config splits on three axes, each a distinct owner: **permission/surface** (ward-kdl guardfiles, dialect 1), **fleet tuning** (identity, model, endpoint, attribution, roster defaults - ward-kdl dialect 2, embedded), and **operator-local preference** (per-host, hand-edited, not embedded, parsed from a local source). One parser may serve two sources. The axes stay distinct owners.
+Config splits on three axes, each a distinct owner: **permission/surface**
+(AOSguard specs and Ward's fixed broker), **deployment tuning** (identity,
+model, endpoint, attribution, roster defaults - AOS and agent-compose launch
+inputs), and **operator-local preference** (per-host, hand-edited, not
+embedded, parsed from a local source). One parser may serve two sources. The
+axes stay distinct owners.
 
 ### Skills
 
-`.agents/skills/` ships the generalizable, public-safe skills - tooling docs for the configs that live here, plus cross-repo skills that help any agentic-os user, not just Kai. These directories are the canonical sources; harness-specific setup owns installation and discovery. Edit the SKILL.md here, not an installed copy.
+`.agents/skills/` ships generalizable, public-safe ordinary skills.
+`.agents/composed/` ships public-safe role-scoped sources that agent-compose
+promotes only after role selection. These directories are canonical.
+Harness-specific setup owns installation and discovery. Edit `SKILL.md` or
+`COMPOSED.md` here, not an installed copy.
 
 ## Release
 
@@ -63,7 +84,7 @@ Conventional-commits 1.0.0 and Forgejo issue references are encouraged house sty
 * `pull-request-and-merge` - open a PR for the director lane. Merge only after the issue thread shows `workflow: pull-request-and-merge`, `WARD-OUTCOME: done`, and a passed review summary.
 * `remote-branch-only` - push a branch and stop. No PR or merge authority.
 
-A read-only clone cannot push itself, so push or merge workflows need a writable surface. Track landed work by issue state and commits on `main`. `ward ops forgejo pr list` and `pr view` are allowed; merge stays gated.
+A read-only clone cannot push itself, so push or merge workflows need a writable surface. Track landed work by issue state and commits on `main`. `aosguard ops forgejo pr list` and `pr view` are allowed. Merge stays gated.
 
 ## Agent rules
 
@@ -78,25 +99,79 @@ A read-only clone cannot push itself, so push or merge workflows need a writable
 * No semicolons in prose.
 * No prose tables - flat bullets `* <anchor> - <cats> - <details>`.
 
-### Name the actor
+### Speak as yourself
 
-In every action sentence, name who performs it: "Kai commits them" or "the agent commits them", never "I'll commit them" (ambiguous). This matters most in user-input option labels - every choice presented to Kai says whose hands are on it.
+In direct conversation, use first person for your own actions: "I checked the
+logs" or "I'll commit the change." Use your resolved seat name only when
+identity materially matters. Reserve "the agent" for generic agents or explicit
+multi-agent distinctions. Name Kai when Kai acts. Keep ownership equally
+explicit in user-input option labels and handoffs: say "I'll implement it" or
+"Kai will choose," not an actorless imperative. A selected voice specialty may
+deliberately impose a different grammatical perspective.
+
+### Action-first communication
+
+Shape every response so the reader can act without retaining hidden state. This
+is baseline communication, not an opt-in mode.
+
+* Lead with the outcome or next action. Skip filler preambles.
+* Number human-executed multi-step work. Keep the immediate list to five bounded actions, then split later work.
+* Keep state visible across turns. Name what finished, the current step, and one next action without repeating a plan already visible in a task tool.
+* Finish the main thread before introducing tangents. State errors matter-of-factly, make completed work visible, and give concrete time ranges only when they help and the uncertainty is named.
+* End with one concrete next action when work remains. Otherwise end when the answer is complete, without a boilerplate closer.
+
+The task and safety rules outrank the output shape. Explain fully when asked,
+confirm before destructive action, ask one focused question when ambiguity is
+material, and stop a three-turn debug spiral to name the suspect assumption.
+Required harness announcements still happen.
+
+Adapted from [`i-have-adhd`](https://github.com/ayghri/i-have-adhd) (MIT), which
+frames the conventions as broadly useful without requiring a diagnosis.
 
 ### Finish the whole task
 
 Unless told otherwise, "done" includes the obvious follow-through, not the first reportable milestone. Finishing a task means committing, pushing to canonical main, and filing a follow-up issue for anything deferred - all of it, without returning between steps to ask. A task ends at a verifiable done-condition (tests green, the change landed, the exemption committed), not at the point where there is something to report. When the user hands off the **what**, the **what-comes-after** is part of the same job. Do not split it into separate turns that each wait on a human.
 
+### Native checkpoints must be remote
+
+A native host session writes into a long-lived checkout. Whenever an agent doing native work outside `warded` reaches a checkpoint with local repository changes, the agent **must commit the in-scope changes and push the commit to the canonical remote before pausing, reporting the checkpoint, switching tasks, or ending the turn**. A checkpoint includes a human decision wall, a blocked dependency, a handoff, a context boundary, and any point where the agent may not continue immediately.
+
+If the resolved workflow allows the work to land, the agent pushes it to `main` as usual. If the work should not yet land on `main`, the agent creates or reuses a task-specific branch and pushes the checkpoint there. The remote branch is the recovery artifact. Uncommitted changes, local-only commits, stashes, reflogs, and a clean local worktree without a remote ref **do not count**. Test failures or incomplete follow-up may keep a checkpoint off `main`, but they never justify leaving the only copy local. Never force-push to satisfy this rule. If an ordinary push cannot succeed, the agent preserves the local state and reports the exact blocker as the current wall.
+
+### Foreign work requires a worktree
+
+Before the first mutation in any native checkout, the agent inspects the worktree, current branch, and local divergence. If the checkout contains work the agent did not create for the current task, the agent **must not edit, format, stage, stash, reset, switch branches, commit, or otherwise mutate that checkout**. The agent creates a separate task-specific branch and linked worktree from the appropriate clean canonical base, then performs all current-task work inside that worktree. The agent places the linked worktree inside the local operating system's resolved temporary directory, with a task-specific basename, rather than beside the canonical checkout or elsewhere in the project workspace. Pre-existing staged, unstaged, or untracked files, local commits, an in-progress Git operation, and a branch owned by another task all count as foreign work. Ambiguous ownership counts as foreign.
+
+The agent leaves the original checkout exactly as found. The agent never absorbs foreign changes into its commit or uses stash as a substitute for isolation. If the agent cannot create a separate worktree safely, the agent stops before any mutation and reports the exact blocker. The remote-checkpoint rule applies to the new worktree and its task branch.
+
+### Unlisted repository clones stay temporary
+
+Before cloning a repository, the agent checks the host's expected-repositories
+list when that surface is configured. If the repository is not explicitly
+listed as one that belongs on disk, the agent clones it into the local
+operating system's resolved temporary directory with a task-specific basename,
+never under the persistent projects or workspace tree. The agent treats that
+clone as task-scoped and removes it when the work is complete and the
+remote-checkpoint requirements are satisfied. An absent or unreadable list
+does not authorize a persistent checkout.
+
+### Human-only workdirs
+
+A checkout whose directory basename ends in `-workdir` is reserved for Kai's manual work. Agents treat it as outside the workspace: agents do not inspect, enter, edit, validate, format, stage, stash, or include it in fleet or recursive tooling. If an agent launches inside one, the agent stops before inspecting repository contents and moves to the canonical checkout or an agent-owned linked worktree.
+
 ### Run until a wall worth a human
 
 Proceed autonomously on anything reversible. Stop only for a destructive, irreversible, or externally-visible action (force-push, data loss, a post or email on the user's behalf, a public surface), or a genuine multi-path fork where the wrong choice is costly to undo. Everything short of that wall: pick the sensible default, name it inline in one line ("picking X because Y"), and keep going. A 5-second "no, do X" after the fact is cheaper than a run parked for an hour waiting on a question the user could have answered either way. Batch any genuine questions and surface them at the end with the work already done, not mid-run.
 
-### Engineers and QA: never debug or iterate against a live deployment
+### Engineers and QA: never debug or iterate against live operations
 
-This rule binds the **sealed roles - engineer and QA** - which run in ephemeral clones with no live-cluster access. It does **not** bind director or ops: those hold live-observe surfaces and are authorized to debug deployments.
+This rule binds the **sealed roles - engineer and QA**. Their ephemeral clones are sealed against live mutation, not approved read-only observation. Director and ops retain their wider operational surfaces and remediation authority.
 
-An engineer or QA runs in a sealed, ephemeral clone with **no live-cluster access**. You cannot curl a public edge, inspect a pod, watch a rollout, or confirm a secret synced. So you **must not** try to debug, tune, or "fix until green" a live deployment, and QA **must not** render a verdict that turns on live-cluster state it cannot observe. Treating infra like a unit test - change logic, push, watch CI, repeat - produces changes you cannot verify, which land red on `main` and churn. A live deployment you cannot observe **is** one of the walls worth a human.
+An engineer or QA may inspect approved read-only observability surfaces, including logs, traces, metrics, health, events, resource state, and rollout status. The engineer may use directly observed evidence for diagnosis, and QA may use it in a verdict. Neither role may execute commands inside workloads, inspect secrets or raw customer payloads, mutate live systems, deploy, or iterate against production. When the next diagnostic or verification step needs a live action beyond observation, the role names the exact operator action and expected evidence, then stops at that boundary.
 
-Deploys already have established precedent (exposure patterns, exemplar services, shared charts). For deploy work: **match the precedent and copy the exemplar, do not invent or iterate.** If a change genuinely needs live verification - does this rollout succeed, is this secret synced, is the edge reachable - you **cannot** provide it from a sealed clone. Stop, file an `interactive`-labeled issue describing exactly what needs live verification, and hand it to a role that can observe live (the operator, or a director / ops run). Do not push a speculative fix and hope CI confirms it.
+CI/CD is live operations for this rule. The engineer or QA may read workflow logs, summarize evidence, and make one locally grounded push for a change whose behavior the repo proves. Repeated pushes to probe Forgejo Actions, release promotion, package registries, runner configuration, Actions secrets, rollout jobs, or deployment pipelines are ops debugging. If the failure only appears in live CI/CD or registry state, the engineer or QA stops after gathering evidence, files an `interactive`-labeled issue with the exact failing run and needed live verification, and hands it to a director or ops run.
+
+Deploys already have established precedent (exposure patterns, exemplar services, shared charts). For deploy work: **match the precedent and copy the exemplar, do not invent or iterate.** The engineer or QA may report health, log, trace, metric, and rollout evidence visible through an approved read-only surface. Neither role initiates a deployment or live verification action. When verification needs such an action, the engineer or QA files an `interactive`-labeled issue describing exactly what the operator must do and what evidence must return, then hands it to the operator, director, or ops. Do not push a speculative fix and hope CI confirms it.
 
 Cross-reference the deploy precedent doc (`coilyco-bridge/deploy/docs/deploy-patterns.md`, forthcoming) and the burndown repo-exclusion filter (`coilyco-flight-deck/ward#1105`).
 
@@ -108,12 +183,12 @@ A narrowed scope does not narrow the context budget. The **first** instance of a
 
 ### Command delivery
 
-Where a command lands depends on the **execution model**: the `/tmp` launcher convention only works when the agent's `/tmp` is the operator's.
+Commands for a human operator must cross the current execution boundary truthfully.
 
-* **Container / surface session** - a `warded` container or read-only director surface (no writable host mount). Nothing the agent writes reaches the host, so a `/tmp/<name>.sh` launcher dies with the container and never reaches the operator, reading as delivered when nothing crossed the boundary. Hand short single-line commands back **inline**. For anything multi-line, reusable, or worth tracking, commit to a **pushable** repo and push, then hand back the committed path - the only file handback that crosses the boundary from here.
-* **Host harness** - native on Kai's Mac under Warp, so `/tmp` is the Mac's. The launcher guidance holds: a genuinely one-off command (pasted once, discarded) goes to `/tmp/<name>.sh` with a `bash /tmp/<name>.sh` launcher whenever it is multi-line or over 25 characters, because Warp mangles pasted multi-line and long commands. Trivial one-liners under the limit stay inline.
+* **Container / surface session** - a `warded` container or read-only director surface has no writable host mount. Hand one-off commands back inline. For anything reusable or worth tracking, commit to a **pushable** repo and push, then hand back the committed path. A local container file does not cross this boundary.
+* **Host harness** - hand one-off commands back inline. A temporary file is optional when it materially improves review or safety, not a terminal-specific paste requirement.
 
-In either model a **reusable script** - anything Kai might run more than once, or worth tracking - is committed to a repo, never `/tmp`, and handed back as a path. This covers **any** command offered for the human to run, optional and alternative ones included, not just the primary next step. The trigger is the recipient, not the framing: commands the agent runs itself through its shell execution tool never touch a human paste path and stay out of scope.
+In either model a **reusable script** - anything Kai might run more than once, or worth tracking - is committed to a repo and handed back as a path. This covers **any** command offered for the human to run, optional and alternative ones included, not just the primary next step. The trigger is the recipient, not the framing: commands the agent runs itself through its shell execution tool never touch a human paste path and stay out of scope.
 
 That covers a **human** recipient. There is **no autonomous agent-to-agent command channel**. The o2r channel (the `otel-a2a-relay` relay plus its `o2r` CLI) was **archived in the June 2026 surface reduction** (`agentic-os-kai#677`), kept active but never used autonomously. Delivery is now **human-mediated**: route the request through Kai, who relays it upstream, no command crossing an agent boundary on its own. Revival and absorption are tracked at `ward#104`. The `kai-command-handover` skill holds the current procedure.
 

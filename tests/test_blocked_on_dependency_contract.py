@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 AUTOMATION_MODE = (
     ROOT
     / ".agents"
-    / "skills"
+    / "composed"
     / "tooling-issue-prioritization"
     / "references"
     / "automation-mode-axis.md"
@@ -16,7 +16,7 @@ AUTOMATION_MODE = (
 READINESS_AXIS = (
     ROOT
     / ".agents"
-    / "skills"
+    / "composed"
     / "tooling-issue-prioritization"
     / "references"
     / "readiness-axis.md"

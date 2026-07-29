@@ -1,0 +1,280 @@
+roles {
+    role engineer {
+        composed-skill coding-ansible
+        composed-skill coding-aws
+        composed-skill coding-csharp
+        composed-skill coding-discord-bot-architect
+        composed-skill coding-git
+        composed-skill coding-go
+        composed-skill coding-javascript
+        composed-skill coding-javascript-react
+        composed-skill coding-kubernetes
+        composed-skill coding-licenses
+        composed-skill coding-python
+        composed-skill coding-rust
+        composed-skill coding-shape-cli
+        composed-skill coding-shape-cloud
+        composed-skill coding-shape-iac
+        composed-skill coding-shape-observability
+        composed-skill coding-shape-tui
+        composed-skill coding-shape-web-server
+        composed-skill coding-terraform
+        composed-skill design-system
+        composed-skill kai-git-workflow
+        composed-skill mcp-server-patterns
+        composed-skill tooling-supply-chain-audit
+        composed-skill writing-public-repos
+        composed-skill writing-system-improvement-vocab
+        // BEGIN generated role-intent harness routes
+        intent autonomous-coding {
+            harness openhands
+        }
+        // END generated role-intent harness routes
+    }
+    role director {
+        composed-skill coding-ansible
+        composed-skill coding-aws
+        composed-skill coding-csharp
+        composed-skill coding-discord-bot-architect
+        composed-skill coding-git
+        composed-skill coding-go
+        composed-skill coding-javascript
+        composed-skill coding-javascript-react
+        composed-skill coding-kubernetes
+        composed-skill coding-licenses
+        composed-skill coding-python
+        composed-skill coding-rust
+        composed-skill coding-shape-cli
+        composed-skill coding-shape-cloud
+        composed-skill coding-shape-iac
+        composed-skill coding-shape-observability
+        composed-skill coding-shape-tui
+        composed-skill coding-shape-web-server
+        composed-skill coding-terraform
+        composed-skill kai-git-workflow
+        composed-skill mcp-server-patterns
+        composed-skill tooling-director-decision-architecture
+        composed-skill tooling-issue-prioritization
+        composed-skill tooling-product-brainstorming
+        composed-skill tooling-scout-autonomy
+        composed-skill tooling-scout-capability
+        composed-skill tooling-scout-displacement
+        composed-skill tooling-skill-authoring
+        composed-skill tooling-supply-chain-audit
+        composed-skill writing-observer-narrator
+        composed-skill writing-system-improvement-vocab
+        composed-skill writing-to-issues
+        composed-skill writing-voice-guide-linter
+        // BEGIN generated role-intent harness routes
+        intent strategic-planning {
+            harness plandex
+        }
+        // END generated role-intent harness routes
+    }
+    role qa {
+        composed-skill coding-ansible
+        composed-skill coding-aws
+        composed-skill coding-csharp
+        composed-skill coding-discord-bot-architect
+        composed-skill coding-git
+        composed-skill coding-go
+        composed-skill coding-javascript
+        composed-skill coding-javascript-react
+        composed-skill coding-kubernetes
+        composed-skill coding-licenses
+        composed-skill coding-python
+        composed-skill coding-rust
+        composed-skill coding-shape-cli
+        composed-skill coding-shape-cloud
+        composed-skill coding-shape-iac
+        composed-skill coding-shape-observability
+        composed-skill coding-shape-tui
+        composed-skill coding-shape-web-server
+        composed-skill coding-terraform
+        composed-skill design-system
+        composed-skill kai-git-workflow
+        composed-skill mcp-server-patterns
+        composed-skill tooling-code-review
+        composed-skill tooling-qa-adversarial-verification
+        composed-skill tooling-qa-state-machine-verification
+        composed-skill tooling-qa-visual-verification
+        composed-skill writing-public-repos
+        // BEGIN generated role-intent harness routes
+        intent code-review {
+            harness aider
+        }
+        // END generated role-intent harness routes
+    }
+    role advisor {
+        composed-skill tooling-advisor-causal-claim-audit
+        composed-skill tooling-advisor-evidence-synthesis
+        // BEGIN generated role-intent harness routes
+        intent research-synthesis {
+            harness hermes
+        }
+        // END generated role-intent harness routes
+    }
+    role ops {
+        composed-skill coding-ansible
+        composed-skill coding-aws
+        composed-skill coding-csharp
+        composed-skill coding-discord-bot-architect
+        composed-skill coding-git
+        composed-skill coding-go
+        composed-skill coding-javascript
+        composed-skill coding-javascript-react
+        composed-skill coding-kubernetes
+        composed-skill coding-licenses
+        composed-skill coding-python
+        composed-skill coding-rust
+        composed-skill coding-shape-cli
+        composed-skill coding-shape-cloud
+        composed-skill coding-shape-iac
+        composed-skill coding-shape-observability
+        composed-skill coding-shape-tui
+        composed-skill coding-shape-web-server
+        composed-skill coding-terraform
+        composed-skill kai-git-workflow
+        composed-skill mcp-server-patterns
+        composed-skill tooling-ops-change-risk-modeling
+        composed-skill tooling-ops-dynamic-systems-diagnosis
+        composed-skill tooling-ops-incident-command
+        composed-skill tooling-ops-live-remediation
+        composed-skill tooling-supply-chain-audit
+        composed-skill writing-system-improvement-vocab
+        // BEGIN generated role-intent harness routes
+        intent ops-investigation {
+            harness holmesgpt
+        }
+        intent operational-decision {
+            harness goose
+        }
+        // END generated role-intent harness routes
+    }
+    role pm {
+        composed-skill tooling-issue-prioritization
+        composed-skill tooling-pm-program-decomposition
+        composed-skill tooling-pm-product-signal-triangulation
+        composed-skill tooling-product-brainstorming
+        composed-skill tooling-scout-autonomy
+        composed-skill tooling-scout-capability
+        composed-skill tooling-scout-displacement
+        composed-skill tooling-skill-authoring
+        composed-skill writing-observer-narrator
+        composed-skill writing-to-issues
+        composed-skill writing-voice-guide-linter
+        // BEGIN generated role-intent harness routes
+        intent strategic-planning {
+            harness hermes
+        }
+        intent project-coordination {
+            harness plane
+        }
+        // END generated role-intent harness routes
+    }
+    role designer {
+        composed-skill coding-javascript
+        composed-skill coding-javascript-react
+        composed-skill design-system
+        composed-skill tooling-designer-cognitive-walkthrough
+        composed-skill tooling-designer-interaction-shaping
+        composed-skill tooling-product-brainstorming
+        // BEGIN generated role-intent harness routes
+        intent product-shaping {
+            harness penpot
+        }
+        intent design-production {
+            harness aosx
+        }
+        // END generated role-intent harness routes
+    }
+    role social {
+        composed-skill writing-observer-narrator
+        composed-skill writing-social-editorial-loop
+        composed-skill writing-social-cultural-reading
+        composed-skill writing-social-trust-boundaries
+        composed-skill writing-voice-guide-linter
+        // BEGIN generated role-intent harness routes
+        intent message-composition {
+            harness mixpost
+        }
+        intent channel-publishing {
+            harness elizaos
+        }
+        // END generated role-intent harness routes
+    }
+    role community {
+        // BEGIN generated role-intent harness routes
+        intent knowledge-retrieval {
+            harness sirens-discord-ops
+        }
+        intent conversation-management {
+            harness sirens-discord-ops
+        }
+        // END generated role-intent harness routes
+
+        composed-skill coding-discord-bot-architect
+        composed-skill tooling-discord-community-host
+    }
+    role sales {
+        composed-skill tooling-sales-discovery
+        composed-skill tooling-sales-negotiation-architecture
+        composed-skill writing-observer-narrator
+        composed-skill writing-voice-guide-linter
+        // BEGIN generated role-intent harness routes
+        intent research-synthesis {
+            harness hermes
+        }
+        intent conversation-management {
+            harness elizaos
+        }
+        // END generated role-intent harness routes
+    }
+    role customer-success {
+        composed-skill tooling-customer-success-signal-routing
+        composed-skill tooling-customer-success-trust-repair
+        composed-skill writing-observer-narrator
+        composed-skill writing-voice-guide-linter
+        // BEGIN generated role-intent harness routes
+        intent knowledge-retrieval {
+            harness rasa
+        }
+        intent conversation-management {
+            harness rasa
+        }
+        // END generated role-intent harness routes
+    }
+    role ceo {
+        composed-skill tooling-ceo-developer-tool-adoption
+        composed-skill tooling-ceo-oss-stewardship
+        composed-skill tooling-ceo-platform-strategy
+        composed-skill tooling-director-decision-architecture
+        composed-skill tooling-issue-prioritization
+        composed-skill tooling-pm-product-signal-triangulation
+        composed-skill tooling-pm-program-decomposition
+        composed-skill tooling-product-brainstorming
+        composed-skill tooling-scout-autonomy
+        composed-skill tooling-scout-capability
+        composed-skill tooling-scout-displacement
+        composed-skill writing-to-issues
+        // BEGIN generated role-intent harness routes
+        intent strategic-planning {
+            harness hermes
+        }
+        // END generated role-intent harness routes
+    }
+    role technical-writer {
+        composed-skill writing-public-repos
+        composed-skill writing-system-improvement-vocab
+        composed-skill writing-to-issues
+        composed-skill writing-voice-guide-linter
+        // BEGIN generated role-intent harness routes
+        intent knowledge-retrieval {
+            harness anythingllm
+        }
+        intent message-composition {
+            harness openwebui
+        }
+        // END generated role-intent harness routes
+    }
+}

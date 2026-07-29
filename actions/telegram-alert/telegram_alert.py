@@ -25,7 +25,13 @@ def build_message(repo: str, workflow: str, job: str, ref: str, sha: str, run_ur
     )
 
 
-def send_message(bot_token: str, chat_id: str, message: str, api_base: str) -> None:
+def send_message(
+    bot_token: str,
+    chat_id: str,
+    message: str,
+    api_base: str,
+    proxy_url: str,
+) -> None:
     payload = urllib.parse.urlencode(
         {
             "chat_id": chat_id,
@@ -35,7 +41,13 @@ def send_message(bot_token: str, chat_id: str, message: str, api_base: str) -> N
     ).encode("utf-8")
     url = f"{api_base.rstrip('/')}/bot{bot_token}/sendMessage"
     req = urllib.request.Request(url, data=payload, method="POST")
-    with urllib.request.urlopen(req, timeout=15) as resp:
+    proxy_handler = (
+        urllib.request.ProxyHandler({"https": proxy_url})
+        if proxy_url
+        else urllib.request.ProxyHandler()
+    )
+    opener = urllib.request.build_opener(proxy_handler)
+    with opener.open(req, timeout=15) as resp:
         resp.read()
 
 
@@ -50,6 +62,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     ap.add_argument("--sha", default=os.environ.get("SHA", ""))
     ap.add_argument("--run-url", default=os.environ.get("RUN_URL", ""))
     ap.add_argument("--api-base", default=os.environ.get("API_BASE", "https://api.telegram.org"))
+    ap.add_argument(
+        "--proxy-url",
+        default=os.environ.get("FORGEJO_EGRESS_PROXY", "").strip(),
+    )
     ap.add_argument("--dry-run", action="store_true")
     return ap.parse_args(argv)
 
@@ -80,9 +96,18 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     try:
-        send_message(args.bot_token, args.chat_id, message, args.api_base)
+        send_message(
+            args.bot_token,
+            args.chat_id,
+            message,
+            args.api_base,
+            args.proxy_url,
+        )
     except urllib.error.URLError as exc:
-        print(f"telegram alert failed: {exc}", file=sys.stderr)
+        print(
+            f"telegram alert failed ({type(exc).__name__})",
+            file=sys.stderr,
+        )
         return 1
     return 0
 

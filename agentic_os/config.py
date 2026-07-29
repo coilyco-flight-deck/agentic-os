@@ -21,10 +21,7 @@ Path semantics (gitignore-style globs over repo-relative POSIX paths):
 A pattern containing a "/" is anchored to the repo root ("docs/*.md"
 matches docs/x.md but not docs/sub/x.md). A pattern with no "/" matches
 the file's basename at any depth, so one wildcard covers a generated file
-wherever it lands - ward's specverb guardfiles, emitted both in docs/ and
-beside the .kdl under cmd/ward-kdl/, collapse to a single
-"ward-kdl.*.guardfile.md" instead of a line per generator. Patterns and paths use forward
-slashes on every platform.
+wherever it lands. Patterns and paths use forward slashes on every platform.
 """
 from __future__ import annotations
 
@@ -40,6 +37,7 @@ else:
     import tomli as tomllib
 
 REPO_ROOT = Path.cwd()
+HUMAN_WORKDIR_SUFFIX = "-workdir"
 
 
 # Workspace enumeration: one shared walk of ~/projects/<org>/* git trees, so
@@ -63,6 +61,16 @@ def projects_root(root: Path | None = None) -> Path:
     return Path.home() / "projects"
 
 
+def is_agent_managed_checkout(path: Path) -> bool:
+    """Whether fleet tooling may treat ``path`` as an agent-managed checkout.
+
+    A repo basename ending in ``-workdir`` reserves that checkout for manual
+    human work. Agent automation must leave it invisible even when it carries
+    a valid ``.git`` directory.
+    """
+    return not path.name.endswith(HUMAN_WORKDIR_SUFFIX)
+
+
 def iter_workspace_repos(root: Path | None = None) -> list[Path]:
     """Every git working tree in the workspace, owner-agnostic.
 
@@ -77,8 +85,9 @@ def iter_workspace_repos(root: Path | None = None) -> list[Path]:
     Handling both shapes means the default ~/projects root covers every org
     dir, while a $PROJECTS_ROOT pointed straight at one org dir still works (it
     mirrors the old single-root behaviour). Hidden dirs (.dispatch-worktrees
-    and other scaffolding) are skipped at both levels. Returns repo directory
-    Paths sorted by (org dir, repo name).
+    and other scaffolding) are skipped at both levels. Human-only ``*-workdir``
+    checkouts are skipped wherever they appear. Returns repo directory Paths
+    sorted by (org dir, repo name).
     """
     base = projects_root(root)
     if not base.is_dir():
@@ -87,13 +96,14 @@ def iter_workspace_repos(root: Path | None = None) -> list[Path]:
     for child in sorted(base.iterdir()):
         if not child.is_dir() or child.name.startswith("."):
             continue
-        if (child / ".git").exists():
+        if (child / ".git").exists() and is_agent_managed_checkout(child):
             repos.append(child)
             continue
         for grandchild in sorted(child.iterdir()):
             if (
                 grandchild.is_dir()
                 and not grandchild.name.startswith(".")
+                and is_agent_managed_checkout(grandchild)
                 and (grandchild / ".git").exists()
             ):
                 repos.append(grandchild)

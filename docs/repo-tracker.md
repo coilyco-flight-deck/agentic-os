@@ -15,7 +15,7 @@ When every checkout is on the expected list, a green all-clear with the count:
 When checkouts are on disk that the list does not expect, it names them and colors the row (orange for a few, bold red once a lot have piled back on):
 
 ```
-📦 7 to remove: coilyco-bridge/agentic-os-hardware, coilyco-bridge/deploy, coilyco-bridge/lore, coilyco-flight-deck/ward, +3 more
+📦 7 to remove: coilyco-bridge/agentic-os-hardware, coilyco-bridge/deploy, coilysiren/lore, coilyco-flight-deck/ward, +3 more
 ```
 
 The first few stray names are listed; the rest collapse into `+N more`. With no expected list configured, the row degrades to just the count: `📦 15 repos`.
@@ -32,6 +32,10 @@ The hook stays generic and carries no repo names of its own. Point the conventio
 ```sh
 ln -sf /path/to/your/repos-on-disk.txt ~/.config/agentic-os/repos-on-disk.txt
 ```
+
+[`aos/native-checkout-repos.txt`](../aos/native-checkout-repos.txt) is the
+public native-host base. Private overlays extend that roster from their own
+repositories and publish one flat manifest for the tracker.
 
 ## Fleet-org scope
 

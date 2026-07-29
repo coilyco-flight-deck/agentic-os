@@ -61,23 +61,29 @@ def test_set_arg_rejects_unknown_arg() -> None:
 
 def test_set_arg_in_tree_rewrites_each_dockerfile_with_arg(tmp_path: Path) -> None:
     script = _load_script()
-    (tmp_path / "core").mkdir()
-    (tmp_path / "lang-go").mkdir()
-    (tmp_path / "agent").mkdir()
-    (tmp_path / "core" / "Dockerfile").write_text("ARG GO_VERSION=1.26.4\n", encoding="utf-8")
-    (tmp_path / "lang-go" / "Dockerfile").write_text(
+    (tmp_path / "rooted").mkdir()
+    (tmp_path / "first").mkdir()
+    (tmp_path / "second").mkdir()
+    (tmp_path / "rooted" / "Dockerfile").write_text(
         "ARG GO_VERSION=1.26.4\n", encoding="utf-8"
     )
-    (tmp_path / "agent" / "Dockerfile").write_text(
+    (tmp_path / "first" / "Dockerfile").write_text(
+        "ARG GO_VERSION=1.26.4\n", encoding="utf-8"
+    )
+    (tmp_path / "second" / "Dockerfile").write_text(
         "ARG CLAUDE_VERSION=2.1.200\n", encoding="utf-8"
     )
 
     script.set_arg_in_tree(tmp_path, "GO_VERSION", "1.26.5")
 
-    assert "ARG GO_VERSION=1.26.5\n" in (tmp_path / "core" / "Dockerfile").read_text()
-    assert "ARG GO_VERSION=1.26.5\n" in (tmp_path / "lang-go" / "Dockerfile").read_text()
+    assert "ARG GO_VERSION=1.26.5\n" in (
+        tmp_path / "rooted" / "Dockerfile"
+    ).read_text()
+    assert "ARG GO_VERSION=1.26.5\n" in (
+        tmp_path / "first" / "Dockerfile"
+    ).read_text()
     assert "ARG CLAUDE_VERSION=2.1.200\n" in (
-        tmp_path / "agent" / "Dockerfile"
+        tmp_path / "second" / "Dockerfile"
     ).read_text()
 
 
@@ -131,44 +137,6 @@ def test_version_sensitive_pins_are_excluded_from_auto_bump() -> None:
     assert "YQ_VERSION" in script.RESOLVERS
 
 
-def test_tier_ownership_declares_each_published_target_once() -> None:
-    script = _load_script()
-    assert script.PUBLISHED_TARGETS == (
-        "dev-base-core",
-        "dev-base-lang-node",
-        "dev-base-lang-go",
-        "dev-base-lang-dotnet",
-        "dev-base-ops",
-        "dev-base-agent",
-        "dev-base-full",
-    )
-
-
-def test_tier_ownership_covers_each_managed_arg_once() -> None:
-    script = _load_script()
-    owned_args = tuple(script.ARG_TO_TARGET)
-    assert set(owned_args) == set(script.RESOLVERS)
-    assert script.ARG_TO_TARGET == {
-        "UV_VERSION": "dev-base-core",
-        "WARD_VERSION": "dev-base-core",
-        "NODE_VERSION": "dev-base-lang-node",
-        "GO_VERSION": "dev-base-lang-go",
-        "DOTNET_VERSION": "dev-base-lang-dotnet",
-        "AWSCLI_VERSION": "dev-base-ops",
-        "GH_VERSION": "dev-base-ops",
-        "DOCKER_VERSION": "dev-base-ops",
-        "HELM_VERSION": "dev-base-ops",
-        "KUBECTL_VERSION": "dev-base-ops",
-        "YQ_VERSION": "dev-base-ops",
-        "TAILSCALE_VERSION": "dev-base-ops",
-        "CLAUDE_VERSION": "dev-base-agent",
-        "MCPORTER_VERSION": "dev-base-agent",
-        "CODEX_VERSION": "dev-base-agent",
-        "GOOSE_VERSION": "dev-base-agent",
-        "TRUFFLEHOG_VERSION": "dev-base-full",
-    }
-
-
 def test_mcporter_is_auto_bumped_from_npm_registry() -> None:
     # MCPorter is installed from npm, so the auto-bump tracks the npm registry's
     # latest published version like Claude does.
@@ -189,6 +157,31 @@ def test_mcporter_resolver_reads_npm_latest(monkeypatch) -> None:
     monkeypatch.setattr(script, "_get_json", fake_get_json)
     assert script._resolve_mcporter() == "0.12.3"
     assert seen["url"] == "https://registry.npmjs.org/mcporter/latest"
+
+
+def test_agent_compose_is_auto_bumped_from_canonical_forgejo_releases() -> None:
+    script = _load_script()
+    assert "AGENT_COMPOSE_VERSION" in script.RESOLVERS
+
+
+def test_agent_compose_resolver_reads_latest_stable_release(monkeypatch) -> None:
+    script = _load_script()
+    seen: dict[str, str] = {}
+
+    def fake_get_json(url: str) -> object:
+        seen["url"] = url
+        return [
+            {"draft": False, "prerelease": True, "tag_name": "v0.37.0"},
+            {"draft": False, "prerelease": False, "tag_name": "v0.36.0"},
+            {"draft": False, "prerelease": False, "tag_name": "v0.9.0"},
+        ]
+
+    monkeypatch.setattr(script, "_get_json", fake_get_json)
+    assert script._resolve_agent_compose() == "0.36.0"
+    assert seen["url"] == (
+        "https://forgejo.coilysiren.me/api/v1/repos/"
+        "coilyco-flight-deck/agent-compose/releases?limit=50"
+    )
 
 
 def test_gh_resolver_reads_the_latest_release(monkeypatch) -> None:
@@ -234,23 +227,11 @@ def test_yq_resolver_reads_the_latest_release(monkeypatch) -> None:
     assert script._resolve_yq() == "4.53.3"
 
 
-def test_ward_binary_is_auto_bumped() -> None:
-    # ward builds from source at a pinned WARD_VERSION and tracks its own Forgejo
-    # releases, so it carries a resolver instead of opting out (agentic-os#223).
+def test_ward_binary_is_manual_until_aos_validates_prod_channel() -> None:
+    # Raw ward releases are staging until release assets are executable-smoked and
+    # aos promotes a candidate as prod/N-1, so dep-bump must not chase latest.
     script = _load_script()
-    assert "WARD_VERSION" in script.RESOLVERS
-
-
-def test_ward_resolver_picks_highest_v_prefixed_tag(monkeypatch) -> None:
-    # The Forgejo tags endpoint returns v-prefixed names; the resolver must strip
-    # the `v` (the Dockerfile ARG is v-less) and order numerically, not lexically.
-    script = _load_script()
-    monkeypatch.setattr(
-        script,
-        "_get_json",
-        lambda url: [{"name": "v0.9.0"}, {"name": "v0.396.0"}, {"name": "v0.40.0"}],
-    )
-    assert script._resolve_ward() == "0.396.0"
+    assert "WARD_VERSION" not in script.RESOLVERS
 
 
 def test_dotnet_is_auto_bumped_and_stays_on_its_channel() -> None:
@@ -287,13 +268,19 @@ def test_compute_plan_skips_unresolved_pins(monkeypatch) -> None:
     assert script.compute_plan(DOCKERFILE_SNIPPET) == []
 
 
-def test_tree_plan_reads_the_split_dev_base_layout(monkeypatch) -> None:
+def test_tree_plan_reads_the_split_dev_base_layout(
+    monkeypatch, tmp_path: Path
+) -> None:
     script = _load_script()
     monkeypatch.setitem(script.RESOLVERS, "UV_VERSION", lambda: "0.12.0")
     for name in list(script.RESOLVERS):
         if name != "UV_VERSION":
             monkeypatch.delitem(script.RESOLVERS, name)
+    (tmp_path / "Dockerfile").write_text(
+        "ARG UV_VERSION=0.11.26\n",
+        encoding="utf-8",
+    )
 
-    assert script._compute_tree_plan(script.DOCKERFILE) == [
+    assert script._compute_tree_plan(tmp_path) == [
         {"arg": "UV_VERSION", "current": "0.11.26", "latest": "0.12.0"}
     ]

@@ -3,16 +3,23 @@
 
 ![Sombra hacking skull](static/wallpaper.jpg)
 
-Cross-platform shell + terminal setup plus cross-repo pre-commit hooks for coilysiren/* repos. Zsh on Mac, Linux, and Windows (Git Bash). Warp on Mac and Windows; both configs symlink into `~/.warp/`.
+Cross-platform shell and terminal setup plus cross-repo pre-commit hooks for
+coilysiren/* repos. Zsh runs on Mac and Linux, with Bash through Git for
+Windows. Alacritty provides the default direct terminal, while the transitional
+Warp configuration remains available.
 
 ## Layout
 
 - `shell/` - shared `common.sh` plus thin `zshrc` + `bashrc`, so bash and zsh match. `warp.zsh` is the zsh-only Warp dispatcher.
-- `warp/` - Warp config (`settings.toml`, `tab_configs/`) plus the `ward exec warp` Go module.
+- `alacritty/` - portable Sombra appearance and terminal security defaults, with host preferences left to the local wrapper.
+- `agent-terminal/` - static agent-compose identity branding for one Alacritty director window.
+- `warp/` - transitional Warp config (`settings.toml`, `tab_configs/`) plus the `ward exec warp` Go module.
+- `aos/` - the Go composition root for standalone and Ward-governed agent launches.
 - `aos-say/` - the `ward exec aos-say` Go module for the speech helper client and relay.
 - `karabiner/` - Karabiner-Elements complex modification assets (`brew install --cask karabiner-elements`), symlinked into the local Karabiner config tree.
 - `scripts/` - portable utilities (gpg-ssm wrapper, agent-name + session-pulse hooks, aws-config lint).
-- `.agents/skills/` - SKILL.md docs for the configs that live here. A private overlay repo's skill mount walks this dir as a peer skill source.
+- `.agents/skills/` - ordinary `SKILL.md` sources that every composed role can discover.
+- `.agents/composed/` - role-scoped `COMPOSED.md` sources that agent-compose promotes only for allowlisted roles.
 - `agentic_os/` - packaged hooks, generators, shared config/data, plus the hygiene guardrails that back the pre-commit suite.
 
 Full breakdown: [docs/repo-layout.md](docs/repo-layout.md).
@@ -40,20 +47,67 @@ should not recreate `~/.bashrc`.
 
 Agent self-name + session-pulse hooks, per-host steps, and gpg wiring: [docs/install.md](docs/install.md).
 
-## Secrets pattern
+## aos CLI
 
-The current pattern keeps secrets off disk entirely:
+AOS composes independent Ward, agent-compose, and aosguard capabilities behind
+one launch surface:
 
 ```bash
-ssm-load                          # pull every / parameter into the current shell env
-ssm-get /eco/server-api-token     # fetch one value without storing it
+aos --agent codex --role engineer --warded --composed --guarded -- owner/repo#267
 ```
 
-No disk write at any point. Same call works on Mac, Linux, Windows. AWS profile defaults to `default`; override with `ssm-load <profile> <region>`. For secrets at shell startup, append `ssm-load` to the end of `shell/common.sh`. The legacy cleartext-on-disk dump (`~/.cache/ssm-env.sh`) was deleted.
+AOS translates the shared role and selected capabilities. Ward remains the
+fixed workflow and container lifecycle owner, agent-compose remains the context producer,
+and cli-guard/specgen remains the guarded-tool generator. The role name selects
+context in each layer and never unions authority.
+
+The original standalone composed-container command remains available:
+
+```bash
+aos --role engineer acompose -- codex
+```
+
+That standalone path projects the resolved host mcporter inventory into the
+ephemeral agent home. When configured HTTP MCP endpoints resolve into the
+tailnet, AOS attaches the container to the shared tailnet network and bridges
+those endpoints through the standing proxy without invoking Ward. See the
+[standalone connectivity contract](docs/aos-standalone-connectivity.md).
+
+For a bounded role check-in, AOS owns the agent's non-interactive defaults:
+
+```bash
+aos --role engineer --agent codex acompose-checkin
+```
+
+The released binary also resolves the committed model-opaque default for a
+role-intent lane:
+
+```bash
+aos --role director harness-default --intent strategic-planning
+aos --role director lane-default --intent strategic-planning
+```
+
+Ward is not part of that standalone path. See the
+[launch and handoff contract](docs/aos-cli.md).
+Homebrew and Scoop install both `aos` and `aosguard`. Direct release binaries and
+the paired native update path are documented in the [CLI release walkthrough](docs/aos-cli-release.md).
+
+## Secrets pattern
+
+Fetch one parameter only when a command needs it:
+
+```bash
+ssm-get /eco/server-api-token
+```
+
+`ssm-get` prints the decrypted value to stdout without writing it to disk. The
+AWS profile defaults to `default`; pass a profile and region as the second and
+third arguments. The bulk shell-environment exporter and the legacy
+cleartext-on-disk dump (`~/.cache/ssm-env.sh`) are removed.
 
 ## agent-compose
 
-Opt-in tooling that composes global agent context and symlinks each harness load point to it. Sources are shared unless optional `harnesses` frontmatter selects a harness-specific slice. Inert until `~/.config/agent-compose/agent-compose.yaml` exists. See [docs/FEATURES.md](docs/FEATURES.md).
+Opt-in tooling that composes global agent context and symlinks each harness load point to it. Sources are shared unless optional `harnesses` frontmatter selects a harness-specific slice. Agent-compose embeds the canonical personalities. AOS publishes the [capability provider](docs/personality-provider.md): ordinary skills, [role-composed skills](docs/role-composed-skills.md), and the public [harness capability registry](docs/harness-selection.md). Host composition stays inert until `~/.config/agent-compose/agent-compose.yaml` exists.
 
 **Prior art.** The idea is fresh in the agentic space but well-trodden in config management, and agent-compose is best understood as **Hiera-for-agent-doctrine, deployed Stow-style, scoped chezmoi-style**:
 

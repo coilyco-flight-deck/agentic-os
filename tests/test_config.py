@@ -181,9 +181,9 @@ agents_md_max_chars = 12000
     # one wildcard covers a generated file wherever it is emitted.
     ("README.md", ["*.md"], True),
     ("nested/README.md", ["*.md"], True),
-    ("docs/ward-kdl.aws.guardfile.md", ["ward-kdl.*.guardfile.md"], True),
-    ("cmd/ward-kdl/ward-kdl.aws.guardfile.md", ["ward-kdl.*.guardfile.md"], True),
-    ("docs/notes.md", ["ward-kdl.*.guardfile.md"], False),
+    ("docs/generated.aws.md", ["generated.*.md"], True),
+    ("cmd/generated/generated.aws.md", ["generated.*.md"], True),
+    ("docs/notes.md", ["generated.*.md"], False),
     # A slash-less exact filename matches its basename at any depth too.
     ("a/b/.pre-commit-config.yaml", [".pre-commit-config.yaml"], True),
 ])
@@ -242,6 +242,23 @@ def test_iter_workspace_repos_skips_hidden(tmp_path: Path) -> None:
     # .dispatch-worktrees scaffolding under an org dir, and a hidden org dir.
     _make_repo(tmp_path / "coilysiren" / ".dispatch-worktrees" / "wt")
     _make_repo(tmp_path / ".hidden-org" / "repo-x")
+    repos = iter_workspace_repos(tmp_path)
+    assert [r.name for r in repos] == ["repo-a"]
+
+
+def test_iter_workspace_repos_skips_human_workdirs(tmp_path: Path) -> None:
+    _make_repo(tmp_path / "coilysiren" / "repo-a")
+    _make_repo(tmp_path / "coilysiren" / "repo-a-workdir")
+    _make_repo(tmp_path / "coilysiren" / "repo-a-workdirs")
+    repos = iter_workspace_repos(tmp_path)
+    assert [r.name for r in repos] == ["repo-a", "repo-a-workdirs"]
+
+
+def test_iter_workspace_repos_skips_human_workdirs_in_single_org_root(
+    tmp_path: Path,
+) -> None:
+    _make_repo(tmp_path / "repo-a")
+    _make_repo(tmp_path / "repo-a-workdir")
     repos = iter_workspace_repos(tmp_path)
     assert [r.name for r in repos] == ["repo-a"]
 

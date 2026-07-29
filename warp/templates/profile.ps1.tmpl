@@ -11,42 +11,55 @@ if (Test-Path '{{ .StartupDir }}') {
     Set-Location -Path '{{ .StartupDir }}'
 }
 
-# Import env vars and PATH additions from shell/common.sh via bash - single
-# source of truth for all shells. PATH is handled separately: bash emits POSIX
-# paths (/c/..., /x/...) which are converted to Windows form (C:\..., X:\...)
-# and prepended if the directory exists and isn't already on Windows PATH.
-$_bash = @(
-    'C:\Program Files\Git\bin\bash.exe',
-    'C:\msys64\usr\bin\bash.exe'
-) | Where-Object { Test-Path $_ } | Select-Object -First 1
-if ($_bash) {
-    $_envOut = & $_bash --norc --noprofile -c "source '{{ .RepoRoot }}/shell/common.sh' 2>/dev/null && env" 2>$null
-    $_bashPath = ''
-    foreach ($_line in ($_envOut -split "`n")) {
-        if ($_line -match '^([A-Za-z][A-Za-z0-9_]*)=(.*)$') {
-            if ($Matches[1] -eq 'PATH') { $_bashPath = $Matches[2] }
-            else { [System.Environment]::SetEnvironmentVariable($Matches[1], $Matches[2], 'Process') }
+# Import the declarative shared exports from common.sh without starting Bash.
+# common.sh owns the values. This loader accepts quoted literals and $HOME.
+$_commonShellPath = '{{ .RepoRoot }}/shell/common.sh'
+if (Test-Path -LiteralPath $_commonShellPath) {
+    $_insideSharedEnvironment = $false
+    foreach ($_line in [System.IO.File]::ReadLines($_commonShellPath)) {
+        if ($_line -eq '# shared-environment: begin') {
+            $_insideSharedEnvironment = $true
+            continue
+        }
+        if ($_line -eq '# shared-environment: end') {
+            break
+        }
+        if ($_insideSharedEnvironment -and $_line -match '^export ([A-Za-z_][A-Za-z0-9_]*)=(.*)$') {
+            $_name = $Matches[1]
+            $_value = $Matches[2].Trim()
+            if ($_value.Length -ge 2 -and (
+                ($_value.StartsWith('"') -and $_value.EndsWith('"')) -or
+                ($_value.StartsWith("'") -and $_value.EndsWith("'"))
+            )) {
+                $_value = $_value.Substring(1, $_value.Length - 2)
+            }
+            $_value = $_value.Replace('${HOME}', $HOME).Replace('$HOME', $HOME)
+            [System.Environment]::SetEnvironmentVariable($_name, $_value, 'Process')
         }
     }
-    # Convert POSIX PATH entries to Windows paths and prepend new ones.
-    # /c/some/path  -> C:\some\path   (POSIX drive letter, Git Bash / MSYS2)
-    # /x/some/path  -> X:\some\path
-    # X:/some/path  -> X:\some\path   (Windows with forward slashes)
-    # MSYS-internal paths (/usr/bin, /mingw64/bin) have no Windows equivalent;
-    # Test-Path filters them out automatically.
-    foreach ($_entry in ($_bashPath -split ':')) {
-        $_win = if ($_entry -match '^/([a-zA-Z])/(.+)') {
-            "$($Matches[1].ToUpper()):\$($Matches[2] -replace '/', '\')"
-        } elseif ($_entry -match '^([a-zA-Z]):/(.+)') {
-            "$($Matches[1].ToUpper()):\$($Matches[2] -replace '/', '\')"
-        } else { $null }
-        if ($_win -and (Test-Path $_win -ErrorAction SilentlyContinue) -and $env:PATH -notlike "*$_win*") {
-            $env:PATH = "$_win;$env:PATH"
-        }
-    }
-    Remove-Variable _envOut, _bashPath, _entry, _win -ErrorAction SilentlyContinue
 }
-Remove-Variable _bash -ErrorAction SilentlyContinue
+
+# Host-derived values stay native so PowerShell receives Windows paths.
+$env:WARD_LOCKDOWN_ROOT = '{{ .ProjectsDir }}'
+$env:_SIREN_SHELL_ENV = '1'
+
+$_pathCandidates = @(
+    'C:\Program Files\Git\usr\bin',
+    'C:\Program Files\Git\bin',
+    (Join-Path $HOME '.cargo\bin'),
+    (Join-Path $HOME '.local\bin'),
+    (Join-Path $HOME 'bin')
+)
+$_existingPaths = @($env:PATH -split [System.IO.Path]::PathSeparator |
+    ForEach-Object { $_.TrimEnd('\', '/') })
+$_prependPaths = @($_pathCandidates | Where-Object {
+    (Test-Path -LiteralPath $_) -and $_existingPaths -notcontains $_.TrimEnd('\', '/')
+})
+if ($_prependPaths.Count -gt 0) {
+    $env:PATH = (@($_prependPaths) + @($env:PATH)) -join [System.IO.Path]::PathSeparator
+}
+Remove-Variable _commonShellPath, _insideSharedEnvironment, _line, _name, _value,
+    _pathCandidates, _existingPaths, _prependPaths -ErrorAction SilentlyContinue
 
 # Defuse stuck xterm mouse-tracking modes (1000 click / 1002 drag / 1003
 # any-motion / 1006 SGR encoding) that a TUI child can leave enabled when it

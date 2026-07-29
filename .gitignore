@@ -76,6 +76,8 @@ Thumbs.db
 /dist
 /build
 /out
+.specgen/**/*.md
+!.specgen/README.md
 *.bundle.js
 *.min.js
 *.min.css
@@ -107,3 +109,9 @@ test-images/
 # Test files
 *.test.js
 *.spec.js
+
+# Local Go launcher builds
+/agent-terminal/agent-terminal
+/agent-terminal/agent-terminal.exe
+/aos/aos
+/aos/aos.exe

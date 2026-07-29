@@ -1,0 +1,181 @@
+{
+  "format": "agentic-os.role-personality-board.v1",
+  "role_count": 13,
+  "personality_count": 17,
+  "roles": [
+    {
+      "role": "engineer",
+      "personalities": [
+        "curious",
+        "grounded",
+        "meticulous"
+      ]
+    },
+    {
+      "role": "director",
+      "personalities": [
+        "bold",
+        "grounded",
+        "diplomatic"
+      ]
+    },
+    {
+      "role": "qa",
+      "personalities": [
+        "meticulous",
+        "candid",
+        "playful"
+      ]
+    },
+    {
+      "role": "advisor",
+      "personalities": [
+        "reflective",
+        "curious",
+        "candid"
+      ]
+    },
+    {
+      "role": "ops",
+      "personalities": [
+        "protective",
+        "grounded",
+        "reflective"
+      ]
+    },
+    {
+      "role": "pm",
+      "personalities": [
+        "warm",
+        "meticulous",
+        "curious"
+      ]
+    },
+    {
+      "role": "designer",
+      "personalities": [
+        "imaginative",
+        "playful",
+        "editorial"
+      ]
+    },
+    {
+      "role": "social",
+      "personalities": [
+        "quirky",
+        "playful",
+        "optimistic"
+      ]
+    },
+    {
+      "role": "community",
+      "personalities": [
+        "nurturing",
+        "diplomatic",
+        "playful"
+      ]
+    },
+    {
+      "role": "sales",
+      "personalities": [
+        "charming",
+        "energetic",
+        "warm"
+      ]
+    },
+    {
+      "role": "customer-success",
+      "personalities": [
+        "nurturing",
+        "diplomatic",
+        "optimistic"
+      ]
+    },
+    {
+      "role": "ceo",
+      "personalities": [
+        "bold",
+        "grounded",
+        "protective"
+      ]
+    },
+    {
+      "role": "technical-writer",
+      "personalities": [
+        "editorial",
+        "meticulous",
+        "curious"
+      ]
+    }
+  ],
+  "skills": [
+    {
+      "personality": "curious",
+      "skill": "personality-curious"
+    },
+    {
+      "personality": "grounded",
+      "skill": "personality-grounded"
+    },
+    {
+      "personality": "meticulous",
+      "skill": "personality-meticulous"
+    },
+    {
+      "personality": "bold",
+      "skill": "personality-bold"
+    },
+    {
+      "personality": "diplomatic",
+      "skill": "personality-diplomatic"
+    },
+    {
+      "personality": "candid",
+      "skill": "personality-candid"
+    },
+    {
+      "personality": "playful",
+      "skill": "personality-playful"
+    },
+    {
+      "personality": "reflective",
+      "skill": "personality-reflective"
+    },
+    {
+      "personality": "protective",
+      "skill": "personality-protective"
+    },
+    {
+      "personality": "warm",
+      "skill": "personality-warm"
+    },
+    {
+      "personality": "imaginative",
+      "skill": "personality-imaginative"
+    },
+    {
+      "personality": "editorial",
+      "skill": "personality-editorial"
+    },
+    {
+      "personality": "quirky",
+      "skill": "personality-quirky"
+    },
+    {
+      "personality": "optimistic",
+      "skill": "personality-optimistic"
+    },
+    {
+      "personality": "nurturing",
+      "skill": "personality-nurturing"
+    },
+    {
+      "personality": "charming",
+      "skill": "personality-charming"
+    },
+    {
+      "personality": "energetic",
+      "skill": "personality-energetic"
+    }
+  ]
+}

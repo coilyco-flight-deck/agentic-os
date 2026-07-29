@@ -1,26 +1,33 @@
-"""Tests for the dev-base image contract."""
+"""Tests for the independent dev-base language-image contract."""
+
 from __future__ import annotations
 
+import argparse
 import importlib.util
 import re
 from pathlib import Path
 
 from agentic_os.dev_base import (
     DEV_BASE_ROOT,
-    REGISTRY_BASE,
     PUBLISHED_TIER_NAMES,
-    TIER_SPECS,
-    graft_build_arg,
+    REGISTRY_BASE,
+    TIER_BY_NAME,
+    affected_tiers,
     publish_plan,
+    required_build_tiers,
     tier_tag,
 )
 
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = REPO_ROOT / "scripts" / "dev-base-build.py"
-
-
-def _tier_path(tier: str) -> Path:
-    return DEV_BASE_ROOT / tier / "Dockerfile"
+DOCKERFILE = DEV_BASE_ROOT / "Dockerfile"
+FULL_DOCKERFILE = DEV_BASE_ROOT / "full" / "Dockerfile"
+INSTALL_COMMON = DEV_BASE_ROOT / "install-common.sh"
+VERIFY_COMMON = DEV_BASE_ROOT / "verify-common.sh"
+LANGUAGE_TIERS = tuple(
+    tier for tier in PUBLISHED_TIER_NAMES if tier.startswith("lang-")
+)
 
 
 def _load_script():
@@ -31,334 +38,456 @@ def _load_script():
     return module
 
 
-def test_dev_base_tier_directories_exist() -> None:
-    for tier in PUBLISHED_TIER_NAMES:
-        assert _tier_path(tier).is_file()
+def _stage_text(text: str, stage: str) -> str:
+    match = re.search(rf"^FROM ubuntu:\S+ AS {re.escape(stage)}$", text, re.MULTILINE)
+    assert match is not None
+    start = match.start()
+    remainder = text[start:]
+    next_stage = remainder.find("\nFROM ", 1)
+    return remainder if next_stage < 0 else remainder[:next_stage]
 
 
-def test_dev_base_plan_is_derived_from_tier_folder_names() -> None:
-    tag = "v0.242.0"
-    plan = publish_plan(REGISTRY_BASE, tag)
+def test_language_targets_are_direct_independent_ubuntu_descendants() -> None:
+    text = DOCKERFILE.read_text(encoding="utf-8")
+
+    assert PUBLISHED_TIER_NAMES == (
+        "lang-node",
+        "lang-go",
+        "lang-dotnet",
+        "lang-rust",
+        "lang-python",
+        "full",
+    )
+    for tier in LANGUAGE_TIERS:
+        spec = TIER_BY_NAME[tier]
+        assert spec.base_tier is None
+        assert spec.dockerfile == DOCKERFILE
+        assert spec.shared_context is True
+        assert re.search(
+            rf"^FROM ubuntu:\S+ AS {re.escape(spec.stage)}$", text, re.MULTILINE
+        )
+        stage = _stage_text(text, spec.stage)
+        assert "ARG BASE_IMAGE" not in stage
+        assert "FROM ${BASE_IMAGE}" not in stage
+
+
+def test_language_targets_share_source_not_runtime_parentage() -> None:
+    text = DOCKERFILE.read_text(encoding="utf-8")
+
+    assert text.count(
+        "source=install-common.sh,target=/tmp/install-common.sh"
+    ) == len(LANGUAGE_TIERS)
+    assert text.count(
+        "source=verify-common.sh,target=/tmp/verify-common.sh"
+    ) == len(LANGUAGE_TIERS)
+    assert text.count('ENTRYPOINT ["/opt/agentic-os/ward-shell-entrypoint.sh"]') == len(
+        LANGUAGE_TIERS
+    )
+    assert text.count('CMD ["bash"]') == len(LANGUAGE_TIERS)
+    assert "specgen-linux-${TARGETARCH}" in text
+    assert "sha256sum -c -" in text
+    assert "COPY --from=aosguard-spec" in text
+    assert "COPY --from=aosguard-python" in text
+    assert "--skills-out /opt/agentic-os/aosguard-skill" in text
+    assert (
+        "COPY --from=dev-base-tool-builder /opt/agentic-os/aosguard-skill "
+        "/opt/agentic-os/aosguard-skill"
+    ) in text
+    assert text.count(
+        "COPY --from=dev-base-tool-builder /opt/agentic-os/aosguard-skill "
+        "/opt/agentic-os/aosguard-skill"
+    ) == len(LANGUAGE_TIERS)
+
+
+def test_common_verification_covers_the_composed_runtime_surface() -> None:
+    text = VERIFY_COMMON.read_text(encoding="utf-8")
+
+    for command in (
+        "aosguard --version",
+        "agent-compose version",
+        "agent-compose roster",
+        "person.json",
+        "python3 -m agentic_os.forgejo_actions_list --help",
+        "ward --version",
+        "WARD_DOCTOR_ALLOW_PLACEHOLDERS=1 ward doctor",
+    ):
+        assert command in text
+    assert "test -s /opt/agentic-os/aosguard-skill/aosguard/SKILL.md" in text
+    assert (
+        "test -s /opt/agentic-os/aosguard-skill/aosguard/references/commands.yaml"
+        in text
+    )
+
+
+def test_substrate_seed_parser_accepts_windows_line_endings() -> None:
+    text = INSTALL_COMMON.read_text(encoding="utf-8")
+
+    assert "ref=${ref%$'\\r'}" in text
+
+
+def test_version_defaults_have_one_owning_source() -> None:
+    text = (
+        DOCKERFILE.read_text(encoding="utf-8")
+        + FULL_DOCKERFILE.read_text(encoding="utf-8")
+    )
+    for name in (
+        "UV_VERSION",
+        "GO_VERSION",
+        "DOTNET_VERSION",
+        "TRUNK_VERSION",
+        "SPECGEN_VERSION",
+        "NODE_VERSION",
+        "GOLANGCI_LINT_VERSION",
+        "TRUFFLEHOG_VERSION",
+        "KDLFMT_VERSION",
+    ):
+        assert text.count(f"ARG {name}=") == 1
+
+
+def test_linuxbrew_is_absent_and_transient_npm_cache_is_removed() -> None:
+    text = (
+        DOCKERFILE.read_text(encoding="utf-8")
+        + FULL_DOCKERFILE.read_text(encoding="utf-8")
+        + INSTALL_COMMON.read_text(encoding="utf-8")
+    )
+
+    assert "linuxbrew" not in text.lower()
+    assert "/home/linuxbrew" not in text
+    assert "rm -rf /root/.npm" in text
+
+
+def test_full_remains_the_composed_default_surface() -> None:
+    spec = TIER_BY_NAME["full"]
+    assert spec.dockerfile == FULL_DOCKERFILE
+    assert spec.base_tier == "lang-rust"
+    assert spec.graft_tiers == ("lang-go", "lang-dotnet", "lang-python")
+
+    text = FULL_DOCKERFILE.read_text(encoding="utf-8")
+    assert "FROM ${BASE_IMAGE} AS dev-base-full" in text
+    assert (
+        "PATH=/usr/local/go/bin:/usr/local/dotnet:/usr/local/node/bin:"
+        "/usr/local/cargo/bin:" in text
+    )
+    assert "DOTNET_ROOT=/usr/local/dotnet" in text
+    assert "COPY --from=dev-base-lang-go-graft /usr/local/go /usr/local/go" in text
+    assert (
+        "COPY --from=dev-base-lang-dotnet-graft /usr/local/dotnet /usr/local/dotnet"
+        in text
+    )
+    assert (
+        "COPY --from=dev-base-lang-python-graft /opt/uv/tools/pipenv "
+        "/opt/uv/tools/pipenv" in text
+    )
+
+
+def test_publish_plan_models_parallel_languages_and_full_fan_in() -> None:
+    plan = publish_plan(REGISTRY_BASE, "candidate", ("release", "latest"))
 
     assert [entry["tier"] for entry in plan] == list(PUBLISHED_TIER_NAMES)
-    assert [entry["image"] for entry in plan] == [
-        f"{REGISTRY_BASE}:{tier}-{tag}" for tier in PUBLISHED_TIER_NAMES if tier != "full"
-    ] + [f"{REGISTRY_BASE}:{tag}"]
-    assert [entry["stage"] for entry in plan] == [
-        f"dev-base-{tier}" for tier in PUBLISHED_TIER_NAMES
-    ]
-    assert [entry["dockerfile"] for entry in plan] == [
-        f"docker/dev-base/{tier}/Dockerfile" for tier in PUBLISHED_TIER_NAMES
-    ]
-    # The fan-out DAG (aos#491): the lang tiers and ops are siblings on core,
-    # agent composes ops, full fans in on agent.
-    assert [entry["base_image"] for entry in plan] == [
-        "ubuntu:24.04",
-        f"{REGISTRY_BASE}:core-{tag}",
-        f"{REGISTRY_BASE}:core-{tag}",
-        f"{REGISTRY_BASE}:core-{tag}",
-        f"{REGISTRY_BASE}:core-{tag}",
-        f"{REGISTRY_BASE}:ops-{tag}",
-        f"{REGISTRY_BASE}:agent-{tag}",
-    ]
-    assert plan[-1]["tier"] == "full"
-    assert "alias_image" not in plan[0]
-
-
-def test_dev_base_plan_grafts_toolchains_into_the_composed_tiers() -> None:
-    tag = "v0.242.0"
-    plan = publish_plan(REGISTRY_BASE, tag)
-    grafts = {entry["tier"]: entry["graft_images"] for entry in plan}
-
-    assert grafts["agent"] == {"LANG_NODE_IMAGE": f"{REGISTRY_BASE}:lang-node-{tag}"}
-    assert grafts["full"] == {
-        "LANG_GO_IMAGE": f"{REGISTRY_BASE}:lang-go-{tag}",
-        "LANG_DOTNET_IMAGE": f"{REGISTRY_BASE}:lang-dotnet-{tag}",
+    for entry in plan[:-1]:
+        assert entry["base_image"] == "ubuntu:24.04"
+        assert entry["dockerfile"] == "docker/dev-base/Dockerfile"
+        assert entry["context_dir"] == "docker/dev-base"
+        assert entry["image"] == (
+            f"{REGISTRY_BASE}:{entry['tier']}-candidate"
+        )
+    full = plan[-1]
+    assert full["image"] == f"{REGISTRY_BASE}:candidate"
+    assert full["base_image"] == f"{REGISTRY_BASE}:lang-rust-candidate"
+    assert full["graft_images"] == {
+        "LANG_GO_IMAGE": f"{REGISTRY_BASE}:lang-go-candidate",
+        "LANG_DOTNET_IMAGE": f"{REGISTRY_BASE}:lang-dotnet-candidate",
+        "LANG_PYTHON_IMAGE": f"{REGISTRY_BASE}:lang-python-candidate",
     }
-    for tier in ("core", "lang-node", "lang-go", "lang-dotnet", "ops"):
-        assert grafts[tier] == {}
-
-
-def test_tier_specs_stay_in_topological_order() -> None:
-    seen: set[str] = set()
-    for spec in TIER_SPECS:
-        if spec.base_tier is not None:
-            assert spec.base_tier in seen, f"{spec.tier}: base {spec.base_tier} not built yet"
-        for graft in spec.graft_tiers:
-            assert graft in seen, f"{spec.tier}: graft {graft} not built yet"
-        seen.add(spec.tier)
-
-
-def test_dev_base_plan_carries_per_tier_cache_and_alias_refs() -> None:
-    plan = publish_plan(REGISTRY_BASE, "v0.242.0", ("release", "latest", "release", ""))
-
-    assert [entry["cache_image"] for entry in plan] == [
-        f"{REGISTRY_BASE}:{tier_tag(tier, 'buildcache')}" for tier in PUBLISHED_TIER_NAMES
-    ]
-    assert [entry["alias_image"] for entry in plan] == [
-        f"{REGISTRY_BASE}:{tier_tag(tier, 'release')}" for tier in PUBLISHED_TIER_NAMES
-    ]
-    assert [entry["alias_images"][1] for entry in plan] == [
-        f"{REGISTRY_BASE}:{tier_tag(tier, 'latest')}" for tier in PUBLISHED_TIER_NAMES
-    ]
-    assert plan[-1]["cache_image"] == f"{REGISTRY_BASE}:buildcache"
-    assert plan[-1]["alias_image"] == f"{REGISTRY_BASE}:release"
-    assert plan[-1]["alias_images"] == [
+    assert full["alias_images"] == [
         f"{REGISTRY_BASE}:release",
         f"{REGISTRY_BASE}:latest",
     ]
 
 
-def test_core_tier_keeps_the_hidden_ward_builder_stage() -> None:
-    text = _tier_path("core").read_text()
-    assert "AS dev-base-ward-builder" in text
-    assert 'COPY --from=dev-base-ward-builder /usr/local/bin/ward /usr/local/bin/ward' in text
-    assert "ARG WARD_CONFIG_REF_COMMIT" in text
-    # The forge host is owned by the ops guardfile - derive it, never restate it.
-    ops_guardfile = (REPO_ROOT / ".ward" / "guardfile.forgejo.kdl").read_text()
-    host = re.search(r'base-url "([^/"]+)', ops_guardfile).group(1)
-    assert (
-        f"WARD_CONFIG_REF={host}/coilyco-flight-deck/agentic-os"
-        "@${WARD_CONFIG_REF_COMMIT}//.ward"
-    ) in text
+def test_language_tags_are_prefixed_and_full_tags_stay_plain() -> None:
+    assert tier_tag("lang-node", "candidate") == "lang-node-candidate"
+    assert tier_tag("full", "candidate") == "candidate"
 
 
-def test_core_tier_runs_ward_doctor_after_installing_ward() -> None:
-    text = _tier_path("core").read_text()
-    assert (
-        text.index('COPY --from=dev-base-ward-builder /usr/local/bin/ward /usr/local/bin/ward')
-        < text.index("ward doctor")
+def test_common_image_inputs_affect_every_tier() -> None:
+    assert affected_tiers(["docker/dev-base/install-common.sh"]) == (
+        "lang-node",
+        "lang-go",
+        "lang-dotnet",
+        "lang-rust",
+        "lang-python",
+        "full",
     )
-    assert "CLIGUARD_NO_SANDBOX=1 ward doctor" in text
+    assert affected_tiers(["aos/main.go"]) == PUBLISHED_TIER_NAMES
 
 
-def test_tier_tag_keeps_full_plain_and_prefixes_variants() -> None:
-    assert tier_tag("full", "v0.243.0") == "v0.243.0"
-    assert tier_tag("full", "release") == "release"
-    assert tier_tag("core", "v0.243.0") == "core-v0.243.0"
-    assert tier_tag("lang-node", "release") == "lang-node-release"
-
-
-def test_tier_files_build_from_their_declared_base_image() -> None:
-    for tier in ("lang-node", "lang-go", "lang-dotnet", "ops", "agent", "full"):
-        text = _tier_path(tier).read_text()
-        assert f"FROM ${{BASE_IMAGE}} AS dev-base-{tier}" in text
-        assert "ARG BASE_IMAGE" in text
-
-
-def test_dotnet_tier_retries_the_installer_fetch_and_run() -> None:
-    text = _tier_path("lang-dotnet").read_text()
-    assert "dotnet-install.sh" in text
-    assert "for attempt in 1 2 3" in text
-    assert "--retry 5 --retry-all-errors --retry-delay 5" in text
-    assert "builds.dotnet.microsoft.com/dotnet/scripts/v1/dotnet-install.sh" in text
-    assert '"${DOTNET_VERSION}" --architecture "${DOTNET_ARCH}"' in text
-
-
-def test_composed_tier_files_graft_their_declared_toolchain_tiers() -> None:
-    # Each declared graft needs an ARG-driven FROM stage plus a COPY --from of
-    # it, so the plan's graft_images build-args actually land in the image.
-    for spec in TIER_SPECS:
-        text = spec.dockerfile.read_text()
-        for graft in spec.graft_tiers:
-            arg = graft_build_arg(graft)
-            assert f"ARG {arg}" in text, f"{spec.tier}: missing ARG {arg}"
-            assert f"FROM ${{{arg}}} AS dev-base-{graft}-graft" in text
-            assert f"COPY --from=dev-base-{graft}-graft " in text
-    agent_text = _tier_path("agent").read_text()
-    full_text = _tier_path("full").read_text()
-    assert "COPY --from=dev-base-lang-node-graft /usr/local/node /usr/local/node" in agent_text
-    assert "COPY --from=dev-base-lang-go-graft /usr/local/go /usr/local/go" in full_text
-    assert (
-        "COPY --from=dev-base-lang-dotnet-graft /usr/local/dotnet /usr/local/dotnet" in full_text
+def test_full_only_change_builds_its_language_source_closure() -> None:
+    assert affected_tiers(["docker/dev-base/full/Dockerfile"]) == ("full",)
+    assert required_build_tiers(("full",)) == (
+        "lang-go",
+        "lang-dotnet",
+        "lang-rust",
+        "lang-python",
+        "full",
     )
 
 
-def test_node_graft_prefix_is_on_the_core_path() -> None:
-    # Cross-tier wiring: core bakes the PATH entry so the node prefix grafted
-    # into agent (see the graft test above) lands runnable.
-    assert "/usr/local/node/bin" in _tier_path("core").read_text()
+def test_build_definition_change_fails_closed_to_the_whole_family() -> None:
+    assert affected_tiers(
+        ["actions/publish-dev-base/scripts/publish-image.sh"]
+    ) == PUBLISHED_TIER_NAMES
+    assert affected_tiers(["docs/dev-base-image.md"]) == ()
 
 
-def test_agent_tier_still_copies_the_stable_assets_from_the_root_context() -> None:
-    text = _tier_path("agent").read_text()
-    assert "COPY agent-name.sh /opt/agentic-os/agent-name.sh" in text
-    assert "COPY statusline.sh /opt/agentic-os/statusline.sh" in text
-    assert "COPY statusline.d/ /opt/agentic-os/statusline.d/" in text
-    assert "COPY ward-shell-entrypoint.sh /opt/agentic-os/ward-shell-entrypoint.sh" in text
-    assert "COPY claude-managed-settings.json /etc/claude-code/managed-settings.json" in text
-    assert "COPY substrate-image-repos.txt /tmp/substrate-image-repos.txt" in text
-    assert 'ENTRYPOINT ["/opt/agentic-os/ward-shell-entrypoint.sh"]' in text
-
-
-def test_full_tier_remains_the_default_surface() -> None:
-    text = _tier_path("full").read_text()
-    assert "WORKDIR /workspace" in text
-    assert 'CMD ["bash"]' in text
-
-
-def test_old_manifest_is_gone() -> None:
-    assert not (DEV_BASE_ROOT / "Dockerfile").exists()
-    assert not (DEV_BASE_ROOT / "ci-image-manifest.json").exists()
-
-
-def test_pushed_build_uses_release_tagless_cache_ref(monkeypatch) -> None:
+def test_changed_path_probe_includes_deleted_inputs(monkeypatch) -> None:
     script = _load_script()
     commands: list[list[str]] = []
 
-    monkeypatch.setattr(script, "_run", lambda cmd: commands.append(cmd))
-    monkeypatch.setattr(script, "_probe_cache_write", lambda ref: None)
-    monkeypatch.setattr(script, "_host_targetarch", lambda: "amd64")
-    monkeypatch.setattr(script, "_ward_config_ref_commit", lambda: "abc123")
+    class Probe:
+        stdout = "docker/dev-base/install-common.sh\n"
 
-    script._build_plan(REGISTRY_BASE, "v0.243.0", True, "linux/amd64,linux/arm64")
+    def run(command, **_kwargs):
+        commands.append(command)
+        return Probe()
 
-    cache_refs = [
-        arg
-        for cmd in commands
-        for arg in cmd
-        if arg.startswith("type=registry,ref=")
-    ]
-    assert cache_refs
-    assert all("v0.243.0" not in ref for ref in cache_refs)
-    assert f"type=registry,ref={REGISTRY_BASE}:core-buildcache" in cache_refs
-    assert f"type=registry,ref={REGISTRY_BASE}:buildcache,mode=max,ignore-error=true" in cache_refs
-    assert any(
-        "WARD_CONFIG_REF_COMMIT=abc123" in arg
-        for cmd in commands
-        for arg in cmd
+    monkeypatch.setattr(script.subprocess, "run", run)
+
+    assert script._changed_paths("base", "head") == (
+        "docker/dev-base/install-common.sh",
     )
+    assert "--diff-filter=ACDMR" in commands[0]
 
 
-def test_pushed_build_tags_every_tier_with_the_requested_aliases(monkeypatch) -> None:
+def test_local_language_build_sets_architecture_and_named_contexts(monkeypatch) -> None:
     script = _load_script()
     commands: list[list[str]] = []
-
     monkeypatch.setattr(script, "_run", lambda cmd: commands.append(cmd))
-    monkeypatch.setattr(script, "_probe_cache_write", lambda ref: None)
     monkeypatch.setattr(script, "_host_targetarch", lambda: "amd64")
-    monkeypatch.setattr(script, "_ward_config_ref_commit", lambda: "abc123")
 
     script._build_plan(
         REGISTRY_BASE,
-        "v0.243.0",
-        True,
-        "linux/amd64,linux/arm64",
-        ("release", "latest"),
+        "candidate",
+        False,
+        None,
+        only_tier="lang-go",
     )
 
-    build_cmds = [cmd for cmd in commands if "--push" in cmd]
-    assert len(build_cmds) == len(PUBLISHED_TIER_NAMES)
-    for tier, cmd in zip(PUBLISHED_TIER_NAMES, build_cmds):
-        tags = [cmd[i + 1] for i, arg in enumerate(cmd) if arg == "-t"]
-        assert tags == [
-            f"{REGISTRY_BASE}:{tier_tag(tier, 'v0.243.0')}",
-            f"{REGISTRY_BASE}:{tier_tag(tier, 'release')}",
-            f"{REGISTRY_BASE}:{tier_tag(tier, 'latest')}",
-        ]
-    # The push path also verifies the alias manifest per tier, not just the tag.
-    inspect_cmds = [cmd for cmd in commands if cmd[:4] == ["docker", "buildx", "imagetools", "inspect"]]
-    assert f"{REGISTRY_BASE}:release" in [cmd[-1] for cmd in inspect_cmds]
-    assert f"{REGISTRY_BASE}:latest" in [cmd[-1] for cmd in inspect_cmds]
+    assert len(commands) == 1
+    build = commands[0]
+    assert build[:3] == ["docker", "build", "--build-arg"]
+    assert "TARGETARCH=amd64" in build
+    assert "aos-cli=aos" in build
+    assert "aosguard-spec=.specgen" in build
+    assert "aosguard-python=agentic_os" in build
+    assert build[build.index("--target") + 1] == "dev-base-lang-go"
+    assert Path(build[-1]).as_posix() == "docker/dev-base"
+
+
+def test_buildx_local_validation_loads_one_platform_without_push(monkeypatch) -> None:
+    script = _load_script()
+    commands: list[list[str]] = []
+    monkeypatch.setattr(script, "_run", lambda cmd: commands.append(cmd))
+
+    script._build_plan(
+        REGISTRY_BASE,
+        "candidate",
+        False,
+        "linux/amd64",
+        only_tiers=("lang-go",),
+        load=True,
+    )
+
+    build = commands[0]
+    assert build[:5] == [
+        "docker",
+        "buildx",
+        "build",
+        "--progress=plain",
+        "--load",
+    ]
+    assert "--push" not in build
+    assert "--cache-to" not in build
+    assert build[build.index("--platform") + 1] == "linux/amd64"
+    assert "TARGETARCH=amd64" not in build
+
+
+def test_full_build_consumes_only_language_image_refs(monkeypatch) -> None:
+    script = _load_script()
+    commands: list[list[str]] = []
+    monkeypatch.setattr(script, "_run", lambda cmd: commands.append(cmd))
+
+    script._build_plan(
+        REGISTRY_BASE,
+        "candidate",
+        False,
+        None,
+        only_tier="full",
+    )
+
+    build = commands[0]
+    build_args = [
+        build[index + 1] for index, value in enumerate(build) if value == "--build-arg"
+    ]
+    assert f"BASE_IMAGE={REGISTRY_BASE}:lang-rust-candidate" in build_args
+    assert f"LANG_GO_IMAGE={REGISTRY_BASE}:lang-go-candidate" in build_args
+    assert f"LANG_DOTNET_IMAGE={REGISTRY_BASE}:lang-dotnet-candidate" in build_args
+    assert f"LANG_PYTHON_IMAGE={REGISTRY_BASE}:lang-python-candidate" in build_args
+    assert "aos-cli=aos" not in build
+    assert build[build.index("--target") + 1] == "dev-base-full"
+    assert Path(build[-1]).as_posix() == "docker/dev-base/full"
+
+
+def test_pushed_build_skips_an_existing_checkpoint(monkeypatch) -> None:
+    script = _load_script()
+    commands: list[list[str]] = []
+    monkeypatch.setattr(script, "_has_target_checkpoint", lambda *_args: True)
+    monkeypatch.setattr(script, "_run", lambda cmd: commands.append(cmd))
+
+    script._build_plan(
+        REGISTRY_BASE,
+        "candidate",
+        True,
+        "linux/amd64,linux/arm64",
+        ("release",),
+        "full",
+    )
+
+    assert commands == []
 
 
 def test_promote_plan_retags_a_draft_to_release_aliases(monkeypatch) -> None:
     script = _load_script()
     commands: list[list[str]] = []
 
+    class Probe:
+        returncode = 0
+        stdout = ""
+        stderr = ""
+
+    monkeypatch.setattr(script.subprocess, "run", lambda *args, **kwargs: Probe())
     monkeypatch.setattr(script, "_run", lambda cmd: commands.append(cmd))
 
-    script._promote_plan(REGISTRY_BASE, "draft-abc123", "v0.244.0", ("release", "latest"), "full")
-
-    create_cmds = [cmd for cmd in commands if cmd[:4] == ["docker", "buildx", "imagetools", "create"]]
-    assert create_cmds == [
-        [
-            "docker",
-            "buildx",
-            "imagetools",
-            "create",
-            "-t",
-            f"{REGISTRY_BASE}:v0.244.0",
-            "-t",
-            f"{REGISTRY_BASE}:release",
-            "-t",
-            f"{REGISTRY_BASE}:latest",
-            f"{REGISTRY_BASE}:draft-abc123",
-        ]
-    ]
-    inspect_refs = [
-        cmd[-1]
-        for cmd in commands
-        if cmd[:4] == ["docker", "buildx", "imagetools", "inspect"]
-    ]
-    assert inspect_refs == [
-        f"{REGISTRY_BASE}:v0.244.0",
-        f"{REGISTRY_BASE}:release",
-        f"{REGISTRY_BASE}:latest",
-    ]
-
-
-def test_single_tier_push_builds_only_that_tier_with_graft_args(monkeypatch) -> None:
-    script = _load_script()
-    commands: list[list[str]] = []
-    probed: list[str] = []
-
-    monkeypatch.setattr(script, "_run", lambda cmd: commands.append(cmd))
-    monkeypatch.setattr(script, "_probe_cache_write", lambda ref: probed.append(ref))
-    monkeypatch.setattr(script, "_host_targetarch", lambda: "amd64")
-    monkeypatch.setattr(script, "_ward_config_ref_commit", lambda: "abc123")
-
-    script._build_plan(
-        REGISTRY_BASE, "v0.243.0", True, "linux/amd64,linux/arm64", "release", "full"
+    script._promote_plan(
+        REGISTRY_BASE,
+        "draft-commit",
+        "candidate",
+        ("release", "latest"),
+        "full",
     )
 
-    build_cmds = [cmd for cmd in commands if "--push" in cmd]
-    assert len(build_cmds) == 1
-    cmd = build_cmds[0]
-    build_args = [cmd[i + 1] for i, arg in enumerate(cmd) if arg == "--build-arg"]
-    assert f"BASE_IMAGE={REGISTRY_BASE}:agent-v0.243.0" in build_args
-    assert f"LANG_GO_IMAGE={REGISTRY_BASE}:lang-go-v0.243.0" in build_args
-    assert f"LANG_DOTNET_IMAGE={REGISTRY_BASE}:lang-dotnet-v0.243.0" in build_args
-    assert probed == [f"{REGISTRY_BASE}:buildcache"]
+    create = next(
+        cmd
+        for cmd in commands
+        if cmd[:4] == ["docker", "buildx", "imagetools", "create"]
+    )
+    assert create == [
+        "docker",
+        "buildx",
+        "imagetools",
+        "create",
+        "-t",
+        f"{REGISTRY_BASE}:candidate",
+        "-t",
+        f"{REGISTRY_BASE}:release",
+        "-t",
+        f"{REGISTRY_BASE}:latest",
+        f"{REGISTRY_BASE}:draft-commit",
+    ]
 
 
-def test_single_tier_build_rejects_an_unknown_tier(monkeypatch) -> None:
+def test_manifest_inspect_retries_and_reports_the_digest(monkeypatch, tmp_path) -> None:
     script = _load_script()
-    monkeypatch.setattr(script, "_run", lambda cmd: None)
-    monkeypatch.setattr(script, "_ward_config_ref_commit", lambda: "abc123")
+    sleeps: list[int] = []
 
-    try:
-        script._build_plan(REGISTRY_BASE, "v0.243.0", True, None, None, "nope")
-    except SystemExit as exc:
-        assert "unknown tier" in str(exc)
-    else:
-        raise AssertionError("unknown tier did not raise")
+    class Probe:
+        def __init__(self, returncode: int, stdout: str, stderr: str) -> None:
+            self.returncode = returncode
+            self.stdout = stdout
+            self.stderr = stderr
+
+    probes = iter(
+        [
+            Probe(1, "", "manifest unknown"),
+            Probe(0, "Digest: sha256:abc123", ""),
+        ]
+    )
+    monkeypatch.setattr(script.subprocess, "run", lambda *args, **kwargs: next(probes))
+    monkeypatch.setattr(script.time, "sleep", lambda seconds: sleeps.append(seconds))
+    summary = tmp_path / "summary.md"
+    monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(summary))
+
+    assert script._inspect_manifest(f"{REGISTRY_BASE}:candidate") == "sha256:abc123"
+    assert sleeps == [1]
+    assert "succeeded after attempt 2/3" in summary.read_text(encoding="utf-8")
 
 
-def test_cache_probe_warns_loudly_when_the_cache_write_is_missing(monkeypatch, capsys) -> None:
+def test_manifest_inspect_treats_registry_404_as_immediate_miss(monkeypatch) -> None:
     script = _load_script()
+    calls: list[dict[str, object]] = []
+    sleeps: list[int] = []
 
-    class _Probe:
+    class Probe:
         returncode = 1
-        stderr = "manifest unknown"
+        stdout = ""
+        stderr = "unexpected status from HEAD request: 404 Not Found"
 
-    monkeypatch.setattr(script.subprocess, "run", lambda *a, **k: _Probe())
-    script._probe_cache_write(f"{REGISTRY_BASE}:buildcache")
-    err = capsys.readouterr().err
-    assert "::warning::" in err
-    assert "starts cold" in err
+    def run(*_args, **kwargs):
+        calls.append(kwargs)
+        return Probe()
+
+    monkeypatch.setattr(script.subprocess, "run", run)
+    monkeypatch.setattr(script.time, "sleep", lambda seconds: sleeps.append(seconds))
+
+    assert script._inspect_manifest(f"{REGISTRY_BASE}:candidate") is None
+    assert len(calls) == 1
+    assert calls[0]["timeout"] == script._MANIFEST_INSPECT_TIMEOUT_SECONDS
+    assert sleeps == []
 
 
-def test_local_build_does_not_tag_an_alias(monkeypatch) -> None:
+def test_manifest_inspect_retries_a_timed_out_client(monkeypatch) -> None:
     script = _load_script()
-    commands: list[list[str]] = []
+    timeouts: list[int] = []
+    sleeps: list[int] = []
 
-    monkeypatch.setattr(script, "_run", lambda cmd: commands.append(cmd))
-    monkeypatch.setattr(script, "_host_targetarch", lambda: "amd64")
-    monkeypatch.setattr(script, "_ward_config_ref_commit", lambda: "abc123")
+    def run(cmd, **kwargs):
+        timeouts.append(kwargs["timeout"])
+        raise script.subprocess.TimeoutExpired(cmd, kwargs["timeout"])
 
-    script._build_plan("agentic-os", "dev-base-local", False, None)
+    monkeypatch.setattr(script.subprocess, "run", run)
+    monkeypatch.setattr(script.time, "sleep", lambda seconds: sleeps.append(seconds))
 
-    for cmd in commands:
-        tags = [cmd[i + 1] for i, arg in enumerate(cmd) if arg == "-t"]
-        assert tags == [tag for tag in tags if tag.endswith("dev-base-local")]
+    assert (
+        script._inspect_manifest(
+            f"{REGISTRY_BASE}:candidate", attempts=2, initial_delay=1
+        )
+        is None
+    )
+    assert timeouts == [script._MANIFEST_INSPECT_TIMEOUT_SECONDS] * 2
+    assert sleeps == [1]
+
+
+def test_cmd_check_reports_checkpoint_state(monkeypatch) -> None:
+    script = _load_script()
+    monkeypatch.setattr(script, "_has_target_checkpoint", lambda *_args: True)
+    monkeypatch.setattr(script, "_target_matches_source", lambda *_args: True)
+
+    build_args = argparse.Namespace(
+        registry=REGISTRY_BASE,
+        tag="candidate",
+        alias=["release"],
+        mode="build",
+        tier="full",
+        source_tag="",
+    )
+    promote_args = argparse.Namespace(
+        registry=REGISTRY_BASE,
+        tag="candidate",
+        alias=["release", "latest"],
+        mode="promote",
+        tier="full",
+        source_tag="draft-commit",
+    )
+
+    assert script._cmd_check(build_args) == 0
+    assert script._cmd_check(promote_args) == 0

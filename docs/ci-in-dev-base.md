@@ -1,13 +1,12 @@
-# CI parity: run app CI inside the pinned dev-base
+# CI parity: run app CI inside the release dev-base
 
-Every app's CI runs **inside the pinned [dev-base image](dev-base-image.md),
+Every app's CI runs **inside the moving `:release` [dev-base image](dev-base-image.md),
 through the same `ward exec` verbs the agents run**, so a green CI means "a
 headless agent can actually land this," not "it passed in some other
 environment" (agentic-os#328).
 
-The current contract still pins one `dev-base-full` image per app. The tiered
-split keeps that default but introduces narrower classes behind the same
-release tag. See [Tiered dev-base image split](dev-base-image-tiering.md).
+The current contract follows the one promoted full dev-base image. The same
+image contains every supported language toolchain.
 
 ## The motivating failure
 
@@ -23,7 +22,7 @@ environment regressions fail **loudly, on a PR**, before any container dispatche
 Each app CI job runs in the dev-base container and invokes the app's own gate
 verbs instead of hand-rolled `uv run` steps:
 
-- `container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:<pinned-tag>`
+- `container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release`
 - `ward exec test` / `ward exec lint` / `ward exec smoke` - the same verbs a
   dispatched agent runs. Each app defines these in its own `.ward/ward.yaml`.
 
@@ -32,36 +31,35 @@ starting point for an app's `.forgejo/workflows/*.yml`.
 
 This repo's live companion is [`.forgejo/workflows/ci.yml`](../.forgejo/workflows/ci.yml).
 It keeps the workflow name `ci` and the job name `gate`, so Forgejo branch
-protection can require the `ci / gate` status context on `pull-requests-and-merge`
-repos. The live gate runs `pytest` plus `pre-commit run --all-files` on a clean
-runner, while the sibling `ward-doctor` job loads the bundle with ward
-so broken config fails before merge. PRs also run the
-main-only validations - a tag-compute dry run in `gate`, plus a
-`build-dev-base` job exposing a second required context, `ci / build-dev-base`
-([walkthrough](pr-dev-base-build-validation.md)).
-## Pinned, not `:latest`
+protection can require the `ci / gate` status context on `pull-request-and-merge`
+repos. The live gate installs the validated ward pin first, then runs `pytest`
+plus `pre-commit run --all-files`, matching the release gate so a PR cannot pass
+what main would refuse.
 
-CI pins an explicit `vX.Y.Z` tag, never the moving `:release` alias, so a run is
-reproducible and adopting a newer dev-base is a **deliberate** bump - which
-itself re-validates every app on the next rollout - not silent drift.
+This repo also exposes `ci / build-dev-base`. It derives affected tiers from
+the canonical image specification and builds their one-architecture source
+closure without a registry credential or push. See
+[pull-request dev-base validation](pr-dev-base-build-validation.md).
 
-## The pinned-tag source of truth
+## Promoted moving alias
+
+CI uses the moving `:release` alias, never the compatibility-only `:latest`
+alias. Each run consumes the newest successfully promoted full image, matching
+the default used by the AOS launcher.
+
+## The release source of truth
 
 <!-- freshness: as-of=2026-07-05 decay-class=pointer half-life=slow -->
-The pin now derives from the tier folder layout through
-[`scripts/dev-base-build.py`](../scripts/dev-base-build.py). That helper turns
-`docker/dev-base/<tier>/Dockerfile` plus the release tag into the literal
-`agentic-os:<tier>-<tag>` ref (`agentic-os:<tag>` for `full`, the default
-surface), so there is no checked-in JSON map of identical refs to drift.
-[dev-base-image.md](dev-base-image.md) covers how those tags publish.
+The release pipeline promotes the successfully published full image to
+`agentic-os:release`, so consumers share one registry-owned source of truth.
+[dev-base-image.md](dev-base-image.md) covers how that alias publishes.
 
 ## Authoring vs rollout
 
-aos **authors** the convention and the pinned tag. It does not reach into other
-repos. An ansible/template rollout in `infrastructure` **reads** the tag file
-and templates it into each app's workflow as a literal `container:` tag, per the
-authoring-vs-rollout law. An app CI never fetches the tag downward at run time -
-it carries a rendered literal, bumped only when the rollout re-runs.
+aos **authors** the convention and publishes the alias. It does not reach into
+other repos. An infrastructure rollout templates the literal `:release` ref
+into each app's workflow, per the authoring-vs-rollout law. The registry resolves
+that alias when the app CI starts.
 
 ## Rollout unit
 
@@ -71,7 +69,8 @@ dev-base image fix (agentic-os#327): with it fixed, parity holds green.
 
 ## See also
 
-- [dev-base container image](dev-base-image.md) - the image CI pins.
+- [dev-base container image](dev-base-image.md) - the image CI follows.
 - [dev-base auto-bump](dev-base-auto-bump.md) - how pinned tool `ARG`s refresh.
-- [Tiered dev-base image split](dev-base-image-tiering.md) - the tier fan-out.
+- [pull-request dev-base validation](pr-dev-base-build-validation.md) - the build-only image gate.
+- [dev-base image](dev-base-image.md) - the full image and release contract.
 - [FEATURES.md](FEATURES.md) - the feature inventory this lands in.

@@ -1,6 +1,7 @@
 ---
 name: kai-tech-prefs
 description: Kai's technical preferences - Go CLI defaults (urfave/cli), Charm TUI stack, dead-repo check, doc conventions, default license. Triggers - cli, tui, library, dependency, recommend tool.
+low-context: required
 ---
 
 # Technical preferences
@@ -39,7 +40,7 @@ No "Repo layout" / "Project structure" sections in README. Filesystem is self-do
 
 ## Licensing
 
-Three tiers by repo intent - MIT for shareable, AGPL-3.0 for deployment-of-one, proprietary All-Rights-Reserved for private personal repos. Default to **MIT** when intent is unclear. Full policy: [`coding-licenses`](../coding-licenses/SKILL.md).
+Three tiers by repo intent - MIT for shareable, AGPL-3.0 for deployment-of-one, proprietary All-Rights-Reserved for private personal repos. Default to **MIT** when intent is unclear.
 
 ## More preferences
 

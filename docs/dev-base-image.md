@@ -1,77 +1,75 @@
-# dev-base container image
+# dev-base image family
 
-aos owns the agent dev env. ward consumes it by tag, so config cannot
-drift.
-
-This page describes the `dev-base-full` contract. See
-[Tiered dev-base image split](dev-base-image-tiering.md).
+AOS publishes five language-specialist images and one full compatibility image.
+Every specialist starts directly from `ubuntu:24.04`. `agentic-os:${TAG}` is
+the full surface, and `agentic-os:release` remains the moving default used by
+the AOS launcher and CI.
 
 ## What ships
 
-[`docker/dev-base/core/Dockerfile`](../docker/dev-base/core/Dockerfile) layers
-the root runtime tier on `ubuntu:24.04`. The sibling tier Dockerfiles live in
-[`docker/dev-base/`](../docker/dev-base/) as one folder per tier.
+[`docker/dev-base/Dockerfile`](../docker/dev-base/Dockerfile) owns the five
+independent language targets. Each target runs the same
+[`install-common.sh`](../docker/dev-base/install-common.sh) source and adds one
+toolchain:
 
-- **core toolchain** - `uv`, pre-commit, Python, shellcheck, git, git-lfs, build-essential, Rust, and ward.
-- **language/runtime tiers** - Node, Go, and .NET 10 + ICU.
-- **ops / agent CLIs** - aws cli, Homebrew, claude, mcporter, opencode, codex, goose, gh, helm, kubectl, yq, Docker CLI, and the Tailscale client plus `tailscaled`.
-- **gate tools** - golangci-lint, trufflehog, and kdlfmt.
-- **platform seed** - the substrate mirrors, the baked agent self-name / status-line assets, and the container shell entrypoint that seeds `AOS_REPO_ROOT` plus `WARD_CONFIG_REF` before the read-only director shell starts.
+* `lang-node`
+* `lang-go`
+* `lang-dotnet`
+* `lang-rust`
+* `lang-python`
 
-Tools under `/usr/local`, `/home/linuxbrew/.linuxbrew`, or `/opt` run as any uid. ward owns `run-as-uid`, mounts, and `~/.aws`. Root bootstrap seeds `/home/ubuntu/.ward/audit` as uid 1000 and avoids root-owned audit state.
+Every image carries Node because the common agent harnesses require it. The
+specialist name identifies the additional development toolchain.
 
-## Naming and tags
+The common surface also carries `aos`, Ward for fixed workflow orchestration,
+`aosguard` for operator commands, agent-compose with its embedded `person:kai`
+source, and the repository's packaged aosguard Python bridges. Each image build renders
+aosguard's native agent skill, renders an agent-compose roster, and checks the
+generated person snapshot plus personality definitions. Linuxbrew is not part
+of any image.
 
-Published as one package,
-`forgejo.coilysiren.me/coilyco-flight-deck/agentic-os`, with variants as tags.
-`full` is the default tag. The folder name prefixes every other tier, so the
-published refs are `agentic-os:${TAG}`, `agentic-os:core-${TAG}`,
-`agentic-os:lang-node-${TAG}`, and so on. `promote.yml` first publishes
-commit-scoped draft tags, and `release.yml` retags that same image family to
-`vX.Y.Z`, `:release`, and `:latest`. The `buildcache` tags hold the cache.
+[`docker/dev-base/full/Dockerfile`](../docker/dev-base/full/Dockerfile) starts
+from the same-release Rust image and grafts Go, .NET, and Python tooling from
+their same-release images. Node is already present in the common surface. The
+full-only gate tools are `golangci-lint`, `trufflehog`, and `kdlfmt`.
 
-## How it publishes
+## Build and publication
 
-The publish jobs in [`.forgejo/workflows/promote.yml`](../.forgejo/workflows/promote.yml)
-run after the repo gate and before `release` moves. They build one draft per
-tier with [`scripts/dev-base-build.py`](../scripts/dev-base-build.py);
-`needs:` carries the tier DAG (see the [tiering doc](dev-base-image-tiering.md)).
-The same workflow's release jobs retag the draft family to `vX.Y.Z`,
-`:release`, and `:latest`, verify manifests, upload the release asset, then
-cut the tag before the branch fast-forward. The manual retry workflow in
-[`.forgejo/workflows/release.yml`](../.forgejo/workflows/release.yml) keeps the
-same logic and never runs on push. The core image stamps `WARD_CONFIG_REF`
-from the current commit, so ward launches against the bundled `.ward/`
-checkout. The core build runs `ward doctor` first, rejecting a broken bundle
-before the draft image publishes.
+`ward exec dev-base-build` builds all five local specialists, then
+`agentic-os:dev-base-local`.
+[`scripts/dev-base-build.py`](../scripts/dev-base-build.py) supplies the AOS
+CLI, aosguard spec, and aosguard Python package as named Docker contexts.
 
-The shared [`actions/dev-base-build`](../actions/dev-base-build/action.yml)
-composite handles the build/verify half. PRs run it build-only, so image
-breakage fails before merge. See [PR dev-base build validation](pr-dev-base-build-validation.md).
+[`dev-base-publish.yml`](../.forgejo/workflows/dev-base-publish.yml) builds the
+five multi-architecture specialists in a four-wide matrix, then builds the full
+fan-in image. [`release.yml`](../.forgejo/workflows/release.yml) promotes every
+manifest to its versioned and moving tags. Language tags use
+`lang-<language>-<tag>`. The full image keeps the plain `<tag>`, `release`, and
+`latest` names. Both paths check each target manifest before work, so a retry
+skips an image that already landed. See [publish resume](dev-base-publish-resume.md).
+
+Pull requests run the affected source closure through
+[`actions/dev-base-build`](../actions/dev-base-build/action.yml). The PR action
+and publication share the Python build plan, bootstrap scripts, Dockerfiles,
+build arguments, and full verification. PRs load one local architecture and
+never receive a registry credential. See
+[PR dev-base build validation](pr-dev-base-build-validation.md).
 
 ## Pinning a tool
 
-Versions pin as `ARG`s: hand-edit and push to main to pin or roll back, else a
-scheduled **auto-bump** refreshes stale pins ([auto-bump doc](dev-base-auto-bump.md)).
-`GOLANGCI_LINT_VERSION` and `KDLFMT_VERSION` opt out, bumped by hand.
+Every managed version has one default `ARG` across the two Dockerfiles.
+`ward exec dep-bump -- check` compares those pins with upstream releases.
+`ward exec dep-bump -- apply --arg NAME --version VERSION` rewrites one owning
+declaration.
 
-## Pulling it
-
-```bash
-docker pull forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release
-```
-
-Needs a `docker login`. `ward container up/exec` (ward#98) is the entry point.
-
-## Not here
-
-- Mount / compose logic and `ward container` verbs - ward#98. The mount-eligibility manifest - aos#222.
-- `coily` (retired, folded into `ward ops`) and running services - not shipped.
-- `docker buildx` and `wasm-pack` - job-local publish or toolchain steps.
-- Tailnet daemon startup, auth, and socket wiring - ward owns bring-up.
+Source ownership follows the tool boundary. The image owns this deployment's
+Git identity and its entrypoint maps that identity onto Ward's provider-neutral
+`WARD_GIT_*` environment contract before container bootstrap. The image does
+not redefine Ward policy, aosguard policy, or agent-compose source data.
 
 ## See also
 
-- [release.md](release.md) - the pipeline this rides on, plus [FEATURES.md](FEATURES.md).
-- [Tiered dev-base image split](dev-base-image-tiering.md) - the implemented fan-out
-  and fan-in model that preserves `dev-base-full` as the default.
+* [CI parity](ci-in-dev-base.md)
+* [Build cache](dev-base-build-cache.md)
+* [PR build validation](pr-dev-base-build-validation.md)
+* [Release workflow](release.md)

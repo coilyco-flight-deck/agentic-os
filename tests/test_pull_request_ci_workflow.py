@@ -10,34 +10,38 @@ def test_pull_request_ci_workflow_exposes_branch_protection_context() -> None:
     workflow = (ROOT / ".forgejo" / "workflows" / "ci.yml").read_text()
     assert "name: ci" in workflow
     assert "pull_request:" in workflow
-    assert "git clone --depth 1 --branch main https://forgejo.coilysiren.me/coilyco-flight-deck/ward.git" in workflow
-    assert "WARD_BIN" in workflow
+    assert 'scripts/install-workflow-ward.sh "${WARD_WORKFLOW_VERSION}"' in workflow
     assert "build-dev-base:" in workflow
+    assert "runs-on: docker-build" in workflow
     assert "uses: ./actions/dev-base-build" in workflow
-    assert "uses: ./actions/tag-bump" in workflow
-    assert "pre-commit run --all-files" in workflow
+    assert "base-sha: ${{ github.event.pull_request.base.sha }}" in workflow
 
 
-def test_pull_request_ci_builds_dev_base_without_publishing() -> None:
+def test_pull_request_image_validation_has_no_publish_credential() -> None:
     workflow = (ROOT / ".forgejo" / "workflows" / "ci.yml").read_text()
-    assert "build-dev-base:" in workflow
-    assert "uses: ./actions/dev-base-build" in workflow
-    # PR-only: main gets the same build (plus the publish) through release.yml.
-    assert "github.event_name == 'pull_request'" in workflow
-    # Build-only contract: the PR job never publishes and never holds creds.
-    assert 'push: "true"' not in workflow
-    assert "registry_token" not in workflow
-    assert "secrets.REGISTRY_TOKEN" not in workflow
+    image_job = workflow.split("  build-dev-base:", 1)[1]
 
-
-def test_pull_request_ci_dry_runs_the_release_tag_computation() -> None:
-    workflow = (ROOT / ".forgejo" / "workflows" / "ci.yml").read_text()
-    assert "uses: ./actions/tag-bump" in workflow
-    assert "create_tag: false" in workflow
+    assert "github.event_name == 'pull_request'" in image_job
+    assert "secrets." not in image_job
+    assert "REGISTRY_TOKEN" not in image_job
+    assert "--push" not in image_job
 
 
 def test_pull_request_ci_docs_name_the_required_context() -> None:
     docs = (ROOT / "docs" / "ci-in-dev-base.md").read_text()
     assert "ci / gate" in docs
     assert "ci / build-dev-base" in docs
-    assert "pull-requests-and-merge" in docs
+    assert "pull-request-and-merge" in docs
+
+
+def test_promote_workflow_uses_the_same_repo_gate_as_ci() -> None:
+    workflow = (ROOT / ".forgejo" / "workflows" / "promote.yml").read_text()
+    gate = (ROOT / "scripts" / "ci" / "repo-test-gate.sh").read_text()
+    assert "name: promote" in workflow
+    assert "scripts/ci/repo-test-gate.sh" in workflow
+    assert "uv run pytest" in gate
+    assert "pre-commit run --all-files" in gate
+    assert "Install validated ward for repo gate" in workflow
+    assert "Load the .ward bundle with the updated ward" not in workflow
+    assert "ward exec test" not in workflow
+    assert "Install ward from source with workflow bundle support" not in workflow

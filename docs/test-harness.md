@@ -15,10 +15,6 @@ The probing *mechanism* differs by harness, so the doc does too:
 
 What stays constant is the *questions* (the probe battery) and the *findings shape* (below), so harnesses can be compared on equal terms.
 
-## Daily compatibility check
-
-`ward exec agent-compat` runs the daily smoke check across Claude, Codex, Goose, Aider, OpenCode, and Qwen. It is a Python `unittest` runner, so the output uses native `ok` / `FAIL` / `ERROR` / skip reporting and the process exits non-zero on failure. See [agent-compat](agent-compat.md) for coverage and usage.
-
 ## Authoring a new harness doc
 
 Name it `test-harness-<agent>.md`, link it from this parent's index, and follow these sections:
@@ -26,12 +22,15 @@ Name it `test-harness-<agent>.md`, link it from this parent's index, and follow 
 - **Mechanism** - exactly how to invoke this agent for one-shot probing, with the gotchas (auth, flags, host).
 - **Usage** - the concrete commands, single and batch.
 - **First prod-test findings** - run the probe battery once and record what it surfaced, organized by: tool use (what fires, what returns real output), iteration discipline (does it thrash), self-knowledge (model/host self-report accuracy), instruction-following (brevity, format), context window (claimed vs real).
-- **Related** - the agent profile skill, the bound model tier, this parent.
+- **Related** - the harness-selection authority, runtime configuration, and
+  this parent.
 
 Keep it public-safe: no tower FQDN or opaque ids (use placeholders, resolve at runtime). Findings are point-in-time - date the model/version they were taken against.
 
 ## Index
 
+- [test-harness-composed-roles](test-harness-composed-roles.md) - authenticated
+  Codex plus the thirteen-role local Goose question matrix. **Landed.**
 - [test-harness-goose](test-harness-goose.md) - Goose driving `qwen3-coder:30b` on the tower. **Landed.**
 - `test-harness-codex` - Codex on `gpt-5.5` (ChatGPT auth). Authored by Codex.
 - `test-harness-opencode`, `test-harness-aider`, `test-harness-claude` - planned.
@@ -39,4 +38,3 @@ Keep it public-safe: no tower FQDN or opaque ids (use placeholders, resolve at r
 ## Related
 
 - [harness-selection.md](harness-selection.md) - picking a harness and model tier.
-- [agents-goose](../.agents/skills/agents-goose/SKILL.md), [agents-claude](../.agents/skills/agents-claude/SKILL.md) and siblings - the harness profiles.

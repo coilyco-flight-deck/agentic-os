@@ -1,44 +1,50 @@
-name: "dev-base image build/verify"
+name: "Validate affected dev-base images"
 description: |
-  Build the tiered dev-base image family through scripts/dev-base-build.py,
-  exercising the in-image `CLIGUARD_NO_SANDBOX=1 ward doctor` gate baked into
-  the core tier, and publish it multi-arch only when push is true. This is
-  the one shared build/verify definition (agentic-os#454, the agentic-os#452
-  prevention): ci.yml runs it on every pull request with push=false - build
-  and verify only, no tag, no registry auth - and release.yml's
-  publish-dev-base runs the same steps with push=true, so the PR validation
-  and the main publish cannot drift apart. Runs on the bare docker runner,
-  not the dev-base container: it bootstraps uv plus the docker CLI/buildx
-  plugin and resolves the daemon at the docker network gateway.
+  Derive the affected image tiers from the canonical AOS tier specification,
+  build their source closure for one local architecture, and run the same
+  in-image and full-surface verification used by publication. The action has
+  no registry credential input and never pushes an image.
 
 inputs:
-  tag:
-    description: "Tag to stamp onto each tier image. A throwaway local tag for build-only runs, the computed release tag for publishes."
-    required: true
-  push:
-    description: "Publish each tier multi-arch with registry cache when true. Default false builds locally for validation only."
-    required: false
-    default: "false"
-  platforms:
-    description: "Platforms for buildx publishes. Build-only runs ignore this and build the host arch."
-    required: false
-    default: "linux/amd64,linux/arm64"
-  registry:
-    description: "Registry/image family base the tier refs derive from."
-    required: false
-    default: "forgejo.coilysiren.me/coilyco-flight-deck/agentic-os"
-  registry_token:
-    description: "Forgejo PAT with write:package. Required when push is true, unused otherwise."
+  base-sha:
+    description: "Base revision used to derive pull-request changes."
     required: false
     default: ""
-  uv_version:
-    description: "uv version bootstrapped onto the bare runner."
+  head-sha:
+    description: "Head revision used to derive pull-request changes."
     required: false
-    default: "0.11.26"
-  buildx_version:
-    description: "docker buildx plugin version bootstrapped onto the bare runner."
+    default: "HEAD"
+  tag:
+    description: "Throwaway local tag for this validation run."
+    required: true
+  platform:
+    description: "Single local platform to build and verify."
+    required: false
+    default: "linux/amd64"
+  cache-max:
+    description: "Maximum persistent Buildx cache retained after validation."
+    required: false
+    default: "20gb"
+  build-timeout:
+    description: "Inner timeout around the affected image build."
+    required: false
+    default: "110m"
+  uv-version:
+    description: "uv version installed on the bare runner."
+    required: false
+    default: "0.12.0"
+  buildx-version:
+    description: "docker buildx plugin version installed on the bare runner."
     required: false
     default: "v0.34.1"
+
+outputs:
+  affected-tiers:
+    description: "Space-separated tiers whose inputs changed."
+    value: ${{ steps.plan.outputs.affected_tiers }}
+  build-tiers:
+    description: "Space-separated source closure built by this run."
+    value: ${{ steps.plan.outputs.build_tiers }}
 
 runs:
   using: "composite"
@@ -46,166 +52,61 @@ runs:
     - name: Install uv
       shell: bash
       env:
-        UV_VERSION: ${{ inputs.uv_version }}
-      run: |
-        set -euo pipefail
-        # The build runs on the bare docker runner, so uv stays job-local here
-        # even though the image family itself also ships it.
-        for attempt in 1 2 3; do
-          if curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 \
-            --connect-timeout 20 "https://astral.sh/uv/${UV_VERSION}/install.sh" \
-            -o /tmp/uv-install.sh; then
-            break
-          fi
-          if [ "$attempt" -eq 3 ]; then
-            exit 1
-          fi
-          echo "uv installer download attempt ${attempt} failed; retrying in 5s" >&2
-          sleep 5
-        done
-        sh /tmp/uv-install.sh
-        echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-        export PATH="$HOME/.local/bin:$PATH"
-        uv --version
+        UV_VERSION: ${{ inputs.uv-version }}
+      run: bash "${GITHUB_ACTION_PATH}/../publish-dev-base/scripts/install-uv.sh"
+
+    - id: plan
+      name: Derive affected tiers from the canonical specification
+      shell: bash
+      env:
+        BASE_SHA: ${{ inputs.base-sha }}
+        HEAD_SHA: ${{ inputs.head-sha }}
+        TAG: ${{ inputs.tag }}
+      run: bash "${GITHUB_ACTION_PATH}/scripts/plan.sh"
 
     - name: Install docker CLI + buildx plugin
+      if: ${{ steps.plan.outputs.has_work == 'true' }}
       shell: bash
       env:
-        BUILDX_VERSION: ${{ inputs.buildx_version }}
-      run: |
-        set -euo pipefail
-        # Keep the buildx bootstrap here. dev-base does not yet carry a safe
-        # Docker daemon/buildx stack for the build jobs.
-        docker_cli_ver=$(
-          for attempt in 1 2 3; do
-            if curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 \
-              --connect-timeout 20 https://download.docker.com/linux/static/stable/x86_64/; then
-              break
-            fi
-            if [ "$attempt" -eq 3 ]; then
-              exit 1
-            fi
-            echo "docker version listing download attempt ${attempt} failed; retrying in 5s" >&2
-            sleep 5
-          done \
-            | grep -oE 'docker-[0-9]+\.[0-9]+\.[0-9]+\.tgz' | sort -V | tail -1 \
-            | sed -E 's/^docker-(.*)\.tgz$/\1/'
-        )
-        for attempt in 1 2 3; do
-          if curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 \
-            --connect-timeout 20 "https://download.docker.com/linux/static/stable/x86_64/docker-${docker_cli_ver}.tgz" \
-            | tar -xz -C /tmp; then
-            break
-          fi
-          if [ "$attempt" -eq 3 ]; then
-            exit 1
-          fi
-          echo "docker CLI download attempt ${attempt} failed; retrying in 5s" >&2
-          sleep 5
-        done
-        install /tmp/docker/docker /usr/local/bin/docker
-        mkdir -p ~/.docker/cli-plugins
-        for attempt in 1 2 3; do
-          if curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 \
-            --connect-timeout 20 "https://github.com/docker/buildx/releases/download/${BUILDX_VERSION}/buildx-${BUILDX_VERSION}.linux-amd64" \
-            -o ~/.docker/cli-plugins/docker-buildx; then
-            break
-          fi
-          if [ "$attempt" -eq 3 ]; then
-            exit 1
-          fi
-          echo "buildx plugin download attempt ${attempt} failed; retrying in 5s" >&2
-          sleep 5
-        done
-        chmod +x ~/.docker/cli-plugins/docker-buildx
-        docker buildx version
-        docker --version
+        BUILDX_VERSION: ${{ inputs.buildx-version }}
+      run: bash "${GITHUB_ACTION_PATH}/../publish-dev-base/scripts/install-docker.sh"
 
     - name: Resolve docker host
+      if: ${{ steps.plan.outputs.has_work == 'true' }}
       shell: bash
-      run: |
-        set -euo pipefail
-        gw=$(node -e "const fs=require('fs');const l=(fs.readFileSync('/proc/net/route','utf8').split('\n').find(x=>x.split('\t')[1]==='00000000'))||'';const h=l.split(/\s+/)[2]||'';if(h){console.log(h.match(/../g).reverse().map(x=>parseInt(x,16)).join('.'))}" || true)
-        for h in "tcp://${gw}:2375" "${DOCKER_HOST:-}" tcp://localhost:2375 unix:///var/run/docker.sock; do
-          [ -z "$h" ] && continue
-          [ "$h" = "tcp://:2375" ] && continue
-          if docker -H "$h" info >/dev/null 2>&1; then
-            echo "docker daemon reachable at $h"
-            echo "DOCKER_HOST=$h" >> "$GITHUB_ENV"
-            echo "selected DOCKER_HOST=$h"
-            docker -H "$h" version
-            exit 0
-          fi
-          echo "no docker daemon at $h"
-        done
-        echo "no reachable docker daemon" >&2
-        exit 1
+      run: bash "${GITHUB_ACTION_PATH}/../publish-dev-base/scripts/resolve-docker-host.sh"
 
-    - name: Registry login + buildx builder (publish only)
+    - name: Reuse the single-architecture validation builder
+      if: ${{ steps.plan.outputs.has_work == 'true' }}
       shell: bash
       env:
-        PUSH: ${{ inputs.push }}
-        REGISTRY_TOKEN: ${{ inputs.registry_token }}
-      run: |
-        set -euo pipefail
-        # Build-only runs never authenticate: a pull request must not hold or
-        # need registry credentials (agentic-os#454).
-        if [ "${PUSH}" != "true" ]; then
-          echo "build-only run; skipping registry login and buildx builder"
-          exit 0
-        fi
-        if [ -z "${REGISTRY_TOKEN:-}" ]; then
-          echo "::error::REGISTRY_TOKEN not set; mint a forgejo PAT with write:package and add it as an Actions secret. See docs/dev-base-image.md." >&2
-          exit 1
-        fi
-        echo "${REGISTRY_TOKEN}" | docker login forgejo.coilysiren.me -u coilyco-ops --password-stdin
-        echo "buildx before bootstrap"
-        docker buildx ls
-        docker run --privileged --rm tonistiigi/binfmt --install all
-        docker buildx create --use --name aosbuilder \
-          --driver docker-container --driver-opt network=host
-        docker buildx inspect --bootstrap
-        echo "buildx after bootstrap"
-        docker buildx ls
+        BUILDER_NAME: aos-pr-builder
+        INSTALL_BINFMT: "false"
+      run: bash "${GITHUB_ACTION_PATH}/../publish-dev-base/scripts/setup-builder.sh"
 
-    - name: Build the tier family
+    - name: Build affected tiers without publishing
+      if: ${{ steps.plan.outputs.has_work == 'true' }}
       shell: bash
       env:
-        PUSH: ${{ inputs.push }}
+        BUILD_TIERS: ${{ steps.plan.outputs.build_tiers }}
+        BUILD_TIMEOUT: ${{ inputs.build-timeout }}
+        PLATFORM: ${{ inputs.platform }}
         TAG: ${{ inputs.tag }}
-        REGISTRY: ${{ inputs.registry }}
-        PLATFORMS: ${{ inputs.platforms }}
-      run: |
-        set -euo pipefail
-        # Build-only runs take the script's local `docker build` path: host
-        # arch only, no cache export, images stay on the daemon. The push
-        # path is the exact multi-arch buildx publish release.yml always ran.
-        args=( --registry "${REGISTRY}" --tag "${TAG}" build )
-        if [ "${PUSH}" = "true" ]; then
-          args+=( --push --platforms "${PLATFORMS}" )
-        fi
-        timeout --preserve-status --kill-after=5m 120m \
-          uv run python scripts/dev-base-build.py "${args[@]}"
+      run: bash "${GITHUB_ACTION_PATH}/scripts/build.sh"
 
-    - name: Verify pushed image manifests are pullable (publish only)
+    - name: Verify the local full development surface
+      if: ${{ steps.plan.outputs.has_work == 'true' && contains(steps.plan.outputs.build_tiers, 'full') }}
       shell: bash
       env:
-        PUSH: ${{ inputs.push }}
+        IMAGE_BASE: agentic-os
         TAG: ${{ inputs.tag }}
-        REGISTRY: ${{ inputs.registry }}
-      run: |
-        set -euo pipefail
-        if [ "${PUSH}" != "true" ]; then
-          echo "build-only run; nothing pushed to verify"
-          exit 0
-        fi
-        # Derive the tier refs from the same plan the build used instead of a
-        # hand-maintained suffix list that can drift from the folder layout.
-        plan=$(uv run python scripts/dev-base-build.py --registry "${REGISTRY}" --tag "${TAG}" plan)
-        refs=$(printf '%s' "${plan}" \
-          | uv run python -c 'import json,sys; print("\n".join(e["image"] for e in json.load(sys.stdin)["tiers"]))')
-        for ref in ${refs}; do
-          echo "verifying ${ref}"
-          timeout --preserve-status --kill-after=15s 2m \
-            docker buildx imagetools inspect "${ref}" >/dev/null
-        done
+        PLATFORMS: ${{ inputs.platform }}
+      run: bash "${GITHUB_ACTION_PATH}/../publish-dev-base/scripts/verify-full.sh"
+
+    - name: Bound the validation cache and remove throwaway tags
+      if: ${{ always() && steps.plan.outputs.has_work == 'true' }}
+      shell: bash
+      env:
+        CACHE_MAX: ${{ inputs.cache-max }}
+        TAG: ${{ inputs.tag }}
+      run: bash "${GITHUB_ACTION_PATH}/scripts/cleanup.sh"

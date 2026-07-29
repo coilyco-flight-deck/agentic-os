@@ -1,6 +1,7 @@
 ---
 name: tooling-gpg-ssm
 description: gpg-ssm is a GPG wrapper that pulls signing material from AWS SSM at sign time instead of caching on disk. Use when wiring up a fresh machine for signed commits, bootstrapping the shared signing key, rotating a key, or debugging signing failures. Triggers - gpg-ssm, gpg signing, signed commits.
+low-context: required
 ---
 
 # gpg-ssm

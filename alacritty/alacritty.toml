@@ -1,0 +1,47 @@
+[general]
+live_config_reload = true
+
+[window]
+decorations = "Full"
+decorations_theme_variant = "Dark"
+dynamic_padding = true
+opacity = 1.0
+padding = { x = 8, y = 8 }
+
+[font]
+size = 14.5
+
+[colors.primary]
+background = "#0d0a1c"
+foreground = "#fafbff"
+
+[colors.cursor]
+cursor = "#ff5ec4"
+text = "#0d0a1c"
+
+[colors.selection]
+background = "#ff5ec4"
+text = "#0d0a1c"
+
+[colors.normal]
+black = "#0d0a1c"
+red = "#ff5a7a"
+green = "#5fe69f"
+yellow = "#ffd866"
+blue = "#7aa8d8"
+magenta = "#ff5ec4"
+cyan = "#1fd6e8"
+white = "#fafbff"
+
+[colors.bright]
+black = "#6a5f9a"
+red = "#ff8aa2"
+green = "#8af0bd"
+yellow = "#ffe399"
+blue = "#a8b8e0"
+magenta = "#ff95da"
+cyan = "#6ae4f0"
+white = "#ffffff"
+
+[terminal]
+osc52 = "OnlyCopy"

@@ -1,4 +1,5 @@
-"""Shared dev-base tier metadata and release/build planning helpers."""
+"""Shared dev-base language-image metadata and release planning."""
+
 from __future__ import annotations
 
 from collections.abc import Iterable
@@ -18,71 +19,149 @@ class TierSpec:
     stage: str
     dockerfile: Path
     base_tier: str | None
-    # Sibling tiers grafted in via COPY --from of their self-contained install
-    # dirs - a composed tier's extra toolchains (docs/dev-base-image-tiering.md).
     graft_tiers: tuple[str, ...] = ()
-    published: bool = True
+    shared_context: bool = False
 
 
-# TIER_SPECS stays in topological order: every base_tier and graft_tier names
-# an earlier entry, so a sequential local build always has its inputs.
 TIER_SPECS: tuple[TierSpec, ...] = (
     TierSpec(
-        tier="core",
-        stage="dev-base-core",
-        dockerfile=DEV_BASE_ROOT / "core" / "Dockerfile",
-        base_tier=None,
+        "lang-node",
+        "dev-base-lang-node",
+        DEV_BASE_ROOT / "Dockerfile",
+        None,
+        shared_context=True,
     ),
     TierSpec(
-        tier="lang-node",
-        stage="dev-base-lang-node",
-        dockerfile=DEV_BASE_ROOT / "lang-node" / "Dockerfile",
-        base_tier="core",
+        "lang-go",
+        "dev-base-lang-go",
+        DEV_BASE_ROOT / "Dockerfile",
+        None,
+        shared_context=True,
     ),
     TierSpec(
-        tier="lang-go",
-        stage="dev-base-lang-go",
-        dockerfile=DEV_BASE_ROOT / "lang-go" / "Dockerfile",
-        base_tier="core",
+        "lang-dotnet",
+        "dev-base-lang-dotnet",
+        DEV_BASE_ROOT / "Dockerfile",
+        None,
+        shared_context=True,
     ),
     TierSpec(
-        tier="lang-dotnet",
-        stage="dev-base-lang-dotnet",
-        dockerfile=DEV_BASE_ROOT / "lang-dotnet" / "Dockerfile",
-        base_tier="core",
+        "lang-rust",
+        "dev-base-lang-rust",
+        DEV_BASE_ROOT / "Dockerfile",
+        None,
+        shared_context=True,
     ),
     TierSpec(
-        tier="ops",
-        stage="dev-base-ops",
-        dockerfile=DEV_BASE_ROOT / "ops" / "Dockerfile",
-        base_tier="core",
-    ),
-    TierSpec(
-        tier="agent",
-        stage="dev-base-agent",
-        dockerfile=DEV_BASE_ROOT / "agent" / "Dockerfile",
-        base_tier="ops",
-        graft_tiers=("lang-node",),
+        "lang-python",
+        "dev-base-lang-python",
+        DEV_BASE_ROOT / "Dockerfile",
+        None,
+        shared_context=True,
     ),
     TierSpec(
         tier="full",
         stage="dev-base-full",
         dockerfile=DEV_BASE_ROOT / "full" / "Dockerfile",
-        base_tier="agent",
-        graft_tiers=("lang-go", "lang-dotnet"),
+        base_tier="lang-rust",
+        graft_tiers=("lang-go", "lang-dotnet", "lang-python"),
     ),
 )
+TIER_BY_NAME = {spec.tier: spec for spec in TIER_SPECS}
+PUBLISHED_TIER_NAMES = tuple(spec.tier for spec in TIER_SPECS)
+NAMED_CONTEXT_ROOTS = (
+    Path(".specgen"),
+    Path("agentic_os"),
+    Path("aos"),
+)
+BUILD_DEFINITION_ROOTS = (
+    Path(".forgejo/workflows/ci.yml"),
+    Path(".forgejo/workflows/dev-base-publish.yml"),
+    Path("actions/dev-base-build"),
+    Path("actions/publish-dev-base"),
+    Path("agentic_os/dev_base.py"),
+    Path("scripts/dev-base-build.py"),
+    Path("scripts/dev-base-check.sh"),
+)
 
-TIER_BY_NAME = {tier.tier: tier for tier in TIER_SPECS}
-PUBLISHED_TIER_NAMES = tuple(tier.tier for tier in TIER_SPECS if tier.published)
+
+def _normalize_repo_path(path: str | Path) -> str:
+    normalized = str(path).replace("\\", "/")
+    while normalized.startswith("./"):
+        normalized = normalized[2:]
+    return normalized.rstrip("/")
+
+
+def _path_matches(path: str, root: Path) -> bool:
+    candidate = _normalize_repo_path(root)
+    return path == candidate or path.startswith(f"{candidate}/")
+
+
+def _tier_owns_path(spec: TierSpec, path: str) -> bool:
+    if any(_path_matches(path, root) for root in BUILD_DEFINITION_ROOTS):
+        return True
+
+    dockerfile = spec.dockerfile.relative_to(REPO_ROOT)
+    if _path_matches(path, dockerfile):
+        return True
+
+    if spec.shared_context:
+        full_root = (DEV_BASE_ROOT / "full").relative_to(REPO_ROOT)
+        dev_base_root = DEV_BASE_ROOT.relative_to(REPO_ROOT)
+        if _path_matches(path, dev_base_root) and not _path_matches(path, full_root):
+            return True
+        return any(_path_matches(path, root) for root in NAMED_CONTEXT_ROOTS)
+
+    return _path_matches(path, spec.dockerfile.parent.relative_to(REPO_ROOT))
+
+
+def affected_tiers(changed_paths: Iterable[str | Path]) -> tuple[str, ...]:
+    """Return directly changed tiers plus every downstream composition."""
+
+    paths = tuple(_normalize_repo_path(path) for path in changed_paths)
+    affected = {
+        spec.tier
+        for spec in TIER_SPECS
+        if any(_tier_owns_path(spec, path) for path in paths)
+    }
+
+    changed = True
+    while changed:
+        changed = False
+        for spec in TIER_SPECS:
+            dependencies = {
+                tier
+                for tier in (spec.base_tier, *spec.graft_tiers)
+                if tier is not None
+            }
+            if spec.tier not in affected and dependencies & affected:
+                affected.add(spec.tier)
+                changed = True
+
+    return tuple(spec.tier for spec in TIER_SPECS if spec.tier in affected)
+
+
+def required_build_tiers(tiers: Iterable[str]) -> tuple[str, ...]:
+    """Return the source-image closure needed to build the selected tiers."""
+
+    required = set(tiers)
+    unknown = required.difference(TIER_BY_NAME)
+    if unknown:
+        raise ValueError(f"unknown dev-base tiers: {', '.join(sorted(unknown))}")
+
+    pending = list(required)
+    while pending:
+        spec = TIER_BY_NAME[pending.pop()]
+        for dependency in (spec.base_tier, *spec.graft_tiers):
+            if dependency is not None and dependency not in required:
+                required.add(dependency)
+                pending.append(dependency)
+
+    return tuple(spec.tier for spec in TIER_SPECS if spec.tier in required)
 
 
 def tier_tag(tier: str, tag: str) -> str:
-    # One package, variants as tags: full is the plain default tag, every
-    # other tier rides a "<tier>-" prefix on the same agentic-os name.
-    if tier == "full":
-        return tag
-    return f"{tier}-{tag}"
+    return tag if tier == "full" else f"{tier}-{tag}"
 
 
 def image_ref(registry_base: str, tier: str, tag: str) -> str:
@@ -101,11 +180,7 @@ def normalize_aliases(aliases: str | Iterable[str] | None = None) -> tuple[str, 
     if aliases is None:
         return ()
 
-    if isinstance(aliases, str):
-        raw_aliases = (aliases,)
-    else:
-        raw_aliases = tuple(aliases)
-
+    raw_aliases = (aliases,) if isinstance(aliases, str) else tuple(aliases)
     normalized: list[str] = []
     seen: set[str] = set()
     for alias in raw_aliases:
@@ -125,21 +200,26 @@ def publish_plan(
     images: dict[str, str] = {}
     for spec in TIER_SPECS:
         ref = image_ref(registry_base, spec.tier, tag)
-        base_ref = "ubuntu:24.04" if spec.base_tier is None else images[spec.base_tier]
         entry: dict[str, object] = {
             "tier": spec.tier,
             "stage": spec.stage,
             "dockerfile": spec.dockerfile.relative_to(REPO_ROOT).as_posix(),
+            "context_dir": (
+                DEV_BASE_ROOT if spec.shared_context else spec.dockerfile.parent
+            ).relative_to(REPO_ROOT).as_posix(),
             "image": ref,
             "cache_image": image_ref(registry_base, spec.tier, "buildcache"),
-            "base_image": base_ref,
+            "base_image": (
+                "ubuntu:24.04" if spec.base_tier is None else images[spec.base_tier]
+            ),
             "graft_images": {
-                graft_build_arg(graft): images[graft] for graft in spec.graft_tiers
+                graft_build_arg(tier): images[tier] for tier in spec.graft_tiers
             },
-            "published": spec.published,
         }
         if alias_tags:
-            alias_images = [image_ref(registry_base, spec.tier, alias) for alias in alias_tags]
+            alias_images = [
+                image_ref(registry_base, spec.tier, alias) for alias in alias_tags
+            ]
             entry["alias_images"] = alias_images
             entry["alias_image"] = alias_images[0]
         plan.append(entry)

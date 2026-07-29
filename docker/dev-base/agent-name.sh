@@ -75,13 +75,13 @@ case "$mode" in
     printf '🐾 You are %s%s this session. When asked "who are you" or "what is your status", lead with this name.\n' "$name" "${pronouns:+ ($pronouns)}"
     ;;
   gitidentity)
-    # Respect the baked git system config from the Dockerfile. Only backfill
-    # a user-scoped identity when the image or runtime environment lacks one.
+    # Respect the image-owned system config. Only backfill a user-scoped
+    # identity from the entrypoint-provided Ward transport seam when needed.
     if ! git config --get user.name >/dev/null 2>&1; then
-      git config --global user.name "${WARD_GIT_NAME:-coilyco-ops}" 2>/dev/null || true
+      git config --global user.name "${WARD_GIT_NAME:?WARD_GIT_NAME is required}" 2>/dev/null || true
     fi
     if ! git config --get user.email >/dev/null 2>&1; then
-      git config --global user.email "${WARD_GIT_EMAIL:-coilyco-ops@coilysiren.me}" 2>/dev/null || true
+      git config --global user.email "${WARD_GIT_EMAIL:?WARD_GIT_EMAIL is required}" 2>/dev/null || true
     fi
     ;;
   statusline | *)

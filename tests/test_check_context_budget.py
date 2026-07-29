@@ -124,6 +124,38 @@ def test_skill_roots_from_config_overlay(tmp_path: Path) -> None:
     assert "codex" in roots  # untouched harnesses keep defaults
 
 
+def test_codex_skill_roots_use_portable_standard() -> None:
+    assert budget.DEFAULT_SKILL_ROOTS["codex"] == [
+        "~/.agents/skills",
+        ".agents/skills",
+    ]
+
+
+def test_skill_load_point_replaces_global_default(tmp_path: Path) -> None:
+    cfg = tmp_path / "agent-compose.yaml"
+    write(
+        cfg,
+        "skill_load_points:\n"
+        "  codex: /portable/codex-skills\n",
+    )
+    roots = budget.skill_roots_from_config(cfg)
+    assert roots["codex"] == ["/portable/codex-skills", ".agents/skills"]
+
+
+def test_explicit_skill_roots_override_load_point(tmp_path: Path) -> None:
+    cfg = tmp_path / "agent-compose.yaml"
+    write(
+        cfg,
+        "skill_load_points:\n"
+        "  codex: /portable/codex-skills\n"
+        "skill_roots:\n"
+        "  codex:\n"
+        "    - /legacy-explicit-root\n",
+    )
+    roots = budget.skill_roots_from_config(cfg)
+    assert roots["codex"] == ["/legacy-explicit-root"]
+
+
 def test_run_end_to_end(tmp_path: Path) -> None:
     src = tmp_path / "repo" / "AGENTS.COMPOSE.md"
     write(src, "# doctrine\n" + "x" * 800)

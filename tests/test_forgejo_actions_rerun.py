@@ -36,6 +36,7 @@ RUN_METADATA = {
 
 
 def test_rerun_dispatches_the_workflow_when_the_web_rerun_is_unavailable(monkeypatch):
+    monkeypatch.setenv("FORGEJO_TOKEN", "test-token")
     calls: list[tuple[str, str, bytes | None]] = []
 
     def fake_request(url, token, *, data=None, content_type=None, auth_scheme="basic"):
@@ -60,6 +61,7 @@ def test_rerun_dispatches_the_workflow_when_the_web_rerun_is_unavailable(monkeyp
 
 
 def test_rerun_failed_jobs_dispatches_the_workflow_when_the_web_route_is_unavailable(monkeypatch):
+    monkeypatch.setenv("FORGEJO_TOKEN", "test-token")
     calls: list[tuple[str, str, bytes | None]] = []
 
     def fake_request(url, token, *, data=None, content_type=None, auth_scheme="basic"):

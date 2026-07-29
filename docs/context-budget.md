@@ -2,9 +2,11 @@
 
 `check-context-budget` reports the eager startup context each agent harness
 loads at session start, per harness, against a per-harness token budget, with
-per-source attribution. It is an on-demand tool (the `ward context-budget`
-verb), not a pre-commit hook, so it carries no weight in the universal commit
-path and is free to grow heavier measurement later.
+per-source attribution. The on-demand `ward context-budget` verb stays outside
+the universal commit path and may grow heavier measurement later.
+
+The [role-seat snapshot mode](context-budget-role-seat.md) measures any
+agent-compose role and seat without requiring that seat's agent executable.
 
 ## What it measures
 
@@ -20,10 +22,10 @@ budget with a fill bar and an `OVER by N` flag:
   description) is eager so the model knows the skill exists; bodies load lazily
   on invoke. With a large skill surface this is routinely the **biggest** axis,
   larger than the composed doc. Lever: prune the skill set.
-- **mcp** - native MCP tool schemas. Lazy through mcporter (codex shells
-  `mcporter call` / `list` on demand) and deferred under ToolSearch, so the eager
-  figure is ~0; reported as a server-count note, not a token sum, until a
-  non-lazy path needs measuring.
+- **mcp** - MCP tool schemas. The shared mcporter inventory is projected
+  into each supported native registry. Harness schema discovery stays deferred,
+  and `mcporter call` remains the CLI fallback, so the eager figure is ~0. The
+  report shows a server-count note rather than a token sum.
 
 When no `agent-compose.yaml` is present (agent-compose is opt-in), the doc axis
 falls back to measuring the installed load-point files directly. These three axes
@@ -31,15 +33,12 @@ are the **proactive** tier (eager prompt bytes); the `immediate_walk` /
 `peripheral_walk` primitives and `--immediate` / `--peripheral` flags measure the
 reachable working-dir/reference tiers - see [context-tiers.md](context-tiers.md).
 
-### Skill scope is cwd-dependent
+### Skill scope follows the CWD
 
-`mount-skills.sh` empties `~/.claude/skills` and symlinks each skill dir into
-per-repo `.claude/skills`, so the eager set is the global plugin skills plus the
-scoped skills discoverable from the cwd. Relative skill roots are expanded
-against the cwd and every workspace repo and deduped by resolved path, so the one
-canonical set mounted into many repos counts once. The reported total is thus the
-**workspace union** (elevated-cwd worst case); a session in one repo sees fewer.
-Roots default per `DEFAULT_SKILL_ROOTS`, overridable via `skill_roots:`.
+Skill roots can be global or CWD-scoped. Relative roots expand across the
+workspace and dedupe by resolved path. `DEFAULT_SKILL_ROOTS` supplies defaults.
+Agent-compose's `skill_load_points:` replaces a harness global root. Legacy
+`skill_roots:` remains an explicit override.
 
 ## Why per-harness budgets differ
 
@@ -49,11 +48,12 @@ The budgets are not one number. They encode three distinct failure modes:
   overlay, so it is the heaviest, and a bloated baseline crowds the task and
   makes the model miss the obvious. The budget is a forcing function: doc growth
   is zero-sum against it.
-- **codex** - its eager MCP surface is ~0 (mcporter never loads tool schemas
-  eagerly), so the budget only bounds the composed doc. Sweep blow-out is runtime
+- **codex** - its native MCP schemas are deferred, so the eager MCP surface is
+  ~0 and the budget only bounds the composed doc. Sweep blow-out is runtime
   accumulation a static report cannot govern.
-- **opencode** - a small local qwen model, curated hardest, so its budget is
-  tightest.
+- **goose and opencode** - AOS treats both open-source layouts as low-context.
+  Their small local models receive the pruned skill catalog and share the
+  tightest budget.
 
 ## Token counting
 
@@ -67,9 +67,10 @@ harnesses, which a zero-sum comparison needs. The swap is one function.
 Budgets are global (host-wide, not repo-scoped): module defaults, overridable by
 a `budgets:` mapping in `agent-compose.yaml` or `--<harness>-budget` flags.
 `--check` exits non-zero when any harness is over budget, for CI. `--mcporter`
-points at the merged mcporter config for codex's server inventory.
+points at the shared inventory projected into each native harness registry.
 
 ## See also
 
 - [features-agents-sessions.md](features-agents-sessions.md) - agent-compose, the composer this measures.
+- [role-composed-skills.md](role-composed-skills.md) - role-gated skills selected into a role bundle.
 - [.ward/ward.yaml](../.ward/ward.yaml) - allowlisted commands.

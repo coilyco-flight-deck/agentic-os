@@ -33,6 +33,17 @@ def test_render_round_trips_through_frontmatter_parse():
     assert render_skill("website", fm["description"]) == text
 
 
+def test_render_can_publish_explicit_low_context_policy():
+    text = render_skill(
+        "website",
+        "A site. Triggers - website",
+        low_context="required",
+    )
+    fm = parse_frontmatter(text)
+    assert fm["low-context"] == "required"
+    assert check_drift("repo-website", text) == []
+
+
 def test_check_drift_passes_clean_generated_file():
     desc = build_description("coilysiren.me — site 🚀", "website", ["personal-site"])
     text = render_skill("website", desc)
@@ -82,6 +93,16 @@ def test_check_drift_flags_name_mismatch():
     text = render_skill("website", "A site. Triggers - website")
     problems = check_drift("repo-other", text)
     assert any("does not match" in p for p in problems)
+
+
+def test_check_drift_flags_invalid_low_context_policy():
+    text = render_skill(
+        "website",
+        "A site. Triggers - website",
+        low_context="unsupported",
+    )
+    problems = check_drift("repo-website", text)
+    assert any("low-context" in p for p in problems)
 
 
 def test_check_drift_rejects_non_prefixed_dir():

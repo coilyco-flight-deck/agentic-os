@@ -1,12 +1,28 @@
 from __future__ import annotations
 
+import os
+import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_repos_bundle_owns_landing_policy() -> None:
-    repos = (ROOT / ".ward" / "repos.kdl").read_text(encoding="utf-8")
-    assert 'workflow default="merge-remote-main"' in repos
-    assert 'repo "coilyco-flight-deck/agentic-os" workflow="pull-request-and-merge"' in repos
-    assert not (ROOT / ".ward" / "workflow.kdl").exists()
+def _run_ward_doctor() -> subprocess.CompletedProcess[str]:
+    env = os.environ.copy()
+    return subprocess.run(
+        ["ward", "doctor"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+
+
+def test_yaml_configuration_is_accepted_by_ward_doctor() -> None:
+    result = _run_ward_doctor()
+    assert "ward doctor: all checks passed" in result.stdout
+
+
+def test_ward_directory_has_no_retired_kdl_configuration() -> None:
+    assert not list((ROOT / ".ward").glob("*.kdl"))

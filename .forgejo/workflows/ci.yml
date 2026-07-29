@@ -5,20 +5,11 @@
 # promote.yml already ran the suite on the exact sha it fast-forwarded, so a
 # flaky rerun cannot fail a vouched promotion (Kai's call, 2026-07-12).
 #
-# The ward-doctor job is the standalone guardfile-load gate: guardfiles are
-# config, so their validity check is ward loading them, never repo tests
-# re-encoding their content. It is the same doctor the core image build runs
-# (the aos#452 fail-closed path), moved up to commit time so a broken bundle
-# cannot reach main.
-#
-# Beyond the test gate, PRs also run the validations that used to live only
-# on main (agentic-os#454, preventing the agentic-os#452 red-main class):
-# gate dry-runs the release tag computation, and build-dev-base builds the
-# whole dev-base tier family through the shared ./actions/dev-base-build
-# composite in build-only mode. That exercises every Dockerfile, pinned ARG,
-# and the in-image `ward doctor` gate pre-merge, while publish, tag, and the
-# GitHub mirror stay main-only. Branch protection can require the
-# `ci / build-dev-base` context alongside `ci / gate`.
+# The Ward doctor job validates only Ward's supported YAML contract. Role
+# policy and operator grants are intentionally absent from this repository.
+# Pull requests also expose `ci / build-dev-base`: one build-only,
+# single-architecture validation of the affected image closure, with no
+# registry credentials and no package push.
 
 name: ci
 
@@ -29,6 +20,9 @@ on:
 
 permissions:
   contents: read
+
+env:
+  WARD_WORKFLOW_VERSION: v0.856.0
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -41,52 +35,13 @@ jobs:
     container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release
     steps:
       - uses: actions/checkout@v6
-      - name: Install ward from source with workflow bundle support
-        run: |
-          set -euo pipefail
-          tmpdir="$(mktemp -d)"
-          git clone --depth 1 --branch main https://forgejo.coilysiren.me/coilyco-flight-deck/ward.git "$tmpdir/ward"
-          cd "$tmpdir/ward"
-          go build -trimpath -o "$tmpdir/ward/ward" ./cmd/ward
-          "$tmpdir/ward/ward" --version
-          echo "WARD_BIN=$tmpdir/ward/ward" >> "$GITHUB_ENV"
-      - name: Load the .ward bundle with the updated ward
-        run: |
-          set -euo pipefail
-          export WARD_CONFIG_REF="file://${PWD}/.ward"
-          CLIGUARD_NO_SANDBOX=1 "$WARD_BIN" doctor
+      - name: Install validated Ward
+        run: scripts/install-workflow-ward.sh "${WARD_WORKFLOW_VERSION}"
+      - name: Validate the supported Ward YAML contract
+        run: CLIGUARD_NO_SANDBOX=1 ward doctor
 
-  gate:
-    runs-on: docker
-    timeout-minutes: 30
-    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - name: Cache pre-commit envs
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pre-commit
-          key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
-          restore-keys: |
-            pre-commit-${{ runner.os }}-
-
-      - name: Repo test gate
-        run: |
-          set -euo pipefail
-          uv run pytest
-          # Same surface release.yml's gate enforces: without this, a
-          # pre-commit violation passes the PR and reddens main (run 1078).
-          pre-commit run --all-files
-
-      - name: Validate release planning (compute-only tag bump)
-        uses: ./actions/tag-bump
-        with:
-          create_tag: false
       - name: Alert Telegram on main failure
-        if: ${{ failure() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/release') }}
+        if: ${{ failure() && github.ref == 'refs/heads/main' }}
         continue-on-error: true
         env:
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -98,74 +53,54 @@ jobs:
           SHA: ${{ github.sha }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           API_BASE: https://api.telegram.org
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          import os
-          import urllib.error
-          import urllib.parse
-          import urllib.request
+        run: "python3 -c 'exec(\"import os\\nimport sys\\nimport urllib.error\\nimport urllib.parse\\nimport urllib.request\\n\\ndef build_message():\\n    return \\\"\\\\n\\\".join([\\n        \\\"CI failed on main\\\",\\n        f\\\"repo: {os.environ['\"'\"'REPO'\"'\"']}\\\",\\n        f\\\"workflow: {os.environ['\"'\"'WORKFLOW'\"'\"']}\\\",\\n        f\\\"job: {os.environ['\"'\"'JOB'\"'\"']}\\\",\\n        f\\\"ref: {os.environ['\"'\"'REF'\"'\"']}\\\",\\n        f\\\"sha: {os.environ['\"'\"'SHA'\"'\"']}\\\",\\n        f\\\"run: {os.environ['\"'\"'RUN_URL'\"'\"']}\\\",\\n    ])\\n\\ndef main():\\n    bot_token = os.environ.get(\\\"BOT_TOKEN\\\", \\\"\\\")\\n    chat_id = os.environ.get(\\\"CHAT_ID\\\", \\\"\\\")\\n    if not bot_token or not chat_id:\\n        print(\\\"telegram alert missing required secret\\\", file=sys.stderr)\\n        return 2\\n    proxy_url = os.environ.get(\\\"FORGEJO_EGRESS_PROXY\\\", \\\"\\\").strip()\\n    payload = urllib.parse.urlencode(\\n        {\\n            \\\"chat_id\\\": chat_id,\\n            \\\"text\\\": build_message(),\\n            \\\"disable_web_page_preview\\\": \\\"true\\\",\\n        }\\n    ).encode(\\\"utf-8\\\")\\n    api_base = os.environ.get(\\\"API_BASE\\\", \\\"https://api.telegram.org\\\").rstrip(\\\"/\\\")\\n    request = urllib.request.Request(\\n        f\\\"{api_base}/bot{bot_token}/sendMessage\\\",\\n        data=payload,\\n        method=\\\"POST\\\",\\n    )\\n    opener = urllib.request.build_opener(\\n        urllib.request.ProxyHandler({\\\"https\\\": proxy_url})\\n        if proxy_url\\n        else urllib.request.ProxyHandler()\\n    )\\n    try:\\n        with opener.open(request, timeout=15) as response:\\n            response.read()\\n    except urllib.error.URLError as exc:\\n        print(f\\\"telegram alert failed ({type(exc).__name__})\\\", file=sys.stderr)\\n        return 1\\n    return 0\\n\\nraise SystemExit(main())\\n\")'"
+  gate:
+    runs-on: docker
+    timeout-minutes: 30
+    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
-          def build_message(repo, workflow, job, ref, sha, run_url):
-              return "\n".join([
-                  "CI failed on main",
-                  f"repo: {repo}",
-                  f"workflow: {workflow}",
-                  f"job: {job}",
-                  f"ref: {ref}",
-                  f"sha: {sha}",
-                  f"run: {run_url}",
-              ])
+      - name: Install validated ward for repo gate
+        run: scripts/install-workflow-ward.sh "${WARD_WORKFLOW_VERSION}"
 
-          def main():
-              bot_token = os.environ["BOT_TOKEN"]
-              chat_id = os.environ["CHAT_ID"]
-              message = build_message(
-                  os.environ["REPO"],
-                  os.environ["WORKFLOW"],
-                  os.environ["JOB"],
-                  os.environ["REF"],
-                  os.environ["SHA"],
-                  os.environ["RUN_URL"],
-              )
-              payload = urllib.parse.urlencode(
-                  {
-                      "chat_id": chat_id,
-                      "text": message,
-                      "disable_web_page_preview": "true",
-                  }
-              ).encode("utf-8")
-              url = f"{os.environ['API_BASE'].rstrip('/')}/bot{bot_token}/sendMessage"
-              req = urllib.request.Request(url, data=payload, method="POST")
-              try:
-                  with urllib.request.urlopen(req, timeout=15) as resp:
-                      resp.read()
-              except urllib.error.URLError as exc:
-                  print(f"telegram alert failed: {exc}")
-                  raise SystemExit(1)
+      - name: Cache pre-commit envs
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+          restore-keys: |
+            pre-commit-${{ runner.os }}-
 
-          main()
-          PY
+      - name: Repo test gate
+        run: bash "$GITHUB_WORKSPACE/scripts/ci/repo-test-gate.sh"
+      - name: Alert Telegram on main failure
+        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        continue-on-error: true
+        env:
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
+          REPO: ${{ github.repository }}
+          WORKFLOW: ${{ github.workflow }}
+          JOB: ${{ github.job }}
+          REF: ${{ github.ref }}
+          SHA: ${{ github.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          API_BASE: https://api.telegram.org
+        run: "python3 -c 'exec(\"import os\\nimport sys\\nimport urllib.error\\nimport urllib.parse\\nimport urllib.request\\n\\ndef build_message():\\n    return \\\"\\\\n\\\".join([\\n        \\\"CI failed on main\\\",\\n        f\\\"repo: {os.environ['\"'\"'REPO'\"'\"']}\\\",\\n        f\\\"workflow: {os.environ['\"'\"'WORKFLOW'\"'\"']}\\\",\\n        f\\\"job: {os.environ['\"'\"'JOB'\"'\"']}\\\",\\n        f\\\"ref: {os.environ['\"'\"'REF'\"'\"']}\\\",\\n        f\\\"sha: {os.environ['\"'\"'SHA'\"'\"']}\\\",\\n        f\\\"run: {os.environ['\"'\"'RUN_URL'\"'\"']}\\\",\\n    ])\\n\\ndef main():\\n    bot_token = os.environ.get(\\\"BOT_TOKEN\\\", \\\"\\\")\\n    chat_id = os.environ.get(\\\"CHAT_ID\\\", \\\"\\\")\\n    if not bot_token or not chat_id:\\n        print(\\\"telegram alert missing required secret\\\", file=sys.stderr)\\n        return 2\\n    proxy_url = os.environ.get(\\\"FORGEJO_EGRESS_PROXY\\\", \\\"\\\").strip()\\n    payload = urllib.parse.urlencode(\\n        {\\n            \\\"chat_id\\\": chat_id,\\n            \\\"text\\\": build_message(),\\n            \\\"disable_web_page_preview\\\": \\\"true\\\",\\n        }\\n    ).encode(\\\"utf-8\\\")\\n    api_base = os.environ.get(\\\"API_BASE\\\", \\\"https://api.telegram.org\\\").rstrip(\\\"/\\\")\\n    request = urllib.request.Request(\\n        f\\\"{api_base}/bot{bot_token}/sendMessage\\\",\\n        data=payload,\\n        method=\\\"POST\\\",\\n    )\\n    opener = urllib.request.build_opener(\\n        urllib.request.ProxyHandler({\\\"https\\\": proxy_url})\\n        if proxy_url\\n        else urllib.request.ProxyHandler()\\n    )\\n    try:\\n        with opener.open(request, timeout=15) as response:\\n            response.read()\\n    except urllib.error.URLError as exc:\\n        print(f\\\"telegram alert failed ({type(exc).__name__})\\\", file=sys.stderr)\\n        return 1\\n    return 0\\n\\nraise SystemExit(main())\\n\")'"
   build-dev-base:
     if: ${{ github.event_name == 'pull_request' }}
-    runs-on: docker
+    runs-on: docker-build
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
-      - name: Build and verify the dev-base tier family (no publish)
+      - name: Build and verify the affected dev-base image closure
         uses: ./actions/dev-base-build
         with:
+          base-sha: ${{ github.event.pull_request.base.sha }}
           tag: pr-${{ github.run_id }}
-
-      - name: Clean up this run's local tier images
-        if: ${{ always() }}
-        run: |
-          set -euo pipefail
-          # The build-only images land on the shared daemon; drop this run's
-          # tags so PR runs do not pile named images up. The underlying
-          # layers stay behind as build cache for the next PR.
-          command -v docker >/dev/null 2>&1 || exit 0
-          docker images --format '{{.Repository}}:{{.Tag}}' \
-            | { grep ":pr-${{ github.run_id }}$" || true; } \
-            | xargs -r docker rmi >/dev/null || true

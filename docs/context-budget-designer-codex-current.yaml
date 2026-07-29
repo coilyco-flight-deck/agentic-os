@@ -1,0 +1,93 @@
+format: agentic-os.role-seat-context.v1
+subject:
+  role: designer
+  seat: codex
+provider: coilyco-flight-deck/agentic-os
+repository: coilyco-flight-deck/agentic-os
+cwd: .
+tokenizer: tokens = chars/4 proxy (v1, swap for the qwen tokenizer later)
+bundle:
+  format: agent-compose.bundle
+  model_class: frontier
+  personalities:
+  - imaginative
+  - playful
+  - warm
+  sources:
+  - person:kai
+  - aos-public
+mcp:
+  delivery: deferred
+  server_count: 13
+  eager_schema_count: 0
+totals:
+  eager:
+    components: 21
+    bytes: 32199
+    tokens: 8054
+  lazy:
+    components: 48
+    bytes: 84966
+    tokens: 21226
+breakdown:
+  eager:
+    agents-cascade: {components: 1, bytes: 21438, tokens: 5360}
+    ordinary-skill-frontmatter: {components: 11, bytes: 2754, tokens: 693}
+    personality-frontmatter: {components: 3, bytes: 442, tokens: 112}
+    role-composed-frontmatter: {components: 5, bytes: 1120, tokens: 282}
+    role-instructions: {components: 1, bytes: 6445, tokens: 1607}
+  lazy:
+    mcp-server-registration: {components: 1, bytes: 0, tokens: 0}
+    ordinary-skill-body: {components: 11, bytes: 18897, tokens: 4722}
+    ordinary-skill-resource: {components: 18, bytes: 27017, tokens: 6761}
+    personality-body: {components: 3, bytes: 4423, tokens: 1107}
+    role-composed-body: {components: 5, bytes: 10908, tokens: 2729}
+    role-composed-resource: {components: 10, bytes: 23721, tokens: 5907}
+components:
+  eager:
+    agents-cascade:
+    - id: agents:000:AGENTS.md
+      owner: coilyco-flight-deck/agentic-os
+      source: coilyco-flight-deck/agentic-os:AGENTS.md
+      delivery: repo-cascade
+      bytes: 21438
+      tokens: 5360
+      sha256: 6a82741b3ddcb6691a9b951e4615421a8a2a957d88e55122b0f1d74a841ac5cc
+    role-instructions:
+    - id: instructions:role
+      owner: agent-compose+person:kai+aos-public
+      source: bundle:content/instructions.md
+      delivery: .codex/AGENTS.md
+      bytes: 6445
+      tokens: 1607
+      sha256: 6cddaedd9bee0e39261f155a1acfd0dd62f62cb3c478dd5d0da49f31fd55e910
+  lazy:
+    mcp-server-registration:
+    - id: mcp:deferred
+      owner: mcporter
+      source: mcporter:inventory
+      delivery: deferred
+      bytes: 0
+      tokens: 0
+      sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+skills:
+  aos-public/coding-javascript: {class: role-composed, eager: 48, lazy: 322, resources: 0}
+  aos-public/coding-javascript-react: {class: role-composed, eager: 48, lazy: 419, resources: 0}
+  aos-public/kai-tech-prefs: {class: ordinary, eager: 51, lazy: 1969, resources: 5}
+  aos-public/repo-agentic-os: {class: ordinary, eager: 50, lazy: 93, resources: 0}
+  aos-public/tooling-agent-workflows: {class: ordinary, eager: 53, lazy: 1642, resources: 4}
+  aos-public/tooling-claude-in-chrome: {class: ordinary, eager: 55, lazy: 1416, resources: 3}
+  aos-public/tooling-designer-cognitive-walkthrough: {class: role-composed, eager: 53, lazy: 765, resources: 0}
+  aos-public/tooling-designer-interaction-shaping: {class: role-composed, eager: 53, lazy: 492, resources: 0}
+  aos-public/tooling-ffmpeg: {class: ordinary, eager: 50, lazy: 559, resources: 0}
+  aos-public/tooling-gpg-ssm: {class: ordinary, eager: 78, lazy: 1373, resources: 3}
+  aos-public/tooling-image-zoom: {class: ordinary, eager: 44, lazy: 949, resources: 1}
+  aos-public/tooling-imagemagick: {class: ordinary, eager: 50, lazy: 492, resources: 0}
+  aos-public/tooling-product-brainstorming: {class: role-composed, eager: 80, lazy: 6638, resources: 10}
+  aos-public/tooling-tailscale: {class: ordinary, eager: 109, lazy: 1887, resources: 2}
+  aos-public/tooling-warp: {class: ordinary, eager: 39, lazy: 317, resources: 0}
+  aos-public/tooling-zsh: {class: ordinary, eager: 114, lazy: 786, resources: 0}
+  person:kai/personality-imaginative: {class: personality, eager: 40, lazy: 399, resources: 0}
+  person:kai/personality-playful: {class: personality, eager: 37, lazy: 352, resources: 0}
+  person:kai/personality-warm: {class: personality, eager: 35, lazy: 356, resources: 0}
+payload_hash: d7c9bcbb6b869681ce07435099fd93bc3fec0b0c8eecfd93f8afaf2af7e12a2f

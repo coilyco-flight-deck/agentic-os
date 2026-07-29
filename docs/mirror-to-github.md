@@ -3,10 +3,11 @@
 `.forgejo/workflows/mirror-to-github.yml` is the GitHub side of the default
 public-repo contract in [forgejo-github-mirror-contract.md](forgejo-github-mirror-contract.md).
 It keeps the read-only GitHub mirror (`coilysiren/agentic-os`) in step with
-canonical Forgejo `main`. GitHub is where the fleet's
-`uses: coilysiren/agentic-os/actions/*@main` references resolve, so the mirror
-advancing matters even though Forgejo is upstream-of-record. The job no-ops
-without the `GITHUB_MIRROR_PAT` secret.
+canonical Forgejo `main`. GitHub consumers can import the mirrored action
+library from `coilysiren/agentic-os/actions/*@main`. Forgejo consumers use
+fully qualified canonical Forgejo URLs, so they do not depend on mirror
+freshness or the instance's default Actions host. The job no-ops without the
+`GITHUB_MIRROR_PAT` secret.
 
 The workflow now starts with a same-workflow test/pre-commit gate so the
 mirror push only runs when the repo-authoritative checks already passed.

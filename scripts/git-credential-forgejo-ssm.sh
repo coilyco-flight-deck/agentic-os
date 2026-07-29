@@ -7,9 +7,12 @@
 # store/erase are no-ops: nothing on disk, never cache-then-persist the value.
 set -euo pipefail
 
-# git invokes helpers with a minimal env, so ward-kdl/aws may not be on PATH.
+# git invokes helpers with a minimal env, so aws may not be on PATH.
 # Prepend the fleet install dirs: linuxbrew, homebrew, /usr/local, ~/.local.
 export PATH="/home/linuxbrew/.linuxbrew/bin:/opt/homebrew/bin:/usr/local/bin:${HOME}/.local/bin:${PATH}"
+# Ward configuration selects an agent runtime surface. It has no place in this
+# repository-access bootstrap and can interfere with nested credential lookup.
+unset WARD_CONFIG_REF
 
 op="${1:-}"
 [ "$op" = "get" ] || exit 0
@@ -25,7 +28,9 @@ done
 # Only answer for the Forgejo host; let git fall through for anything else.
 [ "$host" = "forgejo.coilysiren.me" ] || exit 0
 
-token="$(ward ops aws ssm get-parameter \
+# Git credentials bootstrap repository access, including the checkout that owns
+# the guarded operator spec, so direct AWS CLI use is the bootstrap exception.
+token="$(aws ssm get-parameter \
   --name /forgejo/coilyco-ops/api-token --with-decryption \
   --query Parameter.Value --output text 2>/dev/null)" || exit 0
 [ -n "$token" ] || exit 0

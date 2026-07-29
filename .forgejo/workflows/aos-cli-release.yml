@@ -1,0 +1,111 @@
+# Release the portable aos CLI on its own tag clock. The repository's v* train
+# remains owned by hooks and dev-base images.
+
+name: aos-cli-release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing or explicit aos version tag for a retry."
+        required: false
+        default: ""
+      bump:
+        description: "Version bump when tag is empty."
+        required: false
+        default: "minor"
+        type: choice
+        options: [minor, patch, major]
+
+concurrency:
+  group: aos-cli-release-pipeline
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  WARD_WORKFLOW_VERSION: v0.856.0
+
+jobs:
+  release:
+    runs-on: docker
+    timeout-minutes: 30
+    container:
+      image: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release
+    outputs:
+      tag: ${{ steps.tag.outputs.new_tag }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Install validated Ward for release gate
+        run: scripts/install-workflow-ward.sh "${WARD_WORKFLOW_VERSION}"
+
+      - name: Cache pre-commit envs
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+          restore-keys: |
+            pre-commit-${{ runner.os }}-
+
+      - name: Validate the release commit
+        run: bash "$GITHUB_WORKSPACE/scripts/ci/aos-cli-release.sh" validate
+
+      - id: tag
+        uses: ./actions/tag-bump
+        with:
+          bump: ${{ github.event.inputs.bump || 'minor' }}
+          tag_name: ${{ github.event.inputs.tag || '' }}
+          tag_prefix: aos-v
+          create_tag: true
+          release_sha: ${{ github.sha }}
+
+      - name: Build binaries and package metadata
+        env:
+          AOS_RELEASE_VERSION: ${{ steps.tag.outputs.new_tag }}
+        run: bash "$GITHUB_WORKSPACE/scripts/ci/aos-cli-release.sh" build
+
+      - id: create
+        uses: ./actions/create-release
+        with:
+          tag: ${{ steps.tag.outputs.new_tag }}
+          name: aos ${{ steps.tag.outputs.new_tag }}
+          body: ${{ steps.tag.outputs.changelog }}
+
+      - name: Attach release artifacts
+        env:
+          FORGEJO_TOKEN: ${{ github.token }}
+          RELEASE_ID: ${{ steps.create.outputs.release_id }}
+          FORGEJO_API: https://forgejo.coilysiren.me/api/v1/repos/${{ github.repository }}
+        run: bash "$GITHUB_WORKSPACE/scripts/ci/aos-cli-release.sh" attach
+
+      - name: Update the Homebrew tap
+        env:
+          TAP_WRITE_TOKEN: ${{ secrets.TAP_WRITE_TOKEN }}
+          TAG: ${{ steps.tag.outputs.new_tag }}
+        run: bash "$GITHUB_WORKSPACE/scripts/ci/aos-cli-release.sh" update-homebrew
+
+      - name: Update the Scoop bucket
+        env:
+          SCOOP_WRITE_TOKEN: ${{ secrets.SCOOP_WRITE_TOKEN }}
+          TAG: ${{ steps.tag.outputs.new_tag }}
+        run: bash "$GITHUB_WORKSPACE/scripts/ci/aos-cli-release.sh" update-scoop
+      - name: Alert Telegram on main failure
+        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        continue-on-error: true
+        env:
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
+          REPO: ${{ github.repository }}
+          WORKFLOW: ${{ github.workflow }}
+          JOB: ${{ github.job }}
+          REF: ${{ github.ref }}
+          SHA: ${{ github.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          API_BASE: https://api.telegram.org
+        run: "python3 -c 'exec(\"import os\\nimport sys\\nimport urllib.error\\nimport urllib.parse\\nimport urllib.request\\n\\ndef build_message():\\n    return \\\"\\\\n\\\".join([\\n        \\\"CI failed on main\\\",\\n        f\\\"repo: {os.environ['\"'\"'REPO'\"'\"']}\\\",\\n        f\\\"workflow: {os.environ['\"'\"'WORKFLOW'\"'\"']}\\\",\\n        f\\\"job: {os.environ['\"'\"'JOB'\"'\"']}\\\",\\n        f\\\"ref: {os.environ['\"'\"'REF'\"'\"']}\\\",\\n        f\\\"sha: {os.environ['\"'\"'SHA'\"'\"']}\\\",\\n        f\\\"run: {os.environ['\"'\"'RUN_URL'\"'\"']}\\\",\\n    ])\\n\\ndef main():\\n    bot_token = os.environ.get(\\\"BOT_TOKEN\\\", \\\"\\\")\\n    chat_id = os.environ.get(\\\"CHAT_ID\\\", \\\"\\\")\\n    if not bot_token or not chat_id:\\n        print(\\\"telegram alert missing required secret\\\", file=sys.stderr)\\n        return 2\\n    proxy_url = os.environ.get(\\\"FORGEJO_EGRESS_PROXY\\\", \\\"\\\").strip()\\n    payload = urllib.parse.urlencode(\\n        {\\n            \\\"chat_id\\\": chat_id,\\n            \\\"text\\\": build_message(),\\n            \\\"disable_web_page_preview\\\": \\\"true\\\",\\n        }\\n    ).encode(\\\"utf-8\\\")\\n    api_base = os.environ.get(\\\"API_BASE\\\", \\\"https://api.telegram.org\\\").rstrip(\\\"/\\\")\\n    request = urllib.request.Request(\\n        f\\\"{api_base}/bot{bot_token}/sendMessage\\\",\\n        data=payload,\\n        method=\\\"POST\\\",\\n    )\\n    opener = urllib.request.build_opener(\\n        urllib.request.ProxyHandler({\\\"https\\\": proxy_url})\\n        if proxy_url\\n        else urllib.request.ProxyHandler()\\n    )\\n    try:\\n        with opener.open(request, timeout=15) as response:\\n            response.read()\\n    except urllib.error.URLError as exc:\\n        print(f\\\"telegram alert failed ({type(exc).__name__})\\\", file=sys.stderr)\\n        return 1\\n    return 0\\n\\nraise SystemExit(main())\\n\")'"

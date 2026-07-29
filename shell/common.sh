@@ -1,6 +1,9 @@
 # shellcheck shell=bash
 # Shared bash + zsh init (bash/zsh common subset). See docs/features-shell-secrets.md.
 
+# shared-environment: begin
+# Keep this block declarative. The rendered Windows PowerShell profile parses
+# these export assignments directly so it does not need to launch Bash.
 export ANSIBLE_FORCE_COLOR=1
 export LANG=en_US.UTF-8
 export EDITOR=code
@@ -13,6 +16,14 @@ export AWS_PAGER=""
 export BAT_PAGER=""
 export HISTSIZE=100000
 export SAVEHIST=100000
+# Dev-base image for `ward agent` dispatch: point host shells at the moving
+# release alias.
+export WARD_AGENT_IMAGE="forgejo.coilysiren.me/coilyco-flight-deck/agentic-os"
+export WARD_AGENT_TAG="release"
+# Ward no longer consumes checkout-derived KDL references. Clear an inherited
+# value from a pre-#1615 shell or image before launching a harness.
+unset WARD_CONFIG_REF
+# shared-environment: end
 
 _siren_aos_repo_root() {
   local repo source_dir
@@ -39,24 +50,29 @@ _siren_aos_repo_root() {
   return 1
 }
 
-# Host shells read the bundle live from the checkout (file://): a pull applies
-# immediately, and launch needs no pin, gitsync, or credential. See docs/ward-specs.md.
-_siren_ward_config_ref() {
-  local repo
-  repo=$(_siren_aos_repo_root) || return 1
-  # Native Windows ward.exe cannot stat an MSYS /x/... path; -m emits X:/...
-  if command -v cygpath >/dev/null 2>&1; then
-    repo=$(cygpath -m "$repo") || return 1
+_siren_projects_root() {
+  local repo root
+  if [ -n "${PROJECTS_ROOT:-}" ]; then
+    root="$PROJECTS_ROOT"
+  elif [ -d "$HOME/projects" ]; then
+    root="$HOME/projects"
+  else
+    repo=$(_siren_aos_repo_root) || repo=""
+    if [ -n "$repo" ]; then
+      root="$(cd "$repo/../.." && pwd -P)"
+    else
+      root="$HOME/projects"
+    fi
   fi
-  printf 'file://%s/.ward' "$repo"
+  # Native Windows tools need a drive-qualified value, while Git Bash accepts
+  # the same mixed-slash form for shell paths.
+  if command -v cygpath >/dev/null 2>&1; then
+    root=$(cygpath -m "$root") || return 1
+  fi
+  printf '%s\n' "$root"
 }
 
-export WARD_CONFIG_REF="$(_siren_ward_config_ref)"
-
-# Dev-base image for `ward agent` dispatch: point host shells at the moving
-# release alias.
-export WARD_AGENT_IMAGE="forgejo.coilysiren.me/coilyco-flight-deck/agentic-os"
-export WARD_AGENT_TAG="release"
+export PROJECTS_ROOT="$(_siren_projects_root)"
 
 # Env + PATH are inherited, so run once per terminal tree: the exported guard is
 # the "has this run in this terminal yet?" check. Aliases/functions always define.
@@ -64,7 +80,7 @@ if [ -z "${_SIREN_SHELL_ENV:-}" ]; then
   export _SIREN_SHELL_ENV=1
 
   # ward owns the whole workspace root (the security boundary, all orgs).
-  export WARD_LOCKDOWN_ROOT="$HOME/projects"
+  export WARD_LOCKDOWN_ROOT="$PROJECTS_ROOT"
 
   # Prepend $1 to PATH if it's a real dir and not already present.
   _siren_path_prepend() {
@@ -155,6 +171,23 @@ unalias bat 2>/dev/null || true
 bat() {
   command bat --no-pager "$@"
 }
+
+# Agent-compose converges doctrine, skills, and native MCP registries before it
+# execs the real harness binary. Hosts without the opt-in product keep working.
+_siren_agent_launch() {
+  local cli="$1"
+  shift
+  if command -v acompose >/dev/null 2>&1; then
+    command acompose -- "$cli" "$@"
+    return
+  fi
+  command "$cli" "$@"
+}
+
+claude() { _siren_agent_launch claude "$@"; }
+codex() { _siren_agent_launch codex "$@"; }
+goose() { _siren_agent_launch goose "$@"; }
+opencode() { _siren_agent_launch opencode "$@"; }
 
 pre-commit-aos-version-defined() {
   local version
@@ -283,8 +316,10 @@ git-pr-title() {
 }
 
 apply-aos-common() {
+  local repo
+  repo=$(_siren_aos_repo_root) || return 1
   # shellcheck disable=SC1091
-  source "$HOME/projects/coilyco-flight-deck/agentic-os/shell/common.sh"
+  source "$repo/shell/common.sh"
 }
 
 # Exec from a WSL shell into native Windows PowerShell: SSH-into-WSL sessions skip
@@ -391,29 +426,7 @@ github-token-load() {
   export HOMEBREW_GITHUB_PACKAGES_TOKEN="$GITHUB_PERSONAL_ACCESS_TOKEN"
 }
 
-# --- In-process AWS SSM secret loader (memory only, never disk) ---
-ssm-load() {
-  local quiet=0
-  if [ "$1" = "--quiet" ]; then
-    quiet=1
-    shift
-  fi
-  local profile="${1:-default}"
-  local region="${2:-us-east-1}"
-  local json count name value key
-  json=$(AWS_PROFILE="$profile" AWS_REGION="$region" \
-    aws ssm get-parameters-by-path --path "/" --recursive --with-decryption \
-    --query 'Parameters[].{Name:Name,Value:Value}' --output json) || return 1
-  while IFS="$(printf '\t')" read -r name value; do
-    key=$(printf '%s' "${name#/}" | tr '/-' '__' | tr '[:lower:]' '[:upper:]')
-    export "$key=$value"
-  done <<EOF
-$(printf '%s' "$json" | jq -r '.[] | [.Name, .Value] | @tsv')
-EOF
-  count=$(printf '%s' "$json" | jq 'length')
-  [ "$quiet" -eq 1 ] || printf 'loaded %s SSM exports into env\n' "$count"
-}
-
+# Fetch one SSM value on demand without persisting it.
 ssm-get() {
   local name="$1"
   local profile="${2:-default}"
@@ -423,12 +436,14 @@ ssm-get() {
     --query 'Parameter.Value' --output text
 }
 
-# Auto-cd a fresh interactive shell landing at $HOME into the projects root,
-# matching Warp's default new-tab directory.
+# Auto-cd a fresh interactive shell landing at $HOME into the configured
+# startup directory, matching Warp's default new-tab directory.
 case $- in
   *i*)
-    if [ "$PWD" = "$HOME" ] && [ -d "$HOME/projects" ]; then
-      cd "$HOME/projects"
+    _siren_startup_dir="${WARP_STARTUP_DIR:-$PROJECTS_ROOT}"
+    if [ "$PWD" = "$HOME" ] && [ -d "$_siren_startup_dir" ]; then
+      cd "$_siren_startup_dir"
     fi
+    unset _siren_startup_dir
     ;;
 esac

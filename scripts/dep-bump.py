@@ -1,28 +1,30 @@
 #!/usr/bin/env python3
 """Resolve the dev-base image's pinned tool versions against upstream and bump them.
 
-The dev-base tier Dockerfiles (`docker/dev-base/<tier>/Dockerfile`) hand-pin
-every tool as an `ARG` (`UV_VERSION`, `NODE_VERSION`, ...). `release.yml`
-republishes the image family on every push to main, but nothing keeps those
-pins current, so the published image drifts behind upstream until a human edits
-an `ARG` (agentic-os#272, ward#301).
+The dev-base Dockerfile tree hand-pins every tool as an `ARG` (`UV_VERSION`,
+`NODE_VERSION`, ...). `release.yml` republishes the language-image family on
+every push to main, but nothing keeps those pins current, so the published
+images drift behind upstream until a human edits an `ARG` (agentic-os#272,
+ward#301).
 
 This script is the auto-bump: `plan` resolves each pin's latest upstream release
 and reports the drift; `apply` rewrites a single `ARG` in place. The scheduled
 `.forgejo/workflows/dep-bump.yml` runs `plan`, commits one bump per stale tool,
-and pushes to main, which republishes via the existing `publish-image` job. The
-bump logic lives here (the publish pipeline is this repo's per AGENTS.md); the
-fleet rollout is not this script's concern.
+and pushes to main, which republishes the language matrix and full fan-in
+image. The bump logic lives here (the publish pipeline is this repo's per
+AGENTS.md). The fleet rollout is not this script's concern.
 
 Stdlib only (urllib, no `requests`) so it runs on a bare Forgejo runner with just
 `python3`. Each resolver is isolated: an upstream that is flaky or reshapes its
 API drops that one tool from the plan, it never blocks the others.
 
 Version policy: bumps stay on the pinned line where crossing it is risky. Node
-tracks the latest release of its currently-pinned major (no surprise major jump);
-uv/go/aws-cli/claude/mcporter/codex/goose/ward/gh/helm/kubectl/yq track the
-latest stable upstream release (ward off its Forgejo tags, mcporter off npm,
-everything else off a GitHub Releases/tags feed).
+tracks the latest release of its currently-pinned major (no surprise major jump).
+agent-compose tracks canonical Forgejo releases. uv/go/aws-cli/claude/mcporter/
+codex/goose/gh/helm/kubectl/yq track the latest stable upstream release
+(mcporter off npm, everything else off a GitHub Releases/tags feed). Ward is
+manual until raw ward releases become trustworthy staging inputs and aos owns
+the prod/N-1 promotion.
 
 Usage:
     python3 scripts/dep-bump.py plan            # TSV: NAME<TAB>CURRENT<TAB>LATEST
@@ -41,11 +43,12 @@ import urllib.request
 from pathlib import Path
 from typing import Callable
 
-from agentic_os.dev_base import DEV_BASE_ROOT, TIER_SPECS
+from agentic_os.dev_base import DEV_BASE_ROOT
 
 DOCKERFILE = DEV_BASE_ROOT
 
 GITHUB_API = "https://api.github.com"
+FORGEJO_API = "https://forgejo.coilysiren.me/api/v1"
 _TIMEOUT = 30
 
 
@@ -60,12 +63,12 @@ def parse_args_block(text: str) -> dict[str, str]:
 
 
 def load_pins(dockerfile: Path) -> dict[str, str]:
-    """Collect ARG defaults from a single Dockerfile or the split dev-base tree."""
+    """Collect ARG defaults from one Dockerfile or the dev-base tree."""
     if dockerfile.is_file():
         return parse_args_block(dockerfile.read_text(encoding="utf-8"))
     pins: dict[str, str] = {}
-    for tier in TIER_SPECS:
-        pins.update(parse_args_block(tier.dockerfile.read_text(encoding="utf-8")))
+    for path in sorted(dockerfile.rglob("Dockerfile")):
+        pins.update(parse_args_block(path.read_text(encoding="utf-8")))
     return pins
 
 
@@ -153,6 +156,19 @@ def _gh_tag(repo: str, tag_re: re.Pattern[str]) -> str | None:
     return pick_highest(cands)
 
 
+def _forgejo_release(repo: str, tag_re: re.Pattern[str]) -> str | None:
+    """Highest stable canonical Forgejo release tag matching `tag_re` group 1."""
+    data = _get_json(f"{FORGEJO_API}/repos/{repo}/releases?limit=50")
+    cands = []
+    for rel in data:  # type: ignore[union-attr]
+        if rel.get("draft") or rel.get("prerelease"):
+            continue
+        match = tag_re.match(rel.get("tag_name", ""))
+        if match:
+            cands.append(match.group(1))
+    return pick_highest(cands)
+
+
 def _resolve_uv() -> str | None:
     return _gh_release("astral-sh/uv", re.compile(r"^v?(\d+\.\d+\.\d+)$"))
 
@@ -188,6 +204,13 @@ def _resolve_claude() -> str | None:
 def _resolve_mcporter() -> str | None:
     data = _get_json("https://registry.npmjs.org/mcporter/latest")
     return data.get("version")  # type: ignore[union-attr]
+
+
+def _resolve_agent_compose() -> str | None:
+    return _forgejo_release(
+        "coilyco-flight-deck/agent-compose",
+        re.compile(r"^v(\d+\.\d+\.\d+)$"),
+    )
 
 
 def _resolve_codex() -> str | None:
@@ -242,23 +265,8 @@ def _resolve_dotnet(current: str) -> str | None:
     return data.get("latest-sdk")  # type: ignore[union-attr]
 
 
-def _resolve_ward() -> str | None:
-    # ward lives on Forgejo (not GitHub), so its tags list is the version source.
-    # Return the bare X.Y.Z - the Dockerfile ARG is v-less; the build re-prefixes.
-    data = _get_json(
-        "https://forgejo.coilysiren.me/api/v1/repos/coilyco-flight-deck/ward/tags?limit=100"
-    )
-    tag_re = re.compile(r"^v(\d+\.\d+\.\d+)$")
-    cands = []
-    for tag in data:  # type: ignore[union-attr]
-        match = tag_re.match(tag.get("name", ""))
-        if match:
-            cands.append(match.group(1))
-    return pick_highest(cands)
-
-
-# Resolver per ARG (node's gets the pinned value, to stay on its major). No
-# resolver = never auto-bumped: the golangci-lint / kdlfmt opt-out (auto-bump doc).
+# Resolver per ARG. No resolver means never auto-bumped.
+# Node stays on major; ward opts out until aos validates prod/N-1.
 RESOLVERS: dict[str, Callable[..., str | None]] = {
     "UV_VERSION": _resolve_uv,
     "NODE_VERSION": _resolve_node,
@@ -266,6 +274,7 @@ RESOLVERS: dict[str, Callable[..., str | None]] = {
     "AWSCLI_VERSION": _resolve_awscli,
     "CLAUDE_VERSION": _resolve_claude,
     "MCPORTER_VERSION": _resolve_mcporter,
+    "AGENT_COMPOSE_VERSION": _resolve_agent_compose,
     "CODEX_VERSION": _resolve_codex,
     "GOOSE_VERSION": _resolve_goose,
     "GH_VERSION": _resolve_gh,
@@ -275,52 +284,9 @@ RESOLVERS: dict[str, Callable[..., str | None]] = {
     "YQ_VERSION": _resolve_yq,
     "TAILSCALE_VERSION": _resolve_tailscale,
     "TRUFFLEHOG_VERSION": _resolve_trufflehog,
-    "WARD_VERSION": _resolve_ward,
     "DOTNET_VERSION": _resolve_dotnet,
 }
 _NEEDS_CURRENT = {"NODE_VERSION", "DOTNET_VERSION"}
-
-PUBLISHED_TIER_OWNERSHIP: tuple[tuple[str, tuple[str, ...]], ...] = (
-    ("dev-base-core", ("UV_VERSION", "WARD_VERSION")),
-    ("dev-base-lang-node", ("NODE_VERSION",)),
-    ("dev-base-lang-go", ("GO_VERSION",)),
-    ("dev-base-lang-dotnet", ("DOTNET_VERSION",)),
-    (
-        "dev-base-ops",
-        (
-            "AWSCLI_VERSION",
-            "GH_VERSION",
-            "DOCKER_VERSION",
-            "HELM_VERSION",
-            "KUBECTL_VERSION",
-            "YQ_VERSION",
-            "TAILSCALE_VERSION",
-        ),
-    ),
-    ("dev-base-agent", ("CLAUDE_VERSION", "MCPORTER_VERSION", "CODEX_VERSION", "GOOSE_VERSION")),
-    ("dev-base-full", ("TRUFFLEHOG_VERSION",)),
-)
-
-
-def _build_target_ownership(tiers: tuple[tuple[str, tuple[str, ...]], ...]) -> dict[str, str]:
-    """Map each managed ARG to exactly one published target."""
-    ownership: dict[str, str] = {}
-    seen_targets: set[str] = set()
-    for tier in tiers:
-        target, managed_args = tier
-        if target in seen_targets:
-            raise ValueError(f"duplicate published target declared: {target}")
-        seen_targets.add(target)
-        for arg in managed_args:
-            if arg in ownership:
-                raise ValueError(f"duplicate ownership declared for ARG {arg}")
-            ownership[arg] = target
-    return ownership
-
-
-ARG_TO_TARGET = _build_target_ownership(PUBLISHED_TIER_OWNERSHIP)
-PUBLISHED_TARGETS = tuple(target for target, _ in PUBLISHED_TIER_OWNERSHIP)
-
 
 def compute_plan(text: str) -> list[dict[str, str]]:
     """Resolve every pinned ARG and return the ones whose upstream latest differs.

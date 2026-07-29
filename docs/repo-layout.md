@@ -6,7 +6,7 @@ Full breakdown of what lives where. Summary in [the README](../README.md).
 
 One shared core, two thin per-shell entries, so bash and zsh run identical env, PATH, aliases, and functions.
 
-- `shell/common.sh` - shared core. Env + per-OS PATH, aliases, git helpers, `rg` wrapper, the SSM loader, auto-cd to `~/projects`. Env runs once per terminal tree via `_SIREN_SHELL_ENV`.
+- `shell/common.sh` - env, per-OS PATH, aliases, git helpers, `rg`, SSM loading, workspace-root discovery, and auto-cd via `$WARP_STARTUP_DIR` (default `$PROJECTS_ROOT`). Env runs once per terminal tree via `_SIREN_SHELL_ENV`.
 - `shell/zshrc` - zsh entry, symlinked to `~/.zshrc`. Sources `common.sh`, then zsh-only bits: `compinit`, the `vcs_info` siren prompt, `warp.zsh`.
 - `shell/bashrc` - bash entry, symlinked to `~/.bashrc`. Sources `common.sh`, then bash-only bits: completion, the `PROMPT_COMMAND` siren prompt.
 - `shell/warp.zsh` - the zsh-only `warp` dispatcher + completion.
@@ -31,7 +31,6 @@ Setup, after `brew install --cask karabiner-elements`:
 
 ## scripts
 
-- `verbatim-echo.sh` - wrap a command's output in a fenced block clipped to 20 lines / 100 chars per line for chat-safe dumps.
 - `check-aws-config.py` - reject the `[profile default]` trap in `~/.aws/config` that surfaces later as a cryptic `NoRegion` from SSM/S3.
 - `gpg-ssm` / `gpg-ssm.cmd` - GPG signing wrapper that pulls the passphrase from AWS SSM at `/coilysiren/gpg-passphrase` and bootstraps `/coilysiren/gpg-secret-key` when the configured signing key is missing locally. The `.cmd` is a bash.exe shim Git for Windows needs.
 - `agent-name.sh` - decorate the agent self-name for the Claude Code status line or the SessionStart hook. The name comes from `ward agent-name` with a local fallback when ward is absent.

@@ -33,6 +33,13 @@ cat >"$exclude_paths_file" <<'EOF'
 (^|/)(dist|build)/
 EOF
 
+# Git Bash creates a POSIX-style /tmp path, while the native Windows
+# trufflehog binary needs the equivalent Windows path.
+trufflehog_exclude_paths="$exclude_paths_file"
+if command -v cygpath >/dev/null 2>&1; then
+  trufflehog_exclude_paths="$(cygpath -w "$exclude_paths_file")"
+fi
+
 trufflehog git file://. --since-commit HEAD \
-  --exclude-paths "$exclude_paths_file" \
+  --exclude-paths "$trufflehog_exclude_paths" \
   --no-verification --no-update --fail
