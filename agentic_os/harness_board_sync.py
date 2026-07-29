@@ -127,9 +127,78 @@ def load_board(
     harnesses = _mapping(
         harness_document.get("harnesses"), f"{harnesses_file}: harnesses"
     )
+    role_eligibility = _mapping(
+        harness_document.get("role_eligibility", {}),
+        f"{harnesses_file}: role_eligibility",
+    )
     canonical_roles = load_canonical_roles(roles_path)
     _check_keys(roles, set(canonical_roles), f"{roles_file}: roles")
     _check_keys(selections, set(canonical_roles), f"{selections_file}: selections")
+    unknown_eligibility_roles = sorted(set(role_eligibility) - set(canonical_roles))
+    if unknown_eligibility_roles:
+        raise BoardSyncError(
+            f"{harnesses_file}: role_eligibility has unknown roles "
+            f"{unknown_eligibility_roles}"
+        )
+    harness_roles: dict[str, frozenset[str] | None] = {}
+    for raw_harness, raw_spec in harnesses.items():
+        harness = _slug(raw_harness, f"{harnesses_file}: harness name")
+        harness_spec = _mapping(raw_spec, f"{harnesses_file}: {harness}")
+        raw_roles = harness_spec.get("roles")
+        if raw_roles is None:
+            harness_roles[harness] = None
+            continue
+        if not isinstance(raw_roles, list) or not raw_roles:
+            raise BoardSyncError(
+                f"{harnesses_file}: {harness}.roles must be a non-empty list"
+            )
+        scoped_roles = frozenset(
+            _slug(value, f"{harnesses_file}: {harness}.roles entry")
+            for value in raw_roles
+        )
+        if len(scoped_roles) != len(raw_roles):
+            raise BoardSyncError(f"{harnesses_file}: {harness} repeats a role")
+        unknown_roles = sorted(scoped_roles - set(canonical_roles))
+        if unknown_roles:
+            raise BoardSyncError(
+                f"{harnesses_file}: {harness}.roles has unknown roles {unknown_roles}"
+            )
+        harness_roles[harness] = scoped_roles
+    allowed_by_role: dict[str, frozenset[str]] = {}
+    for role, raw_constraint in role_eligibility.items():
+        constraint = _mapping(
+            raw_constraint,
+            f"{harnesses_file}: role_eligibility.{role}",
+        )
+        _check_keys(
+            constraint,
+            {"allowed_harnesses"},
+            f"{harnesses_file}: role_eligibility.{role}",
+        )
+        raw_allowed = constraint["allowed_harnesses"]
+        if not isinstance(raw_allowed, list) or not raw_allowed:
+            raise BoardSyncError(
+                f"{harnesses_file}: role_eligibility.{role} "
+                "allowed_harnesses must be a non-empty list"
+            )
+        allowed = frozenset(
+            _slug(
+                value,
+                f"{harnesses_file}: role_eligibility.{role}.allowed_harnesses entry",
+            )
+            for value in raw_allowed
+        )
+        if len(allowed) != len(raw_allowed):
+            raise BoardSyncError(
+                f"{harnesses_file}: role_eligibility.{role} repeats a harness"
+            )
+        unknown_harnesses = sorted(allowed - set(harnesses))
+        if unknown_harnesses:
+            raise BoardSyncError(
+                f"{harnesses_file}: role_eligibility.{role} has unknown harnesses "
+                f"{unknown_harnesses}"
+            )
+        allowed_by_role[role] = allowed
 
     routes: list[RoleRoute] = []
     unattended_roles: set[str] = set()
@@ -178,6 +247,16 @@ def load_board(
             if not isinstance(supported, list) or intent not in supported:
                 raise BoardSyncError(
                     f"{harnesses_file}: {harness} does not declare intent {intent}"
+                )
+            supported_roles = harness_roles[harness]
+            if supported_roles is not None and role not in supported_roles:
+                raise BoardSyncError(
+                    f"{harnesses_file}: {harness} does not declare role {role}"
+                )
+            allowed = allowed_by_role.get(role)
+            if allowed is not None and harness not in allowed:
+                raise BoardSyncError(
+                    f"{harnesses_file}: {harness} is not eligible for role {role}"
                 )
             lanes.append(Lane(intent=intent, harness=harness))
         routes.append(RoleRoute(role=role, lanes=tuple(lanes)))

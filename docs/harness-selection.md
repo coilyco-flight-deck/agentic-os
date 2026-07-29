@@ -15,7 +15,7 @@ The committed board contains twelve roles and nineteen lanes:
 * **pm** - `strategic-planning` uses `hermes`. `project-coordination` uses `plane`.
 * **designer** - `product-shaping` uses `penpot`. `design-production` uses `aosx`.
 * **social** - `message-composition` uses `mixpost`. `channel-publishing` uses `elizaos`.
-* **community** - `knowledge-retrieval` uses `rasa`. `conversation-management` uses `elizaos`.
+* **community** - Both intents use the exclusive `sirens-discord-ops` harness.
 * **sales** - `research-synthesis` uses `hermes`. `conversation-management` uses `elizaos`.
 * **customer-success** - `knowledge-retrieval` and `conversation-management` both use `rasa`.
 * **ceo** - `strategic-planning` uses `hermes`.
@@ -46,9 +46,10 @@ harness or product surface. A launcher or profile invokes the selected adapter.
 
 AOS owns the public
 [agent and harness capability registry](../.agents/harnesses.yaml), including
-descriptions, source links, and compatible intents. AOSH owns its hand-selected
-`roles.yaml` role-intent joins and `agent-selections.yaml` lane choices because
-those inputs participate in hardware scoring and backend routing.
+descriptions, links, intents, optional roles, and role eligibility. The
+Community allowlist admits only `sirens-discord-ops` without changing shared
+intents. AOSH owns `roles.yaml` joins and `agent-selections.yaml` choices because
+they participate in hardware scoring and backend routing.
 
 AOS also owns the generated `intent` children inside each canonical role in
 [`.agents/roles.kdl`](../.agents/roles.kdl), the committed agent-compose

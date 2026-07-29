@@ -1,5 +1,8 @@
 # Public agent and harness capability registry. Owner: coilyco-flight-deck/agentic-os.
 max_options_per_intent: 4
+role_eligibility:
+  community:
+    allowed_harnesses: [sirens-discord-ops]
 harnesses:
   aider:
     description: >-
@@ -51,10 +54,10 @@ harnesses:
     intents: [code-review]
   elizaos:
     description: >-
-      ElizaOS is an extensible agent runtime with connectors for social and
-      community channels. Choose it when the work involves maintaining
-      conversations or publishing through several external platforms and needs a
-      programmable, persistent agent behind those channel integrations.
+      ElizaOS is an extensible agent runtime with connectors for social channels.
+      Choose it when publishing or sales conversations span several external
+      platforms and need a programmable, persistent agent behind those channel
+      integrations.
     url: "https://github.com/elizaOS/eliza"
     intents: [channel-publishing, conversation-management]
   factory-worker:
@@ -209,6 +212,15 @@ harnesses:
       of only free-form generation.
     url: "https://rasa.com/docs/"
     intents: [conversation-management, knowledge-retrieval]
+  sirens-discord-ops:
+    description: >-
+      Sirens Discord Ops is the exclusive Community harness for the Sirens Discord.
+      It owns Discord invocation and delivery, Community context, tool use,
+      structured responses, evaluation, and observability while keeping inference
+      behind a model-opaque logical route.
+    url: "https://forgejo.coilysiren.me/coilyco-gaming/sirens-discord-ops"
+    intents: [knowledge-retrieval, conversation-management]
+    roles: [community]
   vtcode:
     description: >-
       VTCode is a Rust coding agent with semantic code context, native sandboxing,

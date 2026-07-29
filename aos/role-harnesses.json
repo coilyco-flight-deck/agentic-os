@@ -97,11 +97,11 @@
       "intents": [
         {
           "intent": "knowledge-retrieval",
-          "harness": "rasa"
+          "harness": "sirens-discord-ops"
         },
         {
           "intent": "conversation-management",
-          "harness": "elizaos"
+          "harness": "sirens-discord-ops"
         }
       ]
     },

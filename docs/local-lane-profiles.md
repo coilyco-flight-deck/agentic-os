@@ -13,7 +13,7 @@ The stable JSON output is:
 {
   "role": "community",
   "intent": "knowledge-retrieval",
-  "harness": "rasa",
+  "harness": "sirens-discord-ops",
   "route": "community/knowledge-retrieval"
 }
 ```

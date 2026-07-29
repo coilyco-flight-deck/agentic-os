@@ -33,9 +33,9 @@ selections:
       agent: elizaos
   community:
     knowledge-retrieval:
-      agent: rasa
+      agent: sirens-discord-ops
     conversation-management:
-      agent: elizaos
+      agent: sirens-discord-ops
   sales:
     research-synthesis:
       agent: hermes

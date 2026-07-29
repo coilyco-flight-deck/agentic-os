@@ -229,7 +229,10 @@ def test_missing_aos_harness_registry_fails_closed(
         )
 
 
-@pytest.mark.parametrize("failure", ["missing-lane", "rationale", "incompatible"])
+@pytest.mark.parametrize(
+    "failure",
+    ["missing-lane", "rationale", "incompatible", "role-ineligible"],
+)
 def test_malformed_selections_fail_closed(
     board_sources: tuple[Path, Path, Path, Path], failure: str
 ) -> None:
@@ -247,8 +250,12 @@ def test_malformed_selections_fail_closed(
             selection = engineer["autonomous-coding"]
             assert isinstance(selection, dict)
             selection["rationale"] = "not part of the contract"
-        else:
+        elif failure == "incompatible":
             engineer["autonomous-coding"] = {"agent": "aider"}
+        else:
+            community = selections["community"]
+            assert isinstance(community, dict)
+            community["conversation-management"] = {"agent": "elizaos"}
 
     _rewrite_yaml(selections_path, mutate)
 
