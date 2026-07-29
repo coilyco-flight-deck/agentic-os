@@ -64,6 +64,10 @@ def test_validation_loads_one_local_platform_and_uses_the_affected_plan() -> Non
     assert "INSTALL_BINFMT: \"false\"" in VALIDATE_ACTION.read_text(
         encoding="utf-8"
     )
+    assert "BUILDER_NAME: default" in VALIDATE_ACTION.read_text(encoding="utf-8")
+    assert "BUILDER_DRIVER: docker" in VALIDATE_ACTION.read_text(
+        encoding="utf-8"
+    )
 
 
 def test_validation_bounds_the_persistent_builder_cache() -> None:
@@ -72,7 +76,7 @@ def test_validation_bounds_the_persistent_builder_cache() -> None:
 
     assert "cache-max:" in action
     assert "docker buildx prune" in cleanup
-    assert "--builder aos-pr-builder" in cleanup
+    assert '--builder "${BUILDER_NAME:-default}"' in cleanup
     assert '--max-used-space "$CACHE_MAX"' in cleanup
 
 
@@ -80,6 +84,7 @@ def test_shared_builder_keeps_publication_multi_arch_capability() -> None:
     text = SETUP_BUILDER.read_text(encoding="utf-8")
 
     assert 'builder_name="${BUILDER_NAME:-aosbuilder}"' in text
+    assert 'builder_driver="${BUILDER_DRIVER:-docker-container}"' in text
     assert '${INSTALL_BINFMT:-true}' in text
     assert "tonistiigi/binfmt --install all" in text
 

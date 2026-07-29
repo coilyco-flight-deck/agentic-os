@@ -76,11 +76,12 @@ runs:
       shell: bash
       run: bash "${GITHUB_ACTION_PATH}/../publish-dev-base/scripts/resolve-docker-host.sh"
 
-    - name: Reuse the single-architecture validation builder
+    - name: Select the single-architecture local builder
       if: ${{ steps.plan.outputs.has_work == 'true' }}
       shell: bash
       env:
-        BUILDER_NAME: aos-pr-builder
+        BUILDER_NAME: default
+        BUILDER_DRIVER: docker
         INSTALL_BINFMT: "false"
       run: bash "${GITHUB_ACTION_PATH}/../publish-dev-base/scripts/setup-builder.sh"
 
@@ -107,6 +108,7 @@ runs:
       if: ${{ always() && steps.plan.outputs.has_work == 'true' }}
       shell: bash
       env:
+        BUILDER_NAME: default
         CACHE_MAX: ${{ inputs.cache-max }}
         TAG: ${{ inputs.tag }}
       run: bash "${GITHUB_ACTION_PATH}/scripts/cleanup.sh"
