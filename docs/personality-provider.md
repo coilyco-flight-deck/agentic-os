@@ -61,9 +61,9 @@ compose {
 delivery preserves selected skill directories. Both modes carry the embedded
 invariant and personality definitions without an AOS personality provider.
 
-Host convergence needs no `roster_sources` entry for personalities. Optional
-roster sources remain overlay inputs. Container composition admits the AOS
-root for capabilities and uses the embedded person source for personalities.
+Host convergence needs no `roster_sources` entry for personalities. Optional roster sources remain overlays.
+After skill changes, rerun agent-compose or AOS composition and start a new agent session. Existing bundles do not hot-reload.
+Container composition admits the AOS root for capabilities and uses the embedded person source for personalities.
 
 ## Behavioral boundary
 

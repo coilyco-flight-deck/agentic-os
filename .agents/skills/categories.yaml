@@ -52,6 +52,16 @@ categories:
 
   # ---- Exact-name skills ----
 
+  - id: design-system
+    kind: exact
+    exact: design-system
+    enforce_status: false
+
+  - id: mcp-server-patterns
+    kind: exact
+    exact: mcp-server-patterns
+    enforce_status: false
+
 # ---- Global checks ----
 
 forbidden_body_strings: []
