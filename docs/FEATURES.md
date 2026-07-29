@@ -6,16 +6,17 @@ This lists shipped capabilities, not files.
 
 ## Inventory
 
-- [Shell and secrets](features-shell-secrets.md) - shared shell setup, agent-compose preflight, Warp, SSM, and GPG.
-- [Branded director terminal](alacritty-directors.md) - Sombra Alacritty director, projects-root default, and cwd override.
+- [Shell and secrets](features-shell-secrets.md) - shared shells, Warp, SSM, and GPG.
+- [Branded director terminal](alacritty-directors.md) - Sombra Alacritty director.
 - [Speech helper](aos-say.md) - `aos-say` client plus relay for status speech.
 - **Karabiner key bindings** - complex modifications for the external keyboard and Remote Desktop.
 - [Agents and sessions](features-agents-sessions.md) - self-name, session pulse, status line, and harness policy.
 - [Agent-compose provider](personality-provider.md) - scoped skills and personality alignment.
+- [Agent tool evaluation](../.agents/skills/tooling-agent-tool-evaluation/SKILL.md) - cross-harness tool evals.
 - [Role-composed skills](role-composed-skills.md) - role-gated CEO and specialist knowledge.
-- [AOS launcher](aos-cli.md) - standalone or Ward-governed role, context, tool,
-  [MCP inventory and tailnet](aos-standalone-connectivity.md) composition plus
-  [role-gated kubeconfig](aos-kubeconfig.md) projection and
+- [AOS launcher](aos-cli.md) - standalone and Ward role or context
+  with [MCP and tailnet](aos-standalone-connectivity.md),
+  [role-gated kubeconfig](aos-kubeconfig.md), and
   [check-ins](aos-acompose-checkin.md).
 - [aosguard](aosguard.md) - AOS-specific guarded CLI and generated skill.
 - [Code review skill](../.agents/composed/tooling-code-review/COMPOSED.md) - QA-only in-container review stance.

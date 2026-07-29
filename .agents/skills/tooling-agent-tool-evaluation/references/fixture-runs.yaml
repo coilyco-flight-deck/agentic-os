@@ -1,0 +1,64 @@
+fixture: inventory-evaluation-observed-runs
+constant_setup:
+  harness: fixture-harness
+  agent: fixture-agent
+  instructions: Complete the task with the available inventory tool.
+  data_snapshot: inventory-2026-07-29
+runs:
+  - id: useful-exact-quantity
+    definition: useful
+    task: exact-quantity
+    correctness: correct
+    duration_seconds: 0.8
+    tool_call_count: 1
+    failures: []
+    result:
+      sellable_units: 17
+    actionable_feedback:
+      - Keep the descriptive name and explicit required fields.
+      - Keep the date format and allowed warehouse values in parameter guidance.
+
+  - id: ambiguous-bounded-summary
+    definition: ambiguous
+    task: bounded-summary
+    correctness: correct
+    duration_seconds: 6.4
+    tool_call_count: 2
+    failures:
+      - The first result returned 500 records with 12 fields each.
+      - The agent had to filter the oversized result locally.
+    result:
+      warehouse_quantities:
+        NW-1: 17
+        SE-2: 4
+    actionable_feedback:
+      - Rename lookup to inventory_search so the domain and operation are clear.
+      - Replace q and location with documented sku and warehouse_code inputs.
+      - Add a limit, field selection, and pagination with a focused default.
+
+  - id: retry-prone-exact-quantity
+    definition: retry_prone
+    task: exact-quantity
+    correctness: correct_after_avoidable_retries
+    duration_seconds: 4.7
+    tool_call_count: 3
+    failures:
+      - Call 1 omitted warehouse because the schema marked it optional.
+      - Call 2 used 07/29/2026 because the date format was unspecified.
+    result:
+      stock: 17
+    actionable_feedback:
+      - Mark warehouse as required in the exposed schema.
+      - Rename on to as_of_date and document the YYYY-MM-DD format.
+      - Include the accepted format in validation errors.
+
+comparison:
+  candidate: useful
+  baseline: ambiguous
+  prior: retry_prone
+  decision: adopt_candidate
+  evidence:
+    - All three definitions eventually produced correct fixture outcomes.
+    - The useful definition completed in one call without an oversized result.
+    - The baseline produced avoidable result volume and extra processing.
+    - The prior definition needed two avoidable recovery calls.

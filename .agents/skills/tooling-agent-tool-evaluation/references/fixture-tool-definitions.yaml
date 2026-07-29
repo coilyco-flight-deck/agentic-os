@@ -1,0 +1,81 @@
+fixture: inventory-tool-definition-variants
+tool_definitions:
+  useful:
+    comparison_role: candidate
+    name: inventory_quantity
+    description: >-
+      Return sellable units for one exact SKU and warehouse, optionally at an
+      ISO 8601 calendar date.
+    input_schema:
+      type: object
+      properties:
+        sku:
+          type: string
+          description: Exact product SKU, such as WIDGET-BLUE.
+        warehouse_code:
+          type: string
+          description: Warehouse code. Allowed values are NW-1 and SE-2.
+        as_of_date:
+          type: string
+          format: date
+          description: Optional ISO 8601 date in YYYY-MM-DD form. Defaults to today.
+      required:
+        - sku
+        - warehouse_code
+      additionalProperties: false
+    result_contract:
+      maximum_items: 1
+      success_example:
+        sku: WIDGET-BLUE
+        warehouse_code: NW-1
+        as_of_date: 2026-07-29
+        sellable_units: 17
+      error_example:
+        error: invalid_warehouse_code
+        message: warehouse_code must be one of NW-1 or SE-2.
+
+  ambiguous:
+    comparison_role: baseline
+    name: lookup
+    description: Looks up inventory data.
+    input_schema:
+      type: object
+      properties:
+        q:
+          type: string
+        location:
+          type: string
+        date:
+          type: string
+      required: []
+    result_contract:
+      default_items: 500
+      fields_per_item: 12
+      pagination: false
+      error_example:
+        error: bad input
+
+  retry_prone:
+    comparison_role: prior
+    name: stock_check
+    description: Get stock for a product.
+    input_schema:
+      type: object
+      properties:
+        sku:
+          type: string
+          description: Product identifier.
+        warehouse:
+          type: string
+          description: Warehouse.
+        on:
+          type: string
+          description: Date.
+      required:
+        - sku
+    result_contract:
+      success_example:
+        stock: 17
+      error_examples:
+        - Missing required runtime field warehouse.
+        - Invalid date. Use YYYY-MM-DD.
