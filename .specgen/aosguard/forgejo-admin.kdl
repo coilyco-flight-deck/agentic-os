@@ -1,0 +1,17 @@
+// Forgejo operations that require an attended administrator credential. Keep
+// these outside the bot-authenticated wrapper so ordinary reads and writes
+// continue to use the coilyco-ops token.
+wrap aosguard ops forgejo-admin {
+    spec forgejo-admin.swagger.v1.json.gz
+    base-url "forgejo.coilysiren.me/api/v1"
+    auth header-token {
+        header Authorization
+        prefix "token "
+        value env FORGEJO_ADMIN_TOKEN
+    }
+    restrict owner matches coily*
+    can replace-all repo-topic {
+        op repoUpdateTopics
+        describe "replace the complete repository topic set with an attended administrator credential (PUT /repos/{owner}/{repo}/topics); repeat --topics for each retained topic"
+    }
+}
