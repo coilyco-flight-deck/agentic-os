@@ -176,6 +176,7 @@ DEFAULT_HOOK_IDS = [
     "documentation-layout",
     "context-load-points",
     "code-comments",
+    "actions-run-one-line",
     "source-doc-refs",
     "catalog-block-present",
     "check-skills",
