@@ -14,7 +14,10 @@ jq -e \
   '.source == "person:kai" and (.role_order | length > 0) and (.personalities | length > 0)' \
   "$roster_dir/person.json" >/dev/null
 test -s "$roster_dir/AGENTS.COMPOSE.md"
-test -n "$(find "$roster_dir/personalities" -type f -name '*.md' -print -quit)"
+test -n "$(
+  find "$roster_dir/.agents/skills" \
+    -type f -path '*/personality-*/SKILL.md' -print -quit
+)"
 
 python3 -m agentic_os.forgejo_actions_list --help >/dev/null
 ward --version
