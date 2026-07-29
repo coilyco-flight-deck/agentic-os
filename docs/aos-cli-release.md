@@ -12,7 +12,8 @@ full dev-base image, so CLI delivery never waits on image promotion.
 Every push to canonical `main` queues
 `.forgejo/workflows/aos-cli-release.yml` without cancellation. The job:
 
-1. runs Python, Go, and pre-commit validation
+1. installs the validated workflow Ward, then runs Python, Go, and pre-commit
+   validation
 2. bumps the CLI minor version without reading commit-message signals
 3. cross-compiles matching `aos` and `aosguard` binaries for every target in
    `aos/release-targets.txt`
