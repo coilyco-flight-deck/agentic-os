@@ -1,12 +1,15 @@
 # Dev-base publish resume
 
-The dev-base publish path is image-resumable. A workflow dispatch accepts a
-commit SHA and optional tag, checks the target registry manifest first, and
-skips the full image when that exact checkpoint already exists.
+The dev-base publish path is tier-resumable. A workflow dispatch accepts a
+commit SHA, optional tag, and tier. It checks the target registry manifest
+first and skips any language or full image whose exact checkpoint already
+exists. Selecting `full` builds any missing language prerequisites before the
+fan-in image. Selecting one language rebuilds only that specialist.
 
-The release retry accepts the same commit-derived source tag and promotes only
-the full manifest. Registry login, manifest inspection, build, and promote
-operations all use bounded retry budgets.
+The release retry accepts the same commit-derived source tag and promotes the
+language manifests in parallel with the full manifest. Registry login,
+manifest inspection, build, and promote operations all use bounded retry
+budgets.
 
 See also:
 

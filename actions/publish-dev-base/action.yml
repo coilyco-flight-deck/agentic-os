@@ -1,11 +1,14 @@
-name: "Publish dev-base"
+name: "Publish one dev-base tier"
 description: |
-  Build and push the full multi-arch development image, or retag an
-  already-pushed draft into the release tags.
+  Build and push one multi-arch language or full image, or retag an
+  already-pushed draft tier into the release tags.
 
 inputs:
+  tier:
+    description: "Published image tier."
+    required: true
   tag:
-    description: "Release tag to stamp onto the image."
+    description: "Release tag to stamp onto the tier image."
     required: true
   alias:
     description: "Optional moving alias tag pushed alongside the stamped tag."
@@ -77,6 +80,7 @@ runs:
       shell: bash
       env:
         MODE: ${{ inputs.mode }}
+        TIER: ${{ inputs.tier }}
         TAG: ${{ inputs.tag }}
         ALIAS: ${{ inputs.alias }}
         EXTRA_ALIASES: ${{ inputs.extra-aliases }}
@@ -94,6 +98,7 @@ runs:
       shell: bash
       env:
         MODE: ${{ inputs.mode }}
+        TIER: ${{ inputs.tier }}
         TAG: ${{ inputs.tag }}
         ALIAS: ${{ inputs.alias }}
         EXTRA_ALIASES: ${{ inputs.extra-aliases }}
@@ -104,6 +109,7 @@ runs:
       run: bash "${GITHUB_ACTION_PATH}/scripts/publish-image.sh"
 
     - name: Verify the full development surface on both architectures
+      if: ${{ inputs.tier == 'full' }}
       shell: bash
       env:
         IMAGE_BASE: ${{ inputs.image-base }}

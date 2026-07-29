@@ -1,8 +1,10 @@
-"""Tests for the single full-image publish workflow."""
+"""Tests for the independent dev-base publish workflow surface."""
 
 from __future__ import annotations
 
 from pathlib import Path
+
+from agentic_os.dev_base import PUBLISHED_TIER_NAMES
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -39,19 +41,25 @@ def _assert_alert_steps_are_non_blocking(text: str) -> None:
         )
 
 
-def test_workflows_publish_and_promote_only_full() -> None:
+def test_workflows_publish_parallel_languages_then_full() -> None:
     publish = PUBLISH.read_text(encoding="utf-8")
     release = RELEASE.read_text(encoding="utf-8")
 
+    assert "publish-languages:" in publish
     assert "publish-full:" in publish
+    assert "retag-languages:" in release
     assert "retag-full:" in release
-    assert "publish-languages" not in publish
-    assert "retag-lang-" not in release
-    assert "matrix:" not in publish
-    assert "\n      tier:" not in publish
-    assert "\n          tier:" not in release
-    assert publish.count("uses: ./actions/publish-dev-base") == 1
-    assert release.count("uses: ./actions/publish-dev-base") == 1
+    for tier in PUBLISHED_TIER_NAMES:
+        if tier.startswith("lang-"):
+            assert f"          - {tier}" in publish
+            assert f"          - {tier}" in release
+    assert "max-parallel: 4" in publish
+    assert "tier: ${{ matrix.tier }}" in publish
+    assert "tier: ${{ matrix.tier }}" in release
+    assert "needs: [plan-draft, publish-languages]" in publish
+    assert "needs: [plan-release, retag-languages, retag-full]" in release
+    assert publish.count("uses: ./actions/publish-dev-base") == 2
+    assert release.count("uses: ./actions/publish-dev-base") == 2
 
 
 def test_publish_workflow_keeps_resume_inputs_and_non_blocking_alerts() -> None:
@@ -62,8 +70,8 @@ def test_publish_workflow_keeps_resume_inputs_and_non_blocking_alerts() -> None:
         assert needle in publish
     for needle in ("sha:", "tag:", "source-tag:", "continue-on-error: true"):
         assert needle in release
-    assert "tier:" not in publish
-    assert "tier:" not in release
+    assert "github.event.inputs.tier == 'all'" in publish
+    assert "github.event.inputs.tier == 'full'" in publish
     _assert_alert_steps_are_non_blocking(publish)
     _assert_alert_steps_are_non_blocking(release)
 
@@ -71,9 +79,10 @@ def test_publish_workflow_keeps_resume_inputs_and_non_blocking_alerts() -> None:
 def test_full_image_build_uses_the_dedicated_runner() -> None:
     publish = PUBLISH.read_text(encoding="utf-8")
 
-    assert publish.count("runs-on: docker-build") == 1
+    assert publish.count("runs-on: docker-build") == 2
+    assert "publish-languages:" in publish
     assert "publish-full:" in publish
-    assert "needs: [plan-draft]" in publish
+    assert "needs: [plan-draft, publish-languages]" in publish
     assert "plan-draft:\n    runs-on: docker\n" in publish
 
 
@@ -104,9 +113,10 @@ def test_publish_action_verifies_every_toolchain_and_aosguard() -> None:
     action = PUBLISH_ACTION.read_text(encoding="utf-8")
     script = VERIFY_FULL.read_text(encoding="utf-8")
 
-    assert "inputs:\n  tag:" in action
-    assert "\n  tier:" not in action
+    assert "inputs:\n  tier:" in action
+    assert "required: true" in action
     assert "Verify the full development surface on both architectures" in action
+    assert "if: ${{ inputs.tier == 'full' }}" in action
     assert "scripts/verify-full.sh" in action
     assert 'image="${IMAGE_BASE}:${TAG}"' in script
     assert "linux/amd64 linux/arm64" in script

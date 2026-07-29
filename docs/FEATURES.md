@@ -32,7 +32,7 @@ This lists shipped capabilities, not files.
 - [Role surface tiers](role-surface-tiers.md) - guarded Engineer/QA observation and wider Director/Ops tiers.
 - [Cross-repo tooling and release](features-release-tooling.md) - hooks, diagnostics, promotion, retries, reruns.
 - [Telegram CI failure alerts](telegram-ci-alerts.md) - reusable red-channel alerting for failing jobs.
-- [dev-base image](dev-base-image.md) - full Ubuntu toolchain image with AOS-owned Git identity.
+- [dev-base image family](dev-base-image.md) - parallel Ubuntu language images plus the full fan-in surface.
 - [CI parity in dev-base](ci-in-dev-base.md) - CI runs inside the moving :release dev-base image.
 - [Pull-request CI gate](ci-in-dev-base.md) - the live `ci` workflow that runs `pytest` on pull requests.
 - [AGENTS pointer](features-agents-pointer.md) - generated sibling-repo workspace pointer.

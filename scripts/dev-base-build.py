@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build, publish, or promote the full dev-base image."""
+"""Build, publish, or promote the dev-base language-image family."""
 from __future__ import annotations
 
 import argparse
@@ -271,20 +271,26 @@ def _build_plan(
             )
             continue
         cmd = _docker_base_command(push, platforms)
-        if not push:
+        is_language = str(entry["tier"]).startswith("lang-")
+        if is_language and not push:
             cmd.extend(["--build-arg", f"TARGETARCH={_host_targetarch()}"])
-        cmd.extend(
-            [
-                "--build-arg",
-                f"WARD_CONFIG_REF_COMMIT={ward_config_ref_commit}",
-                "--build-context",
-                "aos-cli=aos",
-                "--build-context",
-                "aosguard-spec=.specgen",
-                "--build-context",
-                "aosguard-python=agentic_os",
-            ]
-        )
+        if is_language:
+            cmd.extend(
+                [
+                    "--build-arg",
+                    f"WARD_CONFIG_REF_COMMIT={ward_config_ref_commit}",
+                    "--build-context",
+                    "aos-cli=aos",
+                    "--build-context",
+                    "aosguard-spec=.specgen",
+                    "--build-context",
+                    "aosguard-python=agentic_os",
+                ]
+            )
+        else:
+            cmd.extend(["--build-arg", f"BASE_IMAGE={entry['base_image']}"])
+        for arg_name, graft_ref in entry["graft_images"].items():
+            cmd.extend(["--build-arg", f"{arg_name}={graft_ref}"])
         if push:
             cmd.extend(["--cache-from", cache_from, "--cache-to", cache_to])
         cmd.extend(["-t", entry["image"]])
@@ -296,7 +302,7 @@ def _build_plan(
         if push:
             summary = "\n".join(
                 [
-                    "### dev-base publish context",
+                    f"### {entry['tier']} publish context",
                     "",
                     f"- image: {entry['image']}",
                     f"- cache: {entry['cache_image']}",
@@ -477,7 +483,7 @@ def main(argv: list[str] | None = None) -> int:
     p_plan = sub.add_parser("plan", help="Print the derived image plan as JSON.")
     p_plan.set_defaults(func=_cmd_plan)
 
-    p_build = sub.add_parser("build", help="Build the full image.")
+    p_build = sub.add_parser("build", help="Build the image family in order.")
     p_build.add_argument(
         "--push",
         action="store_true",
@@ -487,7 +493,7 @@ def main(argv: list[str] | None = None) -> int:
         "--tier",
         default=None,
         choices=PUBLISHED_TIER_NAMES,
-        help="Compatibility selector. Only full is supported.",
+        help="Build only this tier. Its source tiers must already exist.",
     )
     p_build.add_argument(
         "--platforms",
@@ -496,7 +502,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     p_build.set_defaults(func=_cmd_build)
 
-    p_promote = sub.add_parser("promote", help="Retag an already-pushed image.")
+    p_promote = sub.add_parser("promote", help="Retag an already-pushed image family.")
     p_promote.add_argument(
         "--source-tag",
         required=True,
@@ -506,14 +512,14 @@ def main(argv: list[str] | None = None) -> int:
         "--tier",
         default=None,
         choices=PUBLISHED_TIER_NAMES,
-        help="Compatibility selector. Only full is supported.",
+        help="Promote only this tier.",
     )
     p_promote.set_defaults(func=_cmd_promote)
 
     p_check = sub.add_parser(
         "check",
         help=(
-            "Report whether the full image already matches its target checkpoint."
+            "Report whether the requested tier matches its target checkpoint."
         ),
     )
     p_check.add_argument("--mode", required=True, choices=("build", "promote"))
@@ -521,7 +527,7 @@ def main(argv: list[str] | None = None) -> int:
         "--tier",
         default=None,
         choices=PUBLISHED_TIER_NAMES,
-        help="Compatibility selector. Only full is supported.",
+        help="Check only this tier.",
     )
     p_check.add_argument(
         "--source-tag",

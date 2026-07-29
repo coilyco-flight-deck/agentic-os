@@ -1,12 +1,11 @@
-"""Tests for the single full dev-base image contract."""
+"""Tests for the independent dev-base language-image contract."""
 
 from __future__ import annotations
 
 import argparse
 import importlib.util
+import re
 from pathlib import Path
-
-import pytest
 
 from agentic_os.dev_base import (
     DEV_BASE_ROOT,
@@ -21,7 +20,12 @@ from agentic_os.dev_base import (
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = REPO_ROOT / "scripts" / "dev-base-build.py"
 DOCKERFILE = DEV_BASE_ROOT / "Dockerfile"
+FULL_DOCKERFILE = DEV_BASE_ROOT / "full" / "Dockerfile"
 INSTALL_COMMON = DEV_BASE_ROOT / "install-common.sh"
+VERIFY_COMMON = DEV_BASE_ROOT / "verify-common.sh"
+LANGUAGE_TIERS = tuple(
+    tier for tier in PUBLISHED_TIER_NAMES if tier.startswith("lang-")
+)
 
 
 def _load_script():
@@ -32,35 +36,52 @@ def _load_script():
     return module
 
 
-def test_only_the_full_image_is_publishable() -> None:
-    assert PUBLISHED_TIER_NAMES == ("full",)
-    assert tuple(TIER_BY_NAME) == ("full",)
-    assert TIER_BY_NAME["full"].dockerfile == DOCKERFILE
-    assert not (DEV_BASE_ROOT / "full" / "Dockerfile").exists()
+def _stage_text(text: str, stage: str) -> str:
+    match = re.search(rf"^FROM ubuntu:\S+ AS {re.escape(stage)}$", text, re.MULTILINE)
+    assert match is not None
+    start = match.start()
+    remainder = text[start:]
+    next_stage = remainder.find("\nFROM ", 1)
+    return remainder if next_stage < 0 else remainder[:next_stage]
 
-    with pytest.raises(ValueError, match="unsupported dev-base image"):
-        tier_tag("lang-node", "candidate")
 
-
-def test_full_dockerfile_contains_every_language_and_operator_surface() -> None:
+def test_language_targets_are_direct_independent_ubuntu_descendants() -> None:
     text = DOCKERFILE.read_text(encoding="utf-8")
 
-    assert text.count(" AS dev-base-full") == 1
-    assert "dev-base-lang-" not in text
-    assert text.count("bash /tmp/install-common.sh") == 1
-    for command in (
-        "node --version",
-        "go version",
-        "dotnet --list-sdks",
-        "cargo --version",
-        "trunk --version",
-        "python --version",
-        "pipenv --version",
-        "aosguard --version",
-        "agent-compose version",
-        "agent-compose roster",
-    ):
-        assert command in text
+    assert PUBLISHED_TIER_NAMES == (
+        "lang-node",
+        "lang-go",
+        "lang-dotnet",
+        "lang-rust",
+        "lang-python",
+        "full",
+    )
+    for tier in LANGUAGE_TIERS:
+        spec = TIER_BY_NAME[tier]
+        assert spec.base_tier is None
+        assert spec.dockerfile == DOCKERFILE
+        assert spec.shared_context is True
+        assert re.search(
+            rf"^FROM ubuntu:\S+ AS {re.escape(spec.stage)}$", text, re.MULTILINE
+        )
+        stage = _stage_text(text, spec.stage)
+        assert "ARG BASE_IMAGE" not in stage
+        assert "FROM ${BASE_IMAGE}" not in stage
+
+
+def test_language_targets_share_source_not_runtime_parentage() -> None:
+    text = DOCKERFILE.read_text(encoding="utf-8")
+
+    assert text.count(
+        "source=install-common.sh,target=/tmp/install-common.sh"
+    ) == len(LANGUAGE_TIERS)
+    assert text.count(
+        "source=verify-common.sh,target=/tmp/verify-common.sh"
+    ) == len(LANGUAGE_TIERS)
+    assert text.count('ENTRYPOINT ["/opt/agentic-os/ward-shell-entrypoint.sh"]') == len(
+        LANGUAGE_TIERS
+    )
+    assert text.count('CMD ["bash"]') == len(LANGUAGE_TIERS)
     assert "specgen-linux-${TARGETARCH}" in text
     assert "sha256sum -c -" in text
     assert "COPY --from=aosguard-spec" in text
@@ -71,11 +92,29 @@ def test_full_dockerfile_contains_every_language_and_operator_surface() -> None:
         "/opt/agentic-os/aosguard-skill"
     ) in text
     assert text.count(
-        "test -s /opt/agentic-os/aosguard-skill/aosguard/SKILL.md"
-    ) == 2
-    assert text.count(
+        "COPY --from=dev-base-tool-builder /opt/agentic-os/aosguard-skill "
+        "/opt/agentic-os/aosguard-skill"
+    ) == len(LANGUAGE_TIERS)
+
+
+def test_common_verification_covers_the_composed_runtime_surface() -> None:
+    text = VERIFY_COMMON.read_text(encoding="utf-8")
+
+    for command in (
+        "aosguard --version",
+        "agent-compose version",
+        "agent-compose roster",
+        "person.json",
+        "python3 -m agentic_os.forgejo_actions_list --help",
+        "ward --version",
+        "WARD_DOCTOR_ALLOW_PLACEHOLDERS=1 ward doctor",
+    ):
+        assert command in text
+    assert "test -s /opt/agentic-os/aosguard-skill/aosguard/SKILL.md" in text
+    assert (
         "test -s /opt/agentic-os/aosguard-skill/aosguard/references/commands.yaml"
-    ) == 2
+        in text
+    )
 
 
 def test_substrate_seed_parser_accepts_windows_line_endings() -> None:
@@ -85,7 +124,10 @@ def test_substrate_seed_parser_accepts_windows_line_endings() -> None:
 
 
 def test_version_defaults_have_one_owning_source() -> None:
-    text = DOCKERFILE.read_text(encoding="utf-8")
+    text = (
+        DOCKERFILE.read_text(encoding="utf-8")
+        + FULL_DOCKERFILE.read_text(encoding="utf-8")
+    )
     for name in (
         "UV_VERSION",
         "GO_VERSION",
@@ -100,27 +142,73 @@ def test_version_defaults_have_one_owning_source() -> None:
         assert text.count(f"ARG {name}=") == 1
 
 
-def test_publish_plan_has_one_plain_tagged_image() -> None:
+def test_linuxbrew_is_absent_and_transient_npm_cache_is_removed() -> None:
+    text = (
+        DOCKERFILE.read_text(encoding="utf-8")
+        + FULL_DOCKERFILE.read_text(encoding="utf-8")
+        + INSTALL_COMMON.read_text(encoding="utf-8")
+    )
+
+    assert "linuxbrew" not in text.lower()
+    assert "/home/linuxbrew" not in text
+    assert "rm -rf /root/.npm" in text
+
+
+def test_full_remains_the_composed_default_surface() -> None:
+    spec = TIER_BY_NAME["full"]
+    assert spec.dockerfile == FULL_DOCKERFILE
+    assert spec.base_tier == "lang-rust"
+    assert spec.graft_tiers == ("lang-go", "lang-dotnet", "lang-python")
+
+    text = FULL_DOCKERFILE.read_text(encoding="utf-8")
+    assert "FROM ${BASE_IMAGE} AS dev-base-full" in text
+    assert (
+        "PATH=/usr/local/go/bin:/usr/local/dotnet:/usr/local/node/bin:"
+        "/usr/local/cargo/bin:" in text
+    )
+    assert "DOTNET_ROOT=/usr/local/dotnet" in text
+    assert "COPY --from=dev-base-lang-go-graft /usr/local/go /usr/local/go" in text
+    assert (
+        "COPY --from=dev-base-lang-dotnet-graft /usr/local/dotnet /usr/local/dotnet"
+        in text
+    )
+    assert (
+        "COPY --from=dev-base-lang-python-graft /opt/uv/tools/pipenv "
+        "/opt/uv/tools/pipenv" in text
+    )
+
+
+def test_publish_plan_models_parallel_languages_and_full_fan_in() -> None:
     plan = publish_plan(REGISTRY_BASE, "candidate", ("release", "latest"))
 
-    assert plan == [
-        {
-            "tier": "full",
-            "stage": "dev-base-full",
-            "dockerfile": "docker/dev-base/Dockerfile",
-            "context_dir": "docker/dev-base",
-            "image": f"{REGISTRY_BASE}:candidate",
-            "cache_image": f"{REGISTRY_BASE}:buildcache",
-            "alias_images": [
-                f"{REGISTRY_BASE}:release",
-                f"{REGISTRY_BASE}:latest",
-            ],
-            "alias_image": f"{REGISTRY_BASE}:release",
-        }
+    assert [entry["tier"] for entry in plan] == list(PUBLISHED_TIER_NAMES)
+    for entry in plan[:-1]:
+        assert entry["base_image"] == "ubuntu:24.04"
+        assert entry["dockerfile"] == "docker/dev-base/Dockerfile"
+        assert entry["context_dir"] == "docker/dev-base"
+        assert entry["image"] == (
+            f"{REGISTRY_BASE}:{entry['tier']}-candidate"
+        )
+    full = plan[-1]
+    assert full["image"] == f"{REGISTRY_BASE}:candidate"
+    assert full["base_image"] == f"{REGISTRY_BASE}:lang-rust-candidate"
+    assert full["graft_images"] == {
+        "LANG_GO_IMAGE": f"{REGISTRY_BASE}:lang-go-candidate",
+        "LANG_DOTNET_IMAGE": f"{REGISTRY_BASE}:lang-dotnet-candidate",
+        "LANG_PYTHON_IMAGE": f"{REGISTRY_BASE}:lang-python-candidate",
+    }
+    assert full["alias_images"] == [
+        f"{REGISTRY_BASE}:release",
+        f"{REGISTRY_BASE}:latest",
     ]
 
 
-def test_local_build_targets_full_with_all_named_contexts(monkeypatch) -> None:
+def test_language_tags_are_prefixed_and_full_tags_stay_plain() -> None:
+    assert tier_tag("lang-node", "candidate") == "lang-node-candidate"
+    assert tier_tag("full", "candidate") == "candidate"
+
+
+def test_local_language_build_sets_architecture_and_named_contexts(monkeypatch) -> None:
     script = _load_script()
     commands: list[list[str]] = []
     monkeypatch.setattr(script, "_run", lambda cmd: commands.append(cmd))
@@ -131,8 +219,8 @@ def test_local_build_targets_full_with_all_named_contexts(monkeypatch) -> None:
         REGISTRY_BASE,
         "candidate",
         False,
-        "linux/amd64,linux/arm64",
-        only_tier="full",
+        None,
+        only_tier="lang-go",
     )
 
     assert len(commands) == 1
@@ -143,8 +231,35 @@ def test_local_build_targets_full_with_all_named_contexts(monkeypatch) -> None:
     assert "aos-cli=aos" in build
     assert "aosguard-spec=.specgen" in build
     assert "aosguard-python=agentic_os" in build
-    assert build[build.index("--target") + 1] == "dev-base-full"
+    assert build[build.index("--target") + 1] == "dev-base-lang-go"
     assert Path(build[-1]).as_posix() == "docker/dev-base"
+
+
+def test_full_build_consumes_only_language_image_refs(monkeypatch) -> None:
+    script = _load_script()
+    commands: list[list[str]] = []
+    monkeypatch.setattr(script, "_run", lambda cmd: commands.append(cmd))
+    monkeypatch.setattr(script, "_ward_config_ref_commit", lambda: "commit")
+
+    script._build_plan(
+        REGISTRY_BASE,
+        "candidate",
+        False,
+        None,
+        only_tier="full",
+    )
+
+    build = commands[0]
+    build_args = [
+        build[index + 1] for index, value in enumerate(build) if value == "--build-arg"
+    ]
+    assert f"BASE_IMAGE={REGISTRY_BASE}:lang-rust-candidate" in build_args
+    assert f"LANG_GO_IMAGE={REGISTRY_BASE}:lang-go-candidate" in build_args
+    assert f"LANG_DOTNET_IMAGE={REGISTRY_BASE}:lang-dotnet-candidate" in build_args
+    assert f"LANG_PYTHON_IMAGE={REGISTRY_BASE}:lang-python-candidate" in build_args
+    assert "aos-cli=aos" not in build
+    assert build[build.index("--target") + 1] == "dev-base-full"
+    assert Path(build[-1]).as_posix() == "docker/dev-base/full"
 
 
 def test_pushed_build_skips_an_existing_checkpoint(monkeypatch) -> None:

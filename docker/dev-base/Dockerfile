@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile:1
-# AOS publishes one development image. The full target contains every supported
-# language toolchain and every agent/operator binary.
+# Every published language target starts directly from Ubuntu. The full image
+# fans the independently built language images back into one compatibility
+# surface.
 
 ARG UV_VERSION=0.11.26
 ARG GO_VERSION=1.26.5
@@ -22,9 +23,6 @@ ARG HELM_VERSION=4.2.2
 ARG KUBECTL_VERSION=1.36.2
 ARG YQ_VERSION=4.53.3
 ARG TAILSCALE_VERSION=1.98.8
-ARG GOLANGCI_LINT_VERSION=2.12.2
-ARG TRUFFLEHOG_VERSION=3.95.8
-ARG KDLFMT_VERSION=0.1.7
 ARG TARGETARCH
 
 FROM ubuntu:24.04 AS dev-base-tool-builder
@@ -132,10 +130,161 @@ RUN set -eux; \
     rm -rf /tmp/aosguard-spec; \
     aosguard --version
 
-FROM ubuntu:24.04 AS dev-base-full
+FROM ubuntu:24.04 AS dev-base-lang-node
+ARG UV_VERSION
+ARG AGENT_COMPOSE_VERSION
+ARG NODE_VERSION
+ARG CLAUDE_VERSION
+ARG MCPORTER_VERSION
+ARG CODEX_VERSION
+ARG GOOSE_VERSION
+ARG OPENCODE_VERSION
+ARG AWSCLI_VERSION
+ARG GH_VERSION
+ARG DOCKER_VERSION
+ARG HELM_VERSION
+ARG KUBECTL_VERSION
+ARG YQ_VERSION
+ARG TAILSCALE_VERSION
+ARG TARGETARCH
+ENV PATH=/usr/local/node/bin:/usr/local/bin:/usr/bin:/bin \
+    HOME=/root UV_TOOL_DIR=/opt/uv/tools UV_TOOL_BIN_DIR=/usr/local/bin \
+    UV_PYTHON_INSTALL_DIR=/opt/uv/python AWS_DEFAULT_REGION=us-east-1 \
+    AWS_REGION=us-east-1 AOS_GIT_NAME=coilyco-ops \
+    AOS_GIT_EMAIL=coilyco-ops@coilysiren.me PYTHONPATH=/opt/agentic-os/python
+LABEL org.opencontainers.image.source="https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.title="agentic-os lang-node"
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+RUN --mount=type=bind,source=install-common.sh,target=/tmp/install-common.sh \
+    --mount=type=bind,source=substrate-image-repos.txt,target=/tmp/substrate-repos.txt \
+    bash /tmp/install-common.sh /tmp/substrate-repos.txt
+COPY --chmod=0755 agent-name.sh statusline.sh ward-shell-entrypoint.sh /opt/agentic-os/
+COPY --chmod=0755 statusline.d/ /opt/agentic-os/statusline.d/
+COPY --chmod=0644 claude-managed-settings.json /etc/claude-code/managed-settings.json
+COPY --chmod=0644 substrate-image-repos.txt /opt/agentic-os/substrate-repos.txt
+COPY --from=dev-base-tool-builder /usr/local/bin/ward /usr/local/bin/ward
+COPY --from=dev-base-tool-builder /usr/local/bin/aos /usr/local/bin/aos
+COPY --from=dev-base-tool-builder /usr/local/bin/aosguard /usr/local/bin/aosguard
+COPY --from=dev-base-tool-builder /opt/agentic-os/aosguard-skill /opt/agentic-os/aosguard-skill
+COPY --from=aosguard-python . /opt/agentic-os/python/agentic_os/
+ARG WARD_CONFIG_REF_COMMIT
+ENV WARD_CONFIG_REF=forgejo.coilysiren.me/coilyco-flight-deck/agentic-os@${WARD_CONFIG_REF_COMMIT}//.ward
+RUN --mount=type=bind,source=verify-common.sh,target=/tmp/verify-common.sh \
+    node --version && bash /tmp/verify-common.sh
+WORKDIR /workspace
+ENTRYPOINT ["/opt/agentic-os/ward-shell-entrypoint.sh"]
+CMD ["bash"]
+
+FROM ubuntu:24.04 AS dev-base-lang-go
 ARG UV_VERSION
 ARG GO_VERSION
+ARG AGENT_COMPOSE_VERSION
+ARG NODE_VERSION
+ARG CLAUDE_VERSION
+ARG MCPORTER_VERSION
+ARG CODEX_VERSION
+ARG GOOSE_VERSION
+ARG OPENCODE_VERSION
+ARG AWSCLI_VERSION
+ARG GH_VERSION
+ARG DOCKER_VERSION
+ARG HELM_VERSION
+ARG KUBECTL_VERSION
+ARG YQ_VERSION
+ARG TAILSCALE_VERSION
+ARG TARGETARCH
+ENV PATH=/usr/local/go/bin:/usr/local/node/bin:/usr/local/bin:/usr/bin:/bin \
+    HOME=/root UV_TOOL_DIR=/opt/uv/tools UV_TOOL_BIN_DIR=/usr/local/bin \
+    UV_PYTHON_INSTALL_DIR=/opt/uv/python AWS_DEFAULT_REGION=us-east-1 \
+    AWS_REGION=us-east-1 AOS_GIT_NAME=coilyco-ops \
+    AOS_GIT_EMAIL=coilyco-ops@coilysiren.me PYTHONPATH=/opt/agentic-os/python
+LABEL org.opencontainers.image.source="https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.title="agentic-os lang-go"
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+RUN --mount=type=bind,source=install-common.sh,target=/tmp/install-common.sh \
+    --mount=type=bind,source=substrate-image-repos.txt,target=/tmp/substrate-repos.txt \
+    bash /tmp/install-common.sh /tmp/substrate-repos.txt
+RUN set -eux; . /opt/agentic-os/arch.env; \
+    curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
+      "https://go.dev/dl/go${GO_VERSION}.linux-${GO_ARCH}.tar.gz" -o /tmp/go.tar.gz; \
+    tar -xzf /tmp/go.tar.gz -C /usr/local; rm /tmp/go.tar.gz; go version
+COPY --chmod=0755 agent-name.sh statusline.sh ward-shell-entrypoint.sh /opt/agentic-os/
+COPY --chmod=0755 statusline.d/ /opt/agentic-os/statusline.d/
+COPY --chmod=0644 claude-managed-settings.json /etc/claude-code/managed-settings.json
+COPY --chmod=0644 substrate-image-repos.txt /opt/agentic-os/substrate-repos.txt
+COPY --from=dev-base-tool-builder /usr/local/bin/ward /usr/local/bin/ward
+COPY --from=dev-base-tool-builder /usr/local/bin/aos /usr/local/bin/aos
+COPY --from=dev-base-tool-builder /usr/local/bin/aosguard /usr/local/bin/aosguard
+COPY --from=dev-base-tool-builder /opt/agentic-os/aosguard-skill /opt/agentic-os/aosguard-skill
+COPY --from=aosguard-python . /opt/agentic-os/python/agentic_os/
+ARG WARD_CONFIG_REF_COMMIT
+ENV WARD_CONFIG_REF=forgejo.coilysiren.me/coilyco-flight-deck/agentic-os@${WARD_CONFIG_REF_COMMIT}//.ward
+RUN --mount=type=bind,source=verify-common.sh,target=/tmp/verify-common.sh \
+    go version && bash /tmp/verify-common.sh
+WORKDIR /workspace
+ENTRYPOINT ["/opt/agentic-os/ward-shell-entrypoint.sh"]
+CMD ["bash"]
+
+FROM ubuntu:24.04 AS dev-base-lang-dotnet
+ARG UV_VERSION
 ARG DOTNET_VERSION
+ARG AGENT_COMPOSE_VERSION
+ARG NODE_VERSION
+ARG CLAUDE_VERSION
+ARG MCPORTER_VERSION
+ARG CODEX_VERSION
+ARG GOOSE_VERSION
+ARG OPENCODE_VERSION
+ARG AWSCLI_VERSION
+ARG GH_VERSION
+ARG DOCKER_VERSION
+ARG HELM_VERSION
+ARG KUBECTL_VERSION
+ARG YQ_VERSION
+ARG TAILSCALE_VERSION
+ARG TARGETARCH
+ENV PATH=/usr/local/dotnet:/usr/local/node/bin:/usr/local/bin:/usr/bin:/bin \
+    HOME=/root UV_TOOL_DIR=/opt/uv/tools UV_TOOL_BIN_DIR=/usr/local/bin \
+    UV_PYTHON_INSTALL_DIR=/opt/uv/python AWS_DEFAULT_REGION=us-east-1 \
+    AWS_REGION=us-east-1 DOTNET_ROOT=/usr/local/dotnet \
+    DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 \
+    AOS_GIT_NAME=coilyco-ops AOS_GIT_EMAIL=coilyco-ops@coilysiren.me \
+    PYTHONPATH=/opt/agentic-os/python
+LABEL org.opencontainers.image.source="https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.title="agentic-os lang-dotnet"
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+RUN --mount=type=bind,source=install-common.sh,target=/tmp/install-common.sh \
+    --mount=type=bind,source=substrate-image-repos.txt,target=/tmp/substrate-repos.txt \
+    bash /tmp/install-common.sh /tmp/substrate-repos.txt
+RUN set -eux; . /opt/agentic-os/arch.env; \
+    curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
+      https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh; \
+    chmod 0755 /tmp/dotnet-install.sh; \
+    /tmp/dotnet-install.sh --version "${DOTNET_VERSION}" --architecture "${DOTNET_ARCH}" \
+      --install-dir /usr/local/dotnet --no-path; rm /tmp/dotnet-install.sh; \
+    chmod -R a+rX /usr/local/dotnet; dotnet --list-sdks
+COPY --chmod=0755 agent-name.sh statusline.sh ward-shell-entrypoint.sh /opt/agentic-os/
+COPY --chmod=0755 statusline.d/ /opt/agentic-os/statusline.d/
+COPY --chmod=0644 claude-managed-settings.json /etc/claude-code/managed-settings.json
+COPY --chmod=0644 substrate-image-repos.txt /opt/agentic-os/substrate-repos.txt
+COPY --from=dev-base-tool-builder /usr/local/bin/ward /usr/local/bin/ward
+COPY --from=dev-base-tool-builder /usr/local/bin/aos /usr/local/bin/aos
+COPY --from=dev-base-tool-builder /usr/local/bin/aosguard /usr/local/bin/aosguard
+COPY --from=dev-base-tool-builder /opt/agentic-os/aosguard-skill /opt/agentic-os/aosguard-skill
+COPY --from=aosguard-python . /opt/agentic-os/python/agentic_os/
+ARG WARD_CONFIG_REF_COMMIT
+ENV WARD_CONFIG_REF=forgejo.coilysiren.me/coilyco-flight-deck/agentic-os@${WARD_CONFIG_REF_COMMIT}//.ward
+RUN --mount=type=bind,source=verify-common.sh,target=/tmp/verify-common.sh \
+    dotnet --list-sdks && bash /tmp/verify-common.sh
+WORKDIR /workspace
+ENTRYPOINT ["/opt/agentic-os/ward-shell-entrypoint.sh"]
+CMD ["bash"]
+
+FROM ubuntu:24.04 AS dev-base-lang-rust
+ARG UV_VERSION
 ARG TRUNK_VERSION
 ARG AGENT_COMPOSE_VERSION
 ARG NODE_VERSION
@@ -151,146 +300,40 @@ ARG HELM_VERSION
 ARG KUBECTL_VERSION
 ARG YQ_VERSION
 ARG TAILSCALE_VERSION
-ARG GOLANGCI_LINT_VERSION
-ARG TRUFFLEHOG_VERSION
-ARG KDLFMT_VERSION
 ARG TARGETARCH
-
-ENV PATH=/usr/local/go/bin:/usr/local/node/bin:/usr/local/dotnet:/usr/local/cargo/bin:/usr/local/bin:/usr/bin:/bin:/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin \
-    HOME=/root \
-    HOMEBREW_PREFIX=/home/linuxbrew/.linuxbrew \
-    HOMEBREW_NO_ANALYTICS=1 \
-    HOMEBREW_NO_AUTO_UPDATE=1 \
-    UV_TOOL_DIR=/opt/uv/tools \
-    UV_TOOL_BIN_DIR=/usr/local/bin \
-    UV_PYTHON_INSTALL_DIR=/opt/uv/python \
-    CARGO_HOME=/usr/local/cargo \
-    RUSTUP_HOME=/usr/local/rustup \
-    AWS_DEFAULT_REGION=us-east-1 \
-    AWS_REGION=us-east-1 \
-    DOTNET_ROOT=/usr/local/dotnet \
-    DOTNET_CLI_TELEMETRY_OPTOUT=1 \
-    DOTNET_NOLOGO=1 \
-    AOS_GIT_NAME=coilyco-ops \
-    AOS_GIT_EMAIL=coilyco-ops@coilysiren.me \
-    PYTHONPATH=/opt/agentic-os/python
-
+ENV PATH=/usr/local/node/bin:/usr/local/cargo/bin:/usr/local/bin:/usr/bin:/bin \
+    HOME=/root UV_TOOL_DIR=/opt/uv/tools UV_TOOL_BIN_DIR=/usr/local/bin \
+    UV_PYTHON_INSTALL_DIR=/opt/uv/python CARGO_HOME=/usr/local/cargo \
+    RUSTUP_HOME=/usr/local/rustup AWS_DEFAULT_REGION=us-east-1 \
+    AWS_REGION=us-east-1 AOS_GIT_NAME=coilyco-ops \
+    AOS_GIT_EMAIL=coilyco-ops@coilysiren.me PYTHONPATH=/opt/agentic-os/python
 LABEL org.opencontainers.image.source="https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os" \
       org.opencontainers.image.licenses="MIT" \
-      org.opencontainers.image.title="agentic-os full"
-
+      org.opencontainers.image.title="agentic-os lang-rust"
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-
 RUN --mount=type=bind,source=install-common.sh,target=/tmp/install-common.sh \
     --mount=type=bind,source=substrate-image-repos.txt,target=/tmp/substrate-repos.txt \
     bash /tmp/install-common.sh /tmp/substrate-repos.txt
-
-RUN set -eux; \
-    . /opt/agentic-os/arch.env; \
-    curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
-      "https://go.dev/dl/go${GO_VERSION}.linux-${GO_ARCH}.tar.gz" \
-      -o /tmp/go.tar.gz; \
-    tar -xzf /tmp/go.tar.gz -C /usr/local; \
-    rm /tmp/go.tar.gz; \
-    go version
-
-RUN set -eux; \
-    . /opt/agentic-os/arch.env; \
-    curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
-      https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh; \
-    chmod 0755 /tmp/dotnet-install.sh; \
-    /tmp/dotnet-install.sh --version "${DOTNET_VERSION}" --architecture "${DOTNET_ARCH}" \
-      --install-dir /usr/local/dotnet --no-path; \
-    rm /tmp/dotnet-install.sh; \
-    chmod -R a+rX /usr/local/dotnet; \
-    dotnet --list-sdks
-
-RUN set -eux; \
-    apt-get update; \
-    apt-get install -y --no-install-recommends \
-      libasound2-dev \
-      libudev-dev \
-      libwayland-dev \
-      libxkbcommon-dev \
-      pkg-config; \
+RUN set -eux; apt-get update; apt-get install -y --no-install-recommends \
+      libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev pkg-config; \
     rm -rf /var/lib/apt/lists/*; \
     curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
-      https://sh.rustup.rs -o /tmp/rustup-init.sh; \
-    chmod 0755 /tmp/rustup-init.sh; \
+      https://sh.rustup.rs -o /tmp/rustup-init.sh; chmod 0755 /tmp/rustup-init.sh; \
     /tmp/rustup-init.sh -y --no-modify-path --profile minimal --default-toolchain stable; \
-    rm /tmp/rustup-init.sh; \
-    rustup target add wasm32-unknown-unknown; \
-    chmod -R a+rwX /usr/local/cargo /usr/local/rustup; \
-    cargo --version; \
-    rustc --version
-
-RUN set -eux; \
-    . /opt/agentic-os/arch.env; \
+    rm /tmp/rustup-init.sh; rustup target add wasm32-unknown-unknown; \
+    chmod -R a+rwX /usr/local/cargo /usr/local/rustup; cargo --version
+RUN set -eux; . /opt/agentic-os/arch.env; \
     curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
       "https://github.com/trunk-rs/trunk/releases/download/v${TRUNK_VERSION}/trunk-${KDL_ARCH}-unknown-linux-gnu.tar.gz" \
-      -o /tmp/trunk.tar.gz; \
-    tar -xzf /tmp/trunk.tar.gz -C /usr/local/cargo/bin trunk; \
-    chmod 0755 /usr/local/cargo/bin/trunk; \
-    rm /tmp/trunk.tar.gz; \
-    trunk --version
-
-RUN set -eux; \
-    printf '%s\n' \
-      '#include <wayland-client.h>' \
-      '#include <xkbcommon/xkbcommon.h>' \
-      'int main(void) { return 0; }' \
-      > /tmp/rust-native-smoke.c; \
-    cc /tmp/rust-native-smoke.c \
-      $(pkg-config --cflags --libs wayland-client xkbcommon) \
-      -o /tmp/rust-native-smoke; \
-    /tmp/rust-native-smoke; \
+      -o /tmp/trunk.tar.gz; tar -xzf /tmp/trunk.tar.gz -C /usr/local/cargo/bin trunk; \
+    chmod 0755 /usr/local/cargo/bin/trunk; rm /tmp/trunk.tar.gz; trunk --version
+RUN printf '%s\n' '#include <wayland-client.h>' '#include <xkbcommon/xkbcommon.h>' \
+      'int main(void) { return 0; }' > /tmp/rust-native-smoke.c && \
+    cc /tmp/rust-native-smoke.c $(pkg-config --cflags --libs wayland-client xkbcommon) \
+      -o /tmp/rust-native-smoke && /tmp/rust-native-smoke && \
     rm /tmp/rust-native-smoke /tmp/rust-native-smoke.c
-
-RUN set -eux; \
-    ln -sf /usr/bin/python3 /usr/local/bin/python; \
-    ln -sf /usr/bin/pip3 /usr/local/bin/pip; \
-    uv tool install pipenv; \
-    chmod -R a+rX /opt/uv; \
-    python --version; \
-    pip --version; \
-    pipenv --version
-
-RUN set -eux; \
-    . /opt/agentic-os/arch.env; \
-    curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
-      "https://github.com/golangci/golangci-lint/releases/download/v${GOLANGCI_LINT_VERSION}/golangci-lint-${GOLANGCI_LINT_VERSION}-linux-${GOLANGCI_ARCH}.tar.gz" \
-      -o /tmp/golangci-lint.tar.gz; \
-    tar -xzf /tmp/golangci-lint.tar.gz -C /usr/local/bin --strip-components=1 \
-      "golangci-lint-${GOLANGCI_LINT_VERSION}-linux-${GOLANGCI_ARCH}/golangci-lint"; \
-    chmod 0755 /usr/local/bin/golangci-lint; \
-    rm /tmp/golangci-lint.tar.gz; \
-    golangci-lint --version
-
-RUN set -eux; \
-    . /opt/agentic-os/arch.env; \
-    curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
-      "https://github.com/trufflesecurity/trufflehog/releases/download/v${TRUFFLEHOG_VERSION}/trufflehog_${TRUFFLEHOG_VERSION}_linux_${TRUFFLEHOG_ARCH}.tar.gz" \
-      -o /tmp/trufflehog.tar.gz; \
-    tar -xzf /tmp/trufflehog.tar.gz -C /usr/local/bin trufflehog; \
-    chmod 0755 /usr/local/bin/trufflehog; \
-    rm /tmp/trufflehog.tar.gz; \
-    trufflehog --version
-
-RUN set -eux; \
-    . /opt/agentic-os/arch.env; \
-    curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
-      "https://github.com/hougesen/kdlfmt/releases/download/v${KDLFMT_VERSION}/kdlfmt-${KDL_ARCH}-unknown-linux-gnu.tar.xz" \
-      -o /tmp/kdlfmt.tar.xz; \
-    tar -xJf /tmp/kdlfmt.tar.xz -C /usr/local/bin --strip-components=1 \
-      "kdlfmt-${KDL_ARCH}-unknown-linux-gnu/kdlfmt"; \
-    chmod 0755 /usr/local/bin/kdlfmt; \
-    rm /tmp/kdlfmt.tar.xz; \
-    kdlfmt --version
-
-COPY --chmod=0755 agent-name.sh /opt/agentic-os/agent-name.sh
-COPY --chmod=0755 statusline.sh /opt/agentic-os/statusline.sh
+COPY --chmod=0755 agent-name.sh statusline.sh ward-shell-entrypoint.sh /opt/agentic-os/
 COPY --chmod=0755 statusline.d/ /opt/agentic-os/statusline.d/
-COPY --chmod=0755 ward-shell-entrypoint.sh /opt/agentic-os/ward-shell-entrypoint.sh
 COPY --chmod=0644 claude-managed-settings.json /etc/claude-code/managed-settings.json
 COPY --chmod=0644 substrate-image-repos.txt /opt/agentic-os/substrate-repos.txt
 COPY --from=dev-base-tool-builder /usr/local/bin/ward /usr/local/bin/ward
@@ -298,34 +341,59 @@ COPY --from=dev-base-tool-builder /usr/local/bin/aos /usr/local/bin/aos
 COPY --from=dev-base-tool-builder /usr/local/bin/aosguard /usr/local/bin/aosguard
 COPY --from=dev-base-tool-builder /opt/agentic-os/aosguard-skill /opt/agentic-os/aosguard-skill
 COPY --from=aosguard-python . /opt/agentic-os/python/agentic_os/
-
 ARG WARD_CONFIG_REF_COMMIT
 ENV WARD_CONFIG_REF=forgejo.coilysiren.me/coilyco-flight-deck/agentic-os@${WARD_CONFIG_REF_COMMIT}//.ward
+RUN --mount=type=bind,source=verify-common.sh,target=/tmp/verify-common.sh \
+    cargo --version && trunk --version && bash /tmp/verify-common.sh
+WORKDIR /workspace
+ENTRYPOINT ["/opt/agentic-os/ward-shell-entrypoint.sh"]
+CMD ["bash"]
 
-RUN set -eux; \
-    node --version; \
-    go version; \
-    dotnet --list-sdks; \
-    cargo --version; \
-    trunk --version; \
-    rustup target list --installed | grep -q wasm32-unknown-unknown; \
-    python --version; \
-    pipenv --version; \
-    aosguard --version; \
-    test -s /opt/agentic-os/aosguard-skill/aosguard/SKILL.md; \
-    test -s /opt/agentic-os/aosguard-skill/aosguard/references/commands.yaml; \
-    roster_dir=$(mktemp -d); \
-    agent-compose version; \
-    agent-compose roster --out "${roster_dir}"; \
-    jq -e '.source == "person:kai" and (.role_order | length > 0) and (.personalities | length > 0)' \
-      "${roster_dir}/person.json" >/dev/null; \
-    test -s "${roster_dir}/AGENTS.COMPOSE.md"; \
-    test -n "$(find "${roster_dir}/personalities" -type f -name '*.md' -print -quit)"; \
-    rm -rf "${roster_dir}"; \
-    python3 -m agentic_os.forgejo_actions_list --help >/dev/null; \
-    ward --version; \
-    CLIGUARD_NO_SANDBOX=1 WARD_DOCTOR_ALLOW_PLACEHOLDERS=1 ward doctor
-
+FROM ubuntu:24.04 AS dev-base-lang-python
+ARG UV_VERSION
+ARG AGENT_COMPOSE_VERSION
+ARG NODE_VERSION
+ARG CLAUDE_VERSION
+ARG MCPORTER_VERSION
+ARG CODEX_VERSION
+ARG GOOSE_VERSION
+ARG OPENCODE_VERSION
+ARG AWSCLI_VERSION
+ARG GH_VERSION
+ARG DOCKER_VERSION
+ARG HELM_VERSION
+ARG KUBECTL_VERSION
+ARG YQ_VERSION
+ARG TAILSCALE_VERSION
+ARG TARGETARCH
+ENV PATH=/usr/local/node/bin:/usr/local/bin:/usr/bin:/bin \
+    HOME=/root UV_TOOL_DIR=/opt/uv/tools UV_TOOL_BIN_DIR=/usr/local/bin \
+    UV_PYTHON_INSTALL_DIR=/opt/uv/python AWS_DEFAULT_REGION=us-east-1 \
+    AWS_REGION=us-east-1 AOS_GIT_NAME=coilyco-ops \
+    AOS_GIT_EMAIL=coilyco-ops@coilysiren.me PYTHONPATH=/opt/agentic-os/python
+LABEL org.opencontainers.image.source="https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.title="agentic-os lang-python"
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+RUN --mount=type=bind,source=install-common.sh,target=/tmp/install-common.sh \
+    --mount=type=bind,source=substrate-image-repos.txt,target=/tmp/substrate-repos.txt \
+    bash /tmp/install-common.sh /tmp/substrate-repos.txt
+RUN set -eux; ln -sf /usr/bin/python3 /usr/local/bin/python; \
+    ln -sf /usr/bin/pip3 /usr/local/bin/pip; uv tool install pipenv; \
+    chmod -R a+rX /opt/uv; python --version; pip --version; pipenv --version
+COPY --chmod=0755 agent-name.sh statusline.sh ward-shell-entrypoint.sh /opt/agentic-os/
+COPY --chmod=0755 statusline.d/ /opt/agentic-os/statusline.d/
+COPY --chmod=0644 claude-managed-settings.json /etc/claude-code/managed-settings.json
+COPY --chmod=0644 substrate-image-repos.txt /opt/agentic-os/substrate-repos.txt
+COPY --from=dev-base-tool-builder /usr/local/bin/ward /usr/local/bin/ward
+COPY --from=dev-base-tool-builder /usr/local/bin/aos /usr/local/bin/aos
+COPY --from=dev-base-tool-builder /usr/local/bin/aosguard /usr/local/bin/aosguard
+COPY --from=dev-base-tool-builder /opt/agentic-os/aosguard-skill /opt/agentic-os/aosguard-skill
+COPY --from=aosguard-python . /opt/agentic-os/python/agentic_os/
+ARG WARD_CONFIG_REF_COMMIT
+ENV WARD_CONFIG_REF=forgejo.coilysiren.me/coilyco-flight-deck/agentic-os@${WARD_CONFIG_REF_COMMIT}//.ward
+RUN --mount=type=bind,source=verify-common.sh,target=/tmp/verify-common.sh \
+    python --version && pipenv --version && bash /tmp/verify-common.sh
 WORKDIR /workspace
 ENTRYPOINT ["/opt/agentic-os/ward-shell-entrypoint.sh"]
 CMD ["bash"]

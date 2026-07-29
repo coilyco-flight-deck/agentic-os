@@ -18,6 +18,7 @@ if uv run python scripts/dev-base-build.py \
   "${alias_args[@]}" \
   check \
   --mode "$MODE" \
+  --tier "$TIER" \
   "${source_args[@]}"
 then
   echo "skip_publish=true" >> "$GITHUB_OUTPUT"

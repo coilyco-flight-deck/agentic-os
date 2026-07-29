@@ -33,4 +33,8 @@ Forgejo imports use a fully qualified canonical URL:
 `uses: https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/actions/<name>@main`.
 GitHub uses the mirror.
 
-agentic-os dogfoods these actions in `.forgejo/workflows/`, using local `uses: ./actions/...` refs so the repo never waits on its mirror. Release is split so `promote.yml` gates every main push and fast-forwards `release`, `dev-base-publish.yml` publishes the draft full image on the promoted SHA, and `release.yml` stays the manual retry path. PR retriggers need a real tracked diff. Consumer pin is tag-derived (agentic-os#238). Major bumps stay hand-cut via `scripts/release.py`. `workflow_dispatch` re-fires the retry stage on enqueue miss. Walkthrough: [docs/release.md](release.md).
+agentic-os dogfoods these actions with local `uses:` refs. `promote.yml` gates
+main and advances `release`. `dev-base-publish.yml` publishes the language
+matrix and full fan-in image. `release.yml` is the manual retry path. Consumer
+pins are tag-derived (agentic-os#238), and major bumps stay hand-cut. See
+[docs/release.md](release.md).

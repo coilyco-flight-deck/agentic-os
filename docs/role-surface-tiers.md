@@ -37,7 +37,7 @@ as drift against this map instead of silently disabling a role.
 
 * **guardfile bindings** - [.ward/roles.kdl](../.ward/roles.kdl), authored here - which guarded verb families a role mounts. Examples are the Engineer/QA observe tier, Forgejo tiers, and ops guardfiles under [aws](../.ward/aws.kdl) and [tailscale](../.ward/tailscale.kdl). Per ward#578, tailnet and `~/.aws` reach keys off these bindings.
 * **role presets** - ward's tree - tagline, capabilities, modes, posture. Stripped from the aos overlay on 2026-07-10 (commit 566f42f) by design, never re-authored here.
-* **image binaries** - [docker/dev-base/](dev-base-image.md), authored here - whether language toolchains, `aosguard`, `aws`, `kubectl`, `helm`, `tailscale`, `tailscaled`, and the Docker client exist on disk. The one full image contains them all. The `ops` role remains a permission and bring-up boundary, not an image tag.
+* **image binaries** - [docker/dev-base/](dev-base-image.md), authored here - specialists carry the common operator surface plus one language toolchain. Full contains them all. The `ops` role stays a permission and bring-up boundary, not an image tag.
 * **container bring-up** - ward's tree - whether `~/.aws`, kubeconfig, tailscaled, the director Forgejo broker, and `WARD_CONTEXT_LEVEL` are live. The director does not receive `FORGEJO_TOKEN`. Standalone AOSguard mounts stay specgen-owned. A binary existing says nothing about this layer.
 
 The 2026-07-10 incident: guardfiles still compiled in, but the binaries,

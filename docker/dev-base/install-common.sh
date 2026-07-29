@@ -84,7 +84,6 @@ for attempt in 1 2 3; do
       less \
       libicu74 \
       openssh-client \
-      passwd \
       patch \
       procps \
       python3 \
@@ -110,22 +109,6 @@ ffprobe -version
 
 git lfs install --system --skip-repo
 git lfs version
-
-/usr/sbin/groupadd --gid 1001 linuxbrew
-/usr/sbin/useradd \
-  --uid 1001 \
-  --gid 1001 \
-  --create-home \
-  --home-dir /home/linuxbrew \
-  --shell /bin/bash \
-  linuxbrew
-install -d -o linuxbrew -g linuxbrew /home/linuxbrew/.linuxbrew
-su -s /bin/bash linuxbrew -c '
-  set -euo pipefail
-  export CI=1 HOME=/home/linuxbrew NONINTERACTIVE=1
-  /bin/bash -c "$(curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-  /home/linuxbrew/.linuxbrew/bin/brew --version
-'
 
 curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
   "https://astral.sh/uv/${UV_VERSION:?}/install.sh" \
@@ -158,6 +141,7 @@ rm -rf /tmp/npm-cache
 claude --version
 timeout 1m mcporter --help >/dev/null
 opencode --version
+rm -rf /root/.npm
 
 curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
   "https://github.com/openai/codex/releases/download/rust-v${CODEX_VERSION:?}/codex-${CODEX_ARCH}-unknown-linux-musl.tar.gz" \

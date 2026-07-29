@@ -2,18 +2,19 @@
 
 Three-stage Forgejo-canonical release (ward#1117 / aos#469). Stage 1:
 `promote.yml` gates every `main` push and fast-forwards `release` with
-`CI_RELEASE_TOKEN`. Stage 2: `dev-base-publish.yml` publishes the draft full
-dev-base image under `draft-${sha}` on the promoted SHA, and its manual
-dispatch path can resume that image. Stage 3: `release.yml`
+`CI_RELEASE_TOKEN`. Stage 2: `dev-base-publish.yml` publishes the five draft
+language images in parallel, then the full fan-in image under `draft-${sha}` on
+the promoted SHA. Its manual dispatch path can resume one tier or the whole
+graph. Stage 3: `release.yml`
 is manual retry only under a no-cancel queue, so retries stay sequenced and
 never gate the branch. `main` stays yolo-able. `release` is last-known-good.
 Forgejo owns the release and tag per [forgejo-github-mirror-contract.md](forgejo-github-mirror-contract.md).
 
 `promote.yml` only computes the repo gate and advances the branch. The draft
 publish workflow keeps image availability separate from branch promotion.
-`release.yml` is the manual retry path and no longer runs on push. Its retag
-job waits for the draft source tag. Dispatches can override `sha`, `tag`, and
-`source-tag` to resume the publish or retag.
+`release.yml` is the manual retry path and no longer runs on push. Its language
+and full retag jobs wait for the draft source tags. Dispatches can override
+`sha`, `tag`, and `source-tag` to resume the publish or retag.
 `draft-*` tags are commit-scoped staging refs for Forgejo package cleanup
 rules. `:latest` is a compatibility alias for `:release`.
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build or promote the full dev-base manifest.
+# Build or promote one dev-base tier manifest.
 
 set -euo pipefail
 
@@ -21,6 +21,7 @@ if [ "$MODE" = "build" ]; then
     "${base_args[@]}"
     build
     --push
+    --tier "$TIER"
     --platforms "$PLATFORMS"
   )
 elif [ "$MODE" = "promote" ]; then
@@ -33,6 +34,7 @@ elif [ "$MODE" = "promote" ]; then
     "${base_args[@]}"
     promote
     --source-tag "$SOURCE_TAG"
+    --tier "$TIER"
   )
 else
   echo "::error::unknown mode: ${MODE}" >&2
@@ -58,9 +60,10 @@ else
 fi
 if [ -n "$summary_file" ]; then
   {
-    echo "### dev-base publish failure"
+    echo "### ${TIER} publish failure"
     echo ""
     echo "- mode: ${MODE}"
+    echo "- tier: ${TIER}"
     echo "- exit code: ${rc}"
     echo "- failing command:"
     echo '```bash'
