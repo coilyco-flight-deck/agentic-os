@@ -31,6 +31,11 @@ ward exec agent-terminal -- \
   --repo coilyco-flight-deck/agentic-os
 ```
 
+Homebrew and Scoop install the versioned `agent-terminal` binary on `PATH`
+beside `aos` and `aosguard`. Installation, upgrades, rollbacks, direct release
+assets, and version checks are documented in the
+[native launcher walkthrough](agent-terminal-native.md).
+
 `--working-directory` defaults to `$PROJECTS_ROOT`, with `~/projects` as the
 portable fallback. A caller passes the flag explicitly when one director should
 open inside a specific checkout.

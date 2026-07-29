@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	_ "embed"
 	"encoding/json"
 	"errors"
 	"os"
@@ -11,25 +12,8 @@ import (
 	"testing"
 )
 
-const directorOverlay = `{
-  "format": "agent-compose.overlay.v1",
-  "schema_version": 1,
-  "person": "kai",
-  "role": "director",
-  "purpose": "Pair with the human on high level goals.",
-  "seat": {
-    "harness": "codex",
-    "name": "solar director",
-    "pronouns": "he"
-  },
-  "expression": "acting",
-  "favorite_color": "#94974a",
-  "personalities": [
-    {"name": "bold", "color": "#e1514e", "emblem": {"glyph": "▲"}},
-    {"name": "grounded", "color": "#5fa87a", "emblem": {"glyph": "◆"}},
-    {"name": "diplomatic", "color": "#19a9b0", "emblem": {"glyph": "⇄"}}
-  ]
-}`
+//go:embed testdata/director-overlay.json
+var directorOverlay string
 
 func directorRequest() launchRequest {
 	return launchRequest{
@@ -41,6 +25,25 @@ func directorRequest() launchRequest {
 		AgentComposeBin:  defaultOverlayBin,
 		AlacrittyBin:     defaultAlacrittyBin,
 		Child:            []string{"ward", "agent", "director", "--repo", "coilyco-flight-deck/agentic-os"},
+	}
+}
+
+func TestVersionFlagReportsReleaseVersion(t *testing.T) {
+	original := version
+	version = "aos-v1.2.3"
+	t.Cleanup(func() { version = original })
+
+	var output strings.Builder
+	command := newCommand(commandDeps{})
+	command.Writer = &output
+	if err := command.Run(
+		context.Background(),
+		[]string{"agent-terminal", "--version"},
+	); err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.TrimSpace(output.String()); got != "agent-terminal version aos-v1.2.3" {
+		t.Fatalf("version output = %q", got)
 	}
 }
 

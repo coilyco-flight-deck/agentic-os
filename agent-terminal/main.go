@@ -14,6 +14,8 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
+var version = "dev"
+
 const (
 	overlayFormat       = "agent-compose.overlay.v1"
 	overlaySchema       = 1
@@ -77,6 +79,7 @@ func newCommand(deps commandDeps) *cli.Command {
 		Name:      "agent-terminal",
 		Usage:     "launch one agent-compose branded Alacritty window",
 		ArgsUsage: "-- <command> [arguments...]",
+		Version:   version,
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "role", Required: true, Usage: "canonical agent-compose role"},
 			&cli.StringFlag{Name: "seat", Required: true, Usage: "canonical harness seat"},

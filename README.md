@@ -93,8 +93,9 @@ aos --role director lane-default --intent strategic-planning
 
 Ward is not part of that standalone path. See the
 [launch and handoff contract](docs/aos-cli.md).
-Homebrew and Scoop install both `aos` and `aosguard`. Direct release binaries and
-the paired native update path are documented in the [CLI release walkthrough](docs/aos-cli-release.md).
+Homebrew and Scoop install `aos`, `aosguard`, and `agent-terminal`. Direct
+release binaries and the aligned native update path are documented in the
+[CLI release walkthrough](docs/aos-cli-release.md).
 
 ## Secrets pattern
 

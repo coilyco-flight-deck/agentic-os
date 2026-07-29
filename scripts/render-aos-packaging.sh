@@ -1,5 +1,5 @@
 #!/bin/sh
-# Render Homebrew and Scoop metadata from the version-stamped aos binaries.
+# Render Homebrew and Scoop metadata from the version-stamped native AOS binaries.
 set -eu
 
 repo_root=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
@@ -31,6 +31,10 @@ aosguard_darwin_arm64=$(sha "$dist/aosguard-darwin-arm64")
 aosguard_linux_amd64=$(sha "$dist/aosguard-linux-amd64")
 aosguard_linux_arm64=$(sha "$dist/aosguard-linux-arm64")
 aosguard_windows_amd64=$(sha "$dist/aosguard-windows-amd64.exe")
+agent_terminal_darwin_arm64=$(sha "$dist/agent-terminal-darwin-arm64")
+agent_terminal_linux_amd64=$(sha "$dist/agent-terminal-linux-amd64")
+agent_terminal_linux_arm64=$(sha "$dist/agent-terminal-linux-arm64")
+agent_terminal_windows_amd64=$(sha "$dist/agent-terminal-windows-amd64.exe")
 
 cat > "$dist/aos.rb" <<EOF
 class Aos < Formula
@@ -47,6 +51,10 @@ class Aos < Formula
         url "${base}/aosguard-darwin-arm64"
         sha256 "${aosguard_darwin_arm64}"
       end
+      resource "agent-terminal" do
+        url "${base}/agent-terminal-darwin-arm64"
+        sha256 "${agent_terminal_darwin_arm64}"
+      end
     end
   end
   on_linux do
@@ -57,6 +65,10 @@ class Aos < Formula
         url "${base}/aosguard-linux-amd64"
         sha256 "${aosguard_linux_amd64}"
       end
+      resource "agent-terminal" do
+        url "${base}/agent-terminal-linux-amd64"
+        sha256 "${agent_terminal_linux_amd64}"
+      end
     end
     on_arm do
       url "${base}/aos-linux-arm64"
@@ -65,17 +77,23 @@ class Aos < Formula
         url "${base}/aosguard-linux-arm64"
         sha256 "${aosguard_linux_arm64}"
       end
+      resource "agent-terminal" do
+        url "${base}/agent-terminal-linux-arm64"
+        sha256 "${agent_terminal_linux_arm64}"
+      end
     end
   end
 
   def install
     bin.install Dir["aos-*"].first => "aos"
     resource("aosguard").stage { bin.install Dir["aosguard-*"].first => "aosguard" }
+    resource("agent-terminal").stage { bin.install Dir["agent-terminal-*"].first => "agent-terminal" }
   end
 
   test do
     assert_match version.to_s, shell_output("#{bin}/aos version")
     assert_match version.to_s, shell_output("#{bin}/aosguard --version")
+    assert_match version.to_s, shell_output("#{bin}/agent-terminal --version")
   end
 end
 EOF
@@ -92,12 +110,14 @@ cat > "$dist/aos.json" <<EOF
             "hash": "${windows_amd64}",
             "bin": [
                 ["aos-windows-amd64.exe", "aos"],
-                ["aosguard-windows-amd64.exe", "aosguard"]
+                ["aosguard-windows-amd64.exe", "aosguard"],
+                ["agent-terminal-windows-amd64.exe", "agent-terminal"]
             ]
         }
     },
     "pre_install": [
-        "Invoke-WebRequest -Uri '${base}/aosguard-windows-amd64.exe' -OutFile \"\$dir/aosguard-windows-amd64.exe\"; if ((Get-FileHash \"\$dir/aosguard-windows-amd64.exe\" -Algorithm SHA256).Hash -ne '${aosguard_windows_amd64}') { throw 'aosguard checksum mismatch' }"
+        "Invoke-WebRequest -Uri '${base}/aosguard-windows-amd64.exe' -OutFile \"\$dir/aosguard-windows-amd64.exe\"; if ((Get-FileHash \"\$dir/aosguard-windows-amd64.exe\" -Algorithm SHA256).Hash -ne '${aosguard_windows_amd64}') { throw 'aosguard checksum mismatch' }",
+        "Invoke-WebRequest -Uri '${base}/agent-terminal-windows-amd64.exe' -OutFile \"\$dir/agent-terminal-windows-amd64.exe\"; if ((Get-FileHash \"\$dir/agent-terminal-windows-amd64.exe\" -Algorithm SHA256).Hash -ne '${agent_terminal_windows_amd64}') { throw 'agent-terminal checksum mismatch' }"
     ]
 }
 EOF

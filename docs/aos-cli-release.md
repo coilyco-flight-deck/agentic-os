@@ -15,17 +15,17 @@ Every push to canonical `main` queues
 1. installs the validated workflow Ward, then runs Python, Go, and pre-commit
    validation
 2. bumps the CLI minor version without reading commit-message signals
-3. cross-compiles matching `aos` and `aosguard` binaries for every target in
-   `aos/release-targets.txt`
-4. stamps the tag into `aos version`
+3. cross-compiles matching `aos`, `aosguard`, and `agent-terminal` binaries for
+   every target in `aos/release-targets.txt`
+4. stamps the same tag into all three binaries
 5. renders checksums, Homebrew, and Scoop metadata
 6. creates or reuses the Forgejo release
 7. replaces every release asset from the clean `dist/` directory
 8. updates the tap and bucket when their write tokens are present
 
-Release assets pair `aos-*` with `aosguard-*` on Darwin arm64, Linux amd64 and
-arm64, and Windows amd64. `SHA256SUMS`, `aos.rb`, and `aos.json` cover the
-whole paired set.
+Release assets group `aos-*`, `aosguard-*`, and `agent-terminal-*` on Darwin
+arm64, Linux amd64 and arm64, and Windows amd64. `SHA256SUMS`, `aos.rb`, and
+`aos.json` cover the whole version-aligned set.
 
 ## Install
 
@@ -43,9 +43,13 @@ scoop bucket add coilyco https://forgejo.coilysiren.me/coilyco-flight-deck/scoop
 scoop install coilyco/aos
 ```
 
-Both package managers install `aos` and `aosguard`. The `aosguard` release binary
-contains its generated operator CLI and the Forgejo Actions bridge, so it works
-from an empty directory without a checkout, Ward, or specgen.
+Both package managers install `aos`, `aosguard`, and `agent-terminal` on
+`PATH`. The `aosguard` release binary contains its generated operator CLI and
+the Forgejo Actions bridge. The `agent-terminal` binary contains the Alacritty
+renderer only. Agent-compose remains the provider of
+`agent-compose.overlay.v1` and must be installed separately on native director
+hosts. See the [native launcher walkthrough](agent-terminal-native.md) for its
+dependencies, upgrades, rollback, and version reporting.
 
 Forgejo also serves every checksummed binary directly from the
 [agentic-os releases](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/releases).
@@ -66,11 +70,11 @@ assets are reused and replaced, making a retry idempotent.
 
 `ward exec aos-release-build` creates the binaries and `SHA256SUMS`. With
 `AOS_RELEASE_VERSION` set, `aos-release-package` renders local metadata and
-`aos-release-check` verifies it without creating a tag. The ordinary
-`aos-test`, repository test, and pre-commit verbs remain the release gate.
+`aos-release-check` verifies checksums, versions, `--help`, and an
+`agent-terminal --dry-run` against a renderer-neutral overlay fixture. The
+ordinary Go tests, repository test, and pre-commit verbs remain the release
+gate.
 
 ## See also
 
-* [aos-cli.md](aos-cli.md) - launch and substrate contract.
-* [release.md](release.md) - root hook and dev-base release train.
-* [FEATURES.md](FEATURES.md) - shipped inventory.
+* [AOS CLI](aos-cli.md), [root release](release.md), and [shipped features](FEATURES.md).
