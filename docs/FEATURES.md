@@ -12,7 +12,8 @@ This lists shipped capabilities, not files.
 - **Karabiner key bindings** - complex modifications for the external keyboard and Remote Desktop.
 - [Agents and sessions](features-agents-sessions.md) - self-name, session pulse, status line, and harness policy.
 - [Agent-compose provider](personality-provider.md) - scoped skills and personality alignment.
-- [Role-composed skills](role-composed-skills.md) - role-gated CEO and specialist knowledge.
+- [Role-composed skills](role-composed-skills.md) - role-gated methods with
+  behavioral skill evaluation.
 - [AOS launcher](aos-cli.md) - standalone or Ward-governed role, context, tool,
   [MCP inventory and tailnet](aos-standalone-connectivity.md) composition plus
   [role-gated kubeconfig](aos-kubeconfig.md) projection and

@@ -44,6 +44,9 @@ model refinement follows
 [agent-compose#70](https://forgejo.coilysiren.me/coilyco-flight-deck/agent-compose/issues/70)
 and
 [agentic-os#716](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/issues/716).
+The skill-authoring method keeps deterministic structure checks as the required
+gate, then offers budget-bounded trigger and behavioral evaluation for
+admission or revision decisions.
 
 ## See also
 
