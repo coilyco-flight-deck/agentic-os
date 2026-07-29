@@ -4,7 +4,10 @@
 set -euo pipefail
 
 image="${IMAGE_BASE}:${TAG}"
-for platform in linux/amd64 linux/arm64; do
+IFS=',' read -r -a platforms <<< "${PLATFORMS:-linux/amd64,linux/arm64}"
+for platform in "${platforms[@]}"; do
+  platform="${platform//[[:space:]]/}"
+  [ -n "$platform" ] || continue
   echo "verifying ${image} on ${platform}"
   docker run --rm --platform "$platform" --entrypoint bash "$image" \
     -euo pipefail -c '

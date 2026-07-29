@@ -69,6 +69,95 @@ TIER_SPECS: tuple[TierSpec, ...] = (
 )
 TIER_BY_NAME = {spec.tier: spec for spec in TIER_SPECS}
 PUBLISHED_TIER_NAMES = tuple(spec.tier for spec in TIER_SPECS)
+NAMED_CONTEXT_ROOTS = (
+    Path(".specgen"),
+    Path("agentic_os"),
+    Path("aos"),
+)
+BUILD_DEFINITION_ROOTS = (
+    Path(".forgejo/workflows/ci.yml"),
+    Path(".forgejo/workflows/dev-base-publish.yml"),
+    Path("actions/dev-base-build"),
+    Path("actions/publish-dev-base"),
+    Path("agentic_os/dev_base.py"),
+    Path("scripts/dev-base-build.py"),
+    Path("scripts/dev-base-check.sh"),
+)
+
+
+def _normalize_repo_path(path: str | Path) -> str:
+    normalized = str(path).replace("\\", "/")
+    while normalized.startswith("./"):
+        normalized = normalized[2:]
+    return normalized.rstrip("/")
+
+
+def _path_matches(path: str, root: Path) -> bool:
+    candidate = _normalize_repo_path(root)
+    return path == candidate or path.startswith(f"{candidate}/")
+
+
+def _tier_owns_path(spec: TierSpec, path: str) -> bool:
+    if any(_path_matches(path, root) for root in BUILD_DEFINITION_ROOTS):
+        return True
+
+    dockerfile = spec.dockerfile.relative_to(REPO_ROOT)
+    if _path_matches(path, dockerfile):
+        return True
+
+    if spec.shared_context:
+        full_root = (DEV_BASE_ROOT / "full").relative_to(REPO_ROOT)
+        dev_base_root = DEV_BASE_ROOT.relative_to(REPO_ROOT)
+        if _path_matches(path, dev_base_root) and not _path_matches(path, full_root):
+            return True
+        return any(_path_matches(path, root) for root in NAMED_CONTEXT_ROOTS)
+
+    return _path_matches(path, spec.dockerfile.parent.relative_to(REPO_ROOT))
+
+
+def affected_tiers(changed_paths: Iterable[str | Path]) -> tuple[str, ...]:
+    """Return directly changed tiers plus every downstream composition."""
+
+    paths = tuple(_normalize_repo_path(path) for path in changed_paths)
+    affected = {
+        spec.tier
+        for spec in TIER_SPECS
+        if any(_tier_owns_path(spec, path) for path in paths)
+    }
+
+    changed = True
+    while changed:
+        changed = False
+        for spec in TIER_SPECS:
+            dependencies = {
+                tier
+                for tier in (spec.base_tier, *spec.graft_tiers)
+                if tier is not None
+            }
+            if spec.tier not in affected and dependencies & affected:
+                affected.add(spec.tier)
+                changed = True
+
+    return tuple(spec.tier for spec in TIER_SPECS if spec.tier in affected)
+
+
+def required_build_tiers(tiers: Iterable[str]) -> tuple[str, ...]:
+    """Return the source-image closure needed to build the selected tiers."""
+
+    required = set(tiers)
+    unknown = required.difference(TIER_BY_NAME)
+    if unknown:
+        raise ValueError(f"unknown dev-base tiers: {', '.join(sorted(unknown))}")
+
+    pending = list(required)
+    while pending:
+        spec = TIER_BY_NAME[pending.pop()]
+        for dependency in (spec.base_tier, *spec.graft_tiers):
+            if dependency is not None and dependency not in required:
+                required.add(dependency)
+                pending.append(dependency)
+
+    return tuple(spec.tier for spec in TIER_SPECS if spec.tier in required)
 
 
 def tier_tag(tier: str, tag: str) -> str:

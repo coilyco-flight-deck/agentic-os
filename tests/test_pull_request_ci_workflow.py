@@ -11,11 +11,26 @@ def test_pull_request_ci_workflow_exposes_branch_protection_context() -> None:
     assert "name: ci" in workflow
     assert "pull_request:" in workflow
     assert 'scripts/install-workflow-ward.sh "${WARD_WORKFLOW_VERSION}"' in workflow
+    assert "build-dev-base:" in workflow
+    assert "runs-on: docker-build" in workflow
+    assert "uses: ./actions/dev-base-build" in workflow
+    assert "base-sha: ${{ github.event.pull_request.base.sha }}" in workflow
+
+
+def test_pull_request_image_validation_has_no_publish_credential() -> None:
+    workflow = (ROOT / ".forgejo" / "workflows" / "ci.yml").read_text()
+    image_job = workflow.split("  build-dev-base:", 1)[1]
+
+    assert "github.event_name == 'pull_request'" in image_job
+    assert "secrets." not in image_job
+    assert "REGISTRY_TOKEN" not in image_job
+    assert "--push" not in image_job
 
 
 def test_pull_request_ci_docs_name_the_required_context() -> None:
     docs = (ROOT / "docs" / "ci-in-dev-base.md").read_text()
     assert "ci / gate" in docs
+    assert "ci / build-dev-base" in docs
     assert "pull-request-and-merge" in docs
 
 

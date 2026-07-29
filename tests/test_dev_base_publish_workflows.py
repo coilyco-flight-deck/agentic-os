@@ -119,7 +119,8 @@ def test_publish_action_verifies_every_toolchain_and_aosguard() -> None:
     assert "if: ${{ inputs.tier == 'full' }}" in action
     assert "scripts/verify-full.sh" in action
     assert 'image="${IMAGE_BASE}:${TAG}"' in script
-    assert "linux/amd64 linux/arm64" in script
+    assert "PLATFORMS:-linux/amd64,linux/arm64" in script
+    assert "PLATFORMS: ${{ inputs.platforms }}" in action
     for command in (
         "node --version",
         "go version",

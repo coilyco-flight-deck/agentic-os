@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import json
 import re
 from pathlib import Path
 
@@ -12,7 +13,9 @@ from agentic_os.dev_base import (
     PUBLISHED_TIER_NAMES,
     REGISTRY_BASE,
     TIER_BY_NAME,
+    affected_tiers,
     publish_plan,
+    required_build_tiers,
     tier_tag,
 )
 
@@ -208,6 +211,55 @@ def test_language_tags_are_prefixed_and_full_tags_stay_plain() -> None:
     assert tier_tag("full", "candidate") == "candidate"
 
 
+def test_common_image_inputs_affect_every_tier() -> None:
+    assert affected_tiers(["docker/dev-base/install-common.sh"]) == (
+        "lang-node",
+        "lang-go",
+        "lang-dotnet",
+        "lang-rust",
+        "lang-python",
+        "full",
+    )
+    assert affected_tiers(["aos/main.go"]) == PUBLISHED_TIER_NAMES
+
+
+def test_full_only_change_builds_its_language_source_closure() -> None:
+    assert affected_tiers(["docker/dev-base/full/Dockerfile"]) == ("full",)
+    assert required_build_tiers(("full",)) == (
+        "lang-go",
+        "lang-dotnet",
+        "lang-rust",
+        "lang-python",
+        "full",
+    )
+
+
+def test_build_definition_change_fails_closed_to_the_whole_family() -> None:
+    assert affected_tiers(
+        ["actions/publish-dev-base/scripts/publish-image.sh"]
+    ) == PUBLISHED_TIER_NAMES
+    assert affected_tiers(["docs/dev-base-image.md"]) == ()
+
+
+def test_changed_path_probe_includes_deleted_inputs(monkeypatch) -> None:
+    script = _load_script()
+    commands: list[list[str]] = []
+
+    class Probe:
+        stdout = "docker/dev-base/install-common.sh\n"
+
+    def run(command, **_kwargs):
+        commands.append(command)
+        return Probe()
+
+    monkeypatch.setattr(script.subprocess, "run", run)
+
+    assert script._changed_paths("base", "head") == (
+        "docker/dev-base/install-common.sh",
+    )
+    assert "--diff-filter=ACDMR" in commands[0]
+
+
 def test_local_language_build_sets_architecture_and_named_contexts(monkeypatch) -> None:
     script = _load_script()
     commands: list[list[str]] = []
@@ -231,6 +283,68 @@ def test_local_language_build_sets_architecture_and_named_contexts(monkeypatch) 
     assert "aosguard-python=agentic_os" in build
     assert build[build.index("--target") + 1] == "dev-base-lang-go"
     assert Path(build[-1]).as_posix() == "docker/dev-base"
+
+
+def test_buildx_local_validation_loads_one_platform_without_push(monkeypatch) -> None:
+    script = _load_script()
+    commands: list[list[str]] = []
+    monkeypatch.setattr(script, "_run", lambda cmd: commands.append(cmd))
+
+    script._build_plan(
+        REGISTRY_BASE,
+        "candidate",
+        False,
+        "linux/amd64",
+        only_tiers=("lang-go",),
+        load=True,
+    )
+
+    build = commands[0]
+    assert build[:5] == [
+        "docker",
+        "buildx",
+        "build",
+        "--progress=plain",
+        "--load",
+    ]
+    assert "--push" not in build
+    assert "--cache-to" not in build
+    assert build[build.index("--platform") + 1] == "linux/amd64"
+    assert "TARGETARCH=amd64" not in build
+
+
+def test_local_bake_links_full_sources_without_registry_output() -> None:
+    script = _load_script()
+
+    definition = script._local_bake_definition(
+        "agentic-os",
+        "pr-candidate",
+        "linux/amd64",
+        ("lang-node", "full"),
+    )
+
+    targets = definition["target"]
+    assert definition["group"]["default"]["targets"] == [
+        "lang-node",
+        "lang-go",
+        "lang-dotnet",
+        "lang-rust",
+        "lang-python",
+        "full",
+    ]
+    assert targets["lang-node"]["output"] == ["type=cacheonly"]
+    assert targets["lang-rust"]["output"] == ["type=cacheonly"]
+    assert targets["full"]["output"] == ["type=docker"]
+    assert targets["full"]["platforms"] == ["linux/amd64"]
+    assert targets["full"]["contexts"] == {
+        "agentic-os:lang-rust-pr-candidate": "target:lang-rust",
+        "agentic-os:lang-go-pr-candidate": "target:lang-go",
+        "agentic-os:lang-dotnet-pr-candidate": "target:lang-dotnet",
+        "agentic-os:lang-python-pr-candidate": "target:lang-python",
+    }
+    serialized = json.dumps(definition)
+    assert "type=registry" not in serialized
+    assert "push" not in serialized
 
 
 def test_full_build_consumes_only_language_image_refs(monkeypatch) -> None:

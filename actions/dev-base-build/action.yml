@@ -1,0 +1,113 @@
+name: "Validate affected dev-base images"
+description: |
+  Derive the affected image tiers from the canonical AOS tier specification,
+  build their source closure for one local architecture, and run the same
+  in-image and full-surface verification used by publication. The action has
+  no registry credential input and never pushes an image.
+
+inputs:
+  base-sha:
+    description: "Base revision used to derive pull-request changes."
+    required: false
+    default: ""
+  head-sha:
+    description: "Head revision used to derive pull-request changes."
+    required: false
+    default: "HEAD"
+  tag:
+    description: "Throwaway local tag for this validation run."
+    required: true
+  platform:
+    description: "Single local platform to build and verify."
+    required: false
+    default: "linux/amd64"
+  cache-max:
+    description: "Maximum persistent Buildx cache retained after validation."
+    required: false
+    default: "20gb"
+  build-timeout:
+    description: "Inner timeout around the affected image build."
+    required: false
+    default: "110m"
+  uv-version:
+    description: "uv version installed on the bare runner."
+    required: false
+    default: "0.12.0"
+  buildx-version:
+    description: "docker buildx plugin version installed on the bare runner."
+    required: false
+    default: "v0.34.1"
+
+outputs:
+  affected-tiers:
+    description: "Space-separated tiers whose inputs changed."
+    value: ${{ steps.plan.outputs.affected_tiers }}
+  build-tiers:
+    description: "Space-separated source closure built by this run."
+    value: ${{ steps.plan.outputs.build_tiers }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install uv
+      shell: bash
+      env:
+        UV_VERSION: ${{ inputs.uv-version }}
+      run: bash "${GITHUB_ACTION_PATH}/../publish-dev-base/scripts/install-uv.sh"
+
+    - id: plan
+      name: Derive affected tiers from the canonical specification
+      shell: bash
+      env:
+        BASE_SHA: ${{ inputs.base-sha }}
+        HEAD_SHA: ${{ inputs.head-sha }}
+        TAG: ${{ inputs.tag }}
+      run: bash "${GITHUB_ACTION_PATH}/scripts/plan.sh"
+
+    - name: Install docker CLI + buildx plugin
+      if: ${{ steps.plan.outputs.has_work == 'true' }}
+      shell: bash
+      env:
+        BUILDX_VERSION: ${{ inputs.buildx-version }}
+      run: bash "${GITHUB_ACTION_PATH}/../publish-dev-base/scripts/install-docker.sh"
+
+    - name: Resolve docker host
+      if: ${{ steps.plan.outputs.has_work == 'true' }}
+      shell: bash
+      run: bash "${GITHUB_ACTION_PATH}/../publish-dev-base/scripts/resolve-docker-host.sh"
+
+    - name: Reuse the single-architecture validation builder
+      if: ${{ steps.plan.outputs.has_work == 'true' }}
+      shell: bash
+      env:
+        BUILDER_NAME: aos-pr-builder
+        INSTALL_BINFMT: "false"
+      run: bash "${GITHUB_ACTION_PATH}/../publish-dev-base/scripts/setup-builder.sh"
+
+    - name: Build affected tiers without publishing
+      if: ${{ steps.plan.outputs.has_work == 'true' }}
+      shell: bash
+      env:
+        BUILD_TIERS: ${{ steps.plan.outputs.build_tiers }}
+        BUILD_TIMEOUT: ${{ inputs.build-timeout }}
+        PLATFORM: ${{ inputs.platform }}
+        TAG: ${{ inputs.tag }}
+      run: bash "${GITHUB_ACTION_PATH}/scripts/build.sh"
+
+    - name: Verify the local full development surface
+      if: ${{ steps.plan.outputs.has_work == 'true' && contains(steps.plan.outputs.build_tiers, 'full') }}
+      shell: bash
+      env:
+        IMAGE_BASE: agentic-os
+        TAG: ${{ inputs.tag }}
+        PLATFORMS: ${{ inputs.platform }}
+      run: bash "${GITHUB_ACTION_PATH}/../publish-dev-base/scripts/verify-full.sh"
+
+    - name: Bound the validation cache and remove throwaway tags
+      if: ${{ always() && steps.plan.outputs.has_work == 'true' }}
+      shell: bash
+      env:
+        BUILDER_NAME: aos-pr-builder
+        CACHE_MAX: ${{ inputs.cache-max }}
+        TAG: ${{ inputs.tag }}
+      run: bash "${GITHUB_ACTION_PATH}/scripts/cleanup.sh"

@@ -114,4 +114,5 @@ runs:
       env:
         IMAGE_BASE: ${{ inputs.image-base }}
         TAG: ${{ inputs.tag }}
+        PLATFORMS: ${{ inputs.platforms }}
       run: bash "${GITHUB_ACTION_PATH}/scripts/verify-full.sh"

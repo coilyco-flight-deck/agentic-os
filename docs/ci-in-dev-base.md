@@ -36,6 +36,11 @@ repos. The live gate installs the validated ward pin first, then runs `pytest`
 plus `pre-commit run --all-files`, matching the release gate so a PR cannot pass
 what main would refuse.
 
+This repo also exposes `ci / build-dev-base`. It derives affected tiers from
+the canonical image specification and builds their one-architecture source
+closure without a registry credential or push. See
+[pull-request dev-base validation](pr-dev-base-build-validation.md).
+
 ## Promoted moving alias
 
 CI uses the moving `:release` alias, never the compatibility-only `:latest`
@@ -58,14 +63,14 @@ that alias when the app CI starts.
 
 ## Rollout unit
 
-Each app's `.forgejo/workflows/*.yml` is the rollout unit; the first mover /
-reference adopter is a single app, on its own adoption issue. The blocking
-dependency was the dev-base image fix (agentic-os#327): with the image fixed,
-ward verbs pass inside dev-base and parity holds green.
+Each app's `.forgejo/workflows/*.yml` is the rollout unit, with a single app
+as first mover on its own adoption issue. The blocking dependency was the
+dev-base image fix (agentic-os#327): with it fixed, parity holds green.
 
 ## See also
 
 - [dev-base container image](dev-base-image.md) - the image CI follows.
 - [dev-base auto-bump](dev-base-auto-bump.md) - how pinned tool `ARG`s refresh.
+- [pull-request dev-base validation](pr-dev-base-build-validation.md) - the build-only image gate.
 - [dev-base image](dev-base-image.md) - the full image and release contract.
 - [FEATURES.md](FEATURES.md) - the feature inventory this lands in.

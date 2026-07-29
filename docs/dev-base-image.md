@@ -48,6 +48,13 @@ manifest to its versioned and moving tags. Language tags use
 `latest` names. Both paths check each target manifest before work, so a retry
 skips an image that already landed. See [publish resume](dev-base-publish-resume.md).
 
+Pull requests run the affected source closure through
+[`actions/dev-base-build`](../actions/dev-base-build/action.yml). The PR action
+and publication share the Python build plan, bootstrap scripts, Dockerfiles,
+build arguments, and full verification. PRs load one local architecture and
+never receive a registry credential. See
+[PR dev-base build validation](pr-dev-base-build-validation.md).
+
 ## Pinning a tool
 
 Every managed version has one default `ARG` across the two Dockerfiles.
@@ -64,4 +71,5 @@ not redefine Ward policy, aosguard policy, or agent-compose source data.
 
 * [CI parity](ci-in-dev-base.md)
 * [Build cache](dev-base-build-cache.md)
+* [PR build validation](pr-dev-base-build-validation.md)
 * [Release workflow](release.md)

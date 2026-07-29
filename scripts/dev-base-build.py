@@ -15,7 +15,13 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Callable
 
-from agentic_os.dev_base import PUBLISHED_TIER_NAMES, REGISTRY_BASE, publish_plan
+from agentic_os.dev_base import (
+    PUBLISHED_TIER_NAMES,
+    REGISTRY_BASE,
+    affected_tiers,
+    publish_plan,
+    required_build_tiers,
+)
 
 
 _DIGEST_RE = re.compile(r"^Digest:\s+(sha256:[0-9a-f]+)$", re.MULTILINE)
@@ -23,12 +29,29 @@ _MANIFEST_NOT_FOUND_RE = re.compile(r"\b404 Not Found\b", re.IGNORECASE)
 _MANIFEST_INSPECT_TIMEOUT_SECONDS = 30
 
 
-def _docker_base_command(push: bool, platforms: str | None) -> list[str]:
+def _docker_base_command(
+    push: bool, platforms: str | None, *, load: bool = False
+) -> list[str]:
     if push:
         cmd = ["docker", "buildx", "build", "--progress=plain", "--push"]
         if platforms:
             cmd.extend(["--platform", platforms])
         return cmd
+    if load:
+        requested_platforms = [
+            value.strip() for value in (platforms or "").split(",") if value.strip()
+        ]
+        if len(requested_platforms) != 1:
+            raise SystemExit("buildx load requires exactly one platform")
+        return [
+            "docker",
+            "buildx",
+            "build",
+            "--progress=plain",
+            "--load",
+            "--platform",
+            requested_platforms[0],
+        ]
     return ["docker", "build"]
 
 
@@ -245,12 +268,25 @@ def _build_plan(
     platforms: str | None,
     aliases: str | Sequence[str] | None = None,
     only_tier: str | None = None,
+    *,
+    load: bool = False,
+    only_tiers: Sequence[str] | None = None,
 ) -> None:
+    if push and load:
+        raise SystemExit("--push and --load cannot be combined")
     plan = publish_plan(registry_base, tag, aliases)
-    if only_tier is not None:
-        plan = [entry for entry in plan if entry["tier"] == only_tier]
-        if not plan:
-            raise SystemExit(f"unknown tier: {only_tier}")
+    if only_tier is not None and only_tiers:
+        raise SystemExit("--tier and --tiers cannot be combined")
+    selected_tiers = (
+        {only_tier}
+        if only_tier is not None
+        else set(only_tiers or ())
+    )
+    unknown_tiers = selected_tiers.difference(PUBLISHED_TIER_NAMES)
+    if unknown_tiers:
+        raise SystemExit(f"unknown tier: {', '.join(sorted(unknown_tiers))}")
+    if selected_tiers:
+        plan = [entry for entry in plan if entry["tier"] in selected_tiers]
     for entry in plan:
         dockerfile = Path(entry["dockerfile"])
         context_dir = Path(entry["context_dir"])
@@ -263,9 +299,9 @@ def _build_plan(
                 "skipping image"
             )
             continue
-        cmd = _docker_base_command(push, platforms)
+        cmd = _docker_base_command(push, platforms, load=load)
         is_language = str(entry["tier"]).startswith("lang-")
-        if is_language and not push:
+        if is_language and not push and not load:
             cmd.extend(["--build-arg", f"TARGETARCH={_host_targetarch()}"])
         if is_language:
             cmd.extend(
@@ -344,6 +380,94 @@ def _build_plan(
             )
 
 
+def _local_bake_definition(
+    registry_base: str,
+    tag: str,
+    platform_name: str,
+    tiers: Sequence[str],
+) -> dict[str, object]:
+    requested_platforms = [
+        value.strip() for value in platform_name.split(",") if value.strip()
+    ]
+    if len(requested_platforms) != 1:
+        raise SystemExit("local bake requires exactly one platform")
+
+    selected_tiers = required_build_tiers(tiers)
+    plan = {
+        str(entry["tier"]): entry
+        for entry in publish_plan(registry_base, tag)
+        if entry["tier"] in selected_tiers
+    }
+    tier_by_image = {
+        str(entry["image"]): tier for tier, entry in plan.items()
+    }
+    targets: dict[str, object] = {}
+    for tier in selected_tiers:
+        entry = plan[tier]
+        contexts: dict[str, str] = {}
+        if tier.startswith("lang-"):
+            contexts = {
+                "aos-cli": "aos",
+                "aosguard-spec": ".specgen",
+                "aosguard-python": "agentic_os",
+            }
+        else:
+            dependency_refs = [
+                str(entry["base_image"]),
+                *(str(ref) for ref in entry["graft_images"].values()),
+            ]
+            contexts = {
+                ref: f"target:{tier_by_image[ref]}" for ref in dependency_refs
+            }
+
+        args = (
+            {}
+            if tier.startswith("lang-")
+            else {
+                "BASE_IMAGE": str(entry["base_image"]),
+                **{
+                    str(name): str(ref)
+                    for name, ref in entry["graft_images"].items()
+                },
+            }
+        )
+        targets[tier] = {
+            "context": str(entry["context_dir"]),
+            "dockerfile": Path(str(entry["dockerfile"])).name,
+            "target": str(entry["stage"]),
+            "tags": [str(entry["image"])],
+            "platforms": requested_platforms,
+            "contexts": contexts,
+            "args": args,
+            "output": ["type=docker" if tier == "full" else "type=cacheonly"],
+        }
+
+    return {
+        "group": {"default": {"targets": list(selected_tiers)}},
+        "target": targets,
+    }
+
+
+def _build_local_bake(
+    registry_base: str,
+    tag: str,
+    platform_name: str,
+    tiers: Sequence[str],
+) -> None:
+    definition = _local_bake_definition(
+        registry_base,
+        tag,
+        platform_name,
+        tiers,
+    )
+    subprocess.run(
+        ["docker", "buildx", "bake", "--progress=plain", "--file", "-"],
+        check=True,
+        input=json.dumps(definition),
+        text=True,
+    )
+
+
 def _promote_plan(
     registry_base: str,
     source_tag: str,
@@ -406,9 +530,78 @@ def _cmd_plan(args: argparse.Namespace) -> int:
     return 0
 
 
+def _changed_paths(base: str, head: str) -> tuple[str, ...]:
+    probe = subprocess.run(
+        [
+            "git",
+            "diff",
+            "--name-only",
+            "--diff-filter=ACDMR",
+            base,
+            head,
+            "--",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return tuple(line for line in probe.stdout.splitlines() if line)
+
+
+def _cmd_affected(args: argparse.Namespace) -> int:
+    if args.changed_path and args.base:
+        raise SystemExit("--changed-path and --base cannot be combined")
+
+    if args.changed_path:
+        paths = tuple(args.changed_path)
+        selected = affected_tiers(paths)
+    elif args.base:
+        paths = _changed_paths(args.base, args.head)
+        selected = affected_tiers(paths)
+    else:
+        paths = ()
+        selected = PUBLISHED_TIER_NAMES
+
+    build_tiers = required_build_tiers(selected)
+    payload = {
+        "changed_paths": list(paths),
+        "affected_tiers": list(selected),
+        "build_tiers": list(build_tiers),
+    }
+    print(json.dumps(payload))
+    if args.github_output:
+        with open(args.github_output, "a", encoding="utf-8") as output:
+            output.write(f"affected_tiers={' '.join(selected)}\n")
+            output.write(f"build_tiers={' '.join(build_tiers)}\n")
+            output.write(f"has_work={'true' if build_tiers else 'false'}\n")
+    return 0
+
+
 def _cmd_build(args: argparse.Namespace) -> int:
+    if args.local_bake:
+        if args.push or args.load or args.tier is not None:
+            raise SystemExit(
+                "--local-bake requires --tiers and cannot combine with "
+                "--push, --load, or --tier"
+            )
+        if not args.tiers:
+            raise SystemExit("--local-bake requires --tiers")
+        _build_local_bake(
+            args.registry,
+            args.tag,
+            args.platforms,
+            args.tiers,
+        )
+        return 0
     _build_plan(
-        args.registry, args.tag, args.push, args.platforms, args.alias, args.tier
+        args.registry,
+        args.tag,
+        args.push,
+        args.platforms,
+        args.alias,
+        args.tier,
+        load=args.load,
+        only_tiers=args.tiers,
     )
     return 0
 
@@ -472,6 +665,33 @@ def main(argv: list[str] | None = None) -> int:
     p_plan = sub.add_parser("plan", help="Print the derived image plan as JSON.")
     p_plan.set_defaults(func=_cmd_plan)
 
+    p_affected = sub.add_parser(
+        "affected",
+        help="Derive the affected tiers and their local build closure.",
+    )
+    p_affected.add_argument(
+        "--base",
+        default="",
+        help="Base revision for a git changed-path diff.",
+    )
+    p_affected.add_argument(
+        "--head",
+        default="HEAD",
+        help="Head revision for a git changed-path diff.",
+    )
+    p_affected.add_argument(
+        "--changed-path",
+        action="append",
+        default=[],
+        help="Explicit changed path. May be repeated instead of --base.",
+    )
+    p_affected.add_argument(
+        "--github-output",
+        default="",
+        help="Optional GitHub/Forgejo Actions output file.",
+    )
+    p_affected.set_defaults(func=_cmd_affected)
+
     p_build = sub.add_parser("build", help="Build the image family in order.")
     p_build.add_argument(
         "--push",
@@ -485,9 +705,28 @@ def main(argv: list[str] | None = None) -> int:
         help="Build only this tier. Its source tiers must already exist.",
     )
     p_build.add_argument(
+        "--tiers",
+        nargs="+",
+        default=[],
+        choices=PUBLISHED_TIER_NAMES,
+        help="Build an ordered tier closure derived by the affected command.",
+    )
+    p_build.add_argument(
+        "--load",
+        action="store_true",
+        help="Use buildx to load one local architecture into the Docker daemon.",
+    )
+    p_build.add_argument(
+        "--local-bake",
+        action="store_true",
+        help=(
+            "Build a local target graph in BuildKit and load only the full image."
+        ),
+    )
+    p_build.add_argument(
         "--platforms",
         default="linux/amd64,linux/arm64",
-        help="Platforms for buildx publishes (ignored for local builds).",
+        help="Platforms for buildx push or load operations.",
     )
     p_build.set_defaults(func=_cmd_build)
 
