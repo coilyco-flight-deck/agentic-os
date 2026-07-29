@@ -1,0 +1,32 @@
+fixture: inventory-evaluation-tasks
+tasks:
+  - id: exact-quantity
+    prompt: >-
+      How many sellable units of WIDGET-BLUE did warehouse NW-1 have on
+      2026-07-29?
+    expected_outcome:
+      answer: 17
+      correctness: The final response states that 17 units were sellable.
+
+  - id: invalid-warehouse
+    prompt: >-
+      Check current sellable units of WIDGET-BLUE at warehouse CENTRAL.
+    expected_outcome:
+      answer_kind: guided_error
+      correctness: >-
+        The response says CENTRAL is invalid and identifies NW-1 and SE-2 as
+        valid warehouse codes.
+
+  - id: bounded-summary
+    prompt: >-
+      Summarize which warehouses currently carry WIDGET-BLUE without returning
+      a long record dump.
+    expected_outcome:
+      answer:
+        - warehouse_code: NW-1
+          sellable_units: 17
+        - warehouse_code: SE-2
+          sellable_units: 4
+      correctness: >-
+        The response includes both warehouses and quantities in at most 20
+        result items.
