@@ -27,13 +27,13 @@ with no dev-base input change keeps the status context but skips Docker setup.
 
 [`actions/dev-base-build`](../actions/dev-base-build/action.yml) has no registry
 token input. It installs the same uv, Docker, and Buildx versions as
-publication, then selects Docker's local Buildx driver and uses `--load` for one
-platform. The local driver lets the `full` build consume the specialist images
-from the runner's Docker store without a registry push. The action does not
-install QEMU, does not pass `--push`, and removes the run's local tags
-afterward.
+publication, then uses Buildx Bake target links for one platform. Specialist
+results remain in BuildKit's cache-only exporter and feed the `full` target
+directly. Only `full` is loaded into the runner's Docker store for the shared
+smoke check. The action does not install QEMU, does not pass `--push`, and
+removes the run's local tags afterward.
 
-The persistent local builder cache is pruned to its configured maximum after
+The persistent `aos-pr-builder` cache is pruned to its configured maximum after
 every run. PR validation therefore reuses warm layers without allowing the
 shared runner cache to grow without a bound.
 

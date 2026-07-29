@@ -380,6 +380,94 @@ def _build_plan(
             )
 
 
+def _local_bake_definition(
+    registry_base: str,
+    tag: str,
+    platform_name: str,
+    tiers: Sequence[str],
+) -> dict[str, object]:
+    requested_platforms = [
+        value.strip() for value in platform_name.split(",") if value.strip()
+    ]
+    if len(requested_platforms) != 1:
+        raise SystemExit("local bake requires exactly one platform")
+
+    selected_tiers = required_build_tiers(tiers)
+    plan = {
+        str(entry["tier"]): entry
+        for entry in publish_plan(registry_base, tag)
+        if entry["tier"] in selected_tiers
+    }
+    tier_by_image = {
+        str(entry["image"]): tier for tier, entry in plan.items()
+    }
+    targets: dict[str, object] = {}
+    for tier in selected_tiers:
+        entry = plan[tier]
+        contexts: dict[str, str] = {}
+        if tier.startswith("lang-"):
+            contexts = {
+                "aos-cli": "aos",
+                "aosguard-spec": ".specgen",
+                "aosguard-python": "agentic_os",
+            }
+        else:
+            dependency_refs = [
+                str(entry["base_image"]),
+                *(str(ref) for ref in entry["graft_images"].values()),
+            ]
+            contexts = {
+                ref: f"target:{tier_by_image[ref]}" for ref in dependency_refs
+            }
+
+        args = (
+            {}
+            if tier.startswith("lang-")
+            else {
+                "BASE_IMAGE": str(entry["base_image"]),
+                **{
+                    str(name): str(ref)
+                    for name, ref in entry["graft_images"].items()
+                },
+            }
+        )
+        targets[tier] = {
+            "context": str(entry["context_dir"]),
+            "dockerfile": Path(str(entry["dockerfile"])).name,
+            "target": str(entry["stage"]),
+            "tags": [str(entry["image"])],
+            "platforms": requested_platforms,
+            "contexts": contexts,
+            "args": args,
+            "output": ["type=docker" if tier == "full" else "type=cacheonly"],
+        }
+
+    return {
+        "group": {"default": {"targets": list(selected_tiers)}},
+        "target": targets,
+    }
+
+
+def _build_local_bake(
+    registry_base: str,
+    tag: str,
+    platform_name: str,
+    tiers: Sequence[str],
+) -> None:
+    definition = _local_bake_definition(
+        registry_base,
+        tag,
+        platform_name,
+        tiers,
+    )
+    subprocess.run(
+        ["docker", "buildx", "bake", "--progress=plain", "--file", "-"],
+        check=True,
+        input=json.dumps(definition),
+        text=True,
+    )
+
+
 def _promote_plan(
     registry_base: str,
     source_tag: str,
@@ -490,6 +578,21 @@ def _cmd_affected(args: argparse.Namespace) -> int:
 
 
 def _cmd_build(args: argparse.Namespace) -> int:
+    if args.local_bake:
+        if args.push or args.load or args.tier is not None:
+            raise SystemExit(
+                "--local-bake requires --tiers and cannot combine with "
+                "--push, --load, or --tier"
+            )
+        if not args.tiers:
+            raise SystemExit("--local-bake requires --tiers")
+        _build_local_bake(
+            args.registry,
+            args.tag,
+            args.platforms,
+            args.tiers,
+        )
+        return 0
     _build_plan(
         args.registry,
         args.tag,
@@ -612,6 +715,13 @@ def main(argv: list[str] | None = None) -> int:
         "--load",
         action="store_true",
         help="Use buildx to load one local architecture into the Docker daemon.",
+    )
+    p_build.add_argument(
+        "--local-bake",
+        action="store_true",
+        help=(
+            "Build a local target graph in BuildKit and load only the full image."
+        ),
     )
     p_build.add_argument(
         "--platforms",

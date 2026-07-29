@@ -15,12 +15,13 @@ The workflow step summary records the cache key, source, destination, and
 source-manifest provenance before the expensive build starts. A cold cache is
 therefore visible as a cache event instead of only as a slow build.
 
-Pull-request validation uses Docker's persistent single-architecture local
-builder instead of registry cache export. Every run removes its local image
-tags and prunes that builder with a configured maximum cache size. The local
-driver also lets the `full` composition consume its specialist images without
-a registry push. The PR path keeps warm layers but cannot perform the
-production multi-architecture cache fan-out.
+Pull-request validation uses the persistent single-architecture
+`aos-pr-builder` instead of registry cache export. Buildx Bake links the
+specialist targets directly into `full`, keeps their outputs cache-only, and
+loads only `full` for the smoke check. Every run removes its local image tags
+and prunes that builder with a configured maximum cache size. The PR path keeps
+warm layers but cannot perform the production multi-architecture cache
+fan-out.
 
 See also:
 

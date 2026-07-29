@@ -9,6 +9,6 @@ timeout --preserve-status --kill-after=5m "$BUILD_TIMEOUT" \
   --registry agentic-os \
   --tag "$TAG" \
   build \
-  --load \
+  --local-bake \
   --platforms "$PLATFORM" \
   --tiers "${tiers[@]}"

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import json
 import re
 from pathlib import Path
 
@@ -310,6 +311,40 @@ def test_buildx_local_validation_loads_one_platform_without_push(monkeypatch) ->
     assert "--cache-to" not in build
     assert build[build.index("--platform") + 1] == "linux/amd64"
     assert "TARGETARCH=amd64" not in build
+
+
+def test_local_bake_links_full_sources_without_registry_output() -> None:
+    script = _load_script()
+
+    definition = script._local_bake_definition(
+        "agentic-os",
+        "pr-candidate",
+        "linux/amd64",
+        ("lang-node", "full"),
+    )
+
+    targets = definition["target"]
+    assert definition["group"]["default"]["targets"] == [
+        "lang-node",
+        "lang-go",
+        "lang-dotnet",
+        "lang-rust",
+        "lang-python",
+        "full",
+    ]
+    assert targets["lang-node"]["output"] == ["type=cacheonly"]
+    assert targets["lang-rust"]["output"] == ["type=cacheonly"]
+    assert targets["full"]["output"] == ["type=docker"]
+    assert targets["full"]["platforms"] == ["linux/amd64"]
+    assert targets["full"]["contexts"] == {
+        "agentic-os:lang-rust-pr-candidate": "target:lang-rust",
+        "agentic-os:lang-go-pr-candidate": "target:lang-go",
+        "agentic-os:lang-dotnet-pr-candidate": "target:lang-dotnet",
+        "agentic-os:lang-python-pr-candidate": "target:lang-python",
+    }
+    serialized = json.dumps(definition)
+    assert "type=registry" not in serialized
+    assert "push" not in serialized
 
 
 def test_full_build_consumes_only_language_image_refs(monkeypatch) -> None:

@@ -52,20 +52,20 @@ def test_validation_and_publication_share_build_definitions() -> None:
     assert "scripts/dev-base-build.py" in publish_image
 
 
-def test_validation_loads_one_local_platform_and_uses_the_affected_plan() -> None:
+def test_validation_bakes_one_local_platform_and_uses_the_affected_plan() -> None:
     plan = PLAN.read_text(encoding="utf-8")
     build = BUILD.read_text(encoding="utf-8")
 
     assert "affected" in plan
     assert "--base \"$BASE_SHA\"" in plan
-    assert "--load" in build
+    assert "--local-bake" in build
+    assert "--load" not in build
     assert '--platforms "$PLATFORM"' in build
     assert '--tiers "${tiers[@]}"' in build
     assert "INSTALL_BINFMT: \"false\"" in VALIDATE_ACTION.read_text(
         encoding="utf-8"
     )
-    assert "BUILDER_NAME: default" in VALIDATE_ACTION.read_text(encoding="utf-8")
-    assert "BUILDER_DRIVER: docker" in VALIDATE_ACTION.read_text(
+    assert "BUILDER_NAME: aos-pr-builder" in VALIDATE_ACTION.read_text(
         encoding="utf-8"
     )
 
@@ -76,7 +76,7 @@ def test_validation_bounds_the_persistent_builder_cache() -> None:
 
     assert "cache-max:" in action
     assert "docker buildx prune" in cleanup
-    assert '--builder "${BUILDER_NAME:-default}"' in cleanup
+    assert '--builder "${BUILDER_NAME:-aos-pr-builder}"' in cleanup
     assert '--max-used-space "$CACHE_MAX"' in cleanup
 
 
@@ -84,7 +84,6 @@ def test_shared_builder_keeps_publication_multi_arch_capability() -> None:
     text = SETUP_BUILDER.read_text(encoding="utf-8")
 
     assert 'builder_name="${BUILDER_NAME:-aosbuilder}"' in text
-    assert 'builder_driver="${BUILDER_DRIVER:-docker-container}"' in text
     assert '${INSTALL_BINFMT:-true}' in text
     assert "tonistiigi/binfmt --install all" in text
 

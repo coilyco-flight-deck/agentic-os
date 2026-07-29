@@ -16,6 +16,6 @@ done < <(
     'import json, os; print("\n".join(t["image"] for t in json.loads(os.environ["PLAN_JSON"])["tiers"]))'
 )
 docker buildx prune \
-  --builder "${BUILDER_NAME:-default}" \
+  --builder "${BUILDER_NAME:-aos-pr-builder}" \
   --force \
   --max-used-space "$CACHE_MAX" || true
