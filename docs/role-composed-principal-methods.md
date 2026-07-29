@@ -35,8 +35,9 @@ Community owns routine member interaction and a clean handoff. Human stewards
 retain moderation decisions, while customer-success, PM, ops, and engineering
 receive signals that belong to their work.
 
-Composition grants knowledge only. Ward and the active role surface still
-control tools, credentials, and write authority.
+Composition grants knowledge only. Ward's fixed workflow and the separately
+selected AOSguard surface still control tools, credentials, and write
+authority.
 
 Role composition is the current coarse gate for skill authoring. Frontier
 model refinement follows
@@ -48,4 +49,4 @@ and
 
 * [Role-composed skills](role-composed-skills.md) - source layout and
   composition contract.
-* [Role surface tiers](role-surface-tiers.md) - runtime authority.
+* [AOS and Ward boundary](ward-specs.md) - runtime authority.

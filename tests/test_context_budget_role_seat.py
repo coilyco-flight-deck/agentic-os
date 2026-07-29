@@ -21,6 +21,32 @@ def write(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
+def write_person_snapshot(path: Path) -> None:
+    write(
+        path,
+        json.dumps(
+            {
+                "format": "agent-compose.person-snapshot.v3",
+                "schema_version": 3,
+                "source": "person:fixture",
+                "person": "fixture",
+                "role_order": ["ops"],
+                "roles": {
+                    "ops": {
+                        "personalities": ["protective", "grounded"],
+                    }
+                },
+                "personalities": {
+                    "protective": {"skill": "personality-protective"},
+                    "grounded": {"skill": "personality-grounded"},
+                },
+            },
+            indent=2,
+        )
+        + "\n",
+    )
+
+
 def component_rows(snapshot: dict[str, object]) -> list[dict[str, object]]:
     return list(context._snapshot_component_rows(snapshot))
 
@@ -236,29 +262,7 @@ def test_validate_role_seat_requires_generated_role_and_aos_layout(
     tmp_path: Path,
 ) -> None:
     person_snapshot = tmp_path / "person.json"
-    person_snapshot.write_text(
-        json.dumps(
-            {
-                "format": "agent-compose.person-snapshot.v3",
-                "schema_version": 3,
-                "source": "person:fixture",
-                "person": "fixture",
-                "role_order": ["ops"],
-                "roles": {
-                    "ops": {
-                        "personalities": ["protective", "grounded"],
-                    }
-                },
-                "personalities": {
-                    "protective": {"skill": "personality-protective"},
-                    "grounded": {"skill": "personality-grounded"},
-                },
-            },
-            indent=2,
-        )
-        + "\n",
-        encoding="utf-8",
-    )
+    write_person_snapshot(person_snapshot)
 
     context.validate_role_seat(person_snapshot, "ops", "codex")
     context.validate_role_seat(person_snapshot, "ops", "goose")
@@ -615,6 +619,7 @@ def test_capture_requires_only_agent_compose_executable(
                 roster / "AGENTS.COMPOSE.md",
                 "- If you are codex running the ops role: your name is solar SRE.\n",
             )
+            write_person_snapshot(roster / "person.json")
         elif operation == "compose":
             output = Path(command[command.index("--out") + 1])
             shutil.copytree(source_bundle, output / "bundle")

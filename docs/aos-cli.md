@@ -15,8 +15,8 @@ aos \
   -- owner/repo#267
 ```
 
-The shared role slug selects context and policy. A matching name never
-transfers permissions or unions authority between tools.
+The shared role slug selects context only. A matching name never transfers
+permissions or unions authority between tools.
 
 ## Capability flags
 
@@ -26,8 +26,9 @@ transfers permissions or unions authority between tools.
   private staged home.
 * `--guarded` - AOS attaches standalone `aosguard`, which keeps its specgen credential mounts.
 
-The flags stay independent. `--warded` alone uses Ward's embedded role context.
-Either context capability can join it. All three flags enable the full launch.
+The flags stay independent. `--warded` uses Ward's fixed workflow and broker
+surface. Either context capability can join it. All three flags enable the full
+launch.
 
 Without `--warded`, AOS owns one standalone container. Arguments after `--`
 become arguments to the selected agent:
@@ -37,17 +38,14 @@ aos --agent codex --role engineer --composed -- --version
 aos --agent codex --role engineer --guarded
 ```
 
-The original exact-command form remains available:
-
-```bash
-aos --role engineer acompose -- codex
-```
-
 ## Routing
 
-In warded mode, arguments after `--` are Ward launch arguments. AOS passes only
-the selected image, agent, role, workspace request, and optional generic
-context bundle. See [the context-bundle adapter](aos-context-bundle.md).
+In warded mode, arguments after `--` are Ward launch arguments. AOS passes the
+selected image, agent, role, workspace request, optional generic context
+bundle, and harness-level model inputs through Ward's explicit environment
+seam. Agent-compose carries behavioral identity and seat context. A Ward
+workflow role cannot change the model inputs or privileged surface. See [the context-bundle
+adapter](aos-context-bundle.md).
 
 Ward ships `director`, `qa`, and `engineer`. Other agent-compose roles remain
 available on the standalone composed path. AOS rejects incompatible roles,

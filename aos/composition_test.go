@@ -98,16 +98,76 @@ func TestValidateIntegratedLaunchMatrix(t *testing.T) {
 
 func TestBuildWardLaunchPlanOwnsSiblingTranslation(t *testing.T) {
 	t.Parallel()
-	plan := buildWardLaunchPlan(integratedLaunchOptions{
+	plan, err := buildWardLaunchPlan(integratedLaunchOptions{
 		Image:     "aos:test",
 		Role:      "engineer",
 		Agent:     "codex",
 		Arguments: []string{"owner/repo#267", "--print"},
 	}, "/cache/context")
+	if err != nil {
+		t.Fatal(err)
+	}
 	got := strings.Join(append([]string{plan.Command}, plan.Args...), " ")
-	want := "ward agent engineer owner/repo#267 --print --agent codex --image aos:test --context-bundle /cache/context"
-	if got != want {
-		t.Fatalf("Ward launch = %q, want %q", got, want)
+	for _, want := range []string{
+		"ward agent engineer owner/repo#267 --print",
+		"--agent codex",
+		"--image aos:test",
+		"--context-bundle /cache/context",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("Ward launch %q does not contain %q", got, want)
+		}
+	}
+	for _, want := range []string{
+		"WARD_CODEX_MODEL=",
+		"WARD_CODEX_REASONING_EFFORT=",
+		"WARD_CODEX_VERBOSITY=",
+	} {
+		if !strings.Contains(strings.Join(plan.Environment, " "), want) {
+			t.Fatalf("Ward environment %q does not contain %q", plan.Environment, want)
+		}
+	}
+	if strings.Contains(got, "--config") {
+		t.Fatalf("Ward launch contains a workflow-local config flag: %q", got)
+	}
+}
+
+func TestIntegratedWardedDirectorCodexDryRunUsesOpaqueCompositionMetadata(t *testing.T) {
+	t.Parallel()
+	command := newCommand()
+	var output bytes.Buffer
+	command.Writer = &output
+	command.ErrWriter = &output
+	err := command.Run(context.Background(), []string{
+		"aos",
+		"--agent", "codex",
+		"--role", "director",
+		"--image", "aos:test",
+		"--warded",
+		"--composed",
+		"--guarded",
+		"--dry-run",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	rendered := output.String()
+	for _, want := range []string{"ward agent director", "--agent codex", "--context-bundle '<AOS_CONTEXT_BUNDLE>'"} {
+		if !strings.Contains(rendered, want) {
+			t.Errorf("dry run missing %q:\n%s", want, rendered)
+		}
+	}
+	for _, want := range []string{
+		"WARD_CODEX_MODEL=",
+		"WARD_CODEX_REASONING_EFFORT=",
+		"WARD_CODEX_VERBOSITY=",
+	} {
+		if !strings.Contains(rendered, want) {
+			t.Fatalf("Ward launch did not receive AOS-owned harness environment %q:\n%s", want, rendered)
+		}
+	}
+	if strings.Contains(rendered, "--config") {
+		t.Fatalf("Ward launch contains a workflow-local config flag:\n%s", rendered)
 	}
 }
 
@@ -187,5 +247,35 @@ func TestIntegratedStandaloneDryRunUsesSelectedAgent(t *testing.T) {
 	}
 	if strings.Contains(rendered, substrateVolume) {
 		t.Fatalf("guard-only launch mounted the composition cache:\n%s", rendered)
+	}
+}
+
+func TestIntegratedStandaloneComposedDryRunUsesNoWard(t *testing.T) {
+	t.Parallel()
+	command := newCommand()
+	var output bytes.Buffer
+	command.Writer = &output
+	command.ErrWriter = &output
+	err := command.Run(context.Background(), []string{
+		"aos",
+		"--agent", "codex",
+		"--role", "engineer",
+		"--image", "aos:test",
+		"--composed",
+		"--dry-run",
+		"--",
+		"--version",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	rendered := output.String()
+	for _, want := range []string{"docker run", "_container-acompose", "--composed"} {
+		if !strings.Contains(rendered, want) {
+			t.Errorf("standalone composed dry run missing %q:\n%s", want, rendered)
+		}
+	}
+	if strings.Contains(rendered, "ward agent") {
+		t.Fatalf("standalone composed dry run invoked Ward:\n%s", rendered)
 	}
 }
