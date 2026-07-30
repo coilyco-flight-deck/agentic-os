@@ -44,8 +44,8 @@ unreadable, and `*-workdir` state stays. Clean siblings may disappear alone.
 
 ## Ten-minute fleet pass
 
-The heavier pass runs on startup when its cache is ten minutes old. It fetches
-expected repositories and applies these local transitions:
+Every ten minutes at most, startup pulls expected repositories already on disk.
+It fetches `origin`, then:
 
 * A clean, inactive checkout on a remotely recoverable non-main branch switches
   to `main`, then deletes that local branch.
@@ -53,7 +53,7 @@ expected repositories and applies these local transitions:
 * An inactive linked worktree is removed with its local branch when clean and
   remotely recoverable.
 
-No action pushes, merges, deletes a remote branch, or commits local files.
+It never creates merge commits, pushes, deletes remote branches, commits, or clones missing repositories.
 
 ## Unexpected clones
 

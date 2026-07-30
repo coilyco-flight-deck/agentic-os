@@ -2,10 +2,9 @@
 # Status-line provider: the repo-checkout tracker row. See docs/repo-tracker.md.
 #
 # Names the git checkouts on disk that are NOT on the expected-repos list, i.e.
-# the strays to remove. Format-identical port of the host .agentic-os/statusline.sh
-# (the canonical source - keep this copy in lockstep, like agent-name.sh). It
-# reads no payload and self-suppresses (exit 0, no output) when the scan root is
-# absent, so a single-clone container renders nothing here. See docs/statusline.md.
+# the strays to remove. This canonical provider reads no payload and
+# self-suppresses (exit 0, no output) when the scan root is absent, so a
+# single-clone container renders nothing here. See docs/statusline.md.
 set -euo pipefail
 
 # Scan root: the org dirs live at <root>/<org>/<repo>. Env-overridable.
