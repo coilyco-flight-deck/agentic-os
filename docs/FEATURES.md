@@ -1,8 +1,6 @@
 # Features
 
-Major capabilities shipped by `agentic-os`.
-
-This lists shipped capabilities, not files.
+Major shipped capabilities, not files.
 
 ## Inventory
 
@@ -48,7 +46,7 @@ This lists shipped capabilities, not files.
 - [Catalog caps reference](catalog-caps-reference.md) - generated numeric caps for validators.
 - [Canonical agent-id generator](dictatable-id-alphabet.md) - short lowercase agent IDs.
 - [Knowledge-base freshness](knowledge-base-freshness.md) - age-based fact markers.
-- [Agent SDK patterns](agent-sdk-patterns.md) - reusable reference patterns for coordination, context, operations, tools, and managed agents.
+- [Agent SDK patterns](agent-sdk-patterns.md) - coordination, context, operations, tools, and managed agents.
 
 ## See also
 
