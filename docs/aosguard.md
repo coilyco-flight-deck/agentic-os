@@ -1,8 +1,7 @@
 # aosguard
 
-`aosguard` is AOS's guarded operator CLI. The name is intentionally
-AOS-specific. cli-guard and specgen remain generic products, while AOS owns
-this concrete policy snapshot, release name, and launch integration.
+`aosguard` is AOS's guarded operator CLI. cli-guard and specgen remain generic,
+while AOS owns this concrete policy snapshot, release name, and integration.
 
 Packaged `specgen` discovers the [guardfile project](../.specgen/README.md),
 materializes generated Go out of band, and emits `aosguard` without committed
@@ -15,6 +14,7 @@ The snapshot carries operator-facing Forgejo, AWS, kubectl, Tailscale, Actions,
 and runner-token leaves. AWS SSM permits single reads, file-backed writes, and
 named deletions. Actions lives at `aosguard ops actions` so its exec transport
 does not shadow `aosguard ops forgejo`. The snapshot excludes Ward role policy.
+Forgejo pin actions are fixed to `coilysiren/inbox`, where coilyco-ops is admin.
 Forgejo metadata includes the attended `forgejo-admin repo-topic replace-all`
 leaf, whose repeated `--topics` values become the repository's complete topic
 set. The ordinary Forgejo wrapper keeps the coilyco-ops bot token for reads and
