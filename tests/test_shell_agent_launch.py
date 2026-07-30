@@ -102,3 +102,52 @@ def test_agent_cli_launches_outside_repo(tmp_path: Path) -> None:
 
     assert result.returncode == 0, result.stderr
     assert result.stdout == "<-->\n<goose>\n<outside>\n"
+
+
+def test_agent_cli_uses_native_shadow_when_supported(tmp_path: Path) -> None:
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    _write_executable(
+        bin_dir / "aos",
+        """#!/bin/sh
+if [ "$1" = "_native-shadow" ] && [ "$2" = "--probe" ]; then exit 0; fi
+printf "<%s>\\n" "$@"
+""",
+    )
+    _write_executable(
+        bin_dir / "acompose",
+        '#!/bin/sh\nprintf "unexpected acompose execution\\n"\nexit 9\n',
+    )
+
+    result = _run_function(tmp_path, "codex", "one", "two words")
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == (
+        "<_native-shadow>\n"
+        "<--harness>\n"
+        "<codex>\n"
+        "<-->\n"
+        "<acompose>\n"
+        "<-->\n"
+        "<codex>\n"
+        "<one>\n"
+        "<two words>\n"
+    )
+
+
+def test_agent_cli_ignores_old_aos_without_native_shadow(tmp_path: Path) -> None:
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    _write_executable(
+        bin_dir / "aos",
+        '#!/bin/sh\nexit 1\n',
+    )
+    _write_executable(
+        bin_dir / "acompose",
+        '#!/bin/sh\nprintf "<%s>\\n" "$@"\n',
+    )
+
+    result = _run_function(tmp_path, "claude", "one")
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == "<-->\n<claude>\n<one>\n"

@@ -2,7 +2,14 @@
 
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+	"os/exec"
+	"strconv"
+
+	"golang.org/x/sys/windows"
+)
 
 func hostIdentity() (int, int) {
 	return 1000, 1000
@@ -10,6 +17,28 @@ func hostIdentity() (int, int) {
 
 func chownPath(_ string, _ bool, _, _ int) error {
 	return nil
+}
+
+func processStartIdentity(pid int) (string, error) {
+	handle, err := windows.OpenProcess(windows.PROCESS_QUERY_LIMITED_INFORMATION, false, uint32(pid))
+	if err != nil {
+		return "", err
+	}
+	defer windows.CloseHandle(handle)
+	var creation, exit, kernel, user windows.Filetime
+	if err := windows.GetProcessTimes(handle, &creation, &exit, &kernel, &user); err != nil {
+		return "", err
+	}
+	return strconv.FormatInt(creation.Nanoseconds(), 10), nil
+}
+
+func execNative(command []string) error {
+	child := exec.Command(command[0], command[1:]...)
+	child.Env = os.Environ()
+	child.Stdin = os.Stdin
+	child.Stdout = os.Stdout
+	child.Stderr = os.Stderr
+	return child.Run()
 }
 
 func execAs(_, _ int, _ execSpec) error {

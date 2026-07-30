@@ -11,6 +11,8 @@ This lists shipped capabilities, not files.
 - [Speech helper](aos-say.md) - `aos-say` client plus relay for status speech.
 - **Karabiner key bindings** - external keyboard and Remote Desktop mappings.
 - [Agents and sessions](features-agents-sessions.md) - self-name, pulses, status, and harness policy.
+- [Native agent workspaces](native-agent-workspaces.md) - automatic fleet
+  worktrees, startup leases, and remotely proven cleanup behind agent binaries.
 - [Agent-compose provider](personality-provider.md) - scoped skills and personality alignment.
 - [Agent tool evaluation](../.agents/skills/tooling-agent-tool-evaluation/SKILL.md) - cross-harness tool evals.
 - [Role-composed skills](role-composed-skills.md) - role-gated methods and behavioral evaluation.

@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 	"syscall"
 )
 
@@ -20,6 +21,26 @@ func chownPath(path string, symlink bool, uid, gid int) error {
 		return os.Lchown(path, uid, gid)
 	}
 	return os.Chown(path, uid, gid)
+}
+
+func processStartIdentity(pid int) (string, error) {
+	output, err := exec.Command("ps", "-o", "lstart=", "-p", strconv.Itoa(pid)).Output()
+	if err != nil {
+		return "", err
+	}
+	identity := strings.TrimSpace(string(output))
+	if identity == "" {
+		return "", fmt.Errorf("process %d has no start identity", pid)
+	}
+	return identity, nil
+}
+
+func execNative(command []string) error {
+	path, err := lookPath(command[0])
+	if err != nil {
+		return err
+	}
+	return syscall.Exec(path, command, os.Environ())
 }
 
 func execAs(uid, gid int, spec execSpec) error {

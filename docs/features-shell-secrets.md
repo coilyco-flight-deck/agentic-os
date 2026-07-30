@@ -17,6 +17,10 @@ real binary starts. A host without the opt-in agent-compose product
 falls back to the real binary. The wrappers apply in any working directory,
 including paths outside a git work tree.
 
+Supported AOS binaries also create a leased
+[native session workspace](native-agent-workspaces.md) and clean recoverable
+predecessors. Older binaries retain the direct agent-compose path.
+
 ## On-demand AWS SSM secret reads
 
 `ssm-get <name> [profile] [region]` fetches one decrypted parameter to stdout

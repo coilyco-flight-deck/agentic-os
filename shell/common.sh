@@ -172,13 +172,34 @@ bat() {
   command bat --no-pager "$@"
 }
 
-# Agent-compose converges doctrine, skills, and native MCP registries before it
-# execs the real harness binary. Hosts without the opt-in product keep working.
+# AOS gives native agents one leased, fleet-shaped worktree workspace and cleans
+# dead predecessors before agent-compose converges the real harness.
+_siren_native_shadow_available() {
+  if [ -z "${_SIREN_NATIVE_SHADOW_PROBED+x}" ]; then
+    _SIREN_NATIVE_SHADOW_PROBED=1
+    if command -v aos >/dev/null 2>&1 &&
+      command aos _native-shadow --probe >/dev/null 2>&1; then
+      _SIREN_NATIVE_SHADOW_AVAILABLE=1
+    else
+      _SIREN_NATIVE_SHADOW_AVAILABLE=0
+    fi
+  fi
+  [ "$_SIREN_NATIVE_SHADOW_AVAILABLE" = 1 ]
+}
+
 _siren_agent_launch() {
   local cli="$1"
   shift
   if command -v acompose >/dev/null 2>&1; then
+    if _siren_native_shadow_available; then
+      command aos _native-shadow --harness "$cli" -- acompose -- "$cli" "$@"
+      return
+    fi
     command acompose -- "$cli" "$@"
+    return
+  fi
+  if _siren_native_shadow_available; then
+    command aos _native-shadow --harness "$cli" -- "$cli" "$@"
     return
   fi
   command "$cli" "$@"

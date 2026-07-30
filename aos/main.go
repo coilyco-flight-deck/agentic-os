@@ -137,6 +137,15 @@ func newCommand() *cli.Command {
 				Action: runAcomposeCheckin,
 			},
 			{
+				Name:   "_native-shadow",
+				Hidden: true,
+				Flags: []cli.Flag{
+					&cli.StringFlag{Name: "harness"},
+					&cli.BoolFlag{Name: "probe"},
+				},
+				Action: runNativeShadow,
+			},
+			{
 				Name:      "_container-acompose",
 				Hidden:    true,
 				ArgsUsage: "-- <harness> [args...]",
