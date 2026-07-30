@@ -10,6 +10,34 @@ wrap aosguard ops forgejo-admin {
         value env FORGEJO_ADMIN_TOKEN
     }
     restrict owner matches coily*
+    can edit repo {
+        op repoEdit
+    }
+    action edit repo {
+        describe "update only a repository description with an attended administrator credential (PATCH /repos/{owner}/{repo}); no other repository settings are exposed"
+        input owner {
+            positional
+            required
+            help "repo owner"
+        }
+        input repo {
+            positional
+            required
+            help "repo name"
+        }
+        input description {
+            flag
+            required
+            help "replacement repository description"
+        }
+        call edit repo {
+            args {
+                owner $owner
+                repo $repo
+                description $description
+            }
+        }
+    }
     can replace-all repo-topic {
         op repoUpdateTopics
         describe "replace the complete repository topic set with an attended administrator credential (PUT /repos/{owner}/{repo}/topics); repeat --topics for each retained topic"

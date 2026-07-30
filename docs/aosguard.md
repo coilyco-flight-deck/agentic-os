@@ -15,11 +15,11 @@ and runner-token leaves. AWS SSM permits single reads, file-backed writes, and
 named deletions. Actions lives at `aosguard ops actions` so its exec transport
 does not shadow `aosguard ops forgejo`. The snapshot excludes Ward role policy.
 Forgejo pin actions are fixed to `coilysiren/inbox`, where coilyco-ops is admin.
-Forgejo metadata includes the attended `forgejo-admin repo-topic replace-all`
-leaf, whose repeated `--topics` values become the repository's complete topic
-set. The ordinary Forgejo wrapper keeps the coilyco-ops bot token for reads and
-writes. The admin wrapper reads `FORGEJO_ADMIN_TOKEN` from the environment so
-an attended credential never enters argv, logs, or tracked configuration.
+Forgejo metadata includes attended `forgejo-admin repo edit` and `forgejo-admin
+repo-topic replace-all` leaves. Description edits accept only owner, repository,
+and replacement description. Topics replace the complete set. The ordinary
+Forgejo wrapper keeps bot auth. The admin wrapper reads `FORGEJO_ADMIN_TOKEN`
+from the environment, so credentials never enter argv, logs, or tracked files.
 
 Ward's fixed broker and AOSguard's static operator surface are independent.
 Specgen merges AOSguard policy into one static binary. Neither surface imports

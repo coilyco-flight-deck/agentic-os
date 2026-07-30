@@ -217,6 +217,59 @@ def test_repo_topic_replace_all_dry_run_builds_put_body(
     assert "Authorization: token <redacted>" in result.stdout
 
 
+def test_repo_description_edit_dry_run_builds_bounded_patch(
+    aosguard_binary: Path,
+) -> None:
+    result = subprocess.run(
+        [
+            str(aosguard_binary),
+            "ops",
+            "forgejo-admin",
+            "repo",
+            "edit",
+            "coilyco-example",
+            "sample",
+            "--description",
+            "Bounded repository description.",
+            "--dry-run",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    assert "method: PATCH" in result.stdout
+    assert "/repos/coilyco-example/sample" in result.stdout
+    assert "description: Bounded repository description." in result.stdout
+    assert "private:" not in result.stdout
+    assert "Authorization: token <redacted>" in result.stdout
+
+
+def test_repo_description_edit_rejects_out_of_scope_owner(
+    aosguard_binary: Path,
+) -> None:
+    result = subprocess.run(
+        [
+            str(aosguard_binary),
+            "ops",
+            "forgejo-admin",
+            "repo",
+            "edit",
+            "outside-example",
+            "sample",
+            "--description",
+            "Blocked repository description.",
+            "--dry-run",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode != 0
+    assert 'owner="outside-example" is outside the allowed scope' in result.stderr
+
+
 def test_repo_topic_replace_all_rejects_out_of_scope_owner(
     aosguard_binary: Path,
 ) -> None:
