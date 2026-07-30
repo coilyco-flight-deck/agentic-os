@@ -192,6 +192,7 @@ roles {
         composed-skill writing-observer-narrator
         composed-skill writing-social-editorial-loop
         composed-skill writing-social-cultural-reading
+        composed-skill writing-social-linkedin-video
         composed-skill writing-social-trust-boundaries
         composed-skill writing-voice-guide-linter
         // BEGIN generated role-intent harness routes
