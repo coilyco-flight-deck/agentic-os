@@ -100,6 +100,25 @@ func newCommand() *cli.Command {
 				},
 			},
 			{
+				Name:  "converge",
+				Usage: "converge AOS-owned catalogues and native tool configuration",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:  "config",
+						Usage: "AOS convergence YAML (defaults to ~/.config/aos/converge.yaml)",
+					},
+					&cli.StringFlag{
+						Name:  "home",
+						Usage: "home receiving generated state and native projections",
+					},
+					&cli.BoolFlag{
+						Name:  "check",
+						Usage: "report drift without network or filesystem mutation",
+					},
+				},
+				Action: runEnvironmentConverge,
+			},
+			{
 				Name:   "harness-default",
 				Usage:  "print the projected harness for a role-intent lane",
 				Action: runHarnessDefault,

@@ -122,7 +122,7 @@ func prepareContainer(
 	if err := stageHarnessDefaults(opts.Role, opts.Layout, opts.AgentHome, opts.Workspace); err != nil {
 		return execSpec{}, err
 	}
-	if err := stageMCPProjection(ctx, opts, runner); err != nil {
+	if err := stageMCPProjection(opts); err != nil {
 		return execSpec{}, err
 	}
 	if err := stageHarnessAuth(opts.Layout, opts.AgentHome); err != nil {

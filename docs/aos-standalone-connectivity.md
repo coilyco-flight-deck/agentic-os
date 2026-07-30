@@ -13,9 +13,11 @@ AOS discovers the resolved host `~/.mcporter/mcporter.json` when that file is
 present. The launcher mounts only that inventory read-only. It does not mount
 host HOME, OAuth caches, or unrelated harness configuration.
 
-Container bootstrap runs `agent-compose mcp` after projecting harness defaults.
+Container bootstrap uses the AOS projector after projecting harness defaults.
 Claude and Codex receive native MCP registrations. Every harness receives the
-mcporter inventory as an on-demand CLI fallback.
+mcporter inventory as an on-demand CLI fallback. The same projector backs
+[native environment convergence](aos-convergence.md), so staged and host
+registries share one validation and rendering contract.
 
 ## Tailnet HTTP endpoints
 
@@ -65,5 +67,7 @@ owner of Ward runtime policy when `--warded` is present.
 ## See also
 
 * [AOS launch CLI](aos-cli.md) - launch flags and container contract.
+* [AOS environment convergence](aos-convergence.md) - host catalogue and MCP
+  ownership.
 * [AOS kubeconfig projection](aos-kubeconfig.md) - role-gated live credentials.
 * [Tooling Tailscale skill](../.agents/skills/tooling-tailscale/SKILL.md) - shared proxy and Docker network contract.

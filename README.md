@@ -67,6 +67,12 @@ never union authority between those layers. AOS applies its own bounded
 standalone runtime gates, including
 [kubeconfig projection](docs/aos-kubeconfig.md).
 
+AOS also converges host-aware runtime inputs with `aos converge`, while
+`aos converge --check` detects drift. That surface owns verified remote
+catalogue caching, a deterministic local manifest, native MCP projection, and
+per-server Codex approval policy. See the
+[environment convergence contract](docs/aos-convergence.md).
+
 The original standalone composed-container command remains available:
 
 ```bash

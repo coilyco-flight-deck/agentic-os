@@ -277,11 +277,7 @@ func dockerNetworkExists(ctx context.Context, name string) bool {
 	return command.Run() == nil
 }
 
-func stageMCPProjection(
-	ctx context.Context,
-	opts bootstrapOptions,
-	runner commandRunner,
-) error {
+func stageMCPProjection(opts bootstrapOptions) error {
 	if strings.TrimSpace(opts.MCPInventory) == "" {
 		return nil
 	}
@@ -293,15 +289,11 @@ func stageMCPProjection(
 		}
 		inventory = projected
 	}
-	if err := runner.Run(
-		ctx,
-		opts.AgentComposeBin,
-		"mcp",
-		"--inventory",
-		inventory,
-		"--home",
-		opts.AgentHome,
-	); err != nil {
+	if _, err := projectNativeMCP(nativeMCPOptions{
+		Inventory:     inventory,
+		Home:          opts.AgentHome,
+		ProjectNative: true,
+	}); err != nil {
 		return fmt.Errorf("project MCP inventory: %w", err)
 	}
 	return nil

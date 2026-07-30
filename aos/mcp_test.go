@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"net/netip"
 	"os"
@@ -116,7 +115,7 @@ func TestProjectTailnetMCPInventoryPreservesUnrelatedConfiguration(t *testing.T)
 	}
 }
 
-func TestStageMCPProjectionUsesAgentComposeProjector(t *testing.T) {
+func TestStageMCPProjectionUsesAOSProjector(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()
 	source := filepath.Join(root, "mcporter.json")
@@ -127,19 +126,20 @@ func TestStageMCPProjectionUsesAgentComposeProjector(t *testing.T) {
 	); err != nil {
 		t.Fatal(err)
 	}
-	runner := &fakeCommandRunner{}
 	opts := bootstrapOptions{
 		AgentHome:       filepath.Join(root, "home"),
 		AgentComposeBin: "agent-compose",
 		MCPInventory:    source,
 	}
-	if err := stageMCPProjection(context.Background(), opts, runner); err != nil {
+	if err := stageMCPProjection(opts); err != nil {
 		t.Fatal(err)
 	}
-	joined := strings.Join(runner.commands, "\n")
-	want := "agent-compose mcp --inventory " + source + " --home " + opts.AgentHome
-	if !strings.Contains(joined, want) {
-		t.Fatalf("MCP projection command missing %q:\n%s", want, joined)
+	codex, err := os.ReadFile(filepath.Join(opts.AgentHome, ".codex", "config.toml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(codex), aosMCPBlockBegin) {
+		t.Fatalf("AOS-managed MCP block missing:\n%s", codex)
 	}
 }
 
