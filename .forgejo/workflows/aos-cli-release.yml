@@ -27,7 +27,25 @@ permissions:
   contents: write
 
 jobs:
+  impact:
+    runs-on: docker
+    timeout-minutes: 10
+    container:
+      image: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release
+    outputs:
+      release_required: ${{ steps.impact.outputs.release_required }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - id: impact
+        name: Decide whether CLI artifacts changed
+        run: bash "$GITHUB_WORKSPACE/scripts/ci/release-impact.sh" aos-cli "${{ github.event_name }}" "${{ github.event.before }}" "${{ github.sha }}"
+
   release:
+    needs: [impact]
+    if: ${{ needs.impact.outputs.release_required == 'true' }}
     runs-on: docker
     timeout-minutes: 30
     container:

@@ -6,16 +6,13 @@ version and the `FALLBACK_REV` floor in
 `scripts/apply-agentic-os-hooks.py`, commits the bump, creates a signed
 annotated tag, and pushes both.
 
-This is the HAND-CUT path, primarily for major bumps and offline releases.
-Normal minor releases are automated by `.forgejo/workflows/release.yml`
-(tag-bump on every push to main). The version-bump commit here carries a
-`[skip ci]` marker so a local run does NOT double-fire that pipeline - the
-files are synced and the tag is cut here, and the auto-pipeline stays out
-of the way. Non-release pushes resume auto-minor from the tag this cut.
-The consumer pin now resolves from git tags at read time (agentic-os#238),
-so the auto-pipeline cuts only a tag - no per-push pin commit. This path
-additionally reconciles pyproject `version` + `uv.lock` and refreshes the
-`FALLBACK_REV` floor, so run it whenever those drift behind the tags.
+This is the HAND-CUT path for the root `v*` train. The automatic standalone
+CLI train uses independent `aos-v*` tags and never calls this helper. The
+version-bump commit here carries a `[skip ci]` marker so it does not start
+the main-push workflows. The consumer pin resolves from root git tags at read
+time (agentic-os#238), with no per-push pin commit. This path additionally
+reconciles pyproject `version` + `uv.lock` and refreshes the `FALLBACK_REV`
+floor, so run it whenever those drift behind the root tags.
 
 Usage:
     python3 scripts/release.py [--bump {major|minor|patch}] [--dry-run]
@@ -172,8 +169,7 @@ def main() -> int:
 
     if changed_files:
         run(["git", "add", *changed_files])
-        # [skip ci] so this hand-cut bump does not double-fire the auto
-        # release pipeline (.forgejo/workflows/release.yml) on push.
+        # [skip ci] keeps the hand-cut root release out of main-push workflows.
         run(["git", "commit", "-m", f"chore: bump version to {new_tag} [skip ci]"])
         print(f"Committed version bump touching: {', '.join(changed_files)}")
 

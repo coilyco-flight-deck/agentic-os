@@ -64,6 +64,9 @@ commands:
   aos-release-check:
     run: sh scripts/check-aos-release.sh
     description: "Verify `aos` release checksums, package metadata, and the native version-stamped binary."
+  release-impact:
+    run: uv run python -m agentic_os.release_impact
+    description: "Decide whether changed paths require an AOS CLI or dev-base artifact release. Pass `--surface aos-cli|dev-base` plus `--base REF`, repeated `--changed-path PATH`, or `--force` after `--`."
   workflow-ward-install-check:
     run: bash scripts/install-workflow-ward.sh
     description: "Build the Ward version used by Actions from the generated tag at the production release branch. Pass an explicit ref and temporary output path after `--` to override."

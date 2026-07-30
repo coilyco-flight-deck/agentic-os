@@ -3,15 +3,16 @@
 Three-stage Forgejo-canonical release (ward#1117 / aos#469). Stage 1:
 `promote.yml` gates every `main` push and fast-forwards `release` with
 `CI_RELEASE_TOKEN`. Stage 2: `dev-base-publish.yml` publishes the five draft
-language images in parallel, then the full fan-in image under `draft-${sha}` on
-the promoted SHA. Its manual dispatch path can resume one tier or the whole
-graph. Stage 3: `release.yml`
+language images and full fan-in under `draft-${sha}` only when the affected-tier
+classifier finds work. Manual dispatch overrides the decision and can resume
+one tier or the whole graph. Stage 3: `release.yml`
 is manual retry only under a no-cancel queue, so retries stay sequenced and
 never gate the branch. `main` stays yolo-able. `release` is last-known-good.
 Forgejo owns the release and tag per [forgejo-github-mirror-contract.md](forgejo-github-mirror-contract.md).
 
 `promote.yml` only computes the repo gate and advances the branch. The draft
 publish workflow keeps image availability separate from branch promotion.
+Non-image merges advance `release` without producing draft images.
 `release.yml` is the manual retry path and no longer runs on push. Its language
 and full retag jobs wait for the draft source tags. Dispatches can override
 `sha`, `tag`, and `source-tag` to resume the publish or retag.
@@ -27,7 +28,10 @@ release-please is PR-driven, and `coilysiren/agentic-os` disables GitHub PRs. Ra
 
 ## Version bump
 
-`actions/tag-bump` runs with no bump input, so every push-to-main release is minor. Commit messages are never parsed. For a major, run `scripts/release.py --bump major` to cut `vN.0.0` by hand (`[skip ci]`). The actions are referenced locally (`uses: ./actions/...`).
+`actions/tag-bump` defaults to minor and never parses commits. The `aos-v*`
+train invokes it only when `release-impact` finds a shipped CLI input. Root
+majors remain hand-cut with `scripts/release.py --bump major`. Manual workflow
+dispatch overrides both classifiers.
 
 `actions/tag-bump` also has a compute-only mode: derive the next semver first,
 create the public tag and Forgejo release only at the end.

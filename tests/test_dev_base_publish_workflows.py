@@ -83,7 +83,10 @@ def test_full_image_build_uses_the_dedicated_runner() -> None:
     assert "publish-languages:" in publish
     assert "publish-full:" in publish
     assert "needs: [plan-draft, publish-languages]" in publish
-    assert "plan-draft:\n    runs-on: docker\n" in publish
+    plan_draft = publish.split("\n  plan-draft:\n", 1)[1].split(
+        "\n  publish-languages:\n", 1
+    )[0]
+    assert "runs-on: docker" in plan_draft
 
 
 def test_shared_docker_bootstrap_retries_downloads_without_partial_files() -> None:

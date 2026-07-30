@@ -45,20 +45,20 @@ full-only gate tools are `golangci-lint`, `trufflehog`, and `kdlfmt`.
 [`scripts/dev-base-build.py`](../scripts/dev-base-build.py) supplies the AOS
 CLI, aosguard spec, and aosguard Python package as named Docker contexts.
 
-[`dev-base-publish.yml`](../.forgejo/workflows/dev-base-publish.yml) builds the
-five multi-architecture specialists in a four-wide matrix, then builds the full
-fan-in image. [`release.yml`](../.forgejo/workflows/release.yml) promotes every
-manifest to its versioned and moving tags. Language tags use
+[`dev-base-publish.yml`](../.forgejo/workflows/dev-base-publish.yml) skips
+unless the affected-tier classifier finds an image input, then builds the five
+specialists and full fan-in image. Manual dispatch overrides the decision.
+[`release.yml`](../.forgejo/workflows/release.yml) promotes every manifest to
+its versioned and moving tags. Language tags use
 `lang-<language>-<tag>`. The full image keeps the plain `<tag>`, `release`, and
 `latest` names. Both paths check each target manifest before work, so a retry
 skips an image that already landed. See [publish resume](dev-base-publish-resume.md).
 
 Pull requests run the affected source closure through
 [`actions/dev-base-build`](../actions/dev-base-build/action.yml). The PR action
-and publication share the Python build plan, bootstrap scripts, Dockerfiles,
-build arguments, and full verification. PRs load one local architecture and
-never receive a registry credential. See
-[PR dev-base build validation](pr-dev-base-build-validation.md).
+and publication share the affected-tier contract, scripts, Dockerfiles, build
+arguments, and verification. PRs load one architecture and never receive a
+registry credential. See [PR build validation](pr-dev-base-build-validation.md).
 
 ## Pinning a tool
 

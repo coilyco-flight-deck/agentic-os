@@ -9,8 +9,11 @@ full dev-base image, so CLI delivery never waits on image promotion.
 
 ## Automatic release
 
-Every push to canonical `main` queues
-`.forgejo/workflows/aos-cli-release.yml` without cancellation. The job:
+Every `main` push runs the release-impact classifier.
+`.forgejo/workflows/aos-cli-release.yml` queues a release only for shipped Go
+sources and manifests, AOSguard specs and bridges, the Specgen pin, or release
+build/package scripts. Docs, tests, Alacritty, and workflow-only changes skip
+it. Manual dispatch overrides the decision. The release job:
 
 1. installs the validated workflow Ward, then runs Python, Go, and pre-commit
    validation
@@ -73,8 +76,5 @@ assets are reused and replaced, making a retry idempotent.
 `aos-release-check` verifies checksums, versions, `--help`, and an
 `agent-terminal --dry-run` against a renderer-neutral overlay fixture. The
 ordinary Go tests, repository test, and pre-commit verbs remain the release
-gate.
-
-## See also
-
-* [AOS CLI](aos-cli.md), [root release](release.md), and [shipped features](FEATURES.md).
+gate. `ward exec release-impact -- --surface aos-cli --base REF --head REF`
+prints the decision and matching paths without publishing.
