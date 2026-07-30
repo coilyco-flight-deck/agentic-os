@@ -567,6 +567,9 @@ func normalizeNativeRepository(
 		if err != nil || !safe {
 			return err
 		}
+		if err := cleanUnleasedNativeWorktrees(runtime, repository, live); err != nil {
+			return err
+		}
 		if _, err := nativeGit(repository.Path, "switch", "main"); err != nil {
 			return err
 		}
@@ -579,7 +582,10 @@ func normalizeNativeRepository(
 	if _, err := nativeGit(repository.Path, "merge", "--ff-only", "origin/main"); err != nil {
 		return err
 	}
-	return cleanUnleasedNativeWorktrees(runtime, repository, live)
+	if branch == "main" {
+		return cleanUnleasedNativeWorktrees(runtime, repository, live)
+	}
+	return nil
 }
 
 func cleanUnleasedNativeWorktrees(

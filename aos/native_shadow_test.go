@@ -495,6 +495,29 @@ func TestNativeSweepReturnsExpectedCheckoutToMain(t *testing.T) {
 	}
 }
 
+func TestNativeSweepReclaimsMainBeforeSwitchingCanonicalCheckout(t *testing.T) {
+	root := t.TempDir()
+	repository, _ := createNativeTestRepository(t, root, "owner", "one")
+	testGit(t, repository, "switch", "-c", "task")
+	testGit(t, repository, "push", "-u", "origin", "task")
+	mainWorktree := filepath.Join(root, "main-worktree")
+	testGit(t, repository, "worktree", "add", mainWorktree, "main")
+	runtime := nativeTestRuntime(t, root)
+
+	if err := normalizeNativeRepository(runtime, nativeRepository{
+		Owner: "owner", Name: "one", Path: repository,
+	}, map[string]bool{}); err != nil {
+		t.Fatal(err)
+	}
+
+	if branch := testGit(t, repository, "branch", "--show-current"); branch != "main" {
+		t.Fatalf("branch = %s, want main", branch)
+	}
+	if _, err := os.Stat(mainWorktree); !os.IsNotExist(err) {
+		t.Fatalf("main worktree remains: %v", err)
+	}
+}
+
 func TestUnexpectedCloneDeletedOnThirdSweep(t *testing.T) {
 	root := t.TempDir()
 	repository, _ := createNativeTestRepository(t, root, "owner", "extra")
