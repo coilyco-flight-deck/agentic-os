@@ -40,6 +40,8 @@ Equivalent links on Mac and Linux:
 ln -sf "$PWD/shell/zshrc"  ~/.zshrc      # both source shell/common.sh
 ln -sf "$PWD/shell/bashrc" ~/.bashrc
 ln -sf "$PWD/scripts/gpg-ssm" ~/.local/bin/gpg-ssm
+mkdir -p ~/.config/alacritty
+ln -sf "$PWD/alacritty/alacritty.toml" ~/.config/alacritty/alacritty.toml
 ward exec warp apply                     # warp config
 ```
 

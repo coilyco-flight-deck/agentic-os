@@ -31,9 +31,10 @@ harness. See the [AOS to Ward credential handoff](aos-ward-credentials.md).
 
 ## Cross-platform terminal
 
-Alacritty supplies the portable Sombra rendering baseline. On Windows,
-infrastructure renders Git Bash as Alacritty's direct shell and keeps the
-terminal free of an intermediate multiplexer.
+Alacritty supplies the portable Sombra rendering baseline. Mac and Linux
+workstations symlink the live Alacritty config to the canonical AOS file. On
+Windows, infrastructure renders Git Bash as Alacritty's direct shell and keeps
+the terminal free of an intermediate multiplexer.
 
 Transitional Warp config still renders into `~/.warp-preview/` on Mac or
 `~/.warp/` on Windows. Repo state disables cloud sync and owns its theme,
