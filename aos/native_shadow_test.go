@@ -249,6 +249,67 @@ func TestAssignedNativeRoleExportsAOSModelClass(t *testing.T) {
 	}
 }
 
+func TestNativeCodexWorkspaceTrustIsScopedToGeneratedProject(t *testing.T) {
+	project := "/tmp/aos-native/session/projects"
+	override := `projects={"/tmp/aos-native/session/projects"={trust_level="trusted"}}`
+	tests := []struct {
+		name    string
+		command []string
+		want    []string
+	}{
+		{
+			name:    "assigned role",
+			command: []string{"agent-compose", "launch", "engineer", "codex", "--model", "gpt"},
+			want:    []string{"agent-compose", "launch", "engineer", "codex", "--config", override, "--model", "gpt"},
+		},
+		{
+			name:    "inferred role",
+			command: []string{"agent-compose", "compose", "--", "codex", "--model", "gpt"},
+			want:    []string{"agent-compose", "compose", "--", "codex", "--config", override, "--model", "gpt"},
+		},
+		{
+			name:    "direct harness",
+			command: []string{"codex", "--model", "gpt"},
+			want:    []string{"codex", "--config", override, "--model", "gpt"},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got := trustNativeCodexWorkspace(test.command, "codex", project)
+			if strings.Join(got, "\x00") != strings.Join(test.want, "\x00") {
+				t.Fatalf("command = %#v, want %#v", got, test.want)
+			}
+		})
+	}
+}
+
+func TestNativeCodexProjectResolvesWorkspaceSymlinks(t *testing.T) {
+	actual := filepath.Join(t.TempDir(), "projects")
+	if err := os.MkdirAll(actual, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	link := filepath.Join(t.TempDir(), "projects")
+	if err := os.Symlink(actual, link); err != nil {
+		t.Skipf("symlinks unavailable: %v", err)
+	}
+	resolved, err := filepath.EvalSymlinks(actual)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if got := nativeCodexProject(link); got != resolved {
+		t.Fatalf("project = %q, want canonical path %q", got, resolved)
+	}
+}
+
+func TestNativeWorkspaceTrustDoesNotChangeOtherHarnesses(t *testing.T) {
+	command := []string{"agent-compose", "launch", "engineer", "claude"}
+	got := trustNativeCodexWorkspace(command, "claude", "/tmp/aos-native/session/projects")
+	if strings.Join(got, "\x00") != strings.Join(command, "\x00") {
+		t.Fatalf("command = %#v, want unchanged %#v", got, command)
+	}
+}
+
 func TestNativeLaunchOutsideProjectsStillCreatesFleetWorkspace(t *testing.T) {
 	root := t.TempDir()
 	createNativeTestRepository(t, root, "owner", "one")

@@ -29,7 +29,7 @@ starts at its clean projects root before projecting the caller-assigned role
 bundle. This keeps role load points out of a repository working tree. AOS also
 passes the harness's model class from its embedded layout registry. Its shadow
 home links native host state but leaves user skill directories empty, so only
-the assigned bundle supplies user and repository skills.
+the assigned bundle supplies user and repository skills. For Codex, AOS trusts only the generated workspace through an ephemeral config override, keeping persistent user config clean and normal prompts everywhere else.
 
 ## Startup leases
 

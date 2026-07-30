@@ -111,12 +111,57 @@ func runNativeShadow(_ context.Context, cmd *cli.Command) error {
 	if err := os.Chdir(launchCWD); err != nil {
 		return fmt.Errorf("enter native session workspace %s: %w", launchCWD, err)
 	}
+	if _, isolated := relativeWithin(runtime.SessionsRoot, launchCWD); isolated && harness == "codex" {
+		command = trustNativeCodexWorkspace(command, harness, nativeCodexProject(launchCWD))
+	}
 	if cmd.Bool("assigned-role") {
 		if err := applyNativeRoleModelClass(harness); err != nil {
 			return err
 		}
 	}
 	return execNative(command)
+}
+
+func nativeCodexProject(cwd string) string {
+	if root, err := nativeGit(cwd, "rev-parse", "--show-toplevel"); err == nil &&
+		filepath.IsAbs(root) {
+		cwd = root
+	}
+	if resolved, err := filepath.EvalSymlinks(cwd); err == nil {
+		return resolved
+	}
+	return filepath.Clean(cwd)
+}
+
+func trustNativeCodexWorkspace(command []string, harness, project string) []string {
+	if harness != "codex" || len(command) == 0 {
+		return command
+	}
+	override := "projects={" + tomlBasicString(project) + "={trust_level=\"trusted\"}}"
+	insert := func(index int) []string {
+		trusted := make([]string, 0, len(command)+2)
+		trusted = append(trusted, command[:index]...)
+		trusted = append(trusted, "--config", override)
+		return append(trusted, command[index:]...)
+	}
+	base := func(value string) string {
+		return strings.TrimSuffix(filepath.Base(value), filepath.Ext(value))
+	}
+	if base(command[0]) == "codex" {
+		return insert(1)
+	}
+	if base(command[0]) != "agent-compose" {
+		return command
+	}
+	if len(command) >= 4 && command[1] == "launch" && command[3] == "codex" {
+		return insert(4)
+	}
+	for index := 1; index+1 < len(command); index++ {
+		if command[index] == "--" && base(command[index+1]) == "codex" {
+			return insert(index + 2)
+		}
+	}
+	return command
 }
 
 func applyNativeRoleModelClass(harness string) error {
