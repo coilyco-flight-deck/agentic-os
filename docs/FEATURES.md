@@ -45,6 +45,7 @@ This lists shipped capabilities, not files.
 - [Catalog caps reference](catalog-caps-reference.md) - generated numeric caps for validators.
 - [Canonical agent-id generator](dictatable-id-alphabet.md) - short lowercase agent IDs.
 - [Knowledge-base freshness program](knowledge-base-freshness.md) - age-based doc fact freshness markers.
+- [Agent SDK patterns](agent-sdk-patterns.md) - reusable reference patterns for coordination, context, operations, tools, and managed agents.
 
 ## See also
 
