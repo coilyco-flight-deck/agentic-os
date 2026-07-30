@@ -169,7 +169,7 @@ def test_sync_writes_then_check_passes(
     )
 
 
-def test_if_present_skips_only_an_absent_checkout(
+def test_if_present_skips_only_an_absent_board_source(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     missing = tmp_path / "missing-aosh"
@@ -185,7 +185,7 @@ def test_if_present_skips_only_an_absent_checkout(
         )
         == 0
     )
-    assert "skip: AOSH checkout is absent" in capsys.readouterr().out
+    assert "skip: board source is absent" in capsys.readouterr().out
 
 
 def test_present_incomplete_checkout_fails_closed(

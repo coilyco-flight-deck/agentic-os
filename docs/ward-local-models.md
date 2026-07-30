@@ -1,17 +1,18 @@
 # AOSH projections into AOS
 
-Agent-compose owns behavioral roles, seats, and identity. AOSH owns backend
-selection and model-opaque role intents. AOS owns both the public harness
-capability registry and the concrete deployment tuning that its launchers
-apply. Shipped AOS runtimes embed their projections and never fetch an
+Agent-compose owns behavioral roles, seats, and identity. AOS owns semantic
+role-intent-harness routing and the concrete deployment tuning that its
+launchers apply. AOSH owns model measurements and generic model-selection
+evidence. Shipped AOS runtimes embed their projections and never fetch an
 authoring repository at launch.
 
 ## Role-intent harness board
 
 AOS's hand-owned [`.agents/harnesses.yaml`](../.agents/harnesses.yaml) defines
-public harness identity and intent compatibility. AOSH's hand-owned
-`roles.yaml` and `agent-selections.yaml` define the model-opaque role joins and
-lane choices. `ward exec sync-harness-board` validates the joined inputs,
+public harness identity and intent compatibility. AOS's hand-owned
+[`.agents/role-harnesses.yaml`](../.agents/role-harnesses.yaml) defines the
+model-opaque role joins and lane choices. `ward exec sync-harness-board`
+validates the joined inputs,
 updates generated `intent` children inside the agent-compose provider roles in
 [`.agents/roles.kdl`](../.agents/roles.kdl), and rewrites
 [`role-harnesses.json`](../aos/role-harnesses.json) as the compiled launcher

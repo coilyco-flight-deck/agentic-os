@@ -49,8 +49,9 @@ AOS owns the public
 [agent and harness capability registry](../.agents/harnesses.yaml), including
 descriptions, links, intents, optional roles, and role eligibility. The
 Community allowlist admits only `sirens-discord-ops` without changing shared
-intents. AOSH owns `roles.yaml` joins and `agent-selections.yaml` choices because
-they participate in hardware scoring and backend routing.
+intents. AOS also owns the hand-maintained
+[role-intent-harness board](../.agents/role-harnesses.yaml). Role semantics and
+harness choice are launcher policy, independent of model scoring and hardware.
 
 AOS also owns the generated `intent` children inside each canonical role in
 [`.agents/roles.kdl`](../.agents/roles.kdl), the committed agent-compose
@@ -59,14 +60,13 @@ provider projection. Ward never parses these composition routes.
 The sync also writes [`role-harnesses.json`](../aos/role-harnesses.json) as the
 compiled view embedded by the standalone `aos` binary. The JSON does not become
 a second hand-owned source. The drift check requires both generated views to
-match the AOS capability registry joined with the same AOSH selection board.
-Run `ward exec sync-harness-board` after the AOS registry or an AOSH selection changes. Run
+match the AOS capability registry joined with the same AOS routing board.
+Run `ward exec sync-harness-board` after the AOS registry or routing board changes. Run
 `ward exec sync-harness-board -- --check` for a read-only drift check. Local
-pre-commit performs the same check when the sibling AOSH checkout exists.
-Public checkouts without that sibling report a visible skip.
+pre-commit performs the same self-contained check.
 
-The AOS registry is always required. Malformed or incomplete present AOSH
-selection sources fail closed. Each generated KDL region is marker-bounded so
+The AOS registry and routing board are always required. Malformed or incomplete
+sources fail closed. Each generated KDL region is marker-bounded so
 the sync preserves hand-owned composed-skill bindings.
 The KDL carries role, intent, and harness identity. The JSON adds schema counts
 and role-source provenance. Neither copies backend routing data.

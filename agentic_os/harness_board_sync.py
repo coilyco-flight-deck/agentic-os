@@ -1,4 +1,4 @@
-"""Compile AOS harness mappings with AOSH role selections for AOS consumers."""
+"""Compile AOS-owned role, intent, and harness mappings for AOS consumers."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ import yaml
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_AOSH_ROOT = REPO_ROOT.parents[1] / "coilyco-bridge" / "agentic-os-hardware"
+DEFAULT_BOARD_SOURCE = REPO_ROOT / ".agents" / "role-harnesses.yaml"
 DEFAULT_ROLES = REPO_ROOT / ".agents" / "roles.kdl"
 DEFAULT_AGENT_ROLES = DEFAULT_ROLES
 DEFAULT_HARNESSES = REPO_ROOT / ".agents" / "harnesses.yaml"
@@ -105,13 +105,19 @@ def _check_keys(actual: object, expected: set[str], label: str) -> None:
 
 
 def load_board(
-    aosh_root: Path,
+    board_source: Path = DEFAULT_BOARD_SOURCE,
     *,
     roles_path: Path = DEFAULT_ROLES,
     harnesses_path: Path = DEFAULT_HARNESSES,
 ) -> HarnessBoard:
-    roles_file = aosh_root / ROLES_PATH
-    selections_file = aosh_root / SELECTIONS_PATH
+    # Directory input remains available for isolated legacy fixtures. Production
+    # reads the single AOS-owned source.
+    if board_source.is_dir():
+        roles_file = board_source / ROLES_PATH
+        selections_file = board_source / SELECTIONS_PATH
+    else:
+        roles_file = board_source
+        selections_file = board_source
     harnesses_file = harnesses_path
     role_document = _load_yaml(roles_file)
     selection_document = _load_yaml(selections_file)
@@ -412,7 +418,7 @@ def merge_agent_roles(current: str, board: HarnessBoard, path: Path) -> str:
 
 
 def run(
-    aosh_root: Path,
+    board_source: Path,
     output: Path,
     *,
     roles_path: Path = DEFAULT_ROLES,
@@ -421,7 +427,7 @@ def run(
     check: bool,
 ) -> int:
     board = load_board(
-        aosh_root,
+        board_source,
         roles_path=roles_path,
         harnesses_path=harnesses_path,
     )
@@ -452,7 +458,7 @@ def run(
     ]
     if not drift:
         print(
-            "ok: AOS harness registry and AOSH selections match projections "
+            "ok: AOS role-harness source matches projections "
             f"({len(board.roles)} roles, {board.lane_count} lanes)"
         )
         return 0
@@ -460,7 +466,7 @@ def run(
         for path in drift:
             print(
                 f"drift: {path} does not match "
-                f"{aosh_root / SELECTIONS_PATH} with {harnesses_path}",
+                f"{board_source} with {harnesses_path}",
                 file=sys.stderr,
             )
         print("run `ward exec sync-harness-board` from the AOS checkout", file=sys.stderr)
@@ -473,7 +479,7 @@ def run(
         raise BoardSyncError(f"write harness-board projection: {exc}") from exc
     print(
         f"updated {agent_roles_path} and {output} from "
-        f"{aosh_root / SELECTIONS_PATH} with {harnesses_path}"
+        f"{board_source} with {harnesses_path}"
     )
     return 0
 
@@ -483,24 +489,22 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--check", action="store_true", help="report drift without changing the projection"
     )
-    parser.add_argument(
-        "--if-present",
-        action="store_true",
-        help="skip when the default sibling AOSH checkout is absent",
-    )
-    parser.add_argument("--aosh-root", type=Path, default=DEFAULT_AOSH_ROOT)
+    parser.add_argument("--board", type=Path, default=DEFAULT_BOARD_SOURCE)
+    parser.add_argument("--if-present", action="store_true", help=argparse.SUPPRESS)
+    parser.add_argument("--aosh-root", type=Path, help=argparse.SUPPRESS)
     parser.add_argument("--roles", type=Path, default=DEFAULT_ROLES)
     parser.add_argument("--agent-roles", type=Path, default=DEFAULT_AGENT_ROLES)
     parser.add_argument("--harnesses", type=Path, default=DEFAULT_HARNESSES)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     args = parser.parse_args(argv)
 
-    if args.if_present and not args.aosh_root.exists():
-        print(f"skip: AOSH checkout is absent at {args.aosh_root}")
+    board_source = args.aosh_root or args.board
+    if args.if_present and not board_source.exists():
+        print(f"skip: board source is absent at {board_source}")
         return 0
     try:
         return run(
-            args.aosh_root,
+            board_source,
             args.output,
             roles_path=args.roles,
             agent_roles_path=args.agent_roles,
