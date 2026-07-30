@@ -101,7 +101,7 @@ def load_person_snapshot(path: Path) -> PersonSnapshot:
         raw_meld = raw_role.get("personalities")
         if (
             not isinstance(raw_meld, list)
-            or not 2 <= len(raw_meld) <= 3
+            or not 2 <= len(raw_meld) <= 4
             or not all(isinstance(value, str) for value in raw_meld)
         ):
             raise RolePersonalitySyncError(

@@ -1,14 +1,15 @@
 {
   "format": "agentic-os.role-personality-board.v1",
   "role_count": 13,
-  "personality_count": 17,
+  "personality_count": 21,
   "roles": [
     {
       "role": "engineer",
       "personalities": [
         "curious",
         "grounded",
-        "meticulous"
+        "meticulous",
+        "tenacious"
       ]
     },
     {
@@ -16,7 +17,8 @@
       "personalities": [
         "bold",
         "grounded",
-        "diplomatic"
+        "diplomatic",
+        "decisive"
       ]
     },
     {
@@ -24,7 +26,8 @@
       "personalities": [
         "meticulous",
         "candid",
-        "playful"
+        "playful",
+        "skeptical"
       ]
     },
     {
@@ -32,7 +35,8 @@
       "personalities": [
         "reflective",
         "curious",
-        "candid"
+        "candid",
+        "skeptical"
       ]
     },
     {
@@ -40,7 +44,8 @@
       "personalities": [
         "protective",
         "grounded",
-        "reflective"
+        "reflective",
+        "meticulous"
       ]
     },
     {
@@ -48,7 +53,8 @@
       "personalities": [
         "warm",
         "meticulous",
-        "curious"
+        "curious",
+        "decisive"
       ]
     },
     {
@@ -56,7 +62,8 @@
       "personalities": [
         "imaginative",
         "playful",
-        "editorial"
+        "editorial",
+        "warm"
       ]
     },
     {
@@ -64,7 +71,8 @@
       "personalities": [
         "quirky",
         "playful",
-        "optimistic"
+        "optimistic",
+        "bold"
       ]
     },
     {
@@ -72,7 +80,8 @@
       "personalities": [
         "nurturing",
         "diplomatic",
-        "playful"
+        "playful",
+        "protective"
       ]
     },
     {
@@ -80,7 +89,8 @@
       "personalities": [
         "charming",
         "energetic",
-        "warm"
+        "warm",
+        "tenacious"
       ]
     },
     {
@@ -88,7 +98,8 @@
       "personalities": [
         "nurturing",
         "diplomatic",
-        "optimistic"
+        "optimistic",
+        "tenacious"
       ]
     },
     {
@@ -96,7 +107,8 @@
       "personalities": [
         "bold",
         "grounded",
-        "protective"
+        "protective",
+        "demanding"
       ]
     },
     {
@@ -104,7 +116,8 @@
       "personalities": [
         "editorial",
         "meticulous",
-        "curious"
+        "curious",
+        "candid"
       ]
     }
   ],
@@ -122,6 +135,10 @@
       "skill": "personality-meticulous"
     },
     {
+      "personality": "tenacious",
+      "skill": "personality-tenacious"
+    },
+    {
       "personality": "bold",
       "skill": "personality-bold"
     },
@@ -130,12 +147,20 @@
       "skill": "personality-diplomatic"
     },
     {
+      "personality": "decisive",
+      "skill": "personality-decisive"
+    },
+    {
       "personality": "candid",
       "skill": "personality-candid"
     },
     {
       "personality": "playful",
       "skill": "personality-playful"
+    },
+    {
+      "personality": "skeptical",
+      "skill": "personality-skeptical"
     },
     {
       "personality": "reflective",
@@ -176,6 +201,10 @@
     {
       "personality": "energetic",
       "skill": "personality-energetic"
+    },
+    {
+      "personality": "demanding",
+      "skill": "personality-demanding"
     }
   ]
 }

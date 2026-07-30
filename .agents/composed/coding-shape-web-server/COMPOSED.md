@@ -20,7 +20,7 @@ web server, http server, rest api, graphql, fastapi, flask, django, sanic, starl
 
 ## Design principles
 
-- **OpenAPI from day one.** `/openapi.json` exists, accurate, kept in sync with handlers. Cross-link to the JSON-twin discoverability rule in `kai-tech-prefs` (in agentic-os-kai).
+- **OpenAPI from day one.** `/openapi.json` exists, accurate, kept in sync with handlers. Cross-link to the JSON-twin discoverability rule in `kai-tech-prefs`.
 - **Async I/O when there's I/O.** Sync handlers only when there's nothing to overlap.
 - **Structured errors.** Return shaped JSON for 4xx/5xx, not bare strings.
 - **Prometheus metrics from day one.** `/metrics` endpoint, request duration histograms, error counters. See `coding-shape-observability`.
@@ -43,4 +43,4 @@ Building a new HTTP server, refactoring an existing one, or designing the API su
 
 - `coding-shape-observability` - metrics/tracing wiring.
 - `coding-kubernetes` - deploy target for most servers Kai writes.
-- `kai-tech-prefs` (in agentic-os-kai) - JSON-twin discoverability rule.
+- `kai-tech-prefs` - JSON-twin discoverability rule.

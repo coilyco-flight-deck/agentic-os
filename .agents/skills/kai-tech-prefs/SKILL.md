@@ -10,9 +10,13 @@ low-context: required
 
 Python, AWS, Kubernetes, Terraform. Distributed systems, platform engineering, o11y-heavy. LLM APIs and production-grade AI systems.
 
-## Go CLI
+## CLI and repository shape
 
 Kai is/was a maintainer of [urfave/cli](https://github.com/urfave/cli). **Default to urfave/cli over cobra/kong.** When in doubt about Go CLI tooling, check what urfave/cli does first.
+
+- **Prefer Go for operator CLIs.** Do not introduce a Python CLI surface.
+- **Avoid polyglot repositories.** If a single-language project needs a CLI in another language, put the CLI in its own repository and share contracts through a published schema artifact.
+- **Keep standalone CLIs standalone.** Do not add cli-guard or Ward unless the tool specifically needs audit gating.
 
 ## Charm (preferred TUI/CLI styling family)
 

@@ -17,7 +17,12 @@ def _person_snapshot() -> dict[str, object]:
         "role_order": ["builder", "guide"],
         "roles": {
             "builder": {
-                "personalities": ["curious", "grounded"],
+                "personalities": [
+                    "curious",
+                    "grounded",
+                    "meticulous",
+                    "tenacious",
+                ],
                 "supported_model_classes": ["frontier"],
             },
             "guide": {
@@ -28,7 +33,14 @@ def _person_snapshot() -> dict[str, object]:
             personality: {
                 "skill": role_personality_sync.personality_skill_id(personality)
             }
-            for personality in ("curious", "grounded", "playful", "diplomatic")
+            for personality in (
+                "curious",
+                "grounded",
+                "meticulous",
+                "tenacious",
+                "playful",
+                "diplomatic",
+            )
         },
     }
 
