@@ -20,8 +20,10 @@ import (
 )
 
 const (
-	nativeSweepInterval = 10 * time.Minute
-	nativeDeleteScans   = 3
+	nativeSweepInterval        = 10 * time.Minute
+	nativeDeleteScans          = 3
+	agentComposeModelClassEnv  = "AGENT_COMPOSE_MODEL_CLASS"
+	agentComposeRuntimeHomeEnv = "AGENT_COMPOSE_RUNTIME_HOME"
 )
 
 //go:embed native-checkout-repos.txt
@@ -42,6 +44,7 @@ type nativeLease struct {
 	OriginalCWD     string           `json:"original_cwd"`
 	SessionRoot     string           `json:"session_root"`
 	SessionProjects string           `json:"session_projects"`
+	SessionHome     string           `json:"session_home,omitempty"`
 	Artifacts       []nativeArtifact `json:"artifacts"`
 }
 
@@ -72,6 +75,7 @@ type nativeRuntime struct {
 	PID          int
 	ProcessStart string
 	CWD          string
+	Home         string
 	ProjectsRoot string
 	StateRoot    string
 	SessionsRoot string
@@ -98,14 +102,32 @@ func runNativeShadow(_ context.Context, cmd *cli.Command) error {
 	if err != nil {
 		return err
 	}
-	launchCWD, err := prepareNativeLaunch(runtime, harness)
+	launchCWD, err := prepareNativeLaunchWithOptions(runtime, harness, nativeLaunchOptions{
+		WorkspaceRoot: cmd.Bool("assigned-role"),
+	})
 	if err != nil {
 		return err
 	}
 	if err := os.Chdir(launchCWD); err != nil {
 		return fmt.Errorf("enter native session workspace %s: %w", launchCWD, err)
 	}
+	if cmd.Bool("assigned-role") {
+		if err := applyNativeRoleModelClass(harness); err != nil {
+			return err
+		}
+	}
 	return execNative(command)
+}
+
+func applyNativeRoleModelClass(harness string) error {
+	modelClass, err := modelClassForLayout(harness)
+	if err != nil {
+		return err
+	}
+	if err := os.Setenv(agentComposeModelClassEnv, modelClass); err != nil {
+		return fmt.Errorf("set agent-compose model class: %w", err)
+	}
+	return nil
 }
 
 func resolveNativeRuntime() (nativeRuntime, error) {
@@ -158,6 +180,7 @@ func resolveNativeRuntime() (nativeRuntime, error) {
 		PID:          os.Getpid(),
 		ProcessStart: processStart,
 		CWD:          cwd,
+		Home:         home,
 		ProjectsRoot: projects,
 		StateRoot:    stateRoot,
 		SessionsRoot: sessionsRoot,
@@ -167,7 +190,19 @@ func resolveNativeRuntime() (nativeRuntime, error) {
 	}, nil
 }
 
+type nativeLaunchOptions struct {
+	WorkspaceRoot bool
+}
+
 func prepareNativeLaunch(runtime nativeRuntime, harness string) (string, error) {
+	return prepareNativeLaunchWithOptions(runtime, harness, nativeLaunchOptions{})
+}
+
+func prepareNativeLaunchWithOptions(
+	runtime nativeRuntime,
+	harness string,
+	options nativeLaunchOptions,
+) (string, error) {
 	if err := os.MkdirAll(runtime.StateRoot, 0o700); err != nil {
 		return "", fmt.Errorf("create native state root: %w", err)
 	}
@@ -186,7 +221,12 @@ func prepareNativeLaunch(runtime nativeRuntime, harness string) (string, error) 
 				return err
 			}
 		}
-		launchCWD, err = createNativeSession(runtime, harness, repositories)
+		launchCWD, err = createNativeSession(
+			runtime,
+			harness,
+			repositories,
+			options.WorkspaceRoot,
+		)
 		return err
 	})
 	if err != nil {
@@ -633,6 +673,7 @@ func createNativeSession(
 	runtime nativeRuntime,
 	harness string,
 	repositories []nativeRepository,
+	workspaceRoot bool,
 ) (string, error) {
 	relative, inside := relativeWithin(runtime.ProjectsRoot, runtime.CWD)
 	id, err := nativeSessionID(runtime)
@@ -641,6 +682,14 @@ func createNativeSession(
 	}
 	sessionRoot := filepath.Join(runtime.SessionsRoot, id)
 	sessionProjects := filepath.Join(sessionRoot, "projects")
+	sessionHome := ""
+	if workspaceRoot {
+		sessionHome = filepath.Join(sessionRoot, "home")
+		if err := stageNativeRoleHome(runtime.Home, sessionHome); err != nil {
+			_ = os.RemoveAll(sessionRoot)
+			return "", err
+		}
+	}
 	branch := "aos/" + harness + "/" + id
 	artifacts := make([]nativeArtifact, 0, len(repositories))
 	created := map[string]string{}
@@ -675,13 +724,21 @@ func createNativeSession(
 		OriginalCWD:     runtime.CWD,
 		SessionRoot:     sessionRoot,
 		SessionProjects: sessionProjects,
+		SessionHome:     sessionHome,
 		Artifacts:       artifacts,
 	}
 	if err := writeNativeJSON(nativeStatePath(runtime, "leases", id+".json"), lease); err != nil {
 		return "", fmt.Errorf("write native lease: %w", err)
 	}
+	if sessionHome != "" {
+		if err := os.Setenv(agentComposeRuntimeHomeEnv, sessionHome); err != nil {
+			return "", fmt.Errorf("set agent-compose runtime home: %w", err)
+		}
+	}
 	launch := runtime.CWD
-	if inside {
+	if workspaceRoot {
+		launch = sessionProjects
+	} else if inside {
 		launch = sessionProjects
 		parts := strings.Split(relative, string(filepath.Separator))
 		switch {
@@ -702,6 +759,77 @@ func createNativeSession(
 	}
 	fmt.Fprintf(runtime.Stderr, "aos: native session workspace %s\n", sessionProjects)
 	return launch, nil
+}
+
+func stageNativeRoleHome(source, target string) error {
+	info, err := os.Stat(source)
+	if err != nil {
+		return fmt.Errorf("inspect native host home %s: %w", source, err)
+	}
+	if !info.IsDir() {
+		return fmt.Errorf("native host home %s is not a directory", source)
+	}
+	if err := os.MkdirAll(target, 0o700); err != nil {
+		return fmt.Errorf("create native role home: %w", err)
+	}
+	entries, err := os.ReadDir(source)
+	if err != nil {
+		return fmt.Errorf("read native host home: %w", err)
+	}
+	filtered := map[string]bool{
+		".agents": true,
+		".claude": true,
+	}
+	for _, entry := range entries {
+		name := entry.Name()
+		if filtered[name] {
+			if err := stageNativeRoleConfigDirectory(
+				filepath.Join(source, name),
+				filepath.Join(target, name),
+			); err != nil {
+				return err
+			}
+			continue
+		}
+		if err := os.Symlink(
+			filepath.Join(source, name),
+			filepath.Join(target, name),
+		); err != nil {
+			return fmt.Errorf("link native home entry %s: %w", name, err)
+		}
+	}
+	for _, name := range []string{".agents", ".claude"} {
+		skills := filepath.Join(target, name, "skills")
+		if err := os.MkdirAll(skills, 0o700); err != nil {
+			return fmt.Errorf("create filtered native skill directory %s: %w", skills, err)
+		}
+	}
+	return nil
+}
+
+func stageNativeRoleConfigDirectory(source, target string) error {
+	if err := os.MkdirAll(target, 0o700); err != nil {
+		return fmt.Errorf("create filtered native config %s: %w", target, err)
+	}
+	entries, err := os.ReadDir(source)
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("read native config %s: %w", source, err)
+	}
+	for _, entry := range entries {
+		if entry.Name() == "skills" {
+			continue
+		}
+		if err := os.Symlink(
+			filepath.Join(source, entry.Name()),
+			filepath.Join(target, entry.Name()),
+		); err != nil {
+			return fmt.Errorf("link native config entry %s: %w", entry.Name(), err)
+		}
+	}
+	return nil
 }
 
 func nativeSessionID(runtime nativeRuntime) (string, error) {

@@ -57,11 +57,16 @@ func nativeTestRuntime(t *testing.T, root string) nativeRuntime {
 	}
 	expected := filepath.Join(root, "expected.txt")
 	fleet := filepath.Join(root, "fleet.txt")
+	home := filepath.Join(root, "home")
+	if err := os.MkdirAll(home, 0o755); err != nil {
+		t.Fatal(err)
+	}
 	return nativeRuntime{
 		Now:          time.Date(2026, 7, 29, 10, 0, 0, 0, time.UTC),
 		PID:          os.Getpid(),
 		ProcessStart: start,
 		CWD:          filepath.Join(root, "projects"),
+		Home:         home,
 		ProjectsRoot: filepath.Join(root, "projects"),
 		StateRoot:    filepath.Join(root, "state"),
 		SessionsRoot: filepath.Join(root, "sessions"),
@@ -149,6 +154,98 @@ func TestNativeLaunchMapsRepositorySubdirectoryIntoSession(t *testing.T) {
 
 	if filepath.Base(launch) != "docs" || strings.Contains(launch, repository) {
 		t.Fatalf("mapped launch = %s", launch)
+	}
+}
+
+func TestNativeLaunchCanStartAtSessionProjectsRoot(t *testing.T) {
+	root := t.TempDir()
+	repository, _ := createNativeTestRepository(t, root, "owner", "one")
+	runtime := nativeTestRuntime(t, root)
+	runtime.CWD = repository
+	writeNativeTestList(t, runtime.ExpectedFile, "one")
+	writeNativeTestList(t, runtime.FleetFile, "owner")
+	t.Setenv(agentComposeRuntimeHomeEnv, "")
+
+	launch, err := prepareNativeLaunchWithOptions(
+		runtime,
+		"codex",
+		nativeLaunchOptions{WorkspaceRoot: true},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, lease := onlyNativeLease(t, runtime)
+	if !samePath(launch, lease.SessionProjects) {
+		t.Fatalf("launch = %s, want session projects %s", launch, lease.SessionProjects)
+	}
+	if got := os.Getenv(agentComposeRuntimeHomeEnv); got != lease.SessionHome {
+		t.Fatalf("runtime home = %s, want %s", got, lease.SessionHome)
+	}
+}
+
+func TestStageNativeRoleHomeFiltersUserSkills(t *testing.T) {
+	source := filepath.Join(t.TempDir(), "source")
+	target := filepath.Join(t.TempDir(), "target")
+	for _, path := range []string{
+		filepath.Join(source, ".agents", "skills", "role-other"),
+		filepath.Join(source, ".claude", "skills", "role-other"),
+		filepath.Join(source, ".config"),
+	} {
+		if err := os.MkdirAll(path, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, path := range []string{
+		filepath.Join(source, ".agents", "settings.json"),
+		filepath.Join(source, ".claude", "settings.json"),
+		filepath.Join(source, ".gitconfig"),
+	} {
+		if err := os.WriteFile(path, []byte("test\n"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := stageNativeRoleHome(source, target); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, path := range []string{
+		filepath.Join(target, ".agents", "skills"),
+		filepath.Join(target, ".claude", "skills"),
+	} {
+		entries, err := os.ReadDir(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(entries) != 0 {
+			t.Fatalf("filtered skills remain under %s: %+v", path, entries)
+		}
+	}
+	for _, path := range []string{
+		filepath.Join(target, ".agents", "settings.json"),
+		filepath.Join(target, ".claude", "settings.json"),
+		filepath.Join(target, ".config"),
+		filepath.Join(target, ".gitconfig"),
+	} {
+		info, err := os.Lstat(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if info.Mode()&os.ModeSymlink == 0 {
+			t.Errorf("preserved native home entry is not a symlink: %s", path)
+		}
+	}
+}
+
+func TestAssignedNativeRoleExportsAOSModelClass(t *testing.T) {
+	t.Setenv(agentComposeModelClassEnv, "")
+
+	if err := applyNativeRoleModelClass("goose"); err != nil {
+		t.Fatal(err)
+	}
+	if got := os.Getenv(agentComposeModelClassEnv); got != "low-context" {
+		t.Fatalf("model class = %q, want low-context", got)
 	}
 }
 

@@ -73,7 +73,9 @@ The original standalone composed-container command remains available:
 aos --role engineer acompose -- codex
 ```
 
-That standalone path projects the resolved host mcporter inventory into the
+The `aos` prefix is the container boundary. Bare
+`acompose <role> <harness>` is the native-host role launcher and does not start
+Docker. The standalone AOS path projects the resolved host mcporter inventory into the
 ephemeral agent home. When configured HTTP MCP endpoints resolve into the
 tailnet, AOS attaches the container to the shared tailnet network and bridges
 those endpoints through the standing proxy without invoking Ward. See the
@@ -123,6 +125,17 @@ Opt-in tooling that composes global agent context and symlinks each harness load
 - **[Hiera](https://github.com/puppetlabs/hiera)** (Puppet) - hierarchical, scope-based data lookup. The conceptual twin of the machine-scope intersection that selects which sources compose.
 
 **Naming.** The field's vocabulary is **weave / layer / compose / overlay / blend**. We chose `compose` over the working name `meld`, which collides with [GNOME Meld](https://meldmerge.org/) on both search and semantics.
+
+The native assigned-role form is:
+
+```bash
+acompose designer codex
+```
+
+The shared shell places that launch in a leased native workspace, then Agent
+Compose supplies only the selected role, its full personality meld, and its
+role-composed capability slice. Claude, Codex, Goose, and OpenCode share this
+grammar.
 
 ## Credits
 

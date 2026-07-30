@@ -190,12 +190,12 @@ _siren_native_shadow_available() {
 _siren_agent_launch() {
   local cli="$1"
   shift
-  if command -v acompose >/dev/null 2>&1; then
+  if command -v agent-compose >/dev/null 2>&1; then
     if _siren_native_shadow_available; then
-      command aos _native-shadow --harness "$cli" -- acompose -- "$cli" "$@"
+      command aos _native-shadow --harness "$cli" -- agent-compose compose -- "$cli" "$@"
       return
     fi
-    command acompose -- "$cli" "$@"
+    command agent-compose compose -- "$cli" "$@"
     return
   fi
   if _siren_native_shadow_available; then
@@ -203,6 +203,34 @@ _siren_agent_launch() {
     return
   fi
   command "$cli" "$@"
+}
+
+acompose() {
+  local role="${1:-}"
+  local harness="${2:-}"
+  case "$role" in
+    ""|-*) ;;
+    *)
+      case "$harness" in
+        claude|codex|goose|opencode)
+          if command -v agent-compose >/dev/null 2>&1; then
+            if _siren_native_shadow_available; then
+              command aos _native-shadow --harness "$harness" --assigned-role -- \
+                agent-compose launch "$@"
+              return
+            fi
+            command agent-compose launch "$@"
+            return
+          fi
+          ;;
+      esac
+      ;;
+  esac
+  if command -v agent-compose >/dev/null 2>&1; then
+    command agent-compose compose "$@"
+    return
+  fi
+  command acompose "$@"
 }
 
 claude() { _siren_agent_launch claude "$@"; }

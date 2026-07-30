@@ -22,8 +22,14 @@ with the owner/repository hierarchy reproduced below `projects`. A repository
 subdirectory maps to its session twin. An outside launch keeps its directory.
 It still receives the full leased fleet workspace.
 
-The shadow invokes agent-compose after projection, then execs the vendor
-harness. Users continue to type only `codex`, `claude`, `goose`, or `opencode`.
+The shadow invokes agent-compose after projection, then execs the harness.
+Bare harness commands let the native roster infer a role.
+`acompose <role> <harness> [args...]` enters the same shadow workspace and
+starts at its clean projects root before projecting the caller-assigned role
+bundle. This keeps role load points out of a repository working tree. AOS also
+passes the harness's model class from its embedded layout registry. Its shadow
+home links native host state but leaves user skill directories empty, so only
+the assigned bundle supplies user and repository skills.
 
 ## Startup leases
 

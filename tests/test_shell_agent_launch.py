@@ -59,14 +59,16 @@ def test_agent_cli_launches_through_acompose(
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     _write_executable(
-        bin_dir / "acompose",
+        bin_dir / "agent-compose",
         '#!/bin/sh\nprintf "<%s>\\n" "$@"\n',
     )
 
     result = _run_function(tmp_path, harness, "one", "two words")
 
     assert result.returncode == 0, result.stderr
-    assert result.stdout == "<-->\n<%s>\n<one>\n<two words>\n" % harness
+    assert result.stdout == (
+        "<compose>\n<-->\n<%s>\n<one>\n<two words>\n" % harness
+    )
 
 
 def test_agent_cli_falls_back_when_acompose_is_unavailable(tmp_path: Path) -> None:
@@ -89,7 +91,7 @@ def test_agent_cli_launches_outside_repo(tmp_path: Path) -> None:
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     _write_executable(
-        bin_dir / "acompose",
+        bin_dir / "agent-compose",
         '#!/bin/sh\nprintf "<%s>\\n" "$@"\n',
     )
 
@@ -101,7 +103,7 @@ def test_agent_cli_launches_outside_repo(tmp_path: Path) -> None:
     )
 
     assert result.returncode == 0, result.stderr
-    assert result.stdout == "<-->\n<goose>\n<outside>\n"
+    assert result.stdout == "<compose>\n<-->\n<goose>\n<outside>\n"
 
 
 def test_agent_cli_uses_native_shadow_when_supported(tmp_path: Path) -> None:
@@ -115,8 +117,8 @@ printf "<%s>\\n" "$@"
 """,
     )
     _write_executable(
-        bin_dir / "acompose",
-        '#!/bin/sh\nprintf "unexpected acompose execution\\n"\nexit 9\n',
+        bin_dir / "agent-compose",
+        '#!/bin/sh\nprintf "unexpected agent-compose execution\\n"\nexit 9\n',
     )
 
     result = _run_function(tmp_path, "codex", "one", "two words")
@@ -127,7 +129,8 @@ printf "<%s>\\n" "$@"
         "<--harness>\n"
         "<codex>\n"
         "<-->\n"
-        "<acompose>\n"
+        "<agent-compose>\n"
+        "<compose>\n"
         "<-->\n"
         "<codex>\n"
         "<one>\n"
@@ -143,11 +146,67 @@ def test_agent_cli_ignores_old_aos_without_native_shadow(tmp_path: Path) -> None
         '#!/bin/sh\nexit 1\n',
     )
     _write_executable(
-        bin_dir / "acompose",
+        bin_dir / "agent-compose",
         '#!/bin/sh\nprintf "<%s>\\n" "$@"\n',
     )
 
     result = _run_function(tmp_path, "claude", "one")
 
     assert result.returncode == 0, result.stderr
-    assert result.stdout == "<-->\n<claude>\n<one>\n"
+    assert result.stdout == "<compose>\n<-->\n<claude>\n<one>\n"
+
+
+def test_explicit_acompose_role_uses_native_shadow(tmp_path: Path) -> None:
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    _write_executable(
+        bin_dir / "aos",
+        """#!/bin/sh
+if [ "$1" = "_native-shadow" ] && [ "$2" = "--probe" ]; then exit 0; fi
+printf "<%s>\\n" "$@"
+""",
+    )
+    _write_executable(
+        bin_dir / "agent-compose",
+        '#!/bin/sh\nprintf "unexpected agent-compose execution\\n"\nexit 9\n',
+    )
+
+    result = _run_function(
+        tmp_path,
+        "acompose",
+        "designer",
+        "codex",
+        "--model",
+        "gpt",
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == (
+        "<_native-shadow>\n"
+        "<--harness>\n"
+        "<codex>\n"
+        "<--assigned-role>\n"
+        "<-->\n"
+        "<agent-compose>\n"
+        "<launch>\n"
+        "<designer>\n"
+        "<codex>\n"
+        "<--model>\n"
+        "<gpt>\n"
+    )
+
+
+def test_explicit_acompose_role_runs_without_native_shadow(
+    tmp_path: Path,
+) -> None:
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    _write_executable(
+        bin_dir / "agent-compose",
+        '#!/bin/sh\nprintf "<%s>\\n" "$@"\n',
+    )
+
+    result = _run_function(tmp_path, "acompose", "qa", "goose", "run")
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == "<launch>\n<qa>\n<goose>\n<run>\n"

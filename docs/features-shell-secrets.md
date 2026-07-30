@@ -11,15 +11,14 @@ The core's env + PATH block runs once per terminal tree, gated by an exported `_
 ## Agent-CLI compose preflight
 
 `claude`, `codex`, `goose`, and `opencode` are wrapped in shell functions that
-launch each harness through `acompose -- <cli>`, so
-agent-compose converges doctrine, skills, and native MCP registries before the
-real binary starts. A host without the opt-in agent-compose product
-falls back to the real binary. The wrappers apply in any working directory,
-including paths outside a git work tree.
+launch through Agent Compose, so doctrine, skills, and native MCP registries
+converge before the real binary starts. They retain inferred-role behavior.
+`acompose <role> <harness> [args...]` selects one caller-assigned native bundle.
+Without Agent Compose, the wrappers fall back to the harness.
 
 Supported AOS binaries also create a leased
 [native session workspace](native-agent-workspaces.md) and clean recoverable
-predecessors. Older binaries retain the direct agent-compose path.
+predecessors. Explicit role launches use the same workspace without a container.
 
 ## On-demand AWS SSM secret reads
 

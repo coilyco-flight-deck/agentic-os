@@ -10,7 +10,7 @@ Major shipped capabilities, not files.
 - **Karabiner key bindings** - external keyboard and Remote Desktop mappings.
 - [Agents and sessions](features-agents-sessions.md) - self-name, pulses, status, and harness policy.
 - [Native agent workspaces](native-agent-workspaces.md) - fleet worktrees,
-  leases, and remotely proven cleanup.
+  leases, proven cleanup, and native `acompose <role> <harness>` launches.
 - [Agent-compose provider](personality-provider.md) - scoped skills and personality alignment.
 - [Agent tool evaluation](../.agents/skills/tooling-agent-tool-evaluation/SKILL.md) - cross-harness tool evals.
 - [Role-composed skills](role-composed-skills.md) - role-gated methods and behavioral evaluation.

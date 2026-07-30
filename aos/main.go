@@ -142,6 +142,7 @@ func newCommand() *cli.Command {
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "harness"},
 					&cli.BoolFlag{Name: "probe"},
+					&cli.BoolFlag{Name: "assigned-role"},
 				},
 				Action: runNativeShadow,
 			},
