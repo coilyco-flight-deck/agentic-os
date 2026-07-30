@@ -1,6 +1,6 @@
 ---
 name: repo-agentic-os
-description: Kai cross-platform dotfiles - shell config, on-demand SSM reads, shared aliases. Triggers - agentic-os, agentic-os-public, aos, ssm-get, public-dotfiles, shared-aliases, zsh-config
+description: Cross-platform agentic operating layer with dotfiles, skills, guarded tooling, and repository validators. Triggers - agentic-os, ai-agents, automation, dotfiles, security
 low-context: required
 ---
 
