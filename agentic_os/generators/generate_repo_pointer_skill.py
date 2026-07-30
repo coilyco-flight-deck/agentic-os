@@ -27,6 +27,7 @@ Schema and rollout: see docs/features-agents-pointer.md.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -44,6 +45,7 @@ except ModuleNotFoundError:  # pragma: no cover
     sys.exit(2)
 
 SKILL_PREFIX = "repo-"
+_SKILL_COMPONENT_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 
 # Strip leading badge emoji from GitHub descriptions: they carry no routing
 # signal and burn description bytes. Covers pictographs, VS, and ZWJ.
@@ -93,6 +95,24 @@ def build_description(raw_description: str, name: str, topics: list[str]) -> str
 DEFAULT_ORG = "coilysiren"
 
 
+def repo_skill_name(name: str, org: str = DEFAULT_ORG) -> str:
+    """Return the canonical globally unique skill name for one repository.
+
+    Ordinary repository names retain the compact ``repo-<name>`` contract.
+    Names outside the skill-component grammar use an owner-qualified,
+    content-addressed fallback. The digest prevents punctuation-normalization
+    collisions, while the owner keeps identically named special repositories
+    such as each organization's ``.github`` source distinct.
+    """
+    if _SKILL_COMPONENT_RE.fullmatch(name):
+        return f"{SKILL_PREFIX}{name}"
+
+    owner_slug = re.sub(r"[^a-z0-9]+", "-", org.lower()).strip("-") or "owner"
+    repo_slug = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-") or "repository"
+    digest = hashlib.sha256(f"{org}/{name}".encode()).hexdigest()[:8]
+    return f"{SKILL_PREFIX}{owner_slug}-{repo_slug}-{digest}"
+
+
 def render_skill(
     name: str,
     description: str,
@@ -110,8 +130,12 @@ def render_skill(
     Defaults to `coilysiren`; repos migrated to another org (coilyco-bridge,
     coilyco-flight-deck) set `[tool.agentic-os.repo-pointer-skills] org` so the
     pointer path tracks the real checkout. See scripts/sweep-precommit.py.
+
+    Ordinary names render as `repo-<name>`. A repository name outside the
+    skill grammar receives an owner-qualified, content-addressed fallback so
+    repeated special names such as `.github` remain valid and globally unique.
     """
-    skill_name = f"{SKILL_PREFIX}{name}"
+    skill_name = repo_skill_name(name, org)
     frontmatter_fields = {"name": skill_name, "description": description}
     if low_context is not None:
         frontmatter_fields["low-context"] = low_context
@@ -136,10 +160,17 @@ def render_skill(
 
 
 def skill_path(repo_root: Path, name: str, skills_dir: str) -> Path:
-    return repo_root / skills_dir / f"{SKILL_PREFIX}{name}" / "SKILL.md"
+    org = get_str_option(
+        "repo-pointer-skills", "org", DEFAULT_ORG, repo_root=repo_root
+    )
+    return repo_root / skills_dir / repo_skill_name(name, org) / "SKILL.md"
 
 
 _FRONTMATTER_RE = re.compile(r"\A---\n(?P<fm>.*?\n)---\n", re.DOTALL)
+_POINTER_RE = re.compile(
+    r"^Pointer to `~/projects/(?P<org>[^/`]+)/(?P<name>[^/`]+)/`\.$",
+    re.MULTILINE,
+)
 
 
 def parse_frontmatter(text: str) -> dict:
@@ -164,7 +195,6 @@ def check_drift(skill_dir_name: str, text: str, org: str = DEFAULT_ORG) -> list[
     """
     if not skill_dir_name.startswith(SKILL_PREFIX):
         return [f"{skill_dir_name}: not a repo-pointer skill (no {SKILL_PREFIX!r} prefix)"]
-    bare = skill_dir_name[len(SKILL_PREFIX) :]
     try:
         fm = parse_frontmatter(text)
     except ValueError as exc:
@@ -196,7 +226,28 @@ def check_drift(skill_dir_name: str, text: str, org: str = DEFAULT_ORG) -> list[
             f"{skill_dir_name}/SKILL.md: low-context must be 'required' or 'optional'."
         )
 
-    expected = render_skill(bare, description, org, low_context)
+    pointer = _POINTER_RE.search(text)
+    if pointer is None:
+        problems.append(
+            f"{skill_dir_name}/SKILL.md: missing or malformed repository pointer."
+        )
+        return problems
+
+    repo_name = pointer.group("name")
+    pointer_org = pointer.group("org")
+    expected_skill_name = repo_skill_name(repo_name, org)
+    if skill_dir_name != expected_skill_name:
+        problems.append(
+            f"{skill_dir_name}/SKILL.md: canonical name for {org}/{repo_name} is "
+            f"{expected_skill_name!r}"
+        )
+    if pointer_org != org:
+        problems.append(
+            f"{skill_dir_name}/SKILL.md: pointer owner {pointer_org!r} does not "
+            f"match configured owner {org!r}"
+        )
+
+    expected = render_skill(repo_name, description, org, low_context)
     if text != expected:
         problems.append(
             f"{skill_dir_name}/SKILL.md: body or frontmatter drifted from generator "

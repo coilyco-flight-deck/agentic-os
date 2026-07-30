@@ -1,8 +1,11 @@
+import re
+
 from agentic_os.generators.generate_repo_pointer_skill import (
     build_description,
     check_drift,
     clean_description,
     parse_frontmatter,
+    repo_skill_name,
     render_skill,
 )
 
@@ -54,6 +57,34 @@ def test_render_skill_org_overrides_pointer_path():
     text = render_skill("deploy", "A monorepo. Triggers - deploy", "coilyco-bridge")
     assert "Pointer to `~/projects/coilyco-bridge/deploy/`." in text
     assert "coilysiren" not in text
+
+
+def test_repo_skill_name_preserves_ordinary_repository_names():
+    assert repo_skill_name("website", "coilysiren") == "repo-website"
+
+
+def test_repo_skill_name_distinguishes_dot_repositories_by_owner():
+    bridge = repo_skill_name(".github", "coilyco-bridge")
+    flight_deck = repo_skill_name(".github", "coilyco-flight-deck")
+
+    assert bridge.startswith("repo-coilyco-bridge-github-")
+    assert flight_deck.startswith("repo-coilyco-flight-deck-github-")
+    assert bridge != flight_deck
+    assert re.fullmatch(r"repo-[a-z0-9][a-z0-9-]*", bridge)
+    assert re.fullmatch(r"repo-[a-z0-9][a-z0-9-]*", flight_deck)
+
+
+def test_dot_repository_render_and_drift_check_preserve_real_path():
+    text = render_skill(
+        ".github",
+        "Organization profile. Triggers - .github",
+        "coilyco-bridge",
+    )
+    skill_name = repo_skill_name(".github", "coilyco-bridge")
+
+    assert f"name: {skill_name}" in text
+    assert "Pointer to `~/projects/coilyco-bridge/.github/`." in text
+    assert check_drift(skill_name, text, "coilyco-bridge") == []
 
 
 def test_check_drift_uses_org_for_byte_match():
