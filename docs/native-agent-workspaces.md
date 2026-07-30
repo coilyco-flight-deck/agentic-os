@@ -24,12 +24,12 @@ It still receives the full leased fleet workspace.
 
 The shadow invokes agent-compose after projection, then execs the harness.
 Bare harness commands let the native roster infer a role.
-`acompose <role> <harness> [args...]` enters the same shadow workspace and
-starts at its clean projects root before projecting the caller-assigned role
-bundle. This keeps role load points out of a repository working tree. AOS also
-passes the harness's model class from its embedded layout registry. Its shadow
-home links native host state but leaves user skill directories empty, so only
-the assigned bundle supplies user and repository skills. For Codex, AOS trusts only the generated workspace through an ephemeral config override, keeping persistent user config clean and normal prompts everywhere else.
+`acompose <role> <harness> [args...]` enters the clean shadow workspace for
+non-directors. Director uses warded AOS because Ward owns dispatch and its
+broker. Native AOS passes the harness model class and keeps role load points
+outside repository worktrees. Its shadow home links host state but leaves user
+skill directories empty. For Codex, an ephemeral override trusts only the
+generated workspace, keeping persistent config clean elsewhere.
 
 ## Startup leases
 

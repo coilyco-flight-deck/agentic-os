@@ -156,7 +156,7 @@ def test_agent_cli_ignores_old_aos_without_native_shadow(tmp_path: Path) -> None
     assert result.stdout == "<compose>\n<-->\n<claude>\n<one>\n"
 
 
-def test_explicit_acompose_role_uses_native_shadow(tmp_path: Path) -> None:
+def test_explicit_non_director_role_uses_native_shadow(tmp_path: Path) -> None:
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     _write_executable(
@@ -193,6 +193,43 @@ printf "<%s>\\n" "$@"
         "<codex>\n"
         "<--model>\n"
         "<gpt>\n"
+    )
+
+
+def test_explicit_director_role_uses_warded_aos(tmp_path: Path) -> None:
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    _write_executable(
+        bin_dir / "aos",
+        '#!/bin/sh\nprintf "<%s>\\n" "$@"\n',
+    )
+    _write_executable(bin_dir / "ward", "#!/bin/sh\nexit 0\n")
+    _write_executable(
+        bin_dir / "agent-compose",
+        '#!/bin/sh\nprintf "unexpected agent-compose execution\\n"\nexit 9\n',
+    )
+
+    result = _run_function(
+        tmp_path,
+        "acompose",
+        "director",
+        "codex",
+        "--repo",
+        "owner/repo",
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == (
+        "<--agent>\n"
+        "<codex>\n"
+        "<--role>\n"
+        "<director>\n"
+        "<--warded>\n"
+        "<--composed>\n"
+        "<--guarded>\n"
+        "<-->\n"
+        "<--repo>\n"
+        "<owner/repo>\n"
     )
 
 

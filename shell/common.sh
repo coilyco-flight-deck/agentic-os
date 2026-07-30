@@ -213,6 +213,17 @@ acompose() {
     *)
       case "$harness" in
         claude|codex|goose|opencode)
+          if [ "$role" = director ]; then
+            if ! command -v aos >/dev/null 2>&1 ||
+              ! command -v ward >/dev/null 2>&1; then
+              echo "acompose: director launches need aos and ward on PATH" >&2
+              return 127
+            fi
+            shift 2
+            command aos --agent "$harness" --role director \
+              --warded --composed --guarded -- "$@"
+            return
+          fi
           if command -v agent-compose >/dev/null 2>&1; then
             if _siren_native_shadow_available; then
               command aos _native-shadow --harness "$harness" --assigned-role -- \
