@@ -250,9 +250,11 @@ goose() { _siren_agent_launch goose "$@"; }
 opencode() { _siren_agent_launch opencode "$@"; }
 
 pre-commit-aos-version-defined() {
-  local version
-  version=$(grep -E '^version = ' "$HOME/projects/coilyco-flight-deck/agentic-os/pyproject.toml" | head -1 | sed 's/^version = "\(.*\)"$/\1/')
-  echo "$version"
+  local repo
+  repo=$(_siren_aos_repo_root) || return 1
+  git -C "$repo" tag --list 'aos-precommit-v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname |
+    grep -E '^aos-precommit-v[0-9]+\.[0-9]+\.[0-9]+$' |
+    head -1
 }
 
 pre-commit-aos-version-used() {
@@ -287,17 +289,18 @@ pre-commit-all-hooks-missing() {
   done
 }
 
-# Report every repo whose pinned agentic-os hook rev lags the version agentic-os
-# defines now. Tab columns: repo, pinned rev, current version.
+# Report every repo whose pinned agentic-os hook rev lags the latest fetched
+# aos-precommit release tag. Tab columns: repo, pinned rev, current tag.
 pre-commit-all-aos-version-outdated() {
   local current config repo rev
-  current=$(pre-commit-aos-version-defined)
+  current=$(pre-commit-aos-version-defined) || return 1
+  [ -n "$current" ] || return 1
   for config in */*/.pre-commit-config.yaml; do
     [ -f "$config" ] || continue
     repo="${config%/.pre-commit-config.yaml}"
     rev=$(yq -r '.repos[] | select(.repo | test("agentic-os$")) | .rev' "$config")
     [ -z "$rev" ] || [ "$rev" = "null" ] && continue
-    [ "${rev#v}" = "$current" ] && continue
+    [ "$rev" = "$current" ] && continue
     printf '%s\t%s\t%s\n' "$repo" "$rev" "$current"
   done
 }
