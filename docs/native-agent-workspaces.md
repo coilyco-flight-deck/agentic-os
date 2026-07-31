@@ -29,7 +29,7 @@ non-directors. Director uses warded AOS because Ward owns dispatch and its
 broker. Native AOS passes the harness model class and keeps role load points
 outside repository worktrees. Its shadow home links host state but leaves user
 skill directories empty. For Codex, an ephemeral override trusts only the
-generated workspace, keeping persistent config clean elsewhere.
+generated workspace. Assigned launches also apply the bounded [native Codex hook trust](native-codex-hook-trust.md) contract.
 
 ## Startup leases
 

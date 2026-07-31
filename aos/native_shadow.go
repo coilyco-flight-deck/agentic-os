@@ -84,7 +84,7 @@ type nativeRuntime struct {
 	Stderr       *os.File
 }
 
-func runNativeShadow(_ context.Context, cmd *cli.Command) error {
+func runNativeShadow(ctx context.Context, cmd *cli.Command) error {
 	if cmd.Bool("probe") {
 		return nil
 	}
@@ -115,6 +115,22 @@ func runNativeShadow(_ context.Context, cmd *cli.Command) error {
 		command = trustNativeCodexWorkspace(command, harness, nativeCodexProject(launchCWD))
 	}
 	if cmd.Bool("assigned-role") {
+		if harness == "codex" {
+			trusted, err := trustNativeCodexAttributionHook(ctx, launchCWD, runtime.Home)
+			if err != nil {
+				fmt.Fprintf(
+					runtime.Stderr,
+					"aos: warning: trust native Codex Git attribution hook: %v\n",
+					err,
+				)
+			} else if trusted > 0 {
+				fmt.Fprintf(
+					runtime.Stderr,
+					"aos: trusted %d native Codex Git attribution hook(s)\n",
+					trusted,
+				)
+			}
+		}
 		if err := applyNativeRoleModelClass(harness); err != nil {
 			return err
 		}
