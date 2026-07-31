@@ -20,6 +20,15 @@ Route every dev command through ward, which reads [`.ward/ward.yaml`](.ward/ward
 
 **Operator verbs** (forgejo, aws/ssm, tailscale, kubectl, ...) live in **aosguard**, surfaced as `aosguard ops <area> ...` from the full dev-base image. Enumerate them with `aosguard ops <area> describe` or `--help` - never guess an operator-verb name from prior. Ward retains fixed workflow policy and repository development commands. The old `coily ops` and human-facing `ward ops` spellings are retired.
 
+**Model transport** goes through Agent Proxy. Whenever a task would invoke
+Ollama or LiteLLM, use Agent Proxy's OpenAI-compatible surface instead because
+both are backends behind it. Direct model evaluations send the frozen model
+request through Agent Proxy without launching an agent harness. Harness
+evaluations may launch the harness under test, but its model transport still
+routes through Agent Proxy. Backend-direct calls are limited to Agent Proxy
+implementation, parity testing, or incident isolation, and the caller names
+the exception explicitly.
+
 ## Validation
 
 This repo ships and dogfoods the catalog pre-commit suite (catalog-trifecta, documentation-layout, code-comments, catalog-block, check-skills, check-composed-skills, dead-cross-links, repo-pointer-skills, trufflehog). Run `pre-commit run --all-files` before committing. Per-repo opt-outs (excludes, cap overrides) live under `[tool.agentic-os.*]` in `pyproject.toml`.
