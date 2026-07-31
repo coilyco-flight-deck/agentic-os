@@ -13,7 +13,7 @@ Major shipped capabilities, not files.
   leases, proven cleanup, and native `acompose <role> <harness>` launches.
 - [Agent-compose provider](personality-provider.md) - scoped skills and personality alignment.
 - [Agent tool evaluation](../.agents/skills/tooling-agent-tool-evaluation/SKILL.md) - cross-harness tool evals.
-- [Role-composed skills](role-composed-skills.md) - role-gated methods and behavioral evaluation.
+- [Role-composed skills](role-composed-skills.md) - gated methods, including voice adaptation.
 - [AOS launcher](aos-cli.md) - role and context with
   [convergence](aos-convergence.md),
   [MCP and tailnet](aos-standalone-connectivity.md),

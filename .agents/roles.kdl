@@ -64,6 +64,7 @@ roles {
         composed-skill writing-observer-narrator
         composed-skill writing-system-improvement-vocab
         composed-skill writing-to-issues
+        composed-skill writing-voice-adaptation
         composed-skill writing-voice-guide-linter
         // BEGIN generated role-intent harness routes
         intent strategic-planning {
@@ -162,6 +163,7 @@ roles {
         composed-skill tooling-skill-authoring
         composed-skill writing-observer-narrator
         composed-skill writing-to-issues
+        composed-skill writing-voice-adaptation
         composed-skill writing-voice-guide-linter
         // BEGIN generated role-intent harness routes
         intent strategic-planning {
@@ -194,6 +196,7 @@ roles {
         composed-skill writing-social-cultural-reading
         composed-skill writing-social-linkedin-video
         composed-skill writing-social-trust-boundaries
+        composed-skill writing-voice-adaptation
         composed-skill writing-voice-guide-linter
         // BEGIN generated role-intent harness routes
         intent message-composition {
@@ -221,6 +224,7 @@ roles {
         composed-skill tooling-sales-discovery
         composed-skill tooling-sales-negotiation-architecture
         composed-skill writing-observer-narrator
+        composed-skill writing-voice-adaptation
         composed-skill writing-voice-guide-linter
         // BEGIN generated role-intent harness routes
         intent research-synthesis {
@@ -235,6 +239,7 @@ roles {
         composed-skill tooling-customer-success-signal-routing
         composed-skill tooling-customer-success-trust-repair
         composed-skill writing-observer-narrator
+        composed-skill writing-voice-adaptation
         composed-skill writing-voice-guide-linter
         // BEGIN generated role-intent harness routes
         intent knowledge-retrieval {
@@ -268,6 +273,7 @@ roles {
         composed-skill writing-public-repos
         composed-skill writing-system-improvement-vocab
         composed-skill writing-to-issues
+        composed-skill writing-voice-adaptation
         composed-skill writing-voice-guide-linter
         // BEGIN generated role-intent harness routes
         intent knowledge-retrieval {
