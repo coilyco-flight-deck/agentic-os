@@ -67,8 +67,8 @@ generated skill. `ward exec aosguard-run --` passes subsequent arguments to the
 generated command. `ward exec aosguard-lock` is the only lock-writing step and
 uses the packaged `specgen` executable.
 
-Native releases embed the Actions and SigNoz Python bridges. The
-[SigNoz logs contract](signoz-logs.md) defines its source and query bounds.
+Native releases embed the Actions Python bridge, while SigNoz leaves delegate
+to image-baked mcporter. The [SigNoz read contract](signoz.md) defines the fixed server and tool boundary.
 
 Cross-repository composition is tracked in
 [inbox#267](https://forgejo.coilysiren.me/coilysiren/inbox/issues/267), with AOS
