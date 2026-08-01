@@ -19,8 +19,8 @@ Major shipped capabilities, not files.
   [MCP and tailnet](aos-standalone-connectivity.md),
   [role-gated kubeconfig](aos-kubeconfig.md), and
   [check-ins](aos-acompose-checkin.md).
-- [aosguard](aosguard.md) - AOS-specific guarded CLI and generated skill,
-  including fixed-target `coilysiren/inbox` issue-pin planning.
+- [aosguard](aosguard.md) - guarded CLI with [SigNoz logs](signoz-logs.md)
+  and fixed-target issue pins.
 - [Code review skill](../.agents/composed/tooling-code-review/COMPOSED.md) - QA-only in-container review stance.
 - [Code review contract](../CODE-REVIEW.md) - review invariants.
 - [Harness selection](harness-selection.md) - AOS-owned role board,

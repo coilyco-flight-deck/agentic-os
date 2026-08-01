@@ -10,10 +10,11 @@ lock. Homebrew and Scoop install it beside `aos`.
 
 ## Authority boundary
 
-The snapshot carries operator-facing Forgejo, AWS, kubectl, Tailscale, Actions,
-and runner-token leaves. AWS SSM permits single reads, file-backed writes, and
+The snapshot carries Forgejo, AWS, kubectl, Tailscale, Actions, SigNoz, and
+runner-token leaves. AWS SSM permits single reads, file-backed writes, and
 named deletions. Actions lives at `aosguard ops actions` so its exec transport
-does not shadow `aosguard ops forgejo`. The snapshot excludes Ward role policy.
+does not shadow `aosguard ops forgejo`. `aosguard ops signoz` reads only the
+converged SigNoz MCP server. The snapshot excludes Ward role policy.
 Forgejo pin actions are fixed to `coilysiren/inbox`, where coilyco-ops is admin.
 Forgejo metadata includes attended `forgejo-admin repo edit` and `forgejo-admin
 repo-topic replace-all` leaves. Description edits accept only owner, repository,
@@ -66,8 +67,8 @@ generated skill. `ward exec aosguard-run --` passes subsequent arguments to the
 generated command. `ward exec aosguard-lock` is the only lock-writing step and
 uses the packaged `specgen` executable.
 
-Actions leaves call packaged `agentic_os` Python modules. Native `aosguard`
-releases embed the same bridge, so every leaf works outside a source checkout.
+Native releases embed the Actions and SigNoz Python bridges. The
+[SigNoz logs contract](signoz-logs.md) defines its source and query bounds.
 
 Cross-repository composition is tracked in
 [inbox#267](https://forgejo.coilysiren.me/coilysiren/inbox/issues/267), with AOS
@@ -76,5 +77,4 @@ implementation in [agentic-os#755](https://forgejo.coilysiren.me/coilyco-flight-
 ## See also
 
 * [AOS launch CLI](aos-cli.md)
-* [Feature inventory](FEATURES.md)
 * [AOS and Ward boundary](ward-specs.md)

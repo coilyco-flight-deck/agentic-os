@@ -1,0 +1,10 @@
+// SigNoz reads use only the pre-authenticated MCP endpoint selected by AOS
+// convergence. Forgejo, kubectl, and server evidence stay in their own groups.
+wrap aosguard ops signoz {
+    exec python3
+
+    can run logs {
+        argv "-m" "agentic_os.signoz_logs"
+        describe "search bounded log records through the converged read-only SigNoz MCP server"
+    }
+}
