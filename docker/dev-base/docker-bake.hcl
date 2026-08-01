@@ -1,0 +1,74 @@
+variable "TAG" {
+  default = "dev-base-local"
+}
+
+variable "PLATFORM" {
+  default = "linux/amd64"
+}
+
+group "default" {
+  targets = ["full"]
+}
+
+target "language" {
+  context    = "docker/dev-base"
+  dockerfile = "Dockerfile"
+  platforms  = [PLATFORM]
+  output     = ["type=cacheonly"]
+  contexts = {
+    aosguard-spec   = ".specgen"
+    aosguard-python = "agentic_os"
+    repo-lists      = "aos-cli/repositories"
+  }
+}
+
+target "lang-node" {
+  inherits = ["language"]
+  target   = "dev-base-lang-node"
+  tags     = ["agentic-os:lang-node-${TAG}"]
+}
+
+target "lang-go" {
+  inherits = ["language"]
+  target   = "dev-base-lang-go"
+  tags     = ["agentic-os:lang-go-${TAG}"]
+}
+
+target "lang-dotnet" {
+  inherits = ["language"]
+  target   = "dev-base-lang-dotnet"
+  tags     = ["agentic-os:lang-dotnet-${TAG}"]
+}
+
+target "lang-rust" {
+  inherits = ["language"]
+  target   = "dev-base-lang-rust"
+  tags     = ["agentic-os:lang-rust-${TAG}"]
+}
+
+target "lang-python" {
+  inherits = ["language"]
+  target   = "dev-base-lang-python"
+  tags     = ["agentic-os:lang-python-${TAG}"]
+}
+
+target "full" {
+  context    = "docker/dev-base/full"
+  dockerfile = "Dockerfile"
+  target     = "dev-base-full"
+  platforms  = [PLATFORM]
+  tags       = ["agentic-os:${TAG}"]
+  output     = ["type=docker"]
+  args = {
+    BASE_IMAGE       = "agentic-os:lang-rust-${TAG}"
+    LANG_GO_IMAGE    = "agentic-os:lang-go-${TAG}"
+    LANG_DOTNET_IMAGE = "agentic-os:lang-dotnet-${TAG}"
+    LANG_PYTHON_IMAGE = "agentic-os:lang-python-${TAG}"
+  }
+  contexts = {
+    "agentic-os:lang-rust-${TAG}"   = "target:lang-rust"
+    "agentic-os:lang-go-${TAG}"     = "target:lang-go"
+    "agentic-os:lang-dotnet-${TAG}" = "target:lang-dotnet"
+    "agentic-os:lang-python-${TAG}" = "target:lang-python"
+  }
+}

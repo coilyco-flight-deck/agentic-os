@@ -2,6 +2,10 @@
 
 set -euo pipefail
 
+TAG=dev-base-check docker buildx bake \
+  --print \
+  --file docker/dev-base/docker-bake.hcl >/dev/null
+
 ubuntu_base="$(
   awk '$1 == "FROM" && $2 ~ /^ubuntu:/ { print $2; exit }' \
     docker/dev-base/Dockerfile
@@ -24,10 +28,9 @@ fi
 while IFS= read -r language_target; do
   docker buildx build \
     --check \
-    --build-context aos-cli=aos \
     --build-context aosguard-spec=.specgen \
     --build-context aosguard-python=agentic_os \
-    --build-context repo-lists=aos/repositories \
+    --build-context repo-lists=aos-cli/repositories \
     --target "$language_target" \
     --file docker/dev-base/Dockerfile \
     docker/dev-base

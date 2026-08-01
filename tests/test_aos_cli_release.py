@@ -11,7 +11,7 @@ import subprocess
 
 
 ROOT = Path(__file__).resolve().parent.parent
-TARGETS = ROOT / "aos" / "release-targets.txt"
+TARGETS = ROOT / "aos-cli" / "release-targets.txt"
 RELEASE_BINARIES = ("aos", "aoscompose", "aosward", "aosguard", "agent-terminal")
 
 
@@ -94,6 +94,9 @@ def test_release_workflow_derives_assets_from_dist() -> None:
     assert "for asset in dist/*" in workflow_script
     assert "release-targets.txt" in builder
     assert "build_aosguard" in builder
+    assert "build_aosguard_skill" in builder
+    assert "build_bundle" in builder
+    assert "aos-bundle-${goos}-${goarch}.tar.gz" in builder
     assert "build_agent_terminal" in builder
     assert "specverb.lock" in builder
     assert "aosguard-*" in builder
@@ -109,6 +112,7 @@ def test_release_workflow_derives_assets_from_dist() -> None:
     release_check = (ROOT / "scripts" / "check-aos-release.sh").read_text(encoding="utf-8")
     assert 'grep -Fx "aosguard version $version"' in release_check
     assert 'grep -Fx "agent-terminal version $version"' in release_check
+    assert "share/aos/aosguard-skill/aosguard/SKILL.md" in release_check
     assert "--dry-run" in release_check
     assert "agent-compose" in release_check
     assert "ops actions --help" in release_check

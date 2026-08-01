@@ -17,7 +17,6 @@ SETUP_BUILDER = (
 VERIFY_FULL = (
     ROOT / "actions" / "publish-dev-base" / "scripts" / "verify-full.sh"
 )
-PLAN = ROOT / "actions" / "dev-base-build" / "scripts" / "plan.sh"
 BUILD = ROOT / "actions" / "dev-base-build" / "scripts" / "build.sh"
 CLEANUP = ROOT / "actions" / "dev-base-build" / "scripts" / "cleanup.sh"
 
@@ -33,13 +32,12 @@ def test_validation_action_has_no_registry_write_surface() -> None:
     assert "secrets." not in text
 
 
-def test_validation_and_publication_share_build_definitions() -> None:
+def test_validation_and_publication_share_docker_bootstrap() -> None:
     validate = VALIDATE_ACTION.read_text(encoding="utf-8")
     publish = PUBLISH_ACTION.read_text(encoding="utf-8")
     publish_image = PUBLISH_IMAGE.read_text(encoding="utf-8")
 
     for script in (
-        "scripts/install-uv.sh",
         "scripts/install-docker.sh",
         "scripts/resolve-docker-host.sh",
         "scripts/setup-builder.sh",
@@ -47,21 +45,17 @@ def test_validation_and_publication_share_build_definitions() -> None:
     ):
         assert script in validate
         assert script in publish
-    assert "scripts/dev-base-build.py" in PLAN.read_text(encoding="utf-8")
-    assert "scripts/dev-base-build.py" in BUILD.read_text(encoding="utf-8")
-    assert "scripts/dev-base-build.py" in publish_image
+    assert "docker/dev-base/docker-bake.hcl" in BUILD.read_text(encoding="utf-8")
+    assert "docker buildx build" in publish_image
+    assert "scripts/dev-base-build.py" not in validate + publish + publish_image
 
 
-def test_validation_bakes_one_local_platform_and_uses_the_affected_plan() -> None:
-    plan = PLAN.read_text(encoding="utf-8")
+def test_validation_bakes_one_local_platform_without_a_diff_walker() -> None:
     build = BUILD.read_text(encoding="utf-8")
 
-    assert "affected" in plan
-    assert "--base \"$BASE_SHA\"" in plan
-    assert "--local-bake" in build
-    assert "--load" not in build
-    assert '--platforms "$PLATFORM"' in build
-    assert '--tiers "${tiers[@]}"' in build
+    assert "docker buildx bake" in build
+    assert 'PLATFORM="$PLATFORM"' in build
+    assert "affected" not in build
     assert "INSTALL_BINFMT: \"false\"" in VALIDATE_ACTION.read_text(
         encoding="utf-8"
     )

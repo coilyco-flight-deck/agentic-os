@@ -17,13 +17,24 @@ bare=${version#aos-v}
 )
 
 target_count=$(awk '!/^[[:space:]]*(#|$)/ { count++ } END { print count+0 }' \
-    "$repo_root/aos/release-targets.txt")
-target_count=$((target_count * 5))
+    "$repo_root/aos-cli/release-targets.txt")
+target_count=$((target_count * 6))
 checksum_count=$(wc -l < "$dist/SHA256SUMS" | tr -d ' ')
 if [ "$target_count" -ne "$checksum_count" ]; then
     echo "checksum count does not match release target count" >&2
     exit 1
 fi
+
+for target in $(awk '!/^[[:space:]]*(#|$)/ { print }' \
+    "$repo_root/aos-cli/release-targets.txt"); do
+    goos=${target%%/*}
+    goarch=${target#*/}
+    bundle="$dist/aos-bundle-${goos}-${goarch}.tar.gz"
+    tar -tzf "$bundle" | grep -Fx './share/aos/aosguard-skill/aosguard/SKILL.md' >/dev/null
+    tar -tzf "$bundle" | grep -Fx './share/aos/aosguard-skill/aosguard/references/commands.yaml' >/dev/null
+    tar -tzf "$bundle" | grep -Fx './share/aos/python/agentic_os/forgejo_actions_logs.py' >/dev/null
+    tar -tzf "$bundle" | grep -Fx './share/aos/repositories/substrate-repos.txt' >/dev/null
+done
 
 python3 -m json.tool "$dist/aos.json" >/dev/null
 if command -v ruby >/dev/null 2>&1; then

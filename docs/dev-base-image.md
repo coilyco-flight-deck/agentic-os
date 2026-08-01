@@ -21,7 +21,7 @@ toolchain:
 Every image carries Node because the common agent harnesses require it. The
 specialist name identifies the additional development toolchain.
 
-The common surface also carries `aos`, Ward for fixed workflow orchestration,
+The common surface also carries a release-pinned `aos`, Ward for fixed workflow orchestration,
 `aosguard` for operator commands, agent-compose with its embedded `person:kai`
 source, and the repository's packaged aosguard Python bridges. Each image build renders
 aosguard's native agent skill, renders an agent-compose roster, and checks the
@@ -40,25 +40,25 @@ full-only gate tools are `golangci-lint`, `trufflehog`, and `kdlfmt`.
 
 ## Build and publication
 
-`ward exec dev-base-build` builds all five local specialists, then
-`agentic-os:dev-base-local`.
-[`scripts/dev-base-build.py`](../scripts/dev-base-build.py) supplies the AOS
-CLI, aosguard spec, and aosguard Python package as named Docker contexts.
+`ward exec dev-base-build` executes the declarative
+[`docker-bake.hcl`](../docker/dev-base/docker-bake.hcl), building all five local
+specialists and then `agentic-os:dev-base-local`. The Dockerfile downloads the
+checksummed AOS binary named by `AOS_VERSION`. AOSguard spec, Python bridges,
+and repository manifests remain named build contexts.
 
 [`dev-base-publish.yml`](../.forgejo/workflows/dev-base-publish.yml) skips
-unless the affected-tier classifier finds an image input, then builds the five
-specialists and full fan-in image. Manual dispatch overrides the decision.
+unless the promoted diff changes a path under `docker/`, then builds every
+specialist in a Forgejo matrix and the full fan-in image through `needs`. Manual dispatch overrides the filter.
 [`release.yml`](../.forgejo/workflows/release.yml) promotes every manifest to
 its versioned and moving tags. Language tags use
 `lang-<language>-<tag>`. The full image keeps the plain `<tag>`, `release`, and
 `latest` names. Both paths check each target manifest before work, so a retry
 skips an image that already landed. See [publish resume](dev-base-publish-resume.md).
 
-Pull requests run the affected source closure through
-[`actions/dev-base-build`](../actions/dev-base-build/action.yml). The PR action
-and publication share the affected-tier contract, scripts, Dockerfiles, build
-arguments, and verification. PRs load one architecture and never receive a
-registry credential. See [PR build validation](pr-dev-base-build-validation.md).
+Pull requests with a `docker/` change run the complete source graph through
+[`actions/dev-base-build`](../actions/dev-base-build/action.yml). PR validation and publication
+share the Docker definitions and verification. PR builds have no registry credential. See
+[PR build validation](pr-dev-base-build-validation.md).
 
 ## Pinning a tool
 

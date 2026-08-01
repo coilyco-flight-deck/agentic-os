@@ -10,22 +10,24 @@ on either train.
 
 ## Automatic release
 
-Every `main` push runs the release-impact classifier.
-`.forgejo/workflows/aos-cli-release.yml` queues a release only for shipped Go
-sources and manifests, AOSguard specs and bridges, the Specgen pin, or release
-build/package scripts. Docs, tests, Alacritty, and workflow-only changes skip
-it. Manual dispatch overrides the decision. The release job:
+The promoted `release` branch drives `.forgejo/workflows/aos-cli-release.yml`.
+Its native path filter covers the shipped Go roots, AOSguard specs and bridges,
+the CLI-owned Specgen pin, and release build/package scripts. Unrelated changes
+do not start the workflow. Manual dispatch remains the retry and override path.
+The release job:
 
 1. installs the validated workflow Ward, then runs Python, Go, and pre-commit validation
 2. bumps the CLI minor version without reading commit-message signals
 3. cross-compiles matching `aos`, `aoscompose`, `aosward`, `aosguard`, and `agent-terminal` binaries for every declared target
 4. stamps the same tag into all five binaries
-5. renders checksums, Homebrew, and Scoop metadata
-6. creates or reuses the Forgejo release
-7. replaces every release asset from the clean `dist/` directory
-8. updates the tap and bucket when their write tokens are present
+5. packages `aos`, `aosguard`, the skill, bridges, and manifests into each target bundle
+6. renders checksums, Homebrew, and Scoop metadata
+7. creates or reuses the Forgejo release
+8. replaces every release asset from the clean `dist/` directory
+9. updates the tap and bucket when their write tokens are present
 
-Release assets group `aos-*`, `aoscompose-*`, `aosward-*`, `aosguard-*`, and `agent-terminal-*` on Darwin arm64, Linux amd64 and arm64, and Windows amd64.
+Release assets group `aos-*`, `aos-bundle-*`, `aoscompose-*`, `aosward-*`, `aosguard-*`,
+and `agent-terminal-*` on Darwin arm64, Linux amd64 and arm64, and Windows amd64.
 `SHA256SUMS`, `aos.rb`, and `aos.json` cover the whole version-aligned set.
 
 ## Install
@@ -54,8 +56,7 @@ remains the provider of `agent-compose.overlay.v1` and must be installed separat
 hosts. See the [native launcher walkthrough](agent-terminal-native.md) for its
 dependencies, upgrades, rollback, and version reporting.
 
-Forgejo also serves every checksummed binary directly from the
-[agentic-os releases](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/releases).
+Forgejo also serves every checksummed binary from the [agentic-os releases](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/releases).
 
 The Homebrew and Scoop publication steps consume the repo-scoped
 `TAP_WRITE_TOKEN` and `SCOOP_WRITE_TOKEN` Actions secrets. Their existing
@@ -75,6 +76,5 @@ assets are reused and replaced, making a retry idempotent.
 `AOS_RELEASE_VERSION` set, `aos-release-package` renders local metadata and
 `aos-release-check` verifies checksums, versions, `--help`, and an
 `agent-terminal --dry-run` against a renderer-neutral overlay fixture. The
-ordinary Go tests, repository test, and pre-commit verbs remain the release
-gate. `ward exec release-impact -- --surface aos-cli --base REF --head REF`
-prints the decision and matching paths without publishing.
+ordinary Go tests, repository test, and pre-commit verbs remain the release gate.
+Forgejo evaluates release paths directly from the promoted diff.

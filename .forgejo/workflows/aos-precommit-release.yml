@@ -6,6 +6,15 @@ name: aos-precommit-release
 on:
   push:
     branches: [release]
+    paths:
+      - ".pre-commit-hooks.yaml"
+      - "agentic_os/__init__.py"
+      - "agentic_os/config.py"
+      - "agentic_os/generators/**"
+      - "agentic_os/pre_commit/**"
+      - "agentic_os/seed_skills_data.py"
+      - "pyproject.toml"
+      - "scripts/trufflehog-scan.sh"
   workflow_dispatch:
     inputs:
       tag:
@@ -27,24 +36,7 @@ permissions:
   contents: write
 
 jobs:
-  impact:
-    runs-on: docker
-    timeout-minutes: 10
-    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release
-    outputs:
-      release_required: ${{ steps.impact.outputs.release_required }}
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - id: impact
-        name: Decide whether installed hooks changed
-        run: bash "$GITHUB_WORKSPACE/scripts/ci/release-impact.sh" aos-precommit "${{ github.event_name }}" "${{ github.event.before }}" "${{ github.sha }}"
-
   release:
-    needs: [impact]
-    if: ${{ needs.impact.outputs.release_required == 'true' }}
     runs-on: docker
     timeout-minutes: 20
     container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release

@@ -3,18 +3,16 @@
 
 set -euo pipefail
 
-plan="$(
-  uv run python scripts/dev-base-build.py \
-    --registry agentic-os \
-    --tag "$TAG" \
-    plan
-)"
-while IFS= read -r image; do
+for image in \
+  "agentic-os:lang-node-${TAG}" \
+  "agentic-os:lang-go-${TAG}" \
+  "agentic-os:lang-dotnet-${TAG}" \
+  "agentic-os:lang-rust-${TAG}" \
+  "agentic-os:lang-python-${TAG}" \
+  "agentic-os:${TAG}"
+do
   docker image rm "$image" >/dev/null 2>&1 || true
-done < <(
-  PLAN_JSON="$plan" uv run python -c \
-    'import json, os; print("\n".join(t["image"] for t in json.loads(os.environ["PLAN_JSON"])["tiers"]))'
-)
+done
 docker buildx prune \
   --builder "${BUILDER_NAME:-aos-pr-builder}" \
   --force \

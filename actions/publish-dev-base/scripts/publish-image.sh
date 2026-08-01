@@ -1,79 +1,68 @@
 #!/usr/bin/env bash
-# Build or promote one dev-base tier manifest.
+# Build one explicit image tier or promote one existing manifest.
 
 set -euo pipefail
 
-summary_file="${GITHUB_STEP_SUMMARY:-}"
-read -r -a aliases <<< "${ALIAS:-} ${EXTRA_ALIASES:-}"
-alias_args=()
-for alias in "${aliases[@]}"; do
-  [ -n "$alias" ] && alias_args+=(--alias "$alias")
-done
-base_args=(
-  uv run python scripts/dev-base-build.py
-  --registry "$IMAGE_BASE"
-  --tag "$TAG"
-  "${alias_args[@]}"
-)
-if [ "$MODE" = "build" ]; then
-  publish_cmd=(
-    timeout --preserve-status --kill-after=5m "$BUILD_TIMEOUT"
-    "${base_args[@]}"
-    build
-    --push
-    --tier "$TIER"
-    --platforms "$PLATFORMS"
-  )
-elif [ "$MODE" = "promote" ]; then
-  if [ -z "${SOURCE_TAG:-}" ]; then
-    echo "::error::source-tag is required in promote mode" >&2
-    exit 1
+tier_tag() {
+  if [ "$1" = full ]; then
+    printf '%s' "$2"
+  else
+    printf '%s-%s' "$1" "$2"
   fi
-  publish_cmd=(
-    timeout --preserve-status --kill-after=5m "$BUILD_TIMEOUT"
-    "${base_args[@]}"
-    promote
-    --source-tag "$SOURCE_TAG"
-    --tier "$TIER"
-  )
-else
-  echo "::error::unknown mode: ${MODE}" >&2
-  exit 1
-fi
-
-command_line="$(printf '%q ' "${publish_cmd[@]}")"
-command_line="${command_line% }"
-log_file="$(mktemp)"
-
-run_logged() {
-  set +e
-  "$@" 2>&1 | tee "$log_file"
-  status=${PIPESTATUS[0]}
-  set -e
-  return "$status"
 }
 
-if run_logged "${publish_cmd[@]}"; then
-  exit 0
+target_ref="${IMAGE_BASE}:$(tier_tag "$TIER" "$TAG")"
+read -r -a aliases <<< "${ALIAS:-} ${EXTRA_ALIASES:-}"
+target_args=(-t "$target_ref")
+for moving_tag in "${aliases[@]}"; do
+  [ -n "$moving_tag" ] || continue
+  target_args+=(-t "${IMAGE_BASE}:$(tier_tag "$TIER" "$moving_tag")")
+done
+
+if [ "$MODE" = build ]; then
+  cache_ref="${IMAGE_BASE}:$(tier_tag "$TIER" buildcache)"
+  command=(
+    docker buildx build
+    --progress=plain
+    --push
+    --platform "$PLATFORMS"
+    --cache-from "type=registry,ref=${cache_ref}"
+    --cache-to "type=registry,ref=${cache_ref},mode=max,ignore-error=true"
+    "${target_args[@]}"
+  )
+  if [[ "$TIER" = lang-* ]]; then
+    command+=(
+      --build-context aosguard-spec=.specgen
+      --build-context aosguard-python=agentic_os
+      --build-context repo-lists=aos-cli/repositories
+      --target "dev-base-${TIER}"
+      --file docker/dev-base/Dockerfile
+      docker/dev-base
+    )
+  elif [ "$TIER" = full ]; then
+    command+=(
+      --build-arg "BASE_IMAGE=${IMAGE_BASE}:lang-rust-${TAG}"
+      --build-arg "LANG_GO_IMAGE=${IMAGE_BASE}:lang-go-${TAG}"
+      --build-arg "LANG_DOTNET_IMAGE=${IMAGE_BASE}:lang-dotnet-${TAG}"
+      --build-arg "LANG_PYTHON_IMAGE=${IMAGE_BASE}:lang-python-${TAG}"
+      --target dev-base-full
+      --file docker/dev-base/full/Dockerfile
+      docker/dev-base/full
+    )
+  else
+    echo "::error::unknown dev-base tier: ${TIER}" >&2
+    exit 2
+  fi
+elif [ "$MODE" = promote ]; then
+  if [ -z "${SOURCE_TAG:-}" ]; then
+    echo "::error::source-tag is required in promote mode" >&2
+    exit 2
+  fi
+  source_ref="${IMAGE_BASE}:$(tier_tag "$TIER" "$SOURCE_TAG")"
+  command=(docker buildx imagetools create "${target_args[@]}" "$source_ref")
 else
-  rc=$?
+  echo "::error::unknown publish mode: ${MODE}" >&2
+  exit 2
 fi
-if [ -n "$summary_file" ]; then
-  {
-    echo "### ${TIER} publish failure"
-    echo ""
-    echo "- mode: ${MODE}"
-    echo "- tier: ${TIER}"
-    echo "- exit code: ${rc}"
-    echo "- failing command:"
-    echo '```bash'
-    printf '%s\n' "$command_line"
-    echo '```'
-    echo ""
-    echo "Recent output:"
-    echo '```text'
-    tail -n 60 "$log_file"
-    echo '```'
-  } >> "$summary_file"
-fi
-exit "$rc"
+
+timeout --preserve-status --kill-after=5m "$BUILD_TIMEOUT" "${command[@]}"

@@ -16,7 +16,7 @@ YAML through Ward's loader.
 * Agent-compose owns behavioral roles, seats, identity, personalities, and
   composed skills in [`.agents/roles.kdl`](../.agents/roles.kdl).
 * AOS owns the selected harness, concrete launch tuning in
-  [`harness_launch_profiles.json`](../aos/harness_launch_profiles.json), image,
+  [`harness_launch_profiles.json`](../aos-cli/harness_launch_profiles.json), image,
   deployment defaults, and the immutable context-bundle adapter.
 * Ward receives the fixed workflow role, selected harness and image, original
   work request, explicit harness environment, broker credential, and optional

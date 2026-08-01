@@ -7,7 +7,7 @@ if [[ $# -eq 0 ]]; then
   exit 2
 fi
 
-exec ./aos/aos \
+exec ./aos-cli/aos \
   --agent codex \
   --role engineer \
   --warded \

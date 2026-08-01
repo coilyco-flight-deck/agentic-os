@@ -35,25 +35,25 @@ commands:
     run: go test -C aos-say ./...
     description: "Run the `aos-say` Go test suite."
   aos-build:
-    run: go build -C aos ./...
+    run: go build -C aos-cli ./...
     description: "Compile the standalone Go `aos` container launcher."
   aos-clean:
-    run: go clean -C aos
+    run: go clean -C aos-cli
     description: "Remove the local standalone Go `aos` build artifact."
   aos-test:
-    run: go test -C aos ./...
+    run: go test -C aos-cli ./...
     description: "Run the standalone Go `aos` launcher test suite."
   aos-fmt:
-    run: gofmt -w aos
+    run: gofmt -w aos-cli
     description: "Format the standalone Go `aos` launcher."
   aos-lint:
-    run: go vet -C aos ./...
+    run: go vet -C aos-cli ./...
     description: "Run Go static analysis for the standalone `aos` launcher."
   aos-tidy:
-    run: go mod tidy -C aos
+    run: go mod tidy -C aos-cli
     description: "Reconcile the standalone Go `aos` launcher's module dependencies."
   aos-install:
-    run: go install -C aos .
+    run: go install -C aos-cli .
     description: "Install the standalone Go `aos` launcher into GOBIN."
   aos-release-build:
     run: sh scripts/aos-release-build.sh
@@ -64,9 +64,6 @@ commands:
   aos-release-check:
     run: sh scripts/check-aos-release.sh
     description: "Verify `aos` release checksums, package metadata, and the native version-stamped binary."
-  release-impact:
-    run: uv run python -m agentic_os.release_impact
-    description: "Decide whether changed paths require an AOS CLI, aos-precommit, or dev-base artifact release. Pass `--surface aos-cli|aos-precommit|dev-base` plus `--base REF`, repeated `--changed-path PATH`, or `--force` after `--`."
   workflow-ward-install-check:
     run: bash scripts/install-workflow-ward.sh
     description: "Build the Ward version used by Actions from the generated tag at the production release branch. Pass an explicit ref and temporary output path after `--` to override."
@@ -77,10 +74,10 @@ commands:
     run: python3 -m agentic_os.prod_install_ref
     description: "Resolve guard, Ward, or AOS to the immutable generated tag at its production release branch, falling back to the literal `release` ref."
   aos-dry-run:
-    run: ./aos/aos --role engineer --dry-run acompose -- codex --version
+    run: ./aos-cli/aos --role engineer --dry-run acompose -- codex --version
     description: "Render the default standalone composed-container launch without starting Docker."
   aos-composition-dry-run:
-    run: ./aos/aos --agent codex --role engineer --warded --dry-run --
+    run: ./aos-cli/aos --agent codex --role engineer --warded --dry-run --
     description: "Render the always-composed, always-guarded Ward launch without starting Docker. Pass the Ward issue or freeform arguments after `--`."
   aos-composition-smoke:
     run: bash scripts/aos-composition-smoke.sh
@@ -89,7 +86,7 @@ commands:
     run: bash scripts/qa-verification-fixture.sh
     description: "Run one disposable, admitted director-to-engineer-to-QA proof in coilyco-flight-deck/ward-qa-fixture, then stop the run, delete its issue branch, and close its issue. Pass `--preserve-on-failure` only when QA needs the failed branch and issue retained as evidence."
   aos-standalone-composition-smoke:
-    run: ./aos/aos --agent codex --role engineer --image agentic-os:aos-local --auth=false -- --version
+    run: ./aos-cli/aos --agent codex --role engineer --image agentic-os:aos-local --auth=false -- --version
     description: "Launch the selected agent in one standalone AOS container with composed context and the aosguard skill, then print the agent version."
   aosguard-lock:
     run: sh scripts/aosguard-lock.sh
@@ -104,25 +101,25 @@ commands:
     run: specgen --project-root .specgen/guardfiles run --
     description: "Materialize and run aosguard from the independent .specgen snapshot, passing arguments after `--`."
   aos-image-build:
-    run: uv run python scripts/dev-base-build.py --registry agentic-os --tag aos-local build
+    run: TAG=aos-local docker buildx bake --progress=plain --file docker/dev-base/docker-bake.hcl
     description: "Build the five local language images and fan them into agentic-os:aos-local for standalone `aos` smoke testing."
   aos-container-smoke:
-    run: go run -C aos . --role engineer --layout codex --image agentic-os:aos-local acompose -- sh testdata/codex-smoke.sh
+    run: go run -C aos-cli . --role engineer --layout codex --image agentic-os:aos-local acompose -- sh testdata/codex-smoke.sh
     description: "Launch the full local image through `aos`, compose the engineer Codex HOME, verify its container-boundary defaults, hydrate substrate, and print the in-container Codex version."
   aos-designer-smoke:
-    run: ./aos/aos --role designer --layout codex --image agentic-os:aos-local --auth=false --no-substrate acompose -- sh scripts/aos-designer-smoke.sh
+    run: ./aos-cli/aos --role designer --layout codex --image agentic-os:aos-local --auth=false --no-substrate acompose -- sh scripts/aos-designer-smoke.sh
     description: "Launch the full local image as the designer Codex variant and verify its projected AGENTS.md briefing, selected composed skill, entry-point promotion, and role isolation."
   aos-role-question:
     run: sh scripts/aos-role-question.sh
     description: "Ask one composed role a real question through cloud Codex or Goose with a local model, enforce a bounded run, and require the response to confirm its loaded role. Usage: `ward exec aos-role-question -- cloud|local ROLE [MODEL]`."
   sync-harness-board:
     run: uv run python -m agentic_os.harness_board_sync
-    description: "Validate AOS's role-intent-harness source against its harness registry, then project `.agents/roles.kdl` and the compiled `aos/role-harnesses.json` launcher view. `-- --check` reports drift without writing. See docs/harness-selection.md."
+    description: "Validate AOS's role-intent-harness source against its harness registry, then project `.agents/roles.kdl` and the compiled `aos-cli/role-harnesses.json` launcher view. `-- --check` reports drift without writing. See docs/harness-selection.md."
   sync-role-personalities:
     run: uv run python -m agentic_os.role_personality_sync
-    description: "Project agent-compose's emitted person snapshot into `aos/role-personalities.json` for measurement alignment. `-- --check` reports drift without writing. See docs/role-orientation-projections.md."
+    description: "Project agent-compose's emitted person snapshot into `aos-cli/role-personalities.json` for measurement alignment. `-- --check` reports drift without writing. See docs/role-orientation-projections.md."
   dev-base-build:
-    run: uv run python scripts/dev-base-build.py --registry agentic-os --tag dev-base-local build
+    run: TAG=dev-base-local docker buildx bake --progress=plain --file docker/dev-base/docker-bake.hcl
     description: "Build the Ubuntu-based language-image family locally, ending at agentic-os:dev-base-local, before the release workflow publishes it for both architectures."
   dev-base-check:
     run: bash scripts/dev-base-check.sh

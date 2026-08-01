@@ -11,7 +11,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-PROJECTION_PATH = Path("aos") / "role-personalities.json"
+PROJECTION_PATH = Path("aos-cli") / "role-personalities.json"
 DEFAULT_OUTPUT = REPO_ROOT / PROJECTION_PATH
 DEFAULT_PERSON_SNAPSHOT = (
     Path.home() / ".agent-compose" / "sources" / "personality" / "person.json"

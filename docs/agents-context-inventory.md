@@ -9,7 +9,7 @@ Harness adapters still decide which discovered sources a harness ingests.
 
 ## Inputs
 
-The substrate set comes from `aos/repositories/substrate-repos.txt`. AOS does
+The substrate set comes from `aos-cli/repositories/substrate-repos.txt`. AOS does
 not scan the projects directory to invent a fleet. Infrastructure supplies:
 
 ```text
@@ -34,7 +34,7 @@ ward exec agents-context-inventory -- \
 Markdown is the default. `-- --format json` emits the machine contract and
 `-- --output PATH` writes either render. `-- --check` fails on absent checkouts,
 unknown visibility, or missing root `AGENTS.md`, while retaining the entry.
-Scenarios default to `aos/role-harnesses.json`. `-- --board PATH` overrides it.
+Scenarios default to `aos-cli/role-harnesses.json`. `-- --board PATH` overrides it.
 
 ## Repository and cascade boundaries
 

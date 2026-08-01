@@ -9,7 +9,7 @@ not receive a role-seat or identity projection.
 Normal agent-compose convergence emits a complete person snapshot at
 `~/.agent-compose/sources/personality/person.json`. The AOS personality sync
 reads its role order, ordered melds, and canonical skill bindings, then writes
-[`role-personalities.json`](../aos/role-personalities.json).
+[`role-personalities.json`](../aos-cli/role-personalities.json).
 
 The board does not select runtime personalities. Agent-compose still supplies
 the selected composed role to the harness, including its seat and identity.

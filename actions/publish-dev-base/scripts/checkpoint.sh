@@ -1,31 +1,50 @@
 #!/usr/bin/env bash
-# Skip publication when the full target manifest already exists.
+# Skip a build or promotion only when every requested target already matches.
 
 set -euo pipefail
 
-read -r -a aliases <<< "${ALIAS:-} ${EXTRA_ALIASES:-}"
-alias_args=()
-for alias in "${aliases[@]}"; do
-  [ -n "$alias" ] && alias_args+=(--alias "$alias")
-done
-source_args=()
-if [ -n "${SOURCE_TAG:-}" ]; then
-  source_args+=(--source-tag "$SOURCE_TAG")
-fi
-if uv run python scripts/dev-base-build.py \
-  --registry "$IMAGE_BASE" \
-  --tag "$TAG" \
-  "${alias_args[@]}" \
-  check \
-  --mode "$MODE" \
-  --tier "$TIER" \
-  "${source_args[@]}"
-then
-  echo "skip_publish=true" >> "$GITHUB_OUTPUT"
-else
-  rc=$?
-  if [ "$rc" -ne 1 ]; then
-    exit "$rc"
+tier_tag() {
+  if [ "$1" = full ]; then
+    printf '%s' "$2"
+  else
+    printf '%s-%s' "$1" "$2"
   fi
+}
+
+manifest_digest() {
+  docker buildx imagetools inspect "$1" 2>/dev/null \
+    | awk '$1 == "Digest:" { print $2; exit }'
+}
+
+target="${IMAGE_BASE}:$(tier_tag "$TIER" "$TAG")"
+target_digest=$(manifest_digest "$target")
+if [ -z "$target_digest" ]; then
   echo "skip_publish=false" >> "$GITHUB_OUTPUT"
+  exit 0
 fi
+
+expected_digest=$target_digest
+if [ "$MODE" = promote ]; then
+  if [ -z "${SOURCE_TAG:-}" ]; then
+    echo "::error::source-tag is required in promote mode" >&2
+    exit 2
+  fi
+  source="${IMAGE_BASE}:$(tier_tag "$TIER" "$SOURCE_TAG")"
+  expected_digest=$(manifest_digest "$source")
+  if [ -z "$expected_digest" ] || [ "$target_digest" != "$expected_digest" ]; then
+    echo "skip_publish=false" >> "$GITHUB_OUTPUT"
+    exit 0
+  fi
+fi
+
+read -r -a aliases <<< "${ALIAS:-} ${EXTRA_ALIASES:-}"
+for moving_tag in "${aliases[@]}"; do
+  [ -n "$moving_tag" ] || continue
+  alias_ref="${IMAGE_BASE}:$(tier_tag "$TIER" "$moving_tag")"
+  if [ "$(manifest_digest "$alias_ref")" != "$expected_digest" ]; then
+    echo "skip_publish=false" >> "$GITHUB_OUTPUT"
+    exit 0
+  fi
+done
+
+echo "skip_publish=true" >> "$GITHUB_OUTPUT"

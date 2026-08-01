@@ -113,5 +113,5 @@ test-images/
 # Local Go launcher builds
 /agent-terminal/agent-terminal
 /agent-terminal/agent-terminal.exe
-/aos/aos
-/aos/aos.exe
+/aos-cli/aos
+/aos-cli/aos.exe

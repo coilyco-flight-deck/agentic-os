@@ -85,7 +85,7 @@ run_and_confirm() {
 mode="${1:-}"
 role="${2:-}"
 model="${3:-qwen3.6:35b}"
-aos_bin="${AOS_BIN:-./aos/aos}"
+aos_bin="${AOS_BIN:-./aos-cli/aos}"
 aos_image="${AOS_IMAGE:-agentic-os:aos-local}"
 
 [ "$#" -ge 2 ] || usage

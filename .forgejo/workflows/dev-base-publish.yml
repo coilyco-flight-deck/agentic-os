@@ -6,6 +6,8 @@ name: dev-base-publish
 on:
   push:
     branches: [release]
+    paths:
+      - "docker/**"
   workflow_dispatch:
     inputs:
       sha:
@@ -38,24 +40,7 @@ permissions:
   contents: read
 
 jobs:
-  impact:
-    runs-on: docker
-    timeout-minutes: 10
-    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release
-    outputs:
-      release_required: ${{ steps.impact.outputs.release_required }}
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - id: impact
-        name: Decide whether image inputs changed
-        run: bash "$GITHUB_WORKSPACE/scripts/ci/release-impact.sh" dev-base "${{ github.event_name }}" "${{ github.event.before }}" "${{ github.sha }}"
-
   plan-draft:
-    needs: [impact]
-    if: ${{ needs.impact.outputs.release_required == 'true' }}
     runs-on: docker
     timeout-minutes: 20
     container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release

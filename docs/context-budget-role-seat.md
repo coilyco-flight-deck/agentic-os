@@ -13,7 +13,7 @@ The command asks the local `agent-compose` binary to perform three operations:
 
 The measurement compares the bundle's ordered personality meld and selected
 personality skill ids with the committed
-[AOS role-personality projection](../aos/role-personalities.json), then reads
+[AOS role-personality projection](../aos-cli/role-personalities.json), then reads
 the generated files. The snapshot records that validated meld under
 `bundle.personalities`. Personality skills are attributed to `person:kai`.
 The seat's agent executable does not need to be installed. The command never

@@ -42,10 +42,9 @@ import urllib.request
 from pathlib import Path
 from typing import Callable
 
-from agentic_os.dev_base import DEV_BASE_ROOT
 from agentic_os.prod_install_ref import resolve_release_ref
 
-DOCKERFILE = DEV_BASE_ROOT
+DOCKERFILE = Path(__file__).resolve().parent.parent / "docker" / "dev-base"
 
 GITHUB_API = "https://api.github.com"
 FORGEJO_API = "https://forgejo.coilysiren.me/api/v1"

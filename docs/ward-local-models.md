@@ -15,7 +15,7 @@ model-opaque role joins and lane choices. `ward exec sync-harness-board`
 validates the joined inputs,
 updates generated `intent` children inside the agent-compose provider roles in
 [`.agents/roles.kdl`](../.agents/roles.kdl), and rewrites
-[`role-harnesses.json`](../aos/role-harnesses.json) as the compiled launcher
+[`role-harnesses.json`](../aos-cli/role-harnesses.json) as the compiled launcher
 view.
 
 The board projection has role, intent, harness, and route data only. Models,
@@ -29,7 +29,7 @@ read-only drift check.
 
 ## Concrete launch profiles
 
-[`harness_launch_profiles.json`](../aos/harness_launch_profiles.json) is the
+[`harness_launch_profiles.json`](../aos-cli/harness_launch_profiles.json) is the
 AOS-owned deployment source for model, reasoning-effort, verbosity, and local
 endpoint values. Its role overrides preserve the launch tuning formerly stored
 under `.ward`, while its defaults preserve harness-wide values.
@@ -44,7 +44,7 @@ load the registry and no profile grants authority.
 ## Personality alignment
 
 `ward exec sync-role-personalities` reads agent-compose's emitted person
-snapshot and writes [`role-personalities.json`](../aos/role-personalities.json)
+snapshot and writes [`role-personalities.json`](../aos-cli/role-personalities.json)
 for context-budget verification. Agent-compose remains the runtime owner of
 personalities and named seats.
 

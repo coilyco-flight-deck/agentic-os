@@ -1,11 +1,11 @@
 # Release pipeline
 
 `promote.yml` gates every `main` push and fast-forwards `release` with
-`CI_RELEASE_TOKEN`. Two affected-surface workflows react to that diff.
-`aos-precommit-release.yml` cuts an `aos-precommit-v*` release only for
-installed hook changes. `dev-base-publish.yml` publishes draft images under
-`draft-${sha}` only when its tier classifier finds work. Manual dispatch
-overrides either decision and can resume the image graph. `release.yml` is a
+`CI_RELEASE_TOKEN`. Three artifact workflows use native paths on that diff.
+`aos-cli-release.yml` cuts the versioned CLI bundle, `aos-precommit-release.yml`
+cuts the hook package, and `dev-base-publish.yml` publishes draft images under
+`draft-${sha}` only when the promoted diff changes `docker/`. Manual dispatch
+overrides those filters and can resume the image graph. `release.yml` is a
 no-cancel manual retry queue and never gates the branch. `main` stays
 yolo-able, while `release` is last-known-good. Forgejo owns releases per
 [forgejo-github-mirror-contract.md](forgejo-github-mirror-contract.md).
@@ -27,7 +27,7 @@ packages on its `aos-v*` train. See [aos-cli-release.md](aos-cli-release.md).
 `actions/tag-bump` defaults to minor and never parses commits. `aos-v*`
 requires a shipped CLI input. `aos-precommit-v*` requires an installed hook
 input. Pre-commit majors use `scripts/release.py --bump major`. Other trains
-use workflow dispatch, which also overrides each classifier.
+use workflow dispatch, which also overrides each native path filter.
 
 `actions/tag-bump` also has a compute-only mode: derive the next semver first,
 create the public tag and Forgejo release only at the end.

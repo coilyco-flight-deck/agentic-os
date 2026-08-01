@@ -57,7 +57,7 @@ AOS also owns the generated `intent` children inside each canonical role in
 [`.agents/roles.kdl`](../.agents/roles.kdl), the committed agent-compose
 provider projection. Ward never parses these composition routes.
 
-The sync also writes [`role-harnesses.json`](../aos/role-harnesses.json) as the
+The sync also writes [`role-harnesses.json`](../aos-cli/role-harnesses.json) as the
 compiled view embedded by the standalone `aos` binary. The JSON does not become
 a second hand-owned source. The drift check requires both generated views to
 match the AOS capability registry joined with the same AOS routing board.

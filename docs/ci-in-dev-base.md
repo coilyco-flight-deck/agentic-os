@@ -37,9 +37,10 @@ promoted `release` branch, installs that immutable ref, then runs `pytest` plus
 `pre-commit run --all-files`. If tag publication temporarily lags promotion,
 the resolver falls back to the literal `release` ref.
 
-This repo also exposes `ci / build-dev-base`. It derives affected tiers from
-the canonical image specification and builds their one-architecture source
-closure without a registry credential or push. See
+This repo also exposes `dev-base-pr / build` only for pull requests with a
+change under `docker/`. It builds the complete one-architecture Bake graph.
+The job has no registry
+credential and never pushes. See
 [pull-request dev-base validation](pr-dev-base-build-validation.md).
 
 ## Promoted moving alias

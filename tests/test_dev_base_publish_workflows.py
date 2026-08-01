@@ -4,9 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from agentic_os.dev_base import PUBLISHED_TIER_NAMES
-
-
 ROOT = Path(__file__).resolve().parent.parent
 PUBLISH = ROOT / ".forgejo" / "workflows" / "dev-base-publish.yml"
 RELEASE = ROOT / ".forgejo" / "workflows" / "release.yml"
@@ -44,15 +41,19 @@ def _assert_alert_steps_are_non_blocking(text: str) -> None:
 def test_workflows_publish_parallel_languages_then_full() -> None:
     publish = PUBLISH.read_text(encoding="utf-8")
     release = RELEASE.read_text(encoding="utf-8")
+    language_tiers = {
+        line.strip().removeprefix("- ")
+        for line in publish.splitlines()
+        if line.strip().startswith("- lang-")
+    }
 
     assert "publish-languages:" in publish
     assert "publish-full:" in publish
     assert "retag-languages:" in release
     assert "retag-full:" in release
-    for tier in PUBLISHED_TIER_NAMES:
-        if tier.startswith("lang-"):
-            assert f"          - {tier}" in publish
-            assert f"          - {tier}" in release
+    assert language_tiers
+    for tier in language_tiers:
+        assert f"          - {tier}" in release
     assert "max-parallel: 4" in publish
     assert "tier: ${{ matrix.tier }}" in publish
     assert "tier: ${{ matrix.tier }}" in release

@@ -41,7 +41,7 @@ PERSON_SOURCE_SEGMENT = urllib.parse.quote(PERSON_SOURCE_ID, safe="")
 AOS_TEMP_ROOT = Path(tempfile.gettempdir()) / "aos"
 SLUG_RE = re.compile(r"^[a-z][a-z0-9-]*$")
 AOS_LAYOUT_MODEL_CLASSES_PATH = (
-    Path(__file__).resolve().parents[1] / "aos" / "layout-model-classes.json"
+    Path(__file__).resolve().parents[1] / "aos-cli" / "layout-model-classes.json"
 )
 AOS_LAYOUT_MODEL_CLASSES_FORMAT = "agentic-os.layout-model-classes.v1"
 

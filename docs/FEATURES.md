@@ -39,8 +39,7 @@ Major shipped capabilities, not files.
 - [Telegram CI failure alerts](telegram-ci-alerts.md) - reusable red-channel alerting for failing jobs.
 - [dev-base image family](dev-base-image.md) - parallel Ubuntu language images plus the full fan-in surface.
 - [CI parity in dev-base](ci-in-dev-base.md) - CI runs inside the moving :release dev-base image.
-- [Pull-request CI gate](pr-dev-base-build-validation.md) - tests and affected
-  image builds without publication.
+- [Pull-request CI gate](pr-dev-base-build-validation.md) - fast tests and Docker-only image validation.
 - [AGENTS pointer](features-agents-pointer.md) - generated sibling-repo workspace pointer.
 - [Encoded leak guard](leak-guard.md) - hex-encoded leak-term detector.
 - [Context budget](context-budget.md) - role-seat budgets and generated class diffs.

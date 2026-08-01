@@ -10,6 +10,7 @@ ARG TRUNK_VERSION=0.21.14
 ARG AGENT_COMPOSE_VERSION=1.48.0
 ARG WARD_VERSION=0.864.0
 ARG SPECGEN_VERSION=0.128.0
+ARG AOS_VERSION=0.148.0
 ARG NODE_VERSION=22.23.2
 ARG CLAUDE_VERSION=2.1.220
 ARG MCPORTER_VERSION=0.12.3
@@ -32,6 +33,7 @@ FROM ubuntu:24.04 AS dev-base-tool-builder
 ARG GO_VERSION
 ARG WARD_VERSION
 ARG SPECGEN_VERSION
+ARG AOS_VERSION
 ARG TARGETARCH
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -94,18 +96,17 @@ RUN set -eux; \
     rm -rf /tmp/ward-src /tmp/gobuild /tmp/gocache; \
     ward --version
 
-WORKDIR /tmp/aos-src
-COPY --from=aos-cli go.mod go.sum ./
 RUN set -eux; \
-    export GOPATH=/tmp/aos-gopath GOCACHE=/tmp/aos-gocache; \
-    go mod download
-COPY --from=aos-cli . .
-RUN set -eux; \
-    export GOPATH=/tmp/aos-gopath GOCACHE=/tmp/aos-gocache CGO_ENABLED=0; \
-    go build -trimpath -ldflags "-s -w -X main.version=dev-base" \
-      -o /usr/local/bin/aos .; \
-    chmod 0755 /usr/local/bin/aos; \
-    rm -rf /tmp/aos-gopath /tmp/aos-gocache; \
+    aos_asset="aos-linux-${TARGETARCH}"; \
+    aos_base="https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/releases/download/aos-v${AOS_VERSION}"; \
+    curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
+      "${aos_base}/${aos_asset}" -o "/tmp/${aos_asset}"; \
+    curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
+      "${aos_base}/SHA256SUMS" -o /tmp/aos-SHA256SUMS; \
+    grep "[[:space:]]${aos_asset}$" /tmp/aos-SHA256SUMS \
+      | (cd /tmp && sha256sum -c -); \
+    install -m 0755 "/tmp/${aos_asset}" /usr/local/bin/aos; \
+    rm "/tmp/${aos_asset}" /tmp/aos-SHA256SUMS; \
     /usr/local/bin/aos --version
 
 RUN set -eux; \

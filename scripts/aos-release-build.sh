@@ -3,7 +3,8 @@
 set -eu
 
 repo_root=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
-targets="$repo_root/aos/release-targets.txt"
+targets="$repo_root/aos-cli/release-targets.txt"
+. "$repo_root/aos-cli/release.env"
 version=${AOS_RELEASE_VERSION:-$(
     git -C "$repo_root" describe --tags --exact-match --match 'aos-v*' 2>/dev/null ||
         git -C "$repo_root" rev-parse --short HEAD
@@ -36,10 +37,7 @@ verify_checksum() {
 download_specgen() {
     host_os=$(go env GOOS | tr -d '\r')
     host_arch=$(go env GOARCH | tr -d '\r')
-    specgen_version=$(
-        sed -n 's/^ARG SPECGEN_VERSION=//p' \
-            "$repo_root/docker/dev-base/Dockerfile" | tr -d '\r'
-    )
+    specgen_version=$SPECGEN_VERSION
     asset="specgen-${host_os}-${host_arch}"
     host_suffix=""
     if [ "$host_os" = "windows" ]; then
@@ -49,7 +47,7 @@ download_specgen() {
     specgen="$release_build/specgen${host_suffix}"
     base="https://forgejo.coilysiren.me/coilyco-flight-deck/cli-guard/releases/download/v${specgen_version}"
     if [ -z "$specgen_version" ]; then
-        echo "Dockerfile does not pin specgen" >&2
+        echo "aos-cli/release.env does not pin specgen" >&2
         exit 1
     fi
     curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
@@ -60,6 +58,57 @@ download_specgen() {
         | verify_checksum "$release_build"
     mv "$release_build/$asset" "$specgen"
     chmod 0755 "$specgen"
+}
+
+build_aosguard_skill() {
+    source="$release_build/aosguard-skill-source"
+    host_binary="$release_build/aosguard-skill-host"
+    cp -R "$repo_root/.specgen" "$source"
+    "$specgen" \
+        --project-root "$source/guardfiles" \
+        --skills-out "$release_build/aosguard-skill" \
+        build \
+        --set-version "$version" \
+        --out "$host_binary"
+    test -s "$release_build/aosguard-skill/aosguard/SKILL.md"
+    test -s "$release_build/aosguard-skill/aosguard/references/commands.yaml"
+    rm -rf "$source" "$host_binary"
+}
+
+build_bundle() {
+    target=$1
+    goos=${target%%/*}
+    goarch=${target#*/}
+    suffix=""
+    if [ "$goos" = "windows" ]; then
+        suffix=".exe"
+    fi
+
+    bundle_root="$release_build/aos-bundle-${goos}-${goarch}"
+    bundle="$dist/aos-bundle-${goos}-${goarch}.tar.gz"
+    mkdir -p \
+        "$bundle_root/bin" \
+        "$bundle_root/share/aos/python/agentic_os" \
+        "$bundle_root/share/aos/repositories"
+    cp "$dist/aos-${goos}-${goarch}${suffix}" \
+        "$bundle_root/bin/aos${suffix}"
+    cp "$dist/aosguard-${goos}-${goarch}${suffix}" \
+        "$bundle_root/bin/aosguard${suffix}"
+    cp -R "$release_build/aosguard-skill" \
+        "$bundle_root/share/aos/aosguard-skill"
+    cp "$repo_root/agentic_os/__init__.py" \
+        "$repo_root/agentic_os/forgejo_actions_list.py" \
+        "$repo_root/agentic_os/forgejo_actions_logs.py" \
+        "$repo_root/agentic_os/forgejo_actions_rerun.py" \
+        "$repo_root/agentic_os/forgejo_actions_web.py" \
+        "$bundle_root/share/aos/python/agentic_os/"
+    cp "$repo_root/aos-cli/repositories/substrate-repos.txt" \
+        "$repo_root/aos-cli/repositories/sealed-repos.gitignore" \
+        "$bundle_root/share/aos/repositories/"
+    printf '%s\n' "$version" > "$bundle_root/share/aos/version.txt"
+    tar -czf "$bundle" -C "$bundle_root" .
+    rm -rf "$bundle_root"
+    echo "$bundle"
 }
 
 build_aosguard() {
@@ -144,6 +193,7 @@ mkdir -p "$dist"
 release_build=$(mktemp -d)
 trap 'rm -rf "$release_build"' EXIT HUP INT TERM
 download_specgen
+build_aosguard_skill
 
 while IFS= read -r target || [ -n "$target" ]; do
     target=$(printf '%s' "$target" | tr -d '\r')
@@ -176,7 +226,7 @@ while IFS= read -r target || [ -n "$target" ]; do
         exit 1
     fi
     (
-        cd "$repo_root/aos"
+        cd "$repo_root/aos-cli"
         GOOS="$goos" GOARCH="$goarch" CGO_ENABLED=0 \
             go build -trimpath -ldflags "-s -w -X main.version=${version}" \
             -o "$out" .
@@ -185,6 +235,7 @@ while IFS= read -r target || [ -n "$target" ]; do
     cp "$out" "$ward_out"
     build_agent_terminal "$target"
     build_aosguard "$target"
+    build_bundle "$target"
     echo "$out"
     echo "$compose_out"
     echo "$ward_out"
