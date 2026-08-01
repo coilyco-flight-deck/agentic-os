@@ -81,6 +81,9 @@ def test_language_targets_share_source_not_runtime_parentage() -> None:
     assert text.count(
         "source=verify-common.sh,target=/tmp/verify-common.sh"
     ) == len(LANGUAGE_TIERS)
+    assert text.count("from=repo-lists,source=substrate-repos.txt") == len(
+        LANGUAGE_TIERS
+    )
     assert text.count('ENTRYPOINT ["/opt/agentic-os/ward-shell-entrypoint.sh"]') == len(
         LANGUAGE_TIERS
     )
@@ -221,6 +224,7 @@ def test_common_image_inputs_affect_every_tier() -> None:
         "full",
     )
     assert affected_tiers(["aos/main.go"]) == PUBLISHED_TIER_NAMES
+    assert affected_tiers(["aos/repositories/substrate-repos.txt"]) == PUBLISHED_TIER_NAMES
 
 
 def test_full_only_change_builds_its_language_source_closure() -> None:
@@ -281,6 +285,7 @@ def test_local_language_build_sets_architecture_and_named_contexts(monkeypatch) 
     assert "aos-cli=aos" in build
     assert "aosguard-spec=.specgen" in build
     assert "aosguard-python=agentic_os" in build
+    assert "repo-lists=aos/repositories" in build
     assert build[build.index("--target") + 1] == "dev-base-lang-go"
     assert Path(build[-1]).as_posix() == "docker/dev-base"
 
@@ -333,6 +338,12 @@ def test_local_bake_links_full_sources_without_registry_output() -> None:
         "full",
     ]
     assert targets["lang-node"]["output"] == ["type=cacheonly"]
+    assert targets["lang-node"]["contexts"] == {
+        "aos-cli": "aos",
+        "aosguard-spec": ".specgen",
+        "aosguard-python": "agentic_os",
+        "repo-lists": "aos/repositories",
+    }
     assert targets["lang-rust"]["output"] == ["type=cacheonly"]
     assert targets["full"]["output"] == ["type=docker"]
     assert targets["full"]["platforms"] == ["linux/amd64"]

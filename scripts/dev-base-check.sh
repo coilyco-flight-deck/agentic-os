@@ -27,6 +27,7 @@ while IFS= read -r language_target; do
     --build-context aos-cli=aos \
     --build-context aosguard-spec=.specgen \
     --build-context aosguard-python=agentic_os \
+    --build-context repo-lists=aos/repositories \
     --target "$language_target" \
     --file docker/dev-base/Dockerfile \
     docker/dev-base

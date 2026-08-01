@@ -9,7 +9,7 @@ Harness adapters still decide which discovered sources a harness ingests.
 
 ## Inputs
 
-The substrate set comes from `docker/dev-base/substrate-image-repos.txt`. AOS does
+The substrate set comes from `aos/repositories/substrate-repos.txt`. AOS does
 not scan the projects directory to invent a fleet. Infrastructure supplies:
 
 ```text

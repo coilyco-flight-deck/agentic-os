@@ -1,7 +1,7 @@
 # AGENTS context inventory
 
 * **Snapshot date** - 2026-07-23
-* **Substrate input** - committed `docker/dev-base/substrate-image-repos.txt`
+* **Substrate input** - committed `aos/repositories/substrate-repos.txt`
 * **Fleet input** - owner-qualified transcription of the legacy managed-repo list
 * **Status** - pre-rollout baseline; infrastructure #607 still owns the canonical
   fleet manifest, visibility completion, and missing-checkout reconciliation

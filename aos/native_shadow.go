@@ -26,7 +26,7 @@ const (
 	agentComposeRuntimeHomeEnv = "AGENT_COMPOSE_RUNTIME_HOME"
 )
 
-//go:embed native-checkout-repos.txt
+//go:embed repositories/repos-on-disk.txt
 var nativeCheckoutRepos []byte
 
 type nativeArtifact struct {

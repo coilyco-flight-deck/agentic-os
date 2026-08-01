@@ -37,7 +37,7 @@ The hook stays generic and carries no repo names of its own. Point the conventio
 ln -sf /path/to/your/repos-on-disk.txt ~/.config/agentic-os/repos-on-disk.txt
 ```
 
-[`aos/native-checkout-repos.txt`](../aos/native-checkout-repos.txt) is the
+[`aos/repositories/repos-on-disk.txt`](../aos/repositories/repos-on-disk.txt) is the
 public native-host base. Private overlays extend that roster from their own
 repositories and publish one flat manifest for the tracker.
 

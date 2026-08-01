@@ -40,7 +40,7 @@ def test_aos_cli_non_artifact_changes_do_not_require_a_release() -> None:
         "AGENTS.md",
         "alacritty/alacritty.toml",
         "aos/main_test.go",
-        "aos/native-checkout-repos.txt",
+        "aos/repositories/repos-on-disk.txt",
         "aos/role-personalities.json",
         "agent-terminal/testdata/director-overlay.json",
         "docs/aos-cli-release.md",

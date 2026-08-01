@@ -163,13 +163,13 @@ LABEL org.opencontainers.image.source="https://forgejo.coilysiren.me/coilyco-fli
       org.opencontainers.image.title="agentic-os lang-node"
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN --mount=type=bind,source=install-common.sh,target=/tmp/install-common.sh \
-    --mount=type=bind,source=substrate-image-repos.txt,target=/tmp/substrate-repos.txt \
+    --mount=from=repo-lists,source=substrate-repos.txt,target=/tmp/substrate-repos.txt \
     bash /tmp/install-common.sh /tmp/substrate-repos.txt "${GIT_LFS_VERSION}" \
       "${GIT_LFS_SHA256_AMD64}" "${GIT_LFS_SHA256_ARM64}"
 COPY --chmod=0755 agent-name.sh statusline.sh ward-shell-entrypoint.sh /opt/agentic-os/
 COPY --chmod=0755 statusline.d/ /opt/agentic-os/statusline.d/
 COPY --chmod=0644 claude-managed-settings.json /etc/claude-code/managed-settings.json
-COPY --chmod=0644 substrate-image-repos.txt /opt/agentic-os/substrate-repos.txt
+COPY --from=repo-lists --chmod=0644 substrate-repos.txt /opt/agentic-os/substrate-repos.txt
 COPY --from=dev-base-tool-builder /usr/local/bin/ward /usr/local/bin/ward
 COPY --from=dev-base-tool-builder /usr/local/bin/aos /usr/local/bin/aos
 COPY --from=dev-base-tool-builder /usr/local/bin/aosguard /usr/local/bin/aosguard
@@ -212,7 +212,7 @@ LABEL org.opencontainers.image.source="https://forgejo.coilysiren.me/coilyco-fli
       org.opencontainers.image.title="agentic-os lang-go"
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN --mount=type=bind,source=install-common.sh,target=/tmp/install-common.sh \
-    --mount=type=bind,source=substrate-image-repos.txt,target=/tmp/substrate-repos.txt \
+    --mount=from=repo-lists,source=substrate-repos.txt,target=/tmp/substrate-repos.txt \
     bash /tmp/install-common.sh /tmp/substrate-repos.txt "${GIT_LFS_VERSION}" \
       "${GIT_LFS_SHA256_AMD64}" "${GIT_LFS_SHA256_ARM64}"
 RUN set -eux; . /opt/agentic-os/arch.env; \
@@ -222,7 +222,7 @@ RUN set -eux; . /opt/agentic-os/arch.env; \
 COPY --chmod=0755 agent-name.sh statusline.sh ward-shell-entrypoint.sh /opt/agentic-os/
 COPY --chmod=0755 statusline.d/ /opt/agentic-os/statusline.d/
 COPY --chmod=0644 claude-managed-settings.json /etc/claude-code/managed-settings.json
-COPY --chmod=0644 substrate-image-repos.txt /opt/agentic-os/substrate-repos.txt
+COPY --from=repo-lists --chmod=0644 substrate-repos.txt /opt/agentic-os/substrate-repos.txt
 COPY --from=dev-base-tool-builder /usr/local/bin/ward /usr/local/bin/ward
 COPY --from=dev-base-tool-builder /usr/local/bin/aos /usr/local/bin/aos
 COPY --from=dev-base-tool-builder /usr/local/bin/aosguard /usr/local/bin/aosguard
@@ -267,7 +267,7 @@ LABEL org.opencontainers.image.source="https://forgejo.coilysiren.me/coilyco-fli
       org.opencontainers.image.title="agentic-os lang-dotnet"
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN --mount=type=bind,source=install-common.sh,target=/tmp/install-common.sh \
-    --mount=type=bind,source=substrate-image-repos.txt,target=/tmp/substrate-repos.txt \
+    --mount=from=repo-lists,source=substrate-repos.txt,target=/tmp/substrate-repos.txt \
     bash /tmp/install-common.sh /tmp/substrate-repos.txt "${GIT_LFS_VERSION}" \
       "${GIT_LFS_SHA256_AMD64}" "${GIT_LFS_SHA256_ARM64}"
 RUN set -eux; . /opt/agentic-os/arch.env; \
@@ -280,7 +280,7 @@ RUN set -eux; . /opt/agentic-os/arch.env; \
 COPY --chmod=0755 agent-name.sh statusline.sh ward-shell-entrypoint.sh /opt/agentic-os/
 COPY --chmod=0755 statusline.d/ /opt/agentic-os/statusline.d/
 COPY --chmod=0644 claude-managed-settings.json /etc/claude-code/managed-settings.json
-COPY --chmod=0644 substrate-image-repos.txt /opt/agentic-os/substrate-repos.txt
+COPY --from=repo-lists --chmod=0644 substrate-repos.txt /opt/agentic-os/substrate-repos.txt
 COPY --from=dev-base-tool-builder /usr/local/bin/ward /usr/local/bin/ward
 COPY --from=dev-base-tool-builder /usr/local/bin/aos /usr/local/bin/aos
 COPY --from=dev-base-tool-builder /usr/local/bin/aosguard /usr/local/bin/aosguard
@@ -324,7 +324,7 @@ LABEL org.opencontainers.image.source="https://forgejo.coilysiren.me/coilyco-fli
       org.opencontainers.image.title="agentic-os lang-rust"
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN --mount=type=bind,source=install-common.sh,target=/tmp/install-common.sh \
-    --mount=type=bind,source=substrate-image-repos.txt,target=/tmp/substrate-repos.txt \
+    --mount=from=repo-lists,source=substrate-repos.txt,target=/tmp/substrate-repos.txt \
     bash /tmp/install-common.sh /tmp/substrate-repos.txt "${GIT_LFS_VERSION}" \
       "${GIT_LFS_SHA256_AMD64}" "${GIT_LFS_SHA256_ARM64}"
 RUN set -eux; apt-get update; apt-get install -y --no-install-recommends \
@@ -348,7 +348,7 @@ RUN printf '%s\n' '#include <wayland-client.h>' '#include <xkbcommon/xkbcommon.h
 COPY --chmod=0755 agent-name.sh statusline.sh ward-shell-entrypoint.sh /opt/agentic-os/
 COPY --chmod=0755 statusline.d/ /opt/agentic-os/statusline.d/
 COPY --chmod=0644 claude-managed-settings.json /etc/claude-code/managed-settings.json
-COPY --chmod=0644 substrate-image-repos.txt /opt/agentic-os/substrate-repos.txt
+COPY --from=repo-lists --chmod=0644 substrate-repos.txt /opt/agentic-os/substrate-repos.txt
 COPY --from=dev-base-tool-builder /usr/local/bin/ward /usr/local/bin/ward
 COPY --from=dev-base-tool-builder /usr/local/bin/aos /usr/local/bin/aos
 COPY --from=dev-base-tool-builder /usr/local/bin/aosguard /usr/local/bin/aosguard
@@ -390,7 +390,7 @@ LABEL org.opencontainers.image.source="https://forgejo.coilysiren.me/coilyco-fli
       org.opencontainers.image.title="agentic-os lang-python"
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN --mount=type=bind,source=install-common.sh,target=/tmp/install-common.sh \
-    --mount=type=bind,source=substrate-image-repos.txt,target=/tmp/substrate-repos.txt \
+    --mount=from=repo-lists,source=substrate-repos.txt,target=/tmp/substrate-repos.txt \
     bash /tmp/install-common.sh /tmp/substrate-repos.txt "${GIT_LFS_VERSION}" \
       "${GIT_LFS_SHA256_AMD64}" "${GIT_LFS_SHA256_ARM64}"
 RUN set -eux; ln -sf /usr/bin/python3 /usr/local/bin/python; \
@@ -399,7 +399,7 @@ RUN set -eux; ln -sf /usr/bin/python3 /usr/local/bin/python; \
 COPY --chmod=0755 agent-name.sh statusline.sh ward-shell-entrypoint.sh /opt/agentic-os/
 COPY --chmod=0755 statusline.d/ /opt/agentic-os/statusline.d/
 COPY --chmod=0644 claude-managed-settings.json /etc/claude-code/managed-settings.json
-COPY --chmod=0644 substrate-image-repos.txt /opt/agentic-os/substrate-repos.txt
+COPY --from=repo-lists --chmod=0644 substrate-repos.txt /opt/agentic-os/substrate-repos.txt
 COPY --from=dev-base-tool-builder /usr/local/bin/ward /usr/local/bin/ward
 COPY --from=dev-base-tool-builder /usr/local/bin/aos /usr/local/bin/aos
 COPY --from=dev-base-tool-builder /usr/local/bin/aosguard /usr/local/bin/aosguard

@@ -1,0 +1,3 @@
+# Read-only repositories baked into the dev-base image.
+coilyco-flight-deck/agentic-os
+coilysiren/coilysiren

@@ -13,7 +13,7 @@ from typing import Any, Iterable
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_SUBSTRATE_MANIFEST = REPO_ROOT / "docker" / "dev-base" / "substrate-image-repos.txt"
+DEFAULT_SUBSTRATE_MANIFEST = REPO_ROOT / "aos" / "repositories" / "substrate-repos.txt"
 DEFAULT_BOARD = REPO_ROOT / "aos" / "role-harnesses.json"
 DEFAULT_PROJECTS_ROOT = Path.home() / "projects"
 DEFAULT_AOSH_REPO = "coilyco-bridge/agentic-os-hardware"

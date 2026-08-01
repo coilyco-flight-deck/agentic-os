@@ -312,6 +312,8 @@ def _build_plan(
                     "aosguard-spec=.specgen",
                     "--build-context",
                     "aosguard-python=agentic_os",
+                    "--build-context",
+                    "repo-lists=aos/repositories",
                 ]
             )
         else:
@@ -410,6 +412,7 @@ def _local_bake_definition(
                 "aos-cli": "aos",
                 "aosguard-spec": ".specgen",
                 "aosguard-python": "agentic_os",
+                "repo-lists": "aos/repositories",
             }
         else:
             dependency_refs = [

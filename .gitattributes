@@ -16,4 +16,4 @@ shell/** text eol=lf
 # Extensionless bash scripts under scripts/ hit the same CRLF drift.
 scripts/docker-credential-forgejo-ssm text eol=lf
 scripts/gpg-ssm text eol=lf
-docker/dev-base/substrate-image-repos.txt text eol=lf
+aos/repositories/*.txt text eol=lf
