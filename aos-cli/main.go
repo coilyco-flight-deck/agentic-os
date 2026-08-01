@@ -61,6 +61,10 @@ func newCommandWithDefaults(name string, defaults launchDefaults) *cli.Command {
 				Usage: "shared role slug selected across enabled capabilities",
 			},
 			&cli.StringFlag{
+				Name:  "agent-id",
+				Usage: "optional stable peer id for a generic warded role",
+			},
+			&cli.StringFlag{
 				Name:  "agent",
 				Usage: "agent harness selected for the launch",
 			},

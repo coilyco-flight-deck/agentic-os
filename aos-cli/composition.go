@@ -20,6 +20,7 @@ var (
 type integratedLaunchOptions struct {
 	Image       string
 	Role        string
+	AgentID     string
 	Agent       string
 	Layout      string
 	Delivery    string
@@ -50,6 +51,7 @@ func runIntegratedLaunch(
 	opts := integratedLaunchOptions{
 		Image:       strings.TrimSpace(cmd.String("image")),
 		Role:        strings.TrimSpace(cmd.String("role")),
+		AgentID:     strings.TrimSpace(cmd.String("agent-id")),
 		Agent:       strings.TrimSpace(cmd.String("agent")),
 		Layout:      strings.TrimSpace(cmd.String("layout")),
 		Delivery:    strings.TrimSpace(cmd.String("delivery")),
@@ -83,6 +85,9 @@ func validateIntegratedLaunch(opts integratedLaunchOptions) error {
 	if !safeRoleSlug(opts.Role) {
 		return fmt.Errorf("--role %q is not a safe shared role slug", opts.Role)
 	}
+	if opts.AgentID != "" && !safeAgentID(opts.AgentID) {
+		return fmt.Errorf("--agent-id %q is not a safe peer id", opts.AgentID)
+	}
 	if opts.Agent == "" {
 		return fmt.Errorf("integrated launch needs --agent")
 	}
@@ -108,16 +113,16 @@ func validateIntegratedLaunch(opts integratedLaunchOptions) error {
 				"--kubeconfig is available only for standalone launches because Ward owns warded runtime mounts",
 			)
 		}
-		switch opts.Role {
-		case "director", "qa", "engineer":
-		default:
-			return fmt.Errorf(
-				"--warded role %q is unsupported: Ward ships director, qa, and engineer",
-				opts.Role,
-			)
-		}
 		if (opts.Role == "engineer" || opts.Role == "qa") && len(opts.Arguments) == 0 {
 			return fmt.Errorf("--warded %s needs an issue reference or freeform work", opts.Role)
+		}
+		if opts.Role != "director" && opts.Role != "engineer" && opts.Role != "qa" &&
+			len(opts.Arguments) == 0 {
+			return fmt.Errorf("--warded role %s needs work text", opts.Role)
+		}
+		if opts.AgentID != "" &&
+			(opts.Role == "director" || opts.Role == "engineer" || opts.Role == "qa") {
+			return fmt.Errorf("--agent-id is available only for generic warded roles")
 		}
 		if forbidden := forbiddenWardArgument(opts.Arguments); forbidden != "" {
 			return fmt.Errorf(
@@ -125,6 +130,9 @@ func validateIntegratedLaunch(opts integratedLaunchOptions) error {
 				forbidden,
 			)
 		}
+	}
+	if opts.AgentID != "" && !opts.Warded {
+		return fmt.Errorf("--agent-id needs --warded")
 	}
 	return nil
 }
@@ -142,6 +150,22 @@ func safeRoleSlug(value string) bool {
 	return true
 }
 
+func safeAgentID(value string) bool {
+	if value == "" || len(value) > 128 {
+		return false
+	}
+	for i, r := range value {
+		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') ||
+			(r >= '0' && r <= '9') || r == '-' || r == '_' || r == '.' {
+			if i > 0 || (r != '-' && r != '_' && r != '.') {
+				continue
+			}
+		}
+		return false
+	}
+	return true
+}
+
 func forbiddenWardArgument(arguments []string) string {
 	owned := []string{
 		"--agent",
@@ -151,6 +175,8 @@ func forbiddenWardArgument(arguments []string) string {
 		"--context-bundle",
 		"--ward-source",
 		"--ward-version",
+		"--role",
+		"--agent-id",
 	}
 	for _, argument := range arguments {
 		for _, flag := range owned {
@@ -294,6 +320,12 @@ func runWardedLaunch(
 
 func buildWardLaunchPlan(opts integratedLaunchOptions, bundlePath string) (wardLaunchPlan, error) {
 	args := []string{"agent", opts.Role}
+	if opts.Role != "director" && opts.Role != "engineer" && opts.Role != "qa" {
+		args = []string{"agent", "run", "--role", opts.Role}
+		if opts.AgentID != "" {
+			args = append(args, "--agent-id", opts.AgentID)
+		}
+	}
 	args = append(args, opts.Arguments...)
 	args = append(args, "--agent", opts.Agent, "--image", opts.Image)
 	if bundlePath != "" {

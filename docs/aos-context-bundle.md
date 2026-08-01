@@ -48,9 +48,9 @@ command returns because a detached Ward container can outlive that process.
 
 ## Ward boundary
 
-Before materialization, AOS confirms that the installed host Ward advertises
-`--context-bundle`. AOS then invokes `ward agent` with the selected role,
-agent, image, original work arguments, and immutable bundle path.
+AOS first confirms that host Ward advertises `--context-bundle`. It invokes the
+matching fixed workflow for `director`, `qa`, or `engineer`. Other safe roles
+use `ward agent run --role <slug>` with the same immutable bundle.
 
 Ward validates the directory before Docker starts, mounts it read-only,
 revalidates it during bootstrap, copies accepted files into private agent HOME,

@@ -37,7 +37,7 @@ aoscompose --agent codex --role engineer -- --version
 aosward --agent codex --role engineer -- owner/repo#267
 ```
 
-Warded mode invokes Ward for Compose, lifecycle, and [credential handoff](aos-ward-credentials.md).
+Warded mode uses Ward's fixed workflows and generic broker for Compose, lifecycle, and [credential handoff](aos-ward-credentials.md).
 
 ## Routing
 
@@ -48,9 +48,9 @@ seam. Agent-compose carries behavioral identity and seat context. A Ward
 workflow role cannot change the model inputs or privileged surface. See [the context-bundle
 adapter](aos-context-bundle.md).
 
-Ward ships `director`, `qa`, and `engineer`. Other agent-compose roles remain
-available on the standalone path. AOS rejects incompatible roles,
-agents, and translated Ward flags before starting a container.
+Ward ships the `director`, `qa`, and `engineer` repository workflows. Other safe
+roles use its [generic read-only command](aos-generic-warded-roles.md). AOS rejects
+incompatible agents and translated Ward flags before starting a container.
 
 ## Standalone contract
 

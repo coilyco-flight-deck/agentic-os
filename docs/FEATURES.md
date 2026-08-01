@@ -32,8 +32,8 @@ Major shipped capabilities, not files.
 - [Forgejo Actions list bridge](forgejo-actions-listing.md) - safe run/task listing.
 - [Forgejo runner tokens](forgejo-runner-token.md) - guarded registration-token minting.
 - [Forgejo Actions reruns](forgejo-actions-rerun.md) - guarded reruns and dispatch fallback.
-- [Ward integration boundary](ward-specs.md) - fixed Ward workflows,
-  AOS-owned harness launch tuning, and no role-derived permission bundle.
+- [Ward integration boundary](ward-specs.md) - workflows, arbitrary
+  [composed roles](aos-generic-warded-roles.md), and no role-derived authority.
 - [QA verification fixture](qa-verification-fixture.md) - bounded live role proof.
 - [Cross-repo tooling and release](features-release-tooling.md) - aos-precommit and release operations.
 - [Telegram CI failure alerts](telegram-ci-alerts.md) - reusable red-channel alerting for failing jobs.

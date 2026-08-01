@@ -28,6 +28,11 @@ func TestValidateIntegratedLaunchMatrix(t *testing.T) {
 			Delivery: "compiled", Warded: true, Composed: true,
 			Arguments: []string{"owner/repo#123"},
 		},
+		{
+			Image: "aos:test", Role: "story-architect", Agent: "codex",
+			Delivery: "compiled", Warded: true, Composed: true,
+			AgentID: "architect", Arguments: []string{"shape the premise"},
+		},
 	}
 	for _, opts := range valid {
 		if err := validateIntegratedLaunch(opts); err != nil {
@@ -55,11 +60,19 @@ func TestValidateIntegratedLaunchMatrix(t *testing.T) {
 			want: "unsupported --agent",
 		},
 		{
-			name: "ward role",
+			name: "generic role missing work",
 			opts: integratedLaunchOptions{
 				Image: "aos:test", Role: "designer", Agent: "codex", Warded: true,
 			},
-			want: "Ward ships director, qa, and engineer",
+			want: "needs work text",
+		},
+		{
+			name: "fixed workflow agent id",
+			opts: integratedLaunchOptions{
+				Image: "aos:test", Role: "engineer", Agent: "codex", Warded: true,
+				AgentID: "engineer-one", Arguments: []string{"owner/repo#1"},
+			},
+			want: "only for generic warded roles",
 		},
 		{
 			name: "missing work",
@@ -102,6 +115,31 @@ func TestValidateIntegratedLaunchMatrix(t *testing.T) {
 				t.Fatalf("error = %v, want %q", err, test.want)
 			}
 		})
+	}
+}
+
+func TestBuildWardLaunchPlanUsesGenericRunForArbitraryComposedRole(t *testing.T) {
+	t.Parallel()
+	plan, err := buildWardLaunchPlan(integratedLaunchOptions{
+		Image:     "aos:test",
+		Role:      "story-architect",
+		AgentID:   "architect",
+		Agent:     "codex",
+		Arguments: []string{"shape the premise"},
+	}, "/cache/context")
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := strings.Join(append([]string{plan.Command}, plan.Args...), " ")
+	for _, want := range []string{
+		"ward agent run --role story-architect --agent-id architect shape the premise",
+		"--agent codex",
+		"--image aos:test",
+		"--context-bundle /cache/context",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("Ward launch %q does not contain %q", got, want)
+		}
 	}
 }
 
