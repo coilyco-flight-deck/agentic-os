@@ -5,14 +5,17 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 )
 
 type fakeCommandRunner struct {
-	commands   []string
-	request    string
-	composeErr error
+	commands    []string
+	request     string
+	requestPath string
+	bundlesPath string
+	composeErr  error
 }
 
 func (f *fakeCommandRunner) Run(_ context.Context, name string, args ...string) error {
@@ -28,6 +31,8 @@ func (f *fakeCommandRunner) Run(_ context.Context, name string, args ...string) 
 		return nil
 	}
 	if name == "agent-compose" && len(args) >= 4 && args[0] == "compose" {
+		f.requestPath = args[1]
+		f.bundlesPath = args[3]
 		data, err := os.ReadFile(args[1])
 		if err != nil {
 			return err
@@ -213,15 +218,22 @@ func TestPrepareContainerHydratesSubstrateAndProjectsHome(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	provider := filepath.Join(substrate, "coilyco-flight-deck", "agentic-os")
 	for _, want := range []string{
 		`role "engineer"`,
 		`delivery "native-skills"`,
 		`model-class "` + modelClass + `"`,
-		`source "aos-public" root="." required=#true`,
+		`source "aos" root=` + strconv.Quote(provider) + ` required=#true`,
 	} {
 		if !strings.Contains(runner.request, want) {
 			t.Errorf("compose request missing %q:\n%s", want, runner.request)
 		}
+	}
+	if got := filepath.Dir(runner.requestPath); got != aosTempPath("compose") {
+		t.Errorf("compose request directory = %q, want %q", got, aosTempPath("compose"))
+	}
+	if got := filepath.Dir(runner.bundlesPath); got != aosTempPath("bundles") {
+		t.Errorf("bundle directory = %q, want %q", got, aosTempPath("bundles"))
 	}
 	if !environmentContains(spec.Environment, "HOME="+home) {
 		t.Fatalf("exec environment omitted HOME: %v", spec.Environment)

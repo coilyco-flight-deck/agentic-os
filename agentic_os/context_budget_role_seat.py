@@ -10,10 +10,11 @@ import subprocess
 import tempfile
 import urllib.parse
 from collections import defaultdict
+from contextlib import contextmanager
 from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Iterator
 
 import yaml
 
@@ -34,9 +35,10 @@ from agentic_os.role_personality_sync import (
 )
 
 FORMAT = "agentic-os.role-seat-context.v1"
-SOURCE_ID = "aos-public"
+SOURCE_ID = "aos"
 PERSON_SOURCE_ID = "person:kai"
 PERSON_SOURCE_SEGMENT = urllib.parse.quote(PERSON_SOURCE_ID, safe="")
+AOS_TEMP_ROOT = Path(tempfile.gettempdir()) / "aos"
 SLUG_RE = re.compile(r"^[a-z][a-z0-9-]*$")
 AOS_LAYOUT_MODEL_CLASSES_PATH = (
     Path(__file__).resolve().parents[1] / "aos" / "layout-model-classes.json"
@@ -89,6 +91,14 @@ def _represent_flow_map(
 
 
 _SnapshotDumper.add_representer(_FlowMap, _represent_flow_map)
+
+
+@contextmanager
+def _aos_temporary_directory(*parts: str) -> Iterator[str]:
+    namespace = AOS_TEMP_ROOT.joinpath(*parts)
+    namespace.mkdir(parents=True, exist_ok=True, mode=0o700)
+    with tempfile.TemporaryDirectory(dir=namespace) as temp:
+        yield temp
 
 
 @dataclass(frozen=True)
@@ -317,7 +327,7 @@ def _agents_components(
             "but have different roots"
         )
 
-    with tempfile.TemporaryDirectory(prefix="aos-role-seat-agents-") as temp:
+    with _aos_temporary_directory("role-seat", "agents") as temp:
         inventory_root = Path(temp)
         projects_root = inventory_root / "projects"
         try:
@@ -779,7 +789,7 @@ def build_snapshot(
         _component(
             "instructions:role",
             "role-instructions",
-            "agent-compose+person:kai+aos-public",
+            f"agent-compose+{PERSON_SOURCE_ID}+{SOURCE_ID}",
             "bundle:content/instructions.md",
             projection.instructions_delivery,
             True,
@@ -919,7 +929,7 @@ def capture_snapshot(
     executable = shutil.which(agent_compose)
     if executable is None:
         raise RuntimeError(f"agent-compose executable not found: {agent_compose}")
-    with tempfile.TemporaryDirectory(prefix="aos-role-seat-context-") as temp:
+    with _aos_temporary_directory("role-seat", "context") as temp:
         root = Path(temp)
         staged_provider = root / "provider"
         try:

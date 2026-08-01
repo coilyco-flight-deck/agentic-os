@@ -18,7 +18,6 @@ const (
 	defaultSubstrateSeed     = "/opt/substrate-seed"
 	defaultSubstrateRoot     = "/substrate"
 	defaultAgentHome         = "/home/aos"
-	noSubstrateProviderRoot  = "/tmp/aos-provider"
 	aosProviderRef           = "coilyco-flight-deck/agentic-os"
 	defaultAOSGuardBinary    = "/usr/local/bin/aosguard"
 	defaultAOSGuardSkill     = "/opt/agentic-os/aosguard-skill/aosguard"
@@ -300,7 +299,7 @@ func prepareSubstrate(
 			continue
 		}
 		if opts.NoSubstrate {
-			destination = noSubstrateProviderRoot
+			destination = aosTempPath("provider")
 		}
 		if err := materializeSubstrateRepo(ctx, opts, repo, destination, runner); err != nil {
 			return "", err
@@ -364,7 +363,15 @@ func composeHome(
 	if err != nil {
 		return err
 	}
-	request, err := os.CreateTemp(provider, ".aos-compose-*.kdl")
+	providerRoot, err := filepath.Abs(provider)
+	if err != nil {
+		return fmt.Errorf("resolve compose provider: %w", err)
+	}
+	composeRoot, err := ensureAOSTempNamespace("compose")
+	if err != nil {
+		return err
+	}
+	request, err := os.CreateTemp(composeRoot, "*.kdl")
 	if err != nil {
 		return fmt.Errorf("create compose request: %w", err)
 	}
@@ -374,7 +381,7 @@ func composeHome(
 		"    role " + strconv.Quote(opts.Role) + "\n" +
 		"    delivery " + strconv.Quote(opts.Delivery) + "\n" +
 		"    model-class " + strconv.Quote(modelClass) + "\n" +
-		"    source \"aos-public\" root=\".\" required=#true\n" +
+		"    source \"aos\" root=" + strconv.Quote(providerRoot) + " required=#true\n" +
 		"}\n"
 	if _, err := io.WriteString(request, body); err != nil {
 		request.Close()
@@ -383,7 +390,11 @@ func composeHome(
 	if err := request.Close(); err != nil {
 		return fmt.Errorf("close compose request: %w", err)
 	}
-	bundles, err := os.MkdirTemp("", "aos-bundles-")
+	bundlesRoot, err := ensureAOSTempNamespace("bundles")
+	if err != nil {
+		return err
+	}
+	bundles, err := os.MkdirTemp(bundlesRoot, "")
 	if err != nil {
 		return fmt.Errorf("create bundle cache: %w", err)
 	}

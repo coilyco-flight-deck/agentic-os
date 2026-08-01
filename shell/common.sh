@@ -508,7 +508,7 @@ case $- in
     _siren_startup_dir="${WARP_STARTUP_DIR:-$PROJECTS_ROOT}"
     _siren_startup_from_native=0
     if [ "$_siren_fresh_terminal_tree" = 1 ]; then
-      _siren_native_sessions_dir="${AOS_NATIVE_SESSIONS_DIR:-${TMPDIR:-/tmp}/aos-native}"
+      _siren_native_sessions_dir="${AOS_NATIVE_SESSIONS_DIR:-${TMPDIR:-/tmp}/aos/native}"
       if [ -d "$_siren_native_sessions_dir" ]; then
         _siren_native_sessions_dir="$(cd "$_siren_native_sessions_dir" && pwd -P)"
         _siren_current_dir="$(pwd -P)"

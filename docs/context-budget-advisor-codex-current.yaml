@@ -13,35 +13,38 @@ bundle:
   - reflective
   - curious
   - candid
+  - skeptical
   sources:
   - person:kai
-  - aos-public
+  - aos
 mcp:
   delivery: deferred
-  server_count: 13
+  server_count: 10
   eager_schema_count: 0
 totals:
   eager:
-    components: 18
-    bytes: 31635
-    tokens: 7913
+    components: 21
+    bytes: 29632
+    tokens: 7411
   lazy:
-    components: 35
-    bytes: 55360
-    tokens: 13847
+    components: 41
+    bytes: 66335
+    tokens: 16594
 breakdown:
   eager:
-    agents-cascade: {components: 1, bytes: 21438, tokens: 5360}
-    ordinary-skill-frontmatter: {components: 11, bytes: 2754, tokens: 693}
-    personality-frontmatter: {components: 3, bytes: 462, tokens: 117}
+    agents-cascade: {components: 1, bytes: 22839, tokens: 5710}
+    ordinary-skill-frontmatter: {components: 12, bytes: 3016, tokens: 758}
+    personality-frontmatter: {components: 4, bytes: 632, tokens: 160}
     role-composed-frontmatter: {components: 2, bytes: 416, tokens: 105}
-    role-instructions: {components: 1, bytes: 6565, tokens: 1638}
+    role-instructions: {components: 1, bytes: 2577, tokens: 640}
+    role-skill-frontmatter: {components: 1, bytes: 152, tokens: 38}
   lazy:
     mcp-server-registration: {components: 1, bytes: 0, tokens: 0}
-    ordinary-skill-body: {components: 11, bytes: 18897, tokens: 4722}
-    ordinary-skill-resource: {components: 18, bytes: 27017, tokens: 6761}
-    personality-body: {components: 3, bytes: 4063, tokens: 1017}
+    ordinary-skill-body: {components: 12, bytes: 22694, tokens: 5671}
+    ordinary-skill-resource: {components: 21, bytes: 32335, tokens: 8092}
+    personality-body: {components: 4, bytes: 4953, tokens: 1241}
     role-composed-body: {components: 2, bytes: 5383, tokens: 1347}
+    role-skill-body: {components: 1, bytes: 970, tokens: 243}
 components:
   eager:
     agents-cascade:
@@ -49,17 +52,17 @@ components:
       owner: coilyco-flight-deck/agentic-os
       source: coilyco-flight-deck/agentic-os:AGENTS.md
       delivery: repo-cascade
-      bytes: 21438
-      tokens: 5360
-      sha256: 6a82741b3ddcb6691a9b951e4615421a8a2a957d88e55122b0f1d74a841ac5cc
+      bytes: 22839
+      tokens: 5710
+      sha256: 702e02f0a8a9f35f9a70f90a8b70f1bafb9a49ca7fbfc6584060959aaa02d858
     role-instructions:
     - id: instructions:role
-      owner: agent-compose+person:kai+aos-public
+      owner: agent-compose+person:kai+aos
       source: bundle:content/instructions.md
       delivery: .codex/AGENTS.md
-      bytes: 6565
-      tokens: 1638
-      sha256: 2449a883344463af5f68f9358452feaaf87b3d020844b87cbe3c0691d3b674a8
+      bytes: 2577
+      tokens: 640
+      sha256: ab62fc6811ed257773586ee3c3dd1d84281cb19ed9a72a4d0cb636ca6fdedae4
   lazy:
     mcp-server-registration:
     - id: mcp:deferred
@@ -70,20 +73,23 @@ components:
       tokens: 0
       sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
 skills:
-  aos-public/kai-tech-prefs: {class: ordinary, eager: 51, lazy: 1969, resources: 5}
-  aos-public/repo-agentic-os: {class: ordinary, eager: 50, lazy: 93, resources: 0}
-  aos-public/tooling-advisor-causal-claim-audit: {class: role-composed, eager: 53, lazy: 840, resources: 0}
-  aos-public/tooling-advisor-evidence-synthesis: {class: role-composed, eager: 52, lazy: 507, resources: 0}
-  aos-public/tooling-agent-workflows: {class: ordinary, eager: 53, lazy: 1642, resources: 4}
-  aos-public/tooling-claude-in-chrome: {class: ordinary, eager: 55, lazy: 1416, resources: 3}
-  aos-public/tooling-ffmpeg: {class: ordinary, eager: 50, lazy: 559, resources: 0}
-  aos-public/tooling-gpg-ssm: {class: ordinary, eager: 78, lazy: 1373, resources: 3}
-  aos-public/tooling-image-zoom: {class: ordinary, eager: 44, lazy: 949, resources: 1}
-  aos-public/tooling-imagemagick: {class: ordinary, eager: 50, lazy: 492, resources: 0}
-  aos-public/tooling-tailscale: {class: ordinary, eager: 109, lazy: 1887, resources: 2}
-  aos-public/tooling-warp: {class: ordinary, eager: 39, lazy: 317, resources: 0}
-  aos-public/tooling-zsh: {class: ordinary, eager: 114, lazy: 786, resources: 0}
-  person:kai/personality-candid: {class: personality, eager: 38, lazy: 334, resources: 0}
-  person:kai/personality-curious: {class: personality, eager: 39, lazy: 337, resources: 0}
-  person:kai/personality-reflective: {class: personality, eager: 40, lazy: 346, resources: 0}
-payload_hash: ec0f0871db9d1210940ccdd1ab79e4e406c212724f5dcb8ae42f6fdede5206be
+  aos/kai-tech-prefs: {class: ordinary, eager: 51, lazy: 2068, resources: 5}
+  aos/repo-agentic-os: {class: ordinary, eager: 47, lazy: 93, resources: 0}
+  aos/tooling-advisor-causal-claim-audit: {class: role-composed, eager: 53, lazy: 840, resources: 0}
+  aos/tooling-advisor-evidence-synthesis: {class: role-composed, eager: 52, lazy: 507, resources: 0}
+  aos/tooling-agent-tool-evaluation: {class: ordinary, eager: 68, lazy: 2181, resources: 3}
+  aos/tooling-agent-workflows: {class: ordinary, eager: 53, lazy: 1642, resources: 4}
+  aos/tooling-claude-in-chrome: {class: ordinary, eager: 55, lazy: 1416, resources: 3}
+  aos/tooling-ffmpeg: {class: ordinary, eager: 50, lazy: 559, resources: 0}
+  aos/tooling-gpg-ssm: {class: ordinary, eager: 78, lazy: 1373, resources: 3}
+  aos/tooling-image-zoom: {class: ordinary, eager: 44, lazy: 949, resources: 1}
+  aos/tooling-imagemagick: {class: ordinary, eager: 50, lazy: 492, resources: 0}
+  aos/tooling-tailscale: {class: ordinary, eager: 109, lazy: 1887, resources: 2}
+  aos/tooling-warp: {class: ordinary, eager: 39, lazy: 317, resources: 0}
+  aos/tooling-zsh: {class: ordinary, eager: 114, lazy: 786, resources: 0}
+  person:kai/personality-candid: {class: personality, eager: 38, lazy: 316, resources: 0}
+  person:kai/personality-curious: {class: personality, eager: 39, lazy: 321, resources: 0}
+  person:kai/personality-reflective: {class: personality, eager: 40, lazy: 328, resources: 0}
+  person:kai/personality-skeptical: {class: personality, eager: 43, lazy: 276, resources: 0}
+  person:kai/role-advisor: {class: role, eager: 38, lazy: 243, resources: 0}
+payload_hash: 03060c55a3eff78063d2d4e68ebc0072d9adc7a44cba5a2847df08ed714b2d71

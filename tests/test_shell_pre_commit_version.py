@@ -59,7 +59,7 @@ def test_outdated_diagnostic_compares_full_release_tags(tmp_path: Path) -> None:
         "aos-precommit-v9.9.9-invalid",
     ):
         subprocess.run(
-            ["git", "-C", str(aos_repo), "tag", tag],
+            ["git", "-c", "tag.gpgSign=false", "-C", str(aos_repo), "tag", tag],
             check=True,
             capture_output=True,
             text=True,

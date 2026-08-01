@@ -4,8 +4,8 @@
 # Current ceo context budget
 
 * **Frontier ceo** -
-  [Claude 8,739](context-budget-ceo-claude-current.yaml),
-  [Codex 8,736](context-budget-ceo-codex-current.yaml), lazy 37,016, 12 composed.
+  [Claude 8,109](context-budget-ceo-claude-current.yaml),
+  [Codex 8,106](context-budget-ceo-codex-current.yaml), lazy 40,421, 12 composed.
 
 Only frontier snapshots are available for this role.
 

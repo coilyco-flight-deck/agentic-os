@@ -250,8 +250,8 @@ func TestAssignedNativeRoleExportsAOSModelClass(t *testing.T) {
 }
 
 func TestNativeCodexWorkspaceTrustIsScopedToGeneratedProject(t *testing.T) {
-	project := "/tmp/aos-native/session/projects"
-	override := `projects={"/tmp/aos-native/session/projects"={trust_level="trusted"}}`
+	project := "/tmp/aos/native/session/projects"
+	override := `projects={"/tmp/aos/native/session/projects"={trust_level="trusted"}}`
 	tests := []struct {
 		name    string
 		command []string
@@ -304,7 +304,7 @@ func TestNativeCodexProjectResolvesWorkspaceSymlinks(t *testing.T) {
 
 func TestNativeWorkspaceTrustDoesNotChangeOtherHarnesses(t *testing.T) {
 	command := []string{"agent-compose", "launch", "engineer", "claude"}
-	got := trustNativeCodexWorkspace(command, "claude", "/tmp/aos-native/session/projects")
+	got := trustNativeCodexWorkspace(command, "claude", "/tmp/aos/native/session/projects")
 	if strings.Join(got, "\x00") != strings.Join(command, "\x00") {
 		t.Fatalf("command = %#v, want unchanged %#v", got, command)
 	}

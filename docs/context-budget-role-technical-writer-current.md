@@ -4,12 +4,12 @@
 # Current technical writer context budget
 
 * **Frontier technical writer** -
-  [Claude 7,091](context-budget-technical-writer-claude-current.yaml),
-  [Codex 7,088](context-budget-technical-writer-codex-current.yaml), lazy 16,216, 4 composed.
+  [Claude 7,654](context-budget-technical-writer-claude-current.yaml),
+  [Codex 7,651](context-budget-technical-writer-codex-current.yaml), lazy 19,177, 5 composed.
 * **Low-context technical writer** -
-  [Goose 6,910](context-budget-technical-writer-goose-current.yaml),
-  [OpenCode 6,910](context-budget-technical-writer-opencode-current.yaml), lazy 12,061, 3 composed.
-* **Low-context diff** - eager saves 178 to 181 tokens, lazy saves 4,155 tokens, composed sources 4 -> 3.
+  [Goose 7,473](context-budget-technical-writer-goose-current.yaml),
+  [OpenCode 7,473](context-budget-technical-writer-opencode-current.yaml), lazy 15,022, 4 composed.
+* **Low-context diff** - eager saves 178 to 181 tokens, lazy saves 4,155 tokens, composed sources 5 -> 4.
 
 The programmatic diff compares every frontier seat with every low-context seat.
 

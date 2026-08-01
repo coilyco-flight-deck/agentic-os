@@ -15,7 +15,7 @@ canonical checkout supplies Git objects. Each session receives a writable
 A launch from `$PROJECTS_ROOT` enters:
 
 ```text
-$TMPDIR/aos-native/<session-id>/projects/<owner>/<repo>
+$TMPDIR/aos/native/<session-id>/projects/<owner>/<repo>
 ```
 
 with the owner/repository hierarchy reproduced below `projects`. A repository
@@ -73,8 +73,8 @@ qualifying startups span at least twenty minutes.
 
 ## Local state
 
-Leases and the pass cache use the platform cache at
-`agentic-os/native-shadow`. Worktrees use the platform temporary `aos-native`
-directory. `AOS_NATIVE_STATE_DIR` and `AOS_NATIVE_SESSIONS_DIR` provide
-controlled fixture and host overrides. The [shell owner](features-shell-secrets.md)
-and [repo tracker](repo-tracker.md) document the surrounding surfaces.
+Leases and the pass cache use the platform cache at `agentic-os/native-shadow`.
+AOS groups temporary state under platform `aos`: worktrees in `native`, requests
+in `compose`, and bundles in `bundles`. `AOS_NATIVE_STATE_DIR` and
+`AOS_NATIVE_SESSIONS_DIR` allow overrides. See the [shell owner](features-shell-secrets.md)
+and [repo tracker](repo-tracker.md) for surrounding surfaces.

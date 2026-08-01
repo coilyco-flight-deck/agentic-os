@@ -203,7 +203,7 @@ def test_interactive_shell_preserves_explicit_working_directory(tmp_path: Path) 
 def test_fresh_shell_leaves_native_session_root(tmp_path: Path) -> None:
     home = tmp_path / "home"
     projects = home / "projects"
-    native_sessions = tmp_path / "aos-native"
+    native_sessions = tmp_path / "aos" / "native"
     native_projects = native_sessions / "session" / "projects"
     projects.mkdir(parents=True)
     native_projects.mkdir(parents=True)
@@ -219,7 +219,7 @@ def test_fresh_shell_leaves_native_session_root(tmp_path: Path) -> None:
 def test_nested_shell_preserves_native_session_root(tmp_path: Path) -> None:
     home = tmp_path / "home"
     projects = home / "projects"
-    native_sessions = tmp_path / "aos-native"
+    native_sessions = tmp_path / "aos" / "native"
     native_projects = native_sessions / "session" / "projects"
     projects.mkdir(parents=True)
     native_projects.mkdir(parents=True)
@@ -257,7 +257,7 @@ def test_zsh_entry_ignores_account_default_shell(tmp_path: Path) -> None:
 def test_zsh_fresh_shell_leaves_native_session_root(tmp_path: Path) -> None:
     home = tmp_path / "home"
     projects = home / "projects"
-    native_sessions = tmp_path / "aos-native"
+    native_sessions = tmp_path / "aos" / "native"
     native_projects = native_sessions / "session" / "projects"
     projects.mkdir(parents=True)
     native_projects.mkdir(parents=True)

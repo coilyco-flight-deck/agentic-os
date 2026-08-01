@@ -24,7 +24,7 @@ selected entrypoint to `SKILL.md` while building the role's isolated bundle.
 Unselected role sources leave no catalog metadata or trace in that bundle.
 See [role-composed skills](role-composed-skills.md) for the complete contract.
 
-The compose request supplies the stable source id `aos-public`, so adding an
+The compose request supplies the stable source id `aos`, so adding an
 ordinary skill or role binding needs no parallel provider inventory.
 
 Skill frontmatter owns the [model-class decision](skill-model-classes.md).
@@ -53,7 +53,7 @@ An agent-compose request stored under the provider root admits that root:
 compose {
     role "engineer"
     delivery "native-skills"
-    source "aos-public" root="." required=#true
+    source "aos" root="." required=#true
 }
 ```
 

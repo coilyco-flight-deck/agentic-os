@@ -117,7 +117,7 @@ def bundle_fixture(root: Path, *, model_class: str | None = None) -> Path:
                 "role": "ops",
                 "model_class": model_class,
                 "personalities": list(FIXTURE_PERSONALITIES),
-                "sources": ["person:kai", "aos-public"],
+                "sources": ["person:kai", "aos"],
                 "delivery": {
                     "mode": "native-skills",
                     "instructions": "content/instructions.md",
@@ -128,14 +128,14 @@ def bundle_fixture(root: Path, *, model_class: str | None = None) -> Path:
     )
     write(bundle / "content" / "instructions.md", "# Role instructions\nOps briefing.\n")
     write(
-        bundle / "content" / "skills" / "aos-public" / "alpha" / "SKILL.md",
+        bundle / "content" / "skills" / "aos" / "alpha" / "SKILL.md",
         "---\nname: alpha\ndescription: Alpha capability.\n---\n# Alpha body\n",
     )
     write(
         bundle
         / "content"
         / "skills"
-        / "aos-public"
+        / "aos"
         / "tooling-ops-live-remediation"
         / "SKILL.md",
         "---\n"
@@ -176,7 +176,7 @@ def bundle_fixture(root: Path, *, model_class: str | None = None) -> Path:
         bundle
         / "content"
         / "skills"
-        / "aos-public"
+        / "aos"
         / "alpha"
         / "references"
         / "detail.md",
@@ -256,6 +256,17 @@ def build_fixture_snapshot(
         plugin_roots=plugin_roots or [],
         mcp_servers=mcp_servers or [],
     )
+
+
+def test_aos_temporary_directory_nests_functional_namespaces(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root = tmp_path / "aos"
+    monkeypatch.setattr(context, "AOS_TEMP_ROOT", root)
+
+    with context._aos_temporary_directory("role-seat", "context") as temp:
+        assert Path(temp).parent == root / "role-seat" / "context"
 
 
 def test_validate_role_seat_requires_generated_role_and_aos_layout(
@@ -389,20 +400,20 @@ def test_build_snapshot_separates_eager_and_lazy_components(tmp_path: Path) -> N
     ]
     assert list(skills) == sorted(
         [
-            "aos-public/alpha",
-            "aos-public/tooling-ops-live-remediation",
+            "aos/alpha",
+            "aos/tooling-ops-live-remediation",
             "person:kai/role-ops",
             *expected_personality_skills,
             "skill-root-0/plugin-tool",
         ]
     )
-    alpha = skills["aos-public/alpha"]
+    alpha = skills["aos/alpha"]
     assert set(alpha) == {"class", "eager", "lazy", "resources"}
     assert alpha["class"] == "ordinary"
     assert alpha["eager"] > 0
     assert alpha["lazy"] > 0
     assert alpha["resources"] == 1
-    assert skills["aos-public/tooling-ops-live-remediation"]["class"] == "role-composed"
+    assert skills["aos/tooling-ops-live-remediation"]["class"] == "role-composed"
     assert skills["person:kai/role-ops"]["class"] == "role"
     assert all(
         skills[skill_id]["class"] == "personality"
@@ -557,7 +568,7 @@ def test_snapshot_round_trip_and_delta(tmp_path: Path) -> None:
     serialized = yaml.safe_load(serialized_text)
     assert list(serialized["components"]) == ["eager", "lazy"]
     assert "skills" in serialized
-    assert "aos-public/alpha: {class: ordinary, eager:" in serialized_text
+    assert "aos/alpha: {class: ordinary, eager:" in serialized_text
     assert len(serialized_text.splitlines()) < 100
 
     write(repo / "nested" / "AGENTS.md", "# Nested instructions\n" + "More context.\n" * 5)

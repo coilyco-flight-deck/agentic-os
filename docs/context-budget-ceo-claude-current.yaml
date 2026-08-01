@@ -13,36 +13,39 @@ bundle:
   - bold
   - grounded
   - protective
+  - demanding
   sources:
   - person:kai
-  - aos-public
+  - aos
 mcp:
   delivery: deferred
-  server_count: 13
+  server_count: 10
   eager_schema_count: 0
 totals:
   eager:
-    components: 29
-    bytes: 34934
-    tokens: 8739
+    components: 32
+    bytes: 32416
+    tokens: 8109
   lazy:
-    components: 75
-    bytes: 148201
-    tokens: 37016
+    components: 81
+    bytes: 161809
+    tokens: 40421
 breakdown:
   eager:
-    agents-cascade: {components: 2, bytes: 21449, tokens: 5363}
-    ordinary-skill-frontmatter: {components: 11, bytes: 2754, tokens: 693}
-    personality-frontmatter: {components: 3, bytes: 474, tokens: 120}
+    agents-cascade: {components: 2, bytes: 22850, tokens: 5713}
+    ordinary-skill-frontmatter: {components: 12, bytes: 3016, tokens: 758}
+    personality-frontmatter: {components: 4, bytes: 667, tokens: 169}
     role-composed-frontmatter: {components: 12, bytes: 3108, tokens: 780}
-    role-instructions: {components: 1, bytes: 7149, tokens: 1783}
+    role-instructions: {components: 1, bytes: 2612, tokens: 648}
+    role-skill-frontmatter: {components: 1, bytes: 163, tokens: 41}
   lazy:
     mcp-server-registration: {components: 1, bytes: 0, tokens: 0}
-    ordinary-skill-body: {components: 11, bytes: 18897, tokens: 4722}
-    ordinary-skill-resource: {components: 18, bytes: 27017, tokens: 6761}
-    personality-body: {components: 3, bytes: 4169, tokens: 1043}
+    ordinary-skill-body: {components: 12, bytes: 22694, tokens: 5671}
+    ordinary-skill-resource: {components: 21, bytes: 32335, tokens: 8092}
+    personality-body: {components: 4, bytes: 5145, tokens: 1288}
     role-composed-body: {components: 12, bytes: 35283, tokens: 8820}
     role-composed-resource: {components: 30, bytes: 62835, tokens: 15670}
+    role-skill-body: {components: 1, bytes: 3517, tokens: 880}
 components:
   eager:
     agents-cascade:
@@ -57,17 +60,17 @@ components:
       owner: coilyco-flight-deck/agentic-os
       source: coilyco-flight-deck/agentic-os:AGENTS.md
       delivery: repo-cascade
-      bytes: 21438
-      tokens: 5360
-      sha256: 6a82741b3ddcb6691a9b951e4615421a8a2a957d88e55122b0f1d74a841ac5cc
+      bytes: 22839
+      tokens: 5710
+      sha256: 702e02f0a8a9f35f9a70f90a8b70f1bafb9a49ca7fbfc6584060959aaa02d858
     role-instructions:
     - id: instructions:role
-      owner: agent-compose+person:kai+aos-public
+      owner: agent-compose+person:kai+aos
       source: bundle:content/instructions.md
       delivery: .claude/CLAUDE.md
-      bytes: 7149
-      tokens: 1783
-      sha256: 446beb81a2efcb2dfb2a8ad32830bcb817ed1aecd551f8eb3f1045139e227a19
+      bytes: 2612
+      tokens: 648
+      sha256: d8444adcfb8d43ed93d8dec0e382bc59a3c9b02e7b1a80c70ef446d5d4fcd195
   lazy:
     mcp-server-registration:
     - id: mcp:deferred
@@ -78,30 +81,33 @@ components:
       tokens: 0
       sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
 skills:
-  aos-public/kai-tech-prefs: {class: ordinary, eager: 51, lazy: 1969, resources: 5}
-  aos-public/repo-agentic-os: {class: ordinary, eager: 50, lazy: 93, resources: 0}
-  aos-public/tooling-agent-workflows: {class: ordinary, eager: 53, lazy: 1642, resources: 4}
-  aos-public/tooling-ceo-developer-tool-adoption: {class: role-composed, eager: 58, lazy: 829, resources: 0}
-  aos-public/tooling-ceo-oss-stewardship: {class: role-composed, eager: 56, lazy: 722, resources: 0}
-  aos-public/tooling-ceo-platform-strategy: {class: role-composed, eager: 50, lazy: 760, resources: 0}
-  aos-public/tooling-claude-in-chrome: {class: ordinary, eager: 55, lazy: 1416, resources: 3}
-  aos-public/tooling-director-decision-architecture: {class: role-composed, eager: 52, lazy: 516, resources: 0}
-  aos-public/tooling-ffmpeg: {class: ordinary, eager: 50, lazy: 559, resources: 0}
-  aos-public/tooling-gpg-ssm: {class: ordinary, eager: 78, lazy: 1373, resources: 3}
-  aos-public/tooling-image-zoom: {class: ordinary, eager: 44, lazy: 949, resources: 1}
-  aos-public/tooling-imagemagick: {class: ordinary, eager: 50, lazy: 492, resources: 0}
-  aos-public/tooling-issue-prioritization: {class: role-composed, eager: 87, lazy: 3966, resources: 5}
-  aos-public/tooling-pm-product-signal-triangulation: {class: role-composed, eager: 53, lazy: 648, resources: 0}
-  aos-public/tooling-pm-program-decomposition: {class: role-composed, eager: 48, lazy: 531, resources: 0}
-  aos-public/tooling-product-brainstorming: {class: role-composed, eager: 80, lazy: 6638, resources: 10}
-  aos-public/tooling-scout-autonomy: {class: role-composed, eager: 62, lazy: 3440, resources: 6}
-  aos-public/tooling-scout-capability: {class: role-composed, eager: 77, lazy: 4162, resources: 7}
-  aos-public/tooling-scout-displacement: {class: role-composed, eager: 88, lazy: 1399, resources: 1}
-  aos-public/tooling-tailscale: {class: ordinary, eager: 109, lazy: 1887, resources: 2}
-  aos-public/tooling-warp: {class: ordinary, eager: 39, lazy: 317, resources: 0}
-  aos-public/tooling-zsh: {class: ordinary, eager: 114, lazy: 786, resources: 0}
-  aos-public/writing-to-issues: {class: role-composed, eager: 69, lazy: 879, resources: 1}
-  person:kai/personality-bold: {class: personality, eager: 38, lazy: 327, resources: 0}
-  person:kai/personality-grounded: {class: personality, eager: 39, lazy: 350, resources: 0}
-  person:kai/personality-protective: {class: personality, eager: 43, lazy: 366, resources: 0}
-payload_hash: bec12704f792da5419043f7c06c26627499cff53d467e9ba8767e9f645a90e45
+  aos/kai-tech-prefs: {class: ordinary, eager: 51, lazy: 2068, resources: 5}
+  aos/repo-agentic-os: {class: ordinary, eager: 47, lazy: 93, resources: 0}
+  aos/tooling-agent-tool-evaluation: {class: ordinary, eager: 68, lazy: 2181, resources: 3}
+  aos/tooling-agent-workflows: {class: ordinary, eager: 53, lazy: 1642, resources: 4}
+  aos/tooling-ceo-developer-tool-adoption: {class: role-composed, eager: 58, lazy: 829, resources: 0}
+  aos/tooling-ceo-oss-stewardship: {class: role-composed, eager: 56, lazy: 722, resources: 0}
+  aos/tooling-ceo-platform-strategy: {class: role-composed, eager: 50, lazy: 760, resources: 0}
+  aos/tooling-claude-in-chrome: {class: ordinary, eager: 55, lazy: 1416, resources: 3}
+  aos/tooling-director-decision-architecture: {class: role-composed, eager: 52, lazy: 516, resources: 0}
+  aos/tooling-ffmpeg: {class: ordinary, eager: 50, lazy: 559, resources: 0}
+  aos/tooling-gpg-ssm: {class: ordinary, eager: 78, lazy: 1373, resources: 3}
+  aos/tooling-image-zoom: {class: ordinary, eager: 44, lazy: 949, resources: 1}
+  aos/tooling-imagemagick: {class: ordinary, eager: 50, lazy: 492, resources: 0}
+  aos/tooling-issue-prioritization: {class: role-composed, eager: 87, lazy: 3966, resources: 5}
+  aos/tooling-pm-product-signal-triangulation: {class: role-composed, eager: 53, lazy: 648, resources: 0}
+  aos/tooling-pm-program-decomposition: {class: role-composed, eager: 48, lazy: 531, resources: 0}
+  aos/tooling-product-brainstorming: {class: role-composed, eager: 80, lazy: 6638, resources: 10}
+  aos/tooling-scout-autonomy: {class: role-composed, eager: 62, lazy: 3440, resources: 6}
+  aos/tooling-scout-capability: {class: role-composed, eager: 77, lazy: 4162, resources: 7}
+  aos/tooling-scout-displacement: {class: role-composed, eager: 88, lazy: 1399, resources: 1}
+  aos/tooling-tailscale: {class: ordinary, eager: 109, lazy: 1887, resources: 2}
+  aos/tooling-warp: {class: ordinary, eager: 39, lazy: 317, resources: 0}
+  aos/tooling-zsh: {class: ordinary, eager: 114, lazy: 786, resources: 0}
+  aos/writing-to-issues: {class: role-composed, eager: 69, lazy: 879, resources: 1}
+  person:kai/personality-bold: {class: personality, eager: 38, lazy: 310, resources: 0}
+  person:kai/personality-demanding: {class: personality, eager: 49, lazy: 298, resources: 0}
+  person:kai/personality-grounded: {class: personality, eager: 39, lazy: 332, resources: 0}
+  person:kai/personality-protective: {class: personality, eager: 43, lazy: 348, resources: 0}
+  person:kai/role-ceo: {class: role, eager: 41, lazy: 880, resources: 0}
+payload_hash: 83fc567855d1a240c6c2095c314599a26cbaa276e419bb73feecd925b428ad24
