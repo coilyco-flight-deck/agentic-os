@@ -31,6 +31,11 @@ jobs:
     container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Attach the pull-request merge commit for Ward
+        if: ${{ github.event_name == 'pull_request' }}
+        run: git switch -c ward-ci && git branch --set-upstream-to="origin/${GITHUB_BASE_REF}"
       - name: Install validated Ward
         run: scripts/install-workflow-ward.sh
       - name: Test the AOS CLI
