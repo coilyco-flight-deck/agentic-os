@@ -12,6 +12,7 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parent.parent
 TARGETS = ROOT / "aos" / "release-targets.txt"
+RELEASE_BINARIES = ("aos", "aoscompose", "aosward", "aosguard", "agent-terminal")
 
 
 def release_targets() -> list[str]:
@@ -22,22 +23,10 @@ def release_targets() -> list[str]:
     ]
 
 
-def artifact_name(target: str) -> str:
+def artifact_name(target: str, program: str = "aos") -> str:
     goos, goarch = target.split("/")
     suffix = ".exe" if goos == "windows" else ""
-    return f"aos-{goos}-{goarch}{suffix}"
-
-
-def aosguard_artifact_name(target: str) -> str:
-    goos, goarch = target.split("/")
-    suffix = ".exe" if goos == "windows" else ""
-    return f"aosguard-{goos}-{goarch}{suffix}"
-
-
-def agent_terminal_artifact_name(target: str) -> str:
-    goos, goarch = target.split("/")
-    suffix = ".exe" if goos == "windows" else ""
-    return f"agent-terminal-{goos}-{goarch}{suffix}"
+    return f"{program}-{goos}-{goarch}{suffix}"
 
 
 def test_release_target_manifest_is_safe_and_unique() -> None:
@@ -52,14 +41,9 @@ def test_release_target_manifest_is_safe_and_unique() -> None:
 
 def test_packaging_covers_every_release_binary(tmp_path: Path) -> None:
     for target in release_targets():
-        name = artifact_name(target)
-        (tmp_path / name).write_bytes(f"fixture:{target}".encode())
-        aosguard_name = aosguard_artifact_name(target)
-        (tmp_path / aosguard_name).write_bytes(f"aosguard:{target}".encode())
-        agent_terminal_name = agent_terminal_artifact_name(target)
-        (tmp_path / agent_terminal_name).write_bytes(
-            f"agent-terminal:{target}".encode()
-        )
+        for program in RELEASE_BINARIES:
+            name = artifact_name(target, program)
+            (tmp_path / name).write_bytes(f"{program}:{target}".encode())
 
     version = "aos-v1.2.3"
     env = os.environ | {
@@ -77,26 +61,23 @@ def test_packaging_covers_every_release_binary(tmp_path: Path) -> None:
     manifest = json.loads((tmp_path / "aos.json").read_text(encoding="utf-8"))
     rendered = formula + json.dumps(manifest)
     for target in release_targets():
-        digest = hashlib.sha256((tmp_path / artifact_name(target)).read_bytes()).hexdigest()
-        assert digest in rendered
-        aosguard_digest = hashlib.sha256(
-            (tmp_path / aosguard_artifact_name(target)).read_bytes()
-        ).hexdigest()
-        assert aosguard_digest in rendered
-        agent_terminal_digest = hashlib.sha256(
-            (tmp_path / agent_terminal_artifact_name(target)).read_bytes()
-        ).hexdigest()
-        assert agent_terminal_digest in rendered
+        for program in RELEASE_BINARIES:
+            digest = hashlib.sha256(
+                (tmp_path / artifact_name(target, program)).read_bytes()
+            ).hexdigest()
+            assert digest in rendered
 
     assert manifest["version"] == version.removeprefix("aos-v")
     assert f"/releases/download/{version}/" in rendered
-    assert "aosguard-windows-amd64.exe" in manifest["architecture"]["64bit"]["bin"][1][0]
-    assert (
-        "agent-terminal-windows-amd64.exe"
-        in manifest["architecture"]["64bit"]["bin"][2][0]
-    )
-    assert "resource(\"aosguard\")" in formula
-    assert "resource(\"agent-terminal\")" in formula
+    bins = manifest["architecture"]["64bit"]["bin"]
+    assert ["aoscompose-windows-amd64.exe", "aoscompose"] in bins
+    assert ["aoscompose-windows-amd64.exe", "aoscomposed"] in bins
+    assert ["aosward-windows-amd64.exe", "aosward"] in bins
+    assert ["aosguard-windows-amd64.exe", "aosguard"] in bins
+    assert ["agent-terminal-windows-amd64.exe", "agent-terminal"] in bins
+    assert 'bin.install_symlink bin/"aoscompose" => "aoscomposed"' in formula
+    for program in RELEASE_BINARIES[1:]:
+        assert f'resource("{program}")' in formula
 
 
 def test_release_workflow_derives_assets_from_dist() -> None:

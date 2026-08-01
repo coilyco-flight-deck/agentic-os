@@ -164,11 +164,15 @@ while IFS= read -r target || [ -n "$target" ]; do
             ;;
     esac
     out="$dist/aos-${goos}-${goarch}"
+    compose_out="$dist/aoscompose-${goos}-${goarch}"
+    ward_out="$dist/aosward-${goos}-${goarch}"
     if [ "$goos" = "windows" ]; then
         out="${out}.exe"
+        compose_out="${compose_out}.exe"
+        ward_out="${ward_out}.exe"
     fi
-    if [ -e "$out" ]; then
-        echo "duplicate release output: $out" >&2
+    if [ -e "$out" ] || [ -e "$compose_out" ] || [ -e "$ward_out" ]; then
+        echo "duplicate release output: $out, $compose_out, or $ward_out" >&2
         exit 1
     fi
     (
@@ -177,14 +181,18 @@ while IFS= read -r target || [ -n "$target" ]; do
             go build -trimpath -ldflags "-s -w -X main.version=${version}" \
             -o "$out" .
     )
+    cp "$out" "$compose_out"
+    cp "$out" "$ward_out"
     build_agent_terminal "$target"
     build_aosguard "$target"
     echo "$out"
+    echo "$compose_out"
+    echo "$ward_out"
 done < "$targets"
 
 (
     cd "$dist"
-    for asset in agent-terminal-* aos-* aosguard-*; do
+    for asset in agent-terminal-* aos-* aoscompose-* aosguard-* aosward-*; do
         checksum "$asset"
     done > SHA256SUMS
 )
