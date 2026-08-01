@@ -76,7 +76,9 @@ export PROJECTS_ROOT="$(_siren_projects_root)"
 
 # Env + PATH are inherited, so run once per terminal tree: the exported guard is
 # the "has this run in this terminal yet?" check. Aliases/functions always define.
+_siren_fresh_terminal_tree=0
 if [ -z "${_SIREN_SHELL_ENV:-}" ]; then
+  _siren_fresh_terminal_tree=1
   export _SIREN_SHELL_ENV=1
 
   # ward owns the whole workspace root (the security boundary, all orgs).
@@ -499,14 +501,32 @@ ssm-get() {
     --query 'Parameter.Value' --output text
 }
 
-# Auto-cd a fresh interactive shell landing at $HOME into the configured
-# startup directory, matching Warp's default new-tab directory.
+# Auto-cd a first shell from $HOME or an AOS native session root. Alacritty's
+# new-window action otherwise copies the foreground agent's transient cwd.
 case $- in
   *i*)
     _siren_startup_dir="${WARP_STARTUP_DIR:-$PROJECTS_ROOT}"
-    if [ "$PWD" = "$HOME" ] && [ -d "$_siren_startup_dir" ]; then
-      cd "$_siren_startup_dir"
+    _siren_startup_from_native=0
+    if [ "$_siren_fresh_terminal_tree" = 1 ]; then
+      _siren_native_sessions_dir="${AOS_NATIVE_SESSIONS_DIR:-${TMPDIR:-/tmp}/aos-native}"
+      if [ -d "$_siren_native_sessions_dir" ]; then
+        _siren_native_sessions_dir="$(cd "$_siren_native_sessions_dir" && pwd -P)"
+        _siren_current_dir="$(pwd -P)"
+        if [ "${_siren_current_dir##*/}" = projects ]; then
+          _siren_native_parent="$(cd "$_siren_current_dir/../.." && pwd -P)"
+          if [ "$_siren_native_parent" = "$_siren_native_sessions_dir" ]; then
+            _siren_startup_from_native=1
+          fi
+        fi
+      fi
     fi
-    unset _siren_startup_dir
+    if [ "$PWD" = "$HOME" ] || [ "$_siren_startup_from_native" = 1 ]; then
+      if [ -d "$_siren_startup_dir" ]; then
+        cd "$_siren_startup_dir"
+      fi
+    fi
+    unset _siren_startup_dir _siren_startup_from_native
+    unset _siren_native_sessions_dir _siren_current_dir _siren_native_parent
     ;;
 esac
+unset _siren_fresh_terminal_tree

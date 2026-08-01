@@ -62,10 +62,14 @@ def _interactive_shell_pwd(
     cwd: Path | None = None,
     rcfile: Path | None = None,
     default_shell: str | None = None,
+    native_sessions_root: Path | None = None,
+    existing_terminal_tree: bool = False,
 ) -> str:
     env = os.environ.copy()
     env.pop("WARP_STARTUP_DIR", None)
     env.pop("PROJECTS_ROOT", None)
+    env.pop("AOS_NATIVE_SESSIONS_DIR", None)
+    env.pop("_SIREN_SHELL_ENV", None)
     env.update(
         {
             "HOME": _bash_path(home),
@@ -81,6 +85,10 @@ def _interactive_shell_pwd(
         env["PROJECTS_ROOT"] = _bash_path(projects_root)
     if default_shell is not None:
         env["SHELL"] = default_shell
+    if native_sessions_root is not None:
+        env["AOS_NATIVE_SESSIONS_DIR"] = _bash_path(native_sessions_root)
+    if existing_terminal_tree:
+        env["_SIREN_SHELL_ENV"] = "1"
 
     proc = subprocess.run(
         [
@@ -101,12 +109,19 @@ def _interactive_shell_pwd(
     return proc.stdout
 
 
-def _interactive_zsh_pwd(home: Path, projects_root: Path) -> str:
+def _interactive_zsh_pwd(
+    home: Path,
+    projects_root: Path,
+    *,
+    cwd: Path | None = None,
+    native_sessions_root: Path | None = None,
+) -> str:
     if ZSH is None:
         pytest.skip("zsh is unavailable")
 
     env = os.environ.copy()
     env.pop("WARP_STARTUP_DIR", None)
+    env.pop("AOS_NATIVE_SESSIONS_DIR", None)
     env.pop("_SIREN_SHELL_ENV", None)
     env.update(
         {
@@ -118,10 +133,12 @@ def _interactive_zsh_pwd(home: Path, projects_root: Path) -> str:
             "SHELL": "/bin/bash",
         }
     )
+    if native_sessions_root is not None:
+        env["AOS_NATIVE_SESSIONS_DIR"] = _zsh_path(native_sessions_root)
     zshrc = shlex.quote(_zsh_path(REPO_ROOT / "shell" / "zshrc"))
     proc = subprocess.run(
         [ZSH, "-dfi", "-c", f'source {zshrc}; printf "%s" "$PWD"'],
-        cwd=home,
+        cwd=cwd or home,
         check=True,
         capture_output=True,
         text=True,
@@ -183,6 +200,39 @@ def test_interactive_shell_preserves_explicit_working_directory(tmp_path: Path) 
     assert _interactive_shell_pwd(home, cwd=checkout) == _bash_path(checkout)
 
 
+def test_fresh_shell_leaves_native_session_root(tmp_path: Path) -> None:
+    home = tmp_path / "home"
+    projects = home / "projects"
+    native_sessions = tmp_path / "aos-native"
+    native_projects = native_sessions / "session" / "projects"
+    projects.mkdir(parents=True)
+    native_projects.mkdir(parents=True)
+
+    assert _interactive_shell_pwd(
+        home,
+        projects_root=projects,
+        cwd=native_projects,
+        native_sessions_root=native_sessions,
+    ) == _bash_path(projects)
+
+
+def test_nested_shell_preserves_native_session_root(tmp_path: Path) -> None:
+    home = tmp_path / "home"
+    projects = home / "projects"
+    native_sessions = tmp_path / "aos-native"
+    native_projects = native_sessions / "session" / "projects"
+    projects.mkdir(parents=True)
+    native_projects.mkdir(parents=True)
+
+    assert _interactive_shell_pwd(
+        home,
+        projects_root=projects,
+        cwd=native_projects,
+        native_sessions_root=native_sessions,
+        existing_terminal_tree=True,
+    ) == _bash_path(native_projects)
+
+
 def test_bash_entry_ignores_account_default_shell(tmp_path: Path) -> None:
     home = tmp_path / "home"
     projects = home / "projects"
@@ -202,3 +252,19 @@ def test_zsh_entry_ignores_account_default_shell(tmp_path: Path) -> None:
     projects.mkdir(parents=True)
 
     assert _interactive_zsh_pwd(home, projects) == _zsh_path(projects)
+
+
+def test_zsh_fresh_shell_leaves_native_session_root(tmp_path: Path) -> None:
+    home = tmp_path / "home"
+    projects = home / "projects"
+    native_sessions = tmp_path / "aos-native"
+    native_projects = native_sessions / "session" / "projects"
+    projects.mkdir(parents=True)
+    native_projects.mkdir(parents=True)
+
+    assert _interactive_zsh_pwd(
+        home,
+        projects,
+        cwd=native_projects,
+        native_sessions_root=native_sessions,
+    ) == _zsh_path(projects)
