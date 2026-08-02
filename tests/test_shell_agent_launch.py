@@ -174,7 +174,7 @@ printf "<%s>\\n" "$@"
     result = _run_function(
         tmp_path,
         "acompose",
-        "designer",
+        "design",
         "codex",
         "--model",
         "gpt",
@@ -189,7 +189,7 @@ printf "<%s>\\n" "$@"
         "<-->\n"
         "<agent-compose>\n"
         "<launch>\n"
-        "<designer>\n"
+        "<design>\n"
         "<codex>\n"
         "<--model>\n"
         "<gpt>\n"

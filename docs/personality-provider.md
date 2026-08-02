@@ -40,7 +40,7 @@ every role does not pay a duplicate catalog routing cost.
 Agent-compose activates the complete ordered personality meld for a selected
 role. A request cannot select an arbitrary trait or change compatibility.
 Agent-compose embeds the invariant and all 16 canonical definition trees under
-its `person:kai` source. AOS commits a narrow 12-role alignment board that
+its `roster:core` source. AOS commits a narrow eight-role alignment board that
 verifies the ordered meld and skill ids in measured bundles without selecting
 runtime behavior. See
 [role-orientation projections](role-orientation-projections.md).

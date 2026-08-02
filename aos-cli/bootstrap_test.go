@@ -61,10 +61,10 @@ func (f *fakeCommandRunner) Run(_ context.Context, name string, args ...string) 
 func TestComposeHomeSurfacesRoleCompatibilityFailure(t *testing.T) {
 	t.Parallel()
 	runner := &fakeCommandRunner{
-		composeErr: errors.New(`role "ceo" requires a frontier model`),
+		composeErr: errors.New(`role "strats" requires a frontier model`),
 	}
 	opts := bootstrapOptions{
-		Role:            "ceo",
+		Role:            "strats",
 		Layout:          "goose",
 		Delivery:        "native-skills",
 		AgentHome:       t.TempDir(),
@@ -73,7 +73,7 @@ func TestComposeHomeSurfacesRoleCompatibilityFailure(t *testing.T) {
 	err := composeHome(context.Background(), opts, t.TempDir(), runner)
 	if err == nil || !strings.Contains(
 		err.Error(),
-		`compose role ceo: role "ceo" requires a frontier model`,
+		`compose role strats: role "strats" requires a frontier model`,
 	) {
 		t.Fatalf("compose error = %v", err)
 	}
@@ -346,7 +346,7 @@ func TestPrepareContainerWithoutSubstrateStillMaterializesProvider(t *testing.T)
 	runner := &fakeCommandRunner{}
 	uid, gid := hostIdentity()
 	_, err := prepareContainer(context.Background(), bootstrapOptions{
-		Role:              "advisor",
+		Role:              "strats",
 		Layout:            "codex",
 		Delivery:          "compiled",
 		Composed:          true,

@@ -78,7 +78,7 @@ func TestEmbeddedHarnessLaunchProfilesProduceExplicitWardEnvironment(t *testing.
 
 func TestStandaloneRoleTuningDoesNotChangeWardEnvironment(t *testing.T) {
 	t.Parallel()
-	director, err := standaloneHarnessLaunchProfileFor("director", "codex")
+	strats, err := standaloneHarnessLaunchProfileFor("strats", "codex")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -86,7 +86,7 @@ func TestStandaloneRoleTuningDoesNotChangeWardEnvironment(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if director == engineer {
+	if strats == engineer {
 		t.Fatal("embedded standalone role tuning collapsed to one profile")
 	}
 
@@ -94,7 +94,7 @@ func TestStandaloneRoleTuningDoesNotChangeWardEnvironment(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, role := range []string{"director", "engineer", "qa"} {
+	for _, role := range []string{"director", "engineer", "qa", "strats"} {
 		plan, err := buildWardLaunchPlan(integratedLaunchOptions{
 			Role: role, Agent: "codex", Image: "aos:test",
 		}, "")

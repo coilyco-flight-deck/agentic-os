@@ -22,7 +22,7 @@ Every image carries Node because the common agent harnesses require it. The
 specialist name identifies the additional development toolchain.
 
 The common surface also carries a release-pinned `aos`, Ward for fixed workflow orchestration,
-`aosguard` for operator commands, agent-compose with its embedded `person:kai`
+`aosguard` for operator commands, agent-compose with its embedded `roster:core`
 source, and the repository's packaged aosguard Python bridges. Each image build renders
 aosguard's native agent skill, renders an agent-compose roster, and checks the
 generated person snapshot plus personality definitions. Linuxbrew is not part

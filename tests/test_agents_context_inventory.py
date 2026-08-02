@@ -26,7 +26,7 @@ def _board(path: Path) -> None:
                         ],
                     },
                     {
-                        "role": "advisor",
+                        "role": "strats",
                         "intents": [
                             {"intent": "research", "harness": "claude"}
                         ],
@@ -151,7 +151,7 @@ def test_active_cascade_orders_global_override_bridge_root_and_nested(
         "coilyco-bridge/product:service/AGENTS.md",
     ]
 
-    claude = cascades[("advisor", "claude")]
+    claude = cascades[("strats", "claude")]
     assert [source["delivery_path"] for source in claude["sources"]] == [
         "global-composed",
         "repo-cascade-bridge",

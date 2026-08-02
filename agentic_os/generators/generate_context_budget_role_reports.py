@@ -130,8 +130,10 @@ def _composed_count(snapshot: Mapping[str, object]) -> int:
 def _role_label(role: str) -> str:
     if role == "qa":
         return "QA"
-    if role == "pm":
-        return "PM"
+    if role == "strats":
+        return "Portfolio Strategist"
+    if role == "content":
+        return "Content Manager"
     return role.replace("-", " ")
 
 

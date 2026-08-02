@@ -17,32 +17,20 @@ question_for() {
         qa)
             echo "A role parser currently accepts an empty role. Name the smallest adversarial test set and the pass condition."
             ;;
-        advisor)
-            echo "Two benchmark sources disagree about model latency. Give a short evidence-synthesis plan that preserves uncertainty."
-            ;;
         ops)
             echo "Request latency doubled after a deployment with no error-rate change. Name the first three non-destructive checks and a rollback threshold."
             ;;
-        pm)
-            echo "A cross-repository feature needs design, implementation, and rollout. Break it into the smallest dependency-aware milestones."
-            ;;
-        designer)
-            echo "A twelve-role agent launcher must hide backend model identity. Shape the smallest clear role-selection interaction, including its default and failure state."
-            ;;
-        social)
-            echo "Draft a restrained launch note for role-scoped agent skills and name one signal that would show the message helped."
+        design)
+            echo "An eight-role agent launcher must hide backend model identity. Shape the smallest clear role-selection interaction, including its default and failure state."
             ;;
         community)
             echo "A Discord newcomer asks a repeated setup question in a busy channel. Give a welcoming grounded answer, one useful next step, and the condition for a human handoff."
             ;;
-        sales)
-            echo "A prospect says agent tooling feels too risky. Give one discovery question, one useful proof point, and one next step without pressure."
-            ;;
-        customer-success)
-            echo "A new user cannot find the skill assigned to her role. Give the immediate support response and the product signal that should be routed upstream."
-            ;;
-        ceo)
+        strats)
             echo "Several Flight Deck repositories claim overlapping portfolio priority. Name the evidence needed, make the smallest reversible allocation decision, and delegate the bounded outcomes."
+            ;;
+        content)
+            echo "Draft a restrained launch note for role-scoped agent skills and name one signal that would show the message helped."
             ;;
         *)
             echo "aos role question: unknown role $1" >&2

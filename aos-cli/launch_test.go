@@ -121,7 +121,7 @@ func TestBuildLaunchPlanCanSkipSubstrate(t *testing.T) {
 	t.Parallel()
 	plan, err := buildLaunchPlan(launchOptions{
 		Image:       "agentic-os:test",
-		Role:        "advisor",
+		Role:        "strats",
 		Layout:      "claude",
 		Delivery:    "compiled",
 		Composed:    true,

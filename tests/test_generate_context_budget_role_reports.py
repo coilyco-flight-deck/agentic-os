@@ -63,7 +63,7 @@ def _write_snapshots(
         else:
             eager = 80
         snapshot = _snapshot(
-            "social",
+            "content",
             seat,
             (
                 "low-context"
@@ -74,18 +74,18 @@ def _write_snapshots(
             lazy=200 if model_class == "frontier" else 120,
             composed=5 if model_class == "frontier" else 3,
         )
-        path = docs_dir / f"context-budget-social-{seat}-current.yaml"
+        path = docs_dir / f"context-budget-content-{seat}-current.yaml"
         path.write_text(json.dumps(snapshot), encoding="utf-8")
     return layouts
 
 
 def test_render_computes_class_envelope_diff(tmp_path: Path) -> None:
     layouts = _write_snapshots(tmp_path)
-    built = reports.build_reports(tmp_path, roles=("social",), layouts=layouts)
-    rendered = built[tmp_path / "context-budget-role-social-current.md"]
+    built = reports.build_reports(tmp_path, roles=("content",), layouts=layouts)
+    rendered = built[tmp_path / "context-budget-role-content-current.md"]
 
-    assert "**Frontier social**" in rendered
-    assert "**Low-context social**" in rendered
+    assert "**Frontier Content Manager**" in rendered
+    assert "**Low-context Content Manager**" in rendered
     assert "eager saves 20 to 30 tokens" in rendered
     assert "lazy saves 80 tokens" in rendered
     assert "composed sources 5 -> 3" in rendered
@@ -93,12 +93,12 @@ def test_render_computes_class_envelope_diff(tmp_path: Path) -> None:
 
 def test_generate_then_check_drift(tmp_path: Path) -> None:
     layouts = _write_snapshots(tmp_path)
-    assert reports.generate(tmp_path, roles=("social",), layouts=layouts) == 0
-    assert reports.check_drift(tmp_path, roles=("social",), layouts=layouts) == 0
+    assert reports.generate(tmp_path, roles=("content",), layouts=layouts) == 0
+    assert reports.check_drift(tmp_path, roles=("content",), layouts=layouts) == 0
 
-    report = tmp_path / "context-budget-role-social-current.md"
+    report = tmp_path / "context-budget-role-content-current.md"
     report.write_text("# stale\n", encoding="utf-8")
-    assert reports.check_drift(tmp_path, roles=("social",), layouts=layouts) == 1
+    assert reports.check_drift(tmp_path, roles=("content",), layouts=layouts) == 1
 
 
 def test_rejects_snapshot_model_class_drift(tmp_path: Path) -> None:
@@ -109,27 +109,27 @@ def test_rejects_snapshot_model_class_drift(tmp_path: Path) -> None:
     _write_snapshots(tmp_path, wrong_class_seat=frontier_seat)
 
     with pytest.raises(RuntimeError, match="expected model class"):
-        reports.build_reports(tmp_path, roles=("social",), layouts=layouts)
+        reports.build_reports(tmp_path, roles=("content",), layouts=layouts)
 
 
 def test_frontier_only_role_omits_low_context_diff(tmp_path: Path) -> None:
     for seat in ("cloud-a", "cloud-b"):
         snapshot = _snapshot(
-            "ceo",
+            "strats",
             seat,
             "frontier",
             eager=100,
             lazy=200,
             composed=5,
         )
-        path = tmp_path / f"context-budget-ceo-{seat}-current.yaml"
+        path = tmp_path / f"context-budget-strats-{seat}-current.yaml"
         path.write_text(json.dumps(snapshot), encoding="utf-8")
 
-    built = reports.build_reports(tmp_path, roles=("ceo",), layouts=TEST_LAYOUTS)
-    rendered = built[tmp_path / "context-budget-role-ceo-current.md"]
+    built = reports.build_reports(tmp_path, roles=("strats",), layouts=TEST_LAYOUTS)
+    rendered = built[tmp_path / "context-budget-role-strats-current.md"]
 
-    assert "**Frontier ceo**" in rendered
-    assert "**Low-context ceo**" not in rendered
+    assert "**Frontier Portfolio Strategist**" in rendered
+    assert "**Low-context Portfolio Strategist**" not in rendered
     assert "Low-context diff" not in rendered
     assert "Only frontier snapshots are available" in rendered
 

@@ -15,24 +15,24 @@ bundle:
   - meticulous
   - tenacious
   sources:
-  - person:kai
+  - roster:core
   - aos
 mcp:
   delivery: deferred
-  server_count: 10
+  server_count: 12
   eager_schema_count: 0
 totals:
   eager:
     components: 45
-    bytes: 34382
-    tokens: 8608
+    bytes: 34384
+    tokens: 8609
   lazy:
     components: 124
     bytes: 219690
     tokens: 54892
 breakdown:
   eager:
-    agents-cascade: {components: 2, bytes: 22850, tokens: 5713}
+    agents-cascade: {components: 2, bytes: 22852, tokens: 5714}
     ordinary-skill-frontmatter: {components: 12, bytes: 3016, tokens: 758}
     personality-frontmatter: {components: 4, bytes: 658, tokens: 166}
     role-composed-frontmatter: {components: 25, bytes: 5073, tokens: 1280}
@@ -60,12 +60,12 @@ components:
       owner: coilyco-flight-deck/agentic-os
       source: coilyco-flight-deck/agentic-os:AGENTS.md
       delivery: repo-cascade
-      bytes: 22839
-      tokens: 5710
-      sha256: 702e02f0a8a9f35f9a70f90a8b70f1bafb9a49ca7fbfc6584060959aaa02d858
+      bytes: 22841
+      tokens: 5711
+      sha256: 3a0e58a037674813cf2aa2fd8dc0cf2570a32579f500218c6de31bcec63e3d36
     role-instructions:
     - id: instructions:role
-      owner: agent-compose+person:kai+aos
+      owner: agent-compose+roster:core+aos
       source: bundle:content/instructions.md
       delivery: .claude/CLAUDE.md
       bytes: 2625
@@ -118,9 +118,9 @@ skills:
   aos/tooling-zsh: {class: ordinary, eager: 114, lazy: 786, resources: 0}
   aos/writing-public-repos: {class: role-composed, eager: 52, lazy: 208, resources: 0}
   aos/writing-system-improvement-vocab: {class: role-composed, eager: 70, lazy: 1097, resources: 1}
-  person:kai/personality-curious: {class: personality, eager: 39, lazy: 321, resources: 0}
-  person:kai/personality-grounded: {class: personality, eager: 39, lazy: 332, resources: 0}
-  person:kai/personality-meticulous: {class: personality, eager: 41, lazy: 340, resources: 0}
-  person:kai/personality-tenacious: {class: personality, eager: 47, lazy: 283, resources: 0}
-  person:kai/role-engineer: {class: role, eager: 40, lazy: 449, resources: 0}
-payload_hash: 5b3a41f2edb3912b8e69c412a5788b43a23b90b8177876c4784eaa5186879c54
+  roster:core/personality-curious: {class: personality, eager: 39, lazy: 321, resources: 0}
+  roster:core/personality-grounded: {class: personality, eager: 39, lazy: 332, resources: 0}
+  roster:core/personality-meticulous: {class: personality, eager: 41, lazy: 340, resources: 0}
+  roster:core/personality-tenacious: {class: personality, eager: 47, lazy: 283, resources: 0}
+  roster:core/role-engineer: {class: role, eager: 40, lazy: 449, resources: 0}
+payload_hash: 7e151a525448ccd78447b0abeda9dae6009d384aff94aa179969eb19baac2be9

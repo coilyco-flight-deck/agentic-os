@@ -15,29 +15,29 @@ bundle:
   - reflective
   - meticulous
   sources:
-  - person:kai
+  - roster:core
   - aos
 mcp:
   delivery: deferred
-  server_count: 10
+  server_count: 12
   eager_schema_count: 0
 totals:
   eager:
     components: 35
-    bytes: 32338
-    tokens: 8094
+    bytes: 32346
+    tokens: 8096
   lazy:
     components: 76
-    bytes: 144265
-    tokens: 36054
+    bytes: 144268
+    tokens: 36055
 breakdown:
   eager:
-    agents-cascade: {components: 1, bytes: 22839, tokens: 5710}
+    agents-cascade: {components: 1, bytes: 22841, tokens: 5711}
     ordinary-skill-frontmatter: {components: 10, bytes: 2587, tokens: 650}
     personality-frontmatter: {components: 4, bytes: 644, tokens: 163}
     role-composed-frontmatter: {components: 18, bytes: 3521, tokens: 889}
-    role-instructions: {components: 1, bytes: 2599, tokens: 645}
-    role-skill-frontmatter: {components: 1, bytes: 148, tokens: 37}
+    role-instructions: {components: 1, bytes: 2602, tokens: 645}
+    role-skill-frontmatter: {components: 1, bytes: 151, tokens: 38}
   lazy:
     mcp-server-registration: {components: 1, bytes: 0, tokens: 0}
     ordinary-skill-body: {components: 10, bytes: 19692, tokens: 4920}
@@ -45,7 +45,7 @@ breakdown:
     personality-body: {components: 4, bytes: 5385, tokens: 1348}
     role-composed-body: {components: 18, bytes: 40718, tokens: 10185}
     role-composed-resource: {components: 28, bytes: 53777, tokens: 13422}
-    role-skill-body: {components: 1, bytes: 1574, tokens: 394}
+    role-skill-body: {components: 1, bytes: 1577, tokens: 395}
 components:
   eager:
     agents-cascade:
@@ -53,17 +53,17 @@ components:
       owner: coilyco-flight-deck/agentic-os
       source: coilyco-flight-deck/agentic-os:AGENTS.md
       delivery: repo-cascade
-      bytes: 22839
-      tokens: 5710
-      sha256: 702e02f0a8a9f35f9a70f90a8b70f1bafb9a49ca7fbfc6584060959aaa02d858
+      bytes: 22841
+      tokens: 5711
+      sha256: 3a0e58a037674813cf2aa2fd8dc0cf2570a32579f500218c6de31bcec63e3d36
     role-instructions:
     - id: instructions:role
-      owner: agent-compose+person:kai+aos
+      owner: agent-compose+roster:core+aos
       source: bundle:content/instructions.md
       delivery: .config/goose/.goosehints
-      bytes: 2599
+      bytes: 2602
       tokens: 645
-      sha256: 417e5974bdc95dbe182b8a6246c38465d6ed883c31452c6e34207d593e4e40f5
+      sha256: 4b352e7b9ae0affe9f150c3831ff1fe7c199a35e8aa09414f9a7d4ba9eb7431f
   lazy:
     mcp-server-registration:
     - id: mcp:deferred
@@ -102,9 +102,9 @@ skills:
   aos/tooling-tailscale: {class: ordinary, eager: 109, lazy: 1887, resources: 2}
   aos/tooling-warp: {class: ordinary, eager: 39, lazy: 317, resources: 0}
   aos/tooling-zsh: {class: ordinary, eager: 114, lazy: 786, resources: 0}
-  person:kai/personality-grounded: {class: personality, eager: 39, lazy: 332, resources: 0}
-  person:kai/personality-meticulous: {class: personality, eager: 41, lazy: 340, resources: 0}
-  person:kai/personality-protective: {class: personality, eager: 43, lazy: 348, resources: 0}
-  person:kai/personality-reflective: {class: personality, eager: 40, lazy: 328, resources: 0}
-  person:kai/role-ops: {class: role, eager: 37, lazy: 394, resources: 0}
-payload_hash: a87580afb44d83648bea1546fa44f69094419d918d2e878cbfa81b626fccdaaa
+  roster:core/personality-grounded: {class: personality, eager: 39, lazy: 332, resources: 0}
+  roster:core/personality-meticulous: {class: personality, eager: 41, lazy: 340, resources: 0}
+  roster:core/personality-protective: {class: personality, eager: 43, lazy: 348, resources: 0}
+  roster:core/personality-reflective: {class: personality, eager: 40, lazy: 328, resources: 0}
+  roster:core/role-ops: {class: role, eager: 38, lazy: 395, resources: 0}
+payload_hash: 8cd4a89e8bf00af594c16fc4b3596647fd827b86c658c0e890e0b9242005cfe9

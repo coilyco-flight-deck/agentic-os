@@ -16,7 +16,7 @@ func TestValidateIntegratedLaunchMatrix(t *testing.T) {
 			Delivery: "native-skills", Composed: true,
 		},
 		{
-			Image: "aos:test", Role: "designer", Agent: "claude",
+			Image: "aos:test", Role: "design", Agent: "claude",
 			Delivery: "native-skills", Guarded: true,
 		},
 		{
@@ -62,7 +62,7 @@ func TestValidateIntegratedLaunchMatrix(t *testing.T) {
 		{
 			name: "generic role missing work",
 			opts: integratedLaunchOptions{
-				Image: "aos:test", Role: "designer", Agent: "codex", Warded: true,
+				Image: "aos:test", Role: "design", Agent: "codex", Warded: true,
 			},
 			want: "needs work text",
 		},

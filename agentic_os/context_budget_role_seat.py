@@ -36,7 +36,7 @@ from agentic_os.role_personality_sync import (
 
 FORMAT = "agentic-os.role-seat-context.v1"
 SOURCE_ID = "aos"
-PERSON_SOURCE_ID = "person:kai"
+PERSON_SOURCE_ID = "roster:core"
 PERSON_SOURCE_SEGMENT = urllib.parse.quote(PERSON_SOURCE_ID, safe="")
 AOS_TEMP_ROOT = Path(tempfile.gettempdir()) / "aos"
 SLUG_RE = re.compile(r"^[a-z][a-z0-9-]*$")

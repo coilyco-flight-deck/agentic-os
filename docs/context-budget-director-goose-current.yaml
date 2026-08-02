@@ -15,24 +15,24 @@ bundle:
   - diplomatic
   - decisive
   sources:
-  - person:kai
+  - roster:core
   - aos
 mcp:
   delivery: deferred
-  server_count: 10
+  server_count: 12
   eager_schema_count: 0
 totals:
   eager:
     components: 37
-    bytes: 33060
-    tokens: 8274
+    bytes: 33062
+    tokens: 8275
   lazy:
-    components: 88
-    bytes: 168556
-    tokens: 42132
+    components: 89
+    bytes: 169563
+    tokens: 42383
 breakdown:
   eager:
-    agents-cascade: {components: 1, bytes: 22839, tokens: 5710}
+    agents-cascade: {components: 1, bytes: 22841, tokens: 5711}
     ordinary-skill-frontmatter: {components: 10, bytes: 2587, tokens: 650}
     personality-frontmatter: {components: 4, bytes: 620, tokens: 156}
     role-composed-frontmatter: {components: 20, bytes: 4285, tokens: 1080}
@@ -43,8 +43,8 @@ breakdown:
     ordinary-skill-body: {components: 10, bytes: 19692, tokens: 4920}
     ordinary-skill-resource: {components: 14, bytes: 23119, tokens: 5785}
     personality-body: {components: 4, bytes: 4990, tokens: 1249}
-    role-composed-body: {components: 20, bytes: 45683, tokens: 11428}
-    role-composed-resource: {components: 38, bytes: 73953, tokens: 18470}
+    role-composed-body: {components: 20, bytes: 45776, tokens: 11451}
+    role-composed-resource: {components: 39, bytes: 74867, tokens: 18698}
     role-skill-body: {components: 1, bytes: 1119, tokens: 280}
 components:
   eager:
@@ -53,12 +53,12 @@ components:
       owner: coilyco-flight-deck/agentic-os
       source: coilyco-flight-deck/agentic-os:AGENTS.md
       delivery: repo-cascade
-      bytes: 22839
-      tokens: 5710
-      sha256: 702e02f0a8a9f35f9a70f90a8b70f1bafb9a49ca7fbfc6584060959aaa02d858
+      bytes: 22841
+      tokens: 5711
+      sha256: 3a0e58a037674813cf2aa2fd8dc0cf2570a32579f500218c6de31bcec63e3d36
     role-instructions:
     - id: instructions:role
-      owner: agent-compose+person:kai+aos
+      owner: agent-compose+roster:core+aos
       source: bundle:content/instructions.md
       delivery: .config/goose/.goosehints
       bytes: 2560
@@ -95,7 +95,7 @@ skills:
   aos/tooling-gpg-ssm: {class: ordinary, eager: 78, lazy: 1373, resources: 3}
   aos/tooling-image-zoom: {class: ordinary, eager: 44, lazy: 949, resources: 1}
   aos/tooling-imagemagick: {class: ordinary, eager: 50, lazy: 492, resources: 0}
-  aos/tooling-issue-prioritization: {class: role-composed, eager: 87, lazy: 3966, resources: 5}
+  aos/tooling-issue-prioritization: {class: role-composed, eager: 87, lazy: 4217, resources: 6}
   aos/tooling-supply-chain-audit: {class: role-composed, eager: 50, lazy: 7567, resources: 11}
   aos/tooling-tailscale: {class: ordinary, eager: 109, lazy: 1887, resources: 2}
   aos/tooling-warp: {class: ordinary, eager: 39, lazy: 317, resources: 0}
@@ -104,9 +104,9 @@ skills:
   aos/writing-to-issues: {class: role-composed, eager: 69, lazy: 879, resources: 1}
   aos/writing-voice-adaptation: {class: role-composed, eager: 48, lazy: 493, resources: 0}
   aos/writing-voice-guide-linter: {class: role-composed, eager: 53, lazy: 1032, resources: 1}
-  person:kai/personality-bold: {class: personality, eager: 38, lazy: 310, resources: 0}
-  person:kai/personality-decisive: {class: personality, eager: 40, lazy: 267, resources: 0}
-  person:kai/personality-diplomatic: {class: personality, eager: 39, lazy: 340, resources: 0}
-  person:kai/personality-grounded: {class: personality, eager: 39, lazy: 332, resources: 0}
-  person:kai/role-director: {class: role, eager: 43, lazy: 280, resources: 0}
-payload_hash: c97ae8e8425d8455a605d118137ce66817549b6fd778b12c21ef7a149c788bf6
+  roster:core/personality-bold: {class: personality, eager: 38, lazy: 310, resources: 0}
+  roster:core/personality-decisive: {class: personality, eager: 40, lazy: 267, resources: 0}
+  roster:core/personality-diplomatic: {class: personality, eager: 39, lazy: 340, resources: 0}
+  roster:core/personality-grounded: {class: personality, eager: 39, lazy: 332, resources: 0}
+  roster:core/role-director: {class: role, eager: 43, lazy: 280, resources: 0}
+payload_hash: b54bb5e1f51c8e0d5ce5bc846ad30f62418941fa21bb12ce5bc76119630fbe9b

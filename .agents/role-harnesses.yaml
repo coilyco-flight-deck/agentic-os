@@ -1,5 +1,5 @@
 # AOS-owned semantic routing board. Models, servers, and capacity stay outside it.
-role_source: coilyco-flight-deck/agent-compose:internal/person/person.kdl
+role_source: coilyco-flight-deck/agent-compose:roster:core
 roles:
   engineer:
     intents: [autonomous-coding]
@@ -8,25 +8,15 @@ roles:
     intents: [strategic-planning]
   qa:
     intents: [code-review]
-  advisor:
-    intents: [research-synthesis]
   ops:
     intents: [ops-investigation, operational-decision]
-  pm:
-    intents: [strategic-planning, project-coordination]
-  designer:
+  design:
     intents: [product-shaping, design-production]
-  social:
-    intents: [message-composition, channel-publishing]
   community:
     intents: [knowledge-retrieval, conversation-management]
-  sales:
-    intents: [research-synthesis, conversation-management]
-  customer-success:
-    intents: [knowledge-retrieval, conversation-management]
-  ceo:
-    intents: [strategic-planning]
-  technical-writer:
+  strats:
+    intents: [strategic-planning, research-synthesis]
+  content:
     intents: [knowledge-retrieval, message-composition]
 selections:
   engineer:
@@ -35,31 +25,18 @@ selections:
     strategic-planning: {agent: plandex}
   qa:
     code-review: {agent: aider}
-  advisor:
-    research-synthesis: {agent: hermes}
   ops:
     ops-investigation: {agent: holmesgpt}
     operational-decision: {agent: goose}
-  pm:
-    strategic-planning: {agent: hermes}
-    project-coordination: {agent: plane}
-  designer:
+  design:
     product-shaping: {agent: penpot}
-    design-production: {agent: aosx}
-  social:
-    message-composition: {agent: mixpost}
-    channel-publishing: {agent: elizaos}
+    design-production: {agent: penpot}
   community:
     knowledge-retrieval: {agent: sirens-echo}
     conversation-management: {agent: sirens-echo}
-  sales:
-    research-synthesis: {agent: hermes}
-    conversation-management: {agent: elizaos}
-  customer-success:
-    knowledge-retrieval: {agent: rasa}
-    conversation-management: {agent: rasa}
-  ceo:
+  strats:
     strategic-planning: {agent: hermes}
-  technical-writer:
+    research-synthesis: {agent: hermes}
+  content:
     knowledge-retrieval: {agent: anythingllm}
-    message-composition: {agent: openwebui}
+    message-composition: {agent: mixpost}

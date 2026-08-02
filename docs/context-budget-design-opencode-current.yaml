@@ -1,6 +1,6 @@
 format: agentic-os.role-seat-context.v1
 subject:
-  role: advisor
+  role: design
   seat: opencode
 provider: coilyco-flight-deck/agentic-os
 repository: coilyco-flight-deck/agentic-os
@@ -10,41 +10,41 @@ bundle:
   format: agent-compose.bundle
   model_class: low-context
   personalities:
-  - reflective
-  - curious
-  - candid
-  - skeptical
+  - imaginative
+  - playful
+  - editorial
+  - warm
   sources:
-  - person:kai
+  - roster:core
   - aos
 mcp:
   delivery: deferred
-  server_count: 10
+  server_count: 12
   eager_schema_count: 0
 totals:
   eager:
-    components: 18
-    bytes: 28993
-    tokens: 7250
+    components: 20
+    bytes: 29426
+    tokens: 7359
   lazy:
-    components: 31
-    bytes: 50759
-    tokens: 12696
+    components: 33
+    bytes: 56960
+    tokens: 14246
 breakdown:
   eager:
-    agents-cascade: {components: 1, bytes: 22839, tokens: 5710}
+    agents-cascade: {components: 1, bytes: 22841, tokens: 5711}
     ordinary-skill-frontmatter: {components: 10, bytes: 2587, tokens: 650}
-    personality-frontmatter: {components: 4, bytes: 632, tokens: 160}
-    role-composed-frontmatter: {components: 1, bytes: 206, tokens: 52}
-    role-instructions: {components: 1, bytes: 2577, tokens: 640}
-    role-skill-frontmatter: {components: 1, bytes: 152, tokens: 38}
+    personality-frontmatter: {components: 4, bytes: 635, tokens: 161}
+    role-composed-frontmatter: {components: 3, bytes: 591, tokens: 149}
+    role-instructions: {components: 1, bytes: 2615, tokens: 648}
+    role-skill-frontmatter: {components: 1, bytes: 157, tokens: 40}
   lazy:
     mcp-server-registration: {components: 1, bytes: 0, tokens: 0}
     ordinary-skill-body: {components: 10, bytes: 19692, tokens: 4920}
     ordinary-skill-resource: {components: 14, bytes: 23119, tokens: 5785}
-    personality-body: {components: 4, bytes: 4953, tokens: 1241}
-    role-composed-body: {components: 1, bytes: 2025, tokens: 507}
-    role-skill-body: {components: 1, bytes: 970, tokens: 243}
+    personality-body: {components: 4, bytes: 5683, tokens: 1423}
+    role-composed-body: {components: 3, bytes: 4929, tokens: 1233}
+    role-skill-body: {components: 1, bytes: 3537, tokens: 885}
 components:
   eager:
     agents-cascade:
@@ -52,17 +52,17 @@ components:
       owner: coilyco-flight-deck/agentic-os
       source: coilyco-flight-deck/agentic-os:AGENTS.md
       delivery: repo-cascade
-      bytes: 22839
-      tokens: 5710
-      sha256: 702e02f0a8a9f35f9a70f90a8b70f1bafb9a49ca7fbfc6584060959aaa02d858
+      bytes: 22841
+      tokens: 5711
+      sha256: 3a0e58a037674813cf2aa2fd8dc0cf2570a32579f500218c6de31bcec63e3d36
     role-instructions:
     - id: instructions:role
-      owner: agent-compose+person:kai+aos
+      owner: agent-compose+roster:core+aos
       source: bundle:content/instructions.md
       delivery: .config/opencode/AGENTS.md
-      bytes: 2577
-      tokens: 640
-      sha256: ab62fc6811ed257773586ee3c3dd1d84281cb19ed9a72a4d0cb636ca6fdedae4
+      bytes: 2615
+      tokens: 648
+      sha256: 81ed54b733cbb30be8bb29cd372d7887d236c3654eded50bb9250103c3ac2d94
   lazy:
     mcp-server-registration:
     - id: mcp:deferred
@@ -73,10 +73,12 @@ components:
       tokens: 0
       sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
 skills:
+  aos/coding-javascript: {class: role-composed, eager: 48, lazy: 322, resources: 0}
+  aos/coding-javascript-react: {class: role-composed, eager: 48, lazy: 419, resources: 0}
   aos/kai-tech-prefs: {class: ordinary, eager: 51, lazy: 2068, resources: 5}
   aos/repo-agentic-os: {class: ordinary, eager: 47, lazy: 93, resources: 0}
-  aos/tooling-advisor-evidence-synthesis: {class: role-composed, eager: 52, lazy: 507, resources: 0}
   aos/tooling-agent-tool-evaluation: {class: ordinary, eager: 68, lazy: 2181, resources: 3}
+  aos/tooling-designer-interaction-shaping: {class: role-composed, eager: 53, lazy: 492, resources: 0}
   aos/tooling-ffmpeg: {class: ordinary, eager: 50, lazy: 559, resources: 0}
   aos/tooling-gpg-ssm: {class: ordinary, eager: 78, lazy: 1373, resources: 3}
   aos/tooling-image-zoom: {class: ordinary, eager: 44, lazy: 949, resources: 1}
@@ -84,9 +86,9 @@ skills:
   aos/tooling-tailscale: {class: ordinary, eager: 109, lazy: 1887, resources: 2}
   aos/tooling-warp: {class: ordinary, eager: 39, lazy: 317, resources: 0}
   aos/tooling-zsh: {class: ordinary, eager: 114, lazy: 786, resources: 0}
-  person:kai/personality-candid: {class: personality, eager: 38, lazy: 316, resources: 0}
-  person:kai/personality-curious: {class: personality, eager: 39, lazy: 321, resources: 0}
-  person:kai/personality-reflective: {class: personality, eager: 40, lazy: 328, resources: 0}
-  person:kai/personality-skeptical: {class: personality, eager: 43, lazy: 276, resources: 0}
-  person:kai/role-advisor: {class: role, eager: 38, lazy: 243, resources: 0}
-payload_hash: 58cef4b5d2dde2e714cf8a04328c578edbcb347afc35de818a65e1475b7ddaf1
+  roster:core/personality-editorial: {class: personality, eager: 49, lazy: 364, resources: 0}
+  roster:core/personality-imaginative: {class: personality, eager: 40, lazy: 384, resources: 0}
+  roster:core/personality-playful: {class: personality, eager: 37, lazy: 335, resources: 0}
+  roster:core/personality-warm: {class: personality, eager: 35, lazy: 340, resources: 0}
+  roster:core/role-design: {class: role, eager: 40, lazy: 885, resources: 0}
+payload_hash: 0044947656e9015b43d7de27b6273fc61db1e6bcc7c2aba21a7b7ee1719d0cd3

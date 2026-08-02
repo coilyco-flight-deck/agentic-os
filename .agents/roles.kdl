@@ -106,15 +106,6 @@ roles {
         }
         // END generated role-intent harness routes
     }
-    role advisor {
-        composed-skill tooling-advisor-causal-claim-audit
-        composed-skill tooling-advisor-evidence-synthesis
-        // BEGIN generated role-intent harness routes
-        intent research-synthesis {
-            harness hermes
-        }
-        // END generated role-intent harness routes
-    }
     role ops {
         composed-skill coding-ansible
         composed-skill coding-aws
@@ -152,7 +143,41 @@ roles {
         }
         // END generated role-intent harness routes
     }
-    role pm {
+    role design {
+        composed-skill coding-javascript
+        composed-skill coding-javascript-react
+        composed-skill design-system
+        composed-skill tooling-designer-cognitive-walkthrough
+        composed-skill tooling-designer-interaction-shaping
+        composed-skill tooling-product-brainstorming
+        // BEGIN generated role-intent harness routes
+        intent product-shaping {
+            harness penpot
+        }
+        intent design-production {
+            harness penpot
+        }
+        // END generated role-intent harness routes
+    }
+    role community {
+        composed-skill coding-discord-bot-architect
+        composed-skill tooling-discord-community-host
+        // BEGIN generated role-intent harness routes
+        intent knowledge-retrieval {
+            harness sirens-echo
+        }
+        intent conversation-management {
+            harness sirens-echo
+        }
+        // END generated role-intent harness routes
+    }
+    role strats {
+        composed-skill tooling-advisor-causal-claim-audit
+        composed-skill tooling-advisor-evidence-synthesis
+        composed-skill tooling-ceo-developer-tool-adoption
+        composed-skill tooling-ceo-oss-stewardship
+        composed-skill tooling-ceo-platform-strategy
+        composed-skill tooling-director-decision-architecture
         composed-skill tooling-issue-prioritization
         composed-skill tooling-pm-program-decomposition
         composed-skill tooling-pm-product-signal-triangulation
@@ -169,108 +194,18 @@ roles {
         intent strategic-planning {
             harness hermes
         }
-        intent project-coordination {
-            harness plane
-        }
-        // END generated role-intent harness routes
-    }
-    role designer {
-        composed-skill coding-javascript
-        composed-skill coding-javascript-react
-        composed-skill design-system
-        composed-skill tooling-designer-cognitive-walkthrough
-        composed-skill tooling-designer-interaction-shaping
-        composed-skill tooling-product-brainstorming
-        // BEGIN generated role-intent harness routes
-        intent product-shaping {
-            harness penpot
-        }
-        intent design-production {
-            harness aosx
-        }
-        // END generated role-intent harness routes
-    }
-    role social {
-        composed-skill writing-observer-narrator
-        composed-skill writing-social-editorial-loop
-        composed-skill writing-social-cultural-reading
-        composed-skill writing-social-linkedin-video
-        composed-skill writing-social-trust-boundaries
-        composed-skill writing-voice-adaptation
-        composed-skill writing-voice-guide-linter
-        // BEGIN generated role-intent harness routes
-        intent message-composition {
-            harness mixpost
-        }
-        intent channel-publishing {
-            harness elizaos
-        }
-        // END generated role-intent harness routes
-    }
-    role community {
-        // BEGIN generated role-intent harness routes
-        intent knowledge-retrieval {
-            harness sirens-echo
-        }
-        intent conversation-management {
-            harness sirens-echo
-        }
-        // END generated role-intent harness routes
-
-        composed-skill coding-discord-bot-architect
-        composed-skill tooling-discord-community-host
-    }
-    role sales {
-        composed-skill tooling-sales-discovery
-        composed-skill tooling-sales-negotiation-architecture
-        composed-skill writing-observer-narrator
-        composed-skill writing-voice-adaptation
-        composed-skill writing-voice-guide-linter
-        // BEGIN generated role-intent harness routes
         intent research-synthesis {
             harness hermes
         }
-        intent conversation-management {
-            harness elizaos
-        }
         // END generated role-intent harness routes
     }
-    role customer-success {
-        composed-skill tooling-customer-success-signal-routing
-        composed-skill tooling-customer-success-trust-repair
+    role content {
         composed-skill writing-observer-narrator
-        composed-skill writing-voice-adaptation
-        composed-skill writing-voice-guide-linter
-        // BEGIN generated role-intent harness routes
-        intent knowledge-retrieval {
-            harness rasa
-        }
-        intent conversation-management {
-            harness rasa
-        }
-        // END generated role-intent harness routes
-    }
-    role ceo {
-        composed-skill tooling-ceo-developer-tool-adoption
-        composed-skill tooling-ceo-oss-stewardship
-        composed-skill tooling-ceo-platform-strategy
-        composed-skill tooling-director-decision-architecture
-        composed-skill tooling-issue-prioritization
-        composed-skill tooling-pm-product-signal-triangulation
-        composed-skill tooling-pm-program-decomposition
-        composed-skill tooling-product-brainstorming
-        composed-skill tooling-scout-autonomy
-        composed-skill tooling-scout-capability
-        composed-skill tooling-scout-displacement
-        composed-skill writing-to-issues
-        // BEGIN generated role-intent harness routes
-        intent strategic-planning {
-            harness hermes
-        }
-        // END generated role-intent harness routes
-    }
-    role technical-writer {
         composed-skill writing-public-repos
+        composed-skill writing-social-cultural-reading
+        composed-skill writing-social-editorial-loop
+        composed-skill writing-social-linkedin-video
+        composed-skill writing-social-trust-boundaries
         composed-skill writing-system-improvement-vocab
         composed-skill writing-to-issues
         composed-skill writing-voice-adaptation
@@ -280,7 +215,7 @@ roles {
             harness anythingllm
         }
         intent message-composition {
-            harness openwebui
+            harness mixpost
         }
         // END generated role-intent harness routes
     }

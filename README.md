@@ -137,7 +137,7 @@ Opt-in tooling that composes global agent context and symlinks each harness load
 The native assigned-role form is:
 
 ```bash
-acompose designer codex
+acompose design codex
 ```
 
 The shared shell places that launch in a leased native workspace, then Agent

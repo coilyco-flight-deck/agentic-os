@@ -11,7 +11,7 @@ trap 'rm -rf "$roster_dir"' EXIT
 agent-compose version
 agent-compose roster --out "$roster_dir"
 jq -e \
-  '.source == "person:kai" and (.role_order | length > 0) and (.personalities | length > 0)' \
+  '.source == "roster:core" and (.role_order | length == 8) and (.personalities | length == 16)' \
   "$roster_dir/person.json" >/dev/null
 test -s "$roster_dir/AGENTS.COMPOSE.md"
 test -n "$(

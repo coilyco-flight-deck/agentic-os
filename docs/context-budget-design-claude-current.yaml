@@ -1,7 +1,7 @@
 format: agentic-os.role-seat-context.v1
 subject:
-  role: designer
-  seat: codex
+  role: design
+  seat: claude
 provider: coilyco-flight-deck/agentic-os
 repository: coilyco-flight-deck/agentic-os
 cwd: .
@@ -15,29 +15,29 @@ bundle:
   - editorial
   - warm
   sources:
-  - person:kai
+  - roster:core
   - aos
 mcp:
   delivery: deferred
-  server_count: 10
+  server_count: 12
   eager_schema_count: 0
 totals:
   eager:
-    components: 25
-    bytes: 30620
-    tokens: 7659
+    components: 26
+    bytes: 30624
+    tokens: 7661
   lazy:
     components: 56
-    bytes: 102030
-    tokens: 25495
+    bytes: 102769
+    tokens: 25680
 breakdown:
   eager:
-    agents-cascade: {components: 1, bytes: 22839, tokens: 5710}
+    agents-cascade: {components: 2, bytes: 22852, tokens: 5714}
     ordinary-skill-frontmatter: {components: 12, bytes: 3016, tokens: 758}
-    personality-frontmatter: {components: 4, bytes: 634, tokens: 160}
+    personality-frontmatter: {components: 4, bytes: 635, tokens: 161}
     role-composed-frontmatter: {components: 6, bytes: 1349, tokens: 340}
-    role-instructions: {components: 1, bytes: 2621, tokens: 650}
-    role-skill-frontmatter: {components: 1, bytes: 161, tokens: 41}
+    role-instructions: {components: 1, bytes: 2615, tokens: 648}
+    role-skill-frontmatter: {components: 1, bytes: 157, tokens: 40}
   lazy:
     mcp-server-registration: {components: 1, bytes: 0, tokens: 0}
     ordinary-skill-body: {components: 12, bytes: 22694, tokens: 5671}
@@ -45,25 +45,32 @@ breakdown:
     personality-body: {components: 4, bytes: 5683, tokens: 1423}
     role-composed-body: {components: 6, bytes: 13728, tokens: 3434}
     role-composed-resource: {components: 11, bytes: 24792, tokens: 6175}
-    role-skill-body: {components: 1, bytes: 2798, tokens: 700}
+    role-skill-body: {components: 1, bytes: 3537, tokens: 885}
 components:
   eager:
     agents-cascade:
-    - id: agents:000:AGENTS.md
+    - id: agents:000:CLAUDE.md
+      owner: coilyco-flight-deck/agentic-os
+      source: coilyco-flight-deck/agentic-os:CLAUDE.md
+      delivery: repo-cascade-bridge
+      bytes: 11
+      tokens: 3
+      sha256: 336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49
+    - id: agents:001:AGENTS.md
       owner: coilyco-flight-deck/agentic-os
       source: coilyco-flight-deck/agentic-os:AGENTS.md
       delivery: repo-cascade
-      bytes: 22839
-      tokens: 5710
-      sha256: 702e02f0a8a9f35f9a70f90a8b70f1bafb9a49ca7fbfc6584060959aaa02d858
+      bytes: 22841
+      tokens: 5711
+      sha256: 3a0e58a037674813cf2aa2fd8dc0cf2570a32579f500218c6de31bcec63e3d36
     role-instructions:
     - id: instructions:role
-      owner: agent-compose+person:kai+aos
+      owner: agent-compose+roster:core+aos
       source: bundle:content/instructions.md
-      delivery: .codex/AGENTS.md
-      bytes: 2621
-      tokens: 650
-      sha256: e3c9b7d6f580f2fe3f04883d7e1f4b36cea69d94e48cbb6b7c3ca26ec2237385
+      delivery: .claude/CLAUDE.md
+      bytes: 2615
+      tokens: 648
+      sha256: 81ed54b733cbb30be8bb29cd372d7887d236c3654eded50bb9250103c3ac2d94
   lazy:
     mcp-server-registration:
     - id: mcp:deferred
@@ -92,9 +99,9 @@ skills:
   aos/tooling-tailscale: {class: ordinary, eager: 109, lazy: 1887, resources: 2}
   aos/tooling-warp: {class: ordinary, eager: 39, lazy: 317, resources: 0}
   aos/tooling-zsh: {class: ordinary, eager: 114, lazy: 786, resources: 0}
-  person:kai/personality-editorial: {class: personality, eager: 48, lazy: 364, resources: 0}
-  person:kai/personality-imaginative: {class: personality, eager: 40, lazy: 384, resources: 0}
-  person:kai/personality-playful: {class: personality, eager: 37, lazy: 335, resources: 0}
-  person:kai/personality-warm: {class: personality, eager: 35, lazy: 340, resources: 0}
-  person:kai/role-designer: {class: role, eager: 41, lazy: 700, resources: 0}
-payload_hash: e8dfa493829dfe533485e0fb7bd3a98f199db32c61159fc54b195eeff5f3b936
+  roster:core/personality-editorial: {class: personality, eager: 49, lazy: 364, resources: 0}
+  roster:core/personality-imaginative: {class: personality, eager: 40, lazy: 384, resources: 0}
+  roster:core/personality-playful: {class: personality, eager: 37, lazy: 335, resources: 0}
+  roster:core/personality-warm: {class: personality, eager: 35, lazy: 340, resources: 0}
+  roster:core/role-design: {class: role, eager: 40, lazy: 885, resources: 0}
+payload_hash: b39868b45dbe657de07d9bfbabe404b223852a7251892392472213a25b956713

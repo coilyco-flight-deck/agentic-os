@@ -15,28 +15,28 @@ bundle:
   - playful
   - protective
   sources:
-  - person:kai
+  - roster:core
   - aos
 mcp:
   delivery: deferred
-  server_count: 10
+  server_count: 12
   eager_schema_count: 0
 totals:
   eager:
     components: 22
-    bytes: 29664
-    tokens: 7419
+    bytes: 29674
+    tokens: 7422
   lazy:
     components: 70
     bytes: 109324
     tokens: 27321
 breakdown:
   eager:
-    agents-cascade: {components: 2, bytes: 22850, tokens: 5713}
+    agents-cascade: {components: 2, bytes: 22852, tokens: 5714}
     ordinary-skill-frontmatter: {components: 12, bytes: 3016, tokens: 758}
     personality-frontmatter: {components: 4, bytes: 623, tokens: 158}
     role-composed-frontmatter: {components: 2, bytes: 409, tokens: 103}
-    role-instructions: {components: 1, bytes: 2592, tokens: 643}
+    role-instructions: {components: 1, bytes: 2600, tokens: 645}
     role-skill-frontmatter: {components: 1, bytes: 174, tokens: 44}
   lazy:
     mcp-server-registration: {components: 1, bytes: 0, tokens: 0}
@@ -60,17 +60,17 @@ components:
       owner: coilyco-flight-deck/agentic-os
       source: coilyco-flight-deck/agentic-os:AGENTS.md
       delivery: repo-cascade
-      bytes: 22839
-      tokens: 5710
-      sha256: 702e02f0a8a9f35f9a70f90a8b70f1bafb9a49ca7fbfc6584060959aaa02d858
+      bytes: 22841
+      tokens: 5711
+      sha256: 3a0e58a037674813cf2aa2fd8dc0cf2570a32579f500218c6de31bcec63e3d36
     role-instructions:
     - id: instructions:role
-      owner: agent-compose+person:kai+aos
+      owner: agent-compose+roster:core+aos
       source: bundle:content/instructions.md
       delivery: .claude/CLAUDE.md
-      bytes: 2592
-      tokens: 643
-      sha256: 8a96b02de7a6f71cbfa71359422fd819ea4183679d681258ffa2aaf449016a85
+      bytes: 2600
+      tokens: 645
+      sha256: 6fe6e3d0a0c5a3bb636bcebc3ef3b3f8b5a2c6d47d41803b1c24b63d316ace50
   lazy:
     mcp-server-registration:
     - id: mcp:deferred
@@ -95,9 +95,9 @@ skills:
   aos/tooling-tailscale: {class: ordinary, eager: 109, lazy: 1887, resources: 2}
   aos/tooling-warp: {class: ordinary, eager: 39, lazy: 317, resources: 0}
   aos/tooling-zsh: {class: ordinary, eager: 114, lazy: 786, resources: 0}
-  person:kai/personality-diplomatic: {class: personality, eager: 39, lazy: 340, resources: 0}
-  person:kai/personality-nurturing: {class: personality, eager: 39, lazy: 358, resources: 0}
-  person:kai/personality-playful: {class: personality, eager: 37, lazy: 335, resources: 0}
-  person:kai/personality-protective: {class: personality, eager: 43, lazy: 348, resources: 0}
-  person:kai/role-community: {class: role, eager: 44, lazy: 206, resources: 0}
-payload_hash: 7004bad3e4a2319f037098202ebc2dc6f1b3b4c6262b5e45a4e75b03a7807713
+  roster:core/personality-diplomatic: {class: personality, eager: 39, lazy: 340, resources: 0}
+  roster:core/personality-nurturing: {class: personality, eager: 39, lazy: 358, resources: 0}
+  roster:core/personality-playful: {class: personality, eager: 37, lazy: 335, resources: 0}
+  roster:core/personality-protective: {class: personality, eager: 43, lazy: 348, resources: 0}
+  roster:core/role-community: {class: role, eager: 44, lazy: 206, resources: 0}
+payload_hash: 6c8f465d1b84e4e8a46c9938ab80293c64c171d12f31af97b991dade496b1038

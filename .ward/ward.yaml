@@ -106,9 +106,9 @@ commands:
   aos-container-smoke:
     run: go run -C aos-cli . --role engineer --layout codex --image agentic-os:aos-local acompose -- sh testdata/codex-smoke.sh
     description: "Launch the full local image through `aos`, compose the engineer Codex HOME, verify its container-boundary defaults, hydrate substrate, and print the in-container Codex version."
-  aos-designer-smoke:
-    run: ./aos-cli/aos --role designer --layout codex --image agentic-os:aos-local --auth=false --no-substrate acompose -- sh scripts/aos-designer-smoke.sh
-    description: "Launch the full local image as the designer Codex variant and verify its projected AGENTS.md briefing, selected composed skill, entry-point promotion, and role isolation."
+  aos-design-smoke:
+    run: ./aos-cli/aos --role design --layout codex --image agentic-os:aos-local --auth=false --no-substrate acompose -- sh scripts/aos-design-smoke.sh
+    description: "Launch the full local image as the design Codex variant and verify its projected AGENTS.md briefing, selected composed skill, entry-point promotion, and role isolation."
   aos-role-question:
     run: sh scripts/aos-role-question.sh
     description: "Ask one composed role a real question through cloud Codex or Goose with a local model, enforce a bounded run, and require the response to confirm its loaded role. Usage: `ward exec aos-role-question -- cloud|local ROLE [MODEL]`."

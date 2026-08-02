@@ -31,7 +31,7 @@ roles {
     role engineer {
         composed-skill coding-shape-cli
     }
-    role designer {
+    role design {
         composed-skill tooling-designer-interaction-shaping
     }
 }
@@ -43,11 +43,11 @@ Every canonical agent-compose role has a block and at least one composed
 source.
 
 The complete `coding-*` family and `mcp-server-patterns` are composed for engineer,
-director, QA, and ops. `design-system` is composed for designer, engineer, and QA.
-Community receives only the Discord architecture source.
+director, QA, and ops. `design-system` is composed for design, engineer, and QA.
+Community receives only the Discord architecture and hosting sources.
 
-CEO receives OSS stewardship, platform strategy, and developer-tool adoption methods. Specialist sources also serve advisor,
-designer, QA, ops, PM, social, community, sales, and customer-success.
+Portfolio Strategist receives the deduplicated advisor, PM, and CEO method set. Content receives the deduplicated technical-writing and social method set.
+Sales and customer-success methods stay unbound because v2 has no replacement.
 
 The [principal workflow matrix](role-composed-principal-methods.md) records the broader role-gated method catalog and handoffs.
 

@@ -25,7 +25,7 @@ def _fake_aos(tmp_path: Path, response: str) -> tuple[Path, Path]:
 def _run(
     tmp_path: Path,
     *args: str,
-    response: str = "ROLE-CONFIRMED: designer",
+    response: str = "ROLE-CONFIRMED: design",
 ) -> tuple[subprocess.CompletedProcess[str], str]:
     fake, argv_log = _fake_aos(tmp_path, response)
     env = {
@@ -46,7 +46,7 @@ def _run(
 
 
 def test_cloud_question_selects_codex_and_accepts_role_marker(tmp_path: Path) -> None:
-    proc, argv = _run(tmp_path, "cloud", "designer")
+    proc, argv = _run(tmp_path, "cloud", "design")
 
     assert proc.returncode == 0, proc.stderr
     assert "--image\nagentic-os:aos-local\n" in argv
@@ -74,8 +74,8 @@ def test_question_accepts_display_name_marker(tmp_path: Path) -> None:
     proc, _ = _run(
         tmp_path,
         "local",
-        "customer-success",
-        response="ROLE-CONFIRMED: customer success",
+        "strats",
+        response="ROLE-CONFIRMED: strats",
     )
 
     assert proc.returncode == 0, proc.stderr
@@ -93,10 +93,10 @@ def test_question_accepts_community_role(tmp_path: Path) -> None:
 
 
 def test_question_rejects_missing_role_marker(tmp_path: Path) -> None:
-    proc, _ = _run(tmp_path, "local", "designer", response="A design answer")
+    proc, _ = _run(tmp_path, "local", "design", response="A design answer")
 
     assert proc.returncode == 1
-    assert "response did not confirm designer" in proc.stderr
+    assert "response did not confirm design" in proc.stderr
 
 
 def test_question_rejects_unknown_role_before_launch(tmp_path: Path) -> None:

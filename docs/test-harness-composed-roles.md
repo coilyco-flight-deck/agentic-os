@@ -28,10 +28,10 @@ ward exec aos-build
 ward exec aos-image-build
 ```
 
-## Cloud designer
+## Cloud design
 
 ```bash
-ward exec aos-role-question -- cloud designer
+ward exec aos-role-question -- cloud design
 ```
 
 ## Local role matrix
@@ -42,19 +42,15 @@ Run these sequentially:
 ward exec aos-role-question -- local engineer
 ward exec aos-role-question -- local director
 ward exec aos-role-question -- local qa
-ward exec aos-role-question -- local advisor
 ward exec aos-role-question -- local ops
-ward exec aos-role-question -- local pm
-ward exec aos-role-question -- local designer
-ward exec aos-role-question -- local social
+ward exec aos-role-question -- local design
 ward exec aos-role-question -- local community
-ward exec aos-role-question -- local sales
-ward exec aos-role-question -- local customer-success
-ward exec aos-role-question -- local ceo
+ward exec aos-role-question -- local strats
+ward exec aos-role-question -- local content
 ```
 
 Each question targets the role's actual work, such as adversarial verification
-for QA, remediation triage for ops, or interaction shaping for designer. The
+for QA, remediation triage for ops, or interaction shaping for design. The
 probe never supplies the expected role name in the prompt.
 
 ## First complete run

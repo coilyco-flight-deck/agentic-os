@@ -14,7 +14,7 @@ Major shipped capabilities, not files.
 - [Agent-compose provider](personality-provider.md) - scoped skills and
   personality under the `aos` source namespace.
 - [Agent tool evaluation](../.agents/skills/tooling-agent-tool-evaluation/SKILL.md) - cross-harness tool evals.
-- [Role-composed skills](role-composed-skills.md) - gated methods, including voice adaptation.
+- [Role-composed skills](role-composed-skills.md) - v2 Core Roster method slices.
 - [AOS launcher](aos-cli.md) - role and context with
   [convergence](aos-convergence.md),
   [MCP and tailnet](aos-standalone-connectivity.md),
@@ -24,8 +24,8 @@ Major shipped capabilities, not files.
   [SigNoz MCP reads](signoz.md) and fixed-target issue pins.
 - [Code review skill](../.agents/composed/tooling-code-review/COMPOSED.md) - QA-only in-container review stance.
 - [Code review contract](../CODE-REVIEW.md) - review invariants.
-- [Harness selection](harness-selection.md) - AOS-owned role board,
-  eligibility, routing, and [profiles](local-lane-profiles.md).
+- [Harness selection](harness-selection.md) - v2 role routing and
+  [profiles](local-lane-profiles.md).
 - [Test harnesses](test-harness.md) - agent/model smokes and composed-role probes.
 - [Issue-corpus discovery index](issue-corpus.md) - offline corpus and live Forgejo lookup.
 - [Forgejo Actions logs](forgejo-actions-logs.md) - job logs and run ZIPs.

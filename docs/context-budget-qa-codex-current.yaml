@@ -15,24 +15,24 @@ bundle:
   - playful
   - skeptical
   sources:
-  - person:kai
+  - roster:core
   - aos
 mcp:
   delivery: deferred
-  server_count: 10
+  server_count: 12
   eager_schema_count: 0
 totals:
   eager:
     components: 46
-    bytes: 34757
-    tokens: 8704
+    bytes: 34759
+    tokens: 8705
   lazy:
     components: 115
     bytes: 195975
     tokens: 48963
 breakdown:
   eager:
-    agents-cascade: {components: 1, bytes: 22839, tokens: 5710}
+    agents-cascade: {components: 1, bytes: 22841, tokens: 5711}
     ordinary-skill-frontmatter: {components: 12, bytes: 3016, tokens: 758}
     personality-frontmatter: {components: 4, bytes: 628, tokens: 159}
     role-composed-frontmatter: {components: 27, bytes: 5552, tokens: 1400}
@@ -53,17 +53,17 @@ components:
       owner: coilyco-flight-deck/agentic-os
       source: coilyco-flight-deck/agentic-os:AGENTS.md
       delivery: repo-cascade
-      bytes: 22839
-      tokens: 5710
-      sha256: 702e02f0a8a9f35f9a70f90a8b70f1bafb9a49ca7fbfc6584060959aaa02d858
+      bytes: 22841
+      tokens: 5711
+      sha256: 3a0e58a037674813cf2aa2fd8dc0cf2570a32579f500218c6de31bcec63e3d36
     role-instructions:
     - id: instructions:role
-      owner: agent-compose+person:kai+aos
+      owner: agent-compose+roster:core+aos
       source: bundle:content/instructions.md
       delivery: .codex/AGENTS.md
       bytes: 2573
       tokens: 639
-      sha256: 2795e052251809315568ab512aab1a2afc36c2fcb43afb3532c78d0bcdf62a09
+      sha256: 56c043a6dd71150d3a8288dfc3a845222046860fa94aa967714335b5067fa74e
   lazy:
     mcp-server-registration:
     - id: mcp:deferred
@@ -113,9 +113,9 @@ skills:
   aos/tooling-warp: {class: ordinary, eager: 39, lazy: 317, resources: 0}
   aos/tooling-zsh: {class: ordinary, eager: 114, lazy: 786, resources: 0}
   aos/writing-public-repos: {class: role-composed, eager: 52, lazy: 208, resources: 0}
-  person:kai/personality-candid: {class: personality, eager: 38, lazy: 316, resources: 0}
-  person:kai/personality-meticulous: {class: personality, eager: 41, lazy: 340, resources: 0}
-  person:kai/personality-playful: {class: personality, eager: 37, lazy: 335, resources: 0}
-  person:kai/personality-skeptical: {class: personality, eager: 43, lazy: 276, resources: 0}
-  person:kai/role-qa: {class: role, eager: 38, lazy: 445, resources: 0}
-payload_hash: be8aed5c61f0d84f1bd4076cf49445fc9ca7ab92d7a282436bcbc3417d7dc997
+  roster:core/personality-candid: {class: personality, eager: 38, lazy: 316, resources: 0}
+  roster:core/personality-meticulous: {class: personality, eager: 41, lazy: 340, resources: 0}
+  roster:core/personality-playful: {class: personality, eager: 37, lazy: 335, resources: 0}
+  roster:core/personality-skeptical: {class: personality, eager: 43, lazy: 276, resources: 0}
+  roster:core/role-qa: {class: role, eager: 38, lazy: 445, resources: 0}
+payload_hash: 54567bfa4e434317d0484840393469b65df93be5b628f86becbe40e0cd4c6483

@@ -117,7 +117,7 @@ def bundle_fixture(root: Path, *, model_class: str | None = None) -> Path:
                 "role": "ops",
                 "model_class": model_class,
                 "personalities": list(FIXTURE_PERSONALITIES),
-                "sources": ["person:kai", "aos"],
+                "sources": ["roster:core", "aos"],
                 "delivery": {
                     "mode": "native-skills",
                     "instructions": "content/instructions.md",
@@ -394,7 +394,7 @@ def test_build_snapshot_separates_eager_and_lazy_components(tmp_path: Path) -> N
     skills = first["skills"]
     assert isinstance(skills, dict)
     expected_personality_skills = [
-        "person:kai/"
+        "roster:core/"
         + role_personality_sync.personality_skill_id(personality)
         for personality in FIXTURE_PERSONALITIES
     ]
@@ -402,7 +402,7 @@ def test_build_snapshot_separates_eager_and_lazy_components(tmp_path: Path) -> N
         [
             "aos/alpha",
             "aos/tooling-ops-live-remediation",
-            "person:kai/role-ops",
+            "roster:core/role-ops",
             *expected_personality_skills,
             "skill-root-0/plugin-tool",
         ]
@@ -414,7 +414,7 @@ def test_build_snapshot_separates_eager_and_lazy_components(tmp_path: Path) -> N
     assert alpha["lazy"] > 0
     assert alpha["resources"] == 1
     assert skills["aos/tooling-ops-live-remediation"]["class"] == "role-composed"
-    assert skills["person:kai/role-ops"]["class"] == "role"
+    assert skills["roster:core/role-ops"]["class"] == "role"
     assert all(
         skills[skill_id]["class"] == "personality"
         for skill_id in expected_personality_skills

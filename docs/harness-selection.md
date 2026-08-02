@@ -5,21 +5,16 @@ Harness selection answers which work surface receives a task. Backend model, ser
 
 ## Confirmed board
 
-The committed board contains thirteen roles and twenty-one lanes:
+The committed board contains the eight Core Roster v2 roles and thirteen lanes:
 
 * **engineer** - `autonomous-coding` uses `openhands`.
 * **director** - `strategic-planning` uses `plandex`.
 * **qa** - `code-review` uses `aider`.
-* **advisor** - `research-synthesis` uses `hermes`.
 * **ops** - `ops-investigation` uses `holmesgpt`. `operational-decision` uses `goose`.
-* **pm** - `strategic-planning` uses `hermes`. `project-coordination` uses `plane`.
-* **designer** - `product-shaping` uses `penpot`. `design-production` uses `aosx`.
-* **social** - `message-composition` uses `mixpost`. `channel-publishing` uses `elizaos`.
+* **design** - both design intents use `penpot`.
 * **community** - Both intents use the exclusive `sirens-echo` harness.
-* **sales** - `research-synthesis` uses `hermes`. `conversation-management` uses `elizaos`.
-* **customer-success** - `knowledge-retrieval` and `conversation-management` both use `rasa`.
-* **ceo** - `strategic-planning` uses `hermes`.
-* **technical-writer** - `knowledge-retrieval` uses `anythingllm`. `message-composition` uses `openwebui`.
+* **strats** - `strategic-planning` and `research-synthesis` both use `hermes`.
+* **content** - `knowledge-retrieval` uses `anythingllm`. `message-composition` uses `mixpost`.
 
 Engineer is the sole unattended lane. Every role declares one or two intents,
 and every lane has exactly one selected harness.
