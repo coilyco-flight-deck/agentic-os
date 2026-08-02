@@ -17,14 +17,12 @@ Role-scoped knowledge uses a distinct root and entrypoint:
 .agents/composed/<name>/COMPOSED.md
 ```
 
-The two roots share the taxonomy in `.agents/skills/categories.yaml`. A name
-cannot exist in both roots. A composed source may not contain `SKILL.md`
-anywhere, including nested support directories.
+The two roots share the taxonomy in `.agents/skills/categories.yaml`. A name cannot
+exist in both roots. No composed source may contain `SKILL.md`, including nested support directories.
 
 ## Role binding
 
-AOS owns the allowlist in `.agents/roles.kdl`. This abridged example shows two
-role bindings:
+AOS owns the allowlist in `.agents/roles.kdl`. This abridged example shows two role bindings:
 
 ```kdl
 roles {
@@ -37,10 +35,14 @@ roles {
 }
 ```
 
-Each binding names an existing directory under `.agents/composed/`. Duplicate
-roles, duplicate bindings, unknown roles, and missing sources fail composition.
-Every canonical agent-compose role has a block and at least one composed
-source.
+Each binding names an existing directory under `.agents/composed/`. Duplicate roles,
+duplicate bindings, unknown roles, and missing sources fail composition. Every canonical
+agent-compose role has a block and at least one composed source.
+
+A binding may use a quoted shell-style glob for a semantically homogeneous family,
+such as `composed-skill "coding-*"`. Keep unrelated sources exact. Agent-compose expands
+matches in lexical order and fails when a pattern is invalid, empty, or overlapping.
+A future source matching the family is intentionally admitted without another role edit.
 
 The complete `coding-*` family and `mcp-server-patterns` are composed for engineer,
 director, QA, and ops. `design-system` is composed for design, engineer, and QA.
@@ -53,18 +55,16 @@ The [principal workflow matrix](role-composed-principal-methods.md) records the 
 
 ## Composition
 
-Agent-compose selects ordinary skills for every role, then adds only the
-current role's composed allowlist. It copies each selected source into the
-isolated output and renames `COMPOSED.md` to `SKILL.md`.
-No unselected composed source appears in the role's skill catalog, files,
-manifest, or selection trace. This makes the boundary about context load and
-role focus, not lightweight routing hints.
+Agent-compose selects ordinary skills for every role, then adds only the current role's
+composed allowlist. It copies each selected source into the isolated output and renames
+`COMPOSED.md` to `SKILL.md`. No unselected composed source appears in the role's skill
+catalog, files, manifest, or selection trace. This makes the boundary about context load
+and role focus, not lightweight routing hints.
 
 ## Authority boundary
 
-`.agents/roles.kdl` grants knowledge only. It does not grant commands,
-credentials, network access, mounts, or runtime permissions. Ward remains the
-authority layer for those capabilities.
+`.agents/roles.kdl` grants knowledge only. It does not grant commands, credentials,
+network access, mounts, or runtime permissions. Ward remains the authority layer.
 
 ## Validation
 
