@@ -1,4 +1,4 @@
-module github.com/coilyco-flight-deck/agentic-os/agent-terminal
+module forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/agent-terminal
 
 go 1.25.0
 

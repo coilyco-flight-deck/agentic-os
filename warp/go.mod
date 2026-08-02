@@ -1,4 +1,4 @@
-module github.com/coilyco-flight-deck/agentic-os/warp
+module forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/warp
 
 go 1.25.0
 
