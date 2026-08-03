@@ -14,7 +14,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
-from typing import Iterable, Iterator
+from typing import Iterable, Iterator, Mapping
 
 import yaml
 
@@ -449,7 +449,7 @@ def _validate_manifest_personalities(
 
 
 def _canonical_skill(
-    provider: Path, source_id: str, skill_id: str
+    providers: Mapping[str, Path], source_id: str, skill_id: str
 ) -> tuple[str, str, Path | None]:
     if urllib.parse.unquote(source_id) == PERSON_SOURCE_ID:
         if skill_id.startswith("personality-"):
@@ -457,15 +457,18 @@ def _canonical_skill(
         if skill_id.startswith("role-"):
             return "role-skill", PERSON_SOURCE_ID, None
         raise RuntimeError(f"bundle person source contains unknown skill {skill_id}")
-    if source_id != SOURCE_ID:
-        return "external-skill", source_id, None
+    provider = providers.get(source_id)
+    if provider is None:
+        raise RuntimeError(
+            f"bundle skill {source_id}/{skill_id} has no measured provider root"
+        )
     ordinary = provider / ".agents" / "skills" / skill_id
     composed = provider / ".agents" / "composed" / skill_id
     if (composed / "COMPOSED.md").is_file():
-        return "role-composed", SOURCE_ID, composed
+        return "role-composed", source_id, composed
     if (ordinary / "SKILL.md").is_file():
         kind = "personality" if skill_id.startswith("personality-") else "ordinary-skill"
-        return kind, SOURCE_ID, ordinary
+        return kind, source_id, ordinary
     raise RuntimeError(f"bundle skill {source_id}/{skill_id} has no provider source")
 
 
@@ -520,7 +523,9 @@ def _skill_entrypoint(
 
 
 def _bundle_skill_components(
-    skills_root: Path, provider: Path, skills_delivery: str
+    skills_root: Path,
+    providers: Mapping[str, Path],
+    skills_delivery: str,
 ) -> tuple[list[Component], set[str]]:
     components: list[Component] = []
     selected_ids: set[str] = set()
@@ -531,15 +536,22 @@ def _bundle_skill_components(
             if skill_id in selected_ids:
                 raise RuntimeError(f"bundle selects duplicate skill id {skill_id}")
             selected_ids.add(skill_id)
-            kind, owner, canonical = _canonical_skill(provider, source_id, skill_id)
+            kind, owner, canonical = _canonical_skill(providers, source_id, skill_id)
             if canonical is None:
                 source_entrypoint = f"bundle:{source_id}/{skill_id}/SKILL.md"
-            elif kind == "role-composed":
-                source_entrypoint = (
-                    f"provider:.agents/composed/{skill_id}/COMPOSED.md"
-                )
             else:
-                source_entrypoint = f"provider:.agents/skills/{skill_id}/SKILL.md"
+                provider = providers[source_id]
+                provider_label = (
+                    "provider" if source_id == SOURCE_ID else f"provider:{source_id}"
+                )
+                if kind == "role-composed":
+                    source_entrypoint = (
+                        f"{provider_label}:.agents/composed/{skill_id}/COMPOSED.md"
+                    )
+                else:
+                    source_entrypoint = (
+                        f"{provider_label}:.agents/skills/{skill_id}/SKILL.md"
+                    )
             delivery_entrypoint = f"{skills_delivery}/{skill_id}/SKILL.md"
             components.extend(
                 _skill_entrypoint(
@@ -558,8 +570,13 @@ def _bundle_skill_components(
                 if canonical is None:
                     source = f"bundle:{source_id}/{skill_id}/{relative}"
                 else:
+                    provider = providers[source_id]
+                    provider_label = (
+                        "provider" if source_id == SOURCE_ID else f"provider:{source_id}"
+                    )
                     source = (
-                        f"provider:{canonical.relative_to(provider).as_posix()}/{relative}"
+                        f"{provider_label}:"
+                        f"{canonical.relative_to(provider).as_posix()}/{relative}"
                     )
                 components.append(
                     _component(
@@ -764,6 +781,7 @@ def build_snapshot(
     *,
     role: str,
     seat: str,
+    additional_providers: Mapping[str, Path] | None = None,
     plugin_roots: Iterable[Path] = (),
     mcp_servers: Iterable[str] = (),
 ) -> dict[str, object]:
@@ -771,9 +789,14 @@ def build_snapshot(
     _validate_slug(role, "role")
     _validate_slug(seat, "seat")
     provider = provider.resolve()
+    providers = _provider_roots(provider, additional_providers)
     repo = repo.resolve()
     cwd = cwd.resolve()
     provider_identity = repository_identity(provider)
+    provider_identities = {
+        source_id: repository_identity(source_root)
+        for source_id, source_root in providers.items()
+    }
     repo_identity = repository_identity(repo)
     model_class = model_class_for_seat(seat)
     scenario = Scenario(role=role, intent="context-measurement", harness=seat)
@@ -789,7 +812,7 @@ def build_snapshot(
         _component(
             "instructions:role",
             "role-instructions",
-            f"agent-compose+{PERSON_SOURCE_ID}+{SOURCE_ID}",
+            "agent-compose+" + "+".join((PERSON_SOURCE_ID, *providers)),
             "bundle:content/instructions.md",
             projection.instructions_delivery,
             True,
@@ -809,7 +832,7 @@ def build_snapshot(
 
     bundle_components, selected_ids = _bundle_skill_components(
         skills_root,
-        provider,
+        providers,
         projection.skills_delivery,
     )
     expected_personality_skills = {
@@ -863,6 +886,7 @@ def build_snapshot(
         "format": FORMAT,
         "subject": {"role": role, "seat": seat},
         "provider": provider_identity,
+        **({"providers": provider_identities} if len(providers) > 1 else {}),
         "repository": repo_identity,
         "cwd": cwd_label,
         "tokenizer": TOKENIZER_NOTE,
@@ -899,17 +923,60 @@ def build_snapshot(
     return document
 
 
-def _request_text(provider_root: str, role: str, seat: str) -> str:
-    root = json.dumps(provider_root)
+def _provider_roots(
+    provider: Path,
+    additional_providers: Mapping[str, Path] | None,
+) -> dict[str, Path]:
+    """Resolve the primary AOS provider plus explicitly named extra providers."""
+    providers = {SOURCE_ID: provider.resolve()}
+    for source_id, source_root in (additional_providers or {}).items():
+        _validate_slug(source_id, "provider source id")
+        if source_id in {SOURCE_ID, PERSON_SOURCE_ID}:
+            raise RuntimeError(f"provider source id is reserved: {source_id}")
+        if source_id in providers:
+            raise RuntimeError(f"provider source id is duplicated: {source_id}")
+        providers[source_id] = source_root.resolve()
+    for source_id, source_root in providers.items():
+        if not (source_root / ".agents").is_dir():
+            raise RuntimeError(
+                f"provider {source_id} has no .agents directory: {source_root}"
+            )
+    return providers
+
+
+def parse_additional_provider(value: str) -> tuple[str, Path]:
+    """Parse one CLI `ID=PATH` provider declaration."""
+    source_id, separator, raw_root = value.partition("=")
+    if not separator or not raw_root:
+        raise RuntimeError("additional providers must use ID=PATH")
+    _validate_slug(source_id, "provider source id")
+    if source_id in {SOURCE_ID, PERSON_SOURCE_ID}:
+        raise RuntimeError(f"provider source id is reserved: {source_id}")
+    return source_id, Path(raw_root)
+
+
+def _request_text(
+    provider_root: str,
+    role: str,
+    seat: str,
+    additional_provider_roots: Mapping[str, str] | None = None,
+) -> str:
     model_class = model_class_for_seat(seat)
-    return (
-        "compose {\n"
-        f'    role "{role}"\n'
-        '    delivery "native-skills"\n'
-        f'    model-class "{model_class}"\n'
-        f'    source "{SOURCE_ID}" root={root} required=#true\n'
-        "}\n"
-    )
+    lines = [
+        "compose {",
+        f'    role "{role}"',
+        '    delivery "native-skills"',
+        f'    model-class "{model_class}"',
+        (
+            f'    source "{SOURCE_ID}" root={json.dumps(provider_root)} '
+            "required=#true"
+        ),
+    ]
+    for source_id, root in (additional_provider_roots or {}).items():
+        lines.append(
+            f'    source "{source_id}" root={json.dumps(root)} required=#true'
+        )
+    return "\n".join((*lines, "}", ""))
 
 
 def capture_snapshot(
@@ -920,6 +987,7 @@ def capture_snapshot(
     role: str,
     seat: str,
     agent_compose: str,
+    additional_providers: Mapping[str, Path] | None = None,
     plugin_roots: Iterable[Path] = (),
     mcporter_path: Path,
 ) -> dict[str, object]:
@@ -929,21 +997,48 @@ def capture_snapshot(
     executable = shutil.which(agent_compose)
     if executable is None:
         raise RuntimeError(f"agent-compose executable not found: {agent_compose}")
+    providers = _provider_roots(provider, additional_providers)
     with _aos_temporary_directory("role-seat", "context") as temp:
         root = Path(temp)
-        staged_provider = root / "provider"
-        try:
-            shutil.copytree(provider / ".agents", staged_provider / ".agents")
-        except OSError as exc:
-            raise RuntimeError(f"stage AOS provider {provider}: {exc}") from exc
+        staged_providers: dict[str, Path] = {}
+        for source_id, source_root in providers.items():
+            staged_provider = root / "providers" / source_id
+            try:
+                shutil.copytree(
+                    source_root / ".agents",
+                    staged_provider / ".agents",
+                )
+            except OSError as exc:
+                raise RuntimeError(
+                    f"stage provider {source_id} from {source_root}: {exc}"
+                ) from exc
+            staged_providers[source_id] = staged_provider
         request = root / "request.kdl"
         output = root / "bundles"
         roster = root / "roster"
         projected = root / "projected"
-        request.write_text(_request_text("provider", role, seat), encoding="utf-8")
+        request.write_text(
+            _request_text(
+                "providers/aos",
+                role,
+                seat,
+                {
+                    source_id: f"providers/{source_id}"
+                    for source_id in providers
+                    if source_id != SOURCE_ID
+                },
+            ),
+            encoding="utf-8",
+        )
         try:
             subprocess.run(
-                [executable, "roster", "--out", str(roster), str(staged_provider)],
+                [
+                    executable,
+                    "roster",
+                    "--out",
+                    str(roster),
+                    str(staged_providers[SOURCE_ID]),
+                ],
                 capture_output=True,
                 text=True,
                 encoding="utf-8",
@@ -997,6 +1092,11 @@ def capture_snapshot(
             cwd,
             role=role,
             seat=seat,
+            additional_providers={
+                source_id: source_root
+                for source_id, source_root in providers.items()
+                if source_id != SOURCE_ID
+            },
             plugin_roots=plugin_roots,
             mcp_servers=read_mcporter_server_names(mcporter_path),
         )

@@ -431,6 +431,80 @@ def test_build_snapshot_separates_eager_and_lazy_components(tmp_path: Path) -> N
     assert first["totals"]["lazy"]["tokens"] > 0
 
 
+def test_build_snapshot_attributes_additional_provider_skills(
+    tmp_path: Path,
+) -> None:
+    provider = provider_fixture(tmp_path)
+    private_provider = tmp_path / "private-provider"
+    write(
+        private_provider / ".agents" / "skills" / "private-routing" / "SKILL.md",
+        "---\n"
+        "name: private-routing\n"
+        "description: Private routing metadata.\n"
+        "---\n"
+        "# Private routing\n",
+    )
+    write(
+        private_provider
+        / ".agents"
+        / "composed"
+        / "private-role-method"
+        / "COMPOSED.md",
+        "---\n"
+        "name: private-role-method\n"
+        "description: Private role method.\n"
+        "---\n"
+        "# Private role method\n",
+    )
+    bundle = bundle_fixture(tmp_path)
+    write(
+        bundle / "content" / "skills" / "aosk" / "private-routing" / "SKILL.md",
+        "---\n"
+        "name: private-routing\n"
+        "description: Private routing metadata.\n"
+        "---\n"
+        "# Private routing\n",
+    )
+    write(
+        bundle
+        / "content"
+        / "skills"
+        / "aosk"
+        / "private-role-method"
+        / "SKILL.md",
+        "---\n"
+        "name: private-role-method\n"
+        "description: Private role method.\n"
+        "---\n"
+        "# Private role method\n",
+    )
+    manifest_path = bundle / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["sources"].append("aosk")
+    write(manifest_path, json.dumps(manifest))
+    projected = projection_fixture(tmp_path, bundle)
+    repo, cwd = repo_fixture(tmp_path)
+
+    snapshot = context.build_snapshot(
+        bundle,
+        projected,
+        provider,
+        repo,
+        cwd,
+        role="ops",
+        seat="codex",
+        additional_providers={"aosk": private_provider},
+    )
+
+    assert snapshot["bundle"]["sources"] == ["roster:core", "aos", "aosk"]
+    assert list(snapshot["providers"]) == ["aos", "aosk"]
+    assert snapshot["skills"]["aosk/private-routing"]["class"] == "ordinary"
+    assert (
+        snapshot["skills"]["aosk/private-role-method"]["class"]
+        == "role-composed"
+    )
+
+
 @pytest.mark.parametrize(
     ("seat", "delivery"),
     [
@@ -664,6 +738,29 @@ def test_request_uses_aos_layout_model_class() -> None:
     for seat, model_class in context.load_aos_layout_model_classes().items():
         request = context._request_text("provider", "ops", seat)
         assert f'model-class "{model_class}"' in request
+
+
+def test_request_includes_named_additional_providers() -> None:
+    request = context._request_text(
+        "providers/aos",
+        "ops",
+        "codex",
+        {"aosk": "providers/aosk"},
+    )
+
+    assert 'source "aos" root="providers/aos" required=#true' in request
+    assert 'source "aosk" root="providers/aosk" required=#true' in request
+
+
+def test_parse_additional_provider_fails_closed() -> None:
+    assert context.parse_additional_provider("aosk=/tmp/aosk") == (
+        "aosk",
+        Path("/tmp/aosk"),
+    )
+    with pytest.raises(RuntimeError, match="ID=PATH"):
+        context.parse_additional_provider("aosk")
+    with pytest.raises(RuntimeError, match="reserved"):
+        context.parse_additional_provider("aos=/tmp/aos")
 
 
 def test_plugin_skill_collision_fails_closed(tmp_path: Path) -> None:

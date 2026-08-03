@@ -497,6 +497,16 @@ def main() -> int:
         help="AOS provider root for role-seat measurement (defaults to this checkout)",
     )
     parser.add_argument(
+        "--additional-provider",
+        action="append",
+        default=[],
+        metavar="ID=PATH",
+        help=(
+            "additional role-capability provider for role-seat measurement; "
+            "repeatable"
+        ),
+    )
+    parser.add_argument(
         "--repo",
         type=Path,
         default=Path(__file__).resolve().parents[2],
@@ -565,16 +575,27 @@ def main() -> int:
     args = parser.parse_args()
     if bool(args.role) != bool(args.seat):
         parser.error("--role and --seat must be provided together")
+    if args.additional_provider and not args.role:
+        parser.error("--additional-provider requires --role and --seat")
     if args.role and args.seat:
         from agentic_os.context_budget_role_seat import (
             capture_snapshot,
             load_snapshot,
+            parse_additional_provider,
             render_delta,
             render_snapshot,
             write_snapshot,
         )
 
         try:
+            additional_providers: dict[str, Path] = {}
+            for raw_provider in args.additional_provider:
+                source_id, source_root = parse_additional_provider(raw_provider)
+                if source_id in additional_providers:
+                    raise RuntimeError(
+                        f"provider source id is duplicated: {source_id}"
+                    )
+                additional_providers[source_id] = source_root
             snapshot = capture_snapshot(
                 args.provider,
                 args.repo,
@@ -582,6 +603,7 @@ def main() -> int:
                 role=args.role,
                 seat=args.seat,
                 agent_compose=args.agent_compose,
+                additional_providers=additional_providers,
                 plugin_roots=args.skill_root,
                 mcporter_path=args.mcporter,
             )

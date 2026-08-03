@@ -22,6 +22,8 @@ live service.
 
 The AOS checkout is the default provider, repository, and CWD. `--provider`,
 `--repo`, and `--cwd` make those inputs explicit for fixtures or reproduction.
+Named multi-provider capture is part of the
+[role-seat capture workflow](context-budget-role-seat-capture.md).
 
 ## Measurement boundary
 
@@ -56,25 +58,6 @@ Codex measurements beside the low-context Goose and OpenCode measurements.
 
 ## Capture and compare
 
-Capture a role-seat snapshot with:
-
-```sh
-ward exec context-budget -- --role ops --seat codex \
-  --snapshot docs/context-budget-ops-codex-current.yaml
-```
-
-To compare a refactor, first copy the current snapshot to a task-scoped
-baseline path. Then render the component and total delta into the current
-checkpoint:
-
-```sh
-ward exec context-budget -- --role ops --seat codex \
-  --compare /tmp/context-budget-ops-codex-baseline.yaml \
-  --snapshot docs/context-budget-ops-codex-current.yaml
-```
-
-`--skill-root` adds a seat or plugin skill root when the projected runtime
-declares one outside the verified bundle. Duplicate skill ids, an unknown role
-or AOS seat, a model-class mismatch, personality drift, a malformed provider,
-a wrong bundle role, an unsafe projected entry point, or a mismatched
-comparison subject fails closed.
+The [role-seat capture workflow](context-budget-role-seat-capture.md) gives the
+single-provider, multi-provider, and comparison commands plus their fail-closed
+validation contract.
