@@ -44,12 +44,10 @@ such as `composed-skill "coding-*"`. Keep unrelated sources exact. Agent-compose
 matches in lexical order and fails when a pattern is invalid, empty, or overlapping.
 A future source matching the family is intentionally admitted without another role edit.
 
-The complete `coding-*` family and `mcp-server-patterns` are composed for engineer,
-director, QA, and ops. `design-system` is composed for design, engineer, and QA.
-Community receives only the Discord architecture and hosting sources.
-
-Portfolio Strategist receives the deduplicated advisor, PM, and CEO method set. Content receives the deduplicated technical-writing and social method set.
-Sales and customer-success methods stay unbound because v2 has no replacement.
+Role slices follow the complete coding, design, community, strategy, content,
+verification, and operations boundaries recorded in `.agents/roles.kdl`. The
+[role-skill coverage audit](role-skill-coverage-audit.md) records the second-pass
+placement rationale and deliberate exclusions without duplicating that config.
 
 The [principal workflow matrix](role-composed-principal-methods.md) records the broader role-gated method catalog and handoffs.
 

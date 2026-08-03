@@ -40,6 +40,7 @@ roles {
         composed-skill mcp-server-patterns
         composed-skill tooling-code-review
         composed-skill "tooling-qa-*"
+        composed-skill tooling-supply-chain-audit
         composed-skill writing-public-repos
         // BEGIN generated role-intent harness routes
         intent code-review {
@@ -79,7 +80,11 @@ roles {
     }
     role community {
         composed-skill coding-discord-bot-architect
+        composed-skill tooling-customer-success-signal-routing
+        composed-skill tooling-customer-success-trust-repair
         composed-skill tooling-discord-community-host
+        composed-skill writing-social-cultural-reading
+        composed-skill writing-social-trust-boundaries
         // BEGIN generated role-intent harness routes
         intent knowledge-retrieval {
             harness sirens-echo
