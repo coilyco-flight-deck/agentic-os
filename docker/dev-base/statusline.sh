@@ -40,6 +40,7 @@ project_dir="$(printf '%s' "$payload_flat" \
 self="${BASH_SOURCE[0]}"
 self_dir="$(cd "$(dirname "$self")" && pwd)"
 export AOS_STATUSLINE_HOME="$self_dir"
+export AOS_STATUSLINE_PROJECT_DIR="$project_dir"
 
 base_dir="${AOS_STATUSLINE_DIR:-$self_dir/statusline.d}"
 user_dir="${XDG_CONFIG_HOME:-$HOME/.config}/agentic-os/statusline.d"

@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""Wire the agent self-name into ~/.claude/settings.json.
+"""Wire the composed status line and agent self-name into Claude Code.
 
-Installs two surfaces, both backed by scripts/agent-name.sh:
-  - statusLine: a persistent footer showing claude-<os>-<hostname>-<tag>.
-  - SessionStart hook: injects the same name into the agent's context.
+Installs two surfaces:
+  - statusLine: the provider composer, including self-name and composition rows.
+  - SessionStart: the agent self-name injected into the agent's context.
 
 Merge rules, idempotent and conservative:
-  - statusLine is set only if absent or already pointing at agent-name.sh.
+  - statusLine is set only if absent or already managed by this installer.
+    The legacy direct agent-name.sh status line migrates to the composer.
     A status line the operator set to something else is left untouched.
   - The SessionStart hook is added once; re-runs that find an agent-name.sh
     command already registered make no change.
@@ -29,21 +30,24 @@ from pathlib import Path
 HOME = Path.home()
 SCRIPT_DIR = Path(__file__).resolve().parent
 NAME_SCRIPT = SCRIPT_DIR / "agent-name.sh"
+STATUSLINE_SCRIPT = SCRIPT_DIR.parent / "docker" / "dev-base" / "statusline.sh"
 SETTINGS_PATH = HOME / ".claude" / "settings.json"
 
-def _cmd(mode: str) -> str:
-    """Command string for a given agent-name.sh mode.
+def _cmd(script: Path, mode: str = "") -> str:
+    """Build a cross-platform command string for one shell script.
 
     On Windows, Claude Code cannot exec a .sh directly, so the script is run
     through bash (resolved on PATH). Elsewhere the shebang handles it.
     """
+    suffix = f" {mode}" if mode else ""
     if os.name == "nt":
-        return f'bash "{NAME_SCRIPT.as_posix()}" {mode}'
-    return f"{NAME_SCRIPT} {mode}"
+        return f'bash "{script.as_posix()}"{suffix}'
+    return f"{script}{suffix}"
 
 
-STATUSLINE_CMD = _cmd("statusline")
-SESSIONSTART_CMD = _cmd("sessionstart")
+STATUSLINE_CMD = _cmd(STATUSLINE_SCRIPT)
+LEGACY_STATUSLINE_CMD = _cmd(NAME_SCRIPT, "statusline")
+SESSIONSTART_CMD = _cmd(NAME_SCRIPT, "sessionstart")
 SESSIONSTART_MATCHER = "startup|resume|clear"
 
 
@@ -59,7 +63,7 @@ def merge_statusline(settings: dict) -> bool:
     current = settings.get("statusLine")
     if isinstance(current, dict):
         cmd = current.get("command", "")
-        if "agent-name.sh" not in cmd and cmd != "":
+        if cmd not in {"", STATUSLINE_CMD, LEGACY_STATUSLINE_CMD}:
             print(f"kept existing statusLine ({cmd!r}); not overwriting")
             return False
     desired = {"type": "command", "command": STATUSLINE_CMD, "padding": 2}
@@ -101,9 +105,10 @@ def main() -> int:
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
-    if not NAME_SCRIPT.exists():
-        print(f"error: {NAME_SCRIPT} not found", file=sys.stderr)
-        return 1
+    for script in (NAME_SCRIPT, STATUSLINE_SCRIPT):
+        if not script.exists():
+            print(f"error: {script} not found", file=sys.stderr)
+            return 1
 
     settings = load_settings(SETTINGS_PATH)
     changed = merge_statusline(settings)
@@ -114,11 +119,11 @@ def main() -> int:
         return 0
 
     if not changed:
-        print(f"agent self-name already wired in {SETTINGS_PATH}")
+        print(f"status line and agent self-name already wired in {SETTINGS_PATH}")
         return 0
 
     write_settings(SETTINGS_PATH, settings)
-    print(f"wrote   {SETTINGS_PATH} (agent self-name: statusLine + SessionStart)")
+    print(f"wrote   {SETTINGS_PATH} (provider status line + SessionStart self-name)")
     return 0
 
 

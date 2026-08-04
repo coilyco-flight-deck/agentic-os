@@ -33,8 +33,10 @@ Setup, after `brew install --cask karabiner-elements`:
 
 - `check-aws-config.py` - reject the `[profile default]` trap in `~/.aws/config` that surfaces later as a cryptic `NoRegion` from SSM/S3.
 - `gpg-ssm` / `gpg-ssm.cmd` - GPG signing wrapper that pulls the passphrase from AWS SSM at `/coilysiren/gpg-passphrase` and bootstraps `/coilysiren/gpg-secret-key` when the configured signing key is missing locally. The `.cmd` is a bash.exe shim Git for Windows needs.
-- `agent-name.sh` - decorate the agent self-name for the Claude Code status line or the SessionStart hook. The name comes from `ward agent-name` with a local fallback when ward is absent.
-- `install-agent-name.py` - idempotently wire `agent-name.sh` into `~/.claude/settings.json` as both a status line and a SessionStart hook.
+- `agent-name.sh` - render the agent self-name for the status-line provider or
+  SessionStart hook. The name comes from `ward agent-name` with a local fallback.
+- `install-agent-name.py` - idempotently wire the provider composer as Claude
+  Code's status line and `agent-name.sh` as its SessionStart hook.
 - `agent-compose-freshen.sh` - refresh composed context at SessionStart and surface skipped sources.
 - `install-agent-compose-freshen.py` - idempotently wire the composition refresh into `~/.claude/settings.json`.
 

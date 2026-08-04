@@ -14,7 +14,7 @@ The ansible `shell` role (in the infrastructure repo) symlinks, by `ansible_syst
 - the Forgejo Docker credential helper from `scripts/docker-credential-forgejo-ssm*`
 - the `~/.local/bin` PATH helpers
 
-A pre-existing regular shell or Alacritty config is backed up to `<path>.bak` before linking. The `claude-hooks` role then runs `install-agent-name.py` (status line + SessionStart self-name hook) and `install-agent-compose-freshen.py` (SessionStart composition refresh). Both are idempotent and never clobber a status line you set yourself. The manual symlink fallback (no ansible) is in [the README](../README.md).
+A pre-existing regular shell or Alacritty config is backed up to `<path>.bak` before linking. The `claude-hooks` role then runs `install-agent-name.py` (provider-composed status line + SessionStart self-name hook) and `install-agent-compose-freshen.py` (SessionStart composition refresh). Both are idempotent and never clobber a status line you set yourself. The manual symlink fallback (no ansible) is in [the README](../README.md).
 
 `ward exec apply-shell-links` is the local repair path for the same shell links. It repoints stale symlinks, backs up pre-existing regular files, and supports `ward exec apply-shell-links -- --check` for drift detection. On Windows it intentionally skips `~/.bashrc` and links each `.cmd` wrapper with its sibling Bash implementation; Git Bash popup launchers should not recreate that file.
 

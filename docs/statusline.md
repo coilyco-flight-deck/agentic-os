@@ -2,8 +2,8 @@
 
 A provider-discovery framework that auto-mounts the **full segment-composed
 status line** into every warded container, so an in-container agent session
-shows the same multi-row line a host session does - not just the agent-name row
-See docs/dev-base-self-name.md.
+shows the same multi-row line a host session does, not just the agent-name row.
+See [the self-name provider](dev-base-self-name.md).
 
 ## The problem it replaces
 
@@ -26,9 +26,18 @@ non-zero exit = skipped. So a segment **self-suppresses** when irrelevant - the
 [repo-tracker](repo-tracker.md) renders nothing in a single-clone container,
 where its scan root does not exist.
 
-The two existing segments are now providers: agent-name -> `10-agent-name.sh`
-(a shim delegating to the sibling [`agent-name.sh`](dev-base-self-name.md)
-statusline mode), repo-tracker -> `20-repos.sh`.
+The built-in providers are:
+
+* `10-agent-name.sh` - delegates to the host or image
+  [`agent-name.sh`](dev-base-self-name.md).
+* `15-agent-compose.sh` - asks `acompose statusline` to render the immutable
+  bundle identity, role and harness, model class, selected catalog footprint,
+  and composition health. It self-suppresses outside a projected workspace.
+* `20-repos.sh` - renders the [repo checkout tracker](repo-tracker.md).
+
+Agent Compose owns the second row's content and bundle semantics. AOS only
+discovers the provider and passes the project directory, so the status line
+does not grow a second projection parser or identity cache.
 
 ## Discovery and overlays
 
@@ -50,10 +59,10 @@ Every warded container runs dev-base, and the baked policy-tier
 [`managed-settings.json`](dev-base-self-name.md) points `statusLine` at the
 composer. ward injects no `statusLine` of its own, so the baked one is
 authoritative. A new base provider rides the next image build to **all**
-containers at once, with no per-container or per-host edit. Per doctrine the host
-rollout (the claude-hooks ansible role pointing the host `statusLine` at this
-composer) lands in infrastructure/ansible; the composer and providers authored
-here are host-portable so host and container stay format-identical.
+containers at once, with no per-container edit. On hosts,
+`install-agent-name.py` conservatively migrates its legacy direct self-name
+command to this composer. The infrastructure claude-hooks role invokes that
+installer, keeping rollout separate from the provider authored here.
 
 ## See also
 

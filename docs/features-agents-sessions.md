@@ -12,9 +12,13 @@ auto-memory and denies the `claude-in-chrome` computer-use MCP while preserving
 other user denies. Other harnesses export `AOS_AGENT_HARNESS=<harness>` and use
 the hook points they expose. Local computation stays authoritative.
 
-### Second status-line row
+### Composed status line
 
-Two hooks add optional rows: project-local `$project_dir/.agentic-os/statusline.sh` for per-project status, and `$AGENT_STATUSLINE_EXTRA` (an executable) for host-global. A harness wires its own; this repo ships a [repo-checkout tracker](repo-tracker.md).
+The [status-line composer](statusline.md) discovers ordered providers on hosts
+and in dev-base containers. Its built-ins show the agent self-name, the active
+Agent Compose seat and bundle health, and the optional
+[repo-checkout tracker](repo-tracker.md). User and repository provider
+directories can add, replace, or mask rows without forking the composer.
 
 ## Composed cross-harness agent context
 
