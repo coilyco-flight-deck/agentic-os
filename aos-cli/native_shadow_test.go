@@ -422,11 +422,100 @@ func TestLiveNativeSessionIsNotCleaned(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !live[filepath.Clean(lease.Artifacts[0].Worktree)] {
+	if !live.contains(lease.Artifacts[0].Worktree) {
 		t.Fatal("live worktree was not leased")
 	}
 	if _, err := os.Stat(lease.Artifacts[0].Worktree); err != nil {
 		t.Fatalf("live worktree was removed: %v", err)
+	}
+}
+
+func TestNativeSweepPreservesLiveWorktreeAcrossPathAlias(t *testing.T) {
+	root := t.TempDir()
+	repository, _ := createNativeTestRepository(t, root, "owner", "one")
+	runtime := nativeTestRuntime(t, root)
+	writeNativeTestList(t, runtime.ExpectedFile, "one")
+	writeNativeTestList(t, runtime.FleetFile, "owner")
+	if err := os.MkdirAll(runtime.SessionsRoot, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	aliasRoot := filepath.Join(root, "sessions-alias")
+	if err := os.Symlink(runtime.SessionsRoot, aliasRoot); err != nil {
+		t.Skipf("symlinks unavailable: %v", err)
+	}
+	if _, err := prepareNativeLaunch(runtime, "codex"); err != nil {
+		t.Fatal(err)
+	}
+	leasePath, lease := onlyNativeLease(t, runtime)
+	active := lease.Artifacts[0]
+	relative, err := filepath.Rel(runtime.SessionsRoot, active.Worktree)
+	if err != nil {
+		t.Fatal(err)
+	}
+	lease.Artifacts[0].Worktree = filepath.Join(aliasRoot, relative)
+	if !samePath(active.Worktree, lease.Artifacts[0].Worktree) {
+		t.Fatal("lease alias does not resolve to the active worktree")
+	}
+	if filepath.Clean(active.Worktree) == filepath.Clean(lease.Artifacts[0].Worktree) {
+		t.Fatal("lease alias is not textually distinct from the active worktree")
+	}
+	if err := writeNativeJSON(leasePath, lease); err != nil {
+		t.Fatal(err)
+	}
+
+	controlBranch := "inactive-control"
+	control := filepath.Join(root, "inactive-control")
+	testGit(t, repository, "worktree", "add", "-b", controlBranch, control, "origin/main")
+	testGit(t, control, "push", "-u", "origin", controlBranch)
+	runtime.Now = runtime.Now.Add(nativeSweepInterval)
+
+	if _, err := prepareNativeLaunch(runtime, "claude"); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := os.Stat(active.Worktree); err != nil {
+		t.Fatalf("live worktree was removed through its path alias: %v", err)
+	}
+	if output := testGit(t, repository, "branch", "--list", active.Branch); output == "" {
+		t.Fatal("live worktree branch was removed")
+	}
+	if _, err := os.Stat(control); !os.IsNotExist(err) {
+		t.Fatalf("inactive control worktree remains: %v", err)
+	}
+	if output := testGit(t, repository, "branch", "--list", controlBranch); output != "" {
+		t.Fatalf("inactive control branch remains: %s", output)
+	}
+}
+
+func TestNativeLiveWorktreesFailClosedWhenPathIdentityIsUncertain(t *testing.T) {
+	missing := filepath.Join(t.TempDir(), "missing")
+	if (nativeLiveWorktrees{}).contains(missing) {
+		t.Fatal("empty live set preserved an unrelated missing path")
+	}
+	live := nativeLiveWorktrees{}
+	live.add(missing)
+
+	if !live.contains(t.TempDir()) {
+		t.Fatal("uncertain live path allowed workspace cleanup")
+	}
+}
+
+func TestUnreadableNativeLeaseFailsClosed(t *testing.T) {
+	runtime := nativeTestRuntime(t, t.TempDir())
+	leasePath := nativeStatePath(runtime, "leases", "unreadable.json")
+	if err := os.MkdirAll(filepath.Dir(leasePath), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(leasePath, []byte("not JSON\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	live, err := cleanDeadNativeSessions(runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !live.contains(t.TempDir()) {
+		t.Fatal("unreadable lease allowed workspace cleanup")
 	}
 }
 
@@ -508,7 +597,7 @@ func TestNativeSweepReturnsExpectedCheckoutToMain(t *testing.T) {
 
 	if err := normalizeNativeRepository(runtime, nativeRepository{
 		Owner: "owner", Name: "one", Path: repository,
-	}, map[string]bool{}); err != nil {
+	}, nativeLiveWorktrees{}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -531,7 +620,7 @@ func TestNativeSweepReclaimsMainBeforeSwitchingCanonicalCheckout(t *testing.T) {
 
 	if err := normalizeNativeRepository(runtime, nativeRepository{
 		Owner: "owner", Name: "one", Path: repository,
-	}, map[string]bool{}); err != nil {
+	}, nativeLiveWorktrees{}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -556,7 +645,7 @@ func TestUnexpectedCloneDeletedOnThirdSweep(t *testing.T) {
 	if eligible, _ := unexpectedCloneEligible(
 		runtime,
 		nativeRepository{Owner: "owner", Name: "extra", Path: repository},
-		map[string]bool{},
+		nativeLiveWorktrees{},
 		expected.FleetOrgs,
 	); !eligible {
 		t.Fatal("clean unexpected clone was not eligible")
@@ -568,7 +657,7 @@ func TestUnexpectedCloneDeletedOnThirdSweep(t *testing.T) {
 	for scan := 1; scan <= 3; scan++ {
 		runtime.Now = runtime.Now.Add(nativeSweepInterval)
 		if err := runNativeWorkspaceSweep(
-			runtime, nil, expected, map[string]bool{}, state,
+			runtime, nil, expected, nativeLiveWorktrees{}, state,
 		); err != nil {
 			t.Fatal(err)
 		}
@@ -599,7 +688,7 @@ func TestUnexpectedCloneCounterResetsWhenStateChanges(t *testing.T) {
 	}
 
 	runtime.Now = runtime.Now.Add(nativeSweepInterval)
-	if err := runNativeWorkspaceSweep(runtime, nil, expected, map[string]bool{}, state); err != nil {
+	if err := runNativeWorkspaceSweep(runtime, nil, expected, nativeLiveWorktrees{}, state); err != nil {
 		t.Fatal(err)
 	}
 	state = nativeSweepState{}
@@ -610,7 +699,7 @@ func TestUnexpectedCloneCounterResetsWhenStateChanges(t *testing.T) {
 		t.Fatal(err)
 	}
 	runtime.Now = runtime.Now.Add(nativeSweepInterval)
-	if err := runNativeWorkspaceSweep(runtime, nil, expected, map[string]bool{}, state); err != nil {
+	if err := runNativeWorkspaceSweep(runtime, nil, expected, nativeLiveWorktrees{}, state); err != nil {
 		t.Fatal(err)
 	}
 	state = nativeSweepState{}
@@ -624,7 +713,7 @@ func TestUnexpectedCloneCounterResetsWhenStateChanges(t *testing.T) {
 		t.Fatal(err)
 	}
 	runtime.Now = runtime.Now.Add(nativeSweepInterval)
-	if err := runNativeWorkspaceSweep(runtime, nil, expected, map[string]bool{}, state); err != nil {
+	if err := runNativeWorkspaceSweep(runtime, nil, expected, nativeLiveWorktrees{}, state); err != nil {
 		t.Fatal(err)
 	}
 	state = nativeSweepState{}

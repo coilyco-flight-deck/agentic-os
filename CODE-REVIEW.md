@@ -14,6 +14,9 @@ large enough to stop the work.
 * Dev-base manifest inspections stay bounded per call. A Buildx client stall
   must consume the short retry budget, not the outer image-build budget.
   Definitive registry 404 responses are immediate checkpoint misses.
+* Native workspace cleanup compares live leases and Git worktrees by resolved
+  filesystem identity. Lexical aliases must not make an active worktree appear
+  unleased to the fleet sweep (agentic-os#858).
 
 ## Update triggers
 

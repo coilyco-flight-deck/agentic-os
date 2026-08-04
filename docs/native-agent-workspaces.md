@@ -33,9 +33,9 @@ Assigned launches apply [bounded native Codex hook trust](native-codex-hook-trus
 
 ## Startup leases
 
-One JSON lease covers the session. It records process identity, source and
-session directories, repositories, branches, and worktrees. Exec preserves the
-PID through the vendor binary. The next launch detects a closed terminal.
+One JSON lease records process identity, directories, repositories, branches,
+and worktrees. Exec preserves the PID through the vendor binary, and the next
+launch detects a closed terminal. Resolved identity keeps path aliases leased.
 
 Every launch cleans dead leases before creating its workspace. Live leases stay.
 A clean dead worktree is removed only when its branch tip is reachable from

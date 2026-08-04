@@ -71,6 +71,11 @@ type nativeWorktree struct {
 	Branch string
 }
 
+type nativeLiveWorktrees struct {
+	paths     map[string]struct{}
+	uncertain bool
+}
+
 type nativeRuntime struct {
 	Now          time.Time
 	PID          int
@@ -339,6 +344,48 @@ func nativeStatePath(runtime nativeRuntime, parts ...string) string {
 	return filepath.Join(append([]string{runtime.StateRoot}, parts...)...)
 }
 
+func nativePathKey(path string) (string, error) {
+	if strings.TrimSpace(path) == "" {
+		return "", fmt.Errorf("native path is empty")
+	}
+	absolute, err := filepath.Abs(path)
+	if err != nil {
+		return "", fmt.Errorf("resolve absolute native path %s: %w", path, err)
+	}
+	resolved, err := filepath.EvalSymlinks(absolute)
+	if err != nil {
+		return "", fmt.Errorf("resolve native path %s: %w", path, err)
+	}
+	return filepath.Clean(resolved), nil
+}
+
+func (live *nativeLiveWorktrees) add(path string) {
+	key, err := nativePathKey(path)
+	if err != nil {
+		live.uncertain = true
+		return
+	}
+	if live.paths == nil {
+		live.paths = map[string]struct{}{}
+	}
+	live.paths[key] = struct{}{}
+}
+
+func (live nativeLiveWorktrees) contains(path string) bool {
+	if live.uncertain {
+		return true
+	}
+	if len(live.paths) == 0 {
+		return false
+	}
+	key, err := nativePathKey(path)
+	if err != nil {
+		return true
+	}
+	_, found := live.paths[key]
+	return found
+}
+
 func readNativeJSON(path string, target any) error {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -387,16 +434,16 @@ func nativeGit(directory string, args ...string) (string, error) {
 	return strings.TrimSpace(string(output)), nil
 }
 
-func cleanDeadNativeSessions(runtime nativeRuntime) (map[string]bool, error) {
+func cleanDeadNativeSessions(runtime nativeRuntime) (nativeLiveWorktrees, error) {
 	leaseDir := nativeStatePath(runtime, "leases")
 	entries, err := os.ReadDir(leaseDir)
 	if errors.Is(err, fs.ErrNotExist) {
-		return map[string]bool{}, nil
+		return nativeLiveWorktrees{}, nil
 	}
 	if err != nil {
-		return nil, fmt.Errorf("read native leases: %w", err)
+		return nativeLiveWorktrees{}, fmt.Errorf("read native leases: %w", err)
 	}
-	live := map[string]bool{}
+	live := nativeLiveWorktrees{}
 	for _, entry := range entries {
 		if entry.IsDir() || filepath.Ext(entry.Name()) != ".json" {
 			continue
@@ -404,12 +451,13 @@ func cleanDeadNativeSessions(runtime nativeRuntime) (map[string]bool, error) {
 		path := filepath.Join(leaseDir, entry.Name())
 		var lease nativeLease
 		if err := readNativeJSON(path, &lease); err != nil {
+			live.uncertain = true
 			fmt.Fprintf(runtime.Stderr, "aos: preserving unreadable native lease %s\n", path)
 			continue
 		}
 		if nativeLeaseIsLive(lease) {
 			for _, artifact := range lease.Artifacts {
-				live[filepath.Clean(artifact.Worktree)] = true
+				live.add(artifact.Worktree)
 			}
 			continue
 		}
@@ -430,13 +478,13 @@ func cleanDeadNativeSessions(runtime nativeRuntime) (map[string]bool, error) {
 			lease.ProcessStart = ""
 			lease.Artifacts = remaining
 			if err := writeNativeJSON(path, lease); err != nil {
-				return nil, fmt.Errorf("update preserved native lease: %w", err)
+				return nativeLiveWorktrees{}, fmt.Errorf("update preserved native lease: %w", err)
 			}
 			continue
 		}
 		_ = os.RemoveAll(lease.SessionRoot)
 		if err := os.Remove(path); err != nil && !errors.Is(err, fs.ErrNotExist) {
-			return nil, fmt.Errorf("remove native lease: %w", err)
+			return nativeLiveWorktrees{}, fmt.Errorf("remove native lease: %w", err)
 		}
 	}
 	return live, nil
@@ -525,7 +573,7 @@ func runNativeWorkspaceSweep(
 	runtime nativeRuntime,
 	repositories []nativeRepository,
 	expected nativeExpected,
-	live map[string]bool,
+	live nativeLiveWorktrees,
 	state nativeSweepState,
 ) error {
 	for _, repository := range repositories {
@@ -577,9 +625,9 @@ func runNativeWorkspaceSweep(
 func normalizeNativeRepository(
 	runtime nativeRuntime,
 	repository nativeRepository,
-	live map[string]bool,
+	live nativeLiveWorktrees,
 ) error {
-	if live[filepath.Clean(repository.Path)] || humanWorkdir(repository.Path) {
+	if live.contains(repository.Path) || humanWorkdir(repository.Path) {
 		return nil
 	}
 	if inProgress, err := nativeGitOperationInProgress(repository.Path); err != nil || inProgress {
@@ -622,14 +670,14 @@ func normalizeNativeRepository(
 func cleanUnleasedNativeWorktrees(
 	runtime nativeRuntime,
 	repository nativeRepository,
-	live map[string]bool,
+	live nativeLiveWorktrees,
 ) error {
 	worktrees, err := listNativeWorktrees(repository.Path)
 	if err != nil {
 		return err
 	}
 	for _, worktree := range worktrees {
-		if samePath(worktree.Path, repository.Path) || live[filepath.Clean(worktree.Path)] ||
+		if samePath(worktree.Path, repository.Path) || live.contains(worktree.Path) ||
 			humanWorkdir(worktree.Path) {
 			continue
 		}
@@ -701,10 +749,10 @@ func listNativeWorktrees(repository string) ([]nativeWorktree, error) {
 func unexpectedCloneEligible(
 	runtime nativeRuntime,
 	repository nativeRepository,
-	live map[string]bool,
+	live nativeLiveWorktrees,
 	fleetOrgs map[string]bool,
 ) (bool, string) {
-	if !fleetOrgs[repository.Owner] || live[filepath.Clean(repository.Path)] ||
+	if !fleetOrgs[repository.Owner] || live.contains(repository.Path) ||
 		humanWorkdir(repository.Path) {
 		return false, ""
 	}
