@@ -17,8 +17,11 @@ tier_tag() {
 }
 
 manifest_digest() {
-  docker buildx imagetools inspect "$1" 2>/dev/null \
-    | awk '$1 == "Digest:" { print $2; exit }'
+  local output
+  if ! output=$(docker buildx imagetools inspect "$1" 2>/dev/null); then
+    return 0
+  fi
+  awk '$1 == "Digest:" { print $2; exit }' <<< "$output"
 }
 
 target="${IMAGE_BASE}:$(tier_tag "$TIER" "$TAG")"
@@ -42,9 +45,9 @@ if [ "$MODE" = promote ]; then
   fi
 fi
 
-read -r -a aliases <<< "${ALIAS:-} ${EXTRA_ALIASES:-}"
-for moving_tag in "${aliases[@]}"; do
-  [ -n "$moving_tag" ] || continue
+aliases="${ALIAS:-} ${EXTRA_ALIASES:-}"
+# shellcheck disable=SC2086 # Alias inputs are whitespace-separated tag lists.
+for moving_tag in $aliases; do
   alias_ref="${IMAGE_BASE}:$(tier_tag "$TIER" "$moving_tag")"
   if [ "$(manifest_digest "$alias_ref")" != "$expected_digest" ]; then
     echo "skip_publish=false" >> "$GITHUB_OUTPUT"

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -28,6 +30,46 @@ VERIFY_FULL = (
     / "scripts"
     / "verify-full.sh"
 )
+
+
+def _run_checkpoint(tmp_path: Path, **overrides: str) -> tuple[subprocess.CompletedProcess[str], str]:
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    docker = bin_dir / "docker"
+    docker.write_text(
+        """#!/usr/bin/env bash
+ref=${@: -1}
+case "$ref" in
+  *:lang-node-missing) exit 1 ;;
+  *:lang-node-existing|*:release) printf 'Digest: sha256:target\\n' ;;
+  *:draft-source) printf 'Digest: sha256:source\\n' ;;
+  *) exit 1 ;;
+esac
+""",
+        encoding="utf-8",
+    )
+    docker.chmod(0o755)
+    output = tmp_path / "github-output"
+    env = os.environ | {
+        "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
+        "GITHUB_OUTPUT": str(output),
+        "IMAGE_BASE": "registry.example.invalid/org/image",
+        "MODE": "build",
+        "TIER": "lang-node",
+        "TAG": "missing",
+        "ALIAS": "",
+        "EXTRA_ALIASES": "",
+        "SOURCE_TAG": "",
+        **overrides,
+    }
+    completed = subprocess.run(
+        ["bash", str(CHECKPOINT)],
+        check=False,
+        capture_output=True,
+        env=env,
+        text=True,
+    )
+    return completed, output.read_text(encoding="utf-8") if output.exists() else ""
 
 
 def _assert_alert_steps_are_non_blocking(text: str) -> None:
@@ -84,6 +126,33 @@ def test_promotion_fails_closed_for_language_payloads() -> None:
         text = path.read_text(encoding="utf-8")
         assert '"$TIER" != full' in text
         assert "only the full dev-base image is a promotable release product" in text
+
+
+def test_checkpoint_treats_an_absent_draft_manifest_as_a_build_miss(tmp_path: Path) -> None:
+    completed, output = _run_checkpoint(tmp_path)
+
+    assert completed.returncode == 0, completed.stderr
+    assert output == "skip_publish=false\n"
+
+
+def test_checkpoint_skips_an_existing_build_manifest(tmp_path: Path) -> None:
+    completed, output = _run_checkpoint(tmp_path, TAG="existing")
+
+    assert completed.returncode == 0, completed.stderr
+    assert output == "skip_publish=true\n"
+
+
+def test_checkpoint_rebuilds_a_mismatched_promotion_target(tmp_path: Path) -> None:
+    completed, output = _run_checkpoint(
+        tmp_path,
+        MODE="promote",
+        TIER="full",
+        TAG="release",
+        SOURCE_TAG="draft-source",
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    assert output == "skip_publish=false\n"
 
 
 def test_publish_workflow_keeps_resume_inputs_and_non_blocking_alerts() -> None:
