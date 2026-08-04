@@ -249,6 +249,31 @@ func TestAssignedNativeRoleExportsAOSModelClass(t *testing.T) {
 	}
 }
 
+func TestNativeShadowProtectsClaudeInstall(t *testing.T) {
+	tests := []struct {
+		name     string
+		harness  string
+		isolated bool
+		want     string
+	}{
+		{name: "isolated Claude", harness: "claude", isolated: true, want: "1"},
+		{name: "host Claude", harness: "claude", isolated: false, want: "original"},
+		{name: "isolated Codex", harness: "codex", isolated: true, want: "original"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Setenv(claudeDisableAutoUpdaterEnv, "original")
+
+			if err := protectNativeHarnessInstall(test.harness, test.isolated); err != nil {
+				t.Fatal(err)
+			}
+			if got := os.Getenv(claudeDisableAutoUpdaterEnv); got != test.want {
+				t.Fatalf("%s = %q, want %q", claudeDisableAutoUpdaterEnv, got, test.want)
+			}
+		})
+	}
+}
+
 func TestNativeCodexWorkspaceTrustIsScopedToGeneratedProject(t *testing.T) {
 	project := "/tmp/aos/native/session/projects"
 	override := `projects={"/tmp/aos/native/session/projects"={trust_level="trusted"}}`

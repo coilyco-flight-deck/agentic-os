@@ -6,11 +6,10 @@ fleet-shaped workspace. No timer, daemon, exit hook, or operator command runs.
 
 ## Workspace projection
 
-The expected-repositories file drives one linked worktree per native checkout.
-Resolution uses `$AOS_REPOS_EXPECTED`, then the conventional config path, then
-the embedded public baseline. Entries may be `owner/name` or bare names. The
-canonical checkout supplies Git objects. Each session receives a writable
-`aos/<harness>/<session-id>` branch.
+The expected-repositories file drives one linked worktree per checkout. Its
+resolution uses `$AOS_REPOS_EXPECTED`, the conventional config path, then the
+embedded baseline. Entries accept `owner/name` or bare names. The canonical
+checkout supplies Git objects for a writable `aos/<harness>/<session-id>` branch.
 
 A launch from `$PROJECTS_ROOT` enters:
 
@@ -22,14 +21,15 @@ with the owner/repository hierarchy reproduced below `projects`. A repository
 subdirectory maps to its session twin. An outside launch keeps its directory.
 It still receives the full leased fleet workspace.
 
-The shadow invokes agent-compose after projection, then execs the harness.
-Bare harness commands let the native roster infer a role.
+The shadow invokes agent-compose after projection, then execs the harness. Bare
+harness commands let the native roster infer a role.
 `acompose <role> <harness> [args...]` enters the clean shadow workspace for
 non-directors. Director uses warded AOS because Ward owns dispatch and its
 broker. Native AOS passes the harness model class and keeps role load points
 outside repository worktrees. Its shadow home links host state but leaves user
-skill directories empty. For Codex, an ephemeral override trusts only the
-generated workspace. Assigned launches also apply the bounded [native Codex hook trust](native-codex-hook-trust.md) contract.
+skill directories empty. Claude auto-updates are disabled so a leased home
+cannot replace the host launcher. Codex trusts only the generated workspace.
+Assigned launches apply [bounded native Codex hook trust](native-codex-hook-trust.md).
 
 ## Startup leases
 

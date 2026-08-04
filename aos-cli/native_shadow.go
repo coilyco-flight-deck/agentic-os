@@ -20,10 +20,11 @@ import (
 )
 
 const (
-	nativeSweepInterval        = 10 * time.Minute
-	nativeDeleteScans          = 3
-	agentComposeModelClassEnv  = "AGENT_COMPOSE_MODEL_CLASS"
-	agentComposeRuntimeHomeEnv = "AGENT_COMPOSE_RUNTIME_HOME"
+	nativeSweepInterval         = 10 * time.Minute
+	nativeDeleteScans           = 3
+	agentComposeModelClassEnv   = "AGENT_COMPOSE_MODEL_CLASS"
+	agentComposeRuntimeHomeEnv  = "AGENT_COMPOSE_RUNTIME_HOME"
+	claudeDisableAutoUpdaterEnv = "DISABLE_AUTOUPDATER"
 )
 
 //go:embed repositories/repos-on-disk.txt
@@ -111,7 +112,11 @@ func runNativeShadow(ctx context.Context, cmd *cli.Command) error {
 	if err := os.Chdir(launchCWD); err != nil {
 		return fmt.Errorf("enter native session workspace %s: %w", launchCWD, err)
 	}
-	if _, isolated := relativeWithin(runtime.SessionsRoot, launchCWD); isolated && harness == "codex" {
+	_, isolated := relativeWithin(runtime.SessionsRoot, launchCWD)
+	if err := protectNativeHarnessInstall(harness, isolated); err != nil {
+		return err
+	}
+	if isolated && harness == "codex" {
 		command = trustNativeCodexWorkspace(command, harness, nativeCodexProject(launchCWD))
 	}
 	if cmd.Bool("assigned-role") {
@@ -136,6 +141,16 @@ func runNativeShadow(ctx context.Context, cmd *cli.Command) error {
 		}
 	}
 	return execNative(command)
+}
+
+func protectNativeHarnessInstall(harness string, isolated bool) error {
+	if harness != "claude" || !isolated {
+		return nil
+	}
+	if err := os.Setenv(claudeDisableAutoUpdaterEnv, "1"); err != nil {
+		return fmt.Errorf("disable Claude auto-updater in native shadow: %w", err)
+	}
+	return nil
 }
 
 func nativeCodexProject(cwd string) string {
