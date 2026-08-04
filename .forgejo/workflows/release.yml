@@ -42,7 +42,7 @@ jobs:
   plan-release:
     runs-on: docker
     timeout-minutes: 20
-    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release
+    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:latest
     outputs:
       tag: ${{ steps.tag.outputs.new_tag }}
       version: ${{ steps.tag.outputs.new_version }}
@@ -96,7 +96,7 @@ jobs:
           mode: promote
           tag: ${{ needs.plan-release.outputs.tag }}
           source-tag: ${{ needs.plan-release.outputs.draft_tag }}
-          alias: ${{ github.ref_name }}
+          alias: release
           extra-aliases: latest
           registry-token: ${{ secrets.REGISTRY_TOKEN }}
           build-timeout: 80m
@@ -119,7 +119,7 @@ jobs:
     needs: [plan-release, retag-full]
     if: ${{ needs.plan-release.outputs.tag != '' }}
     runs-on: docker
-    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release
+    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:latest
     steps:
       - uses: actions/checkout@v6
         with:
