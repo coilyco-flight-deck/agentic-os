@@ -8,7 +8,7 @@
 # Forgejo only mints tokens via POST /users/{username}/tokens under HTTP basic
 # auth (token auth is rejected, and there is no admin mint endpoint), so this
 # authenticates as the bot with /forgejo/coilyco-ops/password to mint, then uses
-# the admin /forgejo/api-token only to write the repo Actions secret. The minted
+# the attended FORGEJO_ADMIN_TOKEN only to write the repo Actions secret. The minted
 # token carries no expiry. It never touches disk or stdout - it flows
 # mint -> verify -> SSM -> Actions secret entirely in process memory.
 #
@@ -30,9 +30,11 @@ api="https://${HOST}/api/v1"
 
 aosguard_ssm() { aosguard ops aws ssm "$@"; }
 
-admin_token="$(aosguard_ssm get-parameter --name /forgejo/api-token \
-  --with-decryption --query Parameter.Value --output text)"
-[ -n "$admin_token" ] || { echo "no /forgejo/api-token in SSM" >&2; exit 1; }
+admin_token="${FORGEJO_ADMIN_TOKEN:-}"
+[ -n "$admin_token" ] || {
+  echo "FORGEJO_ADMIN_TOKEN is required; load it with the attended infrastructure forgejo-admin-token helper" >&2
+  exit 1
+}
 bot_password="$(aosguard_ssm get-parameter --name /forgejo/${BOT_USER}/password \
   --with-decryption --query Parameter.Value --output text)"
 [ -n "$bot_password" ] || { echo "no /forgejo/${BOT_USER}/password in SSM" >&2; exit 1; }

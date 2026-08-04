@@ -37,11 +37,6 @@ wrap aosguard ops aws {
         allow-flag --name
         describe "delete one explicitly named SSM parameter"
     }
-    // secrets manager - the --secret-id kwarg is the resource
-    can run secretsmanager get-secret-value {
-        deny-when secret-id matches *prod*
-    }
-    can run secretsmanager list-secrets
     // s3 - the resource is a positional s3:// uri
     can run s3 ls {
         deny-when arg0 matches *tfstate* *-backup*

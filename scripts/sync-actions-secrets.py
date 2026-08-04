@@ -8,7 +8,8 @@ re-applying it one verb: `ward exec sync-actions-secrets` (add `-- --dry-run`
 to preview).
 
 Values never touch disk or argv: read from SSM with the AWS CLI, PUT straight
-to the Forgejo secrets API, authenticated by the /forgejo/api-token PAT.
+to the Forgejo secrets API, authenticated by the attended
+``FORGEJO_ADMIN_TOKEN`` value.
 """
 from __future__ import annotations
 
@@ -22,7 +23,6 @@ from pathlib import Path
 
 FORGEJO_BASE = "https://forgejo.coilysiren.me/api/v1"
 OWNER = "coilyco-flight-deck"
-API_TOKEN_PARAM = "/forgejo/api-token"
 TELEGRAM_DEFAULTS_PATH = (
     Path(__file__).resolve().parent.parent
     / "actions"
@@ -106,6 +106,17 @@ def put_secret(token: str, repo: str, name: str, value: str) -> None:
         response.read()
 
 
+def admin_token() -> str:
+    """Return the attended site-admin token supplied by the operator."""
+    token = os.environ.get("FORGEJO_ADMIN_TOKEN", "").strip()
+    if not token:
+        raise SystemExit(
+            "FORGEJO_ADMIN_TOKEN is required; load it with the attended "
+            "infrastructure forgejo-admin-token helper"
+        )
+    return token
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dry-run", action="store_true", help="print the plan, write nothing")
@@ -121,7 +132,7 @@ def main() -> int:
     if args.dry_run:
         return 0
 
-    token = os.environ.get("FORGEJO_ADMIN_TOKEN") or ssm_get(API_TOKEN_PARAM)
+    token = admin_token()
     for repo, name, param in plan:
         put_secret(token, repo, name, ssm_get(param))
         print(f"{OWNER}/{repo}: {name} set")

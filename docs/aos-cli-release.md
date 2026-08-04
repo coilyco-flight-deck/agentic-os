@@ -62,7 +62,7 @@ The Homebrew and Scoop publication steps consume the repo-scoped
 `TAP_WRITE_TOKEN` and `SCOOP_WRITE_TOKEN` Actions secrets. Their existing
 SSM-backed token family is synchronized into the AOS repository by
 `ward exec sync-actions-secrets`. An operator supplies the attended
-`FORGEJO_ADMIN_TOKEN` in memory when the legacy SSM admin token is unavailable.
+`FORGEJO_ADMIN_TOKEN` in memory.
 
 ## Manual retry
 

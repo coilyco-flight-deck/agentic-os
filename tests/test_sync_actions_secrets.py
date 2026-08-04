@@ -47,3 +47,18 @@ def test_manifest_loader_rejects_missing_parameter_path(tmp_path) -> None:
     )
     with pytest.raises(SystemExit, match="invalid action secret sources"):
         mod.load_secret_sources(manifest)
+
+
+def test_admin_token_requires_attended_environment(monkeypatch) -> None:
+    mod = _load_script()
+    monkeypatch.delenv("FORGEJO_ADMIN_TOKEN", raising=False)
+
+    with pytest.raises(SystemExit, match="FORGEJO_ADMIN_TOKEN is required"):
+        mod.admin_token()
+
+
+def test_admin_token_reads_attended_environment(monkeypatch) -> None:
+    mod = _load_script()
+    monkeypatch.setenv("FORGEJO_ADMIN_TOKEN", " fixture-token ")
+
+    assert mod.admin_token() == "fixture-token"
