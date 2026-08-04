@@ -5,7 +5,7 @@ skill's seed: frontmatter; check-seed-skills-drift fails on staleness.
 """
 from __future__ import annotations
 
-SEED_ALWAYS: list[str] = ['coding-git']
+SEED_ALWAYS: list[str] = ['coding-core-git']
 
 SEED_LANGUAGES: dict[str, dict] = {
     'csharp': {"skill": 'coding-csharp', "extensions": ['.cs']},

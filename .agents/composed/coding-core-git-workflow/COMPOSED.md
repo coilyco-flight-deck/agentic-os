@@ -1,5 +1,5 @@
 ---
-name: kai-git-workflow
+name: coding-core-git-workflow
 description: Git workflow for Kai's repositories. Covers Forgejo, tracker choice, commits, pushes, PR lanes, issues, TODOs, and recovery.
 low-context: required
 ---

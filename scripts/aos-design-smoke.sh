@@ -6,7 +6,7 @@ skills_root="${HOME}/.agents/skills"
 design_skill="${skills_root}/tooling-designer-interaction-shaping/SKILL.md"
 javascript_skill="${skills_root}/coding-javascript/SKILL.md"
 react_skill="${skills_root}/coding-javascript-react/SKILL.md"
-brainstorming_skill="${skills_root}/tooling-product-brainstorming/SKILL.md"
+brainstorming_skill="${skills_root}/tooling-pm-product-brainstorming/SKILL.md"
 
 if [ ! -f "${instructions}" ]; then
     echo "design smoke: missing Codex instructions at ${instructions}" >&2

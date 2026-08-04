@@ -1,12 +1,12 @@
 ---
-name: coding-git
+name: coding-core-git
 description: Git + GitHub umbrella. Hard rule - never use gh api graphql without double-confirming, REST is default. Owns the full PR lifecycle (branch, commit, open, monitor CI, auto-fix, merge) and routes to ward-passthrough and git-workflow siblings.
 low-context: required
 seed:
   kind: always
 ---
 
-# coding-git
+# coding-core-git
 
 Umbrella skill for any work that touches git or GitHub. Owns the broad keyword surface, carries the hard rules that apply to every GitHub touch, holds the full pull-request lifecycle inline, and routes to the focused siblings for ward passthrough and the `coilysiren/*` commit rules.
 
@@ -46,9 +46,9 @@ Each step shows the `gh` way first, then the `git` + `curl` fallback for machine
 ## Routing
 
 - **Ward passthrough for `gh`** (audit-log binding, scope routing) - `ward-ops-gh-meta` (in ward).
-- **Git workflow for `coilysiren/*` repos** (commit-to-main default, every-commit-closes-an-issue rule, readonly exceptions) - `kai-git-workflow`.
+- **Git workflow for `coilysiren/*` repos** (commit-to-main default, every-commit-closes-an-issue rule, readonly exceptions) - `coding-core-git-workflow`.
 
 ## See also
 
 - [AGENTS.md "GitHub Issues - Echo on Touch"](../../../AGENTS.md) - quoting rules for `owner/repo#N` refs and issue URLs.
-- agentic-os-kai#561 - this skill's origin (as `coding-github`, before the PR-workflow merge and rename to `coding-git`).
+- agentic-os-kai#561 - this skill's origin and taxonomy history.

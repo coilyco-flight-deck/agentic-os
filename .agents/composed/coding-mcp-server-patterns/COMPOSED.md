@@ -1,5 +1,5 @@
 ---
-name: mcp-server-patterns
+name: coding-mcp-server-patterns
 description: Build or review Node and TypeScript MCP servers with tools, resources, prompts, schemas, and stdio or Streamable HTTP transports. Triggers - MCP server, MCP tool, MCP resource, MCP prompt, MCP transport, Model Context Protocol.
 low-context: optional
 metadata:

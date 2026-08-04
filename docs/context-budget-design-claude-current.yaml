@@ -23,29 +23,29 @@ mcp:
   eager_schema_count: 0
 totals:
   eager:
-    components: 26
-    bytes: 30624
-    tokens: 7661
+    components: 28
+    bytes: 31029
+    tokens: 7763
   lazy:
-    components: 56
-    bytes: 102769
-    tokens: 25680
+    components: 58
+    bytes: 109530
+    tokens: 27369
 breakdown:
   eager:
     agents-cascade: {components: 2, bytes: 22852, tokens: 5714}
     ordinary-skill-frontmatter: {components: 12, bytes: 3016, tokens: 758}
     personality-frontmatter: {components: 4, bytes: 635, tokens: 161}
-    role-composed-frontmatter: {components: 6, bytes: 1349, tokens: 340}
+    role-composed-frontmatter: {components: 8, bytes: 1754, tokens: 442}
     role-instructions: {components: 1, bytes: 2615, tokens: 648}
     role-skill-frontmatter: {components: 1, bytes: 157, tokens: 40}
   lazy:
     mcp-server-registration: {components: 1, bytes: 0, tokens: 0}
     ordinary-skill-body: {components: 12, bytes: 22694, tokens: 5671}
     ordinary-skill-resource: {components: 21, bytes: 32335, tokens: 8092}
-    personality-body: {components: 4, bytes: 5683, tokens: 1423}
-    role-composed-body: {components: 6, bytes: 13728, tokens: 3434}
-    role-composed-resource: {components: 11, bytes: 24792, tokens: 6175}
-    role-skill-body: {components: 1, bytes: 3537, tokens: 885}
+    personality-body: {components: 4, bytes: 6054, tokens: 1515}
+    role-composed-body: {components: 8, bytes: 18447, tokens: 4614}
+    role-composed-resource: {components: 11, bytes: 24804, tokens: 6178}
+    role-skill-body: {components: 1, bytes: 5196, tokens: 1299}
 components:
   eager:
     agents-cascade:
@@ -90,18 +90,20 @@ skills:
   aos/tooling-agent-workflows: {class: ordinary, eager: 53, lazy: 1642, resources: 4}
   aos/tooling-claude-in-chrome: {class: ordinary, eager: 55, lazy: 1416, resources: 3}
   aos/tooling-designer-cognitive-walkthrough: {class: role-composed, eager: 53, lazy: 765, resources: 0}
-  aos/tooling-designer-interaction-shaping: {class: role-composed, eager: 53, lazy: 492, resources: 0}
+  aos/tooling-designer-interaction-shaping: {class: role-composed, eager: 53, lazy: 493, resources: 0}
   aos/tooling-ffmpeg: {class: ordinary, eager: 50, lazy: 559, resources: 0}
   aos/tooling-gpg-ssm: {class: ordinary, eager: 78, lazy: 1373, resources: 3}
   aos/tooling-image-zoom: {class: ordinary, eager: 44, lazy: 949, resources: 1}
   aos/tooling-imagemagick: {class: ordinary, eager: 50, lazy: 492, resources: 0}
-  aos/tooling-product-brainstorming: {class: role-composed, eager: 80, lazy: 6638, resources: 10}
+  aos/tooling-pm-product-brainstorming: {class: role-composed, eager: 81, lazy: 6641, resources: 10}
+  aos/tooling-pm-product-signal-triangulation: {class: role-composed, eager: 53, lazy: 648, resources: 0}
+  aos/tooling-pm-program-decomposition: {class: role-composed, eager: 48, lazy: 531, resources: 0}
   aos/tooling-tailscale: {class: ordinary, eager: 109, lazy: 1887, resources: 2}
   aos/tooling-warp: {class: ordinary, eager: 39, lazy: 317, resources: 0}
   aos/tooling-zsh: {class: ordinary, eager: 114, lazy: 786, resources: 0}
   roster:core/personality-editorial: {class: personality, eager: 49, lazy: 364, resources: 0}
-  roster:core/personality-imaginative: {class: personality, eager: 40, lazy: 384, resources: 0}
+  roster:core/personality-imaginative: {class: personality, eager: 40, lazy: 476, resources: 0}
   roster:core/personality-playful: {class: personality, eager: 37, lazy: 335, resources: 0}
   roster:core/personality-warm: {class: personality, eager: 35, lazy: 340, resources: 0}
-  roster:core/role-design: {class: role, eager: 40, lazy: 885, resources: 0}
-payload_hash: b39868b45dbe657de07d9bfbabe404b223852a7251892392472213a25b956713
+  roster:core/role-design: {class: role, eager: 40, lazy: 1299, resources: 0}
+payload_hash: eb73b08f334e9c023b267fa700992ab2e504d08d7488e4d8a491d1edbf44d910

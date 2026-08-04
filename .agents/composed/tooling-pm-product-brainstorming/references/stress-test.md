@@ -1,7 +1,7 @@
 # Stress Testing an Assumption
 
 Reference for the Assumption Testing mode in
-`tooling-product-brainstorming`. Use it to break a business or career
+`tooling-pm-product-brainstorming`. Use it to break a business or career
 assumption before the market does. Revenue projections, market size,
 competitive moat, hiring velocity, and customer retention all fit.
 

@@ -11,7 +11,7 @@ not "duplicates a ward wrapper." Until then, treat the ward-overlap
 red flag with skepticism and surface the call to the user instead of
 auto-rejecting.
 
-For every 🥈 and 🥇 entry, run `tooling-supply-chain-audit`. 🥉 entries are
+For every 🥈 and 🥇 entry, run `coding-core-supply-chain-audit`. 🥉 entries are
 skipped because they will not be installed.
 
 When PM owns the scout, PM hands the candidate packet to engineer or ops for

@@ -21,7 +21,7 @@ def _make_skill(composed_dir: Path, name: str, seed_block: str | None) -> None:
 
 def test_iter_collects_always_and_languages(tmp_path: Path) -> None:
     composed = tmp_path / "composed"
-    _make_skill(composed, "coding-git", "seed:\n  kind: always\n")
+    _make_skill(composed, "coding-core-git", "seed:\n  kind: always\n")
     _make_skill(
         composed,
         "coding-python",
@@ -29,7 +29,7 @@ def test_iter_collects_always_and_languages(tmp_path: Path) -> None:
     )
     _make_skill(composed, "coding-plain", None)  # no seed: ignored
     always, languages = seed_skills.iter_seed_skills(composed)
-    assert always == ["coding-git"]
+    assert always == ["coding-core-git"]
     assert languages == {
         "python": {"skill": "coding-python", "extensions": [".py", ".pyi"]}
     }
@@ -78,7 +78,7 @@ def test_iter_rejects_duplicate_extension(tmp_path: Path) -> None:
 
 
 def test_render_is_importable_and_roundtrips() -> None:
-    always = ["coding-git"]
+    always = ["coding-core-git"]
     languages = {"python": {"skill": "coding-python", "extensions": [".py"]}}
     src = seed_skills.render_data_module(always, languages)
     ns: dict = {}
@@ -89,7 +89,7 @@ def test_render_is_importable_and_roundtrips() -> None:
 
 def test_generate_then_check_drift_passes(tmp_path: Path) -> None:
     composed = tmp_path / "composed"
-    _make_skill(composed, "coding-git", "seed:\n  kind: always\n")
+    _make_skill(composed, "coding-core-git", "seed:\n  kind: always\n")
     data_path = tmp_path / "seed_skills_data.py"
     assert seed_skills.generate(composed, data_path) == 0
     assert seed_skills.check_drift(composed, data_path) == 0
@@ -97,7 +97,7 @@ def test_generate_then_check_drift_passes(tmp_path: Path) -> None:
 
 def test_check_drift_fails_when_stale(tmp_path: Path) -> None:
     composed = tmp_path / "composed"
-    _make_skill(composed, "coding-git", "seed:\n  kind: always\n")
+    _make_skill(composed, "coding-core-git", "seed:\n  kind: always\n")
     data_path = tmp_path / "seed_skills_data.py"
     data_path.write_text("SEED_ALWAYS = []\nSEED_LANGUAGES = {}\n", encoding="utf-8")
     assert seed_skills.check_drift(composed, data_path) == 1

@@ -23,19 +23,19 @@ mcp:
   eager_schema_count: 0
 totals:
   eager:
-    components: 33
-    bytes: 32034
-    tokens: 8018
+    components: 34
+    bytes: 32253
+    tokens: 8074
   lazy:
-    components: 64
-    bytes: 109798
-    tokens: 27436
+    components: 76
+    bytes: 140020
+    tokens: 34993
 breakdown:
   eager:
     agents-cascade: {components: 1, bytes: 22841, tokens: 5711}
     ordinary-skill-frontmatter: {components: 10, bytes: 2587, tokens: 650}
     personality-frontmatter: {components: 4, bytes: 628, tokens: 159}
-    role-composed-frontmatter: {components: 16, bytes: 3256, tokens: 821}
+    role-composed-frontmatter: {components: 17, bytes: 3475, tokens: 877}
     role-instructions: {components: 1, bytes: 2573, tokens: 639}
     role-skill-frontmatter: {components: 1, bytes: 149, tokens: 38}
   lazy:
@@ -43,8 +43,8 @@ breakdown:
     ordinary-skill-body: {components: 10, bytes: 19692, tokens: 4920}
     ordinary-skill-resource: {components: 14, bytes: 23119, tokens: 5785}
     personality-body: {components: 4, bytes: 5060, tokens: 1267}
-    role-composed-body: {components: 16, bytes: 33068, tokens: 8272}
-    role-composed-resource: {components: 18, bytes: 27081, tokens: 6747}
+    role-composed-body: {components: 17, bytes: 35773, tokens: 8948}
+    role-composed-resource: {components: 29, bytes: 54598, tokens: 13628}
     role-skill-body: {components: 1, bytes: 1778, tokens: 445}
 components:
   eager:
@@ -76,17 +76,18 @@ components:
 skills:
   aos/coding-ansible: {class: role-composed, eager: 65, lazy: 1428, resources: 1}
   aos/coding-aws: {class: role-composed, eager: 36, lazy: 397, resources: 0}
+  aos/coding-core-git: {class: role-composed, eager: 65, lazy: 5307, resources: 13}
+  aos/coding-core-git-workflow: {class: role-composed, eager: 38, lazy: 2229, resources: 3}
+  aos/coding-core-licenses: {class: role-composed, eager: 50, lazy: 760, resources: 0}
+  aos/coding-core-supply-chain-audit: {class: role-composed, eager: 51, lazy: 7567, resources: 11}
   aos/coding-csharp: {class: role-composed, eager: 49, lazy: 536, resources: 0}
-  aos/coding-git: {class: role-composed, eager: 63, lazy: 5318, resources: 13}
   aos/coding-go: {class: role-composed, eager: 51, lazy: 305, resources: 0}
   aos/coding-javascript: {class: role-composed, eager: 48, lazy: 322, resources: 0}
   aos/coding-javascript-react: {class: role-composed, eager: 48, lazy: 419, resources: 0}
   aos/coding-kubernetes: {class: role-composed, eager: 42, lazy: 421, resources: 0}
-  aos/coding-licenses: {class: role-composed, eager: 49, lazy: 759, resources: 0}
   aos/coding-python: {class: role-composed, eager: 52, lazy: 368, resources: 0}
   aos/coding-rust: {class: role-composed, eager: 49, lazy: 635, resources: 0}
   aos/coding-terraform: {class: role-composed, eager: 46, lazy: 464, resources: 0}
-  aos/kai-git-workflow: {class: role-composed, eager: 36, lazy: 2229, resources: 3}
   aos/kai-tech-prefs: {class: ordinary, eager: 51, lazy: 2068, resources: 5}
   aos/repo-agentic-os: {class: ordinary, eager: 47, lazy: 93, resources: 0}
   aos/tooling-agent-tool-evaluation: {class: ordinary, eager: 68, lazy: 2181, resources: 3}
@@ -105,4 +106,4 @@ skills:
   roster:core/personality-playful: {class: personality, eager: 37, lazy: 335, resources: 0}
   roster:core/personality-skeptical: {class: personality, eager: 43, lazy: 276, resources: 0}
   roster:core/role-qa: {class: role, eager: 38, lazy: 445, resources: 0}
-payload_hash: d91108f21609ec866c9323707feb23aa2cf4ff19011b9d56e584a62bc094ea5a
+payload_hash: 785ec81b0770cb40326e80c8332bb49aa6c82f3c3f703d8827953d33cd19ce85

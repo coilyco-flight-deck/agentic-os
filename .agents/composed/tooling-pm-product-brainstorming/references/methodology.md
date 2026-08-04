@@ -1,6 +1,6 @@
 # Brainstorming methodology (reference)
 
-Loaded on demand from `tooling-product-brainstorming`. This reference routes
+Loaded on demand from `tooling-pm-product-brainstorming`. This reference routes
 to the seven frameworks, five-phase session structure, and anti-pattern
 catalog while the skill entrypoint stays lightweight.
 

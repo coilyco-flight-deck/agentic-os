@@ -42,7 +42,7 @@ tools already in use. A custom thing with zero credible hits exits as keep-custo
 
 Report per subsystem: the candidates plus a fit read - adopt / partial / keep-custom /
 watch. Before any adoption, verify maturity against primary sources (stars, release
-cadence, maintainer count, license) and run `tooling-supply-chain-audit` - a young,
+cadence, maintainer count, license) and run `coding-core-supply-chain-audit` - a young,
 low-star tool is a real dependency risk. PM hands the audit and adoption to engineer
 or ops. A subsystem that is the repo's whole reason for being usually stays custom.
 

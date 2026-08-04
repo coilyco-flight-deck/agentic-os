@@ -2,7 +2,7 @@
 
 PM does not perform this phase. PM hands each approved entry, its phase 4
 evidence, and the `tooling-skill-authoring` admission and placement record to
-engineer. Engineer follows `kai-git-workflow` and the target repository's
+engineer. Engineer follows `coding-core-git-workflow` and the target repository's
 resolved landing workflow.
 
 **Skills:**

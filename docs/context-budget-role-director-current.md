@@ -8,8 +8,8 @@ scope is separate from runtime compatibility, and excluded snapshots remain
 independently valid evidence.
 
 * **Frontier director** -
-  [Claude 9,226](context-budget-director-claude-current.yaml),
-  [Codex 9,223](context-budget-director-codex-current.yaml), lazy 91,644, 34 composed.
+  [Claude 8,749](context-budget-director-claude-current.yaml),
+  [Codex 8,746](context-budget-director-codex-current.yaml), lazy 75,321, 24 composed.
 
 ## See also
 

@@ -5,22 +5,26 @@ the role allowlists in [`.agents/roles.kdl`](../.agents/roles.kdl).
 
 ## Matrix
 
-* **Director** - Git workflow, supply-chain audit, brainstorming,
-  prioritization, all scouts, observer voice, voice linting,
-  system-improvement vocabulary, issue decomposition, and skill authoring.
+* **Director** - core Git, licensing, supply-chain, and architecture-shape
+  guidance, plus decision architecture, PM methods, prioritization, all scouts,
+  observer voice, voice linting, system-improvement vocabulary, issue
+  decomposition, and skill authoring.
 * **Engineer** - Git workflow, supply-chain audit, public-repository writing,
   and system-improvement vocabulary.
-* **QA** - Git workflow, code review, and public-repository writing.
+* **QA** - Git workflow, supply-chain audit, code review, and
+  public-repository writing.
 * **Ops** - Git workflow, supply-chain audit, and system-improvement
   vocabulary.
-* **Designer** - product brainstorming in addition to the frontend coding
-  pair.
-* **Community** - Discord hosting and architecture.
+* **Designer** - the PM family and design methods in addition to the frontend
+  coding pair.
+* **Community** - Discord, customer-success, and social-writing methods,
+  including the editorial loop.
 * **Portfolio Strategist** - the deduplicated advisor, PM, and CEO methods for
   evidence synthesis, portfolio allocation, program decomposition, scouts,
   skill authoring, and issue writing.
-* **Content Manager** - the deduplicated technical-writing and social methods
-  for public-repository writing, editorial work, channel context, and voice.
+* **Content Manager** - the complete writing family for public-repository
+  writing, editorial work, channel context, and voice, excluding issue
+  decomposition after its move into the tooling taxonomy.
 
 ## Handoffs
 

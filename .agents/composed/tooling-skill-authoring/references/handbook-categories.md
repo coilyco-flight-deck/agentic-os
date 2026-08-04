@@ -9,12 +9,12 @@ Pick the prefix up front. The validator rejects unknown prefixes.
 * `ops-investigation-*` - investigation playbooks and runbooks. Status-enforced. Required H2 sections enforced.
 * `gaming-eco-*` - Eco modding (investigation, scaffolding, source-auditing).
 * `writing-*` - prose / voice / issue authoring surface
-  (`writing-voice-guide-linter`, `writing-observer-narrator`,
-  `writing-to-issues`, and the social writing family).
+  (`writing-voice-guide-linter`, `writing-voice-observer-narrator`,
+  `tooling-issue-decomposition`, and the social writing family).
 * `personality-*` - role-neutral presence, attention, tempo, and voice for agent-compose personality providers.
 * `home-*` - smart-home control at My House (hue, sonos, cast).
 * `tooling-*` - agent-ecosystem meta (the scout family,
-  `tooling-supply-chain-audit`, and role-specific methods). Meta-tooling may
+  `coding-core-supply-chain-audit`, and role-specific methods). Meta-tooling may
   stay in the personal prefix when it encodes operating-context discipline.
 * `coding-*` - code-engineering recipes (Discord bot scaffolding, the coding-shape-iac umbrella, git/GitHub PR workflow). Reusable build patterns, not tooling on the agent ecosystem itself.
 

@@ -1,6 +1,6 @@
 # Brainstorming Modes
 
-Reference for `tooling-product-brainstorming`. Different situations call for
+Reference for `tooling-pm-product-brainstorming`. Different situations call for
 different modes of thinking. Identify which mode fits the conversation and
 adapt. You can shift between modes as the conversation evolves.
 

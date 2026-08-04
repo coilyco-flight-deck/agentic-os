@@ -8,8 +8,8 @@ scope is separate from runtime compatibility, and excluded snapshots remain
 independently valid evidence.
 
 * **Frontier Portfolio Strategist** -
-  [Claude 8,445](context-budget-strats-claude-current.yaml),
-  [Codex 8,442](context-budget-strats-codex-current.yaml), lazy 58,271, 18 composed.
+  [Claude 8,451](context-budget-strats-claude-current.yaml),
+  [Codex 8,448](context-budget-strats-codex-current.yaml), lazy 58,289, 18 composed.
 
 ## See also
 

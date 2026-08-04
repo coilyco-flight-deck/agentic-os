@@ -8,8 +8,8 @@ scope is separate from runtime compatibility, and excluded snapshots remain
 independently valid evidence.
 
 * **Frontier ops** -
-  [Claude 8,693](context-budget-ops-claude-current.yaml),
-  [Codex 8,690](context-budget-ops-codex-current.yaml), lazy 56,168, 27 composed.
+  [Claude 8,701](context-budget-ops-claude-current.yaml),
+  [Codex 8,698](context-budget-ops-codex-current.yaml), lazy 56,158, 27 composed.
 
 ## See also
 

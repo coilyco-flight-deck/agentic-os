@@ -2,7 +2,7 @@
 
 For each approved slice, create an issue through the repository's configured
 tracker surface. Coilyco repositories use Forgejo. Follow
-`kai-git-workflow` for tracker selection and write authority.
+`coding-core-git-workflow` for tracker selection and write authority.
 
 Create issues in dependency order (blockers first) so you can reference real issue numbers in the "Blocked by" field.
 

@@ -12,7 +12,7 @@ that another role can execute without reconstructing the debate.
 ## Activation boundary
 
 Director activates this workflow after the problem and credible options exist.
-For open-ended exploration, director uses `tooling-product-brainstorming`
+For open-ended exploration, director uses `tooling-pm-product-brainstorming`
 first. Routine execution and low-cost implementation choices stay with the
 owning role.
 

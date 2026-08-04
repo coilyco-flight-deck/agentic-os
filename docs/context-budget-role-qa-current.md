@@ -6,12 +6,12 @@
 Aggregate inventory scope measures all AOS-supported model classes.
 
 * **Frontier QA** -
-  [Claude 8,708](context-budget-qa-claude-current.yaml),
-  [Codex 8,705](context-budget-qa-codex-current.yaml), lazy 48,963, 27 composed.
+  [Claude 8,766](context-budget-qa-claude-current.yaml),
+  [Codex 8,763](context-budget-qa-codex-current.yaml), lazy 56,520, 28 composed.
 * **Low-context QA** -
-  [Goose 8,018](context-budget-qa-goose-current.yaml),
-  [OpenCode 8,018](context-budget-qa-opencode-current.yaml), lazy 27,436, 16 composed.
-* **Low-context diff** - eager saves 687 to 690 tokens, lazy saves 21,527 tokens, composed sources 27 -> 16.
+  [Goose 8,074](context-budget-qa-goose-current.yaml),
+  [OpenCode 8,074](context-budget-qa-opencode-current.yaml), lazy 34,993, 17 composed.
+* **Low-context diff** - eager saves 689 to 692 tokens, lazy saves 21,527 tokens, composed sources 28 -> 17.
 
 The programmatic diff compares every frontier seat with every low-context seat.
 

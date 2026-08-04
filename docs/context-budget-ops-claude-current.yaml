@@ -24,18 +24,18 @@ mcp:
 totals:
   eager:
     components: 47
-    bytes: 34715
-    tokens: 8693
+    bytes: 34744
+    tokens: 8701
   lazy:
     components: 125
-    bytes: 224790
-    tokens: 56168
+    bytes: 224751
+    tokens: 56158
 breakdown:
   eager:
     agents-cascade: {components: 2, bytes: 22852, tokens: 5714}
     ordinary-skill-frontmatter: {components: 12, bytes: 3016, tokens: 758}
     personality-frontmatter: {components: 4, bytes: 644, tokens: 163}
-    role-composed-frontmatter: {components: 27, bytes: 5450, tokens: 1375}
+    role-composed-frontmatter: {components: 27, bytes: 5479, tokens: 1383}
     role-instructions: {components: 1, bytes: 2602, tokens: 645}
     role-skill-frontmatter: {components: 1, bytes: 151, tokens: 38}
   lazy:
@@ -43,7 +43,7 @@ breakdown:
     ordinary-skill-body: {components: 12, bytes: 22694, tokens: 5671}
     ordinary-skill-resource: {components: 21, bytes: 32335, tokens: 8092}
     personality-body: {components: 4, bytes: 5385, tokens: 1348}
-    role-composed-body: {components: 27, bytes: 63902, tokens: 15979}
+    role-composed-body: {components: 27, bytes: 63863, tokens: 15969}
     role-composed-resource: {components: 59, bytes: 98897, tokens: 24683}
     role-skill-body: {components: 1, bytes: 1577, tokens: 395}
 components:
@@ -83,14 +83,17 @@ components:
 skills:
   aos/coding-ansible: {class: role-composed, eager: 65, lazy: 1428, resources: 1}
   aos/coding-aws: {class: role-composed, eager: 36, lazy: 397, resources: 0}
+  aos/coding-core-git: {class: role-composed, eager: 65, lazy: 5307, resources: 13}
+  aos/coding-core-git-workflow: {class: role-composed, eager: 38, lazy: 2229, resources: 3}
+  aos/coding-core-licenses: {class: role-composed, eager: 50, lazy: 760, resources: 0}
+  aos/coding-core-supply-chain-audit: {class: role-composed, eager: 51, lazy: 7567, resources: 11}
   aos/coding-csharp: {class: role-composed, eager: 49, lazy: 536, resources: 0}
   aos/coding-discord-bot-architect: {class: role-composed, eager: 42, lazy: 11153, resources: 29}
-  aos/coding-git: {class: role-composed, eager: 63, lazy: 5318, resources: 13}
   aos/coding-go: {class: role-composed, eager: 51, lazy: 305, resources: 0}
   aos/coding-javascript: {class: role-composed, eager: 48, lazy: 322, resources: 0}
   aos/coding-javascript-react: {class: role-composed, eager: 48, lazy: 419, resources: 0}
   aos/coding-kubernetes: {class: role-composed, eager: 42, lazy: 421, resources: 0}
-  aos/coding-licenses: {class: role-composed, eager: 49, lazy: 759, resources: 0}
+  aos/coding-mcp-server-patterns: {class: role-composed, eager: 64, lazy: 1062, resources: 1}
   aos/coding-python: {class: role-composed, eager: 52, lazy: 368, resources: 0}
   aos/coding-rust: {class: role-composed, eager: 49, lazy: 635, resources: 0}
   aos/coding-shape-cli: {class: role-composed, eager: 44, lazy: 710, resources: 0}
@@ -100,9 +103,7 @@ skills:
   aos/coding-shape-tui: {class: role-composed, eager: 51, lazy: 401, resources: 0}
   aos/coding-shape-web-server: {class: role-composed, eager: 55, lazy: 475, resources: 0}
   aos/coding-terraform: {class: role-composed, eager: 46, lazy: 464, resources: 0}
-  aos/kai-git-workflow: {class: role-composed, eager: 36, lazy: 2229, resources: 3}
   aos/kai-tech-prefs: {class: ordinary, eager: 51, lazy: 2068, resources: 5}
-  aos/mcp-server-patterns: {class: role-composed, eager: 62, lazy: 1062, resources: 1}
   aos/repo-agentic-os: {class: ordinary, eager: 47, lazy: 93, resources: 0}
   aos/tooling-agent-tool-evaluation: {class: ordinary, eager: 68, lazy: 2181, resources: 3}
   aos/tooling-agent-workflows: {class: ordinary, eager: 53, lazy: 1642, resources: 4}
@@ -115,7 +116,6 @@ skills:
   aos/tooling-ops-dynamic-systems-diagnosis: {class: role-composed, eager: 53, lazy: 658, resources: 0}
   aos/tooling-ops-incident-command: {class: role-composed, eager: 51, lazy: 690, resources: 0}
   aos/tooling-ops-live-remediation: {class: role-composed, eager: 49, lazy: 495, resources: 0}
-  aos/tooling-supply-chain-audit: {class: role-composed, eager: 50, lazy: 7567, resources: 11}
   aos/tooling-tailscale: {class: ordinary, eager: 109, lazy: 1887, resources: 2}
   aos/tooling-warp: {class: ordinary, eager: 39, lazy: 317, resources: 0}
   aos/tooling-zsh: {class: ordinary, eager: 114, lazy: 786, resources: 0}
@@ -125,4 +125,4 @@ skills:
   roster:core/personality-protective: {class: personality, eager: 43, lazy: 348, resources: 0}
   roster:core/personality-reflective: {class: personality, eager: 40, lazy: 328, resources: 0}
   roster:core/role-ops: {class: role, eager: 38, lazy: 395, resources: 0}
-payload_hash: fe67b8ea44c7c25f1d925e42676bd3cff5b72b9d85e4ce76940defdf3b173412
+payload_hash: 33e06eac8623c7669c2728c2e25359a65852bb728b1ecfc682d40eb8e52d7736

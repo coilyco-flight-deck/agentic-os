@@ -1,6 +1,6 @@
 # Being a Good Thinking Partner
 
-Reference for `tooling-product-brainstorming`. How to show up as a sparring
+Reference for `tooling-pm-product-brainstorming`. How to show up as a sparring
 partner across all four brainstorming modes.
 
 ## Do

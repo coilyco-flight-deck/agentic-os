@@ -23,19 +23,19 @@ mcp:
   eager_schema_count: 0
 totals:
   eager:
-    components: 26
-    bytes: 31061
-    tokens: 7770
+    components: 25
+    bytes: 30792
+    tokens: 7704
   lazy:
-    components: 46
-    bytes: 83118
-    tokens: 20792
+    components: 44
+    bytes: 79613
+    tokens: 19914
 breakdown:
   eager:
     agents-cascade: {components: 1, bytes: 22841, tokens: 5711}
     ordinary-skill-frontmatter: {components: 10, bytes: 2587, tokens: 650}
     personality-frontmatter: {components: 4, bytes: 651, tokens: 165}
-    role-composed-frontmatter: {components: 9, bytes: 2082, tokens: 523}
+    role-composed-frontmatter: {components: 8, bytes: 1813, tokens: 457}
     role-instructions: {components: 1, bytes: 2711, tokens: 673}
     role-skill-frontmatter: {components: 1, bytes: 189, tokens: 48}
   lazy:
@@ -43,8 +43,8 @@ breakdown:
     ordinary-skill-body: {components: 10, bytes: 19692, tokens: 4920}
     ordinary-skill-resource: {components: 14, bytes: 23119, tokens: 5785}
     personality-body: {components: 4, bytes: 5389, tokens: 1349}
-    role-composed-body: {components: 9, bytes: 20301, tokens: 5080}
-    role-composed-resource: {components: 7, bytes: 11630, tokens: 2911}
+    role-composed-body: {components: 8, bytes: 17630, tokens: 4411}
+    role-composed-resource: {components: 6, bytes: 10796, tokens: 2702}
     role-skill-body: {components: 1, bytes: 2987, tokens: 747}
 components:
   eager:
@@ -84,18 +84,17 @@ skills:
   aos/tooling-tailscale: {class: ordinary, eager: 109, lazy: 1887, resources: 2}
   aos/tooling-warp: {class: ordinary, eager: 39, lazy: 317, resources: 0}
   aos/tooling-zsh: {class: ordinary, eager: 114, lazy: 786, resources: 0}
-  aos/writing-observer-narrator: {class: role-composed, eager: 87, lazy: 1844, resources: 3}
+  aos/writing-content-linkedin-video: {class: role-composed, eager: 57, lazy: 1799, resources: 2}
   aos/writing-public-repos: {class: role-composed, eager: 52, lazy: 208, resources: 0}
   aos/writing-social-cultural-reading: {class: role-composed, eager: 52, lazy: 604, resources: 0}
   aos/writing-social-editorial-loop: {class: role-composed, eager: 54, lazy: 482, resources: 0}
-  aos/writing-social-linkedin-video: {class: role-composed, eager: 56, lazy: 1799, resources: 2}
   aos/writing-social-trust-boundaries: {class: role-composed, eager: 52, lazy: 650, resources: 0}
-  aos/writing-to-issues: {class: role-composed, eager: 69, lazy: 879, resources: 1}
   aos/writing-voice-adaptation: {class: role-composed, eager: 48, lazy: 493, resources: 0}
   aos/writing-voice-guide-linter: {class: role-composed, eager: 53, lazy: 1032, resources: 1}
+  aos/writing-voice-observer-narrator: {class: role-composed, eager: 89, lazy: 1845, resources: 3}
   roster:core/personality-bold: {class: personality, eager: 38, lazy: 310, resources: 0}
   roster:core/personality-editorial: {class: personality, eager: 49, lazy: 364, resources: 0}
   roster:core/personality-meticulous: {class: personality, eager: 41, lazy: 340, resources: 0}
   roster:core/personality-playful: {class: personality, eager: 37, lazy: 335, resources: 0}
   roster:core/role-content: {class: role, eager: 48, lazy: 747, resources: 0}
-payload_hash: 0d4bd2ab1b6be1a8c3ebe9194d5931ded75a25d56307fddf68646063dd5a69f2
+payload_hash: 26e270945430e616b55557c46aab3a2972fc0c1cb80830f492352745675357b3

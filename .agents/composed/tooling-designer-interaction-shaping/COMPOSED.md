@@ -13,7 +13,7 @@ observable behavior before visual polish or implementation begins.
 
 Designer activates this workflow after the user problem and intended outcome
 are understood. Open-ended concept generation stays in
-`tooling-product-brainstorming`. CSS, component implementation, and baseline
+`tooling-pm-product-brainstorming`. CSS, component implementation, and baseline
 accessibility knowledge stay with the engineering workflow.
 
 ## Shape the experience

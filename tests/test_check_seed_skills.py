@@ -9,7 +9,7 @@ from agentic_os.pre_commit import check_seed_skills as csk
 from agentic_os import config
 
 # A fixed table so tests do not depend on the shipped seed_skills_data.py.
-ALWAYS = ["coding-git"]
+ALWAYS = ["coding-core-git"]
 LANGUAGES = {
     "python": {"skill": "coding-python", "extensions": [".py", ".pyi"]},
     "go": {"skill": "coding-go", "extensions": [".go"]},
@@ -27,19 +27,19 @@ def test_detect_languages_none() -> None:
 
 def test_required_skills_always_plus_languages_deduped() -> None:
     req = csk.required_skills({"python"}, ALWAYS, LANGUAGES)
-    assert req == ["coding-git", "coding-python"]
+    assert req == ["coding-core-git", "coding-python"]
 
 
 def test_referenced_skills_matches_canonical_path() -> None:
     doc = "see .agents/skills/coding-python/SKILL.md for details"
-    assert csk.referenced_skills([doc], ["coding-python", "coding-git"]) == {
+    assert csk.referenced_skills([doc], ["coding-python", "coding-core-git"]) == {
         "coding-python"
     }
 
 
 def test_referenced_skills_matches_composed_source_path() -> None:
     doc = "see .agents/composed/coding-python/COMPOSED.md for details"
-    assert csk.referenced_skills([doc], ["coding-python", "coding-git"]) == {
+    assert csk.referenced_skills([doc], ["coding-python", "coding-core-git"]) == {
         "coding-python"
     }
 
@@ -68,7 +68,7 @@ def test_fails_when_code_unreferenced(
     assert exc.value.code == 1
     err = capsys.readouterr().err
     assert "coding-python" in err  # language-gated
-    assert "coding-git" in err  # always baseline
+    assert "coding-core-git" in err  # always baseline
 
 
 def test_passes_when_referenced(
@@ -77,7 +77,7 @@ def test_passes_when_referenced(
     (tmp_path / "app.py").write_text("x = 1\n", encoding="utf-8")
     (tmp_path / "AGENTS.md").write_text(
         "context:\n"
-        "- .agents/skills/coding-git/SKILL.md\n"
+        "- .agents/skills/coding-core-git/SKILL.md\n"
         "- .agents/skills/coding-python/SKILL.md\n",
         encoding="utf-8",
     )
@@ -90,7 +90,7 @@ def test_no_code_only_needs_always(
 ) -> None:
     # A docs-only repo still owes the always-on baseline reference.
     (tmp_path / "AGENTS.md").write_text(
-        "ctx: .agents/skills/coding-git/SKILL.md\n", encoding="utf-8"
+        "ctx: .agents/skills/coding-core-git/SKILL.md\n", encoding="utf-8"
     )
     _setup(monkeypatch, tmp_path, "[tool.agentic-os.seed-skills]\nenabled = true\n")
     assert csk.main() == 0
@@ -116,7 +116,7 @@ def test_excludes_skip_detection(
     (tmp_path / "vendor").mkdir()
     (tmp_path / "vendor" / "dep.py").write_text("x = 1\n", encoding="utf-8")
     (tmp_path / "AGENTS.md").write_text(
-        "ctx: .agents/skills/coding-git/SKILL.md\n", encoding="utf-8"
+        "ctx: .agents/skills/coding-core-git/SKILL.md\n", encoding="utf-8"
     )
     _setup(
         monkeypatch,

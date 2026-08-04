@@ -1,10 +1,10 @@
 ---
-name: coding-licenses
+name: coding-core-licenses
 description: Kai's licensing policy - MIT for shareable, AGPL-3.0 for deployment-of-one, proprietary for private. Triggers - license, LICENSE, MIT, AGPL, GPL, copyright, SPDX, what license.
 low-context: required
 ---
 
-# coding-licenses
+# coding-core-licenses
 
 How to pick a license for a `coilysiren/*` repo. Choose by **what the repo is for**, not by habit. Three tiers, most to least permissive.
 

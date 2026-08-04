@@ -37,7 +37,7 @@ tools in use. Zero credible hits = keep-custom.
 
 Then report per subsystem: the candidates and a fit read - adopt / partial / keep-custom
 / watch. Two cautions: adopting OSS is taking on a dependency, so sanity-check maturity
-(stars, last release, maintainers, license) and run `tooling-supply-chain-audit`
+(stars, last release, maintainers, license) and run `coding-core-supply-chain-audit`
 before any unvetted adoption. A subsystem that is the repo's whole reason for
 being usually stays custom.
 
@@ -58,4 +58,4 @@ Run scout-displacement when the tooling surface feels too big or too custom. Run
 
 - [references/method.md](references/method.md) - the inventory toolchain and the github search recipe.
 - `tooling-scout-capability` - the inbound sibling.
-- `tooling-supply-chain-audit` - the dependency-risk gate before adopting.
+- `coding-core-supply-chain-audit` - the dependency-risk gate before adopting.

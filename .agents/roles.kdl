@@ -2,9 +2,6 @@ roles {
     role engineer {
         composed-skill "coding-*"
         composed-skill design-system
-        composed-skill kai-git-workflow
-        composed-skill mcp-server-patterns
-        composed-skill tooling-supply-chain-audit
         composed-skill writing-public-repos
         composed-skill writing-system-improvement-vocab
         // BEGIN generated role-intent harness routes
@@ -14,18 +11,14 @@ roles {
         // END generated role-intent harness routes
     }
     role director {
-        composed-skill "coding-*"
-        composed-skill kai-git-workflow
-        composed-skill mcp-server-patterns
+        composed-skill "coding-core-*"
+        composed-skill "coding-shape-*"
         composed-skill tooling-director-decision-architecture
-        composed-skill tooling-issue-prioritization
-        composed-skill tooling-product-brainstorming
+        composed-skill "tooling-issue-*"
+        composed-skill "tooling-pm-*"
         composed-skill "tooling-scout-*"
         composed-skill tooling-skill-authoring
-        composed-skill tooling-supply-chain-audit
-        composed-skill writing-observer-narrator
         composed-skill writing-system-improvement-vocab
-        composed-skill writing-to-issues
         composed-skill "writing-voice-*"
         // BEGIN generated role-intent harness routes
         intent strategic-planning {
@@ -36,11 +29,8 @@ roles {
     role qa {
         composed-skill "coding-*"
         composed-skill design-system
-        composed-skill kai-git-workflow
-        composed-skill mcp-server-patterns
         composed-skill tooling-code-review
         composed-skill "tooling-qa-*"
-        composed-skill tooling-supply-chain-audit
         composed-skill writing-public-repos
         // BEGIN generated role-intent harness routes
         intent code-review {
@@ -50,10 +40,7 @@ roles {
     }
     role ops {
         composed-skill "coding-*"
-        composed-skill kai-git-workflow
-        composed-skill mcp-server-patterns
         composed-skill "tooling-ops-*"
-        composed-skill tooling-supply-chain-audit
         composed-skill writing-system-improvement-vocab
         // BEGIN generated role-intent harness routes
         intent ops-investigation {
@@ -66,9 +53,8 @@ roles {
     }
     role design {
         composed-skill "coding-javascript*"
-        composed-skill design-system
-        composed-skill "tooling-designer-*"
-        composed-skill tooling-product-brainstorming
+        composed-skill "*design*"
+        composed-skill "tooling-pm-*"
         // BEGIN generated role-intent harness routes
         intent product-shaping {
             harness penpot
@@ -79,12 +65,9 @@ roles {
         // END generated role-intent harness routes
     }
     role community {
-        composed-skill coding-discord-bot-architect
-        composed-skill tooling-customer-success-signal-routing
-        composed-skill tooling-customer-success-trust-repair
-        composed-skill tooling-discord-community-host
-        composed-skill writing-social-cultural-reading
-        composed-skill writing-social-trust-boundaries
+        composed-skill "*discord*"
+        composed-skill "tooling-customer-success-*"
+        composed-skill "writing-social-*"
         // BEGIN generated role-intent harness routes
         intent knowledge-retrieval {
             harness sirens-echo
@@ -98,13 +81,10 @@ roles {
         composed-skill "tooling-advisor-*"
         composed-skill "tooling-ceo-*"
         composed-skill tooling-director-decision-architecture
-        composed-skill tooling-issue-prioritization
+        composed-skill "tooling-issue-*"
         composed-skill "tooling-pm-*"
-        composed-skill tooling-product-brainstorming
         composed-skill "tooling-scout-*"
         composed-skill tooling-skill-authoring
-        composed-skill writing-observer-narrator
-        composed-skill writing-to-issues
         composed-skill "writing-voice-*"
         // BEGIN generated role-intent harness routes
         intent strategic-planning {
@@ -116,12 +96,7 @@ roles {
         // END generated role-intent harness routes
     }
     role content {
-        composed-skill writing-observer-narrator
-        composed-skill writing-public-repos
-        composed-skill "writing-social-*"
-        composed-skill writing-system-improvement-vocab
-        composed-skill writing-to-issues
-        composed-skill "writing-voice-*"
+        composed-skill "writing-*"
         // BEGIN generated role-intent harness routes
         intent knowledge-retrieval {
             harness anythingllm

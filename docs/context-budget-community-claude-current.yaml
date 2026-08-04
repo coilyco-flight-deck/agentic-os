@@ -23,19 +23,19 @@ mcp:
   eager_schema_count: 0
 totals:
   eager:
-    components: 22
-    bytes: 29674
-    tokens: 7422
+    components: 27
+    bytes: 30730
+    tokens: 7688
   lazy:
-    components: 70
-    bytes: 109324
-    tokens: 27321
+    components: 75
+    bytes: 121030
+    tokens: 30250
 breakdown:
   eager:
     agents-cascade: {components: 2, bytes: 22852, tokens: 5714}
     ordinary-skill-frontmatter: {components: 12, bytes: 3016, tokens: 758}
     personality-frontmatter: {components: 4, bytes: 623, tokens: 158}
-    role-composed-frontmatter: {components: 2, bytes: 409, tokens: 103}
+    role-composed-frontmatter: {components: 7, bytes: 1465, tokens: 369}
     role-instructions: {components: 1, bytes: 2600, tokens: 645}
     role-skill-frontmatter: {components: 1, bytes: 174, tokens: 44}
   lazy:
@@ -43,7 +43,7 @@ breakdown:
     ordinary-skill-body: {components: 12, bytes: 22694, tokens: 5671}
     ordinary-skill-resource: {components: 21, bytes: 32335, tokens: 8092}
     personality-body: {components: 4, bytes: 5515, tokens: 1381}
-    role-composed-body: {components: 2, bytes: 4704, tokens: 1177}
+    role-composed-body: {components: 7, bytes: 16410, tokens: 4106}
     role-composed-resource: {components: 29, bytes: 43254, tokens: 10794}
     role-skill-body: {components: 1, bytes: 822, tokens: 206}
 components:
@@ -87,6 +87,8 @@ skills:
   aos/tooling-agent-tool-evaluation: {class: ordinary, eager: 68, lazy: 2181, resources: 3}
   aos/tooling-agent-workflows: {class: ordinary, eager: 53, lazy: 1642, resources: 4}
   aos/tooling-claude-in-chrome: {class: ordinary, eager: 55, lazy: 1416, resources: 3}
+  aos/tooling-customer-success-signal-routing: {class: role-composed, eager: 53, lazy: 540, resources: 0}
+  aos/tooling-customer-success-trust-repair: {class: role-composed, eager: 55, lazy: 653, resources: 0}
   aos/tooling-discord-community-host: {class: role-composed, eager: 61, lazy: 818, resources: 0}
   aos/tooling-ffmpeg: {class: ordinary, eager: 50, lazy: 559, resources: 0}
   aos/tooling-gpg-ssm: {class: ordinary, eager: 78, lazy: 1373, resources: 3}
@@ -95,9 +97,12 @@ skills:
   aos/tooling-tailscale: {class: ordinary, eager: 109, lazy: 1887, resources: 2}
   aos/tooling-warp: {class: ordinary, eager: 39, lazy: 317, resources: 0}
   aos/tooling-zsh: {class: ordinary, eager: 114, lazy: 786, resources: 0}
+  aos/writing-social-cultural-reading: {class: role-composed, eager: 52, lazy: 604, resources: 0}
+  aos/writing-social-editorial-loop: {class: role-composed, eager: 54, lazy: 482, resources: 0}
+  aos/writing-social-trust-boundaries: {class: role-composed, eager: 52, lazy: 650, resources: 0}
   roster:core/personality-diplomatic: {class: personality, eager: 39, lazy: 340, resources: 0}
   roster:core/personality-nurturing: {class: personality, eager: 39, lazy: 358, resources: 0}
   roster:core/personality-playful: {class: personality, eager: 37, lazy: 335, resources: 0}
   roster:core/personality-protective: {class: personality, eager: 43, lazy: 348, resources: 0}
   roster:core/role-community: {class: role, eager: 44, lazy: 206, resources: 0}
-payload_hash: 6c8f465d1b84e4e8a46c9938ab80293c64c171d12f31af97b991dade496b1038
+payload_hash: 027f1f4b256e09634247076f67f2b732c7035d3952ed841f5606db68c03f1c3b
