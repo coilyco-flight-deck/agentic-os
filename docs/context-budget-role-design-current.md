@@ -3,6 +3,8 @@
 
 # Current design context budget
 
+Aggregate inventory scope measures all AOS-supported model classes.
+
 * **Frontier design** -
   [Claude 7,661](context-budget-design-claude-current.yaml),
   [Codex 7,658](context-budget-design-codex-current.yaml), lazy 25,680, 6 composed.

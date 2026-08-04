@@ -50,11 +50,20 @@ The shared inventory describes global and repository delivery. Role-seat snapsho
 omit projected global context and retain the repository root-to-CWD AGENTS cascade.
 
 Snapshots use `context-budget-<role>-<seat>-<phase>.yaml`. Every current
-role-seat snapshot is linked from its role report.
+role-seat snapshot remains individually addressable by that stable filename.
+Aggregate role reports link the snapshots selected by measurement policy.
 
 The [current role-class inventory](context-budget-role-seat-current.md) links
-one report per canonical role. Each report presents the frontier Claude and
-Codex measurements beside the low-context Goose and OpenCode measurements.
+one report per canonical role. The AOS-owned
+[inventory policy](../agentic_os/context_budget_inventory_policy.json) selects
+which model classes enter each aggregate report. Unlisted roles default to all
+AOS-supported classes. Every checked-in current snapshot is validated before
+the policy is applied, so excluded snapshots remain independently loadable and
+refreshable evidence.
+
+Aggregate measurement scope is separate from runtime compatibility. The policy
+does not change role composition, harness eligibility, lane selection, layout
+classification, or native and container launch behavior.
 
 ## Capture and compare
 

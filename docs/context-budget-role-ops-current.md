@@ -3,15 +3,13 @@
 
 # Current ops context budget
 
+Aggregate inventory scope intentionally measures frontier seats only. This reporting
+scope is separate from runtime compatibility, and excluded snapshots remain
+independently valid evidence.
+
 * **Frontier ops** -
   [Claude 8,693](context-budget-ops-claude-current.yaml),
   [Codex 8,690](context-budget-ops-codex-current.yaml), lazy 56,168, 27 composed.
-* **Low-context ops** -
-  [Goose 8,096](context-budget-ops-goose-current.yaml),
-  [OpenCode 8,096](context-budget-ops-opencode-current.yaml), lazy 36,055, 18 composed.
-* **Low-context diff** - eager saves 594 to 597 tokens, lazy saves 20,113 tokens, composed sources 27 -> 18.
-
-The programmatic diff compares every frontier seat with every low-context seat.
 
 ## See also
 

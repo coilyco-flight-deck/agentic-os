@@ -3,11 +3,13 @@
 
 # Current Portfolio Strategist context budget
 
+Aggregate inventory scope intentionally measures frontier seats only. This reporting
+scope is separate from runtime compatibility, and excluded snapshots remain
+independently valid evidence.
+
 * **Frontier Portfolio Strategist** -
   [Claude 8,445](context-budget-strats-claude-current.yaml),
   [Codex 8,442](context-budget-strats-codex-current.yaml), lazy 58,271, 18 composed.
-
-Only frontier snapshots are available for this role.
 
 ## See also
 

@@ -3,6 +3,8 @@
 
 # Current community context budget
 
+Aggregate inventory scope measures all AOS-supported model classes.
+
 * **Frontier community** -
   [Claude 7,422](context-budget-community-claude-current.yaml),
   [Codex 7,419](context-budget-community-codex-current.yaml), lazy 27,321, 2 composed.

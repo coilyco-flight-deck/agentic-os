@@ -3,6 +3,8 @@
 
 # Current engineer context budget
 
+Aggregate inventory scope measures all AOS-supported model classes.
+
 * **Frontier engineer** -
   [Claude 8,609](context-budget-engineer-claude-current.yaml),
   [Codex 8,606](context-budget-engineer-codex-current.yaml), lazy 54,892, 25 composed.

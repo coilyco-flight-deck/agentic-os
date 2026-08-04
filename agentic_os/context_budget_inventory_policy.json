@@ -1,0 +1,14 @@
+{
+  "format": "agentic-os.context-budget-inventory-policy.v1",
+  "inventory_model_classes": {
+    "director": [
+      "frontier"
+    ],
+    "strats": [
+      "frontier"
+    ],
+    "ops": [
+      "frontier"
+    ]
+  }
+}

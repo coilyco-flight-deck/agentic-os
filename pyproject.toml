@@ -160,6 +160,10 @@ dev = ["pytest>=9"]
 include = ["agentic_os*"]
 
 [tool.setuptools.package-data]
-# Ship the agent-id cross-language contract files so an importing consumer
-# (not just a source checkout) can read them. See agentic-os#302.
-agentic_os = ["agent_id_vectors.json", "org_shortnames.json"]
+# Ship JSON contracts so an importing consumer, not just a source checkout,
+# can read them.
+agentic_os = [
+    "agent_id_vectors.json",
+    "context_budget_inventory_policy.json",
+    "org_shortnames.json",
+]

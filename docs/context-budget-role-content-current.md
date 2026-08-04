@@ -3,6 +3,8 @@
 
 # Current Content Manager context budget
 
+Aggregate inventory scope measures all AOS-supported model classes.
+
 * **Frontier Content Manager** -
   [Claude 7,951](context-budget-content-claude-current.yaml),
   [Codex 7,948](context-budget-content-codex-current.yaml), lazy 24,947, 10 composed.
