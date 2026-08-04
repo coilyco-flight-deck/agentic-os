@@ -1,16 +1,13 @@
-# dev-base image family
+# dev-base image
 
-AOS publishes five language-specialist images and one full compatibility image.
-Every specialist starts directly from `ubuntu:24.04`. `agentic-os:${TAG}` is
-the full surface, and `agentic-os:release` remains the moving default used by
-the AOS launcher and CI.
+AOS releases one multi-architecture full image. Five language payloads are
+build artifacts that preserve parallelism, cross-run caching, and a shallow
+full-image fan-in. They are not consumer images.
 
-## What ships
+## Build graph
 
 [`docker/dev-base/Dockerfile`](../docker/dev-base/Dockerfile) owns the five
-independent language targets. Each target runs the same
-[`install-common.sh`](../docker/dev-base/install-common.sh) source and adds one
-toolchain:
+independent Ubuntu payload targets:
 
 * `lang-node`
 * `lang-go`
@@ -18,59 +15,62 @@ toolchain:
 * `lang-rust`
 * `lang-python`
 
-Every image carries Node because the common agent harnesses require it. The
-specialist name identifies the additional development toolchain.
-
-The common surface also carries a release-pinned `aos`, Ward for fixed workflow orchestration,
-`aosguard` for operator commands, agent-compose with its embedded `roster:core`
-source, and the repository's packaged aosguard Python bridges. Each image build renders
-aosguard's native agent skill, renders an agent-compose roster, and checks the
-generated person snapshot plus personality definitions. Linuxbrew is not part
-of any image.
-
-The common surface includes `kubectl`, but image builds own no host mounts,
-kubeconfig, or cluster transport. The standalone AOS launcher may add an
-[operator-selected kubeconfig](aos-kubeconfig.md) for an authorized role.
-Language images remain artifacts with no host-specific mount logic.
+Each payload contains only its language toolchain and the architecture metadata
+needed by the full build. The Forgejo matrix builds all five in parallel, with
+four runners active at once. Stable per-language registry cache refs preserve
+BuildKit layers across runners and across days. Commit-scoped payload manifests
+transport one exact build into the full-image job.
 
 [`docker/dev-base/full/Dockerfile`](../docker/dev-base/full/Dockerfile) starts
-from the same-release Rust image and grafts Go, .NET, and Python tooling from
-their same-release images. Node is already present in the common surface. The
-full-only gate tools are `golangci-lint`, `trufflehog`, and `kdlfmt`.
+from the same-commit Rust payload and grafts Node, Go, .NET, and Python from the
+other payloads. It installs the shared agent and operator surface once. Only
+the full image carries the entrypoint, common verification, release-pinned
+`aos`, Ward, `aosguard`, agent-compose, harnesses, operator CLIs, and full-only
+gate tools such as `golangci-lint`, `trufflehog`, and `kdlfmt`.
+
+The full image includes `kubectl`, but image builds own no host mounts,
+kubeconfig, or cluster transport. The standalone AOS launcher may add an
+[operator-selected kubeconfig](aos-kubeconfig.md) for an authorized role.
 
 ## Build and publication
 
 `ward exec dev-base-build` executes the declarative
-[`docker-bake.hcl`](../docker/dev-base/docker-bake.hcl), building all five local
-specialists and then `agentic-os:dev-base-local`. The Dockerfile downloads the
-checksummed AOS binary named by `AOS_VERSION`. AOSguard spec, Python bridges,
-and repository manifests remain named build contexts.
+[`docker-bake.hcl`](../docker/dev-base/docker-bake.hcl). BuildKit builds the five
+payload targets as cache-only dependencies and loads only
+`agentic-os:dev-base-local` for smoke verification.
 
 [`dev-base-publish.yml`](../.forgejo/workflows/dev-base-publish.yml) skips
-unless the promoted diff changes a path under `docker/`, then builds every
-specialist in a Forgejo matrix and the full fan-in image through `needs`. Manual dispatch overrides the filter.
-[`release.yml`](../.forgejo/workflows/release.yml) promotes every manifest to
-its versioned and moving tags. Language tags use
-`lang-<language>-<tag>`. The full image keeps the plain `<tag>`, `release`, and
-`latest` names. Both paths check each target manifest before work, so a retry
-skips an image that already landed. See [publish resume](dev-base-publish-resume.md).
+unless the promoted diff changes a path under `docker/`. Its matrix publishes
+commit-scoped payload drafts, then the full job consumes those exact manifests
+and publishes `draft-${sha}`. Manual dispatch can resume one payload or the
+complete full closure.
 
-Pull requests with a `docker/` change run the complete source graph through
-[`actions/dev-base-build`](../actions/dev-base-build/action.yml). PR validation and publication
-share the Docker definitions and verification. PR builds have no registry credential. See
+[`release.yml`](../.forgejo/workflows/release.yml) promotes only the full
+manifest to its versioned tag, `release`, and `latest`. Payload drafts and
+cache refs are internal build transport with no release alias or compatibility
+contract. See [publish resume](dev-base-publish-resume.md).
+
+Pull requests with a `docker/` change build the complete source graph through
+[`actions/dev-base-build`](../actions/dev-base-build/action.yml). PR validation
+has no registry credential and publishes nothing. See
 [PR build validation](pr-dev-base-build-validation.md).
 
 ## Pinning a tool
 
-Every managed version has one default `ARG` across the two Dockerfiles.
-`ward exec dep-bump -- check` compares those pins with upstream releases.
-`ward exec dep-bump -- apply --arg NAME --version VERSION` rewrites one owning
-declaration.
+Every managed version has one default `ARG` across the two Dockerfiles. A
+language pin lives in its payload target. Shared agents, internal tools,
+operator CLIs, and full-only gates live in the full Dockerfile, so changing
+them reuses cached language payloads instead of rebuilding their toolchains.
+
+`ward exec dep-bump -- check` compares the planner's managed pins with upstream
+releases. `ward exec dep-bump -- apply --arg NAME --version VERSION` rewrites
+one owning declaration. Pins outside the planner remain an explicit inventory
+responsibility rather than being implied current.
 
 Source ownership follows the tool boundary. The image owns this deployment's
-Git identity and its entrypoint maps that identity onto Ward's provider-neutral
-`WARD_GIT_*` environment contract before container bootstrap. The image does
-not redefine Ward policy, aosguard policy, or agent-compose source data.
+Git identity and maps it onto Ward's provider-neutral `WARD_GIT_*` environment
+contract. It does not redefine Ward policy, AOSguard policy, or agent-compose
+source data.
 
 ## See also
 

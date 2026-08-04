@@ -2,21 +2,22 @@
 """Resolve the dev-base image's pinned tool versions against upstream and bump them.
 
 The dev-base Dockerfile tree hand-pins every tool as an `ARG` (`UV_VERSION`,
-`NODE_VERSION`, ...). `release.yml` republishes the language-image family on
-every push to main, but nothing keeps those pins current, so the published
-images drift behind upstream until a human edits an `ARG` (agentic-os#272,
-ward#301).
+`NODE_VERSION`, ...). Relevant pushes rebuild the cached language payloads and
+full image, but nothing keeps those pins current, so the released full image
+drifts behind upstream until a human edits an `ARG` (agentic-os#272, ward#301).
 
 This script is the auto-bump: `plan` resolves each pin's latest upstream release
 and reports the drift; `apply` rewrites a single `ARG` in place. The scheduled
 `.forgejo/workflows/dep-bump.yml` runs `plan`, commits one bump per stale tool,
-and pushes to main, which republishes the language matrix and full fan-in
-image. The bump logic lives here (the publish pipeline is this repo's per
-AGENTS.md). The fleet rollout is not this script's concern.
+and pushes to main, which rebuilds the payload matrix and full fan-in image.
+The bump logic lives here (the publish pipeline is this repo's per AGENTS.md).
+The fleet rollout is not this script's concern.
 
 Stdlib only (urllib, no `requests`) so it runs on a bare Forgejo runner with just
-`python3`. Each resolver is isolated: an upstream that is flaky or reshapes its
-API drops that one tool from the plan, it never blocks the others.
+`python3`. Each resolver is isolated. An upstream that is flaky or reshapes its
+API drops that tool from the plan, so this command is a partial resolver rather
+than a complete currency inventory. The fail-closed disposition is tracked in
+agentic-os#865.
 
 Version policy: bumps stay on the pinned line where crossing it is risky. Node
 tracks the latest release of its currently-pinned major (no surprise major jump).

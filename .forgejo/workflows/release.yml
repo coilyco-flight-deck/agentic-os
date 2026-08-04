@@ -1,7 +1,7 @@
 # Forgejo-canonical release publication, manual retry only. promote.yml gates
 # main and fast-forwards release. dev-base-publish.yml publishes the draft image
-# family on that SHA. This workflow retags every tier, then creates the public
-# git release as the last success marker.
+# graph on that SHA. This workflow retags only the full consumer image, then
+# creates the public git release as the last success marker.
 
 name: release
 
@@ -82,34 +82,6 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           API_BASE: https://api.telegram.org
         run: "python3 -c 'exec(\"import os\\nimport sys\\nimport urllib.error\\nimport urllib.parse\\nimport urllib.request\\n\\ndef build_message():\\n    return \\\"\\\\n\\\".join([\\n        \\\"CI failed on main\\\",\\n        f\\\"repo: {os.environ['\"'\"'REPO'\"'\"']}\\\",\\n        f\\\"workflow: {os.environ['\"'\"'WORKFLOW'\"'\"']}\\\",\\n        f\\\"job: {os.environ['\"'\"'JOB'\"'\"']}\\\",\\n        f\\\"ref: {os.environ['\"'\"'REF'\"'\"']}\\\",\\n        f\\\"sha: {os.environ['\"'\"'SHA'\"'\"']}\\\",\\n        f\\\"run: {os.environ['\"'\"'RUN_URL'\"'\"']}\\\",\\n    ])\\n\\ndef main():\\n    bot_token = os.environ.get(\\\"BOT_TOKEN\\\", \\\"\\\")\\n    chat_id = os.environ.get(\\\"CHAT_ID\\\", \\\"\\\")\\n    if not bot_token or not chat_id:\\n        print(\\\"telegram alert missing required secret\\\", file=sys.stderr)\\n        return 2\\n    proxy_url = os.environ.get(\\\"FORGEJO_EGRESS_PROXY\\\", \\\"\\\").strip()\\n    payload = urllib.parse.urlencode(\\n        {\\n            \\\"chat_id\\\": chat_id,\\n            \\\"text\\\": build_message(),\\n            \\\"disable_web_page_preview\\\": \\\"true\\\",\\n        }\\n    ).encode(\\\"utf-8\\\")\\n    api_base = os.environ.get(\\\"API_BASE\\\", \\\"https://api.telegram.org\\\").rstrip(\\\"/\\\")\\n    request = urllib.request.Request(\\n        f\\\"{api_base}/bot{bot_token}/sendMessage\\\",\\n        data=payload,\\n        method=\\\"POST\\\",\\n    )\\n    opener = urllib.request.build_opener(\\n        urllib.request.ProxyHandler({\\\"https\\\": proxy_url})\\n        if proxy_url\\n        else urllib.request.ProxyHandler()\\n    )\\n    try:\\n        with opener.open(request, timeout=15) as response:\\n            response.read()\\n    except urllib.error.URLError as exc:\\n        print(f\\\"telegram alert failed ({type(exc).__name__})\\\", file=sys.stderr)\\n        return 1\\n    return 0\\n\\nraise SystemExit(main())\\n\")'"
-  retag-languages:
-    needs: [plan-release]
-    if: ${{ needs.plan-release.outputs.tag != '' }}
-    runs-on: docker
-    timeout-minutes: 90
-    strategy:
-      fail-fast: false
-      matrix:
-        tier:
-          - lang-node
-          - lang-go
-          - lang-dotnet
-          - lang-rust
-          - lang-python
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: ./actions/publish-dev-base
-        with:
-          tier: ${{ matrix.tier }}
-          mode: promote
-          tag: ${{ needs.plan-release.outputs.tag }}
-          source-tag: ${{ needs.plan-release.outputs.draft_tag }}
-          alias: ${{ github.ref_name }}
-          extra-aliases: latest
-          registry-token: ${{ secrets.REGISTRY_TOKEN }}
-          build-timeout: 80m
-
   retag-full:
     needs: [plan-release]
     if: ${{ needs.plan-release.outputs.tag != '' }}
@@ -144,7 +116,7 @@ jobs:
           API_BASE: https://api.telegram.org
         run: "python3 -c 'exec(\"import os\\nimport sys\\nimport urllib.error\\nimport urllib.parse\\nimport urllib.request\\n\\ndef build_message():\\n    return \\\"\\\\n\\\".join([\\n        \\\"CI failed on main\\\",\\n        f\\\"repo: {os.environ['\"'\"'REPO'\"'\"']}\\\",\\n        f\\\"workflow: {os.environ['\"'\"'WORKFLOW'\"'\"']}\\\",\\n        f\\\"job: {os.environ['\"'\"'JOB'\"'\"']}\\\",\\n        f\\\"ref: {os.environ['\"'\"'REF'\"'\"']}\\\",\\n        f\\\"sha: {os.environ['\"'\"'SHA'\"'\"']}\\\",\\n        f\\\"run: {os.environ['\"'\"'RUN_URL'\"'\"']}\\\",\\n    ])\\n\\ndef main():\\n    bot_token = os.environ.get(\\\"BOT_TOKEN\\\", \\\"\\\")\\n    chat_id = os.environ.get(\\\"CHAT_ID\\\", \\\"\\\")\\n    if not bot_token or not chat_id:\\n        print(\\\"telegram alert missing required secret\\\", file=sys.stderr)\\n        return 2\\n    proxy_url = os.environ.get(\\\"FORGEJO_EGRESS_PROXY\\\", \\\"\\\").strip()\\n    payload = urllib.parse.urlencode(\\n        {\\n            \\\"chat_id\\\": chat_id,\\n            \\\"text\\\": build_message(),\\n            \\\"disable_web_page_preview\\\": \\\"true\\\",\\n        }\\n    ).encode(\\\"utf-8\\\")\\n    api_base = os.environ.get(\\\"API_BASE\\\", \\\"https://api.telegram.org\\\").rstrip(\\\"/\\\")\\n    request = urllib.request.Request(\\n        f\\\"{api_base}/bot{bot_token}/sendMessage\\\",\\n        data=payload,\\n        method=\\\"POST\\\",\\n    )\\n    opener = urllib.request.build_opener(\\n        urllib.request.ProxyHandler({\\\"https\\\": proxy_url})\\n        if proxy_url\\n        else urllib.request.ProxyHandler()\\n    )\\n    try:\\n        with opener.open(request, timeout=15) as response:\\n            response.read()\\n    except urllib.error.URLError as exc:\\n        print(f\\\"telegram alert failed ({type(exc).__name__})\\\", file=sys.stderr)\\n        return 1\\n    return 0\\n\\nraise SystemExit(main())\\n\")'"
   release:
-    needs: [plan-release, retag-languages, retag-full]
+    needs: [plan-release, retag-full]
     if: ${{ needs.plan-release.outputs.tag != '' }}
     runs-on: docker
     container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release

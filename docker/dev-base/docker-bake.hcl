@@ -15,11 +15,6 @@ target "language" {
   dockerfile = "Dockerfile"
   platforms  = [PLATFORM]
   output     = ["type=cacheonly"]
-  contexts = {
-    aosguard-spec   = ".specgen"
-    aosguard-python = "agentic_os"
-    repo-lists      = "aos-cli/repositories"
-  }
 }
 
 target "lang-node" {
@@ -53,22 +48,27 @@ target "lang-python" {
 }
 
 target "full" {
-  context    = "docker/dev-base/full"
-  dockerfile = "Dockerfile"
+  context    = "docker/dev-base"
+  dockerfile = "full/Dockerfile"
   target     = "dev-base-full"
   platforms  = [PLATFORM]
   tags       = ["agentic-os:${TAG}"]
   output     = ["type=docker"]
   args = {
-    BASE_IMAGE       = "agentic-os:lang-rust-${TAG}"
-    LANG_GO_IMAGE    = "agentic-os:lang-go-${TAG}"
+    BASE_IMAGE        = "agentic-os:lang-rust-${TAG}"
+    LANG_NODE_IMAGE   = "agentic-os:lang-node-${TAG}"
+    LANG_GO_IMAGE     = "agentic-os:lang-go-${TAG}"
     LANG_DOTNET_IMAGE = "agentic-os:lang-dotnet-${TAG}"
     LANG_PYTHON_IMAGE = "agentic-os:lang-python-${TAG}"
   }
   contexts = {
+    "agentic-os:lang-node-${TAG}"   = "target:lang-node"
     "agentic-os:lang-rust-${TAG}"   = "target:lang-rust"
     "agentic-os:lang-go-${TAG}"     = "target:lang-go"
     "agentic-os:lang-dotnet-${TAG}" = "target:lang-dotnet"
     "agentic-os:lang-python-${TAG}" = "target:lang-python"
+    aosguard-spec                     = ".specgen"
+    aosguard-python                   = "agentic_os"
+    repo-lists                        = "aos-cli/repositories"
   }
 }

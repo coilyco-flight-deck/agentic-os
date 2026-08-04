@@ -12,11 +12,12 @@ yolo-able, while `release` is last-known-good. Forgejo owns releases per
 
 Promotion only gates and advances the branch. Non-artifact merges produce no
 package tag or draft image.
-`release.yml` is the manual retry path and no longer runs on push. Its language
-and full retag jobs wait for the draft source tags. Dispatches can override
-`sha`, `tag`, and `source-tag` to resume the publish or retag.
-`draft-*` tags are commit-scoped staging refs for Forgejo package cleanup
-rules. `:latest` is a compatibility alias for `:release`.
+`release.yml` is the manual retry path and no longer runs on push. Its full
+retag job waits for the commit-scoped full draft. The release job retags only
+that full manifest. Dispatches can override `sha`, `tag`, and `source-tag` to
+resume the publish or retag. `draft-*` tags are staging refs for Forgejo package
+cleanup rules. Language drafts and stable language cache refs are build-only
+artifacts. `:latest` is a compatibility alias for `:release`.
 
 The root `v*` train serves the dev-base image. Hook consumers pin the
 independent `aos-precommit-v*` train. The standalone CLI publishes binaries and

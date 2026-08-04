@@ -3,6 +3,11 @@
 
 set -euo pipefail
 
+if [ "$MODE" = promote ] && [ "$TIER" != full ]; then
+  echo "::error::only the full dev-base image is a promotable release product" >&2
+  exit 2
+fi
+
 tier_tag() {
   if [ "$1" = full ]; then
     printf '%s' "$2"

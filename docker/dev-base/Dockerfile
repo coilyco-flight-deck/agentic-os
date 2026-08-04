@@ -1,335 +1,87 @@
 # syntax=docker/dockerfile:1
-# Every published language target starts directly from Ubuntu. The full image
-# fans the independently built language images back into one compatibility
-# surface.
+# Language targets are build-only payloads. Forgejo builds them in parallel,
+# keeps stable registry caches across runs, and feeds their commit-scoped draft
+# manifests into the one released full image.
 
 ARG UV_VERSION=0.12.0
 ARG GO_VERSION=1.26.5
 ARG DOTNET_VERSION=10.0.302
 ARG TRUNK_VERSION=0.21.14
-ARG AGENT_COMPOSE_VERSION=2.0.0
-ARG WARD_VERSION=0.864.0
-ARG SPECGEN_VERSION=0.128.0
-ARG AOS_VERSION=0.148.0
 ARG NODE_VERSION=22.23.2
-ARG CLAUDE_VERSION=2.1.220
-ARG MCPORTER_VERSION=0.12.3
-ARG CODEX_VERSION=0.146.0
-ARG GOOSE_VERSION=1.45.0
-ARG OPENCODE_VERSION=1.18.9
-ARG AWSCLI_VERSION=2.36.11
-ARG GH_VERSION=2.96.0
-ARG DOCKER_VERSION=28.5.2
-ARG HELM_VERSION=4.2.3
-ARG KUBECTL_VERSION=1.36.3
-ARG YQ_VERSION=4.53.3
-ARG TAILSCALE_VERSION=1.98.10
-ARG GIT_LFS_VERSION=3.7.1
-ARG GIT_LFS_SHA256_AMD64=1c0b6ee5200ca708c5cebebb18fdeb0e1c98f1af5c1a9cba205a4c0ab5a5ec08
-ARG GIT_LFS_SHA256_ARM64=73a9c90eeb4312133a63c3eaee0c38c019ea7bfa0953d174809d25b18588dd8d
-ARG TARGETARCH
-
-FROM ubuntu:24.04 AS dev-base-tool-builder
-ARG GO_VERSION
-ARG WARD_VERSION
-ARG SPECGEN_VERSION
-ARG AOS_VERSION
-ARG TARGETARCH
-ARG DEBIAN_FRONTEND=noninteractive
-
-ENV PATH=/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin
-
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-
-RUN set -eux; \
-    for attempt in 1 2 3; do \
-      if apt-get update -o Acquire::Retries=3 \
-        && apt-get install -y --no-install-recommends \
-          ca-certificates \
-          curl \
-          git \
-          openssh-client; then \
-        rm -rf /var/lib/apt/lists/*; \
-        break; \
-      fi; \
-      if [ "$attempt" -eq 3 ]; then \
-        exit 1; \
-      fi; \
-      sleep 5; \
-    done
-
-RUN set -eux; \
-    case "${TARGETARCH}" in \
-      amd64) GO_ARCH=amd64 ;; \
-      arm64) GO_ARCH=arm64 ;; \
-      *) echo "unsupported TARGETARCH: ${TARGETARCH}" >&2; exit 1 ;; \
-    esac; \
-    curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
-      "https://go.dev/dl/go${GO_VERSION}.linux-${GO_ARCH}.tar.gz" \
-      -o /tmp/go.tar.gz; \
-    tar -xzf /tmp/go.tar.gz -C /usr/local; \
-    rm /tmp/go.tar.gz; \
-    go version
-
-RUN set -eux; \
-    export GOPATH=/tmp/gobuild GOCACHE=/tmp/gocache \
-      GOPROXY=direct GOSUMDB=off GOPRIVATE=forgejo.coilysiren.me CGO_ENABLED=0; \
-    for attempt in 1 2 3; do \
-      echo "cloning ward source attempt ${attempt}/3" >&2; \
-      if timeout 120 git clone --progress --depth 1 --branch "v${WARD_VERSION}" \
-        https://forgejo.coilysiren.me/coilyco-flight-deck/ward.git /tmp/ward-src; then \
-        break; \
-      fi; \
-      [ "$attempt" -eq 3 ] && { echo "ward source clone failed after 3 attempts" >&2; exit 1; }; \
-      sleep 5; \
-    done; \
-    cd /tmp/ward-src; \
-    for attempt in 1 2 3; do \
-      if timeout 240 go mod download; then break; fi; \
-      [ "$attempt" -eq 3 ] && { echo "go mod download failed after 3 attempts" >&2; exit 1; }; \
-      sleep 5; \
-    done; \
-    go build -trimpath -ldflags "-s -w -X main.Version=v${WARD_VERSION}" \
-      -o /usr/local/bin/ward ./cmd/ward; \
-    chmod 0755 /usr/local/bin/ward; \
-    cd /; \
-    rm -rf /tmp/ward-src /tmp/gobuild /tmp/gocache; \
-    ward --version
-
-RUN set -eux; \
-    aos_asset="aos-linux-${TARGETARCH}"; \
-    aos_base="https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/releases/download/aos-v${AOS_VERSION}"; \
-    curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
-      "${aos_base}/${aos_asset}" -o "/tmp/${aos_asset}"; \
-    curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
-      "${aos_base}/SHA256SUMS" -o /tmp/aos-SHA256SUMS; \
-    grep "[[:space:]]${aos_asset}$" /tmp/aos-SHA256SUMS \
-      | (cd /tmp && sha256sum -c -); \
-    install -m 0755 "/tmp/${aos_asset}" /usr/local/bin/aos; \
-    rm "/tmp/${aos_asset}" /tmp/aos-SHA256SUMS; \
-    /usr/local/bin/aos --version
-
-RUN set -eux; \
-    specgen_asset="specgen-linux-${TARGETARCH}"; \
-    specgen_base="https://forgejo.coilysiren.me/coilyco-flight-deck/cli-guard/releases/download/v${SPECGEN_VERSION}"; \
-    curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
-      "${specgen_base}/${specgen_asset}" -o "/tmp/${specgen_asset}"; \
-    curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
-      "${specgen_base}/SHA256SUMS" -o /tmp/specgen-SHA256SUMS; \
-    grep "[[:space:]]${specgen_asset}$" /tmp/specgen-SHA256SUMS \
-      | (cd /tmp && sha256sum -c -); \
-    install -m 0755 "/tmp/${specgen_asset}" /usr/local/bin/specgen; \
-    rm "/tmp/${specgen_asset}" /tmp/specgen-SHA256SUMS; \
-    specgen --version
-
-COPY --from=aosguard-spec . /tmp/aosguard-spec
-RUN set -eux; \
-    specgen --project-root /tmp/aosguard-spec/guardfiles \
-      --skills-out /opt/agentic-os/aosguard-skill build \
-      --set-version "dev-base" \
-      --out /usr/local/bin/aosguard; \
-    chmod 0755 /usr/local/bin/aosguard; \
-    test -s /opt/agentic-os/aosguard-skill/aosguard/SKILL.md; \
-    test -s /opt/agentic-os/aosguard-skill/aosguard/references/commands.yaml; \
-    rm -rf /tmp/aosguard-spec; \
-    aosguard --version
 
 FROM ubuntu:24.04 AS dev-base-lang-node
-ARG UV_VERSION
-ARG GIT_LFS_VERSION
-ARG GIT_LFS_SHA256_AMD64
-ARG GIT_LFS_SHA256_ARM64
-ARG AGENT_COMPOSE_VERSION
 ARG NODE_VERSION
-ARG CLAUDE_VERSION
-ARG MCPORTER_VERSION
-ARG CODEX_VERSION
-ARG GOOSE_VERSION
-ARG OPENCODE_VERSION
-ARG AWSCLI_VERSION
-ARG GH_VERSION
-ARG DOCKER_VERSION
-ARG HELM_VERSION
-ARG KUBECTL_VERSION
-ARG YQ_VERSION
-ARG TAILSCALE_VERSION
 ARG TARGETARCH
-ENV PATH=/usr/local/node/bin:/usr/local/bin:/usr/bin:/bin \
-    HOME=/root UV_TOOL_DIR=/opt/uv/tools UV_TOOL_BIN_DIR=/usr/local/bin \
-    UV_PYTHON_INSTALL_DIR=/opt/uv/python AWS_DEFAULT_REGION=us-east-1 \
-    AWS_REGION=us-east-1 AOS_GIT_NAME=coilyco-ops \
-    AOS_GIT_EMAIL=coilyco-ops@coilysiren.me PYTHONPATH=/opt/agentic-os/python
+ENV PATH=/usr/local/node/bin:/usr/local/bin:/usr/bin:/bin
 LABEL org.opencontainers.image.source="https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os" \
       org.opencontainers.image.licenses="MIT" \
-      org.opencontainers.image.title="agentic-os lang-node"
+      org.opencontainers.image.title="agentic-os Node build payload"
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-RUN --mount=type=bind,source=install-common.sh,target=/tmp/install-common.sh \
-    --mount=from=repo-lists,source=substrate-repos.txt,target=/tmp/substrate-repos.txt \
-    bash /tmp/install-common.sh /tmp/substrate-repos.txt "${GIT_LFS_VERSION}" \
-      "${GIT_LFS_SHA256_AMD64}" "${GIT_LFS_SHA256_ARM64}"
-COPY --chmod=0755 agent-name.sh statusline.sh ward-shell-entrypoint.sh /opt/agentic-os/
-COPY --chmod=0755 statusline.d/ /opt/agentic-os/statusline.d/
-COPY --chmod=0644 claude-managed-settings.json /etc/claude-code/managed-settings.json
-COPY --from=repo-lists --chmod=0644 substrate-repos.txt /opt/agentic-os/substrate-repos.txt
-COPY --from=dev-base-tool-builder /usr/local/bin/ward /usr/local/bin/ward
-COPY --from=dev-base-tool-builder /usr/local/bin/aos /usr/local/bin/aos
-COPY --from=dev-base-tool-builder /usr/local/bin/aosguard /usr/local/bin/aosguard
-COPY --from=dev-base-tool-builder /opt/agentic-os/aosguard-skill /opt/agentic-os/aosguard-skill
-COPY --from=aosguard-python . /opt/agentic-os/python/agentic_os/
-RUN --mount=type=bind,source=verify-common.sh,target=/tmp/verify-common.sh \
-    node --version && bash /tmp/verify-common.sh
-WORKDIR /workspace
-ENTRYPOINT ["/opt/agentic-os/ward-shell-entrypoint.sh"]
-CMD ["bash"]
+RUN --mount=type=bind,source=write-arch-env.sh,target=/tmp/write-arch-env.sh \
+    TARGETARCH="${TARGETARCH}" bash /tmp/write-arch-env.sh
+RUN set -eux; . /opt/agentic-os/arch.env; \
+    apt-get update; apt-get install -y --no-install-recommends ca-certificates curl xz-utils; \
+    rm -rf /var/lib/apt/lists/*; \
+    curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
+      "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${NODE_ARCH}.tar.xz" \
+      -o /tmp/node.tar.xz; \
+    install -d /usr/local/node; \
+    tar -xJf /tmp/node.tar.xz -C /usr/local/node --strip-components=1 \
+      --exclude='*/CHANGELOG.md' --exclude='*/README.md' --exclude='*/LICENSE'; \
+    rm /tmp/node.tar.xz; node --version; npm --version
 
 FROM ubuntu:24.04 AS dev-base-lang-go
-ARG UV_VERSION
-ARG GIT_LFS_VERSION
-ARG GIT_LFS_SHA256_AMD64
-ARG GIT_LFS_SHA256_ARM64
 ARG GO_VERSION
-ARG AGENT_COMPOSE_VERSION
-ARG NODE_VERSION
-ARG CLAUDE_VERSION
-ARG MCPORTER_VERSION
-ARG CODEX_VERSION
-ARG GOOSE_VERSION
-ARG OPENCODE_VERSION
-ARG AWSCLI_VERSION
-ARG GH_VERSION
-ARG DOCKER_VERSION
-ARG HELM_VERSION
-ARG KUBECTL_VERSION
-ARG YQ_VERSION
-ARG TAILSCALE_VERSION
 ARG TARGETARCH
-ENV PATH=/usr/local/go/bin:/usr/local/node/bin:/usr/local/bin:/usr/bin:/bin \
-    HOME=/root UV_TOOL_DIR=/opt/uv/tools UV_TOOL_BIN_DIR=/usr/local/bin \
-    UV_PYTHON_INSTALL_DIR=/opt/uv/python AWS_DEFAULT_REGION=us-east-1 \
-    AWS_REGION=us-east-1 AOS_GIT_NAME=coilyco-ops \
-    AOS_GIT_EMAIL=coilyco-ops@coilysiren.me PYTHONPATH=/opt/agentic-os/python
+ENV PATH=/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin
 LABEL org.opencontainers.image.source="https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os" \
       org.opencontainers.image.licenses="MIT" \
-      org.opencontainers.image.title="agentic-os lang-go"
+      org.opencontainers.image.title="agentic-os Go build payload"
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-RUN --mount=type=bind,source=install-common.sh,target=/tmp/install-common.sh \
-    --mount=from=repo-lists,source=substrate-repos.txt,target=/tmp/substrate-repos.txt \
-    bash /tmp/install-common.sh /tmp/substrate-repos.txt "${GIT_LFS_VERSION}" \
-      "${GIT_LFS_SHA256_AMD64}" "${GIT_LFS_SHA256_ARM64}"
+RUN --mount=type=bind,source=write-arch-env.sh,target=/tmp/write-arch-env.sh \
+    TARGETARCH="${TARGETARCH}" bash /tmp/write-arch-env.sh
 RUN set -eux; . /opt/agentic-os/arch.env; \
+    apt-get update; apt-get install -y --no-install-recommends ca-certificates curl; \
+    rm -rf /var/lib/apt/lists/*; \
     curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
       "https://go.dev/dl/go${GO_VERSION}.linux-${GO_ARCH}.tar.gz" -o /tmp/go.tar.gz; \
     tar -xzf /tmp/go.tar.gz -C /usr/local; rm /tmp/go.tar.gz; go version
-COPY --chmod=0755 agent-name.sh statusline.sh ward-shell-entrypoint.sh /opt/agentic-os/
-COPY --chmod=0755 statusline.d/ /opt/agentic-os/statusline.d/
-COPY --chmod=0644 claude-managed-settings.json /etc/claude-code/managed-settings.json
-COPY --from=repo-lists --chmod=0644 substrate-repos.txt /opt/agentic-os/substrate-repos.txt
-COPY --from=dev-base-tool-builder /usr/local/bin/ward /usr/local/bin/ward
-COPY --from=dev-base-tool-builder /usr/local/bin/aos /usr/local/bin/aos
-COPY --from=dev-base-tool-builder /usr/local/bin/aosguard /usr/local/bin/aosguard
-COPY --from=dev-base-tool-builder /opt/agentic-os/aosguard-skill /opt/agentic-os/aosguard-skill
-COPY --from=aosguard-python . /opt/agentic-os/python/agentic_os/
-RUN --mount=type=bind,source=verify-common.sh,target=/tmp/verify-common.sh \
-    go version && bash /tmp/verify-common.sh
-WORKDIR /workspace
-ENTRYPOINT ["/opt/agentic-os/ward-shell-entrypoint.sh"]
-CMD ["bash"]
 
 FROM ubuntu:24.04 AS dev-base-lang-dotnet
-ARG UV_VERSION
-ARG GIT_LFS_VERSION
-ARG GIT_LFS_SHA256_AMD64
-ARG GIT_LFS_SHA256_ARM64
 ARG DOTNET_VERSION
-ARG AGENT_COMPOSE_VERSION
-ARG NODE_VERSION
-ARG CLAUDE_VERSION
-ARG MCPORTER_VERSION
-ARG CODEX_VERSION
-ARG GOOSE_VERSION
-ARG OPENCODE_VERSION
-ARG AWSCLI_VERSION
-ARG GH_VERSION
-ARG DOCKER_VERSION
-ARG HELM_VERSION
-ARG KUBECTL_VERSION
-ARG YQ_VERSION
-ARG TAILSCALE_VERSION
 ARG TARGETARCH
-ENV PATH=/usr/local/dotnet:/usr/local/node/bin:/usr/local/bin:/usr/bin:/bin \
-    HOME=/root UV_TOOL_DIR=/opt/uv/tools UV_TOOL_BIN_DIR=/usr/local/bin \
-    UV_PYTHON_INSTALL_DIR=/opt/uv/python AWS_DEFAULT_REGION=us-east-1 \
-    AWS_REGION=us-east-1 DOTNET_ROOT=/usr/local/dotnet \
-    DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 \
-    AOS_GIT_NAME=coilyco-ops AOS_GIT_EMAIL=coilyco-ops@coilysiren.me \
-    PYTHONPATH=/opt/agentic-os/python
+ENV PATH=/usr/local/dotnet:/usr/local/bin:/usr/bin:/bin \
+    DOTNET_ROOT=/usr/local/dotnet DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
 LABEL org.opencontainers.image.source="https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os" \
       org.opencontainers.image.licenses="MIT" \
-      org.opencontainers.image.title="agentic-os lang-dotnet"
+      org.opencontainers.image.title="agentic-os .NET build payload"
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-RUN --mount=type=bind,source=install-common.sh,target=/tmp/install-common.sh \
-    --mount=from=repo-lists,source=substrate-repos.txt,target=/tmp/substrate-repos.txt \
-    bash /tmp/install-common.sh /tmp/substrate-repos.txt "${GIT_LFS_VERSION}" \
-      "${GIT_LFS_SHA256_AMD64}" "${GIT_LFS_SHA256_ARM64}"
+RUN --mount=type=bind,source=write-arch-env.sh,target=/tmp/write-arch-env.sh \
+    TARGETARCH="${TARGETARCH}" bash /tmp/write-arch-env.sh
 RUN set -eux; . /opt/agentic-os/arch.env; \
+    apt-get update; apt-get install -y --no-install-recommends ca-certificates curl; \
+    rm -rf /var/lib/apt/lists/*; \
     curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
       https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh; \
     chmod 0755 /tmp/dotnet-install.sh; \
     /tmp/dotnet-install.sh --version "${DOTNET_VERSION}" --architecture "${DOTNET_ARCH}" \
-      --install-dir /usr/local/dotnet --no-path; rm /tmp/dotnet-install.sh; \
-    chmod -R a+rX /usr/local/dotnet; dotnet --list-sdks
-COPY --chmod=0755 agent-name.sh statusline.sh ward-shell-entrypoint.sh /opt/agentic-os/
-COPY --chmod=0755 statusline.d/ /opt/agentic-os/statusline.d/
-COPY --chmod=0644 claude-managed-settings.json /etc/claude-code/managed-settings.json
-COPY --from=repo-lists --chmod=0644 substrate-repos.txt /opt/agentic-os/substrate-repos.txt
-COPY --from=dev-base-tool-builder /usr/local/bin/ward /usr/local/bin/ward
-COPY --from=dev-base-tool-builder /usr/local/bin/aos /usr/local/bin/aos
-COPY --from=dev-base-tool-builder /usr/local/bin/aosguard /usr/local/bin/aosguard
-COPY --from=dev-base-tool-builder /opt/agentic-os/aosguard-skill /opt/agentic-os/aosguard-skill
-COPY --from=aosguard-python . /opt/agentic-os/python/agentic_os/
-RUN --mount=type=bind,source=verify-common.sh,target=/tmp/verify-common.sh \
-    dotnet --list-sdks && bash /tmp/verify-common.sh
-WORKDIR /workspace
-ENTRYPOINT ["/opt/agentic-os/ward-shell-entrypoint.sh"]
-CMD ["bash"]
+      --install-dir /usr/local/dotnet --no-path; \
+    rm /tmp/dotnet-install.sh; chmod -R a+rX /usr/local/dotnet; dotnet --list-sdks
 
 FROM ubuntu:24.04 AS dev-base-lang-rust
-ARG UV_VERSION
-ARG GIT_LFS_VERSION
-ARG GIT_LFS_SHA256_AMD64
-ARG GIT_LFS_SHA256_ARM64
 ARG TRUNK_VERSION
-ARG AGENT_COMPOSE_VERSION
-ARG NODE_VERSION
-ARG CLAUDE_VERSION
-ARG MCPORTER_VERSION
-ARG CODEX_VERSION
-ARG GOOSE_VERSION
-ARG OPENCODE_VERSION
-ARG AWSCLI_VERSION
-ARG GH_VERSION
-ARG DOCKER_VERSION
-ARG HELM_VERSION
-ARG KUBECTL_VERSION
-ARG YQ_VERSION
-ARG TAILSCALE_VERSION
 ARG TARGETARCH
-ENV PATH=/usr/local/node/bin:/usr/local/cargo/bin:/usr/local/bin:/usr/bin:/bin \
-    HOME=/root UV_TOOL_DIR=/opt/uv/tools UV_TOOL_BIN_DIR=/usr/local/bin \
-    UV_PYTHON_INSTALL_DIR=/opt/uv/python CARGO_HOME=/usr/local/cargo \
-    RUSTUP_HOME=/usr/local/rustup AWS_DEFAULT_REGION=us-east-1 \
-    AWS_REGION=us-east-1 AOS_GIT_NAME=coilyco-ops \
-    AOS_GIT_EMAIL=coilyco-ops@coilysiren.me PYTHONPATH=/opt/agentic-os/python
+ENV PATH=/usr/local/cargo/bin:/usr/local/bin:/usr/bin:/bin \
+    CARGO_HOME=/usr/local/cargo RUSTUP_HOME=/usr/local/rustup
 LABEL org.opencontainers.image.source="https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os" \
       org.opencontainers.image.licenses="MIT" \
-      org.opencontainers.image.title="agentic-os lang-rust"
+      org.opencontainers.image.title="agentic-os Rust build payload"
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-RUN --mount=type=bind,source=install-common.sh,target=/tmp/install-common.sh \
-    --mount=from=repo-lists,source=substrate-repos.txt,target=/tmp/substrate-repos.txt \
-    bash /tmp/install-common.sh /tmp/substrate-repos.txt "${GIT_LFS_VERSION}" \
-      "${GIT_LFS_SHA256_AMD64}" "${GIT_LFS_SHA256_ARM64}"
+RUN --mount=type=bind,source=write-arch-env.sh,target=/tmp/write-arch-env.sh \
+    TARGETARCH="${TARGETARCH}" bash /tmp/write-arch-env.sh
 RUN set -eux; apt-get update; apt-get install -y --no-install-recommends \
-      libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev pkg-config; \
+      build-essential ca-certificates curl libasound2-dev libudev-dev \
+      libwayland-dev libxkbcommon-dev pkg-config; \
     rm -rf /var/lib/apt/lists/*; \
     curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
       https://sh.rustup.rs -o /tmp/rustup-init.sh; chmod 0755 /tmp/rustup-init.sh; \
@@ -339,75 +91,32 @@ RUN set -eux; apt-get update; apt-get install -y --no-install-recommends \
 RUN set -eux; . /opt/agentic-os/arch.env; \
     curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
       "https://github.com/trunk-rs/trunk/releases/download/v${TRUNK_VERSION}/trunk-${KDL_ARCH}-unknown-linux-gnu.tar.gz" \
-      -o /tmp/trunk.tar.gz; tar -xzf /tmp/trunk.tar.gz -C /usr/local/cargo/bin trunk; \
+      -o /tmp/trunk.tar.gz; \
+    tar -xzf /tmp/trunk.tar.gz -C /usr/local/cargo/bin trunk; \
     chmod 0755 /usr/local/cargo/bin/trunk; rm /tmp/trunk.tar.gz; trunk --version
 RUN printf '%s\n' '#include <wayland-client.h>' '#include <xkbcommon/xkbcommon.h>' \
-      'int main(void) { return 0; }' > /tmp/rust-native-smoke.c && \
+      'int main(void) { return 0; }' > /tmp/rust-native-smoke.c; \
     cc /tmp/rust-native-smoke.c $(pkg-config --cflags --libs wayland-client xkbcommon) \
-      -o /tmp/rust-native-smoke && /tmp/rust-native-smoke && \
+      -o /tmp/rust-native-smoke; /tmp/rust-native-smoke; \
     rm /tmp/rust-native-smoke /tmp/rust-native-smoke.c
-COPY --chmod=0755 agent-name.sh statusline.sh ward-shell-entrypoint.sh /opt/agentic-os/
-COPY --chmod=0755 statusline.d/ /opt/agentic-os/statusline.d/
-COPY --chmod=0644 claude-managed-settings.json /etc/claude-code/managed-settings.json
-COPY --from=repo-lists --chmod=0644 substrate-repos.txt /opt/agentic-os/substrate-repos.txt
-COPY --from=dev-base-tool-builder /usr/local/bin/ward /usr/local/bin/ward
-COPY --from=dev-base-tool-builder /usr/local/bin/aos /usr/local/bin/aos
-COPY --from=dev-base-tool-builder /usr/local/bin/aosguard /usr/local/bin/aosguard
-COPY --from=dev-base-tool-builder /opt/agentic-os/aosguard-skill /opt/agentic-os/aosguard-skill
-COPY --from=aosguard-python . /opt/agentic-os/python/agentic_os/
-RUN --mount=type=bind,source=verify-common.sh,target=/tmp/verify-common.sh \
-    cargo --version && trunk --version && bash /tmp/verify-common.sh
-WORKDIR /workspace
-ENTRYPOINT ["/opt/agentic-os/ward-shell-entrypoint.sh"]
-CMD ["bash"]
 
 FROM ubuntu:24.04 AS dev-base-lang-python
 ARG UV_VERSION
-ARG GIT_LFS_VERSION
-ARG GIT_LFS_SHA256_AMD64
-ARG GIT_LFS_SHA256_ARM64
-ARG AGENT_COMPOSE_VERSION
-ARG NODE_VERSION
-ARG CLAUDE_VERSION
-ARG MCPORTER_VERSION
-ARG CODEX_VERSION
-ARG GOOSE_VERSION
-ARG OPENCODE_VERSION
-ARG AWSCLI_VERSION
-ARG GH_VERSION
-ARG DOCKER_VERSION
-ARG HELM_VERSION
-ARG KUBECTL_VERSION
-ARG YQ_VERSION
-ARG TAILSCALE_VERSION
 ARG TARGETARCH
-ENV PATH=/usr/local/node/bin:/usr/local/bin:/usr/bin:/bin \
-    HOME=/root UV_TOOL_DIR=/opt/uv/tools UV_TOOL_BIN_DIR=/usr/local/bin \
-    UV_PYTHON_INSTALL_DIR=/opt/uv/python AWS_DEFAULT_REGION=us-east-1 \
-    AWS_REGION=us-east-1 AOS_GIT_NAME=coilyco-ops \
-    AOS_GIT_EMAIL=coilyco-ops@coilysiren.me PYTHONPATH=/opt/agentic-os/python
+ENV PATH=/usr/local/bin:/usr/bin:/bin \
+    UV_TOOL_DIR=/opt/uv/tools UV_TOOL_BIN_DIR=/usr/local/bin \
+    UV_PYTHON_INSTALL_DIR=/opt/uv/python
 LABEL org.opencontainers.image.source="https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os" \
       org.opencontainers.image.licenses="MIT" \
-      org.opencontainers.image.title="agentic-os lang-python"
+      org.opencontainers.image.title="agentic-os Python build payload"
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-RUN --mount=type=bind,source=install-common.sh,target=/tmp/install-common.sh \
-    --mount=from=repo-lists,source=substrate-repos.txt,target=/tmp/substrate-repos.txt \
-    bash /tmp/install-common.sh /tmp/substrate-repos.txt "${GIT_LFS_VERSION}" \
-      "${GIT_LFS_SHA256_AMD64}" "${GIT_LFS_SHA256_ARM64}"
-RUN set -eux; ln -sf /usr/bin/python3 /usr/local/bin/python; \
-    ln -sf /usr/bin/pip3 /usr/local/bin/pip; uv tool install pipenv; \
-    chmod -R a+rX /opt/uv; python --version; pip --version; pipenv --version
-COPY --chmod=0755 agent-name.sh statusline.sh ward-shell-entrypoint.sh /opt/agentic-os/
-COPY --chmod=0755 statusline.d/ /opt/agentic-os/statusline.d/
-COPY --chmod=0644 claude-managed-settings.json /etc/claude-code/managed-settings.json
-COPY --from=repo-lists --chmod=0644 substrate-repos.txt /opt/agentic-os/substrate-repos.txt
-COPY --from=dev-base-tool-builder /usr/local/bin/ward /usr/local/bin/ward
-COPY --from=dev-base-tool-builder /usr/local/bin/aos /usr/local/bin/aos
-COPY --from=dev-base-tool-builder /usr/local/bin/aosguard /usr/local/bin/aosguard
-COPY --from=dev-base-tool-builder /opt/agentic-os/aosguard-skill /opt/agentic-os/aosguard-skill
-COPY --from=aosguard-python . /opt/agentic-os/python/agentic_os/
-RUN --mount=type=bind,source=verify-common.sh,target=/tmp/verify-common.sh \
-    python --version && pipenv --version && bash /tmp/verify-common.sh
-WORKDIR /workspace
-ENTRYPOINT ["/opt/agentic-os/ward-shell-entrypoint.sh"]
-CMD ["bash"]
+RUN --mount=type=bind,source=write-arch-env.sh,target=/tmp/write-arch-env.sh \
+    TARGETARCH="${TARGETARCH}" bash /tmp/write-arch-env.sh
+RUN set -eux; apt-get update; apt-get install -y --no-install-recommends \
+      ca-certificates curl python3 python3-pip python3-venv; \
+    rm -rf /var/lib/apt/lists/*; \
+    curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
+      "https://astral.sh/uv/${UV_VERSION}/install.sh" \
+      | env INSTALLER_NO_MODIFY_PATH=1 UV_INSTALL_DIR=/usr/local/bin sh; \
+    uv tool install pipenv; uv python install 3.13 3.12; \
+    chmod -R a+rwX /opt/uv; uv --version; pipenv --version; uv python list

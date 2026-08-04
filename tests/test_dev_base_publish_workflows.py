@@ -8,6 +8,12 @@ ROOT = Path(__file__).resolve().parent.parent
 PUBLISH = ROOT / ".forgejo" / "workflows" / "dev-base-publish.yml"
 RELEASE = ROOT / ".forgejo" / "workflows" / "release.yml"
 PUBLISH_ACTION = ROOT / "actions" / "publish-dev-base" / "action.yml"
+PUBLISH_IMAGE = (
+    ROOT / "actions" / "publish-dev-base" / "scripts" / "publish-image.sh"
+)
+CHECKPOINT = (
+    ROOT / "actions" / "publish-dev-base" / "scripts" / "checkpoint.sh"
+)
 INSTALL_DOCKER = (
     ROOT
     / "actions"
@@ -38,7 +44,7 @@ def _assert_alert_steps_are_non_blocking(text: str) -> None:
         )
 
 
-def test_workflows_publish_parallel_languages_then_full() -> None:
+def test_workflows_publish_parallel_payloads_then_full_and_release_only_full() -> None:
     publish = PUBLISH.read_text(encoding="utf-8")
     release = RELEASE.read_text(encoding="utf-8")
     language_tiers = {
@@ -47,20 +53,37 @@ def test_workflows_publish_parallel_languages_then_full() -> None:
         if line.strip().startswith("- lang-")
     }
 
-    assert "publish-languages:" in publish
+    assert "publish-language-payloads:" in publish
     assert "publish-full:" in publish
-    assert "retag-languages:" in release
+    assert "retag-languages:" not in release
     assert "retag-full:" in release
     assert language_tiers
     for tier in language_tiers:
-        assert f"          - {tier}" in release
+        assert f"          - {tier}" not in release
     assert "max-parallel: 4" in publish
     assert "tier: ${{ matrix.tier }}" in publish
-    assert "tier: ${{ matrix.tier }}" in release
-    assert "needs: [plan-draft, publish-languages]" in publish
-    assert "needs: [plan-release, retag-languages, retag-full]" in release
+    assert "tier: ${{ matrix.tier }}" not in release
+    assert "needs: [plan-draft, publish-language-payloads]" in publish
+    assert "needs: [plan-release, retag-full]" in release
     assert publish.count("uses: ./actions/publish-dev-base") == 2
-    assert release.count("uses: ./actions/publish-dev-base") == 2
+    assert release.count("uses: ./actions/publish-dev-base") == 1
+
+
+def test_language_payload_caches_are_stable_across_commits_and_runners() -> None:
+    script = PUBLISH_IMAGE.read_text(encoding="utf-8")
+
+    assert 'cache_ref="${IMAGE_BASE}:$(tier_tag "$TIER" buildcache)"' in script
+    assert '--cache-from "type=registry,ref=${cache_ref}"' in script
+    assert '--cache-to "type=registry,ref=${cache_ref},mode=max,ignore-error=true"' in script
+    assert "${TAG}" not in script.split('cache_ref=', 1)[1].split("\n", 1)[0]
+    assert 'if [[ "$TIER" = lang-* ]]' in script
+
+
+def test_promotion_fails_closed_for_language_payloads() -> None:
+    for path in (PUBLISH_IMAGE, CHECKPOINT):
+        text = path.read_text(encoding="utf-8")
+        assert '"$TIER" != full' in text
+        assert "only the full dev-base image is a promotable release product" in text
 
 
 def test_publish_workflow_keeps_resume_inputs_and_non_blocking_alerts() -> None:
@@ -81,11 +104,11 @@ def test_full_image_build_uses_the_dedicated_runner() -> None:
     publish = PUBLISH.read_text(encoding="utf-8")
 
     assert publish.count("runs-on: docker-build") == 2
-    assert "publish-languages:" in publish
+    assert "publish-language-payloads:" in publish
     assert "publish-full:" in publish
-    assert "needs: [plan-draft, publish-languages]" in publish
+    assert "needs: [plan-draft, publish-language-payloads]" in publish
     plan_draft = publish.split("\n  plan-draft:\n", 1)[1].split(
-        "\n  publish-languages:\n", 1
+        "\n  publish-language-payloads:\n", 1
     )[0]
     assert "runs-on: docker" in plan_draft
 

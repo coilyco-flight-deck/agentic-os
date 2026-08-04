@@ -1,14 +1,14 @@
-name: "Publish one dev-base tier"
+name: "Publish one dev-base build artifact"
 description: |
-  Build and push one multi-arch language or full image, or retag an
-  already-pushed draft tier into the release tags.
+  Build and push one multi-arch language payload or the full image. Promotion
+  is restricted to the already-pushed full-image draft.
 
 inputs:
   tier:
-    description: "Published image tier."
+    description: "Build artifact tier. Only full is promotable."
     required: true
   tag:
-    description: "Release tag to stamp onto the tier image."
+    description: "Draft or release tag to stamp onto the selected artifact."
     required: true
   alias:
     description: "Optional moving alias tag pushed alongside the stamped tag."

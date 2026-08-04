@@ -1,4 +1,4 @@
-"""Tests for the independent dev-base language-image contract."""
+"""Tests for the cached dev-base language-payload contract."""
 
 from __future__ import annotations
 
@@ -39,28 +39,57 @@ def test_language_targets_are_direct_independent_ubuntu_descendants() -> None:
         assert "FROM ${BASE_IMAGE}" not in stage
 
 
-def test_language_targets_share_source_not_runtime_parentage() -> None:
+def test_language_targets_are_payload_only_and_share_architecture_mapping() -> None:
     text = DOCKERFILE.read_text(encoding="utf-8")
     stage_count = len(_language_stages(text))
 
-    assert text.count("source=install-common.sh,target=/tmp/install-common.sh") == stage_count
-    assert text.count("source=verify-common.sh,target=/tmp/verify-common.sh") == stage_count
-    assert text.count("from=repo-lists,source=substrate-repos.txt") == stage_count
-    assert text.count('["/opt/agentic-os/ward-shell-entrypoint.sh"]') == stage_count
-    assert text.count('CMD ["bash"]') == stage_count
+    assert stage_count == 5
+    assert text.count("source=write-arch-env.sh,target=/tmp/write-arch-env.sh") == stage_count
+    for forbidden in (
+        "install-common.sh",
+        "verify-common.sh",
+        "repo-lists",
+        "ward-shell-entrypoint.sh",
+        "AGENT_COMPOSE_VERSION",
+        "WARD_VERSION",
+        "SPECGEN_VERSION",
+        "AOS_VERSION",
+    ):
+        assert forbidden not in text
+
+
+def test_full_image_owns_the_common_and_internal_tool_surface() -> None:
+    text = FULL_DOCKERFILE.read_text(encoding="utf-8")
+
+    assert text.count("source=install-common.sh,target=/tmp/install-common.sh") == 1
+    assert text.count("source=verify-common.sh,target=/tmp/verify-common.sh") == 1
+    assert "from=repo-lists,source=substrate-repos.txt" in text
+    assert '["/opt/agentic-os/ward-shell-entrypoint.sh"]' in text
     assert "COPY --from=aosguard-spec" in text
     assert "COPY --from=aosguard-python" in text
     assert "--skills-out /opt/agentic-os/aosguard-skill" in text
+    for name in ("AGENT_COMPOSE_VERSION", "WARD_VERSION", "SPECGEN_VERSION", "AOS_VERSION"):
+        assert f"ARG {name}=" in text
 
 
 def test_aos_is_installed_from_a_versioned_release() -> None:
-    text = DOCKERFILE.read_text(encoding="utf-8")
+    text = FULL_DOCKERFILE.read_text(encoding="utf-8")
 
     assert re.search(r"^ARG AOS_VERSION=\d+\.\d+\.\d+$", text, re.MULTILINE)
     assert "releases/download/aos-v${AOS_VERSION}" in text
     assert 'aos_asset="aos-linux-${TARGETARCH}"' in text
     assert "go build -trimpath -ldflags \"-s -w -X main.version=dev-base\"" not in text
     assert "COPY --from=aos-cli" not in text
+
+
+def test_ward_is_installed_from_a_checksummed_release_not_built_from_source() -> None:
+    text = FULL_DOCKERFILE.read_text(encoding="utf-8")
+
+    assert 'ward_asset="ward-linux-${TARGETARCH}"' in text
+    assert '"${ward_base}/SHA256SUMS"' in text
+    assert "sha256sum -c -" in text
+    assert "git clone" not in text
+    assert "go build" not in text
 
 
 def test_common_verification_covers_the_composed_runtime_surface() -> None:
@@ -113,6 +142,7 @@ def test_full_remains_the_composed_default_surface() -> None:
 
     assert "FROM ${BASE_IMAGE} AS dev-base-full" in text
     assert "DOTNET_ROOT=/usr/local/dotnet" in text
+    assert "COPY --from=dev-base-lang-node-graft /usr/local/node /usr/local/node" in text
     assert "COPY --from=dev-base-lang-go-graft /usr/local/go /usr/local/go" in text
     assert "COPY --from=dev-base-lang-dotnet-graft /usr/local/dotnet /usr/local/dotnet" in text
-    assert "COPY --from=dev-base-lang-python-graft /opt/uv/tools/pipenv" in text
+    assert "COPY --from=dev-base-lang-python-graft /opt/uv /opt/uv" in text

@@ -1,6 +1,6 @@
-name: "Validate the dev-base image family"
+name: "Validate the dev-base build graph"
 description: |
-  Build the complete single-architecture image family from its declarative
+  Build the complete single-architecture payload fan-in graph from its declarative
   Docker Bake graph. This action has no registry credential and never pushes.
 
 inputs:
@@ -44,7 +44,7 @@ runs:
         INSTALL_BINFMT: "false"
       run: bash "${GITHUB_ACTION_PATH}/../publish-dev-base/scripts/setup-builder.sh"
 
-    - name: Build the complete image family without publishing
+    - name: Build the complete payload fan-in graph without publishing
       shell: bash
       env:
         BUILD_TIMEOUT: ${{ inputs.build-timeout }}

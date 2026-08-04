@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build the declarative image family into the local Docker daemon.
+# Build the declarative payload fan-in graph into the local Docker daemon.
 
 set -euo pipefail
 

@@ -9,3 +9,4 @@
 !statusline.d/**
 !verify-common.sh
 !ward-shell-entrypoint.sh
+!write-arch-env.sh

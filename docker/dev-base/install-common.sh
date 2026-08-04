@@ -9,67 +9,11 @@ git_lfs_sha256_amd64=${3:?Git LFS amd64 SHA-256 is required}
 git_lfs_sha256_arm64=${4:?Git LFS arm64 SHA-256 is required}
 export DEBIAN_FRONTEND=noninteractive
 
-case "${TARGETARCH:?TARGETARCH is required}" in
-  amd64)
-    AWS_ARCH=x86_64
-    CODEX_ARCH=x86_64
-    DOCKER_ARCH=x86_64
-    DOTNET_ARCH=x64
-    GH_ARCH=amd64
-    GO_ARCH=amd64
-    GOLANGCI_ARCH=amd64
-    GOOSE_ARCH=x86_64
-    HELM_ARCH=amd64
-    KDL_ARCH=x86_64
-    KUBECTL_ARCH=amd64
-    NODE_ARCH=x64
-    TRUFFLEHOG_ARCH=amd64
-    TS_ARCH=amd64
-    YQ_ARCH=amd64
-    ;;
-  arm64)
-    AWS_ARCH=aarch64
-    CODEX_ARCH=aarch64
-    DOCKER_ARCH=aarch64
-    DOTNET_ARCH=arm64
-    GH_ARCH=arm64
-    GO_ARCH=arm64
-    GOLANGCI_ARCH=arm64
-    GOOSE_ARCH=aarch64
-    HELM_ARCH=arm64
-    KDL_ARCH=aarch64
-    KUBECTL_ARCH=arm64
-    NODE_ARCH=arm64
-    TRUFFLEHOG_ARCH=arm64
-    TS_ARCH=arm64
-    YQ_ARCH=arm64
-    ;;
-  *)
-    echo "unsupported TARGETARCH: ${TARGETARCH}" >&2
-    exit 1
-    ;;
-esac
+# shellcheck disable=SC1091
+source /opt/agentic-os/arch.env
 export AWS_ARCH CODEX_ARCH DOCKER_ARCH DOTNET_ARCH GH_ARCH GO_ARCH GOLANGCI_ARCH
 export GOOSE_ARCH HELM_ARCH KDL_ARCH KUBECTL_ARCH NODE_ARCH
 export TRUFFLEHOG_ARCH TS_ARCH YQ_ARCH
-install -d /opt/agentic-os
-printf '%s\n' \
-  "AWS_ARCH=${AWS_ARCH}" \
-  "CODEX_ARCH=${CODEX_ARCH}" \
-  "DOCKER_ARCH=${DOCKER_ARCH}" \
-  "DOTNET_ARCH=${DOTNET_ARCH}" \
-  "GH_ARCH=${GH_ARCH}" \
-  "GO_ARCH=${GO_ARCH}" \
-  "GOLANGCI_ARCH=${GOLANGCI_ARCH}" \
-  "GOOSE_ARCH=${GOOSE_ARCH}" \
-  "HELM_ARCH=${HELM_ARCH}" \
-  "KDL_ARCH=${KDL_ARCH}" \
-  "KUBECTL_ARCH=${KUBECTL_ARCH}" \
-  "NODE_ARCH=${NODE_ARCH}" \
-  "TRUFFLEHOG_ARCH=${TRUFFLEHOG_ARCH}" \
-  "TS_ARCH=${TS_ARCH}" \
-  "YQ_ARCH=${YQ_ARCH}" \
-  > /opt/agentic-os/arch.env
 
 for attempt in 1 2 3; do
   if apt-get update -o Acquire::Retries=3 \
@@ -126,26 +70,11 @@ rm -rf /tmp/git-lfs "/tmp/${git_lfs_asset}"
 git lfs install --system --skip-repo
 git lfs version
 
-curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
-  "https://astral.sh/uv/${UV_VERSION:?}/install.sh" \
-  | env INSTALLER_NO_MODIFY_PATH=1 UV_INSTALL_DIR=/usr/local/bin sh
 uv --version
 uv tool install pre-commit
 chmod -R a+rX /opt/uv
 pre-commit --version
-uv python install 3.13 3.12
-chmod -R a+rwX "${UV_PYTHON_INSTALL_DIR:?}"
 uv python list
-
-curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
-  "https://nodejs.org/dist/v${NODE_VERSION:?}/node-v${NODE_VERSION}-linux-${NODE_ARCH}.tar.xz" \
-  -o /tmp/node.tar.xz
-install -d /usr/local/node
-tar -xJf /tmp/node.tar.xz -C /usr/local/node --strip-components=1 \
-  --exclude='*/CHANGELOG.md' \
-  --exclude='*/README.md' \
-  --exclude='*/LICENSE'
-rm /tmp/node.tar.xz
 node --version
 npm --version
 

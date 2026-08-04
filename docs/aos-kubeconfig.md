@@ -53,7 +53,7 @@ Kubernetes configuration directory.
 
 ## Binary, credentials, and transport
 
-The dev-base image family ships the `kubectl` client binary. A binary in an
+The full dev-base image ships the `kubectl` client binary. A binary in an
 image is not live cluster access. Access exists only when container bring-up
 also supplies all of the following:
 
@@ -71,4 +71,4 @@ starts nor repairs private-network infrastructure.
 
 * [AOS launch CLI](aos-cli.md)
 * [Standalone connectivity](aos-standalone-connectivity.md)
-* [dev-base image family](dev-base-image.md)
+* [dev-base image](dev-base-image.md)

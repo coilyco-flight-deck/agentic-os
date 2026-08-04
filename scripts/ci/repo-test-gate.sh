@@ -13,7 +13,7 @@ if ! command -v "$specgen_bin" >/dev/null 2>&1; then
 
   specgen_version=$(
     sed -n 's/^ARG SPECGEN_VERSION=//p' \
-      "$repo_root/docker/dev-base/Dockerfile" | tr -d '\r'
+      "$repo_root/docker/dev-base/full/Dockerfile" | tr -d '\r'
   )
   if [ -z "$specgen_version" ]; then
     echo "Dockerfile does not pin specgen" >&2

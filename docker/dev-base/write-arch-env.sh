@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+case "${TARGETARCH:?TARGETARCH is required}" in
+  amd64)
+    AWS_ARCH=x86_64
+    CODEX_ARCH=x86_64
+    DOCKER_ARCH=x86_64
+    DOTNET_ARCH=x64
+    GH_ARCH=amd64
+    GO_ARCH=amd64
+    GOLANGCI_ARCH=amd64
+    GOOSE_ARCH=x86_64
+    HELM_ARCH=amd64
+    KDL_ARCH=x86_64
+    KUBECTL_ARCH=amd64
+    NODE_ARCH=x64
+    TRUFFLEHOG_ARCH=amd64
+    TS_ARCH=amd64
+    YQ_ARCH=amd64
+    ;;
+  arm64)
+    AWS_ARCH=aarch64
+    CODEX_ARCH=aarch64
+    DOCKER_ARCH=aarch64
+    DOTNET_ARCH=arm64
+    GH_ARCH=arm64
+    GO_ARCH=arm64
+    GOLANGCI_ARCH=arm64
+    GOOSE_ARCH=aarch64
+    HELM_ARCH=arm64
+    KDL_ARCH=aarch64
+    KUBECTL_ARCH=arm64
+    NODE_ARCH=arm64
+    TRUFFLEHOG_ARCH=arm64
+    TS_ARCH=arm64
+    YQ_ARCH=arm64
+    ;;
+  *)
+    echo "unsupported TARGETARCH: ${TARGETARCH}" >&2
+    exit 1
+    ;;
+esac
+
+install -d /opt/agentic-os
+printf '%s\n' \
+  "AWS_ARCH=${AWS_ARCH}" \
+  "CODEX_ARCH=${CODEX_ARCH}" \
+  "DOCKER_ARCH=${DOCKER_ARCH}" \
+  "DOTNET_ARCH=${DOTNET_ARCH}" \
+  "GH_ARCH=${GH_ARCH}" \
+  "GO_ARCH=${GO_ARCH}" \
+  "GOLANGCI_ARCH=${GOLANGCI_ARCH}" \
+  "GOOSE_ARCH=${GOOSE_ARCH}" \
+  "HELM_ARCH=${HELM_ARCH}" \
+  "KDL_ARCH=${KDL_ARCH}" \
+  "KUBECTL_ARCH=${KUBECTL_ARCH}" \
+  "NODE_ARCH=${NODE_ARCH}" \
+  "TRUFFLEHOG_ARCH=${TRUFFLEHOG_ARCH}" \
+  "TS_ARCH=${TS_ARCH}" \
+  "YQ_ARCH=${YQ_ARCH}" \
+  > /opt/agentic-os/arch.env

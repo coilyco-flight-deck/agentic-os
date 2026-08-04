@@ -158,9 +158,9 @@ def test_aosguard_builds_a_native_skill_out_of_band() -> None:
         encoding="utf-8"
     )
     ward = (ROOT / ".ward" / "ward.yaml").read_text(encoding="utf-8")
-    dockerfile = (ROOT / "docker" / "dev-base" / "Dockerfile").read_text(
-        encoding="utf-8"
-    )
+    dockerfile = (
+        ROOT / "docker" / "dev-base" / "full" / "Dockerfile"
+    ).read_text(encoding="utf-8")
 
     assert "--skills-out dist/skills" in lock_script
     assert "--skills-out dist/skills" in ward

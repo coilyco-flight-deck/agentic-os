@@ -10,7 +10,7 @@ without Docker changes do not enqueue the heavy job.
 [`actions/dev-base-build`](../actions/dev-base-build/action.yml) has no registry
 token input. It installs Docker and Buildx, then executes the declarative
 [`docker-bake.hcl`](../docker/dev-base/docker-bake.hcl) for one platform. The
-Bake graph links every specialist into the full image. Specialist results stay
+Bake graph links every language payload into the full image. Payload results stay
 in BuildKit's cache-only exporter, and only the full image is loaded for the
 shared smoke check.
 
@@ -23,14 +23,15 @@ after every run.
 PR validation and publication share the Dockerfiles, named contexts, Docker
 bootstrap, builder setup, and
 [`verify-full.sh`](../actions/publish-dev-base/scripts/verify-full.sh).
-Publication keeps the extra registry login, per-tier registry cache, and
+Publication keeps the extra registry login, per-artifact registry cache, and
 multi-architecture push. Forgejo owns its dependency order directly: the
 language matrix completes before the full job through `needs`.
 
-Every language target runs
-[`verify-common.sh`](../docker/dev-base/verify-common.sh) inside its Dockerfile.
-That gate includes `WARD_DOCTOR_ALLOW_PLACEHOLDERS=1 ward doctor`. The full
-image then runs the complete-toolchain smoke.
+Language targets validate their isolated toolchains. The full image runs
+[`verify-common.sh`](../docker/dev-base/verify-common.sh) once after grafting
+all payloads and installing the shared surface. That gate includes
+`WARD_DOCTOR_ALLOW_PLACEHOLDERS=1 ward doctor`, followed by the
+complete-toolchain smoke.
 
 ## Required status
 
@@ -40,7 +41,7 @@ protection context.
 
 ## See also
 
-* [dev-base image family](dev-base-image.md)
+* [dev-base image](dev-base-image.md)
 * [dev-base build cache](dev-base-build-cache.md)
 * [CI parity](ci-in-dev-base.md)
 * [release pipeline](release.md)

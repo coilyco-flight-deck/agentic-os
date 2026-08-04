@@ -32,9 +32,6 @@ if [ "$MODE" = build ]; then
   )
   if [[ "$TIER" = lang-* ]]; then
     command+=(
-      --build-context aosguard-spec=.specgen
-      --build-context aosguard-python=agentic_os
-      --build-context repo-lists=aos-cli/repositories
       --target "dev-base-${TIER}"
       --file docker/dev-base/Dockerfile
       docker/dev-base
@@ -42,18 +39,26 @@ if [ "$MODE" = build ]; then
   elif [ "$TIER" = full ]; then
     command+=(
       --build-arg "BASE_IMAGE=${IMAGE_BASE}:lang-rust-${TAG}"
+      --build-arg "LANG_NODE_IMAGE=${IMAGE_BASE}:lang-node-${TAG}"
       --build-arg "LANG_GO_IMAGE=${IMAGE_BASE}:lang-go-${TAG}"
       --build-arg "LANG_DOTNET_IMAGE=${IMAGE_BASE}:lang-dotnet-${TAG}"
       --build-arg "LANG_PYTHON_IMAGE=${IMAGE_BASE}:lang-python-${TAG}"
+      --build-context aosguard-spec=.specgen
+      --build-context aosguard-python=agentic_os
+      --build-context repo-lists=aos-cli/repositories
       --target dev-base-full
       --file docker/dev-base/full/Dockerfile
-      docker/dev-base/full
+      docker/dev-base
     )
   else
     echo "::error::unknown dev-base tier: ${TIER}" >&2
     exit 2
   fi
 elif [ "$MODE" = promote ]; then
+  if [ "$TIER" != full ]; then
+    echo "::error::only the full dev-base image is a promotable release product" >&2
+    exit 2
+  fi
   if [ -z "${SOURCE_TAG:-}" ]; then
     echo "::error::source-tag is required in promote mode" >&2
     exit 2
