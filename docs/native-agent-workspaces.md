@@ -37,10 +37,10 @@ One JSON lease records process identity, directories, repositories, branches,
 and worktrees. Exec preserves the PID through the vendor binary, and the next
 launch detects a closed terminal. Resolved identity keeps path aliases leased.
 
-Every launch cleans dead leases before creating its workspace. Live leases stay.
-A clean dead worktree is removed only when its branch tip is reachable from
-`origin`, then its local branch is deleted. Dirty, untracked, unpushed,
-unreadable, and `*-workdir` state stays. Clean siblings may disappear alone.
+Every launch timestamps a dead lease and preserves its worktrees for 24 hours.
+After the grace, AOS removes a clean worktree only when its branch tip is reachable
+from `origin`, then deletes its local branch. Dirty, untracked, unpushed, unreadable,
+and `*-workdir` state stays. Clean siblings may disappear alone after the grace.
 
 ## Ten-minute fleet pass
 

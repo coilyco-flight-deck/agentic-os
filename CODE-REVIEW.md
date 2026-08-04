@@ -16,7 +16,8 @@ large enough to stop the work.
   Definitive registry 404 responses are immediate checkpoint misses.
 * Native workspace cleanup compares live leases and Git worktrees by resolved
   filesystem identity. Lexical aliases must not make an active worktree appear
-  unleased to the fleet sweep (agentic-os#858).
+  unleased to the fleet sweep (agentic-os#858). Dead leases remain protected
+  until their 24-hour recovery grace expires (agentic-os#882).
 
 ## Update triggers
 

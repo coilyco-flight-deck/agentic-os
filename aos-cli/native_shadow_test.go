@@ -375,7 +375,7 @@ func TestNativeLaunchMapsOwnerDirectoryIntoSession(t *testing.T) {
 	}
 }
 
-func TestNextLaunchCleansDeadRemoteSession(t *testing.T) {
+func TestLegacyDeadSessionIsCleanedAfterGrace(t *testing.T) {
 	root := t.TempDir()
 	repository, _ := createNativeTestRepository(t, root, "owner", "one")
 	runtime := nativeTestRuntime(t, root)
@@ -394,15 +394,83 @@ func TestNextLaunchCleansDeadRemoteSession(t *testing.T) {
 	}
 	runtime.Now = runtime.Now.Add(time.Minute)
 
-	if _, err := prepareNativeLaunch(runtime, "codex"); err != nil {
+	live, err := cleanDeadNativeSessions(runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var retained nativeLease
+	if err := readNativeJSON(leasePath, &retained); err != nil {
+		t.Fatal(err)
+	}
+	if retained.DeadSince == nil || !retained.DeadSince.Equal(runtime.Now) {
+		t.Fatalf("dead since = %v, want %s", retained.DeadSince, runtime.Now)
+	}
+	if !live.contains(oldWorktree) {
+		t.Fatal("newly dead worktree was not protected from the fleet sweep")
+	}
+	if _, err := os.Stat(oldWorktree); err != nil {
+		t.Fatalf("newly dead worktree was removed: %v", err)
+	}
+
+	runtime.Now = runtime.Now.Add(nativeDeadSessionGrace - time.Second)
+	if _, err := cleanDeadNativeSessions(runtime); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(oldWorktree); err != nil {
+		t.Fatalf("worktree was removed before grace expiry: %v", err)
+	}
+
+	runtime.Now = runtime.Now.Add(time.Second)
+	if _, err := cleanDeadNativeSessions(runtime); err != nil {
 		t.Fatal(err)
 	}
 
 	if _, err := os.Stat(oldWorktree); !os.IsNotExist(err) {
-		t.Fatalf("old worktree remains: %v", err)
+		t.Fatalf("expired worktree remains: %v", err)
 	}
 	if output := testGit(t, repository, "branch", "--list", oldBranch); output != "" {
-		t.Fatalf("old branch remains: %s", output)
+		t.Fatalf("expired branch remains: %s", output)
+	}
+	if _, err := os.Stat(leasePath); !os.IsNotExist(err) {
+		t.Fatalf("expired lease remains: %v", err)
+	}
+}
+
+func TestDeadSessionGraceSurvivesDueFleetSweep(t *testing.T) {
+	root := t.TempDir()
+	repository, _ := createNativeTestRepository(t, root, "owner", "one")
+	runtime := nativeTestRuntime(t, root)
+	writeNativeTestList(t, runtime.ExpectedFile, "one")
+	writeNativeTestList(t, runtime.FleetFile, "owner")
+	if _, err := prepareNativeLaunch(runtime, "codex"); err != nil {
+		t.Fatal(err)
+	}
+	leasePath, lease := onlyNativeLease(t, runtime)
+	worktree := lease.Artifacts[0].Worktree
+	branch := lease.Artifacts[0].Branch
+	lease.PID = 0
+	lease.ProcessStart = ""
+	if err := writeNativeJSON(leasePath, lease); err != nil {
+		t.Fatal(err)
+	}
+	runtime.Now = runtime.Now.Add(nativeSweepInterval)
+
+	if _, err := prepareNativeLaunch(runtime, "claude"); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := os.Stat(worktree); err != nil {
+		t.Fatalf("grace-period worktree was removed by fleet sweep: %v", err)
+	}
+	if output := testGit(t, repository, "branch", "--list", branch); output == "" {
+		t.Fatal("grace-period branch was removed by fleet sweep")
+	}
+	var retained nativeLease
+	if err := readNativeJSON(leasePath, &retained); err != nil {
+		t.Fatal(err)
+	}
+	if retained.DeadSince == nil || !retained.DeadSince.Equal(runtime.Now) {
+		t.Fatalf("dead since = %v, want %s", retained.DeadSince, runtime.Now)
 	}
 }
 
@@ -415,7 +483,12 @@ func TestLiveNativeSessionIsNotCleaned(t *testing.T) {
 	if _, err := prepareNativeLaunch(runtime, "codex"); err != nil {
 		t.Fatal(err)
 	}
-	_, lease := onlyNativeLease(t, runtime)
+	leasePath, lease := onlyNativeLease(t, runtime)
+	deadSince := runtime.Now.Add(-nativeDeadSessionGrace)
+	lease.DeadSince = &deadSince
+	if err := writeNativeJSON(leasePath, lease); err != nil {
+		t.Fatal(err)
+	}
 
 	live, err := cleanDeadNativeSessions(runtime)
 	if err != nil {
@@ -427,6 +500,13 @@ func TestLiveNativeSessionIsNotCleaned(t *testing.T) {
 	}
 	if _, err := os.Stat(lease.Artifacts[0].Worktree); err != nil {
 		t.Fatalf("live worktree was removed: %v", err)
+	}
+	var restored nativeLease
+	if err := readNativeJSON(leasePath, &restored); err != nil {
+		t.Fatal(err)
+	}
+	if restored.DeadSince != nil {
+		t.Fatalf("live lease kept stale dead since %s", restored.DeadSince)
 	}
 }
 
@@ -519,7 +599,7 @@ func TestUnreadableNativeLeaseFailsClosed(t *testing.T) {
 	}
 }
 
-func TestNextLaunchPreservesDeadDirtySession(t *testing.T) {
+func TestExpiredDeadSessionPreservesDirtyWorktree(t *testing.T) {
 	root := t.TempDir()
 	createNativeTestRepository(t, root, "owner", "one")
 	runtime := nativeTestRuntime(t, root)
@@ -535,6 +615,8 @@ func TestNextLaunchPreservesDeadDirtySession(t *testing.T) {
 	}
 	lease.PID = 0
 	lease.ProcessStart = ""
+	deadSince := runtime.Now.Add(-nativeDeadSessionGrace)
+	lease.DeadSince = &deadSince
 	if err := writeNativeJSON(leasePath, lease); err != nil {
 		t.Fatal(err)
 	}
@@ -548,7 +630,7 @@ func TestNextLaunchPreservesDeadDirtySession(t *testing.T) {
 	}
 }
 
-func TestNextLaunchPreservesDeadUnpushedSession(t *testing.T) {
+func TestExpiredDeadSessionPreservesUnpushedWorktree(t *testing.T) {
 	root := t.TempDir()
 	createNativeTestRepository(t, root, "owner", "one")
 	runtime := nativeTestRuntime(t, root)
@@ -568,6 +650,8 @@ func TestNextLaunchPreservesDeadUnpushedSession(t *testing.T) {
 	testGit(t, worktree, "commit", "-m", "local only")
 	lease.PID = 0
 	lease.ProcessStart = ""
+	deadSince := runtime.Now.Add(-nativeDeadSessionGrace)
+	lease.DeadSince = &deadSince
 	if err := writeNativeJSON(leasePath, lease); err != nil {
 		t.Fatal(err)
 	}

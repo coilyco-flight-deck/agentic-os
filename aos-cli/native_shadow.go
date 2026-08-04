@@ -21,6 +21,7 @@ import (
 
 const (
 	nativeSweepInterval         = 10 * time.Minute
+	nativeDeadSessionGrace      = 24 * time.Hour
 	nativeDeleteScans           = 3
 	agentComposeModelClassEnv   = "AGENT_COMPOSE_MODEL_CLASS"
 	agentComposeRuntimeHomeEnv  = "AGENT_COMPOSE_RUNTIME_HOME"
@@ -46,6 +47,7 @@ type nativeLease struct {
 	SessionRoot     string           `json:"session_root"`
 	SessionProjects string           `json:"session_projects"`
 	SessionHome     string           `json:"session_home,omitempty"`
+	DeadSince       *time.Time       `json:"dead_since,omitempty"`
 	Artifacts       []nativeArtifact `json:"artifacts"`
 }
 
@@ -371,6 +373,12 @@ func (live *nativeLiveWorktrees) add(path string) {
 	live.paths[key] = struct{}{}
 }
 
+func (live *nativeLiveWorktrees) addArtifacts(artifacts []nativeArtifact) {
+	for _, artifact := range artifacts {
+		live.add(artifact.Worktree)
+	}
+}
+
 func (live nativeLiveWorktrees) contains(path string) bool {
 	if live.uncertain {
 		return true
@@ -456,9 +464,26 @@ func cleanDeadNativeSessions(runtime nativeRuntime) (nativeLiveWorktrees, error)
 			continue
 		}
 		if nativeLeaseIsLive(lease) {
-			for _, artifact := range lease.Artifacts {
-				live.add(artifact.Worktree)
+			if lease.DeadSince != nil {
+				lease.DeadSince = nil
+				if err := writeNativeJSON(path, lease); err != nil {
+					return nativeLiveWorktrees{}, fmt.Errorf("restore live native lease: %w", err)
+				}
 			}
+			live.addArtifacts(lease.Artifacts)
+			continue
+		}
+		if lease.DeadSince == nil {
+			deadSince := runtime.Now
+			lease.DeadSince = &deadSince
+			live.addArtifacts(lease.Artifacts)
+			if err := writeNativeJSON(path, lease); err != nil {
+				return nativeLiveWorktrees{}, fmt.Errorf("start dead native lease grace: %w", err)
+			}
+			continue
+		}
+		if runtime.Now.Before(lease.DeadSince.Add(nativeDeadSessionGrace)) {
+			live.addArtifacts(lease.Artifacts)
 			continue
 		}
 		remaining := make([]nativeArtifact, 0, len(lease.Artifacts))
