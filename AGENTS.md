@@ -22,12 +22,20 @@ Route every dev command through ward, which reads [`.ward/ward.yaml`](.ward/ward
 
 **Model transport** goes through Agent Proxy. Whenever a task would invoke
 Ollama or LiteLLM, use Agent Proxy's OpenAI-compatible surface instead because
-both are backends behind it. Direct model evaluations send the frozen model
-request through Agent Proxy without launching an agent harness. Harness
-evaluations may launch the harness under test, but its model transport still
-routes through Agent Proxy. Backend-direct calls are limited to Agent Proxy
-implementation, parity testing, or incident isolation, and the caller names
-the exception explicitly.
+both are backends behind it. Direct evaluations targeting those backends send
+the frozen model request through Agent Proxy without launching an agent
+harness. Harness evaluations may launch the harness under test, but transport
+to those backends still routes through Agent Proxy. Backend-direct calls are
+limited to Agent Proxy implementation, parity testing, or incident isolation,
+and the caller names the exception explicitly.
+
+**Public cloud evaluation approval.** Repository behavior evaluations are
+pre-authorized to send public-safe, tracked repository role bundles,
+evaluation prompts, rubrics, and model responses to OpenAI's Codex cloud for
+model inference and independent review. This authorization excludes secrets,
+credentials, private overlays, customer data, unpublished personal
+information, and raw operational payloads. It authorizes evaluation transport
+only, not publication or any other external action.
 
 ## Validation
 
