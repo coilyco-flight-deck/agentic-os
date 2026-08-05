@@ -5,7 +5,6 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"testing"
 )
@@ -230,14 +229,23 @@ func TestPrepareContainerHydratesSubstrateAndProjectsHome(t *testing.T) {
 		`role "engineer"`,
 		`delivery "native-skills"`,
 		`model-tier "` + modelTier + `"`,
-		`source "aos" root=` + strconv.Quote(provider) + ` required=#true`,
+		`source "aos" root="." required=#true`,
 	} {
 		if !strings.Contains(runner.request, want) {
 			t.Errorf("compose request missing %q:\n%s", want, runner.request)
 		}
 	}
-	if got := filepath.Dir(runner.requestPath); got != aosTempPath("compose") {
-		t.Errorf("compose request directory = %q, want %q", got, aosTempPath("compose"))
+	if got := filepath.Dir(runner.requestPath); got != provider {
+		t.Errorf("compose request directory = %q, want provider %q", got, provider)
+	}
+	entries, err := os.ReadDir(provider)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, entry := range entries {
+		if strings.HasPrefix(entry.Name(), ".aos-compose-") && strings.HasSuffix(entry.Name(), ".kdl") {
+			t.Errorf("compose request was not removed: %s", entry.Name())
+		}
 	}
 	if got := filepath.Dir(runner.bundlesPath); got != aosTempPath("bundles") {
 		t.Errorf("bundle directory = %q, want %q", got, aosTempPath("bundles"))

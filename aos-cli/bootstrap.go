@@ -367,17 +367,9 @@ func composeHome(
 	if err != nil {
 		return fmt.Errorf("resolve %s/%s model tier: %w", opts.Role, opts.Layout, err)
 	}
-	providerRoot, err := filepath.Abs(provider)
+	request, err := os.CreateTemp(provider, ".aos-compose-*.kdl")
 	if err != nil {
-		return fmt.Errorf("resolve compose provider: %w", err)
-	}
-	composeRoot, err := ensureAOSTempNamespace("compose")
-	if err != nil {
-		return err
-	}
-	request, err := os.CreateTemp(composeRoot, "*.kdl")
-	if err != nil {
-		return fmt.Errorf("create compose request: %w", err)
+		return fmt.Errorf("create compose request under provider: %w", err)
 	}
 	requestPath := request.Name()
 	defer os.Remove(requestPath)
@@ -385,7 +377,7 @@ func composeHome(
 		"    role " + strconv.Quote(opts.Role) + "\n" +
 		"    delivery " + strconv.Quote(opts.Delivery) + "\n" +
 		"    model-tier " + strconv.Quote(modelTier) + "\n" +
-		"    source \"aos\" root=" + strconv.Quote(providerRoot) + " required=#true\n" +
+		"    source \"aos\" root=\".\" required=#true\n" +
 		"}\n"
 	if _, err := io.WriteString(request, body); err != nil {
 		request.Close()
