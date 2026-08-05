@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -39,6 +40,26 @@ func TestBuildContextBundlePlanUsesAOSImageAsMaterializer(t *testing.T) {
 		if !strings.Contains(joined, want) {
 			t.Errorf("context materialization plan missing %q:\n%s", want, joined)
 		}
+	}
+}
+
+func TestContainerContextBundleAcceptsVerifiedBundleFlag(t *testing.T) {
+	t.Parallel()
+	command := newCommand()
+	err := command.Run(context.Background(), []string{
+		"aos",
+		"--role", "engineer",
+		"--agent", "codex",
+		"--layout", "codex",
+		"--composed",
+		"_container-context-bundle",
+		"--output", "/output",
+		"--uid", "1000",
+		"--gid", "1000",
+		"--bundle", containerComposeBundle,
+	})
+	if err == nil || !strings.Contains(err.Error(), "_container-context-bundle is internal") {
+		t.Fatalf("container context-bundle parser error = %v", err)
 	}
 }
 

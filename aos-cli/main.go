@@ -249,6 +249,10 @@ func newCommandWithDefaults(name string, defaults launchDefaults) *cli.Command {
 						Name:     "gid",
 						Required: true,
 					},
+					&cli.StringFlag{
+						Name:   "bundle",
+						Hidden: true,
+					},
 				},
 				Action: runContainerContextBundle,
 			},
