@@ -101,7 +101,7 @@ commands:
     run: specgen --project-root .specgen/guardfiles run --
     description: "Materialize and run aosguard from the independent .specgen snapshot, passing arguments after `--`."
   aos-image-build:
-    run: TAG=aos-local docker buildx bake --progress=plain --file docker/dev-base/docker-bake.hcl
+    run: env TAG=aos-local docker buildx bake --progress=plain --file docker/dev-base/docker-bake.hcl
     description: "Build the five local language images and fan them into agentic-os:aos-local for standalone `aos` smoke testing."
   aos-container-smoke:
     run: go run -C aos-cli . --role engineer --layout codex --image agentic-os:aos-local acompose -- sh testdata/codex-smoke.sh
@@ -116,7 +116,7 @@ commands:
     run: uv run python -m agentic_os.role_personality_sync
     description: "Project agent-compose's emitted person snapshot into `aos-cli/role-personalities.json` for measurement alignment. `-- --check` reports drift without writing. See docs/role-orientation-projections.md."
   dev-base-build:
-    run: TAG=dev-base-local docker buildx bake --progress=plain --file docker/dev-base/docker-bake.hcl
+    run: env TAG=dev-base-local docker buildx bake --progress=plain --file docker/dev-base/docker-bake.hcl
     description: "Build the parallel Ubuntu language payloads and full fan-in locally, loading agentic-os:dev-base-local. Language outputs remain cache-only build artifacts."
   dev-base-check:
     run: bash scripts/dev-base-check.sh
