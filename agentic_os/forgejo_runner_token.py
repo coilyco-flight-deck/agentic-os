@@ -38,7 +38,7 @@ def parse_scope(argv: list[str]) -> Scope:
 
 def main(argv: list[str] | None = None) -> int:
     scope = parse_scope(list(sys.argv[1:] if argv is None else argv))
-    cmd = ["ward", "ops", "forgejo", "fetch", scope.leaf, *scope.argv]
+    cmd = ["aosguard", "ops", "forgejo", "fetch", scope.leaf, *scope.argv]
     proc = subprocess.run(cmd, check=False)
     return proc.returncode
 

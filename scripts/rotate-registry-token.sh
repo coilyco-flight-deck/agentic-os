@@ -9,8 +9,9 @@
 # auth (token auth is rejected, and there is no admin mint endpoint), so this
 # authenticates as the bot with /forgejo/coilyco-ops/password to mint, then uses
 # the attended FORGEJO_ADMIN_TOKEN only to write the repo Actions secret. The minted
-# token carries no expiry. It never touches disk or stdout - it flows
-# mint -> verify -> SSM -> Actions secret entirely in process memory.
+# token carries no expiry. It never reaches stdout. The guarded SSM surface
+# requires a file source, so the token uses a mode-600 temporary file that the
+# exit trap removes after SSM and the Actions secret are updated.
 #
 # Why a script and not a one-off: forgejo PATs can be revoked or expire, and the
 # auto-issued Actions token can read but not write the registry (docs/dev-base-image.md),
@@ -55,9 +56,15 @@ code="$(curl -sS -o /dev/null -w '%{http_code}' -u "${BOT_USER}:${new_token}" "h
 [ "$code" = "200" ] || { echo "registry /v2/ returned ${code}, not 200" >&2; exit 1; }
 echo "  /v2/ -> 200"
 
+secret_dir="$(mktemp -d)"
+token_file="${secret_dir}/token"
+trap 'rm -f "${token_file}"; rmdir "${secret_dir}"' EXIT
+printf '%s' "$new_token" >"$token_file"
+chmod 600 "$token_file"
+
 echo "Stashing to SSM ${SSM_PATH} ..."
 aosguard_ssm put-parameter --name "$SSM_PATH" --type SecureString \
-  --value "$new_token" --overwrite >/dev/null
+  --value "file://${token_file}" --overwrite >/dev/null
 echo "  stored"
 
 echo "Setting repo Actions secret ${SECRET_NAME} on ${REPO} ..."

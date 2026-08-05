@@ -16,7 +16,8 @@
 # POST /users/{username}/tokens under HTTP basic auth, so this authenticates as
 # the bot with /forgejo/coilyco-ops/password to mint, then uses the attended
 # FORGEJO_ADMIN_TOKEN only to write the repo Actions secret. The minted token
-# never touches disk or stdout - it flows mint -> SSM -> Actions secret in memory.
+# never reaches stdout. The guarded SSM surface requires a file source, so the
+# token uses a mode-600 temporary file that the exit trap removes afterward.
 set -euo pipefail
 
 HOST="forgejo.coilysiren.me"
@@ -51,9 +52,15 @@ new_token="$(printf '%s' "$mint_resp" | python3 -c 'import sys,json; print(json.
 [ -n "$new_token" ] || { echo "mint returned no sha1" >&2; exit 1; }
 echo "  minted (value withheld)"
 
+secret_dir="$(mktemp -d)"
+token_file="${secret_dir}/token"
+trap 'rm -f "${token_file}"; rmdir "${secret_dir}"' EXIT
+printf '%s' "$new_token" >"$token_file"
+chmod 600 "$token_file"
+
 echo "Stashing to SSM ${SSM_PATH} ..."
 aosguard_ssm put-parameter --name "$SSM_PATH" --type SecureString \
-  --value "$new_token" --overwrite >/dev/null
+  --value "file://${token_file}" --overwrite >/dev/null
 echo "  stored"
 
 echo "Setting repo Actions secret ${SECRET_NAME} on ${REPO} ..."
