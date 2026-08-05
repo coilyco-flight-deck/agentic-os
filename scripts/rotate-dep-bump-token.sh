@@ -6,11 +6,12 @@
 # secret DEP_BUMP_TOKEN (what the workflow's checkout pushes main with).
 #
 # Why this token exists: dep-bump pushes ARG bumps to main, and the resulting
-# push must enqueue release.yml so the image republishes. Some Forgejo versions
-# suppress workflow runs from the auto-issued job token (the same anti-recursion
-# guard GitHub applies), so a real-user PAT push is the reliable trigger. The
-# token needs write:repository (push commits), not write:package like the
-# registry token. See docs/dev-base-image.md ("Auto-bump").
+# push must enqueue promotion and the dev-base publish chain so the image
+# republishes. Some Forgejo versions suppress workflow runs from the auto-issued
+# job token (the same anti-recursion guard GitHub applies), so a real-user PAT
+# push is the reliable trigger. The token needs write:repository (push commits),
+# not write:package like the registry token. See docs/dev-base-image.md
+# ("Auto-bump").
 #
 # Mirrors scripts/rotate-registry-token.sh: forgejo only mints tokens via
 # POST /users/{username}/tokens under HTTP basic auth, so this authenticates as

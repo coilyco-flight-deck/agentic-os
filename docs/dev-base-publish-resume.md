@@ -10,9 +10,10 @@ Selecting one language rebuilds only that payload. Stable per-language
 `buildcache` refs remain independent of commit-scoped draft tags, so a resumed
 or later build can reuse layers produced on another runner or day.
 
-The release retry promotes only the full manifest. It accepts the same
-commit-derived source tag, keeps retries idempotent through manifest checks,
-and applies an explicit timeout to every promotion.
+An `all` or `full` resume continues into the root release after the full draft
+passes verification. A single-language resume stops after that payload. The
+separate release dispatch remains available for idempotent retag or metadata
+recovery and explicit version overrides.
 
 See also:
 

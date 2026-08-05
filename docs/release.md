@@ -4,23 +4,24 @@
 `CI_RELEASE_TOKEN`. Three artifact workflows use native paths on that diff.
 `aos-cli-release.yml` cuts the versioned CLI bundle, `aos-precommit-release.yml`
 cuts the hook package, and `dev-base-publish.yml` publishes draft images under
-`draft-${sha}` only when the promoted diff changes `docker/`. Manual dispatch
-overrides those filters and can resume the image graph. `release.yml` is a
-no-cancel manual retry queue and never gates the branch. `main` stays
-yolo-able, while `release` is last-known-good. Forgejo owns releases per
+`draft-${sha}` only when the promoted diff changes `docker/`. After the full
+draft succeeds, it calls `release.yml` to publish the next root minor release.
+Manual dispatch overrides the path filter and can resume the image graph.
+`release.yml` is also a no-cancel retry and override queue. It never gates the
+branch. `main` stays yolo-able, while `release` is last-known-good. Forgejo owns releases per
 [forgejo-github-mirror-contract.md](forgejo-github-mirror-contract.md).
 
 Promotion only gates and advances the branch. Non-artifact merges produce no
 package tag or draft image.
-`release.yml` is the manual retry path and no longer runs on push. Its full
-retag job waits for the commit-scoped full draft. The release job retags only
-that full manifest. Dispatches can override `sha`, `tag`, and `source-tag` to
-resume the publish or retag. The moving alias is always `:release`, independent
-of the dispatch ref. Planning and release-metadata jobs bootstrap from the
-already-promoted `:latest` full image, so an absent `:release` alias remains
-repairable through the workflow. `draft-*` tags are staging refs for Forgejo
-package cleanup rules. Language drafts and stable language cache refs are
-build-only artifacts. `:latest` is a compatibility alias for `:release`.
+`release.yml` runs as a reusable workflow after the full draft is verified and
+as the manual retry path. Its retag job promotes only that full manifest.
+Dispatches can override `sha`, `tag`, and `source-tag` to resume or repair a
+publication. The moving alias is always `:release`, independent of the dispatch
+ref. Planning and release-metadata jobs bootstrap from the already-promoted
+`:latest` full image, so an absent `:release` alias remains repairable through
+the workflow. `draft-*` tags are staging refs for Forgejo package cleanup rules.
+Language drafts and stable language cache refs are build-only artifacts.
+`:latest` is a compatibility alias for `:release`.
 
 The root `v*` train serves the dev-base image. Hook consumers pin the
 independent `aos-precommit-v*` train. The standalone CLI publishes binaries and
@@ -30,8 +31,9 @@ packages on its `aos-v*` train. See [aos-cli-release.md](aos-cli-release.md).
 
 `actions/tag-bump` defaults to minor and never parses commits. `aos-v*`
 requires a shipped CLI input. `aos-precommit-v*` requires an installed hook
-input. Pre-commit majors use `scripts/release.py --bump major`. Other trains
-use workflow dispatch, which also overrides each native path filter.
+input. Root `v*` minor releases follow verified full-image drafts. Pre-commit
+majors use `scripts/release.py --bump major`. Workflow dispatch remains the
+explicit patch, major, retry, and native path-filter override.
 
 `actions/tag-bump` also has a compute-only mode: derive the next semver first,
 create the public tag and Forgejo release only at the end.

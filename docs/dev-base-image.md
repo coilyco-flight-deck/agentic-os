@@ -39,16 +39,16 @@ kubeconfig, or cluster transport. The standalone AOS launcher may add an
 payload targets as cache-only dependencies and loads only
 `agentic-os:dev-base-local` for smoke verification.
 
-[`dev-base-publish.yml`](../.forgejo/workflows/dev-base-publish.yml) skips
-unless the promoted diff changes a path under `docker/`. Its matrix publishes
+[`dev-base-publish.yml`](../.forgejo/workflows/dev-base-publish.yml) skips unless the promoted diff changes a path under `docker/`. Its matrix publishes
 commit-scoped payload drafts, then the full job consumes those exact manifests
-and publishes `draft-${sha}`. Manual dispatch can resume one payload or the
-complete full closure.
+and publishes `draft-${sha}`. A successful full draft calls the root release
+workflow. Manual dispatch can resume one payload or the complete full closure,
+and a resumed full closure finishes the same release chain.
 
 [`release.yml`](../.forgejo/workflows/release.yml) promotes only the full
-manifest to its versioned tag, `release`, and `latest`. Payload drafts and
-cache refs are internal build transport with no release alias or compatibility
-contract. See [publish resume](dev-base-publish-resume.md).
+manifest to its next minor tag, `release`, and `latest`. Manual dispatch reuses
+it for retries and version overrides. Payload drafts and cache refs are internal
+build transport with no release alias or compatibility contract. See [publish resume](dev-base-publish-resume.md).
 
 Pull requests with a `docker/` change build the complete source graph through
 [`actions/dev-base-build`](../actions/dev-base-build/action.yml). PR validation

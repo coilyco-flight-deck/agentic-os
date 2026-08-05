@@ -1,25 +1,49 @@
-# Forgejo-canonical release publication, manual retry only. promote.yml gates
-# main and fast-forwards release. dev-base-publish.yml publishes the draft image
-# graph on that SHA. This workflow retags only the full consumer image, then
-# creates the public git release as the last success marker.
+# Forgejo-canonical full-image release publication. dev-base-publish.yml calls
+# this workflow after the draft graph succeeds. Manual dispatch reuses the same
+# jobs for retries and explicit version overrides.
 
 name: release
 
 on:
+  workflow_call:
+    inputs:
+      sha:
+        description: "Commit SHA to release. Defaults to the caller SHA."
+        required: false
+        default: ""
+        type: string
+      tag:
+        description: "Existing or explicit version tag for a retry."
+        required: false
+        default: ""
+        type: string
+      source-tag:
+        description: "Draft tag override. Defaults to draft-<sha>."
+        required: false
+        default: ""
+        type: string
+      bump:
+        description: "Version bump when tag is empty."
+        required: false
+        default: "minor"
+        type: string
   workflow_dispatch:
     inputs:
       sha:
         description: "Commit SHA to retag. Defaults to the dispatch ref."
         required: false
         default: ""
+        type: string
       tag:
         description: "Version tag override. Defaults to the next semver tag."
         required: false
         default: ""
+        type: string
       source-tag:
         description: "Draft tag override. Defaults to draft-<sha>."
         required: false
         default: ""
+        type: string
       bump:
         description: "Version bump for a manual run."
         required: false
@@ -56,16 +80,16 @@ jobs:
       - id: tag
         uses: ./actions/tag-bump
         with:
-          bump: ${{ github.event.inputs.bump || 'minor' }}
+          bump: ${{ inputs.bump || 'minor' }}
           create_tag: false
-          tag_name: ${{ github.event.inputs.tag || '' }}
-          release_sha: ${{ github.event.inputs.sha || github.sha }}
+          tag_name: ${{ inputs.tag || '' }}
+          release_sha: ${{ inputs.sha || github.sha }}
 
       - id: draft
         name: Derive the draft image tag
         env:
-          SHA: ${{ github.event.inputs.sha || github.sha }}
-          DRAFT_TAG_OVERRIDE: ${{ github.event.inputs['source-tag'] || '' }}
+          SHA: ${{ inputs.sha || github.sha }}
+          DRAFT_TAG_OVERRIDE: ${{ inputs['source-tag'] || '' }}
         run: bash "$GITHUB_WORKSPACE/scripts/ci/derive-draft-tag.sh"
 
       - name: Alert Telegram on main failure
@@ -128,9 +152,10 @@ jobs:
       - id: tag
         uses: ./actions/tag-bump
         with:
-          bump: ${{ github.event.inputs.bump || 'minor' }}
+          bump: ${{ inputs.bump || 'minor' }}
           create_tag: true
           tag_name: ${{ needs.plan-release.outputs.tag }}
+          release_sha: ${{ inputs.sha || github.sha }}
 
       - id: create
         uses: ./actions/create-release

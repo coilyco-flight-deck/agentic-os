@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Rotate the forgejo container-registry publish token used by the release
-# workflow's publish-image job (.forgejo/workflows/release.yml). The token is
+# Rotate the forgejo container-registry publish token used by the dev-base draft
+# publisher and full-image release promotion workflows. The token is
 # owned by the coilyco-ops bot, scoped write:package, and lands in two places:
 # SSM (/forgejo/coilyco-ops/registry-token, the durable record) and the repo
 # Actions secret REGISTRY_TOKEN (what the workflow's `docker login` reads).
