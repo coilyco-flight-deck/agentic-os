@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -10,6 +9,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/goccy/go-yaml"
 )
 
 func testGit(t *testing.T, directory string, args ...string) string {
@@ -91,13 +92,6 @@ func writeNativeTestList(t *testing.T, path string, values ...string) {
 
 func writeNativeTestPlan(t *testing.T, path string, values ...string) {
 	t.Helper()
-	type selection struct {
-		Identity string `json:"identity"`
-		Path     string `json:"path"`
-		Source   string `json:"source"`
-		Scope    string `json:"scope"`
-		Reason   string `json:"reason"`
-	}
 	identities := make([]string, 0, len(values))
 	for _, value := range values {
 		if !strings.Contains(value, "/") {
@@ -106,26 +100,25 @@ func writeNativeTestPlan(t *testing.T, path string, values ...string) {
 		identities = append(identities, value)
 	}
 	slices.Sort(identities)
-	residency := make([]selection, 0, len(identities))
+	residency := make([]aosRepositorySelection, 0, len(identities))
 	for _, identity := range identities {
-		residency = append(residency, selection{
+		residency = append(residency, aosRepositorySelection{
 			Identity: identity,
 			Path:     filepath.Join(filepath.Dir(path), "projects", filepath.FromSlash(identity)),
 			Source:   "test", Scope: "role-union", Reason: "test repository",
 		})
 	}
-	payload := struct {
-		Format       string                 `json:"format"`
-		ProjectsRoot string                 `json:"projects_root"`
-		Roles        map[string][]selection `json:"roles"`
-		Residency    []selection            `json:"residency"`
-	}{
-		Format:       "agent-compose.repositories.v1",
+	payload := aosRepositoryPlan{
+		Format:       agentComposeRepositoryPlanYAMLFormat,
 		ProjectsRoot: filepath.Join(filepath.Dir(path), "projects"),
-		Roles:        map[string][]selection{},
-		Residency:    residency,
+		Inputs: []aosRepositoryPlanInput{{
+			Identity: "owner/policy", Revision: "0123456789abcdef",
+			Policy: aosRepositoryPolicyInput{Path: ".agents/roles.kdl", SHA256: "sha256:test"},
+		}},
+		Roles:     map[string][]aosRepositorySelection{},
+		Residency: residency,
 	}
-	raw, err := json.Marshal(payload)
+	raw, err := yaml.Marshal(payload)
 	if err != nil {
 		t.Fatal(err)
 	}

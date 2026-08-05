@@ -7,9 +7,9 @@ fleet-shaped workspace. No timer, daemon, exit hook, or operator command runs.
 ## Workspace projection
 
 Agent Compose's compiled residency plan drives one linked worktree per checkout.
-AOS reads `$AOS_REPOSITORY_PLAN` or `~/.agent-compose/repository-plan.json`.
-There is no fallback. Identities are exact `owner/repository`, and the canonical
-checkout supplies Git objects for a writable `aos/<harness>/<session-id>` branch.
+AOS reads `$AOS_REPOSITORY_PLAN` or `~/.agent-compose/repository-plan.yaml`.
+Legacy JSON remains a rollout fallback. No embedded roster exists. Exact
+`owner/repository` identities supply writable worktrees from canonical Git objects.
 
 A launch from `$PROJECTS_ROOT` enters:
 

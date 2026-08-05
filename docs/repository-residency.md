@@ -1,7 +1,7 @@
 # Repository residency
 
 Agent Compose owns repository policy and emits the strict
-`~/.agent-compose/repository-plan.json`. AOS validates that machine contract and
+`~/.agent-compose/repository-plan.yaml`. AOS validates that machine contract and
 exposes its host-residency projection without parsing `.agents/roles.kdl`:
 
 ```sh
@@ -14,11 +14,13 @@ absolute projects root and each owner-qualified selection's source, scope,
 reason, and provider details. Lines output contains only sorted
 `owner/repository` identities for shell consumers.
 
-AOS rejects unknown fields, unknown formats, unsafe identities, duplicate or
-unsorted selections, incomplete provenance, relative roots, and paths outside
-the compiled projects root. Missing or invalid plan state fails closed. There
-is no embedded repository fallback and doctrine source paths never become
-repository policy.
+AOS consumes Agent Compose's `agent-compose.repositories.v2` YAML contract and
+temporarily accepts the preceding v1 JSON contract during host rollout. When
+both files exist, YAML wins. AOS rejects unknown fields, unknown formats, unsafe
+identities, duplicate or unsorted selections, incomplete provenance, relative
+roots, and paths outside the compiled projects root. Missing or invalid plan
+state fails closed. There is no embedded repository fallback and doctrine
+source paths never become repository policy.
 
 Native workspace projection and cleanup use the same compiled residency set.
 The status-line tracker compares exact owner-qualified checkouts against it.

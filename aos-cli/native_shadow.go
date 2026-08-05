@@ -268,7 +268,7 @@ func resolveNativeRuntime() (nativeRuntime, error) {
 	}
 	plan := strings.TrimSpace(os.Getenv("AOS_REPOSITORY_PLAN"))
 	if plan == "" {
-		plan = filepath.Join(home, ".agent-compose", "repository-plan.json")
+		plan = repositoryPlanPath(home)
 	}
 	fleet := strings.TrimSpace(os.Getenv("AOS_FLEET_ORGS"))
 	if fleet == "" {

@@ -11,31 +11,45 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/goccy/go-yaml"
 	"github.com/urfave/cli/v3"
 )
 
 const (
-	agentComposeRepositoryPlanFormat = "agent-compose.repositories.v1"
-	aosRepositoryResidencyFormat     = "aos.repository-residency.v1"
+	agentComposeRepositoryPlanJSONFormat = "agent-compose.repositories.v1"
+	agentComposeRepositoryPlanYAMLFormat = "agent-compose.repositories.v2"
+	aosRepositoryResidencyFormat         = "aos.repository-residency.v1"
 )
 
 type aosRepositorySelection struct {
-	Identity   string   `json:"identity"`
-	Path       string   `json:"path"`
-	Source     string   `json:"source"`
-	Scope      string   `json:"scope"`
-	Reason     string   `json:"reason"`
-	Required   bool     `json:"required,omitempty"`
-	Skills     []string `json:"skills,omitempty"`
-	Name       string   `json:"name,omitempty"`
-	DeclaredBy string   `json:"declared_by,omitempty"`
+	Identity   string   `json:"identity" yaml:"identity"`
+	Path       string   `json:"path" yaml:"path"`
+	Source     string   `json:"source" yaml:"source"`
+	Scope      string   `json:"scope" yaml:"scope"`
+	Reason     string   `json:"reason" yaml:"reason"`
+	Required   bool     `json:"required,omitempty" yaml:"required,omitempty"`
+	Skills     []string `json:"skills,omitempty" yaml:"skills,omitempty"`
+	Name       string   `json:"name,omitempty" yaml:"name,omitempty"`
+	DeclaredBy string   `json:"declared_by,omitempty" yaml:"declared_by,omitempty"`
+}
+
+type aosRepositoryPolicyInput struct {
+	Path   string `yaml:"path"`
+	SHA256 string `yaml:"sha256"`
+}
+
+type aosRepositoryPlanInput struct {
+	Identity string                   `yaml:"identity"`
+	Revision string                   `yaml:"revision"`
+	Policy   aosRepositoryPolicyInput `yaml:"policy"`
 }
 
 type aosRepositoryPlan struct {
-	Format       string                              `json:"format"`
-	ProjectsRoot string                              `json:"projects_root"`
-	Roles        map[string][]aosRepositorySelection `json:"roles"`
-	Residency    []aosRepositorySelection            `json:"residency"`
+	Format       string                              `json:"format" yaml:"format"`
+	ProjectsRoot string                              `json:"projects_root" yaml:"projects_root"`
+	Inputs       []aosRepositoryPlanInput            `json:"-" yaml:"inputs,omitempty"`
+	Roles        map[string][]aosRepositorySelection `json:"roles" yaml:"roles"`
+	Residency    []aosRepositorySelection            `json:"residency" yaml:"residency"`
 }
 
 func defaultRepositoryPlanPath() string {
@@ -44,9 +58,21 @@ func defaultRepositoryPlanPath() string {
 	}
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return filepath.Join(".agent-compose", "repository-plan.json")
+		return filepath.Join(".agent-compose", "repository-plan.yaml")
 	}
-	return filepath.Join(home, ".agent-compose", "repository-plan.json")
+	return repositoryPlanPath(home)
+}
+
+func repositoryPlanPath(home string) string {
+	yamlPath := filepath.Join(home, ".agent-compose", "repository-plan.yaml")
+	if _, err := os.Stat(yamlPath); err == nil || !errors.Is(err, os.ErrNotExist) {
+		return yamlPath
+	}
+	jsonPath := filepath.Join(home, ".agent-compose", "repository-plan.json")
+	if _, err := os.Stat(jsonPath); err == nil || !errors.Is(err, os.ErrNotExist) {
+		return jsonPath
+	}
+	return yamlPath
 }
 
 func loadAOSRepositoryPlan(filename string) (aosRepositoryPlan, error) {
@@ -55,17 +81,23 @@ func loadAOSRepositoryPlan(filename string) (aosRepositoryPlan, error) {
 		return aosRepositoryPlan{}, fmt.Errorf("read Agent Compose repository plan %s: %w", filename, err)
 	}
 	var plan aosRepositoryPlan
-	decoder := json.NewDecoder(bytes.NewReader(raw))
-	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(&plan); err != nil {
+	expectedFormat := agentComposeRepositoryPlanYAMLFormat
+	if trimmed := bytes.TrimSpace(raw); len(trimmed) > 0 && trimmed[0] == '{' {
+		expectedFormat = agentComposeRepositoryPlanJSONFormat
+		decoder := json.NewDecoder(bytes.NewReader(raw))
+		decoder.DisallowUnknownFields()
+		if err := decoder.Decode(&plan); err != nil {
+			return aosRepositoryPlan{}, fmt.Errorf("decode Agent Compose repository plan %s: %w", filename, err)
+		}
+		var trailing json.RawMessage
+		if err := decoder.Decode(&trailing); !errors.Is(err, io.EOF) {
+			return aosRepositoryPlan{}, fmt.Errorf("decode Agent Compose repository plan %s: trailing JSON", filename)
+		}
+	} else if err := yaml.UnmarshalWithOptions(raw, &plan, yaml.Strict()); err != nil {
 		return aosRepositoryPlan{}, fmt.Errorf("decode Agent Compose repository plan %s: %w", filename, err)
 	}
-	var trailing json.RawMessage
-	if err := decoder.Decode(&trailing); !errors.Is(err, io.EOF) {
-		return aosRepositoryPlan{}, fmt.Errorf("decode Agent Compose repository plan %s: trailing JSON", filename)
-	}
-	if plan.Format != agentComposeRepositoryPlanFormat {
-		return aosRepositoryPlan{}, fmt.Errorf("Agent Compose repository plan format is %q, want %q", plan.Format, agentComposeRepositoryPlanFormat)
+	if plan.Format != expectedFormat {
+		return aosRepositoryPlan{}, fmt.Errorf("Agent Compose repository plan format is %q, want %q", plan.Format, expectedFormat)
 	}
 	if !filepath.IsAbs(plan.ProjectsRoot) {
 		return aosRepositoryPlan{}, fmt.Errorf("Agent Compose repository plan projects_root must be absolute")
