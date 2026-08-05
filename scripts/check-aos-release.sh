@@ -99,6 +99,7 @@ if [ -n "$native_aos" ]; then
         --agent codex \
         --role engineer \
         --image agentic-os:test \
+        --auth=false \
         --dry-run \
         -- \
         --version)
@@ -108,6 +109,7 @@ if [ -n "$native_aos" ]; then
         --agent codex \
         --role engineer \
         --image agentic-os:test \
+        --auth=false \
         --dry-run \
         -- \
         --version)
