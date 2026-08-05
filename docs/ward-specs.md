@@ -8,8 +8,8 @@ workflow mechanics, and its fixed broker. AOS does not ship a Ward role bundle.
 
 The only Ward-consumed AOS file is [`.ward/ward.yaml`](../.ward/ward.yaml). It
 declares repository development commands, the AOS image and release channel,
-and the supported verification fixture input. `ward doctor` validates that
-YAML through Ward's loader.
+and the repository landing workflow. `ward doctor` validates that YAML through
+Ward's loader.
 
 ## Ownership
 

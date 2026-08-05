@@ -82,9 +82,6 @@ commands:
   aos-composition-smoke:
     run: bash scripts/aos-composition-smoke.sh
     description: "Materialize the full local context bundle and render Ward's launch without starting an agent container. Pass the Ward issue or freeform arguments after `--`."
-  qa-verification-fixture:
-    run: bash scripts/qa-verification-fixture.sh
-    description: "Run one disposable, admitted engineer-to-QA proof in coilyco-flight-deck/ward-qa-fixture, then stop the run, delete its issue branch, and close its issue. Pass `--preserve-on-failure` only when QA needs the failed branch and issue retained as evidence."
   aos-standalone-composition-smoke:
     run: ./aos-cli/aos --agent codex --role engineer --image agentic-os:aos-local --auth=false -- --version
     description: "Launch the selected agent in one standalone AOS container with composed context and the aosguard skill, then print the agent version."
@@ -228,10 +225,6 @@ agent:
   image: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os
   release-channel: release
   workflow: pull-request-and-merge
-  verification:
-    fixtures:
-      - repository: coilyco-flight-deck/ward-qa-fixture
-        issue-label: qa-fixture
 
 # Catalog metadata for the cross-repo knowledge graph.
 # Schema: ward catalog block tracker.

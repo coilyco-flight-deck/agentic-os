@@ -32,7 +32,6 @@ Major shipped capabilities, not files.
 - [Forgejo Actions reruns](forgejo-actions-rerun.md) - guarded reruns and dispatch fallback.
 - [Ward integration boundary](ward-specs.md) - workflows, arbitrary
   [composed roles](aos-generic-warded-roles.md), and no role-derived authority.
-- [QA verification fixture](qa-verification-fixture.md) - bounded live role proof.
 - [Cross-repo tooling and release](features-release-tooling.md) - aos-precommit and release operations.
 - [Telegram CI failure alerts](telegram-ci-alerts.md) - reusable red-channel alerting for failing jobs.
 - [dev-base image](dev-base-image.md) - parallel cached language payloads feeding one automatically released full development surface.
