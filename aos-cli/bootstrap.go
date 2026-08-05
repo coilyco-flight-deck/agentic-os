@@ -359,9 +359,13 @@ func composeHome(
 	provider string,
 	runner commandRunner,
 ) error {
-	modelClass, err := modelClassForLayout(opts.Layout)
+	profile, err := standaloneHarnessLaunchProfileFor(opts.Role, opts.Layout)
 	if err != nil {
 		return err
+	}
+	modelTier, err := modelTierForModel(profile.Model)
+	if err != nil {
+		return fmt.Errorf("resolve %s/%s model tier: %w", opts.Role, opts.Layout, err)
 	}
 	providerRoot, err := filepath.Abs(provider)
 	if err != nil {
@@ -380,7 +384,7 @@ func composeHome(
 	body := "compose {\n" +
 		"    role " + strconv.Quote(opts.Role) + "\n" +
 		"    delivery " + strconv.Quote(opts.Delivery) + "\n" +
-		"    model-class " + strconv.Quote(modelClass) + "\n" +
+		"    model-tier " + strconv.Quote(modelTier) + "\n" +
 		"    source \"aos\" root=" + strconv.Quote(providerRoot) + " required=#true\n" +
 		"}\n"
 	if _, err := io.WriteString(request, body); err != nil {

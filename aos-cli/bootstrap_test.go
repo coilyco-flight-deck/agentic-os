@@ -77,12 +77,19 @@ func TestComposeHomeSurfacesRoleCompatibilityFailure(t *testing.T) {
 	) {
 		t.Fatalf("compose error = %v", err)
 	}
-	modelClass, modelErr := modelClassForLayout(opts.Layout)
+	profile, profileErr := standaloneHarnessLaunchProfileFor(opts.Role, opts.Layout)
+	if profileErr != nil {
+		t.Fatal(profileErr)
+	}
+	modelTier, modelErr := modelTierForModel(profile.Model)
 	if modelErr != nil {
 		t.Fatal(modelErr)
 	}
-	if !strings.Contains(runner.request, `model-class "`+modelClass+`"`) {
-		t.Fatalf("compose request omitted selected model class:\n%s", runner.request)
+	if !strings.Contains(runner.request, `model-tier "`+modelTier+`"`) {
+		t.Fatalf("compose request omitted selected model tier:\n%s", runner.request)
+	}
+	if strings.Contains(runner.request, "model-class") {
+		t.Fatalf("compose request retained retired model class:\n%s", runner.request)
 	}
 }
 
@@ -214,7 +221,7 @@ func TestPrepareContainerHydratesSubstrateAndProjectsHome(t *testing.T) {
 			t.Fatalf("substrate path remained writable: %s %o", path, info.Mode().Perm())
 		}
 	}
-	modelClass, err := modelClassForLayout("codex")
+	modelTier, err := modelTierForModel(profile.Model)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -222,7 +229,7 @@ func TestPrepareContainerHydratesSubstrateAndProjectsHome(t *testing.T) {
 	for _, want := range []string{
 		`role "engineer"`,
 		`delivery "native-skills"`,
-		`model-class "` + modelClass + `"`,
+		`model-tier "` + modelTier + `"`,
 		`source "aos" root=` + strconv.Quote(provider) + ` required=#true`,
 	} {
 		if !strings.Contains(runner.request, want) {

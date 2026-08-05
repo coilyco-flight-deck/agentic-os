@@ -238,14 +238,22 @@ func TestStageNativeRoleHomeFiltersUserSkills(t *testing.T) {
 	}
 }
 
-func TestAssignedNativeRoleExportsAOSModelClass(t *testing.T) {
-	t.Setenv(agentComposeModelClassEnv, "")
+func TestNativeShadowExportsAOSModelTier(t *testing.T) {
+	t.Setenv(agentComposeModelClassEnv, "low-context")
+	t.Setenv(agentComposeModelTierEnv, "")
 
-	if err := applyNativeRoleModelClass("goose"); err != nil {
+	command := []string{
+		"agent-compose", "launch", "engineer", "goose",
+		"--model", "deploy-backend/deepseek-v4-flash",
+	}
+	if err := applyNativeModelTier("goose", command); err != nil {
 		t.Fatal(err)
 	}
-	if got := os.Getenv(agentComposeModelClassEnv); got != "low-context" {
-		t.Fatalf("model class = %q, want low-context", got)
+	if got := os.Getenv(agentComposeModelTierEnv); got != modelTierCommodity {
+		t.Fatalf("model tier = %q, want %s", got, modelTierCommodity)
+	}
+	if _, found := os.LookupEnv(agentComposeModelClassEnv); found {
+		t.Fatalf("retired %s remains set", agentComposeModelClassEnv)
 	}
 }
 

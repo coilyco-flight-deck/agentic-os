@@ -23,6 +23,7 @@ const (
 	nativeSweepInterval         = 10 * time.Minute
 	nativeDeadSessionGrace      = 24 * time.Hour
 	nativeDeleteScans           = 3
+	agentComposeModelTierEnv    = "AGENT_COMPOSE_MODEL_TIER"
 	agentComposeModelClassEnv   = "AGENT_COMPOSE_MODEL_CLASS"
 	agentComposeRuntimeHomeEnv  = "AGENT_COMPOSE_RUNTIME_HOME"
 	claudeDisableAutoUpdaterEnv = "DISABLE_AUTOUPDATER"
@@ -126,6 +127,9 @@ func runNativeShadow(ctx context.Context, cmd *cli.Command) error {
 	if isolated && harness == "codex" {
 		command = trustNativeCodexWorkspace(command, harness, nativeCodexProject(launchCWD))
 	}
+	if err := applyNativeModelTier(harness, command); err != nil {
+		return err
+	}
 	if cmd.Bool("assigned-role") {
 		if harness == "codex" {
 			trusted, err := trustNativeCodexAttributionHook(ctx, launchCWD, runtime.Home)
@@ -142,9 +146,6 @@ func runNativeShadow(ctx context.Context, cmd *cli.Command) error {
 					trusted,
 				)
 			}
-		}
-		if err := applyNativeRoleModelClass(harness); err != nil {
-			return err
 		}
 	}
 	return execNative(command)
@@ -202,13 +203,20 @@ func trustNativeCodexWorkspace(command []string, harness, project string) []stri
 	return command
 }
 
-func applyNativeRoleModelClass(harness string) error {
-	modelClass, err := modelClassForLayout(harness)
+func applyNativeModelTier(harness string, command []string) error {
+	if err := os.Unsetenv(agentComposeModelClassEnv); err != nil {
+		return fmt.Errorf("unset retired agent-compose model class: %w", err)
+	}
+	model, err := nativeRuntimeModel(harness, command)
 	if err != nil {
 		return err
 	}
-	if err := os.Setenv(agentComposeModelClassEnv, modelClass); err != nil {
-		return fmt.Errorf("set agent-compose model class: %w", err)
+	modelTier, err := modelTierForModel(model)
+	if err != nil {
+		return fmt.Errorf("resolve native %s model tier: %w", harness, err)
+	}
+	if err := os.Setenv(agentComposeModelTierEnv, modelTier); err != nil {
+		return fmt.Errorf("set agent-compose model tier: %w", err)
 	}
 	return nil
 }

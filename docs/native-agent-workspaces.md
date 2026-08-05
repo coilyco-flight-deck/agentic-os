@@ -25,10 +25,10 @@ The shadow invokes agent-compose after projection, then execs the harness. Bare
 harness commands let the native roster infer a role.
 `acompose <role> <harness> [args...]` enters the clean shadow workspace for
 non-directors. Director uses warded AOS because Ward owns dispatch and its
-broker. Native AOS passes the harness model class and keeps role load points
-outside repository worktrees. Its shadow home links host state but leaves user
-skill directories empty. Claude auto-updates are disabled so a leased home
-cannot replace the host launcher. Codex trusts only the generated workspace.
+broker. Native AOS maps a model override or its profile fallback to `frontier`,
+`commodity`, or `oss` and passes it to Agent Compose. Tier gates compatibility,
+never context selection. AOS clears retired model-class, and user skills stay empty.
+Claude auto-updates cannot replace the host launcher, and Codex trusts the workspace.
 Assigned launches apply [bounded native Codex hook trust](native-codex-hook-trust.md).
 
 ## Startup leases
