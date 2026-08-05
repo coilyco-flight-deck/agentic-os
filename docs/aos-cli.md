@@ -54,7 +54,8 @@ incompatible agents and translated Ward flags before starting a container.
 * CWD mounts read-write at `/workspace/<cwd-name>` and becomes the workdir.
 * Composition hydrates the baked provider through `aos-substrate-cache`.
 * [Codex authentication](aos-codex-auth.md) fails closed before Docker, projects
-  file-backed credentials read-only, and preserves `--auth=false` for startup checks.
+  file-backed or direct macOS Keychain credentials read-only, and preserves
+  `--auth=false` for startup checks.
 * [MCP and tailnet projection](aos-standalone-connectivity.md) preserves the native standalone connectivity baseline.
 * [Role-gated kubeconfig projection](aos-kubeconfig.md) mounts one explicit operator-selected source read-only for standalone director and ops launches.
 * With `--auth=true`, present authentication variables cross by name, never rendered value.

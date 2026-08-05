@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -192,17 +193,20 @@ func runStandaloneIntegratedLaunch(
 	ctx context.Context,
 	cmd *cli.Command,
 	opts integratedLaunchOptions,
-) error {
+) (returnErr error) {
 	cwd, err := filepath.Abs(".")
 	if err != nil {
 		return fmt.Errorf("resolve current working directory: %w", err)
 	}
 	command := append([]string{opts.Agent}, opts.Arguments...)
 	uid, gid := hostIdentity()
-	authMounts, err := authMountsForLaunch(opts.Auth, opts.Agent)
+	auth, err := authForLaunch(ctx, opts.Auth, opts.Agent)
 	if err != nil {
 		return err
 	}
+	defer func() {
+		returnErr = errors.Join(returnErr, auth.Close())
+	}()
 	mcp, err := discoverMCPLaunch(ctx)
 	if err != nil {
 		return err
@@ -220,7 +224,7 @@ func runStandaloneIntegratedLaunch(
 		GID:             gid,
 		TTY:             isTerminal(os.Stdin),
 		NoSubstrate:     opts.NoSubstrate,
-		AuthMounts:      authMounts,
+		AuthMounts:      auth.Mounts,
 		ForwardedEnvs:   forwardedEnvironment(opts.Auth),
 		Kubeconfig:      opts.Kubeconfig,
 		MCPInventory:    mcp.Inventory,

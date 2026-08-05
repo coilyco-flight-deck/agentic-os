@@ -19,8 +19,8 @@ adapter and its defaults. Codex is the first supported adapter.
 
 The adapter runs `codex exec` with an ephemeral session, a read-only sandbox,
 no color, and no Git-repository requirement. The container supplies its
-Terra-medium defaults and stages validated file-backed Codex auth through the
-normal AOS path.
+Terra-medium defaults and stages validated file-backed or macOS Keychain Codex
+auth through the normal AOS path.
 
 The check-in skips the general substrate while retaining the AOS provider
 required to compose the role. A conflicting explicit `--layout` fails instead
@@ -45,7 +45,7 @@ section divider, and each prompt, warning, response, or token block.
 Global `--image`, `--delivery`, `--auth`, and `--dry-run` behavior still
 applies. A dry run renders the Docker launch without exposing auth or forwarded
 environment values. The default `--auth=true` requires readable supported
-Codex file auth before Docker starts. `--auth=false` is reserved for deliberate
+Codex auth before Docker starts. `--auth=false` is reserved for deliberate
 unauthenticated commands and does not turn a check-in into an inference proof.
 
 ## See also

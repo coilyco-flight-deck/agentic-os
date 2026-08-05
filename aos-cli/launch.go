@@ -3,7 +3,9 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -33,6 +35,23 @@ type authMount struct {
 	HostPath      string
 	ContainerPath string
 }
+
+type authProjection struct {
+	Mounts  []authMount
+	cleanup func() error
+}
+
+func (projection authProjection) Close() error {
+	if projection.cleanup == nil {
+		return nil
+	}
+	if err := projection.cleanup(); err != nil {
+		return fmt.Errorf("remove temporary auth projection: %w", err)
+	}
+	return nil
+}
+
+type codexKeyringReader func(context.Context, string, string) ([]byte, error)
 
 type launchOptions struct {
 	Image           string
@@ -206,20 +225,33 @@ func buildLaunchPlan(opts launchOptions) (launchPlan, error) {
 	return launchPlan{DockerArgs: args, Workspace: workspace}, nil
 }
 
-func authMountsForLaunch(enabled bool, layout string) ([]authMount, error) {
-	if !enabled {
-		return nil, nil
-	}
-	return discoverAuthMounts(layout)
+func authForLaunch(ctx context.Context, enabled bool, layout string) (authProjection, error) {
+	return authForLaunchWithKeyring(ctx, enabled, layout, readCodexKeyring)
 }
 
-func discoverAuthMounts(layout string) ([]authMount, error) {
+func authForLaunchWithKeyring(
+	ctx context.Context,
+	enabled bool,
+	layout string,
+	readKeyring codexKeyringReader,
+) (authProjection, error) {
+	if !enabled {
+		return authProjection{}, nil
+	}
+	return discoverAuthProjection(ctx, layout, readKeyring)
+}
+
+func discoverAuthProjection(
+	ctx context.Context,
+	layout string,
+	readKeyring codexKeyringReader,
+) (authProjection, error) {
 	if layout == "codex" {
-		return discoverCodexAuthMounts()
+		return discoverCodexAuthProjection(ctx, readKeyring)
 	}
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return nil, nil
+		return authProjection{}, nil
 	}
 	var source, target string
 	switch layout {
@@ -230,51 +262,125 @@ func discoverAuthMounts(layout string) ([]authMount, error) {
 		source = filepath.Join(home, ".config", "goose", "config.yaml")
 		target = containerAuthRoot + "/goose.yaml"
 	default:
-		return nil, nil
+		return authProjection{}, nil
 	}
 	info, err := os.Stat(source)
 	if err != nil || !info.Mode().IsRegular() {
-		return nil, nil
+		return authProjection{}, nil
 	}
-	return []authMount{{HostPath: source, ContainerPath: target}}, nil
+	return authProjection{Mounts: []authMount{{HostPath: source, ContainerPath: target}}}, nil
 }
 
-func discoverCodexAuthMounts() ([]authMount, error) {
+func discoverCodexAuthProjection(
+	ctx context.Context,
+	readKeyring codexKeyringReader,
+) (authProjection, error) {
 	if codexEnvironmentAuthPresent() {
-		return nil, nil
+		return authProjection{}, nil
 	}
+	absHome, err := resolveCodexHome()
+	if err != nil {
+		return authProjection{}, err
+	}
+	source := filepath.Join(absHome, "auth.json")
+	info, err := os.Stat(source)
+	if err == nil {
+		if !info.Mode().IsRegular() {
+			return authProjection{}, fmt.Errorf("codex auth: unsupported credential source at %s: want a regular auth.json file", source)
+		}
+		if err := validateCodexAuthFile(source, func(path string) (io.ReadCloser, error) {
+			return os.Open(path)
+		}); err != nil {
+			return authProjection{}, err
+		}
+		return authProjection{Mounts: []authMount{{
+			HostPath: source, ContainerPath: containerAuthRoot + "/codex.json",
+		}}}, nil
+	}
+	if !os.IsNotExist(err) {
+		return authProjection{}, fmt.Errorf("codex auth: credentials at %s are unreadable: %w", source, err)
+	}
+
+	account := codexKeyringAccount(absHome, "cli")
+	payload, keyringErr := readKeyring(ctx, codexDirectKeyringService, account)
+	if keyringErr == nil {
+		if err := validateCodexAuthReader("macOS Keychain", bytes.NewReader(payload)); err != nil {
+			return authProjection{}, err
+		}
+		return writeTemporaryCodexAuth(payload)
+	}
+	if errors.Is(keyringErr, errCodexKeyringUnsupported) {
+		return authProjection{}, fmt.Errorf(
+			"codex auth: file-backed credentials not found at %s and host keyring projection is unsupported on this platform (use --auth=false for unauthenticated commands)",
+			source,
+		)
+	}
+	if !errors.Is(keyringErr, errCodexKeyringNotFound) {
+		return authProjection{}, fmt.Errorf("codex auth: macOS Keychain credentials are unreadable: %w", keyringErr)
+	}
+
+	encrypted := filepath.Join(absHome, "secrets", "codex_auth.age")
+	if encryptedInfo, encryptedErr := os.Stat(encrypted); encryptedErr == nil && encryptedInfo.Mode().IsRegular() {
+		return authProjection{}, fmt.Errorf(
+			"codex auth: encrypted keyring credentials at %s are not supported for standalone projection; select Codex direct keyring or file storage",
+			encrypted,
+		)
+	}
+	return authProjection{}, fmt.Errorf(
+		"codex auth: credentials were not found at %s or in the macOS Keychain (use --auth=false for unauthenticated commands)",
+		source,
+	)
+}
+
+func resolveCodexHome() (string, error) {
 	codexHome := strings.TrimSpace(os.Getenv("CODEX_HOME"))
 	if codexHome == "" {
 		home, err := os.UserHomeDir()
 		if err != nil {
-			return nil, fmt.Errorf("codex auth: resolve host home: %w", err)
+			return "", fmt.Errorf("codex auth: resolve host home: %w", err)
 		}
 		codexHome = filepath.Join(home, ".codex")
 	}
 	absHome, err := filepath.Abs(codexHome)
 	if err != nil {
-		return nil, fmt.Errorf("codex auth: resolve CODEX_HOME: %w", err)
+		return "", fmt.Errorf("codex auth: resolve CODEX_HOME: %w", err)
 	}
-	source := filepath.Join(absHome, "auth.json")
-	info, err := os.Stat(source)
+	return absHome, nil
+}
+
+func codexKeyringAccount(codexHome, prefix string) string {
+	canonical := codexHome
+	if resolved, err := filepath.EvalSymlinks(codexHome); err == nil {
+		canonical = resolved
+	}
+	digest := sha256.Sum256([]byte(canonical))
+	return fmt.Sprintf("%s|%x", prefix, digest[:8])
+}
+
+func writeTemporaryCodexAuth(payload []byte) (authProjection, error) {
+	directory, err := os.MkdirTemp("", "aos-codex-auth-")
 	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, fmt.Errorf(
-				"codex auth: file-backed credentials not found at %s; AOS cannot project keyring-only credentials (use --auth=false for unauthenticated commands)",
-				source,
-			)
-		}
-		return nil, fmt.Errorf("codex auth: credentials at %s are unreadable: %w", source, err)
+		return authProjection{}, fmt.Errorf("codex auth: create private projection directory: %w", err)
 	}
-	if !info.Mode().IsRegular() {
-		return nil, fmt.Errorf("codex auth: unsupported credential source at %s: want a regular auth.json file", source)
+	cleanup := func() error { return os.RemoveAll(directory) }
+	fail := func(err error) (authProjection, error) {
+		_ = cleanup()
+		return authProjection{}, err
 	}
-	if err := validateCodexAuthFile(source, func(path string) (io.ReadCloser, error) {
-		return os.Open(path)
-	}); err != nil {
-		return nil, err
+	if err := os.Chmod(directory, 0o700); err != nil {
+		return fail(fmt.Errorf("codex auth: secure private projection directory: %w", err))
 	}
-	return []authMount{{HostPath: source, ContainerPath: containerAuthRoot + "/codex.json"}}, nil
+	path := filepath.Join(directory, "auth.json")
+	if err := os.WriteFile(path, payload, 0o600); err != nil {
+		return fail(fmt.Errorf("codex auth: write private projection: %w", err))
+	}
+	if err := os.Chmod(path, 0o600); err != nil {
+		return fail(fmt.Errorf("codex auth: secure private projection: %w", err))
+	}
+	return authProjection{
+		Mounts:  []authMount{{HostPath: path, ContainerPath: containerAuthRoot + "/codex.json"}},
+		cleanup: cleanup,
+	}, nil
 }
 
 func validateCodexAuthFile(path string, openFile func(string) (io.ReadCloser, error)) error {
@@ -283,14 +389,17 @@ func validateCodexAuthFile(path string, openFile func(string) (io.ReadCloser, er
 		return fmt.Errorf("codex auth: credentials at %s are unreadable: %w", path, err)
 	}
 	defer input.Close()
+	return validateCodexAuthReader(path, input)
+}
 
+func validateCodexAuthReader(source string, input io.Reader) error {
 	var payload map[string]json.RawMessage
 	decoder := json.NewDecoder(input)
 	if err := decoder.Decode(&payload); err != nil || ensureJSONEnd(decoder) != nil ||
 		!supportedCodexAuthPayload(payload) {
 		return fmt.Errorf(
-			"codex auth: unsupported credentials at %s: want a Codex auth.json containing file-backed API-key or token data",
-			path,
+			"codex auth: unsupported credentials from %s: want Codex API-key or token data",
+			source,
 		)
 	}
 	return nil

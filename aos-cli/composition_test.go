@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -298,7 +299,11 @@ func TestIntegratedStandaloneDryRunAlwaysUsesComposedAndGuardedContexts(t *testi
 
 func TestIntegratedStandaloneCodexAuthFailurePrecedesDockerPlan(t *testing.T) {
 	clearCodexAuthEnvironment(t)
-	t.Setenv("CODEX_HOME", t.TempDir())
+	codexHome := t.TempDir()
+	t.Setenv("CODEX_HOME", codexHome)
+	if err := os.Mkdir(filepath.Join(codexHome, "auth.json"), 0o700); err != nil {
+		t.Fatal(err)
+	}
 	command := newCommand()
 	var output bytes.Buffer
 	command.Writer = &output
@@ -312,7 +317,7 @@ func TestIntegratedStandaloneCodexAuthFailurePrecedesDockerPlan(t *testing.T) {
 		"--",
 		"exec", "probe",
 	})
-	if err == nil || !strings.Contains(err.Error(), "file-backed credentials not found") {
+	if err == nil || !strings.Contains(err.Error(), "unsupported credential source") {
 		t.Fatalf("missing Codex auth error = %v", err)
 	}
 	if output.Len() != 0 {

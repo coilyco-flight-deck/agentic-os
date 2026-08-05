@@ -1,7 +1,10 @@
 package main
 
 import (
+	"context"
+	"crypto/sha256"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -53,19 +56,22 @@ func TestCodexAuthPipelineUsesCodexHomeAndStagesPrivateFile(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	mounts, err := authMountsForLaunch(true, "codex")
+	projection, err := authForLaunchWithKeyring(
+		context.Background(), true, "codex", unexpectedKeyringRead(t),
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(mounts) != 1 || mounts[0].HostPath != hostAuth ||
-		mounts[0].ContainerPath != containerAuthRoot+"/codex.json" {
-		t.Fatalf("Codex auth mounts = %#v", mounts)
+	defer projection.Close()
+	if len(projection.Mounts) != 1 || projection.Mounts[0].HostPath != hostAuth ||
+		projection.Mounts[0].ContainerPath != containerAuthRoot+"/codex.json" {
+		t.Fatalf("Codex auth mounts = %#v", projection.Mounts)
 	}
 	plan, err := buildLaunchPlan(launchOptions{
 		Image: "agentic-os:test", Role: "engineer", Layout: "codex",
 		Delivery: "native-skills", Composed: true, CWD: t.TempDir(),
 		Command: []string{"codex", "exec", "probe"}, UID: 1000, GID: 1000,
-		AuthMounts: mounts,
+		AuthMounts: projection.Mounts,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -103,14 +109,98 @@ func TestCodexAuthPipelineUsesCodexHomeAndStagesPrivateFile(t *testing.T) {
 	}
 }
 
+func TestCodexAuthPipelineProjectsDirectMacOSKeyringPrivately(t *testing.T) {
+	clearCodexAuthEnvironment(t)
+	codexHome := filepath.Join(t.TempDir(), "codex-home")
+	if err := os.MkdirAll(codexHome, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("CODEX_HOME", codexHome)
+	payload := []byte(`{"tokens":{"access_token":"synthetic-keyring-token"}}`)
+	canonical, err := filepath.EvalSymlinks(codexHome)
+	if err != nil {
+		t.Fatal(err)
+	}
+	digest := sha256.Sum256([]byte(canonical))
+	wantAccount := "cli|" + fmt.Sprintf("%x", digest[:8])
+	readKeyring := func(_ context.Context, service, account string) ([]byte, error) {
+		if service != codexDirectKeyringService || account != wantAccount {
+			t.Fatalf("keyring lookup = %q / %q, want %q / %q", service, account, codexDirectKeyringService, wantAccount)
+		}
+		return payload, nil
+	}
+
+	projection, err := authForLaunchWithKeyring(context.Background(), true, "codex", readKeyring)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(projection.Mounts) != 1 {
+		t.Fatalf("Codex keyring mounts = %#v", projection.Mounts)
+	}
+	mount := projection.Mounts[0]
+	if mount.ContainerPath != containerAuthRoot+"/codex.json" {
+		t.Fatalf("Codex keyring container path = %q", mount.ContainerPath)
+	}
+	info, err := os.Stat(mount.HostPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if info.Mode().Perm() != 0o600 {
+		t.Fatalf("temporary Codex auth mode = %o, want 600", info.Mode().Perm())
+	}
+	directory := filepath.Dir(mount.HostPath)
+	directoryInfo, err := os.Stat(directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if directoryInfo.Mode().Perm() != 0o700 {
+		t.Fatalf("temporary Codex auth directory mode = %o, want 700", directoryInfo.Mode().Perm())
+	}
+	plan, err := buildLaunchPlan(launchOptions{
+		Image: "agentic-os:test", Role: "engineer", Layout: "codex",
+		Delivery: "native-skills", Composed: true, CWD: t.TempDir(),
+		Command: []string{"codex", "exec", "probe"}, UID: 1000, GID: 1000,
+		AuthMounts: projection.Mounts,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantMount := "type=bind,source=" + mount.HostPath + ",target=" + containerAuthRoot + "/codex.json,readonly"
+	if !containsArg(plan.DockerArgs, wantMount) {
+		t.Fatalf("launch plan omitted read-only keyring projection:\n%s", strings.Join(plan.DockerArgs, "\n"))
+	}
+	if err := projection.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(directory); !os.IsNotExist(err) {
+		t.Fatalf("temporary Codex auth directory survived cleanup: %v", err)
+	}
+}
+
 func TestCodexAuthFailsBeforeLaunch(t *testing.T) {
 	t.Run("missing", func(t *testing.T) {
 		clearCodexAuthEnvironment(t)
 		codexHome := t.TempDir()
 		t.Setenv("CODEX_HOME", codexHome)
-		_, err := authMountsForLaunch(true, "codex")
-		if err == nil || !strings.Contains(err.Error(), "file-backed credentials not found") {
+		_, err := authForLaunchWithKeyring(
+			context.Background(), true, "codex", missingKeyringRead,
+		)
+		if err == nil || !strings.Contains(err.Error(), "were not found") {
 			t.Fatalf("missing Codex auth error = %v", err)
+		}
+	})
+
+	t.Run("keyring unreadable", func(t *testing.T) {
+		clearCodexAuthEnvironment(t)
+		t.Setenv("CODEX_HOME", t.TempDir())
+		_, err := authForLaunchWithKeyring(
+			context.Background(), true, "codex",
+			func(context.Context, string, string) ([]byte, error) {
+				return nil, errors.New("interaction denied")
+			},
+		)
+		if err == nil || !strings.Contains(err.Error(), "Keychain credentials are unreadable") {
+			t.Fatalf("unreadable Codex keyring error = %v", err)
 		}
 	})
 
@@ -130,7 +220,9 @@ func TestCodexAuthFailsBeforeLaunch(t *testing.T) {
 		if err := os.Mkdir(filepath.Join(codexHome, "auth.json"), 0o700); err != nil {
 			t.Fatal(err)
 		}
-		_, err := authMountsForLaunch(true, "codex")
+		_, err := authForLaunchWithKeyring(
+			context.Background(), true, "codex", unexpectedKeyringRead(t),
+		)
 		if err == nil || !strings.Contains(err.Error(), "unsupported credential source") {
 			t.Fatalf("unsupported Codex auth source error = %v", err)
 		}
@@ -143,7 +235,9 @@ func TestCodexAuthFailsBeforeLaunch(t *testing.T) {
 		if err := os.WriteFile(filepath.Join(codexHome, "auth.json"), []byte(`{"unknown":true}`), 0o600); err != nil {
 			t.Fatal(err)
 		}
-		_, err := authMountsForLaunch(true, "codex")
+		_, err := authForLaunchWithKeyring(
+			context.Background(), true, "codex", unexpectedKeyringRead(t),
+		)
 		if err == nil || !strings.Contains(err.Error(), "unsupported credentials") {
 			t.Fatalf("unsupported Codex auth payload error = %v", err)
 		}
@@ -152,9 +246,11 @@ func TestCodexAuthFailsBeforeLaunch(t *testing.T) {
 	t.Run("disabled", func(t *testing.T) {
 		clearCodexAuthEnvironment(t)
 		t.Setenv("CODEX_HOME", t.TempDir())
-		mounts, err := authMountsForLaunch(false, "codex")
-		if err != nil || len(mounts) != 0 {
-			t.Fatalf("disabled Codex auth mounts = %#v, error = %v", mounts, err)
+		projection, err := authForLaunchWithKeyring(
+			context.Background(), false, "codex", unexpectedKeyringRead(t),
+		)
+		if err != nil || len(projection.Mounts) != 0 {
+			t.Fatalf("disabled Codex auth mounts = %#v, error = %v", projection.Mounts, err)
 		}
 	})
 }
@@ -165,9 +261,11 @@ func TestCodexEnvironmentAuthAndDisabledAuthForwarding(t *testing.T) {
 	t.Setenv("ANTHROPIC_API_KEY", "synthetic")
 	t.Setenv("GOOSE_MODEL", "synthetic-model")
 
-	mounts, err := authMountsForLaunch(true, "codex")
-	if err != nil || len(mounts) != 0 {
-		t.Fatalf("Codex environment auth mounts = %#v, error = %v", mounts, err)
+	projection, err := authForLaunchWithKeyring(
+		context.Background(), true, "codex", unexpectedKeyringRead(t),
+	)
+	if err != nil || len(projection.Mounts) != 0 {
+		t.Fatalf("Codex environment auth mounts = %#v, error = %v", projection.Mounts, err)
 	}
 	withAuth := forwardedEnvironment(true)
 	for _, want := range []string{"CODEX_API_KEY", "ANTHROPIC_API_KEY", "GOOSE_MODEL"} {
@@ -493,6 +591,18 @@ func clearCodexAuthEnvironment(t *testing.T) {
 	t.Helper()
 	for _, key := range []string{"CODEX_API_KEY", "CODEX_ACCESS_TOKEN", "OPENAI_API_KEY"} {
 		t.Setenv(key, "")
+	}
+}
+
+func missingKeyringRead(context.Context, string, string) ([]byte, error) {
+	return nil, errCodexKeyringNotFound
+}
+
+func unexpectedKeyringRead(t *testing.T) codexKeyringReader {
+	t.Helper()
+	return func(context.Context, string, string) ([]byte, error) {
+		t.Fatal("unexpected Codex keyring read")
+		return nil, nil
 	}
 }
 

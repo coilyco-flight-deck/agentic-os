@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -299,16 +300,19 @@ func runComposedLaunch(
 	layout string,
 	command []string,
 	noSubstrate bool,
-) error {
+) (returnErr error) {
 	cwd, err := filepath.Abs(".")
 	if err != nil {
 		return fmt.Errorf("resolve current working directory: %w", err)
 	}
 	uid, gid := hostIdentity()
-	authMounts, err := authMountsForLaunch(cmd.Bool("auth"), layout)
+	auth, err := authForLaunch(ctx, cmd.Bool("auth"), layout)
 	if err != nil {
 		return err
 	}
+	defer func() {
+		returnErr = errors.Join(returnErr, auth.Close())
+	}()
 	mcp, err := discoverMCPLaunch(ctx)
 	if err != nil {
 		return err
@@ -325,7 +329,7 @@ func runComposedLaunch(
 		GID:             gid,
 		TTY:             isTerminal(os.Stdin),
 		NoSubstrate:     noSubstrate,
-		AuthMounts:      authMounts,
+		AuthMounts:      auth.Mounts,
 		ForwardedEnvs:   forwardedEnvironment(cmd.Bool("auth")),
 		Guarded:         true,
 		Kubeconfig:      cmd.String("kubeconfig"),

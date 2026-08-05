@@ -4,7 +4,8 @@ doc_goal: Define fail-closed Codex authentication for standalone AOS launches.
 # Standalone Codex authentication
 
 Standalone AOS launches default to `--auth=true`. When Codex is selected, AOS
-requires supported environment or file-backed credentials before it starts Docker.
+requires supported environment, file-backed, or macOS Keychain credentials
+before it starts Docker.
 
 ## Host discovery
 
@@ -16,16 +17,25 @@ regular, valid JSON, and contain file-backed API-key or token data. AOS reports
 missing, unreadable, non-file, and unsupported credentials without printing
 credential values or file contents.
 
-Codex can store credentials in an operating-system keyring, but AOS cannot
-project that store into an ephemeral container. A keyring-only login therefore
-needs a file-backed Codex login before an authenticated standalone launch.
+When the file is absent on macOS, AOS reads Codex's direct `Codex Auth`
+Keychain record for the resolved `CODEX_HOME`. It writes the returned auth JSON
+to a private `0700` temporary directory as a `0600` file, mounts that file
+read-only, and removes the directory after the Docker command or dry run ends.
+The Keychain value is never printed or placed in Docker arguments or environment
+variables.
+
+Codex's encrypted secrets backend stores `secrets/codex_auth.age` on disk and
+only its passphrase in the keyring. Standalone AOS does not reimplement that
+cryptographic format. It reports the backend as unsupported before Docker
+starts. Direct keyring projection is currently macOS-only. Other platforms
+require environment or file-backed auth.
 
 ## Container staging
 
-The host auth file mounts at `/run/aos/auth/codex.json` read-only. Container
-bootstrap copies it into the tmpfs-backed `$CODEX_HOME/auth.json` with mode
-`0600`, then hands the ephemeral HOME to Codex. The host HOME and credential
-store never mount into the container.
+The selected host auth projection mounts at `/run/aos/auth/codex.json`
+read-only. Container bootstrap copies it into the tmpfs-backed
+`$CODEX_HOME/auth.json` with mode `0600`, then hands the ephemeral HOME to
+Codex. The host HOME and credential store never mount into the container.
 
 Discovery and validation finish before AOS builds or executes the Docker launch.
 Dry-run output contains only the auth path and mount shape, never auth contents.
