@@ -159,6 +159,54 @@ func TestProjectNativeMCPServerFallbackSkipsHarnessRegistries(t *testing.T) {
 	}
 }
 
+func TestProjectNativeMCPLegacyInventoryAddsEmptyImports(t *testing.T) {
+	root := t.TempDir()
+	home := filepath.Join(root, "home")
+	inventoryPath := filepath.Join(root, "mcporter.json")
+	writeNativeMCPTestFile(
+		t,
+		inventoryPath,
+		`{"mcpServers":{"reader":{"baseUrl":"https://mcp.example.test/mcp"}}}`+"\n",
+	)
+	result, err := projectNativeMCP(nativeMCPOptions{
+		Inventory: inventoryPath,
+		Home:      home,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !result.Changed || result.Servers != 1 {
+		t.Fatalf("unexpected legacy projection result: %+v", result)
+	}
+	raw, err := os.ReadFile(filepath.Join(home, ".mcporter", "mcporter.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var projected struct {
+		Imports []string                   `json:"imports"`
+		Servers map[string]json.RawMessage `json:"mcpServers"`
+	}
+	if err := json.Unmarshal(raw, &projected); err != nil {
+		t.Fatal(err)
+	}
+	if projected.Imports == nil || len(projected.Imports) != 0 {
+		t.Fatalf("normalized imports = %#v, want explicit empty list", projected.Imports)
+	}
+	if _, ok := projected.Servers["reader"]; !ok {
+		t.Fatalf("normalized inventory lost reader server: %s", raw)
+	}
+	current, err := projectNativeMCP(nativeMCPOptions{
+		Inventory: inventoryPath,
+		Home:      home,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if current.Changed {
+		t.Fatalf("second legacy projection drifted: %+v", current)
+	}
+}
+
 func TestProjectNativeMCPCheckDoesNotWrite(t *testing.T) {
 	root := t.TempDir()
 	home := filepath.Join(root, "home")
@@ -203,5 +251,22 @@ func TestProjectNativeMCPRejectsUnsupportedApprovalMode(t *testing.T) {
 		`unsupported Codex approval mode "never"`,
 	) {
 		t.Fatalf("unsupported approval mode error = %v", err)
+	}
+}
+
+func TestProjectNativeMCPRejectsNonEmptyImports(t *testing.T) {
+	root := t.TempDir()
+	inventoryPath := filepath.Join(root, "mcporter.json")
+	writeNativeMCPTestFile(
+		t,
+		inventoryPath,
+		`{"imports":["claude"],"mcpServers":{}}`+"\n",
+	)
+	_, err := projectNativeMCP(nativeMCPOptions{
+		Inventory: inventoryPath,
+		Home:      filepath.Join(root, "home"),
+	})
+	if err == nil || !strings.Contains(err.Error(), "inventory imports must be []") {
+		t.Fatalf("non-empty imports error = %v", err)
 	}
 }

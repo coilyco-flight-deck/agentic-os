@@ -32,7 +32,10 @@ no-op. An explicitly selected missing config is an error.
 
 ## MCP contract
 
-The inventory must set `imports` to an empty list. AOS always copies it to
+Canonical inventories set `imports` to an empty list. For compatibility with
+older inventories, AOS treats an absent key as empty and writes an explicit
+`imports: []` value into the projected inventory. Malformed or non-empty
+imports remain an error. AOS always copies the safe inventory to
 `~/.mcporter/mcporter.json`. With `project_native: true`, AOS also:
 
 * replaces Claude's `mcpServers` object while preserving unrelated top-level

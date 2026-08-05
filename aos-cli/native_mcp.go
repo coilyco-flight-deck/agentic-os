@@ -136,9 +136,20 @@ func loadNativeMCPInventory(path string) (nativeMCPInventory, error) {
 	if err := json.Unmarshal(raw, &top); err != nil {
 		return nativeMCPInventory{}, fmt.Errorf("native MCP: parse inventory: %w", err)
 	}
+	if top == nil {
+		return nativeMCPInventory{}, fmt.Errorf("native MCP: inventory must be a JSON object")
+	}
 	importsRaw, ok := top["imports"]
 	if !ok {
-		return nativeMCPInventory{}, fmt.Errorf("native MCP: inventory must set imports to []")
+		importsRaw = json.RawMessage("[]")
+		top["imports"] = importsRaw
+		raw, err = json.MarshalIndent(top, "", "  ")
+		if err != nil {
+			return nativeMCPInventory{}, fmt.Errorf(
+				"native MCP: normalize legacy inventory: %w",
+				err,
+			)
+		}
 	}
 	var imports []string
 	if err := json.Unmarshal(importsRaw, &imports); err != nil || len(imports) != 0 {
