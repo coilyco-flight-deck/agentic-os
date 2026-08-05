@@ -3,7 +3,7 @@
 AOS binds Ward's provider-neutral fixture mode to
 `coilyco-flight-deck/ward-qa-fixture` and the `qa-fixture` issue label.
 
-The lane proves the real director, engineer, and QA control path without
+The lane proves the real engineer and QA control path without
 granting QA mutation authority over ordinary repositories, main branches,
 merges, releases, deploys, or production targets.
 
@@ -38,8 +38,7 @@ The verb performs one bounded sequence:
    `headless`, and `P4`.
 2. Ward proves that a non-fixture repository and a merge workflow are refused
    before launch.
-3. A fixture director dispatches one engineer under
-   `remote-branch-only`.
+3. Ward launches one fixture engineer under `remote-branch-only`.
 4. The entry point waits for the deterministic `issue-N` branch.
 5. Fixture QA checks out that exact branch and records its commit and verdict.
 6. The entry point stops residual work, deletes the issue branch, and closes
@@ -52,9 +51,9 @@ Ward still stops the workload before preserving them.
 ## Evidence
 
 Ward stamps fixture containers with `WARD_VERIFICATION_FIXTURE=1` and
-`ward.verification-fixture=true`. The issue thread records director dispatch,
-engineer outcome, QA verdict, reviewed commit, and cleanup-visible terminal
-state. Ward's append-only audit records each launch and cleanup command.
+`ward.verification-fixture=true`. The issue thread records the engineer
+outcome, QA verdict, reviewed commit, and cleanup-visible terminal state.
+Ward's append-only audit records each launch and cleanup command.
 
 ## Failure ownership
 

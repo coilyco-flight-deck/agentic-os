@@ -47,7 +47,7 @@ bootstrap() {
       --name "${fixture_repo}" \
       --auto_init \
       --default_branch main \
-      --description "Disposable public fixture for bounded Ward director, engineer, and QA verification." \
+      --description "Disposable public fixture for bounded Ward engineer and QA verification." \
       --readme Default >/dev/null
     echo "qa fixture: created ${fixture_slug}" >&2
   fi
@@ -136,7 +136,7 @@ trap cleanup EXIT
 
 started_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 issue_title="Ward QA verification fixture ${started_at}"
-issue_body="Append a section named \`Ward QA verification ${started_at}\` to README.md. Under it, state that the director, engineer, and QA fixture chain reached the remote branch. Commit and push only the deterministic issue branch. Do not open a pull request, merge, release, or deploy."
+issue_body="Append a section named \`Ward QA verification ${started_at}\` to README.md. Under it, state that the engineer and QA fixture chain reached the remote branch. Commit and push only the deterministic issue branch. Do not open a pull request, merge, release, or deploy."
 
 issue_number="$(
   aosguard ops forgejo issue create \
@@ -178,12 +178,9 @@ if ward agent engineer \
   exit 1
 fi
 
-ward agent director \
+ward agent engineer \
   "${issue_ref}" \
-  --burndown \
-  --verification-fixture \
-  --max-cycles 2 \
-  --poll-interval 5s
+  --verification-fixture
 
 branch_ready=false
 for _ in $(seq 1 180); do
@@ -211,4 +208,4 @@ if ! grep -q "WARD-WORKFLOW: qa-done" <<<"${qa_comments}"; then
   exit 1
 fi
 
-echo "qa fixture: director, engineer, and QA proof passed on ${branch}" >&2
+echo "qa fixture: engineer and QA proof passed on ${branch}" >&2
