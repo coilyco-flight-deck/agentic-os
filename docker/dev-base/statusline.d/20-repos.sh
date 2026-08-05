@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Status-line provider: the repo-checkout tracker row. See docs/repo-tracker.md.
 #
-# Names the git checkouts on disk that are NOT on the expected-repos list, i.e.
+# Names the git checkouts on disk that are NOT in compiled residency, i.e.
 # the strays to remove. This canonical provider reads no payload and
 # self-suppresses (exit 0, no output) when the scan root is absent, so a
 # single-clone container renders nothing here. See docs/statusline.md.
@@ -34,20 +34,22 @@ count="$(printf '%s\n' "$current" | wc -l | tr -d ' ')"
 
 reset="\033[0m"
 
-# Expected list. Without a readable one, just show the count (nothing to flag).
-expected_file="${AOS_REPOS_EXPECTED:-${XDG_CONFIG_HOME:-$HOME/.config}/agentic-os/repos-on-disk.txt}"
-if [ ! -r "$expected_file" ]; then
+# Expected owner-qualified identities come from AOS's strict Agent Compose
+# projection. Without that product surface, show only the count.
+aos_bin="${AOS_BIN:-aos}"
+if ! command -v "$aos_bin" >/dev/null 2>&1; then
+  printf '  📦 \033[32m%s repos%b' "$count" "$reset"
+  exit 0
+fi
+if ! expected="$("$aos_bin" repositories --format lines 2>/dev/null)"; then
   printf '  📦 \033[32m%s repos%b' "$count" "$reset"
   exit 0
 fi
 
-# Expected repo names: strip comments/whitespace, drop any owner/ prefix, dedup.
-exp_names="$(sed 's/#.*//' "$expected_file" | tr -d '[:blank:]' | sed 's#.*/##' | grep -v '^$' | sort -u)"
-
-# Stray = on disk but its repo name is not expected.
+# Stray = an exact owner/repository checkout absent from compiled residency.
 stray=""
 while IFS= read -r r; do
-  printf '%s\n' "$exp_names" | grep -qxF "${r##*/}" || stray="${stray:+$stray
+  printf '%s\n' "$expected" | grep -qxF "$r" || stray="${stray:+$stray
 }$r"
 done < <(printf '%s\n' "$current")
 

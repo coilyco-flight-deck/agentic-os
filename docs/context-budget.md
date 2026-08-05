@@ -1,8 +1,8 @@
 # Context-budget report
 
 `check-context-budget` reports the eager startup context each agent harness
-loads at session start, per harness, against a per-harness token budget, with
-per-source attribution. The on-demand `ward context-budget` verb stays outside
+loads at session start, per harness, against a per-harness token budget. The
+on-demand `ward context-budget` verb stays outside
 the universal commit path and may grow heavier measurement later.
 
 The [role-seat snapshot mode](context-budget-role-seat.md) measures any
@@ -14,10 +14,10 @@ It sums everything a harness ingests at session start across three axes, each
 with a different growth lever, then reports the total against a per-harness
 budget with a fill bar and an `OVER by N` flag:
 
-- **doc** - the composed AGENTS.md/CLAUDE.md load point. It reuses the composer's
-  own resolution, so the bytes are exactly what the load point holds, with a
-  per-source breakdown. Lever: edit the AGENTS.md sources. The `agent-compose-size`
-  hook caps these sources at commit time; this measures the composed result.
+- **doc** - the installed AGENTS.md/CLAUDE.md load point. It reads the load-point
+  file directly, so the bytes are exactly what the harness receives. Lever:
+  edit the inputs owned by Agent Compose. The `agent-compose-size` hook caps
+  those sources at commit time; this measures the installed result.
 - **skills** - every mounted skill's SKILL.md **frontmatter** (name +
   description) is eager so the model knows the skill exists; bodies load lazily
   on invoke. With a large skill surface this is routinely the **biggest** axis,

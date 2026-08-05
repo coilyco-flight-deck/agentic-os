@@ -264,6 +264,7 @@ func runWardedLaunch(
 				Output:   "<AOS_CONTEXT_BUNDLE_STAGING>",
 				UID:      uid,
 				GID:      gid,
+				Bundle:   "<AGENT_COMPOSE_BUNDLE>",
 			})
 			if err != nil {
 				return err

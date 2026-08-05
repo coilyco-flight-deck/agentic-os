@@ -37,8 +37,6 @@ Setup, after `brew install --cask karabiner-elements`:
   SessionStart hook. The name comes from `ward agent-name` with a local fallback.
 - `install-agent-name.py` - idempotently wire the provider composer as Claude
   Code's status line and `agent-name.sh` as its SessionStart hook.
-- `agent-compose-freshen.sh` - refresh composed context at SessionStart and surface skipped sources.
-- `install-agent-compose-freshen.py` - idempotently wire the composition refresh into `~/.claude/settings.json`.
 
 ## agentic_os
 

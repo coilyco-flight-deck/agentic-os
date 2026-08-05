@@ -10,6 +10,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -20,12 +21,14 @@ const (
 	contextBundleFormat       = "ward.context-bundle.v1"
 	contextBundleManifestName = "context-bundle.json"
 	containerBundleOutput     = "/output"
+	containerComposeBundle    = "/opt/agent-compose-bundle"
 )
 
 type contextBundleManifest struct {
-	Format string `json:"format"`
-	Role   string `json:"role"`
-	Agent  string `json:"agent"`
+	Format       string   `json:"format"`
+	Role         string   `json:"role"`
+	Agent        string   `json:"agent"`
+	Repositories []string `json:"repositories"`
 }
 
 type contextBundlePlanOptions struct {
@@ -38,6 +41,7 @@ type contextBundlePlanOptions struct {
 	Output   string
 	UID      int
 	GID      int
+	Bundle   string
 }
 
 type contextBundlePlan struct {
@@ -51,6 +55,7 @@ type contextBundleMaterializeOptions struct {
 	Delivery string
 	Composed bool
 	Guarded  bool
+	Bundle   string
 }
 
 func buildContextBundlePlan(opts contextBundlePlanOptions) (contextBundlePlan, error) {
@@ -80,10 +85,12 @@ func buildContextBundlePlan(opts contextBundlePlanOptions) (contextBundlePlan, e
 		"--mount", "type=bind,source=" + opts.Output + ",target=" + containerBundleOutput,
 	}
 	if opts.Composed {
-		args = append(
-			args,
+		if strings.TrimSpace(opts.Bundle) == "" {
+			return contextBundlePlan{}, fmt.Errorf("composed context bundle needs a verified Agent Compose bundle")
+		}
+		args = append(args,
 			"--mount",
-			"type=volume,source="+substrateVolume+",target="+containerCacheRoot,
+			"type=bind,source="+opts.Bundle+",target="+containerComposeBundle+",readonly",
 		)
 	}
 	args = append(args,
@@ -108,6 +115,9 @@ func buildContextBundlePlan(opts contextBundlePlanOptions) (contextBundlePlan, e
 		"--uid", fmt.Sprintf("%d", opts.UID),
 		"--gid", fmt.Sprintf("%d", opts.GID),
 	)
+	if opts.Composed {
+		args = append(args, "--bundle", containerComposeBundle)
+	}
 
 	return contextBundlePlan{DockerArgs: args}, nil
 }
@@ -139,6 +149,13 @@ func materializeContextBundle(
 	}()
 
 	uid, gid := hostIdentity()
+	composeBundle := ""
+	if opts.Composed {
+		composeBundle, err = materializeAgentComposeBundle(ctx, opts.Role, opts.Agent)
+		if err != nil {
+			return "", err
+		}
+	}
 	plan, err := buildContextBundlePlan(contextBundlePlanOptions{
 		Image:    opts.Image,
 		Role:     opts.Role,
@@ -149,6 +166,7 @@ func materializeContextBundle(
 		Output:   staging,
 		UID:      uid,
 		GID:      gid,
+		Bundle:   composeBundle,
 	})
 	if err != nil {
 		return "", err
@@ -189,6 +207,109 @@ func materializeContextBundle(
 	return destination, nil
 }
 
+func materializeAgentComposeBundle(ctx context.Context, role, agent string) (string, error) {
+	binary, err := hostLookPath("agent-compose")
+	if err != nil {
+		return "", fmt.Errorf("context materialization needs Agent Compose on the host PATH: %w", err)
+	}
+	command := exec.CommandContext(
+		ctx,
+		binary,
+		"bundle", "materialize",
+		"--role", role,
+		"--harness", agent,
+	)
+	command.Stderr = os.Stderr
+	raw, err := command.Output()
+	if err != nil {
+		return "", fmt.Errorf("materialize verified Agent Compose bundle: %w", err)
+	}
+	var selected struct {
+		Format string `json:"format"`
+		Bundle string `json:"bundle"`
+	}
+	decoder := json.NewDecoder(strings.NewReader(string(raw)))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&selected); err != nil {
+		return "", fmt.Errorf("decode Agent Compose bundle selection: %w", err)
+	}
+	if selected.Format != "agent-compose.bundle-selection.v1" || strings.TrimSpace(selected.Bundle) == "" {
+		return "", fmt.Errorf("Agent Compose returned an invalid bundle selection")
+	}
+	verify := exec.CommandContext(ctx, binary, "verify", selected.Bundle)
+	verify.Stdout = os.Stderr
+	verify.Stderr = os.Stderr
+	if err := verify.Run(); err != nil {
+		return "", fmt.Errorf("verify selected Agent Compose bundle: %w", err)
+	}
+	if _, err := readBundleRepositories(selected.Bundle, role); err != nil {
+		return "", err
+	}
+	return selected.Bundle, nil
+}
+
+func projectVerifiedBundle(
+	ctx context.Context,
+	opts bootstrapOptions,
+	bundle string,
+	runner commandRunner,
+) error {
+	if err := runner.Run(ctx, opts.AgentComposeBin, "verify", bundle); err != nil {
+		return fmt.Errorf("verify Agent Compose context bundle: %w", err)
+	}
+	if _, err := readBundleRepositories(bundle, opts.Role); err != nil {
+		return err
+	}
+	if err := runner.Run(
+		ctx,
+		opts.AgentComposeBin,
+		"project", bundle,
+		"--layout", opts.Layout,
+		"--target", opts.AgentHome,
+		"--scope", "home",
+	); err != nil {
+		return fmt.Errorf("project Agent Compose context bundle: %w", err)
+	}
+	return nil
+}
+
+func readBundleRepositories(bundle, role string) ([]string, error) {
+	raw, err := os.ReadFile(filepath.Join(bundle, "manifest.json"))
+	if err != nil {
+		return nil, fmt.Errorf("read Agent Compose bundle manifest: %w", err)
+	}
+	var manifest struct {
+		Format       string `json:"format"`
+		Role         string `json:"role"`
+		Repositories []struct {
+			Identity string `json:"identity"`
+		} `json:"repositories"`
+	}
+	if err := json.Unmarshal(raw, &manifest); err != nil {
+		return nil, fmt.Errorf("decode Agent Compose bundle manifest: %w", err)
+	}
+	if manifest.Format != "agent-compose.bundle" || manifest.Role != role {
+		return nil, fmt.Errorf("Agent Compose bundle does not match selected role %q", role)
+	}
+	repositories := make([]string, 0, len(manifest.Repositories))
+	prior := ""
+	for _, repository := range manifest.Repositories {
+		parts := strings.Split(repository.Identity, "/")
+		if len(parts) != 2 || !safePathSegment(parts[0]) || !safePathSegment(parts[1]) {
+			return nil, fmt.Errorf("Agent Compose bundle contains invalid repository identity %q", repository.Identity)
+		}
+		if repository.Identity <= prior {
+			return nil, fmt.Errorf("Agent Compose bundle repositories are not strictly sorted and deduplicated")
+		}
+		prior = repository.Identity
+		repositories = append(repositories, repository.Identity)
+	}
+	if len(repositories) == 0 {
+		return nil, fmt.Errorf("Agent Compose bundle selects no repositories")
+	}
+	return repositories, nil
+}
+
 func runContainerContextBundle(ctx context.Context, cmd *cli.Command) error {
 	if os.Getenv("AOS_CONTAINER") != "1" {
 		return fmt.Errorf("_container-context-bundle is internal to an AOS container")
@@ -222,16 +343,11 @@ func runContainerContextBundle(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	if opts.Composed {
-		opts.NoSubstrate = true
-		repos, err := loadSubstrateRepos(opts.SubstrateManifest)
-		if err != nil {
-			return err
+		composeBundle := strings.TrimSpace(cmd.String("bundle"))
+		if composeBundle == "" {
+			return fmt.Errorf("_container-context-bundle needs --bundle for composed context")
 		}
-		provider, err := prepareSubstrate(ctx, opts, repos, osCommandRunner{})
-		if err != nil {
-			return err
-		}
-		if err := composeHome(ctx, opts, provider, osCommandRunner{}); err != nil {
+		if err := projectVerifiedBundle(ctx, opts, composeBundle, osCommandRunner{}); err != nil {
 			return err
 		}
 		if err := os.RemoveAll(filepath.Join(opts.AgentHome, ".agent-compose")); err != nil {
@@ -253,6 +369,13 @@ func runContainerContextBundle(ctx context.Context, cmd *cli.Command) error {
 		Format: contextBundleFormat,
 		Role:   opts.Role,
 		Agent:  opts.Layout,
+	}
+	if opts.Composed {
+		repositories, err := readBundleRepositories(strings.TrimSpace(cmd.String("bundle")), opts.Role)
+		if err != nil {
+			return err
+		}
+		manifest.Repositories = repositories
 	}
 	body, err := json.MarshalIndent(manifest, "", "  ")
 	if err != nil {
@@ -383,6 +506,20 @@ func validateContextBundleOutput(
 		manifest.Role != expected.Role ||
 		manifest.Agent != expected.Agent {
 		return fmt.Errorf("materialized context-bundle manifest does not match the selected launch")
+	}
+	if expected.Composed && len(manifest.Repositories) == 0 {
+		return fmt.Errorf("materialized composed context bundle selects no repositories")
+	}
+	if !expected.Composed && len(manifest.Repositories) != 0 {
+		return fmt.Errorf("materialized uncomposed context bundle unexpectedly selects repositories")
+	}
+	prior := ""
+	for _, repository := range manifest.Repositories {
+		parts := strings.Split(repository, "/")
+		if len(parts) != 2 || !safePathSegment(parts[0]) || !safePathSegment(parts[1]) || repository <= prior {
+			return fmt.Errorf("materialized context bundle has invalid, unsorted, or duplicate repository %q", repository)
+		}
+		prior = repository
 	}
 	if err := validateStagedHome(filepath.Join(root, "home"), expected.Agent); err != nil {
 		return err

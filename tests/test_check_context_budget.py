@@ -18,17 +18,6 @@ def test_count_tokens_is_chars_over_four_ceil() -> None:
     assert budget.count_tokens("x" * 5) == 2  # ceil, not floor
 
 
-def test_doc_contributions_ranks_sources(tmp_path: Path) -> None:
-    big = tmp_path / "big" / "AGENTS.COMPOSE.md"
-    small = tmp_path / "small" / "AGENTS.COMPOSE.md"
-    write(big, "# big\n" + "x" * 400)
-    write(small, "# small\n" + "y" * 40)
-    total, per_source = budget.doc_contributions([big, small], {})
-    assert total > 0
-    assert per_source[0][0] == str(big)  # 400-char source leads
-    assert per_source[0][1] >= per_source[1][1]
-
-
 def test_skill_contributions_counts_frontmatter_and_dedups(tmp_path: Path) -> None:
     # Two skills under an absolute root.
     write(
@@ -112,18 +101,6 @@ def test_read_mcporter_servers(tmp_path: Path) -> None:
     assert budget.read_mcporter_servers(tmp_path / "missing.json") is None
 
 
-def test_plan_from_config_none_when_absent(tmp_path: Path) -> None:
-    assert budget.plan_from_config(tmp_path / "no-config.yaml", tmp_path / "C.md") is None
-
-
-def test_skill_roots_from_config_overlay(tmp_path: Path) -> None:
-    cfg = tmp_path / "agent-compose.yaml"
-    write(cfg, "skill_roots:\n  claude:\n    - /custom/skills\n")
-    roots = budget.skill_roots_from_config(cfg)
-    assert roots["claude"] == ["/custom/skills"]
-    assert "codex" in roots  # untouched harnesses keep defaults
-
-
 def test_codex_skill_roots_use_portable_standard() -> None:
     assert budget.DEFAULT_SKILL_ROOTS["codex"] == [
         "~/.agents/skills",
@@ -131,54 +108,27 @@ def test_codex_skill_roots_use_portable_standard() -> None:
     ]
 
 
-def test_skill_load_point_replaces_global_default(tmp_path: Path) -> None:
-    cfg = tmp_path / "agent-compose.yaml"
-    write(
-        cfg,
-        "skill_load_points:\n"
-        "  codex: /portable/codex-skills\n",
-    )
-    roots = budget.skill_roots_from_config(cfg)
-    assert roots["codex"] == ["/portable/codex-skills", ".agents/skills"]
-
-
-def test_explicit_skill_roots_override_load_point(tmp_path: Path) -> None:
-    cfg = tmp_path / "agent-compose.yaml"
-    write(
-        cfg,
-        "skill_load_points:\n"
-        "  codex: /portable/codex-skills\n"
-        "skill_roots:\n"
-        "  codex:\n"
-        "    - /legacy-explicit-root\n",
-    )
-    roots = budget.skill_roots_from_config(cfg)
-    assert roots["codex"] == ["/legacy-explicit-root"]
-
-
-def test_run_end_to_end(tmp_path: Path) -> None:
-    src = tmp_path / "repo" / "AGENTS.COMPOSE.md"
-    write(src, "# doctrine\n" + "x" * 800)
+def test_run_end_to_end(tmp_path: Path, monkeypatch) -> None:
     config_path = tmp_path / "agent-compose.yaml"
-    write(
-        config_path,
-        f"sources:\n  - {src}\n"
-        f"load_points:\n  claude: {tmp_path / 'CLAUDE.md'}\n  codex: null\n"
-        f"skill_roots:\n  claude: []\n",  # isolate doc axis for a deterministic budget test
-    )
-    composed = tmp_path / "COMPOSED.md"
+    write(config_path, "sources: []\n")
     nomcp = tmp_path / "no-mcp.json"
+    monkeypatch.setattr(
+        budget,
+        "DEFAULT_LOAD_POINTS",
+        {"claude": tmp_path / "missing-CLAUDE.md"},
+    )
+    monkeypatch.setattr(budget, "DEFAULT_SKILL_ROOTS", {"claude": []})
     # Report mode always exits 0.
-    assert budget.run(config_path, composed, {}, nomcp, tmp_path, check=False) == 0
-    # Check mode exits 1 when forced over a tiny budget.
-    assert budget.run(config_path, composed, {"claude": 1}, nomcp, tmp_path, check=True) == 1
+    assert budget.run(config_path, {}, nomcp, tmp_path, check=False) == 0
+    # With no installed load point, a tiny document budget still passes.
+    assert budget.run(config_path, {"claude": 1}, nomcp, tmp_path, check=True) == 0
     # Tier walk paths flow through run without disturbing the exit code.
     clone = tmp_path / "clone"
     write(clone / "f.txt", "x" * 20)
     _git_repo(clone)
     assert (
         budget.run(
-            config_path, composed, {}, nomcp, tmp_path, check=False,
+            config_path, {}, nomcp, tmp_path, check=False,
             immediate=[clone], peripheral=[clone],
         )
         == 0

@@ -42,7 +42,7 @@ Major shipped capabilities, not files.
 - [Encoded leak guard](leak-guard.md) - hex-encoded leak-term detector.
 - [Context budget](context-budget.md) - role-seat budgets, multi-provider attribution, and generated class diffs.
 - [AGENTS inventory](agents-context-inventory.md) - fleet corpus and clipping candidates.
-- [Mount eligibility](mount-eligibility-manifest.md) - per-harness repository allowlist.
+- [Repository residency](repository-residency.md) - strict Agent Compose plan adapter for native workspaces, fleet consumers, and exact status-line tracking.
 - [Catalog caps reference](catalog-caps-reference.md) - generated numeric caps for validators.
 - [Canonical agent-id generator](dictatable-id-alphabet.md) - short lowercase agent IDs.
 - [Knowledge-base freshness](knowledge-base-freshness.md) - age-based fact markers.

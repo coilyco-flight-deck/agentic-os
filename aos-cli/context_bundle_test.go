@@ -19,6 +19,7 @@ func TestBuildContextBundlePlanUsesAOSImageAsMaterializer(t *testing.T) {
 		Output:   "/cache/staging",
 		UID:      1000,
 		GID:      1000,
+		Bundle:   "/cache/bundles/verified",
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -26,7 +27,7 @@ func TestBuildContextBundlePlanUsesAOSImageAsMaterializer(t *testing.T) {
 	joined := strings.Join(plan.DockerArgs, "\n")
 	for _, want := range []string{
 		"type=bind,source=/cache/staging,target=/output",
-		"type=volume,source=aos-substrate-cache,target=/var/cache/aos/git",
+		"type=bind,source=/cache/bundles/verified,target=/opt/agent-compose-bundle,readonly",
 		"--entrypoint\n/usr/local/bin/aos",
 		"aos:test",
 		"--role\nengineer",
@@ -106,7 +107,7 @@ func TestValidateContextBundleOutputBindsRoleAndAgent(t *testing.T) {
 	}
 	if err := os.WriteFile(
 		filepath.Join(root, contextBundleManifestName),
-		[]byte("{\"format\":\"ward.context-bundle.v1\",\"role\":\"engineer\",\"agent\":\"codex\"}\n"),
+		[]byte("{\"format\":\"ward.context-bundle.v1\",\"role\":\"engineer\",\"agent\":\"codex\",\"repositories\":[\"coilyco-flight-deck/agentic-os\"]}\n"),
 		0o644,
 	); err != nil {
 		t.Fatal(err)
@@ -120,5 +121,39 @@ func TestValidateContextBundleOutputBindsRoleAndAgent(t *testing.T) {
 	expected.Role = "qa"
 	if err := validateContextBundleOutput(root, expected); err == nil {
 		t.Fatal("role-mismatched context bundle passed")
+	}
+}
+
+func TestReadBundleRepositoriesRejectsUnsortedSelection(t *testing.T) {
+	t.Parallel()
+	bundle := t.TempDir()
+	manifest := `{"format":"agent-compose.bundle","role":"engineer","repositories":[{"identity":"owner/two"},{"identity":"owner/one"}]}`
+	if err := os.WriteFile(filepath.Join(bundle, "manifest.json"), []byte(manifest), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, err := readBundleRepositories(bundle, "engineer")
+	if err == nil || !strings.Contains(err.Error(), "sorted") {
+		t.Fatalf("unsorted repository error = %v", err)
+	}
+}
+
+func TestValidateContextBundleRejectsRepositoriesWithoutComposition(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(root, "home", ".codex"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "home", ".codex", "AGENTS.md"), []byte("context\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	manifest := `{"format":"ward.context-bundle.v1","role":"engineer","agent":"codex","repositories":["owner/one"]}`
+	if err := os.WriteFile(filepath.Join(root, contextBundleManifestName), []byte(manifest), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	err := validateContextBundleOutput(root, contextBundleMaterializeOptions{
+		Role: "engineer", Agent: "codex", Composed: false,
+	})
+	if err == nil || !strings.Contains(err.Error(), "uncomposed") {
+		t.Fatalf("uncomposed repository error = %v", err)
 	}
 }

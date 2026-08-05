@@ -210,15 +210,6 @@
   pass_filenames: false
   stages: [pre-commit]
 
-- id: agent-compose-drift
-  name: agent-compose composed-file drift
-  description: "Verify ~/.config/agent-compose/COMPOSED.md is reproducible from the composer (not hand-edited or stale). Machine-state check; no-op without a config. See docs/context-budget.md."
-  entry: check-agent-compose-drift
-  language: python
-  always_run: true
-  pass_filenames: false
-  stages: [pre-commit]
-
 - id: yaml-strict
   name: strict canonical YAML
   description: "Autofix YAML to a deterministic canonical form: recursive mapping-key alpha-sort, recursive sequence sort by canonical serialization, comment stripping, single trailing newline, explicit --- start, 2-space indent. Rejects (without fixing) duplicate keys and anchors/aliases/tags. Re-stage after a fix. Dials + opt-outs under [tool.agentic-os.yaml-strict] (sort_sequences, no_comments, order_significant, excludes). See docs/features-release-tooling.md."

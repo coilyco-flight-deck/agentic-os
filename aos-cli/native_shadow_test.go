@@ -1,9 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -70,7 +72,7 @@ func nativeTestRuntime(t *testing.T, root string) nativeRuntime {
 		ProjectsRoot: filepath.Join(root, "projects"),
 		StateRoot:    filepath.Join(root, "state"),
 		SessionsRoot: filepath.Join(root, "sessions"),
-		ExpectedFile: expected,
+		PlanFile:     expected,
 		FleetFile:    fleet,
 		Stderr:       os.Stderr,
 	}
@@ -82,6 +84,54 @@ func writeNativeTestList(t *testing.T, path string, values ...string) {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(path, []byte(strings.Join(values, "\n")+"\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func writeNativeTestPlan(t *testing.T, path string, values ...string) {
+	t.Helper()
+	type selection struct {
+		Identity string `json:"identity"`
+		Path     string `json:"path"`
+		Source   string `json:"source"`
+		Scope    string `json:"scope"`
+		Reason   string `json:"reason"`
+	}
+	identities := make([]string, 0, len(values))
+	for _, value := range values {
+		if !strings.Contains(value, "/") {
+			value = "owner/" + value
+		}
+		identities = append(identities, value)
+	}
+	slices.Sort(identities)
+	residency := make([]selection, 0, len(identities))
+	for _, identity := range identities {
+		residency = append(residency, selection{
+			Identity: identity,
+			Path:     filepath.Join(filepath.Dir(path), "projects", filepath.FromSlash(identity)),
+			Source:   "test", Scope: "role-union", Reason: "test repository",
+		})
+	}
+	payload := struct {
+		Format       string                 `json:"format"`
+		ProjectsRoot string                 `json:"projects_root"`
+		Roles        map[string][]selection `json:"roles"`
+		Residency    []selection            `json:"residency"`
+	}{
+		Format:       "agent-compose.repositories.v1",
+		ProjectsRoot: filepath.Join(filepath.Dir(path), "projects"),
+		Roles:        map[string][]selection{},
+		Residency:    residency,
+	}
+	raw, err := json.Marshal(payload)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, raw, 0o644); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -108,7 +158,7 @@ func TestNativeLaunchCreatesFleetWorkspaceFromProjectsRoot(t *testing.T) {
 	createNativeTestRepository(t, root, "owner", "one")
 	createNativeTestRepository(t, root, "owner", "two")
 	runtime := nativeTestRuntime(t, root)
-	writeNativeTestList(t, runtime.ExpectedFile, "one", "two")
+	writeNativeTestPlan(t, runtime.PlanFile, "one", "two")
 	writeNativeTestList(t, runtime.FleetFile, "owner")
 
 	launch, err := prepareNativeLaunch(runtime, "codex")
@@ -144,7 +194,7 @@ func TestNativeLaunchMapsRepositorySubdirectoryIntoSession(t *testing.T) {
 	testGit(t, repository, "push", "origin", "main")
 	runtime := nativeTestRuntime(t, root)
 	runtime.CWD = filepath.Join(repository, "docs")
-	writeNativeTestList(t, runtime.ExpectedFile, "one")
+	writeNativeTestPlan(t, runtime.PlanFile, "one")
 	writeNativeTestList(t, runtime.FleetFile, "owner")
 
 	launch, err := prepareNativeLaunch(runtime, "claude")
@@ -162,7 +212,7 @@ func TestNativeLaunchCanStartAtSessionProjectsRoot(t *testing.T) {
 	repository, _ := createNativeTestRepository(t, root, "owner", "one")
 	runtime := nativeTestRuntime(t, root)
 	runtime.CWD = repository
-	writeNativeTestList(t, runtime.ExpectedFile, "one")
+	writeNativeTestPlan(t, runtime.PlanFile, "one")
 	writeNativeTestList(t, runtime.FleetFile, "owner")
 	t.Setenv(agentComposeRuntimeHomeEnv, "")
 
@@ -348,7 +398,7 @@ func TestNativeLaunchOutsideProjectsStillCreatesFleetWorkspace(t *testing.T) {
 	createNativeTestRepository(t, root, "owner", "one")
 	runtime := nativeTestRuntime(t, root)
 	runtime.CWD = root
-	writeNativeTestList(t, runtime.ExpectedFile, "one")
+	writeNativeTestPlan(t, runtime.PlanFile, "one")
 	writeNativeTestList(t, runtime.FleetFile, "owner")
 
 	launch, err := prepareNativeLaunch(runtime, "codex")
@@ -370,7 +420,7 @@ func TestNativeLaunchMapsOwnerDirectoryIntoSession(t *testing.T) {
 	createNativeTestRepository(t, root, "owner", "one")
 	runtime := nativeTestRuntime(t, root)
 	runtime.CWD = filepath.Join(runtime.ProjectsRoot, "owner")
-	writeNativeTestList(t, runtime.ExpectedFile, "one")
+	writeNativeTestPlan(t, runtime.PlanFile, "one")
 	writeNativeTestList(t, runtime.FleetFile, "owner")
 
 	launch, err := prepareNativeLaunch(runtime, "codex")
@@ -387,7 +437,7 @@ func TestLegacyDeadSessionIsCleanedAfterGrace(t *testing.T) {
 	root := t.TempDir()
 	repository, _ := createNativeTestRepository(t, root, "owner", "one")
 	runtime := nativeTestRuntime(t, root)
-	writeNativeTestList(t, runtime.ExpectedFile, "one")
+	writeNativeTestPlan(t, runtime.PlanFile, "one")
 	writeNativeTestList(t, runtime.FleetFile, "owner")
 	if _, err := prepareNativeLaunch(runtime, "codex"); err != nil {
 		t.Fatal(err)
@@ -448,7 +498,7 @@ func TestDeadSessionGraceSurvivesDueFleetSweep(t *testing.T) {
 	root := t.TempDir()
 	repository, _ := createNativeTestRepository(t, root, "owner", "one")
 	runtime := nativeTestRuntime(t, root)
-	writeNativeTestList(t, runtime.ExpectedFile, "one")
+	writeNativeTestPlan(t, runtime.PlanFile, "one")
 	writeNativeTestList(t, runtime.FleetFile, "owner")
 	if _, err := prepareNativeLaunch(runtime, "codex"); err != nil {
 		t.Fatal(err)
@@ -486,7 +536,7 @@ func TestLiveNativeSessionIsNotCleaned(t *testing.T) {
 	root := t.TempDir()
 	createNativeTestRepository(t, root, "owner", "one")
 	runtime := nativeTestRuntime(t, root)
-	writeNativeTestList(t, runtime.ExpectedFile, "one")
+	writeNativeTestPlan(t, runtime.PlanFile, "one")
 	writeNativeTestList(t, runtime.FleetFile, "owner")
 	if _, err := prepareNativeLaunch(runtime, "codex"); err != nil {
 		t.Fatal(err)
@@ -522,7 +572,7 @@ func TestNativeSweepPreservesLiveWorktreeAcrossPathAlias(t *testing.T) {
 	root := t.TempDir()
 	repository, _ := createNativeTestRepository(t, root, "owner", "one")
 	runtime := nativeTestRuntime(t, root)
-	writeNativeTestList(t, runtime.ExpectedFile, "one")
+	writeNativeTestPlan(t, runtime.PlanFile, "one")
 	writeNativeTestList(t, runtime.FleetFile, "owner")
 	if err := os.MkdirAll(runtime.SessionsRoot, 0o755); err != nil {
 		t.Fatal(err)
@@ -611,7 +661,7 @@ func TestExpiredDeadSessionPreservesDirtyWorktree(t *testing.T) {
 	root := t.TempDir()
 	createNativeTestRepository(t, root, "owner", "one")
 	runtime := nativeTestRuntime(t, root)
-	writeNativeTestList(t, runtime.ExpectedFile, "one")
+	writeNativeTestPlan(t, runtime.PlanFile, "one")
 	writeNativeTestList(t, runtime.FleetFile, "owner")
 	if _, err := prepareNativeLaunch(runtime, "codex"); err != nil {
 		t.Fatal(err)
@@ -642,7 +692,7 @@ func TestExpiredDeadSessionPreservesUnpushedWorktree(t *testing.T) {
 	root := t.TempDir()
 	createNativeTestRepository(t, root, "owner", "one")
 	runtime := nativeTestRuntime(t, root)
-	writeNativeTestList(t, runtime.ExpectedFile, "one")
+	writeNativeTestPlan(t, runtime.PlanFile, "one")
 	writeNativeTestList(t, runtime.FleetFile, "owner")
 	if _, err := prepareNativeLaunch(runtime, "codex"); err != nil {
 		t.Fatal(err)
@@ -684,7 +734,7 @@ func TestNativeSweepReturnsExpectedCheckoutToMain(t *testing.T) {
 	testGit(t, repository, "commit", "-m", "task")
 	testGit(t, repository, "push", "-u", "origin", "task")
 	runtime := nativeTestRuntime(t, root)
-	writeNativeTestList(t, runtime.ExpectedFile, "one")
+	writeNativeTestPlan(t, runtime.PlanFile, "one")
 	writeNativeTestList(t, runtime.FleetFile, "owner")
 
 	if err := normalizeNativeRepository(runtime, nativeRepository{
@@ -728,10 +778,10 @@ func TestUnexpectedCloneDeletedOnThirdSweep(t *testing.T) {
 	root := t.TempDir()
 	repository, _ := createNativeTestRepository(t, root, "owner", "extra")
 	runtime := nativeTestRuntime(t, root)
-	writeNativeTestList(t, runtime.ExpectedFile)
+	writeNativeTestPlan(t, runtime.PlanFile)
 	writeNativeTestList(t, runtime.FleetFile, "owner")
 	expected := nativeExpected{
-		Full: map[string]bool{}, Names: map[string]bool{},
+		Full:      map[string]bool{},
 		FleetOrgs: map[string]bool{"owner": true},
 	}
 	if eligible, _ := unexpectedCloneEligible(
@@ -769,10 +819,10 @@ func TestUnexpectedCloneCounterResetsWhenStateChanges(t *testing.T) {
 	root := t.TempDir()
 	repository, _ := createNativeTestRepository(t, root, "owner", "extra")
 	runtime := nativeTestRuntime(t, root)
-	writeNativeTestList(t, runtime.ExpectedFile)
+	writeNativeTestPlan(t, runtime.PlanFile)
 	writeNativeTestList(t, runtime.FleetFile, "owner")
 	expected := nativeExpected{
-		Full: map[string]bool{}, Names: map[string]bool{},
+		Full:      map[string]bool{},
 		FleetOrgs: map[string]bool{"owner": true},
 	}
 	state := nativeSweepState{

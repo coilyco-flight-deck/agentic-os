@@ -11,17 +11,16 @@ home/<selected instruction and skill roots>
 bin/aosguard
 ```
 
-AOS is the only layer that knows how to assemble the independent producers
-behind this handoff.
+AOS alone assembles the independent producers behind this handoff.
 
 ## Materialization
 
 AOS starts the selected AOS image as a short-lived materializer. When
 `--composed` is active, the helper:
 
-1. asks agent-compose to compose the selected role
-2. verifies its immutable bundle
-3. projects it into an empty private home
+1. asks `agent-compose bundle materialize` for the selected role and harness
+2. independently verifies the returned immutable bundle
+3. projects that exact verified bundle into an empty private home
 4. removes `.agent-compose/` bookkeeping
 5. validates that only the selected instruction and skill roots remain
 
@@ -36,9 +35,12 @@ AOS writes the strict `ward.context-bundle.v1` manifest last:
 {
   "format": "ward.context-bundle.v1",
   "role": "engineer",
-  "agent": "codex"
+  "agent": "codex",
+  "repositories": ["coilyco-flight-deck/agentic-os", "coilysiren/lore"]
 }
 ```
+
+The manifest seals verified repository identities. See [repository residency](repository-residency.md).
 
 ## Lifetime
 
@@ -57,8 +59,11 @@ revalidates it during bootstrap, copies accepted files into private agent HOME,
 and appends Ward-owned authority context. Ward keeps bundle tools after the
 image's existing PATH, so bundled tools cannot shadow image tools.
 
-The manifest cannot name permissions, credentials, mounts, network access, or
-other capabilities. Ward's broker surface is fixed and role-independent.
+Ward maps sealed repositories read-only. See [repository residency](repository-residency.md).
+
+The manifest cannot name permissions, credentials, host source paths, mount
+modes, network access, or other capabilities. Ward's broker surface is fixed
+and role-independent.
 
 ## Ownership
 
@@ -68,11 +73,6 @@ other capabilities. Ward's broker surface is fixed and role-independent.
 * cli-guard and specgen own generic guarded-tool generation.
 * Ward owns runtime policy, Docker Compose, credentials, teardown, and
   authority in warded mode.
-
-The cross-repository contract is tracked in
-[inbox#267](https://forgejo.coilysiren.me/coilysiren/inbox/issues/267). The AOS
-implementation is tracked in
-[agentic-os#755](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/issues/755).
 
 ## See also
 

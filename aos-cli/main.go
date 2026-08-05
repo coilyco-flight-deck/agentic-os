@@ -119,6 +119,15 @@ func newCommandWithDefaults(name string, defaults launchDefaults) *cli.Command {
 		},
 		Commands: []*cli.Command{
 			{
+				Name:  "repositories",
+				Usage: "print the deterministic host-residency projection from Agent Compose",
+				Flags: []cli.Flag{
+					&cli.StringFlag{Name: "plan", Value: defaultRepositoryPlanPath(), Usage: "compiled Agent Compose repository plan"},
+					&cli.StringFlag{Name: "format", Value: "json", Usage: "output format: json or lines"},
+				},
+				Action: runRepositories,
+			},
+			{
 				Name:  "version",
 				Usage: "print the build version",
 				Action: func(_ context.Context, _ *cli.Command) error {
@@ -182,6 +191,10 @@ func newCommandWithDefaults(name string, defaults launchDefaults) *cli.Command {
 					&cli.IntFlag{
 						Name:     "gid",
 						Required: true,
+					},
+					&cli.StringFlag{
+						Name:   "bundle",
+						Hidden: true,
 					},
 					&cli.StringFlag{
 						Name:   "mcp-inventory",

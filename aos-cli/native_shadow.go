@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"crypto/rand"
-	_ "embed"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -28,9 +27,6 @@ const (
 	agentComposeRuntimeHomeEnv  = "AGENT_COMPOSE_RUNTIME_HOME"
 	claudeDisableAutoUpdaterEnv = "DISABLE_AUTOUPDATER"
 )
-
-//go:embed repositories/repos-on-disk.txt
-var nativeCheckoutRepos []byte
 
 type nativeArtifact struct {
 	Repository string `json:"repository"`
@@ -88,7 +84,7 @@ type nativeRuntime struct {
 	ProjectsRoot string
 	StateRoot    string
 	SessionsRoot string
-	ExpectedFile string
+	PlanFile     string
 	FleetFile    string
 	Stderr       *os.File
 }
@@ -254,9 +250,9 @@ func resolveNativeRuntime() (nativeRuntime, error) {
 	if config == "" {
 		config = filepath.Join(home, ".config")
 	}
-	expected := strings.TrimSpace(os.Getenv("AOS_REPOS_EXPECTED"))
-	if expected == "" {
-		expected = filepath.Join(config, "agentic-os", "repos-on-disk.txt")
+	plan := strings.TrimSpace(os.Getenv("AOS_REPOSITORY_PLAN"))
+	if plan == "" {
+		plan = filepath.Join(home, ".agent-compose", "repository-plan.json")
 	}
 	fleet := strings.TrimSpace(os.Getenv("AOS_FLEET_ORGS"))
 	if fleet == "" {
@@ -275,7 +271,7 @@ func resolveNativeRuntime() (nativeRuntime, error) {
 		ProjectsRoot: projects,
 		StateRoot:    stateRoot,
 		SessionsRoot: sessionsRoot,
-		ExpectedFile: expected,
+		PlanFile:     plan,
 		FleetFile:    fleet,
 		Stderr:       os.Stderr,
 	}, nil
@@ -1009,35 +1005,35 @@ func nativeSessionID(runtime nativeRuntime) (string, error) {
 
 type nativeExpected struct {
 	Full      map[string]bool
-	Names     map[string]bool
 	FleetOrgs map[string]bool
 }
 
 func (expected nativeExpected) matches(owner, name string) bool {
-	return expected.Full[filepath.Join(owner, name)] || expected.Names[name]
+	return expected.Full[filepath.Join(owner, name)]
 }
 
 func resolveExpectedRepositories(
 	runtime nativeRuntime,
 ) ([]nativeRepository, nativeExpected, error) {
-	data, err := os.ReadFile(runtime.ExpectedFile)
-	if errors.Is(err, fs.ErrNotExist) {
-		data = nativeCheckoutRepos
-	} else if err != nil {
-		return nil, nativeExpected{}, fmt.Errorf("read expected repositories: %w", err)
+	plan, err := loadAOSRepositoryPlan(runtime.PlanFile)
+	if err != nil {
+		return nil, nativeExpected{}, err
+	}
+	if plan.ProjectsRoot == "" || !samePath(plan.ProjectsRoot, runtime.ProjectsRoot) {
+		return nil, nativeExpected{}, fmt.Errorf("Agent Compose repository plan projects_root %q does not match %s", plan.ProjectsRoot, runtime.ProjectsRoot)
 	}
 	expected := nativeExpected{
 		Full:      map[string]bool{},
-		Names:     map[string]bool{},
 		FleetOrgs: readNativeListSet(runtime.FleetFile),
 	}
-	entries := parseNativeList(data)
-	for _, entry := range entries {
-		if strings.Contains(entry, "/") {
-			expected.Full[filepath.Clean(entry)] = true
-		} else {
-			expected.Names[entry] = true
+	prior := ""
+	for _, entry := range plan.Residency {
+		parts := strings.Split(entry.Identity, "/")
+		if len(parts) != 2 || !safePathSegment(parts[0]) || !safePathSegment(parts[1]) || entry.Identity <= prior {
+			return nil, nativeExpected{}, fmt.Errorf("Agent Compose repository plan has invalid, unsorted, or duplicate residency identity %q", entry.Identity)
 		}
+		prior = entry.Identity
+		expected.Full[filepath.FromSlash(entry.Identity)] = true
 	}
 	var repositories []nativeRepository
 	for _, repository := range scanNativeRepositories(runtime.ProjectsRoot) {

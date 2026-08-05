@@ -24,7 +24,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from agentic_os.generators import generate_agent_compose
+from agentic_os.frontmatter import split_frontmatter
 from agentic_os.pre_commit.check_documentation_layout import should_skip
 from agentic_os.config import get_int_option, is_enabled, is_excluded, load_excludes
 
@@ -66,7 +66,9 @@ def find_violations(root: Path) -> list[str]:
     # stripped, since source-selection directives are not composed content).
     line_to_files: dict[str, set[str]] = {}
     for rel in sources:
-        body = generate_agent_compose.parse_source(root / rel)[1]
+        _metadata, body = split_frontmatter(
+            (root / rel).read_text(encoding="utf-8", errors="replace")
+        )
         for line in _significant_lines(body, min_chars):
             line_to_files.setdefault(line, set()).add(str(rel))
 

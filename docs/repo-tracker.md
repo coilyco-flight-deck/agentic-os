@@ -1,6 +1,7 @@
 # Repo-checkout tracker
 
-A project-local status-line row that names the git checkouts on disk that are **not** on an expected-repos list, i.e. the strays to remove. Repos quietly re-clone themselves back during dev work; this surfaces the ones that should not be there so they stop piling up.
+A project-local status-line row names git checkouts on disk that are not in
+Agent Compose's compiled host residency, meaning the strays to remove.
 
 The canonical implementation is the dev-base
 [`20-repos.sh`](../docker/dev-base/statusline.d/20-repos.sh) provider for the
@@ -10,52 +11,54 @@ adopt the same provider through `.agentic-os/statusline.d/`.
 
 ## What it shows
 
-When every checkout is on the expected list, a green all-clear with the count:
+When every checkout is resident, the row shows a green all-clear and count:
 
-```
+```text
 📦 15 repos, none stray
 ```
 
-When checkouts are on disk that the list does not expect, it names them and colors the row (orange for a few, bold red once a lot have piled back on):
+When compiled residency omits on-disk checkouts, the row names the first few
+and collapses the rest into `+N more`. A few strays are orange. Four or more are
+bold red:
 
-```
+```text
 📦 7 to remove: coilyco-bridge/agentic-os-hardware, coilyco-bridge/deploy, coilysiren/lore, coilyco-flight-deck/ward, +3 more
 ```
 
-The first few stray names are listed; the rest collapse into `+N more`. With no expected list configured, the row degrades to just the count: `📦 15 repos`.
+When the AOS projection is unavailable, the row degrades to the checkout count
+without claiming that anything is stray.
 
-## The expected-repos list
+## Expected residency
 
-A newline-delimited file of the repos that **should** be on disk, one per line, each `owner/name` or bare `name`. Lines starting with `#` and blanks are ignored. Resolution order:
-
-1. `$AOS_REPOS_EXPECTED`, if set, points at the file.
-2. Otherwise `~/.config/agentic-os/repos-on-disk.txt` (override the dir with `XDG_CONFIG_HOME`).
-
-The hook stays generic and carries no repo names of its own. Point the conventional path at whatever manifest you treat as canonical, e.g. symlink it at your own list:
-
-```sh
-ln -sf /path/to/your/repos-on-disk.txt ~/.config/agentic-os/repos-on-disk.txt
-```
-
-[`aos-cli/repositories/repos-on-disk.txt`](../aos-cli/repositories/repos-on-disk.txt) is the
-public native-host base. Private overlays extend that roster from their own
-repositories and publish one flat manifest for the tracker.
+The provider runs `aos repositories --format lines`. AOS strictly validates
+Agent Compose's compiled plan before returning sorted `owner/repository`
+identities. The tracker carries no repository names, parses no policy, and has
+no fallback roster. `$AOS_BIN` may select the AOS executable.
 
 ## Fleet-org scope
 
-Only checkouts under **your own orgs** are considered, so third-party upstreams (an external repo you cloned for reference) never read as strays. The fleet orgs come from a list of org names, one per line, resolved from `$AOS_FLEET_ORGS`, else `~/.config/agentic-os/fleet-orgs.txt`. A `<root>/<org>` whose `org` is not on that list is skipped entirely. With no fleet-orgs list, every org is in scope.
+Only checkouts under the configured fleet owners are considered, so third-party
+upstreams never read as strays. Owner names come from `$AOS_FLEET_ORGS`, else
+`~/.config/agentic-os/fleet-orgs.txt`. With no owner list, every owner directory
+is in scope.
 
-## How it scans
+## Scan contract
 
-- Scan root is `~/projects` (override with `AOS_REPOS_ROOT`), where the org dirs live at `<root>/<org>/<repo>`.
-- A `<root>/<org>/<repo>` counts as a checkout when `<repo>/.git` exists. `.git` is a directory for normal clones and a file for worktrees and submodules, so both are caught.
-- Matching is by **repo name**: a checkout is expected when its `name` appears in the list (after dropping any `owner/` prefix from list entries), so the list may use either form. The scan is a shallow stat over the org dirs, cheap enough to run on every status-line refresh.
+* The root is `~/projects`, overridable through `$AOS_REPOS_ROOT`.
+* `<root>/<owner>/<repository>` counts as a checkout when `.git` exists as a
+  file or directory.
+* Matching uses exact `owner/repository` identity. Same-named repositories
+  under different owners remain distinct.
+* The scan performs only shallow directory and `.git` checks.
 
-## Reuse in another repo
+## Reuse
 
-The provider is self-contained and reads no repo-specific state. A repo can
-adopt it by placing a copy or symlink at
-`.agentic-os/statusline.d/20-repos.sh`, marking it executable, and pointing
-`AOS_REPOS_EXPECTED` and `AOS_FLEET_ORGS` (or the conventional config paths) at
-its expected-repos and fleet-orgs lists. The status-line composer discovers it
-for sessions rooted there.
+A repository can adopt the provider by placing a copy or symlink at
+`.agentic-os/statusline.d/20-repos.sh` and marking it executable. AOS supplies
+residency. The fleet-org input controls scan scope. The status-line composer
+discovers the provider for sessions rooted there.
+
+## See also
+
+* [Repository residency](repository-residency.md) - strict machine projection.
+* [Status line](statusline.md) - provider composition.

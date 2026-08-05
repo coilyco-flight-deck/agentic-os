@@ -5,9 +5,9 @@ This measures everything a harness ingests at session start, per harness, agains
 a per-harness token budget, across three axes that each have a different growth
 lever:
 
-  * doc    - the composed AGENTS.md/CLAUDE.md load point (what agent-compose
-             builds). Reuses the composer's own resolution, so the bytes match
-             what the load point holds. Lever: edit the AGENTS.md sources.
+  * doc    - the installed AGENTS.md/CLAUDE.md load point. Measures that file
+             directly, so the bytes match what the harness receives. Lever:
+             edit the inputs owned by Agent Compose.
   * skills - every mounted skill's SKILL.md *frontmatter* (name + description) is
              eager so the model knows the skill exists; bodies load lazily on
              invoke. With a large skill surface this is routinely the BIGGEST
@@ -72,19 +72,14 @@ from agentic_os.context_budget_tokens import (
     TOKENIZER_NOTE,
     count_tokens,
 )
-from agentic_os.generators.generate_agent_compose import (
-    COMPOSED_PATH,
-    CONFIG_PATH,
-    DEFAULT_LOAD_POINTS,
-    _split_frontmatter,
-    compose,
-    gather_sources,
-    load_config,
-    plan_outputs,
-    resolve_load_points,
-    select_by_scope,
-    _normalize_scopes,
-)
+from agentic_os.frontmatter import split_frontmatter
+
+HOME = Path.home()
+CONFIG_PATH = HOME / ".config" / "agent-compose" / "agent-compose.yaml"
+DEFAULT_LOAD_POINTS = {
+    "claude": HOME / ".claude" / "CLAUDE.md",
+    "codex": HOME / ".codex" / "AGENTS.md",
+}
 
 # Whole-baseline (doc + skills) budgets, not laws. Tune via agent-compose.yaml
 # `budgets:` / CLI flags; per-harness rationale in docs/context-budget.md.
@@ -102,12 +97,6 @@ DEFAULT_SKILL_ROOTS = {
     "codex": ["~/.agents/skills", ".agents/skills"],
     "goose": ["~/.agents/skills", ".agents/skills"],
     "opencode": ["~/.agents/skills", ".agents/skills"],
-}
-
-DEFAULT_SKILL_LOAD_POINTS = {
-    "codex": "~/.agents/skills",
-    "goose": "~/.agents/skills",
-    "opencode": "~/.agents/skills",
 }
 
 class TierWalk(NamedTuple):
@@ -183,38 +172,6 @@ def peripheral_walk(repos: Iterable[Path]) -> tuple[TierWalk, list[tuple[str, Ti
     return total, per_repo
 
 
-def _banner_tokens() -> int:
-    """Token cost of the compose banner alone, to net it out of attribution."""
-    return count_tokens(compose([]))
-
-
-def doc_contributions(
-    sources: list[Path], overrides: dict[Path, Path]
-) -> tuple[int, list[tuple[str, int]]]:
-    """Return (doc tokens, per-source tokens) for one harness's composed slice.
-
-    Total is the real composed body the harness loads. Per-source nets out the
-    banner so the breakdown sums close to the total and ranks contributors.
-    """
-    total = count_tokens(compose(sources, overrides))
-    banner = _banner_tokens()
-    per_source = [
-        (
-            str(src),
-            max(
-                0,
-                count_tokens(
-                    compose([src], {src: overrides[src]} if src in overrides else {})
-                )
-                - banner,
-            ),
-        )
-        for src in sources
-    ]
-    per_source.sort(key=lambda item: item[1], reverse=True)
-    return total, per_source
-
-
 def _expand_skill_roots(roots: list[str], cwd: Path) -> list[Path]:
     """Resolve configured skill roots to concrete dirs to scan.
 
@@ -260,68 +217,14 @@ def skill_contributions(
             if resolved in seen:
                 continue
             seen.add(resolved)
-            meta, _body = _split_frontmatter(skill_md.read_text(encoding="utf-8", errors="replace"))
+            meta, _body = split_frontmatter(
+                skill_md.read_text(encoding="utf-8", errors="replace")
+            )
             name = str(meta.get("name", "") or skill_md.parent.name)
             desc = str(meta.get("description", ""))
             per_skill.append((name, count_tokens(f"{name}: {desc}")))
     per_skill.sort(key=lambda item: item[1], reverse=True)
     return sum(t for _n, t in per_skill), per_skill, len(per_skill)
-
-
-def plan_from_config(
-    config_path: Path, composed_path: Path
-) -> tuple[
-    dict[str, Path], dict[str, list[Path]], dict[str, dict[Path, Path]], dict[str, int]
-] | None:
-    """Reproduce the per-harness compose plan, or None when agent-compose is off."""
-    if not config_path.is_file():
-        return None
-    config = load_config(config_path)
-    gathered, _errors = gather_sources(config)
-    sources = select_by_scope(gathered, _normalize_scopes(config.get("scopes")))
-    if not sources:
-        return None
-    load_points = resolve_load_points(config)
-    slices, overrides, _outputs, _harness_errors = plan_outputs(
-        sources, load_points, composed_path
-    )
-    raw_budgets = config.get("budgets")
-    budgets: dict[str, int] = {}
-    if isinstance(raw_budgets, dict):
-        budgets = {str(k): int(v) for k, v in raw_budgets.items() if isinstance(v, int)}
-    return load_points, slices, overrides, budgets
-
-
-def skill_roots_from_config(config_path: Path) -> dict[str, list[str]]:
-    """Resolve defaults, modern load points, then legacy explicit root overrides."""
-    roots = {h: list(r) for h, r in DEFAULT_SKILL_ROOTS.items()}
-    if not config_path.is_file():
-        return roots
-    config = load_config(config_path)
-
-    load_points = config.get("skill_load_points")
-    if isinstance(load_points, dict):
-        for harness, value in load_points.items():
-            if not isinstance(value, str) or not value.strip():
-                continue
-            name = str(harness)
-            current = roots.get(name, [])
-            default_point = DEFAULT_SKILL_LOAD_POINTS.get(name)
-            if default_point is None:
-                current = [value, *current]
-            else:
-                current = [
-                    value if root == default_point else root
-                    for root in current
-                ]
-            roots[name] = list(dict.fromkeys(current))
-
-    explicit_roots = config.get("skill_roots")
-    if isinstance(explicit_roots, dict):
-        for harness, value in explicit_roots.items():
-            if isinstance(value, list):
-                roots[str(harness)] = [str(v) for v in value]
-    return roots
 
 
 def _human_bytes(n: int) -> str:
@@ -417,7 +320,6 @@ def read_mcporter_servers(path: Path) -> list[str] | None:
 
 def run(
     config_path: Path,
-    composed_path: Path,
     cli_budgets: dict[str, int],
     mcporter_path: Path,
     cwd: Path,
@@ -426,8 +328,9 @@ def run(
     immediate: list[Path] | None = None,
     peripheral: list[Path] | None = None,
 ) -> int:
-    plan = plan_from_config(config_path, composed_path)
-    skill_roots = skill_roots_from_config(config_path)
+    skill_roots = {
+        harness: list(roots) for harness, roots in DEFAULT_SKILL_ROOTS.items()
+    }
     servers = read_mcporter_servers(mcporter_path)
     mcp_count = len(servers) if servers is not None else None
 
@@ -435,23 +338,25 @@ def run(
     lines = [f"context-budget report  ({TOKENIZER_NOTE})", ""]
     over: list[str] = []
 
-    if plan is None:
-        load_points = dict(DEFAULT_LOAD_POINTS)
-        budgets.update(cli_budgets)
-        lines.append("agent-compose config absent; measuring installed load points directly.")
-        lines.append("")
-        doc_plan = {
-            h: (p, count_tokens(p.read_text(encoding="utf-8", errors="replace")) if p.is_file() else 0, [])
-            for h, p in load_points.items()
-        }
+    load_points = dict(DEFAULT_LOAD_POINTS)
+    budgets.update(cli_budgets)
+    if config_path.is_file():
+        lines.append(
+            "agent-compose owns composition; measuring its installed load points directly."
+        )
     else:
-        load_points, slices, overrides, config_budgets = plan
-        budgets.update(config_budgets)
-        budgets.update(cli_budgets)
-        doc_plan = {}
-        for h in load_points:
-            doc_total, doc_top = doc_contributions(slices.get(h, []), overrides.get(h, {}))
-            doc_plan[h] = (load_points[h], doc_total, doc_top)
+        lines.append("agent-compose config absent; measuring installed load points directly.")
+    lines.append("")
+    doc_plan = {
+        harness: (
+            path,
+            count_tokens(path.read_text(encoding="utf-8", errors="replace"))
+            if path.is_file()
+            else 0,
+            [],
+        )
+        for harness, path in load_points.items()
+    }
 
     for harness in sorted(load_points):
         load_point, doc_total, doc_top = doc_plan[harness]
@@ -627,7 +532,6 @@ def main() -> int:
     try:
         return run(
             args.config,
-            COMPOSED_PATH,
             cli_budgets,
             args.mcporter,
             Path.cwd(),

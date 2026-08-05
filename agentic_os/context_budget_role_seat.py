@@ -25,7 +25,7 @@ from agentic_os.agents_context_inventory import (
     discover_repositories,
 )
 from agentic_os.context_budget_tokens import TOKENIZER_NOTE, count_tokens
-from agentic_os.generators.generate_agent_compose import _split_frontmatter
+from agentic_os.frontmatter import split_frontmatter
 from agentic_os.role_personality_sync import (
     PROJECTION_PATH as ROLE_PERSONALITY_PROJECTION,
     RolePersonalitySyncError,
@@ -486,7 +486,7 @@ def _skill_entrypoint(
         text = entrypoint.read_text(encoding="utf-8")
     except OSError as exc:
         raise RuntimeError(f"read selected skill {entrypoint}: {exc}") from exc
-    metadata, body = _split_frontmatter(text)
+    metadata, body = split_frontmatter(text)
     name = metadata.get("name")
     description = metadata.get("description")
     if not isinstance(name, str) or not name.strip():

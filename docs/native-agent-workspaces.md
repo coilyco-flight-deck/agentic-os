@@ -6,9 +6,9 @@ fleet-shaped workspace. No timer, daemon, exit hook, or operator command runs.
 
 ## Workspace projection
 
-The expected-repositories file drives one linked worktree per checkout. Its
-resolution uses `$AOS_REPOS_EXPECTED`, the conventional config path, then the
-embedded baseline. Entries accept `owner/name` or bare names. The canonical
+Agent Compose's compiled residency plan drives one linked worktree per checkout.
+AOS reads `$AOS_REPOSITORY_PLAN` or `~/.agent-compose/repository-plan.json`.
+There is no fallback. Identities are exact `owner/repository`, and the canonical
 checkout supplies Git objects for a writable `aos/<harness>/<session-id>` branch.
 
 A launch from `$PROJECTS_ROOT` enters:
@@ -44,7 +44,7 @@ and `*-workdir` state stays. Clean siblings may disappear alone after the grace.
 
 ## Ten-minute fleet pass
 
-Every ten minutes at most, startup pulls expected repositories already on disk.
+Every ten minutes at most, startup pulls resident repositories already on disk.
 It fetches `origin`, then:
 
 * A clean, inactive checkout on a remotely recoverable non-main branch switches
@@ -59,7 +59,7 @@ It never creates merge commits, pushes, deletes remote branches, commits, or clo
 
 Fleet ownership comes from `$AOS_FLEET_ORGS` or its conventional config path.
 A direct `$PROJECTS_ROOT/<owner>/<repo>` checkout is unexpected when its origin
-belongs to a fleet org but the expected-repositories file omits it.
+belongs to a fleet org but compiled residency omits its exact identity.
 
 An unexpected clone must be inactive on clean `main` at fetched `origin/main`.
 It cannot have linked worktrees, Git operations, submodules, ignored or
