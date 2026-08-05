@@ -11,7 +11,7 @@
       "verbosity": "low"
     },
     "goose": {
-      "model": "ministral-3:8b"
+      "model": "ministral-3:14b"
     },
     "opencode": {
       "model": "qwen3.6:35b",
