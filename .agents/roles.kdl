@@ -1,52 +1,52 @@
 roles {
     role engineer {
-        composed-skill "coding-*"
-        composed-skill design-system
-        composed-skill writing-public-repos
         composed-skill writing-system-improvement-vocab
+        composed-skill writing-public-repos
+        composed-skill design-system
+        composed-skill "coding-*"
     }
     role director {
-        composed-skill "coding-core-*"
-        composed-skill "coding-shape-*"
         composed-skill tooling-director-decision-architecture
-        composed-skill "tooling-issue-*"
-        composed-skill "tooling-pm-*"
-        composed-skill "tooling-scout-*"
-        composed-skill tooling-skill-authoring
         composed-skill writing-system-improvement-vocab
+        composed-skill tooling-skill-authoring
+        composed-skill "tooling-issue-*"
+        composed-skill "tooling-scout-*"
         composed-skill "writing-voice-*"
+        composed-skill "coding-shape-*"
+        composed-skill "coding-core-*"
+        composed-skill "tooling-pm-*"
     }
     role qa {
-        composed-skill "coding-*"
-        composed-skill design-system
-        composed-skill tooling-code-review
-        composed-skill "tooling-qa-*"
         composed-skill writing-public-repos
+        composed-skill tooling-code-review
+        composed-skill design-system
+        composed-skill "tooling-qa-*"
+        composed-skill "coding-*"
     }
     role ops {
-        composed-skill "coding-*"
-        composed-skill "tooling-ops-*"
         composed-skill writing-system-improvement-vocab
+        composed-skill "tooling-ops-*"
+        composed-skill "coding-*"
     }
     role design {
         composed-skill "coding-javascript*"
-        composed-skill "*design*"
         composed-skill "tooling-pm-*"
+        composed-skill "*design*"
     }
     role community {
-        composed-skill "*discord*"
         composed-skill "tooling-customer-success-*"
         composed-skill "writing-social-*"
+        composed-skill "*discord*"
     }
     role strats {
-        composed-skill "tooling-advisor-*"
-        composed-skill "tooling-ceo-*"
         composed-skill tooling-director-decision-architecture
-        composed-skill "tooling-issue-*"
-        composed-skill "tooling-pm-*"
-        composed-skill "tooling-scout-*"
         composed-skill tooling-skill-authoring
+        composed-skill "tooling-advisor-*"
         composed-skill "writing-voice-*"
+        composed-skill "tooling-issue-*"
+        composed-skill "tooling-scout-*"
+        composed-skill "tooling-ceo-*"
+        composed-skill "tooling-pm-*"
     }
     role content {
         composed-skill "writing-*"
