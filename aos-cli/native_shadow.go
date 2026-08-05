@@ -107,6 +107,9 @@ func runNativeShadow(ctx context.Context, cmd *cli.Command) error {
 	if err != nil {
 		return err
 	}
+	if err := convergeNativeEnvironment(ctx, runtime); err != nil {
+		return fmt.Errorf("converge native environment: %w", err)
+	}
 	launchCWD, err := prepareNativeLaunchWithOptions(runtime, harness, nativeLaunchOptions{
 		WorkspaceRoot: cmd.Bool("assigned-role"),
 	})
@@ -145,6 +148,19 @@ func runNativeShadow(ctx context.Context, cmd *cli.Command) error {
 		}
 	}
 	return execNative(command)
+}
+
+func convergeNativeEnvironment(ctx context.Context, runtime nativeRuntime) error {
+	result, err := convergeEnvironment(ctx, environmentConvergeOptions{
+		Home: runtime.Home,
+	})
+	if err != nil {
+		return err
+	}
+	for _, warning := range result.Warnings {
+		fmt.Fprintf(runtime.Stderr, "aos: warning: %s\n", warning)
+	}
+	return nil
 }
 
 func protectNativeHarnessInstall(harness string, isolated bool) error {

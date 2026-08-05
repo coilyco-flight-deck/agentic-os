@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"os/exec"
@@ -304,6 +305,41 @@ func TestNativeShadowExportsAOSModelTier(t *testing.T) {
 	}
 	if _, found := os.LookupEnv(agentComposeModelClassEnv); found {
 		t.Fatalf("retired %s remains set", agentComposeModelClassEnv)
+	}
+}
+
+func TestConvergeNativeEnvironmentAppliesHostMCPProjection(t *testing.T) {
+	root := t.TempDir()
+	runtime := nativeTestRuntime(t, root)
+	config := filepath.Join(runtime.Home, ".config", "aos", "converge.yaml")
+	inventory := filepath.Join(runtime.Home, ".config", "mcporter", "mcporter.json")
+	writeNativeMCPTestFile(
+		t,
+		config,
+		"mcp:\n  inventory: ~/.config/mcporter/mcporter.json\n",
+	)
+	writeNativeMCPTestFile(
+		t,
+		inventory,
+		`{"imports":[],"mcpServers":{"forgejo":{"baseUrl":"https://mcp.example.test/mcp","x-codex":{"defaultToolsApprovalMode":"approve"}}}}`+"\n",
+	)
+
+	if err := convergeNativeEnvironment(context.Background(), runtime); err != nil {
+		t.Fatal(err)
+	}
+
+	raw, err := os.ReadFile(filepath.Join(runtime.Home, ".codex", "config.toml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{
+		aosMCPBlockBegin,
+		`[mcp_servers."forgejo"]`,
+		`default_tools_approval_mode = "approve"`,
+	} {
+		if !strings.Contains(string(raw), want) {
+			t.Fatalf("native convergence missing %q:\n%s", want, raw)
+		}
 	}
 }
 
