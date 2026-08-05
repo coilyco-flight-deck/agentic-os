@@ -10,7 +10,7 @@ Use userspace mode, not TUN: no `/dev/net/tun`, no `NET_ADMIN`, no route. Tailsc
 services:
   tailscale:
     image: tailscale/tailscale:latest
-    container_name: tailscale-proxy        # fixed name shared with ward
+    container_name: tailscale-proxy        # fixed proxy name used by standalone AOS
     hostname: tailscale-proxy              # becomes the tailnet node name
     environment:
       TS_AUTHKEY: ${TS_AUTHKEY}            # reusable + ephemeral key, tag:proxy, minted by terraform/tailscale
@@ -19,10 +19,10 @@ services:
     ports:
       - "127.0.0.1:1055:1055"             # SOCKS5, published to host loopback only
     restart: unless-stopped
-    networks: [ward-tailnet]               # in-VM consumers reach the box by name here
+    networks: [ward-tailnet]               # shared Docker network for in-VM consumers
 networks:
   ward-tailnet:
-    name: ward-tailnet                     # fixed docker name - shared contract, do not rename
+    name: ward-tailnet                     # existing shared Docker name, do not rename
 ```
 
 This is the standing, shared box. It runs once with `restart: unless-stopped`, and the infra sibling (the `tailscale-proxy` ansible role in `coilyco-flight-deck/infrastructure`) converges it, not ward. The compose lives at `ansible/roles/tailscale-proxy/files/compose.yaml` and is authoritative. This excerpt focuses on its Tailscale service.
@@ -35,14 +35,14 @@ TS_AUTHKEY="$(aosguard ops aws ssm get-parameter \
   --query 'Parameter.Value' --output text)" docker compose up -d
 ```
 
-## Two consumers, one box
+## Consumers
 
-The standing box serves SOCKS5 on `0.0.0.0:1055` to two distinct callers, and the compose above wires both:
+The standing box serves SOCKS5 on `0.0.0.0:1055` to callers that opt in, and the compose above wires the two supported paths:
 
 - **Host tools** reach it on the published `127.0.0.1:1055` loopback. SSH and any host-side client point at that port (see below). The bind stays loopback-only, so nothing off the host can dial it.
-- **In-VM containers** that join the `ward-tailnet` network reach it by name as `socks5h://tailscale-proxy:1055`. The fixed docker name is what lets a `ward agent` carry resolve the box without an IP or SSM lookup. `socks5h` (not `socks5`) hands the hostname to tailscaled to resolve tailnet-side, which is what makes by-name dialing of tailnet peers work from inside the carry.
+- **Standalone AOS launches** that join the `ward-tailnet` network reach it by name as `socks5h://tailscale-proxy:1055`. AOS exports that proxy URL for tools that explicitly support SOCKS, and its bounded MCP bridge sends tailnet HTTP endpoint traffic through this proxy when the host inventory resolves an MCP endpoint into a Tailscale range. `socks5h` (not `socks5`) hands the hostname to tailscaled to resolve tailnet-side when a caller uses by-name dialing.
 
-The second consumer is the carry side of `ward agent --ts-sidecar`. ward never converges this box - it only attaches a carry to `ward-tailnet` and preflights that `tailscale-proxy` is present. The two shared names, the `ward-tailnet` network and the `tailscale-proxy` host, are a contract between this compose and ward. See ward's [`docs/agent-ts-sidecar.md`](https://github.com/coilyco-flight-deck/ward/blob/main/docs/agent-ts-sidecar.md) for the carry-side attach, preflight, and by-name route.
+The infrastructure `tailscale-proxy` role converges the standing userspace proxy. Standalone AOS consumes the existing proxy and network for its bounded MCP connectivity path. AOS neither starts nor repairs the proxy.
 
 ## SSH through the proxy
 

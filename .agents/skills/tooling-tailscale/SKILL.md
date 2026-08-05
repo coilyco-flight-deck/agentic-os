@@ -16,7 +16,7 @@ Tailscale and a second WireGuard-based VPN (any commercial WireGuard client - Mu
 
 Run Tailscale in a Docker container in userspace/SOCKS5 mode so its interface and routes live in the container namespace, never the host route table. The host VPN keeps the default route uncontested while you still get tailnet reach. The same Docker Desktop compose contract runs on macOS and Windows.
 
-- [containerized setup](references/containerized-setup.md) - compose file, auth-key injection, SSH-through-SOCKS5 config, and the two-consumer model (host loopback plus the `ward-tailnet` shared-network carry).
+- [containerized setup](references/containerized-setup.md) - compose file, auth-key injection, SSH-through-SOCKS5 config, and the shared proxy model for host loopback plus standalone AOS MCP connectivity.
 - [sharp edges](references/sharp-edges.md) - tailnet identity, MagicDNS, IaC key minting, per-connection scope, throughput.
 
 ## Why this is here
