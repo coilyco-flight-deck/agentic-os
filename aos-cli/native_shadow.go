@@ -21,6 +21,10 @@ import (
 const (
 	nativeSweepInterval         = 10 * time.Minute
 	nativeDeadSessionGrace      = 24 * time.Hour
+	nativeLockPoll              = 100 * time.Millisecond
+	nativeLockNotice            = 5 * time.Second
+	nativeLockWait              = 2 * time.Minute
+	nativeLockGrace             = 5 * time.Second
 	nativeDeleteScans           = 3
 	nativeSessionIDAttempts     = 64
 	nativeIDLetters             = "abcdefghjkmpqrstuvwxyz"
@@ -50,6 +54,14 @@ type nativeLease struct {
 	ClaudeKeychain  string           `json:"claude_keychain,omitempty"`
 	DeadSince       *time.Time       `json:"dead_since,omitempty"`
 	Artifacts       []nativeArtifact `json:"artifacts"`
+}
+
+// nativeLockOwner identifies the launch holding the startup lock, so a later
+// launch can tell a live cleanup from an interrupted one.
+type nativeLockOwner struct {
+	PID          int       `json:"pid"`
+	ProcessStart string    `json:"process_start"`
+	Acquired     time.Time `json:"acquired"`
 }
 
 type nativeCandidate struct {
@@ -92,6 +104,9 @@ type nativeRuntime struct {
 	FleetFile    string
 	Random       io.Reader
 	Stderr       *os.File
+	// Progress narrates startup. A nil value stays silent, which keeps tests
+	// and embedded callers quiet without a flag.
+	Progress *nativeProgress
 	// ClaudeKeyring is injected by tests. The zero value falls back to the
 	// platform keyring.
 	ClaudeKeyring claudeKeyringPorts
@@ -122,6 +137,7 @@ func runNativeShadow(ctx context.Context, cmd *cli.Command) error {
 	if err != nil {
 		return err
 	}
+	runtime.Progress.Begin(harness, command)
 	if err := convergeNativeEnvironment(ctx, runtime); err != nil {
 		return fmt.Errorf("converge native environment: %w", err)
 	}
@@ -162,19 +178,28 @@ func runNativeShadow(ctx context.Context, cmd *cli.Command) error {
 			}
 		}
 	}
+	runtime.Progress.Ready()
+	runtime.Progress.Exec(command)
 	return execNative(command)
 }
 
 func convergeNativeEnvironment(ctx context.Context, runtime nativeRuntime) error {
+	step := runtime.Progress.Step("converge environment")
 	result, err := convergeEnvironment(ctx, environmentConvergeOptions{
 		Home: runtime.Home,
 	})
 	if err != nil {
+		step.Fail(err)
 		return err
 	}
 	for _, warning := range result.Warnings {
 		fmt.Fprintf(runtime.Stderr, "aos: warning: %s\n", warning)
 	}
+	if !result.Configured {
+		step.Done("not configured")
+		return nil
+	}
+	step.Done("%d catalogues, %d MCP servers", result.Catalogues, result.MCPServers)
 	return nil
 }
 
@@ -300,6 +325,7 @@ func resolveNativeRuntime() (nativeRuntime, error) {
 		FleetFile:    fleet,
 		Random:       rand.Reader,
 		Stderr:       os.Stderr,
+		Progress:     newNativeProgress(os.Stderr, nil),
 	}, nil
 }
 
@@ -340,18 +366,28 @@ func prepareNativeLaunchWorkspaceWithOptions(
 	}
 	var workspace nativeLaunchWorkspace
 	err := withNativeStartupLock(runtime, func() error {
+		reclaim := runtime.Progress.Step("reclaim finished sessions")
 		live, err := cleanDeadNativeSessions(runtime)
 		if err != nil {
+			reclaim.Fail(err)
 			return err
 		}
+		reclaim.Done("%d live worktrees", len(live.paths))
+		resolve := runtime.Progress.Step("resolve resident repositories")
 		repositories, expected, err := resolveExpectedRepositories(runtime)
 		if err != nil {
+			resolve.Fail(err)
 			return err
 		}
-		if due, state := nativeSweepDue(runtime); due {
+		resolve.Done("%d resident", len(repositories))
+		due, state := nativeSweepDue(runtime)
+		if due {
 			if err := runNativeWorkspaceSweep(runtime, repositories, expected, live, state); err != nil {
 				return err
 			}
+		} else {
+			runtime.Progress.Skip("fleet pass", "last pass %s ago, interval %s",
+				formatNativeDuration(runtime.Now.Sub(state.LastSweep)), nativeSweepInterval)
 		}
 		workspace, err = createNativeSession(
 			runtime,
@@ -370,25 +406,68 @@ func prepareNativeLaunchWorkspaceWithOptions(
 	return workspace, nil
 }
 
+// withNativeStartupLock serializes startup cleanup. The lock names its owner,
+// so an interrupted launch is reclaimed at once. docs/native-startup-narration.md
 func withNativeStartupLock(runtime nativeRuntime, action func() error) error {
 	lock := filepath.Join(runtime.StateRoot, "startup.lock")
-	for attempt := 0; attempt < 200; attempt++ {
+	began := time.Now()
+	announced := time.Time{}
+	for {
 		err := os.Mkdir(lock, 0o700)
 		if err == nil {
-			defer os.Remove(lock)
+			defer os.RemoveAll(lock)
+			if err := writeNativeJSON(nativeLockOwnerPath(lock), nativeLockOwner{
+				PID:          runtime.PID,
+				ProcessStart: runtime.ProcessStart,
+				Acquired:     time.Now().UTC(),
+			}); err != nil {
+				return fmt.Errorf("claim native startup lock: %w", err)
+			}
 			return action()
 		}
 		if !errors.Is(err, fs.ErrExist) {
 			return fmt.Errorf("acquire native startup lock: %w", err)
 		}
-		if info, statErr := os.Stat(lock); statErr == nil &&
-			runtime.Now.Sub(info.ModTime()) > 2*time.Minute {
-			_ = os.Remove(lock)
+		holder, live := inspectNativeStartupLock(lock)
+		if !live {
+			runtime.Progress.Wait("reclaiming startup lock abandoned by pid %d", holder.PID)
+			if err := os.RemoveAll(lock); err != nil {
+				return fmt.Errorf("reclaim abandoned native startup lock %s: %w", lock, err)
+			}
 			continue
 		}
-		time.Sleep(25 * time.Millisecond)
+		waited := time.Since(began)
+		if waited >= nativeLockWait {
+			return fmt.Errorf(
+				"native startup pid %d has held %s for %s; wait for that launch or remove the lock directory",
+				holder.PID, lock, formatNativeDuration(waited))
+		}
+		if time.Since(announced) >= nativeLockNotice {
+			announced = time.Now()
+			runtime.Progress.Wait("native startup pid %d holds the lock, waited %s",
+				holder.PID, formatNativeDuration(waited))
+		}
+		time.Sleep(nativeLockPoll)
 	}
-	return fmt.Errorf("native startup cleanup is already running")
+}
+
+func nativeLockOwnerPath(lock string) string {
+	return filepath.Join(lock, "owner.json")
+}
+
+// inspectNativeStartupLock reports the lock's owner and whether it still runs.
+// A missing owner file is trusted only inside the creator's write window.
+func inspectNativeStartupLock(lock string) (nativeLockOwner, bool) {
+	var holder nativeLockOwner
+	if err := readNativeJSON(nativeLockOwnerPath(lock), &holder); err != nil {
+		info, statErr := os.Stat(lock)
+		return holder, statErr == nil && time.Since(info.ModTime()) < nativeLockGrace
+	}
+	if holder.PID <= 0 || holder.ProcessStart == "" {
+		return holder, false
+	}
+	identity, err := processStartIdentity(holder.PID)
+	return holder, err == nil && identity == holder.ProcessStart
 }
 
 func nativeStatePath(runtime nativeRuntime, parts ...string) string {
@@ -521,6 +600,8 @@ func cleanDeadNativeSessions(runtime nativeRuntime) (nativeLiveWorktrees, error)
 		return nativeLiveWorktrees{}, fmt.Errorf("read native leases: %w", err)
 	}
 	live := nativeLiveWorktrees{}
+	released := 0
+	runtime.Progress.Note("%d lease(s) on disk", len(entries))
 	for _, entry := range entries {
 		if entry.IsDir() || filepath.Ext(entry.Name()) != ".json" {
 			continue
@@ -562,6 +643,9 @@ func cleanDeadNativeSessions(runtime nativeRuntime) (nativeLiveWorktrees, error)
 			live.addArtifacts(lease.Artifacts)
 			continue
 		}
+		runtime.Progress.Item("release", released+1, len(entries),
+			"session %s (%d worktrees)", lease.ID, len(lease.Artifacts))
+		released++
 		remaining := make([]nativeArtifact, 0, len(lease.Artifacts))
 		for _, artifact := range lease.Artifacts {
 			cleaned, err := cleanNativeArtifact(artifact)
@@ -677,10 +761,15 @@ func runNativeWorkspaceSweep(
 	live nativeLiveWorktrees,
 	state nativeSweepState,
 ) error {
-	for _, repository := range repositories {
-		if _, err := nativeGit(repository.Path, "fetch", "--prune", "origin"); err != nil {
-			fmt.Fprintf(runtime.Stderr, "aos: fetch skipped for %s/%s: %v\n",
-				repository.Owner, repository.Name, err)
+	pass := runtime.Progress.Step("fleet pass over %d repositories", len(repositories))
+	for index, repository := range repositories {
+		identity := repository.Owner + "/" + repository.Name
+		runtime.Progress.Item("fetch", index+1, len(repositories), "%s", identity)
+		began := time.Now()
+		_, err := nativeGit(repository.Path, "fetch", "--prune", "origin")
+		pass.Track(identity, time.Since(began))
+		if err != nil {
+			fmt.Fprintf(runtime.Stderr, "aos: fetch skipped for %s: %v\n", identity, err)
 			continue
 		}
 		if err := normalizeNativeRepository(runtime, repository, live); err != nil {
@@ -688,6 +777,8 @@ func runNativeWorkspaceSweep(
 				repository.Path, err)
 		}
 	}
+	pass.Done("")
+	scan := runtime.Progress.Step("scan for unexpected clones")
 	next := map[string]nativeCandidate{}
 	for _, repository := range scanNativeRepositories(runtime.ProjectsRoot) {
 		if expected.matches(repository.Owner, repository.Name) {
@@ -705,7 +796,9 @@ func runNativeWorkspaceSweep(
 		}
 		if candidate.Scans >= nativeDeleteScans {
 			if err := os.RemoveAll(repository.Path); err != nil {
-				return fmt.Errorf("remove unexpected clone %s: %w", repository.Path, err)
+				err = fmt.Errorf("remove unexpected clone %s: %w", repository.Path, err)
+				scan.Fail(err)
+				return err
 			}
 			fmt.Fprintf(runtime.Stderr, "aos: removed unexpected clone %s after three startup scans\n",
 				repository.Path)
@@ -715,6 +808,7 @@ func runNativeWorkspaceSweep(
 		fmt.Fprintf(runtime.Stderr, "aos: unexpected clone %s eligible for cleanup (%d/3)\n",
 			repository.Path, candidate.Scans)
 	}
+	scan.Done("%d candidate(s)", len(next))
 	state.LastSweep = runtime.Now
 	state.Candidates = next
 	if err := writeNativeJSON(nativeStatePath(runtime, "sweep.json"), state); err != nil {
@@ -919,10 +1013,13 @@ func createNativeSession(
 		if options.StandaloneHome {
 			stageHome = stageStandaloneRoleHome
 		}
+		stage := runtime.Progress.Step("stage session home")
 		if err := stageHome(runtime.Home, sessionHome); err != nil {
+			stage.Fail(err)
 			_ = os.RemoveAll(sessionRoot)
 			return nativeLaunchWorkspace{}, err
 		}
+		stage.Done("%s", sessionHome)
 	}
 	claudeKeychain := ""
 	if harness == "claude" && sessionHome != "" {
@@ -941,15 +1038,21 @@ func createNativeSession(
 	branch := "aos/" + harness + "/" + id
 	artifacts := make([]nativeArtifact, 0, len(repositories))
 	created := map[string]string{}
-	for _, repository := range repositories {
+	link := runtime.Progress.Step("link %d session worktrees", len(repositories))
+	for index, repository := range repositories {
+		identity := repository.Owner + "/" + repository.Name
 		target := filepath.Join(sessionProjects, repository.Owner, repository.Name)
 		if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+			link.Fail(err)
 			return nativeLaunchWorkspace{}, err
 		}
-		if _, err := nativeGit(repository.Path,
-			"worktree", "add", "--quiet", "-b", branch, target, "origin/main"); err != nil {
-			fmt.Fprintf(runtime.Stderr, "aos: worktree skipped for %s/%s: %v\n",
-				repository.Owner, repository.Name, err)
+		runtime.Progress.Item("worktree", index+1, len(repositories), "%s", identity)
+		began := time.Now()
+		_, err := nativeGit(repository.Path,
+			"worktree", "add", "--quiet", "-b", branch, target, "origin/main")
+		link.Track(identity, time.Since(began))
+		if err != nil {
+			fmt.Fprintf(runtime.Stderr, "aos: worktree skipped for %s: %v\n", identity, err)
 			continue
 		}
 		artifacts = append(artifacts, nativeArtifact{
@@ -959,6 +1062,7 @@ func createNativeSession(
 		})
 		created[filepath.Join(repository.Owner, repository.Name)] = target
 	}
+	link.Done("%d linked", len(artifacts))
 	if len(artifacts) == 0 {
 		if sessionHome == "" {
 			_ = os.RemoveAll(sessionRoot)
