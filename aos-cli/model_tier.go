@@ -26,6 +26,8 @@ func modelTierForModel(model string) (string, error) {
 		strings.Contains(normalized, "gpt-"):
 		return modelTierFrontier, nil
 	case strings.Contains(normalized, "ornith"),
+		normalized == "goose",
+		normalized == "opencode",
 		strings.Contains(normalized, "mistral"),
 		strings.Contains(normalized, "ministral"),
 		strings.Contains(normalized, "qwen"):
@@ -36,12 +38,8 @@ func modelTierForModel(model string) (string, error) {
 }
 
 func nativeRuntimeModel(harness string, command []string) (string, error) {
-	profile, err := harnessLaunchDefaultFor(harness)
-	if err != nil {
-		return "", err
-	}
 	args := nativeHarnessArguments(command, harness)
-	model := profile.Model
+	model := strings.TrimSpace(harness)
 	for index := 0; index < len(args); index++ {
 		arg := args[index]
 		if arg == "--" {

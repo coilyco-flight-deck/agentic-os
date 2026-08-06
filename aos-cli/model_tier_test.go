@@ -9,6 +9,8 @@ func TestModelTierForModel(t *testing.T) {
 		"codex":                              modelTierFrontier,
 		"gpt-5.6-sol":                        modelTierFrontier,
 		"deploy-backend/deepseek-v4-flash":   modelTierCommodity,
+		"goose":                              modelTierOSS,
+		"opencode":                           modelTierOSS,
 		"ornith:35b":                         modelTierOSS,
 		"mistral-small3.2:24b":               modelTierOSS,
 		"mistralai/Ministral-3-14B-Instruct": modelTierOSS,
@@ -34,31 +36,6 @@ func TestModelTierForModelRejectsUnknownModels(t *testing.T) {
 	for _, model := range []string{"", "unknown-model"} {
 		if _, err := modelTierForModel(model); err == nil {
 			t.Fatalf("modelTierForModel(%q) succeeded", model)
-		}
-	}
-}
-
-func TestEveryHarnessLaunchProfileHasAModelTier(t *testing.T) {
-	t.Parallel()
-	document, err := loadConfiguredHarnessLaunchProfiles()
-	if err != nil {
-		t.Fatal(err)
-	}
-	for harness, profile := range document.Defaults {
-		if _, err := modelTierForModel(profile.Model); err != nil {
-			t.Errorf("default profile %s: %v", harness, err)
-		}
-	}
-	for role, profiles := range document.StandaloneRoles {
-		for harness := range profiles {
-			profile, err := standaloneHarnessLaunchProfileFor(role, harness)
-			if err != nil {
-				t.Errorf("standalone profile %s/%s: %v", role, harness, err)
-				continue
-			}
-			if _, err := modelTierForModel(profile.Model); err != nil {
-				t.Errorf("standalone profile %s/%s: %v", role, harness, err)
-			}
 		}
 	}
 }
@@ -107,12 +84,8 @@ func TestNativeRuntimeModelUsesHarnessOverride(t *testing.T) {
 	}
 }
 
-func TestNativeRuntimeModelFallsBackToAOSProfile(t *testing.T) {
+func TestNativeRuntimeModelFallsBackToHarness(t *testing.T) {
 	t.Parallel()
-	profile, err := harnessLaunchDefaultFor("goose")
-	if err != nil {
-		t.Fatal(err)
-	}
 	got, err := nativeRuntimeModel(
 		"goose",
 		[]string{"agent-compose", "launch", "community", "goose"},
@@ -120,8 +93,8 @@ func TestNativeRuntimeModelFallsBackToAOSProfile(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got != profile.Model {
-		t.Fatalf("nativeRuntimeModel() = %q, want profile model %q", got, profile.Model)
+	if got != "goose" {
+		t.Fatalf("nativeRuntimeModel() = %q, want goose", got)
 	}
 }
 

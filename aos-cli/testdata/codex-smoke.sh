@@ -9,8 +9,6 @@ if [ ! -f "${config}" ]; then
     exit 1
 fi
 for expected in \
-    'model = "gpt-5.6-terra"' \
-    'model_reasoning_effort = "medium"' \
     'approval_policy = "never"' \
     'sandbox_mode = "danger-full-access"' \
     '[notice]' \
@@ -22,6 +20,14 @@ for expected in \
         exit 1
     fi
 done
+if rg -q '^model =' "${config}"; then
+    echo "Codex smoke: AOS must leave model unset" >&2
+    exit 1
+fi
+if rg -q '^model_reasoning_effort =' "${config}"; then
+    echo "Codex smoke: AOS must leave reasoning effort unset" >&2
+    exit 1
+fi
 if rg -q '^model_verbosity =' "${config}"; then
     echo "Codex smoke: AOS must leave model verbosity unset" >&2
     exit 1

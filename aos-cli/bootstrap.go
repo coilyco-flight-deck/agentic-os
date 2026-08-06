@@ -359,11 +359,11 @@ func composeHome(
 	provider string,
 	runner commandRunner,
 ) error {
-	profile, err := standaloneHarnessLaunchProfileFor(opts.Role, opts.Layout)
+	runtimeModel, err := nativeRuntimeModel(opts.Layout, opts.Command)
 	if err != nil {
-		return err
+		return fmt.Errorf("resolve %s/%s runtime model: %w", opts.Role, opts.Layout, err)
 	}
-	modelTier, err := modelTierForModel(profile.Model)
+	modelTier, err := modelTierForModel(runtimeModel)
 	if err != nil {
 		return fmt.Errorf("resolve %s/%s model tier: %w", opts.Role, opts.Layout, err)
 	}
@@ -457,14 +457,7 @@ func stageHarnessDefaults(role, layout, home, workspace string) error {
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return fmt.Errorf("create codex config directory: %w", err)
 	}
-	profile, err := standaloneHarnessLaunchProfileFor(role, layout)
-	if err != nil {
-		return err
-	}
 	body := "# Written by the AOS container bootstrap: the container is the security boundary.\n" +
-		"model = " + tomlBasicString(profile.Model) + "\n" +
-		"model_reasoning_effort = " + tomlBasicString(profile.ReasoningEffort) + "\n" +
-		"model_verbosity = " + tomlBasicString(profile.Verbosity) + "\n" +
 		"approval_policy = \"never\"\n" +
 		"sandbox_mode = \"danger-full-access\"\n\n" +
 		"[notice]\n" +

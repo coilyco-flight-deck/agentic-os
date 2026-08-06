@@ -37,11 +37,12 @@ Warded mode uses Ward's fixed workflows and generic broker for Compose, lifecycl
 ## Routing
 
 In warded mode, arguments after `--` are Ward launch arguments. AOS passes the
-selected image, agent, role, workspace request, optional generic context bundle,
-and harness-level model inputs through Ward's explicit environment seam. AOS maps
-the resolved profile to Agent Compose's tier, which gates role compatibility only.
-Agent-compose carries behavioral identity and seat context. A Ward workflow
-cannot change model inputs or privileged surface. See [the context-bundle adapter](aos-context-bundle.md).
+selected image, agent, role, workspace request, and optional generic context
+bundle to Ward. Harness model and effort settings stay in the
+harness's own configuration surface. Standalone AOS derives only the Agent
+Compose `model-tier` request from the selected runtime model or harness
+default. Agent-compose carries behavioral identity and seat context. A Ward
+workflow cannot change privileged surface. See [the context-bundle adapter](aos-context-bundle.md).
 
 Ward ships the `director`, `qa`, and `engineer` repository workflows. Other safe
 roles use its [generic read-only command](aos-generic-warded-roles.md). AOS rejects

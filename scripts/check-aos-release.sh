@@ -135,6 +135,13 @@ if [ -n "$native_aos" ]; then
         printf '%s\n' "$aoscompose_default_plan" | grep -F -- "--role engineer" >/dev/null
         printf '%s\n' "$aoscompose_default_plan" | grep -F -- "--layout codex" >/dev/null
         printf '%s\n' "$aoscompose_default_plan" | grep -F -- "-- codex" >/dev/null
+        aoscompose_director_plan=$("$native_aoscompose" \
+            --image agentic-os:test \
+            --dry-run \
+            director)
+        printf '%s\n' "$aoscompose_director_plan" | grep -F -- "--role director" >/dev/null
+        printf '%s\n' "$aoscompose_director_plan" | grep -F -- "--layout claude" >/dev/null
+        printf '%s\n' "$aoscompose_director_plan" | grep -F -- "-- claude" >/dev/null
         "$native_aosguard" --help >/dev/null
         "$native_aosguard" --version | grep -Fx "aosguard version $version" >/dev/null
         "$native_aosguard" ops aws --help >/dev/null

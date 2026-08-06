@@ -11,7 +11,7 @@ Use this map when a change crosses AOS, Ward, agent-compose, or AOSguard.
 ## Notes
 
 * `.agents/roles.kdl` owns behavioral composition.
-* `.agents/harness-launch-profiles.yaml` owns concrete harness launch tuning.
+* `.agents/harness-launch-profiles.yaml` owns role-to-default-agent mapping.
 * `.ward/ward.yaml` owns repository commands, the deployment image and release
   channel, and supported YAML fixture input.
 * Agent-compose owns named seats and pronouns.

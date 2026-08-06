@@ -63,8 +63,9 @@ aosward --agent codex --role engineer -- owner/repo#267
 
 `aoscompose` is the canonical explicit alias of `aos`. The earlier `aoscomposed`
 spelling remains as a compatibility alias. As a standalone convenience,
-`aoscompose <role>` selects the role's default agent, currently Codex for the
-core roster, and `aoscompose <role> <harness>` overrides that default.
+`aoscompose <role>` selects the role's default agent from
+[`.agents/harness-launch-profiles.yaml`](.agents/harness-launch-profiles.yaml),
+and `aoscompose <role> <harness>` overrides that default.
 `aosward` adds `--warded`. Ward remains the fixed workflow and container
 lifecycle owner, agent-compose remains the context producer, and
 cli-guard/specgen remains the guarded-tool generator. Matching

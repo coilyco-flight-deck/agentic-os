@@ -76,13 +76,9 @@ func TestComposeHomeSurfacesRoleCompatibilityFailure(t *testing.T) {
 	) {
 		t.Fatalf("compose error = %v", err)
 	}
-	profile, profileErr := standaloneHarnessLaunchProfileFor(opts.Role, opts.Layout)
-	if profileErr != nil {
-		t.Fatal(profileErr)
-	}
-	modelTier, modelErr := modelTierForModel(profile.Model)
-	if modelErr != nil {
-		t.Fatal(modelErr)
+	modelTier, err := modelTierForModel(opts.Layout)
+	if err != nil {
+		t.Fatal(err)
 	}
 	if !strings.Contains(runner.request, `model-tier "`+modelTier+`"`) {
 		t.Fatalf("compose request omitted selected model tier:\n%s", runner.request)
@@ -189,14 +185,7 @@ func TestPrepareContainerHydratesSubstrateAndProjectsHome(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Codex container defaults are absent: %v", err)
 	}
-	profile, err := standaloneHarnessLaunchProfileFor("engineer", "codex")
-	if err != nil {
-		t.Fatal(err)
-	}
 	for _, want := range []string{
-		"model = " + tomlBasicString(profile.Model),
-		"model_reasoning_effort = " + tomlBasicString(profile.ReasoningEffort),
-		"model_verbosity = " + tomlBasicString(profile.Verbosity),
 		`approval_policy = "never"`,
 		`sandbox_mode = "danger-full-access"`,
 		`[notice]`,
@@ -206,6 +195,15 @@ func TestPrepareContainerHydratesSubstrateAndProjectsHome(t *testing.T) {
 	} {
 		if !strings.Contains(string(config), want) {
 			t.Errorf("Codex config missing %q:\n%s", want, config)
+		}
+	}
+	for _, retired := range []string{
+		"model = ",
+		"model_reasoning_effort = ",
+		"model_verbosity = ",
+	} {
+		if strings.Contains(string(config), retired) {
+			t.Errorf("Codex config retained %q:\n%s", retired, config)
 		}
 	}
 	for _, path := range []string{
@@ -220,7 +218,7 @@ func TestPrepareContainerHydratesSubstrateAndProjectsHome(t *testing.T) {
 			t.Fatalf("substrate path remained writable: %s %o", path, info.Mode().Perm())
 		}
 	}
-	modelTier, err := modelTierForModel(profile.Model)
+	modelTier, err := modelTierForModel("codex")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -272,40 +270,6 @@ func TestPrepareContainerHydratesSubstrateAndProjectsHome(t *testing.T) {
 	}
 }
 
-func TestModelClassForLayout(t *testing.T) {
-	t.Parallel()
-	layouts, err := loadLayoutModelClasses(embeddedLayoutModelClasses)
-	if err != nil {
-		t.Fatal(err)
-	}
-	for layout, want := range layouts {
-		got, err := modelClassForLayout(layout)
-		if err != nil {
-			t.Fatalf("modelClassForLayout(%q): %v", layout, err)
-		}
-		if got != want {
-			t.Fatalf("modelClassForLayout(%q) = %q, want %q", layout, got, want)
-		}
-	}
-	if _, err := modelClassForLayout("unknown"); err == nil {
-		t.Fatal("modelClassForLayout accepted an unknown layout")
-	}
-}
-
-func TestLoadLayoutModelClassesRejectsMalformedRegistry(t *testing.T) {
-	t.Parallel()
-	for _, data := range [][]byte{
-		[]byte(`{}`),
-		[]byte(`{"format":"agentic-os.layout-model-classes.v1","layouts":{}}`),
-		[]byte(`{"format":"agentic-os.layout-model-classes.v1","layouts":{"test":"unknown"}}`),
-		[]byte(`{"format":"agentic-os.layout-model-classes.v1","layouts":{"test":"frontier"}} trailing`),
-	} {
-		if _, err := loadLayoutModelClasses(data); err == nil {
-			t.Fatalf("loadLayoutModelClasses accepted %q", data)
-		}
-	}
-}
-
 func TestStageHarnessDefaultsEscapesCodexWorkspaceAndIgnoresOtherLayouts(t *testing.T) {
 	t.Parallel()
 	home := t.TempDir()
@@ -318,14 +282,20 @@ func TestStageHarnessDefaultsEscapesCodexWorkspaceAndIgnoresOtherLayouts(t *test
 		t.Fatal(err)
 	}
 	for _, want := range []string{
-		`model = "`,
-		`model_reasoning_effort = "`,
-		`model_verbosity = "`,
 		`hide_rate_limit_model_nudge = true`,
 		`[projects."/workspace/repo\\\"quoted"]`,
 	} {
 		if !strings.Contains(string(config), want) {
 			t.Errorf("Codex config missing %q:\n%s", want, config)
+		}
+	}
+	for _, retired := range []string{
+		`model = "`,
+		`model_reasoning_effort = "`,
+		`model_verbosity = "`,
+	} {
+		if strings.Contains(string(config), retired) {
+			t.Errorf("Codex config retained %q:\n%s", retired, config)
 		}
 	}
 

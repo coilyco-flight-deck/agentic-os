@@ -166,14 +166,8 @@ func TestBuildWardLaunchPlanOwnsSiblingTranslation(t *testing.T) {
 			t.Fatalf("Ward launch %q does not contain %q", got, want)
 		}
 	}
-	for _, want := range []string{
-		"WARD_CODEX_MODEL=",
-		"WARD_CODEX_REASONING_EFFORT=",
-		"WARD_CODEX_VERBOSITY=",
-	} {
-		if !strings.Contains(strings.Join(plan.Environment, " "), want) {
-			t.Fatalf("Ward environment %q does not contain %q", plan.Environment, want)
-		}
+	if len(plan.Environment) != 0 {
+		t.Fatalf("Ward launch received AOS-owned harness environment: %v", plan.Environment)
 	}
 	if strings.Contains(got, "--config") {
 		t.Fatalf("Ward launch contains a workflow-local config flag: %q", got)
@@ -205,13 +199,13 @@ func TestIntegratedWardedDirectorCodexDryRunUsesOpaqueCompositionMetadata(t *tes
 			t.Errorf("dry run missing %q:\n%s", want, rendered)
 		}
 	}
-	for _, want := range []string{
+	for _, retired := range []string{
 		"WARD_CODEX_MODEL=",
 		"WARD_CODEX_REASONING_EFFORT=",
 		"WARD_CODEX_VERBOSITY=",
 	} {
-		if !strings.Contains(rendered, want) {
-			t.Fatalf("Ward launch did not receive AOS-owned harness environment %q:\n%s", want, rendered)
+		if strings.Contains(rendered, retired) {
+			t.Fatalf("Ward launch retained AOS-owned harness environment %q:\n%s", retired, rendered)
 		}
 	}
 	if strings.Contains(rendered, "--config") {

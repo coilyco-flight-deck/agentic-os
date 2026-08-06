@@ -375,11 +375,7 @@ func buildWardLaunchPlan(opts integratedLaunchOptions, bundlePath string) (wardL
 	if bundlePath != "" {
 		args = append(args, "--context-bundle", bundlePath)
 	}
-	environment, err := wardLaunchEnvironmentFor(opts.Agent)
-	if err != nil {
-		return wardLaunchPlan{}, err
-	}
-	return wardLaunchPlan{Command: "ward", Environment: environment, Args: args}, nil
+	return wardLaunchPlan{Command: "ward", Args: args}, nil
 }
 
 func resolveWardWithContextContract(ctx context.Context) (string, error) {

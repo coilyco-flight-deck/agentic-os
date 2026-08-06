@@ -283,7 +283,7 @@ func TestStageNativeRoleHomeFiltersUserSkills(t *testing.T) {
 }
 
 func TestNativeShadowExportsAOSModelTier(t *testing.T) {
-	t.Setenv(agentComposeModelClassEnv, "low-context")
+	t.Setenv(agentComposeModelClassEnv, "legacy-model-class")
 	t.Setenv(agentComposeModelTierEnv, "")
 
 	command := []string{
