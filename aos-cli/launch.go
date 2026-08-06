@@ -82,6 +82,7 @@ type launchOptions struct {
 	AuthMounts      []authMount
 	ForwardedEnvs   []string
 	Kubeconfig      string
+	HostNetwork     bool
 	MCPInventory    string
 	TailnetNetwork  string
 	TailnetForwards []tailnetForward
@@ -137,6 +138,9 @@ func buildLaunchPlan(opts launchOptions) (launchPlan, error) {
 	if len(opts.TailnetForwards) > 0 && opts.TailnetNetwork == "" {
 		return launchPlan{}, fmt.Errorf("tailnet MCP forwarding needs a Docker network")
 	}
+	if opts.HostNetwork && opts.TailnetNetwork != "" {
+		return launchPlan{}, fmt.Errorf("host networking conflicts with Docker network %q", opts.TailnetNetwork)
+	}
 	kubeconfig, err := resolveKubeconfigMount(opts.Role, opts.Kubeconfig)
 	if err != nil {
 		return launchPlan{}, err
@@ -185,7 +189,9 @@ func buildLaunchPlan(opts launchOptions) (launchPlan, error) {
 			"--env", "KUBECONFIG="+containerKubeconfig,
 		)
 	}
-	if opts.TailnetNetwork != "" {
+	if opts.HostNetwork {
+		args = append(args, "--network", "host")
+	} else if opts.TailnetNetwork != "" {
 		args = append(
 			args,
 			"--network", opts.TailnetNetwork,

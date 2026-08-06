@@ -31,6 +31,7 @@ type integratedLaunchOptions struct {
 	NoSubstrate bool
 	Auth        bool
 	Kubeconfig  string
+	HostNetwork bool
 	DryRun      bool
 	Arguments   []string
 }
@@ -62,6 +63,7 @@ func runIntegratedLaunch(
 		NoSubstrate: cmd.Bool("no-substrate"),
 		Auth:        cmd.Bool("auth"),
 		Kubeconfig:  cmd.String("kubeconfig"),
+		HostNetwork: defaults.HostNetwork,
 		DryRun:      cmd.Bool("dry-run"),
 		Arguments:   cmd.Args().Slice(),
 	}
@@ -250,6 +252,10 @@ func runStandaloneIntegratedLaunch(
 	if err != nil {
 		return err
 	}
+	if opts.HostNetwork {
+		mcp.TailnetNetwork = ""
+		mcp.Forwards = nil
+	}
 	plan, err := buildLaunchPlan(launchOptions{
 		Image:           opts.Image,
 		Role:            opts.Role,
@@ -266,6 +272,7 @@ func runStandaloneIntegratedLaunch(
 		AuthMounts:      auth.Mounts,
 		ForwardedEnvs:   forwardedEnvironment(opts.Auth),
 		Kubeconfig:      opts.Kubeconfig,
+		HostNetwork:     opts.HostNetwork,
 		MCPInventory:    mcp.Inventory,
 		TailnetNetwork:  mcp.TailnetNetwork,
 		TailnetForwards: mcp.Forwards,

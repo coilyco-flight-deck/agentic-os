@@ -21,6 +21,7 @@ const (
 type launchDefaults struct {
 	Warded       bool
 	RoleShortcut bool
+	HostNetwork  bool
 }
 
 func main() {
@@ -49,7 +50,7 @@ func commandDefaultsForInvocation(executable string) launchDefaults {
 	}
 	for _, alias := range []string{"aoscompose", "aoscomposed"} {
 		if name == alias || strings.HasPrefix(name, alias+"-") {
-			return launchDefaults{RoleShortcut: true}
+			return launchDefaults{RoleShortcut: true, HostNetwork: true}
 		}
 	}
 	return launchDefaults{}

@@ -19,10 +19,10 @@ The compatibility flags `--composed` and `--guarded` remain accepted, including
 explicit false values, but cannot disable either context.
 
 `aos` and `aoscompose` name the standalone container `<role>-<suffix>`.
-`aoscomposed` stays compatible. For `aoscompose`, first positional selects
-role. A second harness overrides that role default. Auth is default-on. Use
-`--auth=false` only for startup checks. Examples: `aoscompose engineer --version`
-and `aoscompose engineer goose --version`.
+`aoscomposed` stays compatible. `aoscompose` uses Docker host networking.
+First positional selects role, and a second harness overrides the default.
+Auth is default-on. Use `--auth=false` only for startup checks:
+`aoscompose engineer --version` or `aoscompose engineer goose --version`.
 
 `aosward` is the same executable with warded mode forced. It equals
 `aos --warded`, but `--warded=false` cannot disable its Ward delegation:
@@ -55,7 +55,7 @@ incompatible agents and translated Ward flags before starting a container.
 * [Codex authentication](aos-codex-auth.md) fails closed before Docker, projects
   file-backed or direct macOS Keychain credentials read-only, and preserves
   `--auth=false` for startup checks.
-* [MCP and tailnet projection](aos-standalone-connectivity.md) preserves the native standalone connectivity baseline.
+* [Standalone connectivity](aos-standalone-connectivity.md) preserves host networking, MCP, and tailnet behavior.
 * [Role-gated kubeconfig projection](aos-kubeconfig.md) mounts one explicit operator-selected source read-only for standalone director and ops launches.
 * With `--auth=true`, present authentication variables cross by name, never rendered value.
 * Docker socket, AWS config, host HOME, and Git credentials do not mount.

@@ -39,6 +39,13 @@ URLs and do not use the bridge.
 Tailnet MCP bridging currently supports `http` URLs. AOS rejects a detected
 tailnet `https` endpoint instead of silently breaking TLS hostname validation.
 
+## Host network
+
+`aoscompose` and `aoscomposed` launch with Docker host networking. Private tools
+should bind `127.0.0.1:<port>`, which opens at that URL from the host browser.
+This mode replaces `ward-tailnet` for these aliases. Bare `aos --role ...` and
+`aosward` keep network ownership.
+
 ## Outage behavior
 
 MCP registration remains visible when the standing proxy is cycling. Calls to

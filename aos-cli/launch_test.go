@@ -373,6 +373,49 @@ func TestBuildLaunchPlanNamesAgentContainerForRole(t *testing.T) {
 	}
 }
 
+func TestBuildLaunchPlanUsesHostNetwork(t *testing.T) {
+	t.Parallel()
+	plan, err := buildLaunchPlan(launchOptions{
+		Image:       "agentic-os:test",
+		Role:        "engineer",
+		Layout:      "codex",
+		Delivery:    "native-skills",
+		Composed:    true,
+		CWD:         t.TempDir(),
+		Command:     []string{"codex"},
+		UID:         1000,
+		GID:         1000,
+		HostNetwork: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	network, ok := flagValue(plan.DockerArgs, "--network")
+	if !ok || network != "host" {
+		t.Fatalf("host-network launch plan network = %q, ok = %v:\n%s", network, ok, strings.Join(plan.DockerArgs, "\n"))
+	}
+}
+
+func TestBuildLaunchPlanRejectsConflictingNetworks(t *testing.T) {
+	t.Parallel()
+	_, err := buildLaunchPlan(launchOptions{
+		Image:          "agentic-os:test",
+		Role:           "engineer",
+		Layout:         "codex",
+		Delivery:       "native-skills",
+		Composed:       true,
+		CWD:            t.TempDir(),
+		Command:        []string{"codex"},
+		UID:            1000,
+		GID:            1000,
+		HostNetwork:    true,
+		TailnetNetwork: tailnetDockerNetwork,
+	})
+	if err == nil || !strings.Contains(err.Error(), "host networking conflicts") {
+		t.Fatalf("conflicting network error = %v", err)
+	}
+}
+
 func TestBuildLaunchPlanPullsMovingReleaseImage(t *testing.T) {
 	t.Parallel()
 	plan, err := buildLaunchPlan(launchOptions{

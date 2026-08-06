@@ -416,6 +416,7 @@ func TestAOSComposeAliasesUseBothContextsWithoutWard(t *testing.T) {
 			rendered := output.String()
 			for _, want := range []string{
 				"_container-acompose",
+				"--network host",
 				"--composed",
 				"--guarded",
 				"-- codex --version",
