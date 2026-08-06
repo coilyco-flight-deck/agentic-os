@@ -47,6 +47,7 @@ type nativeLease struct {
 	SessionRoot     string           `json:"session_root"`
 	SessionProjects string           `json:"session_projects"`
 	SessionHome     string           `json:"session_home,omitempty"`
+	ClaudeKeychain  string           `json:"claude_keychain,omitempty"`
 	DeadSince       *time.Time       `json:"dead_since,omitempty"`
 	Artifacts       []nativeArtifact `json:"artifacts"`
 }
@@ -91,6 +92,16 @@ type nativeRuntime struct {
 	FleetFile    string
 	Random       io.Reader
 	Stderr       *os.File
+	// ClaudeKeyring is injected by tests. The zero value falls back to the
+	// platform keyring.
+	ClaudeKeyring claudeKeyringPorts
+}
+
+func (runtime nativeRuntime) claudeKeyring() claudeKeyringPorts {
+	if runtime.ClaudeKeyring.Read != nil {
+		return runtime.ClaudeKeyring
+	}
+	return defaultClaudeKeyringPorts()
 }
 
 func runNativeShadow(ctx context.Context, cmd *cli.Command) error {
@@ -480,6 +491,26 @@ func nativeGit(directory string, args ...string) (string, error) {
 	return strings.TrimSpace(string(output)), nil
 }
 
+// harvestNativeClaudeLease returns a finished session's token to the host and
+// reports whether the lease changed. Keyring failure warns, never blocks.
+func harvestNativeClaudeLease(runtime nativeRuntime, lease *nativeLease) bool {
+	if strings.TrimSpace(lease.ClaudeKeychain) == "" {
+		return false
+	}
+	if err := returnNativeClaudeCredential(
+		context.Background(),
+		runtime.claudeKeyring(),
+		runtime.Home,
+		lease.ClaudeKeychain,
+	); err != nil {
+		fmt.Fprintf(runtime.Stderr,
+			"aos: native session Claude login not returned to the host: %v\n", err)
+		return false
+	}
+	lease.ClaudeKeychain = ""
+	return true
+}
+
 func cleanDeadNativeSessions(runtime nativeRuntime) (nativeLiveWorktrees, error) {
 	leaseDir := nativeStatePath(runtime, "leases")
 	entries, err := os.ReadDir(leaseDir)
@@ -510,6 +541,13 @@ func cleanDeadNativeSessions(runtime nativeRuntime) (nativeLiveWorktrees, error)
 			}
 			live.addArtifacts(lease.Artifacts)
 			continue
+		}
+		// A dead session's token is harvested at once rather than after the
+		// worktree grace, because the next launch needs the refreshed value.
+		if harvested := harvestNativeClaudeLease(runtime, &lease); harvested {
+			if err := writeNativeJSON(path, lease); err != nil {
+				return nativeLiveWorktrees{}, fmt.Errorf("record harvested native lease: %w", err)
+			}
 		}
 		if lease.DeadSince == nil {
 			deadSince := runtime.Now
@@ -886,6 +924,20 @@ func createNativeSession(
 			return nativeLaunchWorkspace{}, err
 		}
 	}
+	claudeKeychain := ""
+	if harness == "claude" && sessionHome != "" {
+		service, err := lendNativeClaudeCredential(
+			context.Background(),
+			runtime.claudeKeyring(),
+			runtime.Home,
+			sessionHome,
+		)
+		if err != nil {
+			fmt.Fprintf(runtime.Stderr,
+				"aos: native session Claude login not carried forward: %v\n", err)
+		}
+		claudeKeychain = service
+	}
 	branch := "aos/" + harness + "/" + id
 	artifacts := make([]nativeArtifact, 0, len(repositories))
 	created := map[string]string{}
@@ -922,6 +974,7 @@ func createNativeSession(
 			SessionRoot:     sessionRoot,
 			SessionProjects: sessionProjects,
 			SessionHome:     sessionHome,
+			ClaudeKeychain:  claudeKeychain,
 			Artifacts:       artifacts,
 		}); err != nil {
 			return nativeLaunchWorkspace{}, fmt.Errorf("write native lease: %w", err)
@@ -941,6 +994,7 @@ func createNativeSession(
 		SessionRoot:     sessionRoot,
 		SessionProjects: sessionProjects,
 		SessionHome:     sessionHome,
+		ClaudeKeychain:  claudeKeychain,
 		Artifacts:       artifacts,
 	}
 	if err := writeNativeJSON(nativeStatePath(runtime, "leases", id+".json"), lease); err != nil {

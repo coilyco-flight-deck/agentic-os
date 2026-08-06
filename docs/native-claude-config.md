@@ -42,3 +42,10 @@ session keeps a symlink to the host file rather than a divergent copy.
 
 Seeding failure is reported and never blocks a launch. Trust is a convenience,
 and a session that prompts is still a working session.
+
+## Credentials
+
+The config link carries onboarding and registry state, not the login itself. On
+macOS the OAuth token lives in the Keychain under a service name keyed to
+`CLAUDE_CONFIG_DIR`, so a session-scoped config directory never finds it. See
+[Claude credential bridging](native-claude-credentials.md).

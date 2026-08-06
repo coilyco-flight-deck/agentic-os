@@ -1,0 +1,89 @@
+//go:build darwin
+
+package main
+
+import (
+	"bytes"
+	"context"
+	"errors"
+	"os/exec"
+)
+
+func readClaudeKeyring(ctx context.Context, service, account string) ([]byte, error) {
+	command := exec.CommandContext(
+		ctx,
+		"/usr/bin/security",
+		"find-generic-password",
+		"-s", service,
+		"-a", account,
+		"-w",
+	)
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	command.Stdout = &stdout
+	command.Stderr = &stderr
+	if err := command.Run(); err != nil {
+		if claudeKeyringMissing(err, stderr.Bytes()) {
+			return nil, errClaudeKeyringNotFound
+		}
+		return nil, err
+	}
+	return bytes.TrimSpace(stdout.Bytes()), nil
+}
+
+// The secret crosses on argv because /usr/bin/security otherwise only prompts
+// on a terminal. docs/native-claude-credentials.md records the tradeoff.
+func writeClaudeKeyring(ctx context.Context, service, account string, secret []byte) error {
+	command := exec.CommandContext(
+		ctx,
+		"/usr/bin/security",
+		"add-generic-password",
+		"-U",
+		"-s", service,
+		"-a", account,
+		"-w", string(secret),
+	)
+	var stderr bytes.Buffer
+	command.Stderr = &stderr
+	if err := command.Run(); err != nil {
+		return errors.New(claudeKeyringFailure(err, stderr.Bytes()))
+	}
+	return nil
+}
+
+func deleteClaudeKeyring(ctx context.Context, service, account string) error {
+	command := exec.CommandContext(
+		ctx,
+		"/usr/bin/security",
+		"delete-generic-password",
+		"-s", service,
+		"-a", account,
+	)
+	var stderr bytes.Buffer
+	command.Stderr = &stderr
+	if err := command.Run(); err != nil {
+		if claudeKeyringMissing(err, stderr.Bytes()) {
+			return errClaudeKeyringNotFound
+		}
+		return errors.New(claudeKeyringFailure(err, stderr.Bytes()))
+	}
+	return nil
+}
+
+func claudeKeyringMissing(err error, stderr []byte) bool {
+	var exitError *exec.ExitError
+	if !errors.As(err, &exitError) {
+		return false
+	}
+	return bytes.Contains(stderr, []byte("-25300")) ||
+		bytes.Contains(stderr, []byte("could not be found"))
+}
+
+// The secret never reaches stderr, so the message is safe to surface.
+func claudeKeyringFailure(err error, stderr []byte) string {
+	message := string(bytes.TrimSpace(stderr))
+	if message == "" {
+		return err.Error()
+	}
+	return message
+}
