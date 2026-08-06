@@ -46,3 +46,8 @@ white = "#ffffff"
 
 [terminal]
 osc52 = "OnlyCopy"
+
+[[keyboard.bindings]]
+key = "Return"
+mods = "Shift"
+chars = "\u001B\r"
