@@ -10,7 +10,7 @@ transfers authority between tools. Standalone AOS applies bounded access gates s
 
 ## Launch modes
 
-Every AOS agent launch has these two contexts:
+Every AOS launch has two contexts:
 
 * Agent-compose verifies and projects the selected role into a private staged home.
 * AOS attaches standalone `aosguard`, which keeps its specgen credential mounts.
@@ -18,7 +18,7 @@ Every AOS agent launch has these two contexts:
 The compatibility flags `--composed` and `--guarded` remain accepted, including
 explicit false values, but cannot disable either context.
 
-`aos` and `aoscompose` own one standalone container. `aoscomposed` stays compatible. For `aoscompose`, the first positional arg can select the role, and a second harness overrides that role's default agent:
+`aos` and `aoscompose` name the standalone container `<role>-<suffix>`. `aoscomposed` stays compatible. For `aoscompose`, the first positional arg can select the role, and a second harness overrides that role's default agent:
 
 ```bash
 aoscompose --auth=false engineer --version
@@ -72,7 +72,7 @@ Composition verifies the immutable role bundle with `project --scope home`.
 cover both lifecycle shapes. The standalone smoke uses `--auth=false` and a
 version command, so it proves startup rather than authenticated inference. The
 [Codex auth contract](aos-codex-auth.md) names the inference probe. The [CLI release
-pipeline](aos-cli-release.md) publishes checksummed binaries plus Homebrew and Scoop metadata.
+pipeline](aos-cli-release.md) publishes checksummed binaries and package metadata.
 
 ## See also
 

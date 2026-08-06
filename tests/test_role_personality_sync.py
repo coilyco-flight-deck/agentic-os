@@ -81,6 +81,53 @@ def test_sync_writes_then_check_passes(
     assert role_personality_sync.run(snapshot, output, check=True) == 0
 
 
+def test_sync_scopes_projection_to_launch_profile_roles(
+    personality_sources: tuple[Path, Path],
+) -> None:
+    snapshot, output = personality_sources
+    role_scope = output.parent / "harness-launch-profiles.yaml"
+    role_scope.write_text(
+        "roles:\n  guide:\n    agent: claude\n",
+        encoding="utf-8",
+    )
+
+    assert (
+        role_personality_sync.run(
+            snapshot,
+            output,
+            check=False,
+            role_scope=role_scope,
+        )
+        == 0
+    )
+
+    assert role_personality_sync.load_projection(output) == {
+        "guide": ("playful", "diplomatic")
+    }
+
+
+def test_sync_fails_when_launch_profile_role_is_missing(
+    personality_sources: tuple[Path, Path],
+) -> None:
+    snapshot, output = personality_sources
+    role_scope = output.parent / "harness-launch-profiles.yaml"
+    role_scope.write_text(
+        "roles:\n  absent:\n    agent: codex\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(
+        role_personality_sync.RolePersonalitySyncError,
+        match="absent from agent-compose snapshot",
+    ):
+        role_personality_sync.run(
+            snapshot,
+            output,
+            check=False,
+            role_scope=role_scope,
+        )
+
+
 def test_snapshot_rejects_invalid_personality_binding(
     personality_sources: tuple[Path, Path],
 ) -> None:

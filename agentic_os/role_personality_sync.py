@@ -13,6 +13,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PROJECTION_PATH = Path("aos-cli") / "role-personalities.json"
 DEFAULT_OUTPUT = REPO_ROOT / PROJECTION_PATH
+DEFAULT_ROLE_SCOPE = REPO_ROOT / ".agents" / "harness-launch-profiles.yaml"
 DEFAULT_PERSON_SNAPSHOT = (
     Path.home() / ".agent-compose" / "sources" / "personality" / "person.json"
 )
@@ -144,6 +145,62 @@ def load_person_snapshot(path: Path) -> PersonSnapshot:
     return PersonSnapshot(roles=tuple(roles), skills=tuple(skills))
 
 
+def load_role_scope(path: Path) -> tuple[str, ...]:
+    try:
+        raw = path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise RolePersonalitySyncError(f"read role scope {path}: {exc}") from exc
+    roles: list[str] = []
+    in_roles = False
+    for line_number, line in enumerate(raw.splitlines(), start=1):
+        body = line.split("#", 1)[0].rstrip()
+        if not body:
+            continue
+        indent = len(body) - len(body.lstrip(" "))
+        stripped = body.strip()
+        if indent == 0:
+            in_roles = stripped == "roles:"
+            continue
+        if not in_roles:
+            continue
+        if indent == 2 and stripped.endswith(":"):
+            roles.append(_slug(stripped[:-1], f"{path}:{line_number}: role"))
+            continue
+        if indent <= 2:
+            raise RolePersonalitySyncError(
+                f"{path}:{line_number}: roles must use plain nested mapping keys"
+            )
+    if not roles:
+        raise RolePersonalitySyncError(f"{path}: roles are empty")
+    if len(set(roles)) != len(roles):
+        raise RolePersonalitySyncError(f"{path}: roles repeat a role")
+    return tuple(roles)
+
+
+def scope_snapshot(snapshot: PersonSnapshot, roles: tuple[str, ...]) -> PersonSnapshot:
+    indexed = {role.role: role for role in snapshot.roles}
+    missing = [role for role in roles if role not in indexed]
+    if missing:
+        raise RolePersonalitySyncError(
+            "role scope contains roles absent from agent-compose snapshot: "
+            + ", ".join(missing)
+        )
+    selected_roles = tuple(indexed[role] for role in roles)
+    selected_personalities = {
+        personality
+        for role in selected_roles
+        for personality in role.personalities
+    }
+    return PersonSnapshot(
+        roles=selected_roles,
+        skills=tuple(
+            (personality, skill)
+            for personality, skill in snapshot.skills
+            if personality in selected_personalities
+        ),
+    )
+
+
 def render_projection(snapshot: PersonSnapshot) -> str:
     payload = {
         "format": FORMAT,
@@ -239,8 +296,16 @@ def load_projection(path: Path) -> dict[str, tuple[str, ...]]:
     return role_map
 
 
-def run(person_snapshot: Path, output: Path, *, check: bool) -> int:
+def run(
+    person_snapshot: Path,
+    output: Path,
+    *,
+    check: bool,
+    role_scope: Path | None = None,
+) -> int:
     snapshot = load_person_snapshot(person_snapshot)
+    if role_scope is not None:
+        snapshot = scope_snapshot(snapshot, load_role_scope(role_scope))
     expected = render_projection(snapshot)
     try:
         current = output.read_text(encoding="utf-8")
@@ -290,6 +355,12 @@ def main(argv: list[str] | None = None) -> int:
         type=Path,
         default=DEFAULT_PERSON_SNAPSHOT,
     )
+    parser.add_argument(
+        "--role-scope",
+        type=Path,
+        default=DEFAULT_ROLE_SCOPE,
+        help="YAML launch profile whose roles scope the AOS projection",
+    )
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     args = parser.parse_args(argv)
 
@@ -304,6 +375,7 @@ def main(argv: list[str] | None = None) -> int:
             args.person_snapshot,
             args.output,
             check=args.check,
+            role_scope=args.role_scope,
         )
     except RolePersonalitySyncError as exc:
         print(f"role-personality-sync: {exc}", file=sys.stderr)

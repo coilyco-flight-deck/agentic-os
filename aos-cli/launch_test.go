@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -340,6 +341,38 @@ func TestBuildLaunchPlanMountsCWDAndRunsInternalCompose(t *testing.T) {
 	}
 }
 
+func TestBuildLaunchPlanNamesAgentContainerForRole(t *testing.T) {
+	t.Parallel()
+	plan, err := buildLaunchPlan(launchOptions{
+		Image:    "agentic-os:test",
+		Role:     "engineer",
+		Layout:   "codex",
+		Delivery: "native-skills",
+		Composed: true,
+		CWD:      t.TempDir(),
+		Command:  []string{"codex"},
+		UID:      1000,
+		GID:      1000,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	name, ok := flagValue(plan.DockerArgs, "--name")
+	if !ok {
+		t.Fatalf("launch plan omitted Docker container name:\n%s", strings.Join(plan.DockerArgs, "\n"))
+	}
+	suffix, ok := strings.CutPrefix(name, "engineer-")
+	if !ok {
+		t.Fatalf("container name = %q, want role-prefixed name", name)
+	}
+	if len(suffix) != 8 {
+		t.Fatalf("container name suffix = %q, want 8 hex characters", suffix)
+	}
+	if _, err := hex.DecodeString(suffix); err != nil {
+		t.Fatalf("container name suffix = %q, want hex: %v", suffix, err)
+	}
+}
+
 func TestBuildLaunchPlanPullsMovingReleaseImage(t *testing.T) {
 	t.Parallel()
 	plan, err := buildLaunchPlan(launchOptions{
@@ -625,6 +658,15 @@ func containsArg(args []string, want string) bool {
 		}
 	}
 	return false
+}
+
+func flagValue(args []string, name string) (string, bool) {
+	for i, arg := range args {
+		if arg == name && i+1 < len(args) {
+			return args[i+1], true
+		}
+	}
+	return "", false
 }
 
 func writeTestKubeconfig(t *testing.T, path string) string {

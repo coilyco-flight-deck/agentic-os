@@ -3,7 +3,9 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -30,6 +32,17 @@ var (
 	workspaceNamePattern = regexp.MustCompile(`[^A-Za-z0-9._-]+`)
 	lookPath             = exec.LookPath
 )
+
+func agentContainerName(role string) (string, error) {
+	if !safeRoleSlug(role) {
+		return "", fmt.Errorf("role %q is not a safe shared role slug", role)
+	}
+	random := make([]byte, 4)
+	if _, err := rand.Read(random); err != nil {
+		return "", fmt.Errorf("generate agent container suffix: %w", err)
+	}
+	return role + "-" + hex.EncodeToString(random), nil
+}
 
 type authMount struct {
 	HostPath      string
@@ -105,6 +118,10 @@ func buildLaunchPlan(opts launchOptions) (launchPlan, error) {
 	if strings.TrimSpace(opts.Role) == "" {
 		return launchPlan{}, fmt.Errorf("role must not be empty")
 	}
+	containerName, err := agentContainerName(opts.Role)
+	if err != nil {
+		return launchPlan{}, err
+	}
 	if len(opts.Command) == 0 {
 		return launchPlan{}, fmt.Errorf("launch command must not be empty")
 	}
@@ -135,7 +152,7 @@ func buildLaunchPlan(opts launchOptions) (launchPlan, error) {
 	}
 	workspace := containerWorkspaceRoot + "/" + name
 
-	args := []string{"run", "--rm", "--interactive"}
+	args := []string{"run", "--rm", "--interactive", "--name", containerName}
 	if opts.Image == defaultImage {
 		args = append(args, "--pull", "always")
 	}
