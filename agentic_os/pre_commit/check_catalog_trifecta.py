@@ -17,9 +17,7 @@ This validator checks, per markdown file:
     2. The file contains a "## See also" section header.
     3. The file contains markdown links resolving to each of the other
        three canonical paths (the two peer .md files plus .ward/ward.yaml).
-    4. The file cites the canonical convention doc at
-       docs/features-release-tooling.md.
-    5. AGENTS.md contains the standard repo-local agent heading set.
+    4. AGENTS.md contains the standard repo-local agent heading set.
 
 The .ward/ward.yaml file only needs to exist; no back-link required,
 since YAML is machine-consumed and the prose home is the .md files.
@@ -27,12 +25,7 @@ since YAML is machine-consumed and the prose home is the .md files.
 Usage (when run directly):
     python3 scripts/check-catalog-trifecta.py
 
-Canonical copy lives in coilyco-flight-deck/agentic-os/scripts/. Each consumer
-repo gets a stamped copy via agentic-os-kai's apply-catalog-trifecta-hook
-rollout. Exits 0 on clean, 1 on any violation with a per-file report on
-stderr.
-
-See docs/features-release-tooling.md for the convention design.
+Exits 0 on clean, 1 on any violation with a per-file report on stderr.
 """
 from __future__ import annotations
 
@@ -75,9 +68,6 @@ AGENTS_REQUIRED_H2 = [
 LINK_RE = re.compile(
     r"(?<!\!)\[(?P<text>[^\]\n]+)\]\((?P<target>[^)\s]+)(?:\s+\"[^\"]*\")?\)"
 )
-
-CONVENTION_CITATIONS = ("features-release-tooling.md",)
-
 
 def link_targets(text: str) -> set[str]:
     """Resolved-target paths for every inline markdown link in `text`.
@@ -139,12 +129,6 @@ def check_md_file(md_path: Path, catalog_yaml: Path) -> list[str]:
                 f"catalog-trifecta files."
             )
 
-    if not any(c in body for c in CONVENTION_CITATIONS):
-        violations.append(
-            f"{md_path}: convention citation missing. Include "
-            f"a link to features-release-tooling.md in the See also footer."
-        )
-
     if md_path == Path("AGENTS.md"):
         violations.extend(check_agents_headings(body))
 
@@ -202,9 +186,7 @@ def main() -> int:
 
     for v in all_violations:
         sys.stderr.write(f"FAIL: {v}\n")
-    sys.stderr.write(
-        f"\n{len(all_violations)} violation(s). See docs/features-release-tooling.md.\n"
-    )
+    sys.stderr.write(f"\n{len(all_violations)} catalog-trifecta violation(s).\n")
     return 1
 
 

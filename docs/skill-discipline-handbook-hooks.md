@@ -27,7 +27,10 @@ basenames. Per-repo excludes live under
 
 ### catalog-trifecta (pre-commit, pre-push)
 
-Runs `check-catalog-trifecta`. Enforces the repo entrypoint set: `README.md`, `AGENTS.md`, `docs/FEATURES.md`, and one catalog YAML (`.ward/ward.yaml` or `.ward/ward.yaml`). Each Markdown file needs `## See also`, links to the other entrypoints, and the convention citation.
+Runs `check-catalog-trifecta`. Enforces the repo entrypoint set: `README.md`,
+`AGENTS.md`, `docs/FEATURES.md`, and `.ward/ward.yaml`. Each Markdown file needs
+`## See also` and links to the other entrypoints. Consumers do not cite an
+AOS-internal convention page.
 
 `AGENTS.md` also carries a required repo-local heading set so agents can scan operating rules without guessing each repo's prose shape:
 

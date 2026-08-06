@@ -11,6 +11,9 @@ The suite covers Actions policy, contracts, links, source-doc refs,
 issue refs stay opt-in in [pre-commit hygiene](pre-commit-hygiene.md). See the
 [hook manifest](../.pre-commit-hooks.yaml).
 
+`catalog-trifecta` requires the four consumer entrypoints to exist and
+cross-link. It requires no AOS citation.
+
 ## Seed-skill propagation
 
 qwen-opencode's per-repo context management wants a little language context living inside each target repo (for a Python repo, a pointer to how Kai writes Python). The composed `coding-<lang>` sources declare how they propagate with a `seed:` frontmatter block: `kind: always` (the `coding-core-git` baseline, seeded into every repo) or `kind: language` with `language` + `extensions` (seeded into repos containing those files). Target repos reference the delivered path, e.g. `.agents/skills/coding-python/SKILL.md`, or the canonical `.agents/composed/coding-python/COMPOSED.md` source.

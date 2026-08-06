@@ -52,7 +52,7 @@
 
 - id: catalog-trifecta
   name: catalog-trifecta cross-link convention
-  description: Enforce that README + AGENTS + docs/FEATURES + .ward/ward.yaml cross-link. See docs/features-release-tooling.md.
+  description: Enforce that README + AGENTS + docs/FEATURES + .ward/ward.yaml exist and cross-link.
   entry: check-catalog-trifecta
   language: python
   always_run: true
