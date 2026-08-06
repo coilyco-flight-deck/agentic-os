@@ -9,11 +9,9 @@ roles:
     agent: claude
   design:
     agent: claude
-  community:
-    agent: claude
   strats:
     agent: claude
-  content:
+  creator:
     agent: claude
   ai:
     agent: claude

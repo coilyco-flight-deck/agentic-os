@@ -44,16 +44,22 @@ func TestLoadHarnessLaunchProfilesRejectsMalformedRegistry(t *testing.T) {
 	}
 }
 
+// Resolution is the behavior under test, not the agent a role points at: the
+// profiles own that tunable, so naming values here would restate config.
 func TestStandaloneDefaultAgentForRole(t *testing.T) {
-	t.Parallel()
-	tests := map[string]string{
-		"engineer": "codex",
-		"director": "claude",
+	// Not parallel - reads the global cwd and the compiled fallback that the
+	// sibling tests below swap out.
+	document, err := loadConfiguredHarnessLaunchProfiles()
+	if err != nil {
+		t.Fatal(err)
 	}
-	for role, want := range tests {
+	if len(document.DefaultAgents) == 0 {
+		t.Fatal("the configured launch profiles declared no roles")
+	}
+	for role, want := range document.DefaultAgents {
 		got, err := standaloneDefaultAgentForRole(role)
 		if err != nil {
-			t.Fatal(err)
+			t.Fatalf("standaloneDefaultAgentForRole(%s): %v", role, err)
 		}
 		if got != want {
 			t.Fatalf("standaloneDefaultAgentForRole(%s) = %q, want %q", role, got, want)
