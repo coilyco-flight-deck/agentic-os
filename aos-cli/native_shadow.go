@@ -590,6 +590,13 @@ func harvestNativeClaudeLease(runtime nativeRuntime, lease *nativeLease) bool {
 	return true
 }
 
+// nativeHeldLease pairs a lease with its file so startup can read every lease
+// once, resolve all owning processes in one query, then decide.
+type nativeHeldLease struct {
+	path  string
+	lease nativeLease
+}
+
 func cleanDeadNativeSessions(runtime nativeRuntime) (nativeLiveWorktrees, error) {
 	leaseDir := nativeStatePath(runtime, "leases")
 	entries, err := os.ReadDir(leaseDir)
@@ -602,6 +609,8 @@ func cleanDeadNativeSessions(runtime nativeRuntime) (nativeLiveWorktrees, error)
 	live := nativeLiveWorktrees{}
 	released := 0
 	runtime.Progress.Note("%d lease(s) on disk", len(entries))
+	held := make([]nativeHeldLease, 0, len(entries))
+	pids := make([]int, 0, len(entries))
 	for _, entry := range entries {
 		if entry.IsDir() || filepath.Ext(entry.Name()) != ".json" {
 			continue
@@ -613,7 +622,14 @@ func cleanDeadNativeSessions(runtime nativeRuntime) (nativeLiveWorktrees, error)
 			fmt.Fprintf(runtime.Stderr, "aos: preserving unreadable native lease %s\n", path)
 			continue
 		}
-		if nativeLeaseIsLive(lease) {
+		held = append(held, nativeHeldLease{path: path, lease: lease})
+		pids = append(pids, lease.PID)
+	}
+	probe := probeNativeProcesses(pids)
+	for _, entry := range held {
+		path := entry.path
+		lease := entry.lease
+		if probe.leaseIsLive(lease) {
 			if lease.DeadSince != nil {
 				lease.DeadSince = nil
 				if err := writeNativeJSON(path, lease); err != nil {
@@ -643,7 +659,7 @@ func cleanDeadNativeSessions(runtime nativeRuntime) (nativeLiveWorktrees, error)
 			live.addArtifacts(lease.Artifacts)
 			continue
 		}
-		runtime.Progress.Item("release", released+1, len(entries),
+		runtime.Progress.Item("release", released+1, len(held),
 			"session %s (%d worktrees)", lease.ID, len(lease.Artifacts))
 		released++
 		remaining := make([]nativeArtifact, 0, len(lease.Artifacts))
@@ -676,11 +692,58 @@ func cleanDeadNativeSessions(runtime nativeRuntime) (nativeLiveWorktrees, error)
 }
 
 func nativeLeaseIsLive(lease nativeLease) bool {
+	return nativeProcessProbe{}.leaseIsLive(lease)
+}
+
+// nativeProcessProbe answers liveness for a whole batch of leases. When batched
+// is set, an absent PID is proof the process is gone, not a reason to re-ask.
+type nativeProcessProbe struct {
+	identities map[int]string
+	batched    bool
+}
+
+// probeNativeProcesses resolves every PID once. A failed batch degrades to the
+// per-PID path rather than reporting live sessions as dead.
+func probeNativeProcesses(pids []int) nativeProcessProbe {
+	if len(pids) == 0 {
+		return nativeProcessProbe{identities: map[int]string{}, batched: true}
+	}
+	identities, err := processStartIdentities(pids)
+	if err != nil {
+		return nativeProcessProbe{}
+	}
+	return nativeProcessProbe{identities: identities, batched: true}
+}
+
+func (probe nativeProcessProbe) leaseIsLive(lease nativeLease) bool {
 	if lease.PID <= 0 || lease.ProcessStart == "" {
 		return false
 	}
+	if probe.batched {
+		return probe.identities[lease.PID] == lease.ProcessStart
+	}
 	identity, err := processStartIdentity(lease.PID)
 	return err == nil && identity == lease.ProcessStart
+}
+
+// batchProcessPIDs keeps one query's argument list well inside any platform
+// limit while still collapsing a normal lease population into a single call.
+func batchProcessPIDs(pids []int) [][]int {
+	const size = 256
+	unique := make([]int, 0, len(pids))
+	seen := map[int]bool{}
+	for _, pid := range pids {
+		if pid > 0 && !seen[pid] {
+			seen[pid] = true
+			unique = append(unique, pid)
+		}
+	}
+	var batches [][]int
+	for start := 0; start < len(unique); start += size {
+		end := min(start+size, len(unique))
+		batches = append(batches, unique[start:end])
+	}
+	return batches
 }
 
 func cleanNativeArtifact(artifact nativeArtifact) (bool, error) {

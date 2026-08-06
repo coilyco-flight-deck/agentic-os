@@ -32,6 +32,20 @@ func processStartIdentity(pid int) (string, error) {
 	return strconv.FormatInt(creation.Nanoseconds(), 10), nil
 }
 
+// processStartIdentities keeps the batched shape the callers expect. Windows
+// queries each process directly, so there is no spawn to amortize.
+func processStartIdentities(pids []int) (map[int]string, error) {
+	identities := map[int]string{}
+	for _, batch := range batchProcessPIDs(pids) {
+		for _, pid := range batch {
+			if identity, err := processStartIdentity(pid); err == nil {
+				identities[pid] = identity
+			}
+		}
+	}
+	return identities, nil
+}
+
 func execNative(command []string) error {
 	child := exec.Command(command[0], command[1:]...)
 	child.Env = os.Environ()
