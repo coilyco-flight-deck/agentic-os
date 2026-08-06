@@ -98,6 +98,7 @@ def test_release_workflow_derives_assets_from_dist() -> None:
     assert "build_bundle" in builder
     assert "aos-bundle-${goos}-${goarch}.tar.gz" in builder
     assert "build_agent_terminal" in builder
+    assert "compiledHarnessLaunchProfilesBase64" in builder
     assert "specverb.lock" in builder
     assert "aosguard-*" in builder
     assert "agent-terminal-*" in builder

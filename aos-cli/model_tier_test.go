@@ -40,7 +40,7 @@ func TestModelTierForModelRejectsUnknownModels(t *testing.T) {
 
 func TestEveryHarnessLaunchProfileHasAModelTier(t *testing.T) {
 	t.Parallel()
-	document, err := loadHarnessLaunchProfiles(embeddedHarnessLaunchProfiles)
+	document, err := loadConfiguredHarnessLaunchProfiles()
 	if err != nil {
 		t.Fatal(err)
 	}

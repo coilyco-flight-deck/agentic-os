@@ -16,6 +16,12 @@ else
     dist="$repo_root/dist"
     rm -rf "$dist"
 fi
+launch_profiles="$repo_root/.agents/harness-launch-profiles.yaml"
+if [ ! -s "$launch_profiles" ]; then
+    echo "missing AOS launch profiles: $launch_profiles" >&2
+    exit 1
+fi
+launch_profiles_b64=$(base64 < "$launch_profiles" | tr -d '\n')
 
 checksum() {
     if command -v sha256sum >/dev/null 2>&1; then
@@ -228,7 +234,8 @@ while IFS= read -r target || [ -n "$target" ]; do
     (
         cd "$repo_root/aos-cli"
         GOOS="$goos" GOARCH="$goarch" CGO_ENABLED=0 \
-            go build -trimpath -ldflags "-s -w -X main.version=${version}" \
+            go build -trimpath \
+            -ldflags "-s -w -X main.version=${version} -X main.compiledHarnessLaunchProfilesBase64=${launch_profiles_b64}" \
             -o "$out" .
     )
     cp "$out" "$compose_out"

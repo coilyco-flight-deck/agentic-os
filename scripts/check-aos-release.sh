@@ -127,6 +127,14 @@ if [ -n "$native_aos" ]; then
     trap 'rm -rf "$smoke_dir"' EXIT HUP INT TERM
     (
         cd "$smoke_dir"
+        aoscompose_default_plan=$("$native_aoscompose" \
+            --image agentic-os:test \
+            --auth=false \
+            --dry-run \
+            engineer)
+        printf '%s\n' "$aoscompose_default_plan" | grep -F -- "--role engineer" >/dev/null
+        printf '%s\n' "$aoscompose_default_plan" | grep -F -- "--layout codex" >/dev/null
+        printf '%s\n' "$aoscompose_default_plan" | grep -F -- "-- codex" >/dev/null
         "$native_aosguard" --help >/dev/null
         "$native_aosguard" --version | grep -Fx "aosguard version $version" >/dev/null
         "$native_aosguard" ops aws --help >/dev/null
