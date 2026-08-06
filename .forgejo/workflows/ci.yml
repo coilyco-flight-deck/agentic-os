@@ -33,15 +33,19 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - name: Attach the pull-request merge commit for Ward
+      - name: Build verified pull-request merge evidence for Ward
         if: ${{ github.event_name == 'pull_request' }}
-        run: git switch -c ward-ci && git branch --set-upstream-to="origin/${GITHUB_BASE_REF}"
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: scripts/prepare-workflow-ward-pr.sh
       - name: Install validated Ward
         run: scripts/install-workflow-ward.sh
       - name: Test the AOS CLI
-        run: ward exec aos-test
+        run: scripts/run-workflow-ward.sh aos-test
       - name: Test the native terminal companion
-        run: ward exec agent-terminal-test
+        run: scripts/run-workflow-ward.sh agent-terminal-test
 
   ward-doctor:
     runs-on: docker
