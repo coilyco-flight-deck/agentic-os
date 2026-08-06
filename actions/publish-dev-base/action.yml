@@ -3,6 +3,12 @@ description: |
   Build and push one multi-arch language payload or the full image. Promotion
   is restricted to the already-pushed full-image draft.
 
+  Build mode installs binfmt as part of the buildx builder setup. Promote mode
+  skips that setup and lands on the `docker` runner instead of `docker-build`,
+  so it inherits no handler from a build-mode run. The full-tier verification
+  runs one container per published platform in both modes, so promote installs
+  binfmt on its own before that step. See docs/dev-base-publish-resume.md.
+
 inputs:
   tier:
     description: "Build artifact tier. Only full is promotable."
@@ -107,6 +113,11 @@ runs:
         PLATFORMS: ${{ inputs.platforms }}
         BUILD_TIMEOUT: ${{ inputs.build-timeout }}
       run: bash "${GITHUB_ACTION_PATH}/scripts/publish-image.sh"
+
+    - name: Install binfmt so promote can verify the foreign architecture
+      if: ${{ inputs.tier == 'full' && inputs.mode == 'promote' }}
+      shell: bash
+      run: docker run --privileged --rm tonistiigi/binfmt --install all
 
     - name: Verify the full development surface on both architectures
       if: ${{ inputs.tier == 'full' }}

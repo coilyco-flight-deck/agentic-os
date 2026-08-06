@@ -15,6 +15,14 @@ passes verification. A single-language resume stops after that payload. The
 separate release dispatch remains available for idempotent retag or metadata
 recovery and explicit version overrides.
 
+## Cross-architecture verification
+
+Both publish modes verify the full tier by running one container per published
+platform, so the foreign-architecture leg needs a binfmt handler. Build mode
+installs it while setting up the buildx builder. Promote mode skips that setup
+and runs on the `docker` runner rather than `docker-build`, so it inherits no
+handler from a build-mode run and installs binfmt itself before verifying.
+
 See also:
 
 * [dev-base container image](dev-base-image.md)
