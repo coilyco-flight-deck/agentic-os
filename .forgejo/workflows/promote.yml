@@ -1,5 +1,8 @@
-# Promote main to release after the repo gate only. Draft dev-base image
-# publishing now runs in a separate workflow keyed by the promoted SHA, so a
+# Promote main to release after the same suite ci.yml runs. ci.yml never
+# re-gates release precisely because this gate already vouched for the exact
+# sha, so the two must stay in step: a gate narrower than ci.yml promotes a red
+# main. test_pull_request_ci_workflow.py holds them in step. Draft dev-base
+# image publishing runs in a separate workflow keyed by the promoted SHA, so a
 # transient registry or build failure cannot stall the release branch.
 
 name: promote
@@ -38,6 +41,12 @@ jobs:
 
       - name: Repo test gate
         run: bash "$GITHUB_WORKSPACE/scripts/ci/repo-test-gate.sh"
+      - name: Test the AOS CLI
+        run: scripts/run-workflow-ward.sh aos-test
+      - name: Test the native terminal companion
+        run: scripts/run-workflow-ward.sh agent-terminal-test
+      - name: Validate the supported Ward YAML contract
+        run: CLIGUARD_NO_SANDBOX=1 ward doctor
 
       - name: Alert Telegram on main failure
         if: ${{ failure() && github.ref == 'refs/heads/main' }}
