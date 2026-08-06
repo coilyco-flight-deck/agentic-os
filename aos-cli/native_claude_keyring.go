@@ -86,6 +86,11 @@ func lendNativeClaudeCredential(
 		return "", nil
 	}
 	secret, err := ports.Read(ctx, hostService, account)
+	// No keyring on this platform means no keyring login to lend: Claude Code
+	// keeps the credential in the config dir the session already projects.
+	if errors.Is(err, errClaudeKeyringUnsupported) {
+		return "", nil
+	}
 	if err != nil {
 		return "", err
 	}
@@ -119,6 +124,9 @@ func returnNativeClaudeCredential(
 		return nil
 	}
 	secret, readErr := ports.Read(ctx, sessionService, account)
+	if errors.Is(readErr, errClaudeKeyringUnsupported) {
+		return nil
+	}
 	if readErr != nil && !errors.Is(readErr, errClaudeKeyringNotFound) {
 		return readErr
 	}

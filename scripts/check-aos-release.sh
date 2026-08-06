@@ -7,6 +7,22 @@ dist=${AOS_RELEASE_DIST:-"$repo_root/dist"}
 version=${AOS_RELEASE_VERSION:?AOS_RELEASE_VERSION is required}
 bare=${version#aos-v}
 
+# The agent a role launches by default is configuration, owned by the launch
+# profiles the release binaries are stamped from. Derive it, never restate it.
+role_default_agent() {
+    profiles="$repo_root/.agents/harness-launch-profiles.yaml"
+    agent=$(awk -v role="$1" '
+        $1 == role ":" { found = 1; next }
+        found && $1 == "agent:" { print $2; exit }
+        found && $0 ~ /^  [^ ]/ { exit }
+    ' "$profiles")
+    if [ -z "$agent" ]; then
+        echo "$profiles declares no default agent for role $1" >&2
+        exit 1
+    fi
+    printf '%s\n' "$agent"
+}
+
 (
     cd "$dist"
     if command -v sha256sum >/dev/null 2>&1; then
@@ -129,6 +145,10 @@ if [ -n "$native_aos" ]; then
     printf '%s\n' "$aosward_plan" | grep -F "ward agent director" >/dev/null
     smoke_dir=$(mktemp -d)
     trap 'rm -rf "$smoke_dir"' EXIT HUP INT TERM
+    # The launch profiles own which agent a role defaults to, so read the
+    # expected agent from them rather than restating it here.
+    engineer_agent=$(role_default_agent engineer)
+    director_agent=$(role_default_agent director)
     (
         cd "$smoke_dir"
         aoscompose_default_plan=$("$native_aoscompose" \
@@ -137,15 +157,15 @@ if [ -n "$native_aos" ]; then
             --dry-run \
             engineer)
         printf '%s\n' "$aoscompose_default_plan" | grep -F -- "--role engineer" >/dev/null
-        printf '%s\n' "$aoscompose_default_plan" | grep -F -- "--layout codex" >/dev/null
-        printf '%s\n' "$aoscompose_default_plan" | grep -F -- "-- codex" >/dev/null
+        printf '%s\n' "$aoscompose_default_plan" | grep -F -- "--layout $engineer_agent" >/dev/null
+        printf '%s\n' "$aoscompose_default_plan" | grep -F -- "-- $engineer_agent" >/dev/null
         aoscompose_director_plan=$("$native_aoscompose" \
             --image agentic-os:test \
             --dry-run \
             director)
         printf '%s\n' "$aoscompose_director_plan" | grep -F -- "--role director" >/dev/null
-        printf '%s\n' "$aoscompose_director_plan" | grep -F -- "--layout claude" >/dev/null
-        printf '%s\n' "$aoscompose_director_plan" | grep -F -- "-- claude" >/dev/null
+        printf '%s\n' "$aoscompose_director_plan" | grep -F -- "--layout $director_agent" >/dev/null
+        printf '%s\n' "$aoscompose_director_plan" | grep -F -- "-- $director_agent" >/dev/null
         "$native_aosguard" --help >/dev/null
         "$native_aosguard" --version | grep -Fx "aosguard version $version" >/dev/null
         "$native_aosguard" ops aws --help >/dev/null

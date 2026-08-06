@@ -200,3 +200,45 @@ func TestHarvestNativeClaudeLeaseClearsRecord(t *testing.T) {
 		t.Fatal("a cleared lease must not be harvested twice")
 	}
 }
+
+// Linux and Windows keep the Claude login in the config dir the session already
+// projects, so an absent keyring is nothing to report and nothing to carry.
+func unsupportedClaudeKeyring() claudeKeyringPorts {
+	return claudeKeyringPorts{
+		Read: func(context.Context, string, string) ([]byte, error) {
+			return nil, errClaudeKeyringUnsupported
+		},
+		Write: func(context.Context, string, string, []byte) error {
+			return errClaudeKeyringUnsupported
+		},
+		Delete: func(context.Context, string, string) error {
+			return errClaudeKeyringUnsupported
+		},
+	}
+}
+
+func TestLendNativeClaudeCredentialStaysQuietWithoutAKeyring(t *testing.T) {
+	service, err := lendNativeClaudeCredential(
+		context.Background(),
+		unsupportedClaudeKeyring(),
+		"/home/example",
+		"/tmp/example-session/home",
+	)
+	if err != nil {
+		t.Fatalf("error = %v, want none", err)
+	}
+	if service != "" {
+		t.Fatalf("service = %q, want empty", service)
+	}
+}
+
+func TestReturnNativeClaudeCredentialStaysQuietWithoutAKeyring(t *testing.T) {
+	home := "/home/example"
+	session := nativeClaudeKeychainService(home, "/tmp/example-session/home/.claude")
+	err := returnNativeClaudeCredential(
+		context.Background(), unsupportedClaudeKeyring(), home, session,
+	)
+	if err != nil {
+		t.Fatalf("error = %v, want none", err)
+	}
+}
