@@ -33,11 +33,6 @@ roles {
         composed-skill "tooling-pm-*"
         composed-skill "*design*"
     }
-    role community {
-        composed-skill "tooling-customer-success-*"
-        composed-skill "writing-social-*"
-        composed-skill "*discord*"
-    }
     role strats {
         composed-skill tooling-director-decision-architecture
         composed-skill tooling-skill-authoring
@@ -48,7 +43,7 @@ roles {
         composed-skill "tooling-ceo-*"
         composed-skill "tooling-pm-*"
     }
-    role content {
+    role creator {
         composed-skill "writing-*"
     }
     role ai {
