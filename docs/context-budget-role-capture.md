@@ -10,7 +10,7 @@ Capture the default AOS provider:
 
 ```sh
 ward exec context-budget -- --role ops \
-  --snapshot docs/context-budget-ops-current.yaml
+  --snapshot /tmp/context-budget-ops-current.yaml
 ```
 
 ## Multiple providers
@@ -36,7 +36,7 @@ Copy the current snapshot to a task-scoped baseline, then capture and compare:
 ```sh
 ward exec context-budget -- --role ops \
   --compare /tmp/context-budget-ops-baseline.yaml \
-  --snapshot docs/context-budget-ops-current.yaml
+  --snapshot /tmp/context-budget-ops-current.yaml
 ```
 
 `--skill-root` remains the separate input for plugin skills declared outside the

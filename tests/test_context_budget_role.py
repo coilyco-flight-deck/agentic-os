@@ -508,6 +508,36 @@ def test_snapshot_rejects_missing_personality_skill_body(
         )
 
 
+def test_snapshot_accepts_additional_roster_owned_skill(tmp_path: Path) -> None:
+    provider = provider_fixture(tmp_path)
+    bundle = bundle_fixture(tmp_path)
+    repo, cwd = repo_fixture(tmp_path)
+    write(
+        bundle
+        / "content"
+        / "skills"
+        / context.PERSON_SOURCE_SEGMENT
+        / "eval-role-comms"
+        / "SKILL.md",
+        "---\n"
+        "name: eval-role-comms\n"
+        "description: Evaluate role communication.\n"
+        "---\n"
+        "# Role communication\n",
+    )
+
+    snapshot = context.build_snapshot(
+        bundle,
+        provider,
+        repo,
+        cwd,
+        role="ops",
+        expected_personalities=FIXTURE_PERSONALITIES,
+    )
+
+    assert snapshot["skills"]["roster:core/eval-role-comms"]["class"] == "role"
+
+
 def test_snapshot_round_trip_and_delta(tmp_path: Path) -> None:
     provider = provider_fixture(tmp_path)
     bundle = bundle_fixture(tmp_path)

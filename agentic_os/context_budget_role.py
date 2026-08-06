@@ -285,9 +285,7 @@ def _canonical_skill(
     if urllib.parse.unquote(source_id) == PERSON_SOURCE_ID:
         if skill_id.startswith("personality-"):
             return "personality", PERSON_SOURCE_ID, None
-        if skill_id.startswith("role-"):
-            return "role-skill", PERSON_SOURCE_ID, None
-        raise RuntimeError(f"bundle person source contains unknown skill {skill_id}")
+        return "role-skill", PERSON_SOURCE_ID, None
     provider = providers.get(source_id)
     if provider is None:
         raise RuntimeError(

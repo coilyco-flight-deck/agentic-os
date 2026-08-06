@@ -40,10 +40,9 @@ with its class, eager tokens, lazy tokens, and resource count. Stable ordering,
 no timestamps, and no absolute source locators make identical inputs produce the
 same payload hash.
 
-Snapshots use `context-budget-<role>-<phase>.yaml`. Exactly one current snapshot
-exists per role. The generated
-[current role inventory](context-budget-role-current.md) validates and links each
-snapshot from the AOS launch profiles.
+Snapshots use `context-budget-<role>-<phase>.yaml`. AOS owns the reusable
+measurement and validation contract. The consumer that determines the complete
+provider combination owns its current snapshots and aggregate inventory.
 
 ## Capture and compare
 

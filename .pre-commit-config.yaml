@@ -123,14 +123,6 @@ repos:
         always_run: true
         pass_filenames: false
         stages: [pre-commit]
-      - id: context-budget-role-reports
-        name: role context-budget reports in sync with snapshots
-        entry: python -m agentic_os.generators.generate_context_budget_role_reports --check
-        language: python
-        additional_dependencies: [pyyaml]
-        always_run: true
-        pass_filenames: false
-        stages: [pre-commit]
       - id: agent-compose-size
         name: agent-compose source size budget
         entry: python -m agentic_os.pre_commit.check_agent_compose_size
