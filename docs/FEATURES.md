@@ -15,10 +15,9 @@ Major shipped capabilities, not files.
   personality under the `aos` source namespace.
 - [Agent tool evaluation](../.agents/skills/tooling-agent-tool-evaluation/SKILL.md) - cross-harness tool evals.
 - [Role-composed skills](role-composed-skills.md) - v2 Core Roster method slices.
-- [AOS launcher](aos-cli.md) - role and context with
-  [convergence](aos-convergence.md),
-  [host networking, MCP, and tailnet](aos-standalone-connectivity.md),
-  [role-gated kubeconfig](aos-kubeconfig.md), and
+- [AOS launcher](aos-cli.md) - role context with
+  [convergence](aos-convergence.md), [connectivity](aos-standalone-connectivity.md),
+  [kubeconfig](aos-kubeconfig.md), [issue pins](aos-issue-pin-context.md), and
   [check-ins](aos-acompose-checkin.md).
 - [aosguard](aosguard.md) - guarded CLI with fixed one-tool
   [SigNoz MCP reads](signoz.md) and fixed-target issue pins.

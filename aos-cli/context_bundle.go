@@ -25,23 +25,29 @@ const (
 )
 
 type contextBundleManifest struct {
-	Format       string   `json:"format"`
-	Role         string   `json:"role"`
-	Agent        string   `json:"agent"`
-	Repositories []string `json:"repositories"`
+	Format       string                  `json:"format"`
+	Role         string                  `json:"role"`
+	Agent        string                  `json:"agent"`
+	Repositories []string                `json:"repositories"`
+	IssuePins    *contextBundleIssuePins `json:"issue_pins,omitempty"`
+}
+
+type contextBundleIssuePins struct {
+	Digest string `json:"digest"`
 }
 
 type contextBundlePlanOptions struct {
-	Image    string
-	Role     string
-	Agent    string
-	Delivery string
-	Composed bool
-	Guarded  bool
-	Output   string
-	UID      int
-	GID      int
-	Bundle   string
+	Image           string
+	Role            string
+	Agent           string
+	Delivery        string
+	Composed        bool
+	Guarded         bool
+	Output          string
+	UID             int
+	GID             int
+	Bundle          string
+	IssuePinContext issuePinLaunchContext
 }
 
 type contextBundlePlan struct {
@@ -49,13 +55,14 @@ type contextBundlePlan struct {
 }
 
 type contextBundleMaterializeOptions struct {
-	Image    string
-	Role     string
-	Agent    string
-	Delivery string
-	Composed bool
-	Guarded  bool
-	Bundle   string
+	Image           string
+	Role            string
+	Agent           string
+	Delivery        string
+	Composed        bool
+	Guarded         bool
+	Bundle          string
+	IssuePinContext issuePinLaunchContext
 }
 
 func buildContextBundlePlan(opts contextBundlePlanOptions) (contextBundlePlan, error) {
@@ -93,6 +100,19 @@ func buildContextBundlePlan(opts contextBundlePlanOptions) (contextBundlePlan, e
 			"type=bind,source="+opts.Bundle+",target="+containerComposeBundle+",readonly",
 		)
 	}
+	if opts.IssuePinContext.HostPath != "" {
+		info, err := os.Stat(opts.IssuePinContext.HostPath)
+		if err != nil {
+			return contextBundlePlan{}, fmt.Errorf("inspect issue-pin context: %w", err)
+		}
+		if !info.Mode().IsRegular() {
+			return contextBundlePlan{}, fmt.Errorf("issue-pin context %s is not a regular file", opts.IssuePinContext.HostPath)
+		}
+		args = append(args,
+			"--mount",
+			"type=bind,source="+opts.IssuePinContext.HostPath+",target="+containerIssuePinContext+",readonly",
+		)
+	}
 	args = append(args,
 		"--tmpfs", "/tmp:rw,exec,size="+runtimeTmpfsSize,
 		"--env", "AOS_CONTAINER=1",
@@ -117,6 +137,13 @@ func buildContextBundlePlan(opts contextBundlePlanOptions) (contextBundlePlan, e
 	)
 	if opts.Composed {
 		args = append(args, "--bundle", containerComposeBundle)
+	}
+	if opts.IssuePinContext.HostPath != "" {
+		args = append(
+			args,
+			"--issue-pin-context", containerIssuePinContext,
+			"--issue-pin-digest", opts.IssuePinContext.Digest,
+		)
 	}
 
 	return contextBundlePlan{DockerArgs: args}, nil
@@ -156,17 +183,23 @@ func materializeContextBundle(
 			return "", err
 		}
 	}
+	issuePins, err := prepareIssuePinLaunchContext(ctx, opts.Role)
+	if err != nil {
+		return "", err
+	}
+	defer func() { _ = issuePins.Close() }()
 	plan, err := buildContextBundlePlan(contextBundlePlanOptions{
-		Image:    opts.Image,
-		Role:     opts.Role,
-		Agent:    opts.Agent,
-		Delivery: opts.Delivery,
-		Composed: opts.Composed,
-		Guarded:  opts.Guarded,
-		Output:   staging,
-		UID:      uid,
-		GID:      gid,
-		Bundle:   composeBundle,
+		Image:           opts.Image,
+		Role:            opts.Role,
+		Agent:           opts.Agent,
+		Delivery:        opts.Delivery,
+		Composed:        opts.Composed,
+		Guarded:         opts.Guarded,
+		Output:          staging,
+		UID:             uid,
+		GID:             gid,
+		Bundle:          composeBundle,
+		IssuePinContext: issuePins,
 	})
 	if err != nil {
 		return "", err
@@ -362,6 +395,11 @@ func runContainerContextBundle(ctx context.Context, cmd *cli.Command) error {
 			return err
 		}
 	}
+	issuePinContext := strings.TrimSpace(cmd.String("issue-pin-context"))
+	issuePinDigest := strings.TrimSpace(cmd.String("issue-pin-digest"))
+	if err := stageHydratedIssuePinContext(opts.Layout, opts.AgentHome, issuePinContext, issuePinDigest); err != nil {
+		return err
+	}
 	if err := validateStagedHome(opts.AgentHome, opts.Layout); err != nil {
 		return err
 	}
@@ -376,6 +414,9 @@ func runContainerContextBundle(ctx context.Context, cmd *cli.Command) error {
 			return err
 		}
 		manifest.Repositories = repositories
+	}
+	if issuePinContext != "" {
+		manifest.IssuePins = &contextBundleIssuePins{Digest: issuePinDigest}
 	}
 	body, err := json.MarshalIndent(manifest, "", "  ")
 	if err != nil {
@@ -521,6 +562,9 @@ func validateContextBundleOutput(
 		}
 		prior = repository
 	}
+	if manifest.IssuePins != nil && !safeHexDigest(manifest.IssuePins.Digest) {
+		return fmt.Errorf("materialized context bundle has invalid issue-pin digest")
+	}
 	if err := validateStagedHome(filepath.Join(root, "home"), expected.Agent); err != nil {
 		return err
 	}
@@ -534,6 +578,19 @@ func validateContextBundleOutput(
 		return fmt.Errorf("materialized unguarded bundle unexpectedly contains bin")
 	}
 	return nil
+}
+
+func safeHexDigest(value string) bool {
+	if len(value) != sha256.Size*2 {
+		return false
+	}
+	for _, r := range value {
+		if (r >= '0' && r <= '9') || (r >= 'a' && r <= 'f') {
+			continue
+		}
+		return false
+	}
+	return true
 }
 
 func hashContextBundle(root string) (string, error) {

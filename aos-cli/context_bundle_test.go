@@ -10,6 +10,11 @@ import (
 
 func TestBuildContextBundlePlanUsesAOSImageAsMaterializer(t *testing.T) {
 	t.Parallel()
+	issuePins := filepath.Join(t.TempDir(), "issue-pins.md")
+	if err := os.WriteFile(issuePins, []byte("pins\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	digest := strings.Repeat("a", 64)
 	plan, err := buildContextBundlePlan(contextBundlePlanOptions{
 		Image:    "aos:test",
 		Role:     "engineer",
@@ -21,6 +26,10 @@ func TestBuildContextBundlePlanUsesAOSImageAsMaterializer(t *testing.T) {
 		UID:      1000,
 		GID:      1000,
 		Bundle:   "/cache/bundles/verified",
+		IssuePinContext: issuePinLaunchContext{
+			HostPath: issuePins,
+			Digest:   digest,
+		},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -29,6 +38,7 @@ func TestBuildContextBundlePlanUsesAOSImageAsMaterializer(t *testing.T) {
 	for _, want := range []string{
 		"type=bind,source=/cache/staging,target=/output",
 		"type=bind,source=/cache/bundles/verified,target=/opt/agent-compose-bundle,readonly",
+		"type=bind,source=" + issuePins + ",target=" + containerIssuePinContext + ",readonly",
 		"--entrypoint\n/usr/local/bin/aos",
 		"aos:test",
 		"--role\nengineer",
@@ -36,10 +46,42 @@ func TestBuildContextBundlePlanUsesAOSImageAsMaterializer(t *testing.T) {
 		"--composed",
 		"--guarded",
 		"_container-context-bundle",
+		"--issue-pin-context\n" + containerIssuePinContext,
+		"--issue-pin-digest\n" + digest,
 	} {
 		if !strings.Contains(joined, want) {
 			t.Errorf("context materialization plan missing %q:\n%s", want, joined)
 		}
+	}
+}
+
+func TestValidateContextBundleAcceptsIssuePinProvenance(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(root, "home", ".codex"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "home", ".codex", "AGENTS.md"), []byte("context\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	digest := strings.Repeat("a", 64)
+	manifest := `{"format":"ward.context-bundle.v1","role":"engineer","agent":"codex","repositories":["owner/one"],"issue_pins":{"digest":"` + digest + `"}}`
+	if err := os.WriteFile(filepath.Join(root, contextBundleManifestName), []byte(manifest), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := validateContextBundleOutput(root, contextBundleMaterializeOptions{
+		Role: "engineer", Agent: "codex", Composed: true,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	manifest = `{"format":"ward.context-bundle.v1","role":"engineer","agent":"codex","repositories":["owner/one"],"issue_pins":{"digest":"not-hex"}}`
+	if err := os.WriteFile(filepath.Join(root, contextBundleManifestName), []byte(manifest), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := validateContextBundleOutput(root, contextBundleMaterializeOptions{
+		Role: "engineer", Agent: "codex", Composed: true,
+	}); err == nil {
+		t.Fatal("invalid issue-pin digest passed validation")
 	}
 }
 

@@ -254,6 +254,16 @@ func runStandaloneIntegratedLaunch(
 	if err != nil {
 		return err
 	}
+	var issuePins issuePinLaunchContext
+	if !opts.DryRun {
+		issuePins, err = prepareIssuePinLaunchContext(ctx, opts.Role)
+		if err != nil {
+			return err
+		}
+		defer func() {
+			returnErr = errors.Join(returnErr, issuePins.Close())
+		}()
+	}
 	mcp, err := discoverMCPLaunch(ctx)
 	if err != nil {
 		return err
@@ -284,6 +294,7 @@ func runStandaloneIntegratedLaunch(
 		MCPInventory:    mcp.Inventory,
 		TailnetNetwork:  mcp.TailnetNetwork,
 		TailnetForwards: mcp.Forwards,
+		IssuePinContext: issuePins,
 	})
 	if err != nil {
 		return err
