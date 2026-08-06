@@ -56,19 +56,18 @@ Agent self-name and composition hooks, per-host steps, and gpg wiring: [docs/ins
 AOS always composes the selected role and attaches generated `aosguard`:
 
 ```bash
-aos --auth=false --agent codex --role engineer -- --version
-aoscompose --auth=false --agent codex --role engineer -- --version
-```
-
-A warded launch uses the dedicated command:
-
-```bash
+aoscompose --auth=false engineer --version
+aoscompose --auth=false engineer goose --version
 aosward --agent codex --role engineer -- owner/repo#267
 ```
 
 `aoscompose` is the canonical explicit alias of `aos`. The earlier `aoscomposed`
-spelling remains as a compatibility alias. `aosward` adds `--warded`. Ward remains the fixed workflow and container lifecycle owner, agent-compose remains the context
-producer, and cli-guard/specgen remains the guarded-tool generator. Matching
+spelling remains as a compatibility alias. As a standalone convenience,
+`aoscompose <role>` selects the role's default agent, currently Codex for the
+core roster, and `aoscompose <role> <harness>` overrides that default.
+`aosward` adds `--warded`. Ward remains the fixed workflow and container
+lifecycle owner, agent-compose remains the context producer, and
+cli-guard/specgen remains the guarded-tool generator. Matching
 role names never union authority between those layers. AOS applies its own
 bounded standalone runtime gates, including [kubeconfig projection](docs/aos-kubeconfig.md).
 

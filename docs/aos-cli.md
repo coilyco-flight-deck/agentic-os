@@ -18,12 +18,11 @@ Every AOS agent launch has these two contexts:
 The compatibility flags `--composed` and `--guarded` remain accepted, including
 explicit false values, but cannot disable either context.
 
-`aos` and its explicit `aoscompose` alias own one standalone container. The earlier `aoscomposed` spelling remains available as a compatibility alias.
-Arguments after `--` become arguments to the selected agent:
+`aos` and `aoscompose` own one standalone container. `aoscomposed` stays compatible. For `aoscompose`, the first positional arg can select the role, and a second harness overrides that role's default agent:
 
 ```bash
-aos --auth=false --agent codex --role engineer -- --version
-aoscompose --auth=false --agent codex --role engineer -- --version
+aoscompose --auth=false engineer --version
+aoscompose --auth=false engineer goose --version
 ```
 
 `aosward` is the same executable with warded mode forced. It is equivalent to

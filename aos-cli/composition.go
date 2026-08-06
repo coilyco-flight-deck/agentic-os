@@ -65,6 +65,11 @@ func runIntegratedLaunch(
 		DryRun:      cmd.Bool("dry-run"),
 		Arguments:   cmd.Args().Slice(),
 	}
+	if defaults.RoleShortcut {
+		if err := applyStandaloneRoleShortcut(&opts); err != nil {
+			return err
+		}
+	}
 	if opts.Role == "" && opts.Agent == "" && len(opts.Arguments) == 0 {
 		return cli.ShowAppHelp(cmd)
 	}
@@ -77,6 +82,31 @@ func runIntegratedLaunch(
 		return runWardedLaunch(ctx, cmd, opts)
 	}
 	return runStandaloneIntegratedLaunch(ctx, cmd, opts)
+}
+
+func applyStandaloneRoleShortcut(opts *integratedLaunchOptions) error {
+	if opts.Role == "" && len(opts.Arguments) > 0 {
+		candidate := strings.TrimSpace(opts.Arguments[0])
+		if candidate != "" && !strings.HasPrefix(candidate, "-") {
+			opts.Role = candidate
+			opts.Arguments = append([]string(nil), opts.Arguments[1:]...)
+		}
+	}
+	if opts.Agent == "" && len(opts.Arguments) > 0 {
+		candidate := strings.TrimSpace(opts.Arguments[0])
+		if isSupportedHarness(candidate) {
+			opts.Agent = candidate
+			opts.Arguments = append([]string(nil), opts.Arguments[1:]...)
+		}
+	}
+	if opts.Agent == "" && opts.Role != "" {
+		agent, err := standaloneDefaultAgentForRole(opts.Role)
+		if err != nil {
+			return err
+		}
+		opts.Agent = agent
+	}
+	return nil
 }
 
 func validateIntegratedLaunch(opts integratedLaunchOptions) error {
@@ -136,6 +166,15 @@ func validateIntegratedLaunch(opts integratedLaunchOptions) error {
 		return fmt.Errorf("--agent-id needs --warded")
 	}
 	return nil
+}
+
+func isSupportedHarness(value string) bool {
+	switch value {
+	case "claude", "codex", "goose", "opencode":
+		return true
+	default:
+		return false
+	}
 }
 
 func safeRoleSlug(value string) bool {

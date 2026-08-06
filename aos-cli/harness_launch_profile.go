@@ -15,6 +15,7 @@ var embeddedHarnessLaunchProfiles []byte
 type harnessLaunchProfileDocument struct {
 	Format          string                                     `json:"format"`
 	Defaults        map[string]harnessLaunchProfile            `json:"defaults"`
+	DefaultAgents   map[string]string                          `json:"default_agents"`
 	StandaloneRoles map[string]map[string]harnessLaunchProfile `json:"standalone_roles"`
 }
 
@@ -47,6 +48,24 @@ func loadHarnessLaunchProfiles(data []byte) (harnessLaunchProfileDocument, error
 	for harness, profile := range document.Defaults {
 		if err := validateHarnessLaunchProfile("default", harness, profile); err != nil {
 			return harnessLaunchProfileDocument{}, err
+		}
+	}
+	if len(document.DefaultAgents) == 0 {
+		return harnessLaunchProfileDocument{}, fmt.Errorf("harness launch profile default agents are empty")
+	}
+	for role, harness := range document.DefaultAgents {
+		if !safeRoleSlug(role) {
+			return harnessLaunchProfileDocument{}, fmt.Errorf(
+				"harness launch profile registry has unsafe default-agent role %q",
+				role,
+			)
+		}
+		if _, ok := document.Defaults[harness]; !ok {
+			return harnessLaunchProfileDocument{}, fmt.Errorf(
+				"harness launch profile default agent %s uses unsupported harness %q",
+				role,
+				harness,
+			)
 		}
 	}
 	for role, profiles := range document.StandaloneRoles {
@@ -113,6 +132,21 @@ func standaloneHarnessLaunchProfileFor(role, harness string) (harnessLaunchProfi
 		}
 	}
 	return profile, nil
+}
+
+func standaloneDefaultAgentForRole(role string) (string, error) {
+	if !safeRoleSlug(role) {
+		return "", fmt.Errorf("AOS has no default agent for unsafe role %q", role)
+	}
+	document, err := loadHarnessLaunchProfiles(embeddedHarnessLaunchProfiles)
+	if err != nil {
+		return "", err
+	}
+	agent, ok := document.DefaultAgents[role]
+	if !ok {
+		return "", fmt.Errorf("AOS has no default agent for role %s; add --agent", role)
+	}
+	return agent, nil
 }
 
 func wardLaunchEnvironmentFor(harness string) ([]string, error) {

@@ -19,12 +19,14 @@ const (
 )
 
 type launchDefaults struct {
-	Warded bool
+	Warded       bool
+	RoleShortcut bool
 }
 
 func main() {
 	cmd := newCommandForInvocation(os.Args[0])
-	if err := cmd.Run(context.Background(), os.Args); err != nil {
+	args := normalizeRoleShortcutArgs(commandDefaultsForInvocation(os.Args[0]), os.Args)
+	if err := cmd.Run(context.Background(), args); err != nil {
 		fmt.Fprintf(os.Stderr, "%s: %v\n", cmd.Name, err)
 		os.Exit(1)
 	}
@@ -35,16 +37,96 @@ func newCommand() *cli.Command {
 }
 
 func newCommandForInvocation(executable string) *cli.Command {
+	defaults := commandDefaultsForInvocation(executable)
+	name := commandNameForInvocation(executable)
+	return newCommandWithDefaults(name, defaults)
+}
+
+func commandDefaultsForInvocation(executable string) launchDefaults {
 	name := strings.TrimSuffix(strings.ToLower(filepath.Base(executable)), ".exe")
 	if name == "aosward" || strings.HasPrefix(name, "aosward-") {
-		return newCommandWithDefaults("aosward", launchDefaults{Warded: true})
+		return launchDefaults{Warded: true}
 	}
 	for _, alias := range []string{"aoscompose", "aoscomposed"} {
 		if name == alias || strings.HasPrefix(name, alias+"-") {
-			return newCommandWithDefaults(alias, launchDefaults{})
+			return launchDefaults{RoleShortcut: true}
 		}
 	}
-	return newCommand()
+	return launchDefaults{}
+}
+
+func commandNameForInvocation(executable string) string {
+	name := strings.TrimSuffix(strings.ToLower(filepath.Base(executable)), ".exe")
+	if name == "aosward" || strings.HasPrefix(name, "aosward-") {
+		return "aosward"
+	}
+	for _, alias := range []string{"aoscompose", "aoscomposed"} {
+		if name == alias || strings.HasPrefix(name, alias+"-") {
+			return alias
+		}
+	}
+	return "aos"
+}
+
+func normalizeRoleShortcutArgs(defaults launchDefaults, args []string) []string {
+	if !defaults.RoleShortcut || hasDashTerminator(args) {
+		return args
+	}
+	expectValue := false
+	for index := 1; index < len(args); index++ {
+		arg := args[index]
+		if expectValue {
+			expectValue = false
+			continue
+		}
+		if strings.HasPrefix(arg, "--") {
+			name, _, hasValue := strings.Cut(strings.TrimPrefix(arg, "--"), "=")
+			if !hasValue && rootFlagTakesValue(name) {
+				expectValue = true
+			}
+			continue
+		}
+		if strings.HasPrefix(arg, "-") {
+			continue
+		}
+		if isRootSubcommand(arg) {
+			return args
+		}
+		normalized := append([]string(nil), args[:index]...)
+		normalized = append(normalized, "--")
+		normalized = append(normalized, args[index:]...)
+		return normalized
+	}
+	return args
+}
+
+func hasDashTerminator(args []string) bool {
+	for _, arg := range args {
+		if arg == "--" {
+			return true
+		}
+	}
+	return false
+}
+
+func rootFlagTakesValue(name string) bool {
+	switch name {
+	case "role", "agent-id", "agent", "image", "layout", "density", "delivery", "kubeconfig":
+		return true
+	default:
+		return false
+	}
+}
+
+func isRootSubcommand(value string) bool {
+	switch value {
+	case "repositories", "version", "converge", "acompose", "acompose-checkin",
+		"_native-shadow", "_container-acompose", "_container-socks-forward",
+		"_container-context-bundle":
+		return true
+	default:
+		return false
+	}
 }
 
 func newCommandWithDefaults(name string, defaults launchDefaults) *cli.Command {

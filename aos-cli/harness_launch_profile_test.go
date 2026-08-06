@@ -16,6 +16,9 @@ func TestLoadHarnessLaunchProfilesUsesDefaultsAndRoleOverrides(t *testing.T) {
       "verbosity": "low"
     }
   },
+  "default_agents": {
+    "director": "codex"
+  },
   "standalone_roles": {
     "director": {
       "codex": {
@@ -37,6 +40,9 @@ func TestLoadHarnessLaunchProfilesUsesDefaultsAndRoleOverrides(t *testing.T) {
 			document.StandaloneRoles["director"]["codex"],
 		)
 	}
+	if document.DefaultAgents["director"] != "codex" {
+		t.Fatalf("default agent was not decoded: %+v", document.DefaultAgents)
+	}
 }
 
 func TestLoadHarnessLaunchProfilesRejectsMalformedRegistry(t *testing.T) {
@@ -46,9 +52,27 @@ func TestLoadHarnessLaunchProfilesRejectsMalformedRegistry(t *testing.T) {
 		[]byte(`{"format":"agentic-os.harness-launch-profiles.v1","defaults":{}}`),
 		[]byte(`{"format":"agentic-os.harness-launch-profiles.v1","defaults":{"other":{"model":"x"}}}`),
 		[]byte(`{"format":"agentic-os.harness-launch-profiles.v1","defaults":{"codex":{"model":""}}}`),
+		[]byte(`{"format":"agentic-os.harness-launch-profiles.v1","defaults":{"codex":{"model":"x"}},"default_agents":{"bad/role":"codex"}}`),
+		[]byte(`{"format":"agentic-os.harness-launch-profiles.v1","defaults":{"codex":{"model":"x"}},"default_agents":{"engineer":"other"}}`),
 	} {
 		if _, err := loadHarnessLaunchProfiles(data); err == nil {
 			t.Fatalf("loadHarnessLaunchProfiles accepted %q", data)
+		}
+	}
+}
+
+func TestStandaloneDefaultAgentForRole(t *testing.T) {
+	t.Parallel()
+	agent, err := standaloneDefaultAgentForRole("engineer")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if agent != "codex" {
+		t.Fatalf("standaloneDefaultAgentForRole(engineer) = %q, want codex", agent)
+	}
+	for _, role := range []string{"", "bad/role", "story-architect"} {
+		if _, err := standaloneDefaultAgentForRole(role); err == nil {
+			t.Fatalf("standaloneDefaultAgentForRole(%q) succeeded", role)
 		}
 	}
 }

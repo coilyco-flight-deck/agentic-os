@@ -437,6 +437,78 @@ func TestAOSComposeAliasesUseBothContextsWithoutWard(t *testing.T) {
 	}
 }
 
+func TestAOSComposeAliasesAcceptRoleShortcutWithDefaultAgent(t *testing.T) {
+	t.Parallel()
+	for _, alias := range []string{"aoscompose", "aoscomposed"} {
+		alias := alias
+		t.Run(alias, func(t *testing.T) {
+			command := newCommandForInvocation("/usr/local/bin/" + alias)
+			var output bytes.Buffer
+			command.Writer = &output
+			command.ErrWriter = &output
+			err := command.Run(context.Background(), []string{
+				alias,
+				"--image", "aos:test",
+				"--auth=false",
+				"--dry-run",
+				"engineer",
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			rendered := output.String()
+			for _, want := range []string{
+				"_container-acompose",
+				"--role engineer",
+				"-- codex",
+			} {
+				if !strings.Contains(rendered, want) {
+					t.Errorf("%s shortcut dry run missing %q:\n%s", alias, want, rendered)
+				}
+			}
+		})
+	}
+}
+
+func TestAOSComposeAliasRoleShortcutAcceptsPositionalHarnessOverride(t *testing.T) {
+	t.Parallel()
+	command := newCommandForInvocation("/usr/local/bin/aoscompose")
+	var output bytes.Buffer
+	command.Writer = &output
+	command.ErrWriter = &output
+	args := normalizeRoleShortcutArgs(launchDefaults{RoleShortcut: true}, []string{
+		"aoscompose",
+		"--image", "aos:test",
+		"--auth=false",
+		"--dry-run",
+		"engineer",
+		"goose",
+		"--version",
+	})
+	if err := command.Run(context.Background(), args); err != nil {
+		t.Fatal(err)
+	}
+	rendered := output.String()
+	for _, want := range []string{
+		"_container-acompose",
+		"--role engineer",
+		"-- goose --version",
+	} {
+		if !strings.Contains(rendered, want) {
+			t.Errorf("shortcut override dry run missing %q:\n%s", want, rendered)
+		}
+	}
+}
+
+func TestNormalizeRoleShortcutArgsLeavesSubcommandsAlone(t *testing.T) {
+	t.Parallel()
+	args := []string{"aoscompose", "version"}
+	got := normalizeRoleShortcutArgs(launchDefaults{RoleShortcut: true}, args)
+	if strings.Join(got, "\x00") != strings.Join(args, "\x00") {
+		t.Fatalf("normalizeRoleShortcutArgs(version) = %v, want %v", got, args)
+	}
+}
+
 func TestIntegratedStandaloneKubeconfigDryRun(t *testing.T) {
 	t.Parallel()
 	kubeconfig := writeTestKubeconfig(

@@ -18,6 +18,16 @@
       "endpoint": "http://host.docker.internal:8082/v1"
     }
   },
+  "default_agents": {
+    "engineer": "codex",
+    "director": "codex",
+    "qa": "codex",
+    "ops": "codex",
+    "design": "codex",
+    "community": "codex",
+    "strats": "codex",
+    "content": "codex"
+  },
   "standalone_roles": {
     "director": {
       "claude": {
