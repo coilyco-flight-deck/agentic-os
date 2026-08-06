@@ -3,10 +3,10 @@ package main
 import (
 	"context"
 	"crypto/rand"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -22,6 +22,9 @@ const (
 	nativeSweepInterval         = 10 * time.Minute
 	nativeDeadSessionGrace      = 24 * time.Hour
 	nativeDeleteScans           = 3
+	nativeSessionIDAttempts     = 64
+	nativeIDLetters             = "abcdefghjkmpqrstuvwxyz"
+	nativeIDDigits              = "456789"
 	agentComposeModelTierEnv    = "AGENT_COMPOSE_MODEL_TIER"
 	agentComposeModelClassEnv   = "AGENT_COMPOSE_MODEL_CLASS"
 	agentComposeRuntimeHomeEnv  = "AGENT_COMPOSE_RUNTIME_HOME"
@@ -86,6 +89,7 @@ type nativeRuntime struct {
 	SessionsRoot string
 	PlanFile     string
 	FleetFile    string
+	Random       io.Reader
 	Stderr       *os.File
 }
 
@@ -283,6 +287,7 @@ func resolveNativeRuntime() (nativeRuntime, error) {
 		SessionsRoot: sessionsRoot,
 		PlanFile:     plan,
 		FleetFile:    fleet,
+		Random:       rand.Reader,
 		Stderr:       os.Stderr,
 	}, nil
 }
@@ -864,11 +869,10 @@ func createNativeSession(
 	options nativeLaunchOptions,
 ) (nativeLaunchWorkspace, error) {
 	relative, inside := relativeWithin(runtime.ProjectsRoot, runtime.CWD)
-	id, err := nativeSessionID(runtime)
+	id, sessionRoot, err := reserveNativeSession(runtime, harness, repositories)
 	if err != nil {
 		return nativeLaunchWorkspace{}, err
 	}
-	sessionRoot := filepath.Join(runtime.SessionsRoot, id)
 	sessionProjects := filepath.Join(sessionRoot, "projects")
 	sessionHome := ""
 	if options.WorkspaceRoot || options.StandaloneHome {
@@ -1121,16 +1125,123 @@ func stageNativeRoleConfigDirectory(source, target string) error {
 	return nil
 }
 
-func nativeSessionID(runtime nativeRuntime) (string, error) {
-	random := make([]byte, 4)
-	if _, err := rand.Read(random); err != nil {
-		return "", fmt.Errorf("generate native session id: %w", err)
+func reserveNativeSession(
+	runtime nativeRuntime,
+	harness string,
+	repositories []nativeRepository,
+) (string, string, error) {
+	if err := os.MkdirAll(runtime.SessionsRoot, 0o700); err != nil {
+		return "", "", fmt.Errorf("create native sessions root: %w", err)
 	}
-	return fmt.Sprintf("%s-%d-%s",
-		runtime.Now.UTC().Format("20060102t150405z"),
-		runtime.PID,
-		hex.EncodeToString(random),
-	), nil
+	branchCollisions := 0
+	leaseCollisions := 0
+	directoryCollisions := 0
+	for attempt := 0; attempt < nativeSessionIDAttempts; attempt++ {
+		id, err := nativeSessionID(runtime)
+		if err != nil {
+			return "", "", err
+		}
+		branch := "aos/" + harness + "/" + id
+		occupied := false
+		for _, repository := range repositories {
+			for _, reference := range []string{
+				"refs/heads/" + branch,
+				"refs/remotes/origin/" + branch,
+			} {
+				exists, err := nativeGitRefExists(repository.Path, reference)
+				if err != nil {
+					return "", "", err
+				}
+				if exists {
+					occupied = true
+					break
+				}
+			}
+			if occupied {
+				break
+			}
+		}
+		if occupied {
+			branchCollisions++
+			continue
+		}
+		leasePath := nativeStatePath(runtime, "leases", id+".json")
+		if _, err := os.Lstat(leasePath); err == nil {
+			leaseCollisions++
+			continue
+		} else if !errors.Is(err, fs.ErrNotExist) {
+			return "", "", fmt.Errorf("inspect native lease candidate: %w", err)
+		}
+		sessionRoot := filepath.Join(runtime.SessionsRoot, id)
+		if err := os.Mkdir(sessionRoot, 0o700); err == nil {
+			return id, sessionRoot, nil
+		} else if !errors.Is(err, fs.ErrExist) {
+			return "", "", fmt.Errorf("reserve native session root: %w", err)
+		}
+		directoryCollisions++
+	}
+	return "", "", fmt.Errorf(
+		"reserve native session id after %d attempts (%d branch, %d lease, %d directory collisions)",
+		nativeSessionIDAttempts,
+		branchCollisions,
+		leaseCollisions,
+		directoryCollisions,
+	)
+}
+
+func nativeGitRefExists(directory, reference string) (bool, error) {
+	arguments := []string{"-C", directory, "show-ref", "--verify", "--quiet", reference}
+	command := exec.Command("git", arguments...)
+	command.Env = append(os.Environ(), "GIT_TERMINAL_PROMPT=0")
+	output, err := command.CombinedOutput()
+	if err == nil {
+		return true, nil
+	}
+	var exitError *exec.ExitError
+	if errors.As(err, &exitError) && exitError.ExitCode() == 1 {
+		return false, nil
+	}
+	return false, fmt.Errorf(
+		"git %s: %w: %s",
+		strings.Join(arguments, " "),
+		err,
+		strings.TrimSpace(string(output)),
+	)
+}
+
+func nativeSessionID(runtime nativeRuntime) (string, error) {
+	reader := runtime.Random
+	if reader == nil {
+		reader = rand.Reader
+	}
+	alphabets := []string{
+		nativeIDLetters,
+		nativeIDLetters,
+		nativeIDDigits,
+		nativeIDDigits,
+	}
+	id := make([]byte, len(alphabets))
+	for index, alphabet := range alphabets {
+		character, err := nativeRandomCharacter(reader, alphabet)
+		if err != nil {
+			return "", fmt.Errorf("generate native session id: %w", err)
+		}
+		id[index] = character
+	}
+	return string(id), nil
+}
+
+func nativeRandomCharacter(reader io.Reader, alphabet string) (byte, error) {
+	limit := 256 - 256%len(alphabet)
+	for {
+		var sample [1]byte
+		if _, err := io.ReadFull(reader, sample[:]); err != nil {
+			return 0, err
+		}
+		if int(sample[0]) < limit {
+			return alphabet[int(sample[0])%len(alphabet)], nil
+		}
+	}
 }
 
 type nativeExpected struct {

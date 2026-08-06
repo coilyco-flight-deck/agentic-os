@@ -14,12 +14,13 @@ Legacy JSON remains a rollout fallback. No embedded roster exists. Exact
 A launch from `$PROJECTS_ROOT` enters:
 
 ```text
-$TMPDIR/aos/native/<session-id>/projects/<owner>/<repo>
+$TMPDIR/aos/native/<id>/projects/<owner>/<repo>
 ```
 
 with the owner/repository hierarchy reproduced below `projects`. A repository
-subdirectory maps to its session twin. An outside launch keeps its directory.
-It still receives the full leased fleet workspace.
+subdirectory maps to its session twin. An outside launch keeps its directory
+and the full fleet workspace. The collision-checked `<id>` uses the canonical
+dictatable shape `ab85`: two lowercase letters then two digits.
 
 Native and standalone AOS use this shadow before agent-compose or Docker runs.
 Bare harness commands let the native roster infer a role.
