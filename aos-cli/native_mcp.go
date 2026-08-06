@@ -79,7 +79,7 @@ func projectNativeMCP(opts nativeMCPOptions) (nativeMCPResult, error) {
 	var claudePayload, codexPayload []byte
 	var claudeChanged, codexChanged bool
 	if opts.ProjectNative {
-		claudePath = filepath.Join(home, ".claude.json")
+		claudePath = nativeClaudeConfigPath(home)
 		codexPath = filepath.Join(home, ".codex", "config.toml")
 		claudePayload, claudeChanged, err = renderNativeClaude(
 			claudePath,
@@ -111,7 +111,7 @@ func projectNativeMCP(opts nativeMCPOptions) (nativeMCPResult, error) {
 		}
 	}
 	if claudeChanged {
-		if err := writeAtomicFile(claudePath, claudePayload, 0o600); err != nil {
+		if err := writeAtomicFile(nativeClaudeWritePath(claudePath), claudePayload, 0o600); err != nil {
 			return nativeMCPResult{}, fmt.Errorf("native MCP: write Claude registry: %w", err)
 		}
 	}

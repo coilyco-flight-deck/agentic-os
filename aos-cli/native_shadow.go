@@ -973,6 +973,15 @@ func createNativeSession(
 			}
 		}
 	}
+	if harness == "claude" {
+		config := nativeClaudeConfigPath(runtime.Home)
+		if sessionHome != "" {
+			config = nativeClaudeSessionConfigPath(sessionHome)
+		}
+		if err := seedNativeClaudeTrust(config, []string{launch, sessionProjects}); err != nil {
+			fmt.Fprintf(runtime.Stderr, "aos: native session trust not seeded: %v\n", err)
+		}
+	}
 	fmt.Fprintf(runtime.Stderr, "aos: native session workspace %s\n", sessionProjects)
 	return nativeLaunchWorkspace{
 		CWD:             launch,
@@ -1024,7 +1033,7 @@ func stageNativeRoleHome(source, target string) error {
 			return fmt.Errorf("create filtered native skill directory %s: %w", skills, err)
 		}
 	}
-	return nil
+	return linkNativeClaudeConfig(source, target)
 }
 
 func stageStandaloneRoleHome(source, target string) error {
