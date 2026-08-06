@@ -16,7 +16,7 @@ Ward's loader.
 * Agent-compose owns behavioral roles, seats, identity, personalities, and
   composed skills in [`.agents/roles.kdl`](../.agents/roles.kdl).
 * AOS owns the selected harness, concrete launch tuning in
-  [`harness_launch_profiles.json`](../aos-cli/harness_launch_profiles.json), image,
+  [`harness-launch-profiles.yaml`](../aos-cli/.agents/harness-launch-profiles.yaml), image,
   deployment defaults, and the immutable context-bundle adapter.
 * Ward receives the fixed workflow role, selected harness and image, original
   work request, explicit harness environment, broker credential, and optional
@@ -34,7 +34,7 @@ follows:
 * Image, release channel, and this repository's landing workflow moved from
   `defaults.kdl` and `repos.kdl` to `.ward/ward.yaml`.
 * Models, reasoning effort, verbosity, and local harness defaults moved from
-  `agents.kdl` and `roles.kdl` to the embedded AOS launch-profile registry.
+  `agents.kdl` and `roles.kdl` to the embedded AOS launch-profile YAML registry.
   Standalone AOS launches may select its role tuning. Ward-bound launches
   receive only the registry's harness-level defaults through Ward's explicit
   `WARD_*` environment seam, so a Ward workflow role cannot change those

@@ -2,39 +2,35 @@ package main
 
 import (
 	_ "embed"
-	"encoding/json"
 	"fmt"
 	"strings"
+
+	"github.com/goccy/go-yaml"
 )
 
 const harnessLaunchProfilesFormat = "agentic-os.harness-launch-profiles.v1"
 
-//go:embed harness_launch_profiles.json
+//go:embed .agents/harness-launch-profiles.yaml
 var embeddedHarnessLaunchProfiles []byte
 
 type harnessLaunchProfileDocument struct {
-	Format          string                                     `json:"format"`
-	Defaults        map[string]harnessLaunchProfile            `json:"defaults"`
-	DefaultAgents   map[string]string                          `json:"default_agents"`
-	StandaloneRoles map[string]map[string]harnessLaunchProfile `json:"standalone_roles"`
+	Format          string                                     `yaml:"format"`
+	Defaults        map[string]harnessLaunchProfile            `yaml:"defaults"`
+	DefaultAgents   map[string]string                          `yaml:"default_agents"`
+	StandaloneRoles map[string]map[string]harnessLaunchProfile `yaml:"standalone_roles"`
 }
 
 type harnessLaunchProfile struct {
-	Model           string `json:"model"`
-	ReasoningEffort string `json:"reasoning_effort,omitempty"`
-	Verbosity       string `json:"verbosity,omitempty"`
-	Endpoint        string `json:"endpoint,omitempty"`
+	Model           string `yaml:"model"`
+	ReasoningEffort string `yaml:"reasoning_effort,omitempty"`
+	Verbosity       string `yaml:"verbosity,omitempty"`
+	Endpoint        string `yaml:"endpoint,omitempty"`
 }
 
 func loadHarnessLaunchProfiles(data []byte) (harnessLaunchProfileDocument, error) {
 	var document harnessLaunchProfileDocument
-	decoder := json.NewDecoder(strings.NewReader(string(data)))
-	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(&document); err != nil {
+	if err := yaml.UnmarshalWithOptions(data, &document, yaml.Strict()); err != nil {
 		return harnessLaunchProfileDocument{}, fmt.Errorf("decode harness launch profiles: %w", err)
-	}
-	if err := ensureJSONEnd(decoder); err != nil {
-		return harnessLaunchProfileDocument{}, fmt.Errorf("decode harness launch profiles trailer: %w", err)
 	}
 	if document.Format != harnessLaunchProfilesFormat {
 		return harnessLaunchProfileDocument{}, fmt.Errorf(

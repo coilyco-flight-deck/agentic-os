@@ -7,27 +7,21 @@ import (
 
 func TestLoadHarnessLaunchProfilesUsesDefaultsAndRoleOverrides(t *testing.T) {
 	t.Parallel()
-	document, err := loadHarnessLaunchProfiles([]byte(`{
-  "format": "agentic-os.harness-launch-profiles.v1",
-  "defaults": {
-    "codex": {
-      "model": "default-model",
-      "reasoning_effort": "medium",
-      "verbosity": "low"
-    }
-  },
-  "default_agents": {
-    "director": "codex"
-  },
-  "standalone_roles": {
-    "director": {
-      "codex": {
-        "model": "role-model",
-        "reasoning_effort": "high"
-      }
-    }
-  }
-}`))
+	document, err := loadHarnessLaunchProfiles([]byte(`
+format: agentic-os.harness-launch-profiles.v1
+defaults:
+  codex:
+    model: default-model
+    reasoning_effort: medium
+    verbosity: low
+default_agents:
+  director: codex
+standalone_roles:
+  director:
+    codex:
+      model: role-model
+      reasoning_effort: high
+`))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -49,11 +43,11 @@ func TestLoadHarnessLaunchProfilesRejectsMalformedRegistry(t *testing.T) {
 	t.Parallel()
 	for _, data := range [][]byte{
 		[]byte(`{}`),
-		[]byte(`{"format":"agentic-os.harness-launch-profiles.v1","defaults":{}}`),
-		[]byte(`{"format":"agentic-os.harness-launch-profiles.v1","defaults":{"other":{"model":"x"}}}`),
-		[]byte(`{"format":"agentic-os.harness-launch-profiles.v1","defaults":{"codex":{"model":""}}}`),
-		[]byte(`{"format":"agentic-os.harness-launch-profiles.v1","defaults":{"codex":{"model":"x"}},"default_agents":{"bad/role":"codex"}}`),
-		[]byte(`{"format":"agentic-os.harness-launch-profiles.v1","defaults":{"codex":{"model":"x"}},"default_agents":{"engineer":"other"}}`),
+		[]byte("format: agentic-os.harness-launch-profiles.v1\ndefaults: {}\n"),
+		[]byte("format: agentic-os.harness-launch-profiles.v1\ndefaults:\n  other:\n    model: x\n"),
+		[]byte("format: agentic-os.harness-launch-profiles.v1\ndefaults:\n  codex:\n    model: ''\n"),
+		[]byte("format: agentic-os.harness-launch-profiles.v1\ndefaults:\n  codex:\n    model: x\ndefault_agents:\n  bad/role: codex\n"),
+		[]byte("format: agentic-os.harness-launch-profiles.v1\ndefaults:\n  codex:\n    model: x\ndefault_agents:\n  engineer: other\n"),
 	} {
 		if _, err := loadHarnessLaunchProfiles(data); err == nil {
 			t.Fatalf("loadHarnessLaunchProfiles accepted %q", data)
