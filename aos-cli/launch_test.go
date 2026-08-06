@@ -379,6 +379,38 @@ func TestBuildLaunchPlanMountsWorkspaceSourceAndNestedCWD(t *testing.T) {
 	}
 }
 
+func TestBuildLaunchPlanMountsHomeSource(t *testing.T) {
+	t.Parallel()
+	home := t.TempDir()
+	plan, err := buildLaunchPlan(launchOptions{
+		Image:      "agentic-os:test",
+		Role:       "engineer",
+		Layout:     "codex",
+		Delivery:   "native-skills",
+		Composed:   true,
+		CWD:        t.TempDir(),
+		HomeSource: home,
+		Command:    []string{"codex"},
+		UID:        1000,
+		GID:        1000,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	joined := strings.Join(plan.DockerArgs, "\n")
+	for _, want := range []string{
+		"type=bind,source=" + home + ",target=" + defaultAgentHome,
+		"--tmpfs\n/tmp:rw,exec,size=" + runtimeTmpfsSize,
+	} {
+		if !strings.Contains(joined, want) {
+			t.Errorf("launch plan missing %q:\n%s", want, joined)
+		}
+	}
+	if strings.Contains(joined, "--tmpfs\n"+defaultAgentHome) {
+		t.Fatalf("launch plan kept blank HOME tmpfs with a home source:\n%s", joined)
+	}
+}
+
 func TestBuildLaunchPlanNamesAgentContainerForRole(t *testing.T) {
 	t.Parallel()
 	plan, err := buildLaunchPlan(launchOptions{

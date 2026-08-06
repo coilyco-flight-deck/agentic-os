@@ -434,6 +434,80 @@ func TestIntegratedStandaloneDryRunFromProjectsRootMountsFleetSurface(t *testing
 	}
 }
 
+func TestIntegratedStandaloneDryRunMountsSafeHomeProjection(t *testing.T) {
+	runtime, _ := useStandaloneWorkspaceFixture(t)
+	for _, path := range []string{
+		filepath.Join(runtime.Home, ".agents"),
+		filepath.Join(runtime.Home, ".claude"),
+		filepath.Join(runtime.Home, ".aws"),
+		filepath.Join(runtime.Home, ".codex"),
+	} {
+		if err := os.MkdirAll(path, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, path := range []string{
+		filepath.Join(runtime.Home, ".agents", "settings.json"),
+		filepath.Join(runtime.Home, ".claude", "settings.json"),
+		filepath.Join(runtime.Home, ".claude", ".credentials.json"),
+		filepath.Join(runtime.Home, ".aws", "config"),
+		filepath.Join(runtime.Home, ".codex", "auth.json"),
+		filepath.Join(runtime.Home, ".gitconfig"),
+	} {
+		if err := os.WriteFile(path, []byte("test\n"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	command := newCommand()
+	var output bytes.Buffer
+	command.Writer = &output
+	command.ErrWriter = &output
+	if err := command.Run(context.Background(), []string{
+		"aos",
+		"--agent", "codex",
+		"--role", "engineer",
+		"--image", "aos:test",
+		"--auth=false",
+		"--dry-run",
+		"--",
+		"--version",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	rendered := output.String()
+	if !strings.Contains(rendered, ",target="+defaultAgentHome) {
+		t.Fatalf("standalone dry run did not mount a projected HOME:\n%s", rendered)
+	}
+	if strings.Contains(rendered, "source="+runtime.Home) {
+		t.Fatalf("standalone dry run mounted host HOME directly:\n%s", rendered)
+	}
+	if strings.Contains(rendered, "--tmpfs "+defaultAgentHome) {
+		t.Fatalf("standalone dry run kept blank HOME tmpfs:\n%s", rendered)
+	}
+	_, lease := onlyNativeLease(t, runtime)
+	if lease.SessionHome == "" {
+		t.Fatalf("lease did not record a standalone home: %#v", lease)
+	}
+	for _, path := range []string{
+		filepath.Join(lease.SessionHome, ".agents", "settings.json"),
+		filepath.Join(lease.SessionHome, ".claude", "settings.json"),
+	} {
+		if _, err := os.Stat(path); err != nil {
+			t.Fatalf("safe home projection missing %s: %v", path, err)
+		}
+	}
+	for _, path := range []string{
+		filepath.Join(lease.SessionHome, ".claude", ".credentials.json"),
+		filepath.Join(lease.SessionHome, ".aws", "config"),
+		filepath.Join(lease.SessionHome, ".codex", "auth.json"),
+		filepath.Join(lease.SessionHome, ".gitconfig"),
+	} {
+		if _, err := os.Lstat(path); !os.IsNotExist(err) {
+			t.Fatalf("safe home projection included denied path %s: %v", path, err)
+		}
+	}
+}
+
 func TestIntegratedStandaloneCodexAuthFailurePrecedesDockerPlan(t *testing.T) {
 	clearCodexAuthEnvironment(t)
 	codexHome := t.TempDir()

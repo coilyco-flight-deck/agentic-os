@@ -412,6 +412,7 @@ func runComposedLaunch(
 		Composed:        true,
 		CWD:             workspace.CWD,
 		WorkspaceSource: workspace.Source,
+		HomeSource:      workspace.HomeSource,
 		Command:         command,
 		UID:             uid,
 		GID:             gid,

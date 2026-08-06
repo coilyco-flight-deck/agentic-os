@@ -282,6 +282,81 @@ func TestStageNativeRoleHomeFiltersUserSkills(t *testing.T) {
 	}
 }
 
+func TestStageStandaloneRoleHomeCopiesSafeConfigAndDeniesSensitivePaths(t *testing.T) {
+	source := filepath.Join(t.TempDir(), "source")
+	target := filepath.Join(t.TempDir(), "target")
+	for _, path := range []string{
+		filepath.Join(source, ".agents", "skills", "role-other"),
+		filepath.Join(source, ".agents", "profiles"),
+		filepath.Join(source, ".claude", "skills", "role-other"),
+		filepath.Join(source, ".aws"),
+		filepath.Join(source, ".codex"),
+		filepath.Join(source, ".config", "goose"),
+	} {
+		if err := os.MkdirAll(path, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, path := range []string{
+		filepath.Join(source, ".agents", "settings.json"),
+		filepath.Join(source, ".agents", "profiles", "engineer.yaml"),
+		filepath.Join(source, ".agents", "skills", "role-other", "SKILL.md"),
+		filepath.Join(source, ".claude", "settings.json"),
+		filepath.Join(source, ".claude", ".credentials.json"),
+		filepath.Join(source, ".aws", "config"),
+		filepath.Join(source, ".codex", "auth.json"),
+		filepath.Join(source, ".config", "goose", "config.yaml"),
+		filepath.Join(source, ".gitconfig"),
+	} {
+		if err := os.WriteFile(path, []byte("test\n"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := stageStandaloneRoleHome(source, target); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, path := range []string{
+		filepath.Join(target, ".agents", "settings.json"),
+		filepath.Join(target, ".agents", "profiles", "engineer.yaml"),
+		filepath.Join(target, ".claude", "settings.json"),
+	} {
+		info, err := os.Lstat(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if info.Mode()&os.ModeSymlink != 0 {
+			t.Errorf("standalone home entry should be copied, not symlinked: %s", path)
+		}
+	}
+	for _, path := range []string{
+		filepath.Join(target, ".agents", "skills", "role-other", "SKILL.md"),
+		filepath.Join(target, ".claude", "skills", "role-other"),
+		filepath.Join(target, ".claude", ".credentials.json"),
+		filepath.Join(target, ".aws", "config"),
+		filepath.Join(target, ".codex", "auth.json"),
+		filepath.Join(target, ".config", "goose", "config.yaml"),
+		filepath.Join(target, ".gitconfig"),
+	} {
+		if _, err := os.Lstat(path); !os.IsNotExist(err) {
+			t.Fatalf("standalone home projected denied path %s: %v", path, err)
+		}
+	}
+	for _, path := range []string{
+		filepath.Join(target, ".agents", "skills"),
+		filepath.Join(target, ".claude", "skills"),
+	} {
+		entries, err := os.ReadDir(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(entries) != 0 {
+			t.Fatalf("standalone skill directory is not empty under %s: %+v", path, entries)
+		}
+	}
+}
+
 func TestNativeShadowExportsAOSModelTier(t *testing.T) {
 	t.Setenv(agentComposeModelClassEnv, "legacy-model-class")
 	t.Setenv(agentComposeModelTierEnv, "")

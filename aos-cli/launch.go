@@ -76,6 +76,7 @@ type launchOptions struct {
 	Guarded         bool
 	CWD             string
 	WorkspaceSource string
+	HomeSource      string
 	Command         []string
 	UID             int
 	GID             int
@@ -197,6 +198,22 @@ func buildLaunchPlan(opts launchOptions) (launchPlan, error) {
 			"--mount", "type=volume,source="+substrateVolume+",target="+containerCacheRoot,
 		)
 	}
+	if strings.TrimSpace(opts.HomeSource) != "" {
+		homeSource, err := filepath.Abs(opts.HomeSource)
+		if err != nil {
+			return launchPlan{}, fmt.Errorf("resolve home source: %w", err)
+		}
+		info, err := os.Stat(homeSource)
+		if err != nil {
+			return launchPlan{}, fmt.Errorf("inspect home source: %w", err)
+		}
+		if !info.IsDir() {
+			return launchPlan{}, fmt.Errorf("home source %s is not a directory", homeSource)
+		}
+		args = append(args,
+			"--mount", "type=bind,source="+homeSource+",target="+defaultAgentHome,
+		)
+	}
 	if opts.MCPInventory != "" {
 		args = append(
 			args,
@@ -221,8 +238,10 @@ func buildLaunchPlan(opts launchOptions) (launchPlan, error) {
 			"--env", "AOS_TAILNET_SOCKS5="+tailnetSOCKS5URL,
 		)
 	}
+	if strings.TrimSpace(opts.HomeSource) == "" {
+		args = append(args, "--tmpfs", defaultAgentHome+":rw,exec,size="+runtimeTmpfsSize)
+	}
 	args = append(args,
-		"--tmpfs", defaultAgentHome+":rw,exec,size="+runtimeTmpfsSize,
 		"--tmpfs", "/tmp:rw,exec,size="+runtimeTmpfsSize,
 		"--workdir", workspace,
 		"--env", "AOS_CONTAINER=1",

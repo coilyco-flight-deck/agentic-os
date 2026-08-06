@@ -43,8 +43,9 @@ type wardLaunchPlan struct {
 }
 
 type standaloneWorkspace struct {
-	CWD    string
-	Source string
+	CWD        string
+	Source     string
+	HomeSource string
 }
 
 func runIntegratedLaunch(
@@ -270,6 +271,7 @@ func runStandaloneIntegratedLaunch(
 		Guarded:         opts.Guarded,
 		CWD:             workspace.CWD,
 		WorkspaceSource: workspace.Source,
+		HomeSource:      workspace.HomeSource,
 		Command:         command,
 		UID:             uid,
 		GID:             gid,
@@ -301,7 +303,7 @@ func prepareStandaloneWorkspace(harness string) (standaloneWorkspace, error) {
 	workspace, err := prepareNativeLaunchWorkspaceWithOptions(
 		runtime,
 		harness,
-		nativeLaunchOptions{},
+		nativeLaunchOptions{StandaloneHome: true},
 	)
 	if err != nil {
 		return standaloneWorkspace{}, err
@@ -312,6 +314,7 @@ func prepareStandaloneWorkspace(harness string) (standaloneWorkspace, error) {
 			result.Source = workspace.SessionProjects
 		}
 	}
+	result.HomeSource = workspace.SessionHome
 	return result, nil
 }
 

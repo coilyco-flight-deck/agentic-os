@@ -294,7 +294,8 @@ func resolveNativeRuntime() (nativeRuntime, error) {
 }
 
 type nativeLaunchOptions struct {
-	WorkspaceRoot bool
+	WorkspaceRoot  bool
+	StandaloneHome bool
 }
 
 type nativeLaunchWorkspace struct {
@@ -346,7 +347,7 @@ func prepareNativeLaunchWorkspaceWithOptions(
 			runtime,
 			harness,
 			repositories,
-			options.WorkspaceRoot,
+			options,
 		)
 		return err
 	})
@@ -866,7 +867,7 @@ func createNativeSession(
 	runtime nativeRuntime,
 	harness string,
 	repositories []nativeRepository,
-	workspaceRoot bool,
+	options nativeLaunchOptions,
 ) (nativeLaunchWorkspace, error) {
 	relative, inside := relativeWithin(runtime.ProjectsRoot, runtime.CWD)
 	id, err := nativeSessionID(runtime)
@@ -876,9 +877,13 @@ func createNativeSession(
 	sessionRoot := filepath.Join(runtime.SessionsRoot, id)
 	sessionProjects := filepath.Join(sessionRoot, "projects")
 	sessionHome := ""
-	if workspaceRoot {
+	if options.WorkspaceRoot || options.StandaloneHome {
 		sessionHome = filepath.Join(sessionRoot, "home")
-		if err := stageNativeRoleHome(runtime.Home, sessionHome); err != nil {
+		stageHome := stageNativeRoleHome
+		if options.StandaloneHome {
+			stageHome = stageStandaloneRoleHome
+		}
+		if err := stageHome(runtime.Home, sessionHome); err != nil {
 			_ = os.RemoveAll(sessionRoot)
 			return nativeLaunchWorkspace{}, err
 		}
@@ -929,7 +934,7 @@ func createNativeSession(
 		}
 	}
 	launch := runtime.CWD
-	if workspaceRoot {
+	if options.WorkspaceRoot {
 		launch = sessionProjects
 	} else if inside {
 		launch = sessionProjects
@@ -999,6 +1004,79 @@ func stageNativeRoleHome(source, target string) error {
 		skills := filepath.Join(target, name, "skills")
 		if err := os.MkdirAll(skills, 0o700); err != nil {
 			return fmt.Errorf("create filtered native skill directory %s: %w", skills, err)
+		}
+	}
+	return nil
+}
+
+func stageStandaloneRoleHome(source, target string) error {
+	info, err := os.Stat(source)
+	if err != nil {
+		return fmt.Errorf("inspect standalone host home %s: %w", source, err)
+	}
+	if !info.IsDir() {
+		return fmt.Errorf("standalone host home %s is not a directory", source)
+	}
+	if err := os.MkdirAll(target, 0o700); err != nil {
+		return fmt.Errorf("create standalone role home: %w", err)
+	}
+	for _, spec := range []struct {
+		name    string
+		blocked map[string]bool
+	}{
+		{name: ".agents", blocked: map[string]bool{"skills": true}},
+		{name: ".claude", blocked: map[string]bool{"skills": true, ".credentials.json": true}},
+	} {
+		if err := copyStandaloneHomeDirectory(
+			filepath.Join(source, spec.name),
+			filepath.Join(target, spec.name),
+			spec.blocked,
+		); err != nil {
+			return err
+		}
+	}
+	for _, name := range []string{".agents", ".claude"} {
+		skills := filepath.Join(target, name, "skills")
+		if err := os.MkdirAll(skills, 0o700); err != nil {
+			return fmt.Errorf("create standalone skill directory %s: %w", skills, err)
+		}
+	}
+	return nil
+}
+
+func copyStandaloneHomeDirectory(source, target string, blocked map[string]bool) error {
+	entries, err := os.ReadDir(source)
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("read standalone home directory %s: %w", source, err)
+	}
+	if err := os.MkdirAll(target, 0o700); err != nil {
+		return fmt.Errorf("create standalone home directory %s: %w", target, err)
+	}
+	for _, entry := range entries {
+		name := entry.Name()
+		if blocked[name] || entry.Type()&os.ModeSymlink != 0 {
+			continue
+		}
+		sourcePath := filepath.Join(source, name)
+		targetPath := filepath.Join(target, name)
+		if entry.IsDir() {
+			if err := copyStandaloneHomeDirectory(sourcePath, targetPath, nil); err != nil {
+				return err
+			}
+			continue
+		}
+		info, err := entry.Info()
+		if err != nil {
+			return fmt.Errorf("inspect standalone home entry %s: %w", sourcePath, err)
+		}
+		if !info.Mode().IsRegular() {
+			continue
+		}
+		if err := copyFile(sourcePath, targetPath, info.Mode().Perm()); err != nil {
+			return fmt.Errorf("copy standalone home entry %s: %w", sourcePath, err)
 		}
 	}
 	return nil

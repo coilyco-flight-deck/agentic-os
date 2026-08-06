@@ -5,8 +5,8 @@ doc_goal: Define AOS as the composition root for standalone and Ward-governed ag
 
 AOS exposes one launch shape with composed context and guarded tools always present.
 
-The shared role slug selects context across enabled capabilities and never
-transfers authority between tools. Standalone AOS applies bounded access gates such as [kubeconfig projection](aos-kubeconfig.md).
+The shared role slug selects context across capabilities and never transfers
+authority. Standalone AOS applies [bounded access gates](aos-kubeconfig.md).
 
 ## Launch modes
 
@@ -49,16 +49,17 @@ incompatible agents and translated Ward flags before starting a container.
 
 ## Standalone contract
 
-* The moving default image is pulled before each launch. Custom images stay local.
+* Default image pulls each launch. Custom images stay local.
 * Standalone uses native shadow: worktrees mount at `/workspace`, mapped CWD is workdir.
+* HOME is copied to `/home/aos` from an allowlist.
 * Composition hydrates the baked provider through `aos-substrate-cache`.
 * [Codex authentication](aos-codex-auth.md) fails closed before Docker, projects
   file-backed or direct macOS Keychain credentials read-only, and preserves
   `--auth=false` for startup checks.
-* [Standalone connectivity](aos-standalone-connectivity.md) preserves host networking, MCP, and tailnet behavior.
-* [Role-gated kubeconfig projection](aos-kubeconfig.md) mounts one explicit operator-selected source read-only for standalone director and ops launches.
-* With `--auth=true`, present authentication variables cross by name, never rendered value.
-* Docker socket, AWS config, host HOME, and Git credentials do not mount.
+* [Standalone connectivity](aos-standalone-connectivity.md) keeps host networking, MCP, and tailnet behavior.
+* [Role-gated kubeconfig projection](aos-kubeconfig.md) mounts one operator-selected source read-only for standalone director and ops.
+* With `--auth=true`, auth env names cross without rendered values.
+* Host HOME, AWS, Git, and Docker stay out. Credentials use auth projection only.
 
 Root performs bootstrap only. The harness runs as the host uid and gid.
 Composition verifies the immutable role bundle with `project --scope home`.
