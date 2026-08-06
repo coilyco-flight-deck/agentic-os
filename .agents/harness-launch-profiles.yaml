@@ -1,10 +1,10 @@
 roles:
   engineer:
-    agent: codex
+    agent: claude
   director:
     agent: claude
   qa:
-    agent: codex
+    agent: claude
   ops:
     agent: claude
   design:
@@ -14,6 +14,6 @@ roles:
   strats:
     agent: claude
   content:
-    agent: codex
+    agent: claude
   ai:
-    agent: codex
+    agent: claude
