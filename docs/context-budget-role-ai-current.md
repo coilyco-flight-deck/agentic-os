@@ -3,13 +3,13 @@
 
 # Current AI Engineer context budget
 
-Aggregate inventory scope intentionally measures frontier seats only. This reporting
-scope is separate from runtime compatibility, and excluded snapshots remain
-independently valid evidence.
+The aggregate includes every checked-in current snapshot for this role.
 
 * **Frontier AI Engineer** -
   [Claude 8,600](context-budget-ai-claude-current.yaml),
   [Codex 8,597](context-budget-ai-codex-current.yaml), lazy 52,916, 22 composed.
+
+Only frontier snapshots are available for this role.
 
 ## See also
 
