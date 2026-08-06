@@ -87,7 +87,7 @@ commands:
     description: "Launch the selected agent in one standalone AOS container with composed context and the aosguard skill, then print the agent version."
   aosguard-lock:
     run: sh scripts/aosguard-lock.sh
-    description: "Refresh aosguard's vendored API snapshot and frozen cli-guard dependency graph with the packaged specgen driver."
+    description: "Refresh aosguard's vendored API snapshot and frozen cli-guard dependency graph with the packaged specgen driver. Pass specgen lock flags after `--`."
   aosguard-build:
     run: specgen --project-root .specgen/guardfiles --skills-out dist/skills build --out dist/aosguard
     description: "Materialize the standalone aosguard operator CLI and native generated skill from the independent .specgen snapshot."
