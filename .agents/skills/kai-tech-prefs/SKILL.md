@@ -1,7 +1,6 @@
 ---
 name: kai-tech-prefs
 description: Kai's technical preferences - Go CLI defaults (urfave/cli), Charm TUI stack, dead-repo check, doc conventions, default license. Triggers - cli, tui, library, dependency, recommend tool.
-low-context: required
 ---
 
 # Technical preferences

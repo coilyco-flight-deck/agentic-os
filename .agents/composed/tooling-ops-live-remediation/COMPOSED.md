@@ -1,7 +1,6 @@
 ---
 name: tooling-ops-live-remediation
 description: Use when ops investigates or remediates a live system. Requires before-and-after evidence, bounded mutations, blast-radius control, rollback, and verified recovery.
-low-context: required
 ---
 
 # Live remediation

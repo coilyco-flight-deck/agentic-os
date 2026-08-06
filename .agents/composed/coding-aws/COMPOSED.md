@@ -1,7 +1,6 @@
 ---
 name: coding-aws
 description: AWS umbrella skill. Kai's primary cloud. Python via boto3, secrets and config via SSM Parameter Store, region pinned to us-east-1.
-low-context: required
 ---
 
 # coding-aws

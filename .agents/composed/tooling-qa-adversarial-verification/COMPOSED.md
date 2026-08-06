@@ -1,7 +1,6 @@
 ---
 name: tooling-qa-adversarial-verification
 description: Use when QA verifies a change or release candidate. Maps requirements to positive, negative, regression, and unobservable evidence before rendering a verdict.
-low-context: required
 ---
 
 # Adversarial verification

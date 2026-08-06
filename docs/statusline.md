@@ -31,8 +31,8 @@ The built-in providers are:
 * `10-agent-name.sh` - delegates to the host or image
   [`agent-name.sh`](dev-base-self-name.md).
 * `15-agent-compose.sh` - asks `acompose statusline` to render the immutable
-  bundle identity, role and harness, model class, selected catalog footprint,
-  and composition health. It self-suppresses outside a projected workspace.
+  bundle identity, role and harness, selected catalog footprint, and
+  composition health. It self-suppresses outside a projected workspace.
 * `20-repos.sh` - renders the [repo checkout tracker](repo-tracker.md).
 
 Agent Compose owns the second row's content and bundle semantics. AOS only

@@ -1,7 +1,6 @@
 ---
 name: tooling-scout-autonomy
 description: Build leg of the scout family - what novel software to BUILD on your existing toolset, ranked for a long autonomous run, biased to refactors and wide backfills. Triggers - autonomy scout, scout autonomy, what should I build.
-low-context: optional
 ---
 
 # scout-autonomy

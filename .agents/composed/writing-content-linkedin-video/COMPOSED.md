@@ -1,7 +1,6 @@
 ---
 name: writing-content-linkedin-video
 description: Use when social turns a topic, post, demo, transcript, or supplied footage into a LinkedIn-native video. Shapes the hook, script, shots, captions, companion copy, edit, and export verification.
-low-context: required
 ---
 
 # LinkedIn video production

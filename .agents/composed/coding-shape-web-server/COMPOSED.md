@@ -1,7 +1,6 @@
 ---
 name: coding-shape-web-server
 description: Category umbrella for building HTTP / REST / GraphQL servers. Python via FastAPI (Flask on legacy), Go via stdlib net/http or chi, Node via Fastify. Async I/O, OpenAPI, Prometheus from day one.
-low-context: optional
 ---
 
 # coding-shape-web-server

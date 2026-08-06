@@ -1,7 +1,6 @@
 ---
 name: writing-social-cultural-reading
 description: Use when social adapts a message to an active community or interprets its response. Builds evidence-based cultural hypotheses without stereotyping or fabricating belonging.
-low-context: required
 ---
 
 # Cultural reading

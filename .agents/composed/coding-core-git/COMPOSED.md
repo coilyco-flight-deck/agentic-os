@@ -1,7 +1,6 @@
 ---
 name: coding-core-git
 description: Git + GitHub umbrella. Hard rule - never use gh api graphql without double-confirming, REST is default. Owns the full PR lifecycle (branch, commit, open, monitor CI, auto-fix, merge) and routes to ward-passthrough and git-workflow siblings.
-low-context: required
 seed:
   kind: always
 ---

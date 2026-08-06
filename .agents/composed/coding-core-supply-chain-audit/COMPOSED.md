@@ -1,7 +1,6 @@
 ---
 name: coding-core-supply-chain-audit
 description: Audit third-party packages, libraries, plugins, MCP servers, or upstream repos before pulling them in. Confirms maintainers real, code not malicious, project maintained.
-low-context: required
 allowed-tools: Bash Read Grep WebFetch
 ---
 

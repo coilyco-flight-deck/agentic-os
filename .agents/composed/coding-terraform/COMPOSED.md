@@ -1,7 +1,6 @@
 ---
 name: coding-terraform
 description: Terraform umbrella skill for AWS infra. Backend state in S3 with DynamoDB lock, region us-east-1. Pinned provider versions, plan-before-apply, for_each over count.
-low-context: required
 ---
 
 # coding-terraform

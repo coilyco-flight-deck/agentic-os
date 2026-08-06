@@ -1,4 +1,4 @@
-"""Tests for role context-budget reports."""
+"""Tests for role context measurement reports."""
 
 from __future__ import annotations
 
@@ -7,21 +7,12 @@ from pathlib import Path
 
 import pytest
 
-from agentic_os.context_budget_role_seat import FORMAT
+from agentic_os.context_budget_role import FORMAT
 from agentic_os.generators import generate_context_budget_role_reports as reports
-
-TEST_LAYOUTS = {
-    "cloud-a": "frontier",
-    "cloud-b": "frontier",
-    "oss-a": "low-context",
-    "oss-b": "low-context",
-}
 
 
 def _snapshot(
     role: str,
-    seat: str,
-    model_class: str,
     *,
     eager: int,
     lazy: int,
@@ -29,8 +20,8 @@ def _snapshot(
 ) -> dict[str, object]:
     return {
         "format": FORMAT,
-        "subject": {"role": role, "seat": seat},
-        "bundle": {"model_class": model_class},
+        "subject": {"role": role},
+        "bundle": {"format": "agent-compose.bundle"},
         "totals": {
             "eager": {"components": 1, "bytes": eager * 4, "tokens": eager},
             "lazy": {"components": 1, "bytes": lazy * 4, "tokens": lazy},
@@ -50,34 +41,13 @@ def _snapshot(
     }
 
 
-def _write_snapshots(
-    docs_dir: Path,
-    *,
-    wrong_class_seat: str | None = None,
-) -> dict[str, str]:
-    frontier_index = 0
-    for seat, model_class in TEST_LAYOUTS.items():
-        if model_class == "frontier":
-            eager = 100 + frontier_index * 10
-            frontier_index += 1
-        else:
-            eager = 80
-        declared_class = model_class
-        if seat == wrong_class_seat:
-            declared_class = (
-                "low-context" if model_class == "frontier" else "frontier"
-            )
-        snapshot = _snapshot(
-            "content",
-            seat,
-            declared_class,
-            eager=eager,
-            lazy=200 if model_class == "frontier" else 120,
-            composed=5 if model_class == "frontier" else 3,
-        )
-        path = docs_dir / f"context-budget-content-{seat}-current.yaml"
-        path.write_text(json.dumps(snapshot), encoding="utf-8")
-    return TEST_LAYOUTS
+def _write_snapshot(docs_dir: Path, role: str = "content") -> Path:
+    path = docs_dir / f"context-budget-{role}-current.yaml"
+    path.write_text(
+        json.dumps(_snapshot(role, eager=80, lazy=120, composed=3)),
+        encoding="utf-8",
+    )
+    return path
 
 
 def test_loads_canonical_roles_from_launch_profiles(tmp_path: Path) -> None:
@@ -90,65 +60,52 @@ def test_loads_canonical_roles_from_launch_profiles(tmp_path: Path) -> None:
     assert reports.load_canonical_roles(profiles) == ("engineer", "ops")
 
 
-def test_render_computes_class_envelope_diff(tmp_path: Path) -> None:
-    layouts = _write_snapshots(tmp_path)
-    built = reports.build_reports(tmp_path, roles=("content",), layouts=layouts)
-    rendered = built[tmp_path / "context-budget-role-content-current.md"]
+def test_render_lists_one_harness_neutral_snapshot_per_role(tmp_path: Path) -> None:
+    _write_snapshot(tmp_path)
+    built = reports.build_reports(tmp_path, roles=("content",))
+    rendered = built[tmp_path / "context-budget-role-current.md"]
+    flat = " ".join(rendered.split())
 
-    assert "**Frontier Content Manager**" in rendered
-    assert "**Low-context Content Manager**" in rendered
-    assert "eager saves 20 to 30 tokens" in rendered
-    assert "lazy saves 80 tokens" in rendered
-    assert "composed sources 5 -> 3" in rendered
-    assert "every checked-in current snapshot" in rendered
+    assert "one harness-neutral snapshot" in rendered
+    assert "[Content Manager](context-budget-content-current.yaml)" in rendered
+    assert "eager 80, lazy 120, composed 3" in flat
+    assert "Claude" not in rendered
+    assert "Codex" not in rendered
+    assert "low-context" not in rendered
 
 
 def test_generate_then_check_drift(tmp_path: Path) -> None:
-    layouts = _write_snapshots(tmp_path)
-    assert reports.generate(tmp_path, roles=("content",), layouts=layouts) == 0
-    assert reports.check_drift(tmp_path, roles=("content",), layouts=layouts) == 0
+    _write_snapshot(tmp_path)
+    assert reports.generate(tmp_path, roles=("content",)) == 0
+    assert reports.check_drift(tmp_path, roles=("content",)) == 0
 
-    report = tmp_path / "context-budget-role-content-current.md"
+    report = tmp_path / "context-budget-role-current.md"
     report.write_text("# stale\n", encoding="utf-8")
-    assert reports.check_drift(tmp_path, roles=("content",), layouts=layouts) == 1
+    assert reports.check_drift(tmp_path, roles=("content",)) == 1
 
 
-def test_rejects_snapshot_model_class_drift(tmp_path: Path) -> None:
-    low_context_seat = next(
-        seat
-        for seat, model_class in TEST_LAYOUTS.items()
-        if model_class == "low-context"
-    )
-    layouts = _write_snapshots(tmp_path, wrong_class_seat=low_context_seat)
+def test_rejects_snapshot_subject_drift(tmp_path: Path) -> None:
+    path = _write_snapshot(tmp_path)
+    snapshot = json.loads(path.read_text(encoding="utf-8"))
+    snapshot["subject"]["seat"] = "codex"
+    path.write_text(json.dumps(snapshot), encoding="utf-8")
 
-    with pytest.raises(RuntimeError, match="expected model class"):
-        reports.build_reports(tmp_path, roles=("content",), layouts=layouts)
+    with pytest.raises(RuntimeError, match="subject must name exactly one role"):
+        reports.build_reports(tmp_path, roles=("content",))
 
 
 def test_rejects_malformed_snapshot(tmp_path: Path) -> None:
-    layouts = _write_snapshots(tmp_path)
-    malformed = tmp_path / "context-budget-content-oss-a-current.yaml"
-    malformed.write_text("{}\n", encoding="utf-8")
+    path = _write_snapshot(tmp_path)
+    path.write_text("{}\n", encoding="utf-8")
 
-    with pytest.raises(RuntimeError, match="unsupported role-seat context snapshot"):
-        reports.build_reports(tmp_path, roles=("content",), layouts=layouts)
-
-
-def test_available_classes_are_derived_from_snapshots(tmp_path: Path) -> None:
-    layouts = _write_snapshots(tmp_path)
-    for seat, model_class in layouts.items():
-        if model_class == "low-context":
-            (tmp_path / f"context-budget-content-{seat}-current.yaml").unlink()
-
-    built = reports.build_reports(tmp_path, roles=("content",), layouts=layouts)
-    rendered = built[tmp_path / "context-budget-role-content-current.md"]
-    inventory = built[tmp_path / "context-budget-role-seat-current.md"]
-
-    assert "**Frontier Content Manager**" in rendered
-    assert "**Low-context Content Manager**" not in rendered
-    assert "Only frontier snapshots are available" in rendered
-    assert "frontier only." in inventory
+    with pytest.raises(RuntimeError, match="unsupported role context snapshot"):
+        reports.build_reports(tmp_path, roles=("content",))
 
 
-def test_committed_role_reports_are_current() -> None:
+def test_rejects_missing_role_snapshot(tmp_path: Path) -> None:
+    with pytest.raises(RuntimeError, match="roles have no current snapshot: content"):
+        reports.build_reports(tmp_path, roles=("content",))
+
+
+def test_committed_role_report_is_current() -> None:
     assert reports.check_drift() == 0

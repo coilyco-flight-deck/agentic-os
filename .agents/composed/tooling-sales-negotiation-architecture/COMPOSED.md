@@ -1,7 +1,6 @@
 ---
 name: tooling-sales-negotiation-architecture
 description: Use when sales negotiates commercial terms after qualification. Prepares interests, alternatives, issue trades, concessions, authority, and a mutual implementation path.
-low-context: optional
 ---
 
 # Negotiation architecture

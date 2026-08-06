@@ -1,7 +1,6 @@
 ---
 name: tooling-ceo-oss-stewardship
 description: Use when CEO decides how the portfolio should consume, contribute to, publish, fork, govern, or retire open-source software. Balances strategic leverage, ecosystem health, and maintainer load.
-low-context: optional
 ---
 
 # Open-source stewardship

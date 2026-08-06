@@ -35,8 +35,6 @@
 # Top-level fields (optional):
 #   max_skill_md_lines / max_skill_md_bytes: override the 500 / 10_000 caps.
 #   max_description_bytes: override the 500-byte description cap (0 disables).
-#   require_low_context: require every skill to declare `low-context` as
-#     `required` or `optional`. Default false for backward compatibility.
 #   archive_path_components: list of path components that mark frozen-archive
 #     sub-trees. Any .md whose path contains one of these is skipped from
 #     size-cap checks (still validated for stale refs etc.). Archives are

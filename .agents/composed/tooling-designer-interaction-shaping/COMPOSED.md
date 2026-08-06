@@ -1,7 +1,6 @@
 ---
 name: tooling-designer-interaction-shaping
 description: Use when designer turns a chosen product direction into an interaction specification. Defines the shortest flow, meaningful states, recovery, hierarchy, and handoff evidence.
-low-context: required
 ---
 
 # Interaction shaping

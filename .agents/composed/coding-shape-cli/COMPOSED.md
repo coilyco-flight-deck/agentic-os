@@ -1,7 +1,6 @@
 ---
 name: coding-shape-cli
 description: Category umbrella for building CLI tools. Go via urfave/cli, Python via click, Node via commander, shell prompts via gum. Wrapper APIs mirror the real CLI.
-low-context: optional
 ---
 
 # coding-shape-cli

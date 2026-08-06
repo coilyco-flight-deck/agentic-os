@@ -1,7 +1,6 @@
 ---
 name: tooling-image-zoom
 description: Crop and re-examine small or ambiguous image regions. Use for dense screenshots, charts, scans, diagrams, or text that is unreadable at full-image scale.
-low-context: required
 license: MIT
 compatibility: Requires Bash and ImageMagick (`magick` or `convert` plus `identify`).
 metadata:

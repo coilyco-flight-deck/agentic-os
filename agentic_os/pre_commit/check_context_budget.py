@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Report the eager startup-context budget each harness loads, on demand.
+"""Report the eager startup context each harness loads, on demand.
 
-This measures everything a harness ingests at session start, per harness, against
-a per-harness token budget, across three axes that each have a different growth
-lever:
+This measures everything a harness ingests at session start across three axes
+that each have a different growth lever:
 
   * doc    - the installed AGENTS.md/CLAUDE.md load point. Measures that file
              directly, so the bytes match what the harness receives. Lever:
@@ -44,19 +43,17 @@ repos counts once.
 Token counting (v1): a deterministic chars/4 proxy. tiktoken has no qwen encoding
 and the qwen BPE needs its vocab assets, so v1 ships a hermetic proxy behind
 `count_tokens`; swapping in a real tokenizer is a one-function change. ~10% off
-absolute but consistent across harnesses, which a zero-sum budget needs.
+absolute but consistent across harnesses.
 
-Budgets and skill roots are global (host-wide, not repo-scoped): module defaults,
-the modern `skill_load_points:` projection, the legacy `skill_roots:` override,
-and CLI flags determine them.
+Skill roots are global (host-wide, not repo-scoped): module defaults, the modern
+`skill_load_points:` projection, and the legacy `skill_roots:` override determine
+them.
 
 Usage:
-    check-context-budget                  # report every harness vs its budget
-    check-context-budget --check          # exit 1 if any harness is over budget
-    check-context-budget --claude-budget 12000
-    check-context-budget --role ops --seat codex --snapshot context-budget-ops-codex-before.yaml
-    check-context-budget --role ops --seat codex --compare context-budget-ops-codex-before.yaml \
-        --snapshot context-budget-ops-codex-after.yaml
+    check-context-budget                  # report installed harness context
+    check-context-budget --role ops --snapshot context-budget-ops-before.yaml
+    check-context-budget --role ops --compare context-budget-ops-before.yaml \
+        --snapshot context-budget-ops-after.yaml
 """
 from __future__ import annotations
 
@@ -79,15 +76,6 @@ CONFIG_PATH = HOME / ".config" / "agent-compose" / "agent-compose.yaml"
 DEFAULT_LOAD_POINTS = {
     "claude": HOME / ".claude" / "CLAUDE.md",
     "codex": HOME / ".codex" / "AGENTS.md",
-}
-
-# Whole-baseline (doc + skills) budgets, not laws. Tune via agent-compose.yaml
-# `budgets:` / CLI flags; per-harness rationale in docs/context-budget.md.
-DEFAULT_BUDGETS = {
-    "claude": 13_000,
-    "codex": 6_000,
-    "goose": 5_000,
-    "opencode": 5_000,
 }
 
 # Per-harness skill roots scanned for SKILL.md frontmatter; absolute = global
@@ -265,14 +253,6 @@ def tier_section(immediate: list[Path], peripheral: list[Path]) -> list[str]:
     return lines
 
 
-def _bar(tokens: int, budget: int, width: int = 24) -> str:
-    """A small filled/empty bar showing tokens against budget."""
-    if budget <= 0:
-        return ""
-    filled = min(width, round(width * tokens / budget))
-    return "[" + "#" * filled + "-" * (width - filled) + "]"
-
-
 def _harness_block(
     harness: str,
     load_point: Path,
@@ -282,13 +262,10 @@ def _harness_block(
     skill_top: list[tuple[str, int]],
     skill_count: int,
     mcp_servers: int | None,
-    budget: int,
-) -> tuple[list[str], bool]:
-    """Render one harness's doc/skills/mcp breakdown vs its total budget."""
+) -> list[str]:
+    """Render one harness's doc, skills, and MCP breakdown."""
     total = doc_total + skill_total
-    is_over = bool(budget) and total > budget
-    flag = f"  OVER by {total - budget}" if is_over else ""
-    lines = [f"{harness:9} {total:6} tok  / {budget:6} budget  {_bar(total, budget)}{flag}"]
+    lines = [f"{harness:9} {total:6} tok"]
     lines.append(f"          doc    {doc_total:6} tok  ({load_point})")
     if doc_top:
         name, tok = doc_top[0]
@@ -299,7 +276,7 @@ def _harness_block(
     mcp_label = f"{mcp_servers} servers (native/deferred, CLI fallback)" if mcp_servers is not None else "not measured"
     lines.append(f"          mcp       n/a       ({mcp_label})")
     lines.append("")
-    return lines, is_over
+    return lines
 
 
 def read_mcporter_servers(path: Path) -> list[str] | None:
@@ -320,11 +297,9 @@ def read_mcporter_servers(path: Path) -> list[str] | None:
 
 def run(
     config_path: Path,
-    cli_budgets: dict[str, int],
     mcporter_path: Path,
     cwd: Path,
     *,
-    check: bool,
     immediate: list[Path] | None = None,
     peripheral: list[Path] | None = None,
 ) -> int:
@@ -334,12 +309,9 @@ def run(
     servers = read_mcporter_servers(mcporter_path)
     mcp_count = len(servers) if servers is not None else None
 
-    budgets = dict(DEFAULT_BUDGETS)
     lines = [f"context-budget report  ({TOKENIZER_NOTE})", ""]
-    over: list[str] = []
 
     load_points = dict(DEFAULT_LOAD_POINTS)
-    budgets.update(cli_budgets)
     if config_path.is_file():
         lines.append(
             "agent-compose owns composition; measuring its installed load points directly."
@@ -363,13 +335,11 @@ def run(
         skill_total, skill_top, skill_count = skill_contributions(
             skill_roots.get(harness, []), cwd
         )
-        block, is_over = _harness_block(
+        block = _harness_block(
             harness, load_point, doc_total, doc_top, skill_total, skill_top,
-            skill_count, mcp_count, budgets.get(harness, 0),
+            skill_count, mcp_count,
         )
         lines.extend(block)
-        if is_over:
-            over.append(harness)
 
     lines.append(
         "skills = plugin + scoped SKILL.md frontmatter, deduped, discoverable across "
@@ -383,23 +353,18 @@ def run(
     lines.extend(tier_section(immediate or [], peripheral or []))
 
     out = "\n".join(lines)
-    if check and over:
-        sys.stderr.write(out + "\n")
-        sys.stderr.write(f"\nover budget: {', '.join(over)}\n")
-        return 1
     print(out)
     return 0
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Report per-harness eager context budget.")
-    parser.add_argument("--role", help="role to measure with --seat")
-    parser.add_argument("--seat", help="agent-compose roster seat to measure with --role")
+    parser = argparse.ArgumentParser(description="Report eager context by harness.")
+    parser.add_argument("--role", help="agent-compose role bundle to measure")
     parser.add_argument(
         "--provider",
         type=Path,
         default=Path(__file__).resolve().parents[2],
-        help="AOS provider root for role-seat measurement (defaults to this checkout)",
+        help="AOS provider root for role measurement (defaults to this checkout)",
     )
     parser.add_argument(
         "--additional-provider",
@@ -407,7 +372,7 @@ def main() -> int:
         default=[],
         metavar="ID=PATH",
         help=(
-            "additional role-capability provider for role-seat measurement; "
+            "additional role-capability provider for role measurement; "
             "repeatable"
         ),
     )
@@ -415,40 +380,35 @@ def main() -> int:
         "--repo",
         type=Path,
         default=Path(__file__).resolve().parents[2],
-        help="repository root whose AGENTS.md cascade role-seat mode measures",
+        help="repository root whose AGENTS.md cascade role mode measures",
     )
     parser.add_argument(
         "--cwd",
         type=Path,
         default=Path(__file__).resolve().parents[2],
-        help="CWD inside --repo for the role-seat cascade",
+        help="CWD inside --repo for the role cascade",
     )
     parser.add_argument(
         "--snapshot",
         type=Path,
-        help="write the deterministic grouped role-seat YAML snapshot to this path",
+        help="write the deterministic grouped role YAML snapshot to this path",
     )
     parser.add_argument(
         "--compare",
         type=Path,
-        help="compare role-seat context against a prior snapshot",
+        help="compare role context against a prior snapshot",
     )
     parser.add_argument(
         "--skill-root",
         type=Path,
         action="append",
         default=[],
-        help="extra seat/plugin skill root to include; repeatable",
+        help="extra plugin skill root to include; repeatable",
     )
     parser.add_argument(
         "--agent-compose",
         default="agent-compose",
-        help="agent-compose executable used to materialize and project the role-seat bundle",
-    )
-    parser.add_argument(
-        "--check",
-        action="store_true",
-        help="exit 1 if any harness is over budget (for CI), instead of just printing",
+        help="agent-compose executable used to materialize the role bundle",
     )
     parser.add_argument("--config", type=Path, default=CONFIG_PATH, help="agent-compose.yaml path")
     parser.add_argument(
@@ -473,17 +433,11 @@ def main() -> int:
         metavar="REPO",
         help="reference repo to walk as tier 3 (peripheral), with a total; repeatable",
     )
-    for harness in DEFAULT_BUDGETS:
-        parser.add_argument(
-            f"--{harness}-budget", type=int, default=None, help=f"override the {harness} token budget"
-        )
     args = parser.parse_args()
-    if bool(args.role) != bool(args.seat):
-        parser.error("--role and --seat must be provided together")
     if args.additional_provider and not args.role:
-        parser.error("--additional-provider requires --role and --seat")
-    if args.role and args.seat:
-        from agentic_os.context_budget_role_seat import (
+        parser.error("--additional-provider requires --role")
+    if args.role:
+        from agentic_os.context_budget_role import (
             capture_snapshot,
             load_snapshot,
             parse_additional_provider,
@@ -506,7 +460,6 @@ def main() -> int:
                 args.repo,
                 args.cwd,
                 role=args.role,
-                seat=args.seat,
                 agent_compose=args.agent_compose,
                 additional_providers=additional_providers,
                 plugin_roots=args.skill_root,
@@ -524,18 +477,11 @@ def main() -> int:
             sys.stderr.write(f"context-budget: {exc}\n")
             return 1
 
-    cli_budgets = {
-        harness: getattr(args, f"{harness}_budget")
-        for harness in DEFAULT_BUDGETS
-        if getattr(args, f"{harness}_budget") is not None
-    }
     try:
         return run(
             args.config,
-            cli_budgets,
             args.mcporter,
             Path.cwd(),
-            check=args.check,
             immediate=args.immediate,
             peripheral=args.peripheral,
         )

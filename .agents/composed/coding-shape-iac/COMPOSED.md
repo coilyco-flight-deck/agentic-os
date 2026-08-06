@@ -1,7 +1,6 @@
 ---
 name: coding-shape-iac
 description: Category umbrella for infrastructure-as-code. The Ansible / Terraform / Kubernetes trifecta is Kai's full-coverage model - Terraform hits APIs, Ansible converges hosts, Kubernetes orchestrates containers.
-low-context: optional
 ---
 
 # coding-shape-iac

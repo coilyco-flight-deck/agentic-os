@@ -1,7 +1,6 @@
 ---
 name: tooling-ceo-platform-strategy
 description: Use when CEO decides whether a shared capability should become, remain, or leave a platform. Frames platform customers, contracts, leverage, adoption, and exit criteria.
-low-context: optional
 ---
 
 # Platform strategy

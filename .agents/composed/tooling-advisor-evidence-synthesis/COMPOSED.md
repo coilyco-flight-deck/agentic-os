@@ -1,7 +1,6 @@
 ---
 name: tooling-advisor-evidence-synthesis
 description: Use when advisor turns research into a decision-grade conclusion. Builds claim-level evidence, calibrated uncertainty, disagreement analysis, and actionable implications.
-low-context: required
 ---
 
 # Evidence synthesis

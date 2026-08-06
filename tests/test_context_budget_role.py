@@ -1,4 +1,4 @@
-"""Tests for structural role-seat context snapshots."""
+"""Tests for harness-neutral role context snapshots."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from agentic_os import context_budget_role_seat as context
+from agentic_os import context_budget_role as context
 from agentic_os import agent_compose_person
 
 
@@ -34,6 +34,7 @@ def write_person_snapshot(path: Path) -> None:
                 "roles": {
                     "ops": {
                         "personalities": list(FIXTURE_PERSONALITIES),
+                        "supported_model_tiers": ["frontier", "commodity"],
                     }
                 },
                 "personalities": {
@@ -84,9 +85,7 @@ def provider_fixture(root: Path) -> Path:
     return provider
 
 
-def bundle_fixture(root: Path, *, model_tier: str | None = None) -> Path:
-    if model_tier is None:
-        model_tier = context.model_class_for_seat("codex")
+def bundle_fixture(root: Path) -> Path:
     bundle = root / "bundle"
     write(
         bundle / "manifest.json",
@@ -94,7 +93,6 @@ def bundle_fixture(root: Path, *, model_tier: str | None = None) -> Path:
             {
                 "format": "agent-compose.bundle",
                 "role": "ops",
-                "model_tier": model_tier,
                 "personalities": list(FIXTURE_PERSONALITIES),
                 "sources": ["roster:core", "aos"],
                 "delivery": {
@@ -164,46 +162,6 @@ def bundle_fixture(root: Path, *, model_tier: str | None = None) -> Path:
     return bundle
 
 
-def projection_fixture(
-    root: Path,
-    bundle: Path,
-    *,
-    seat: str = "codex",
-) -> Path:
-    projected = root / "projected"
-    if seat == "claude":
-        instructions = ".claude/CLAUDE.md"
-        skills = ".claude/skills"
-    elif seat == "goose":
-        instructions = ".config/goose/.goosehints"
-        skills = ".agents/skills"
-    elif seat == "opencode":
-        instructions = ".config/opencode/AGENTS.md"
-        skills = ".agents/skills"
-    else:
-        instructions = f".{seat}/AGENTS.md"
-        skills = ".agents/skills"
-    write(
-        projected / instructions,
-        (bundle / "content" / "instructions.md").read_text(encoding="utf-8"),
-    )
-    write(projected / skills / "alpha" / "SKILL.md", "projected\n")
-    write(
-        projected / ".agent-compose" / "projection.json",
-        json.dumps(
-            {
-                "layout": seat,
-                "bundle": str(bundle),
-                "files": [
-                    instructions,
-                    f"{skills}/alpha/SKILL.md",
-                ],
-            }
-        ),
-    )
-    return projected
-
-
 def repo_fixture(root: Path) -> tuple[Path, Path]:
     repo = root / "repo"
     cwd = repo / "nested" / "deeper"
@@ -216,22 +174,18 @@ def repo_fixture(root: Path) -> tuple[Path, Path]:
 def build_fixture_snapshot(
     root: Path,
     *,
-    seat: str = "codex",
     plugin_roots: list[Path] | None = None,
     mcp_servers: list[str] | None = None,
 ) -> dict[str, object]:
     provider = provider_fixture(root)
-    bundle = bundle_fixture(root, model_tier=context.model_class_for_seat(seat))
-    projected = projection_fixture(root, bundle, seat=seat)
+    bundle = bundle_fixture(root)
     repo, cwd = repo_fixture(root)
     return context.build_snapshot(
         bundle,
-        projected,
         provider,
         repo,
         cwd,
         role="ops",
-        seat=seat,
         expected_personalities=FIXTURE_PERSONALITIES,
         plugin_roots=plugin_roots or [],
         mcp_servers=mcp_servers or [],
@@ -245,54 +199,51 @@ def test_aos_temporary_directory_nests_functional_namespaces(
     root = tmp_path / "aos"
     monkeypatch.setattr(context, "AOS_TEMP_ROOT", root)
 
-    with context._aos_temporary_directory("role-seat", "context") as temp:
-        assert Path(temp).parent == root / "role-seat" / "context"
+    with context._aos_temporary_directory("role", "context") as temp:
+        assert Path(temp).parent == root / "role" / "context"
 
 
-def test_validate_role_seat_requires_generated_role_and_aos_layout(
+def test_validate_role_requires_generated_role(
     tmp_path: Path,
 ) -> None:
     person_snapshot = tmp_path / "person.json"
     write_person_snapshot(person_snapshot)
 
-    assert context.validate_role_seat(person_snapshot, "ops", "codex") == (
-        FIXTURE_PERSONALITIES
-    )
-    assert context.validate_role_seat(person_snapshot, "ops", "goose") == (
-        FIXTURE_PERSONALITIES
+    assert context.validate_role(
+        person_snapshot, "ops"
+    ).personalities == FIXTURE_PERSONALITIES
+    assert context.validate_role(person_snapshot, "ops").model_tiers == (
+        "frontier",
+        "commodity",
     )
 
     with pytest.raises(RuntimeError, match="role qa is absent"):
-        context.validate_role_seat(person_snapshot, "qa", "goose")
-    with pytest.raises(RuntimeError, match="unsupported AOS seat"):
-        context.validate_role_seat(person_snapshot, "ops", "aider")
+        context.validate_role(person_snapshot, "qa")
+    with pytest.raises(RuntimeError, match="role must be a lowercase slug"):
+        context.validate_role(person_snapshot, "QA")
 
 
 def test_agents_inventory_rejects_outside_cwd(tmp_path: Path) -> None:
     provider = provider_fixture(tmp_path)
     bundle = bundle_fixture(tmp_path)
-    projected = projection_fixture(tmp_path, bundle)
     repo, _ = repo_fixture(tmp_path)
     with pytest.raises(RuntimeError, match="outside repository root"):
         context.build_snapshot(
             bundle,
-            projected,
             provider,
             repo,
             tmp_path,
             role="ops",
-            seat="codex",
             expected_personalities=FIXTURE_PERSONALITIES,
         )
 
 
-def test_agents_inventory_omits_global_context_already_measured_by_projection(
+def test_agents_inventory_measures_harness_neutral_repo_cascade(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     provider = provider_fixture(tmp_path)
     bundle = bundle_fixture(tmp_path)
-    projected = projection_fixture(tmp_path, bundle)
     cwd = provider / "nested"
     cwd.mkdir()
     write(provider / "AGENTS.md", "# Shared global and repository base\n")
@@ -305,12 +256,10 @@ def test_agents_inventory_omits_global_context_already_measured_by_projection(
 
     snapshot = context.build_snapshot(
         bundle,
-        projected,
         provider,
         provider,
         cwd,
         role="ops",
-        seat="codex",
         expected_personalities=FIXTURE_PERSONALITIES,
     )
     components = [
@@ -357,8 +306,8 @@ def test_build_snapshot_separates_eager_and_lazy_components(tmp_path: Path) -> N
     )
 
     assert first == second
-    assert first["subject"] == {"role": "ops", "seat": "codex"}
-    assert first["bundle"]["model_class"] == context.model_class_for_seat("codex")
+    assert first["subject"] == {"role": "ops"}
+    assert "model_class" not in first["bundle"]
     assert first["bundle"]["personalities"] == list(FIXTURE_PERSONALITIES)
     assert first["cwd"] == "nested/deeper"
     assert first["mcp"] == {
@@ -407,7 +356,7 @@ def test_build_snapshot_separates_eager_and_lazy_components(tmp_path: Path) -> N
     )
     assert skills["skill-root-0/plugin-tool"]["class"] == "plugin"
     components = {item["id"]: item for item in component_rows(first)}
-    assert components["instructions:role"]["delivery"] == ".codex/AGENTS.md"
+    assert components["instructions:role"]["delivery"] == "role-instructions"
     assert components["agents:000:AGENTS.md"]["eager"] is True
     assert components["agents:001:nested/AGENTS.md"]["eager"] is True
     assert components["mcp:deferred"]["tokens"] == 0
@@ -468,17 +417,14 @@ def test_build_snapshot_attributes_additional_provider_skills(
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     manifest["sources"].append("aosk")
     write(manifest_path, json.dumps(manifest))
-    projected = projection_fixture(tmp_path, bundle)
     repo, cwd = repo_fixture(tmp_path)
 
     snapshot = context.build_snapshot(
         bundle,
-        projected,
         provider,
         repo,
         cwd,
         role="ops",
-        seat="codex",
         expected_personalities=FIXTURE_PERSONALITIES,
         additional_providers={"aosk": private_provider},
     )
@@ -492,52 +438,9 @@ def test_build_snapshot_attributes_additional_provider_skills(
     )
 
 
-@pytest.mark.parametrize(
-    ("seat", "delivery"),
-    [
-        ("claude", ".claude/CLAUDE.md"),
-        ("goose", ".config/goose/.goosehints"),
-        ("opencode", ".config/opencode/AGENTS.md"),
-    ],
-)
-def test_projection_changes_seat_specific_load_points(
-    tmp_path: Path,
-    seat: str,
-    delivery: str,
-) -> None:
-    snapshot = build_fixture_snapshot(tmp_path, seat=seat)
-    components = {item["id"]: item for item in component_rows(snapshot)}
-
-    assert snapshot["subject"] == {"role": "ops", "seat": seat}
-    assert snapshot["bundle"]["model_class"] == context.model_class_for_seat(seat)
-    assert components["instructions:role"]["delivery"] == delivery
-
-
-def test_snapshot_rejects_wrong_model_tier(tmp_path: Path) -> None:
-    provider = provider_fixture(tmp_path)
-    bundle = bundle_fixture(
-        tmp_path, model_tier=context.model_class_for_seat("codex")
-    )
-    projected = projection_fixture(tmp_path, bundle, seat="goose")
-    repo, cwd = repo_fixture(tmp_path)
-
-    with pytest.raises(RuntimeError, match="expected model tier low-context"):
-        context.build_snapshot(
-            bundle,
-            projected,
-            provider,
-            repo,
-            cwd,
-            role="ops",
-            seat="goose",
-            expected_personalities=FIXTURE_PERSONALITIES,
-        )
-
-
 def test_snapshot_rejects_wrong_bundle_role(tmp_path: Path) -> None:
     provider = provider_fixture(tmp_path)
     bundle = bundle_fixture(tmp_path)
-    projected = projection_fixture(tmp_path, bundle)
     repo, cwd = repo_fixture(tmp_path)
     manifest = json.loads((bundle / "manifest.json").read_text(encoding="utf-8"))
     manifest["role"] = "engineer"
@@ -546,12 +449,10 @@ def test_snapshot_rejects_wrong_bundle_role(tmp_path: Path) -> None:
     with pytest.raises(RuntimeError, match="expected role ops"):
         context.build_snapshot(
             bundle,
-            projected,
             provider,
             repo,
             cwd,
             role="ops",
-            seat="codex",
             expected_personalities=FIXTURE_PERSONALITIES,
         )
 
@@ -561,7 +462,6 @@ def test_snapshot_rejects_personality_drift_from_agent_compose(
 ) -> None:
     provider = provider_fixture(tmp_path)
     bundle = bundle_fixture(tmp_path)
-    projected = projection_fixture(tmp_path, bundle)
     repo, cwd = repo_fixture(tmp_path)
     manifest = json.loads(
         (bundle / "manifest.json").read_text(encoding="utf-8")
@@ -572,12 +472,10 @@ def test_snapshot_rejects_personality_drift_from_agent_compose(
     with pytest.raises(RuntimeError, match="personalities differ"):
         context.build_snapshot(
             bundle,
-            projected,
             provider,
             repo,
             cwd,
             role="ops",
-            seat="codex",
             expected_personalities=FIXTURE_PERSONALITIES,
         )
 
@@ -587,7 +485,6 @@ def test_snapshot_rejects_missing_personality_skill_body(
 ) -> None:
     provider = provider_fixture(tmp_path)
     bundle = bundle_fixture(tmp_path)
-    projected = projection_fixture(tmp_path, bundle)
     repo, cwd = repo_fixture(tmp_path)
     missing = agent_compose_person.personality_skill_id(
         FIXTURE_PERSONALITIES[0]
@@ -603,12 +500,10 @@ def test_snapshot_rejects_missing_personality_skill_body(
     with pytest.raises(RuntimeError, match="personality skills differ"):
         context.build_snapshot(
             bundle,
-            projected,
             provider,
             repo,
             cwd,
             role="ops",
-            seat="codex",
             expected_personalities=FIXTURE_PERSONALITIES,
         )
 
@@ -616,16 +511,13 @@ def test_snapshot_rejects_missing_personality_skill_body(
 def test_snapshot_round_trip_and_delta(tmp_path: Path) -> None:
     provider = provider_fixture(tmp_path)
     bundle = bundle_fixture(tmp_path)
-    projected = projection_fixture(tmp_path, bundle)
     repo, cwd = repo_fixture(tmp_path)
     before = context.build_snapshot(
         bundle,
-        projected,
         provider,
         repo,
         cwd,
         role="ops",
-        seat="codex",
         expected_personalities=FIXTURE_PERSONALITIES,
     )
     snapshot_path = tmp_path / "before.yaml"
@@ -640,17 +532,15 @@ def test_snapshot_round_trip_and_delta(tmp_path: Path) -> None:
     write(repo / "nested" / "AGENTS.md", "# Nested instructions\n" + "More context.\n" * 5)
     after = context.build_snapshot(
         bundle,
-        projected,
         provider,
         repo,
         cwd,
         role="ops",
-        seat="codex",
         expected_personalities=FIXTURE_PERSONALITIES,
     )
     rendered = context.render_delta(context.load_snapshot(snapshot_path), after)
 
-    assert "Role-seat context delta" in rendered
+    assert "Role context delta" in rendered
     assert "~ agents:001:nested/AGENTS.md" in rendered
     assert before["payload_hash"] != after["payload_hash"]
     assert int(after["totals"]["eager"]["tokens"]) > int(
@@ -658,9 +548,10 @@ def test_snapshot_round_trip_and_delta(tmp_path: Path) -> None:
     )
 
 
-def test_delta_rejects_different_role_or_seat(tmp_path: Path) -> None:
-    before = build_fixture_snapshot(tmp_path / "before", seat="codex")
-    after = build_fixture_snapshot(tmp_path / "after", seat="claude")
+def test_delta_rejects_different_role(tmp_path: Path) -> None:
+    before = build_fixture_snapshot(tmp_path / "before")
+    after = build_fixture_snapshot(tmp_path / "after")
+    after["subject"] = {"role": "qa"}
     after["repository"] = before["repository"]
     after["cwd"] = before["cwd"]
 
@@ -701,12 +592,6 @@ def test_capture_requires_only_agent_compose_executable(
         elif operation == "compose":
             output = Path(command[command.index("--out") + 1])
             shutil.copytree(source_bundle, output / "bundle")
-        elif operation == "project":
-            target = Path(command[command.index("--target") + 1])
-            projection_fixture(target.parent, source_bundle)
-            generated = target.parent / "projected"
-            if generated != target:
-                shutil.copytree(generated, target)
         return Result()
 
     monkeypatch.setattr(context.shutil, "which", fake_which)
@@ -717,28 +602,26 @@ def test_capture_requires_only_agent_compose_executable(
         repo,
         cwd,
         role="ops",
-        seat="codex",
         agent_compose="agent-compose",
         mcporter_path=tmp_path / "missing-mcporter.json",
     )
 
-    assert snapshot["subject"] == {"role": "ops", "seat": "codex"}
+    assert snapshot["subject"] == {"role": "ops"}
     assert executable_lookups == ["agent-compose"]
-    assert operations == ["roster", "compose", "project"]
+    assert operations == ["roster", "compose"]
 
 
-def test_request_uses_aos_layout_model_tier() -> None:
-    for seat, model_tier in context.load_aos_layout_model_classes().items():
-        request = context._request_text("provider", "ops", seat)
-        assert f'model-tier "{model_tier}"' in request
-        assert "model-class" not in request
+def test_request_uses_role_compatibility_tier_without_model_class() -> None:
+    request = context._request_text("provider", "ops", "frontier")
+    assert 'model-tier "frontier"' in request
+    assert "model-class" not in request
 
 
 def test_request_includes_named_additional_providers() -> None:
     request = context._request_text(
         "providers/aos",
         "ops",
-        "codex",
+        "frontier",
         {"aosk": "providers/aosk"},
     )
 

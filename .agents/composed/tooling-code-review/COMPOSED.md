@@ -1,7 +1,6 @@
 ---
 name: tooling-code-review
 description: Code review for ward's in-container review agent. Use when asked to review a filesystem diff, do adversarial review, same-family review, non-iterative review, or a ward review gate. Triggers - code review, review this diff, diff review, adversarial review, same-family review, non-iterative review, filesystem diff review.
-low-context: required
 ---
 
 # Code Review

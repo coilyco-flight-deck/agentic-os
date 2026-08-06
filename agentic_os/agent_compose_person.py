@@ -21,6 +21,7 @@ class AgentComposePersonError(RuntimeError):
 class RolePersonalities:
     role: str
     personalities: tuple[str, ...]
+    model_tiers: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -107,7 +108,30 @@ def load_person_snapshot(path: Path) -> PersonSnapshot:
             raise AgentComposePersonError(
                 f"{path}: role {role} repeats a personality"
             )
-        roles.append(RolePersonalities(role=role, personalities=meld))
+        raw_tiers = raw_role.get("supported_model_tiers")
+        if (
+            not isinstance(raw_tiers, list)
+            or not raw_tiers
+            or not all(isinstance(value, str) for value in raw_tiers)
+        ):
+            raise AgentComposePersonError(
+                f"{path}: role {role} supported model tiers are malformed"
+            )
+        model_tiers = tuple(
+            _slug(value, f"{path}: role {role} supported model tier")
+            for value in raw_tiers
+        )
+        if len(set(model_tiers)) != len(model_tiers):
+            raise AgentComposePersonError(
+                f"{path}: role {role} repeats a supported model tier"
+            )
+        roles.append(
+            RolePersonalities(
+                role=role,
+                personalities=meld,
+                model_tiers=model_tiers,
+            )
+        )
         for personality in meld:
             if personality not in selected_set:
                 selected.append(personality)

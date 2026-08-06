@@ -1,7 +1,6 @@
 ---
 name: design-system
 description: Generate or audit design systems, design tokens, component consistency, accessibility, and visual polish. Triggers - design system, design tokens, visual audit, styling review, UI consistency, accessibility review.
-low-context: optional
 metadata:
   origin: ECC
   source: https://github.com/affaan-m/ECC/tree/591ab5cbd3f2f65860ea91c226e410b1502c8e2e/skills/design-system

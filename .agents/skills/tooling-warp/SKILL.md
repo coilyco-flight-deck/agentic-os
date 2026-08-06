@@ -1,7 +1,6 @@
 ---
 name: tooling-warp
 description: Operate and diagnose the repo-managed Warp terminal configuration. Triggers - Warp, WarpPreview, warp settings, tabs, warp://, warppreview://.
-low-context: required
 ---
 
 # Warp

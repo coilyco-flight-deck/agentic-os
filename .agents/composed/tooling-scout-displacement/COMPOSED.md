@@ -1,7 +1,6 @@
 ---
 name: tooling-scout-displacement
 description: Outbound half of the scout pair. Build-vs-buy / NIH audit - finds custom code you maintain that off-the-shelf OSS already does, and proposes shedding it. Inventories your subsystems with code-analysis tooling, then hydrates OSS candidates via a per-language github search. Paired with tooling-scout-capability (what to ADD).
-low-context: optional
 ---
 
 # scout-displacement

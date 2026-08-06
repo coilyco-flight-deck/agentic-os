@@ -1,7 +1,6 @@
 ---
 name: tooling-skill-authoring
 description: Author, evaluate, place, prune, and validate skills. Covers admission, scope, trigger quality, behavioral deltas, structure, provenance, and deterministic gates.
-low-context: optional
 license: Apache-2.0
 metadata:
   source-url: https://github.com/anthropics/skills/tree/main/skills/skill-creator
@@ -38,9 +37,6 @@ Runbooks and partial-failure playbooks stay central. Requirements live in
 
 Create an ordinary `SKILL.md` or role-scoped `COMPOSED.md`. Both use the same
 `name` and `description` frontmatter. Bind role-scoped sources in `.agents/roles.kdl`.
-
-Classify low-context admission per skill. Missing metadata defaults to
-`required`. See the [model-class policy](../../../docs/skill-model-classes.md).
 
 Run the validator before committing for fast feedback:
 

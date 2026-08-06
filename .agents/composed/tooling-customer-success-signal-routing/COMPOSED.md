@@ -1,7 +1,6 @@
 ---
 name: tooling-customer-success-signal-routing
 description: Use when customer-success turns onboarding or support contacts into immediate resolution and recurring product signals. Separates evidence, routing, promises, and closure.
-low-context: required
 ---
 
 # Customer signal routing

@@ -1,7 +1,6 @@
 ---
 name: tooling-pm-program-decomposition
 description: Use when PM turns a broad outcome into an epic and sequenced Forgejo issues. Preserves parent links, evidence lanes, dependency order, and closure boundaries.
-low-context: required
 ---
 
 # Program decomposition

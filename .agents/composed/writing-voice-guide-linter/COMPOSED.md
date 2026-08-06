@@ -1,7 +1,6 @@
 ---
 name: writing-voice-guide-linter
 description: Lint prose against Kai's voice rules - no em-dashes, no italics, no semicolons, no prose tables, she/her. Triggers - voice lint, voice check, lint prose, em-dash check, pronoun check.
-low-context: required
 ---
 
 # voice-guide-linter

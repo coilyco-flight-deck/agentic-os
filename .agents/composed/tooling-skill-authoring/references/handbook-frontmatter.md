@@ -8,7 +8,6 @@ Every `SKILL.md` and `COMPOSED.md` begins with YAML frontmatter:
 ---
 name: <directory-name>
 description: Use when <routing condition>. Include the canonical task shape plus a compact alias set. Keep discovery text short; put procedure in the body.
-low-context: <required|optional>
 ---
 ```
 
@@ -18,8 +17,6 @@ Rules:
 * `description` MUST be non-empty. Validator enforces this.
 * `description` is routing metadata, not documentation. Claude and Codex both see it before reading the skill body. The field answers "when should the agent open this skill?"
 * `description` may include a compact `Triggers - foo, bar, baz` tail when trigger aliases help. The tail is optional, and it should earn its bytes. Avoid exhaustive keyword bags.
-* `low-context` decides whether agent-compose keeps the skill for smaller-context model classes. Use `required` for safe fundamentals and local truth. Use `optional` for work the model is not expected to perform or advanced technique that does not change safe fundamentals.
-* Missing `low-context` metadata defaults to `required` for backward compatibility. Providers may set `require_low_context: true` in `categories.yaml` when every source must carry an explicit decision.
 * `SKILL.md` is the ordinary discoverable entrypoint. `COMPOSED.md` is the
   source entrypoint that agent-compose renames after role selection.
 * Cross-links to other skills use either:

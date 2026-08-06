@@ -1,7 +1,6 @@
 ---
 name: tooling-qa-state-machine-verification
 description: Use when QA verifies a stateful lifecycle, protocol, or workflow. Models states, guarded transitions, invalid events, invariants, reachability, and event sequences before verdict.
-low-context: optional
 ---
 
 # State-machine verification

@@ -1,7 +1,6 @@
 ---
 name: coding-javascript
 description: JavaScript and TypeScript umbrella skill. Default to TypeScript over plain JavaScript. Node 20+. ESM modules. Frameworks live as subskills (e.g. coding-javascript-react).
-low-context: required
 seed:
   kind: language
   language: javascript

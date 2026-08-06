@@ -1,7 +1,6 @@
 ---
 name: repo-agentic-os
 description: Cross-platform agentic operating layer with dotfiles, skills, guarded tooling, and repository validators. Triggers - agentic-os, ai-agents, automation, dotfiles, security
-low-context: required
 ---
 
 # repo-agentic-os

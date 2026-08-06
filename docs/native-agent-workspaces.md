@@ -25,9 +25,8 @@ Native and standalone AOS use this shadow before agent-compose or Docker runs.
 Bare harness commands let the native roster infer a role.
 `acompose <role> <harness> [args...]` enters the clean shadow workspace for
 non-directors. Director uses warded AOS because Ward owns dispatch and its
-broker. Native AOS maps a model override or its profile fallback to `frontier`,
-`commodity`, or `oss` and passes it to Agent Compose. Tier gates compatibility,
-never context selection. AOS clears retired model-class, and user skills stay empty.
+broker. Native AOS clears deprecated Agent Compose model selectors, so every
+harness receives the complete selected role composition. User skills stay empty.
 Claude auto-updates cannot replace the host launcher, and Codex trusts the workspace.
 Assigned launches apply [bounded native Codex hook trust](native-codex-hook-trust.md).
 

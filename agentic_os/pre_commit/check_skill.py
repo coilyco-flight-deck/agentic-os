@@ -56,8 +56,6 @@ def detect_skills_dir() -> str:
 DEFAULT_MAX_LINES = 500
 DEFAULT_MAX_BYTES = 10_000
 DEFAULT_MAX_DESCRIPTION_BYTES = 500
-LOW_CONTEXT_POLICIES = ("required", "optional")
-
 # Thin skills (role: thin) must fit a small-local-model catalog budget. Cap is
 # 1/4 the 4000-char / 80-line cap. See docs/skill-discipline-handbook-size-caps.md.
 THIN_MAX_LINES = 20
@@ -98,11 +96,6 @@ class Spec:
         """Cap on description length. 0 disables the check."""
         v = self.raw.get("max_description_bytes", DEFAULT_MAX_DESCRIPTION_BYTES)
         return int(v)
-
-    @property
-    def require_low_context(self) -> bool:
-        """Whether every skill must declare an explicit low-context policy."""
-        return bool(self.raw.get("require_low_context", False))
 
     @property
     def archive_path_components(self) -> list[str]:
@@ -149,25 +142,6 @@ class Report:
     def emit(self) -> None:
         for line in self.failures:
             sys.stderr.write(f"FAIL: {line}\n")
-
-
-def validate_low_context_policy(
-    name: str, entrypoint: str, fm: dict, spec: Spec, report: Report
-) -> None:
-    policy = fm.get("low-context")
-    if policy is None:
-        if spec.require_low_context:
-            report.fail(
-                f"{name}/{entrypoint}: missing required frontmatter `low-context`. "
-                "Choose `required` or `optional`."
-            )
-        return
-    if policy not in LOW_CONTEXT_POLICIES:
-        allowed = " or ".join(f"`{value}`" for value in LOW_CONTEXT_POLICIES)
-        report.fail(
-            f"{name}/{entrypoint}: frontmatter `low-context` must be {allowed}, "
-            f"got {policy!r}"
-        )
 
 
 def load_spec() -> Spec:
@@ -369,7 +343,6 @@ def validate_skill(
         report.fail(f"{name}/{ENTRYPOINT_NAME}: missing or malformed YAML frontmatter")
         return
 
-    validate_low_context_policy(name, ENTRYPOINT_NAME, fm, spec, report)
 
     # Repo-pointer skills are generated and owned by the repo-pointer-skills hook,
     # so skip shape validation here. Global checks still apply via run_global_checks.

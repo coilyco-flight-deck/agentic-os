@@ -39,9 +39,10 @@ Major shipped capabilities, not files.
 - [Pull-request CI gate](pr-dev-base-build-validation.md) - fast tests and Docker-only image validation.
 - [AGENTS pointer](features-agents-pointer.md) - generated sibling-repo workspace pointer.
 - [Encoded leak guard](leak-guard.md) - hex-encoded leak-term detector.
-- [Context budget](context-budget.md) - role-seat budgets, multi-provider attribution, and generated class diffs.
+- [Context measurement](context-budget.md) - harness-neutral role composition,
+  multi-provider attribution, and generated seat inventories.
 - [AGENTS inventory](agents-context-inventory.md) - fleet corpus and clipping candidates.
-- [Repository residency](repository-residency.md) - strict Agent Compose plan adapter for native workspaces, fleet consumers, and exact status-line tracking.
+- [Repository residency](repository-residency.md) - Agent Compose native-workspace adapter and status tracking.
 - [Catalog caps reference](catalog-caps-reference.md) - generated numeric caps for validators.
 - [Canonical agent-id generator](dictatable-id-alphabet.md) - short lowercase agent IDs.
 - [Knowledge-base freshness](knowledge-base-freshness.md) - age-based fact markers.

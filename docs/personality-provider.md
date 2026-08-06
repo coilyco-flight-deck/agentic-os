@@ -25,10 +25,8 @@ Unselected role sources leave no catalog metadata or trace in that bundle.
 See [role-composed skills](role-composed-skills.md) for the complete contract.
 
 The compose request supplies the stable source id `aos`, so adding an
-ordinary skill or role binding needs no parallel provider inventory.
-
-Skill frontmatter owns the [model-class decision](skill-model-classes.md).
-Role selection runs first, so pruning never widens the role boundary.
+ordinary skill or role binding needs no parallel provider inventory. AOS does
+not prune that inventory by harness, model family, or context-window size.
 
 Agent-compose activates the complete ordered personality meld for a selected
 role. A request cannot select an arbitrary trait or change compatibility.

@@ -126,7 +126,7 @@ func runNativeShadow(ctx context.Context, cmd *cli.Command) error {
 	if isolated && harness == "codex" {
 		command = trustNativeCodexWorkspace(command, harness, nativeCodexProject(launchCWD))
 	}
-	if err := applyNativeModelTier(harness, command); err != nil {
+	if err := clearDeprecatedModelSelectors(); err != nil {
 		return err
 	}
 	if cmd.Bool("assigned-role") {
@@ -215,20 +215,14 @@ func trustNativeCodexWorkspace(command []string, harness, project string) []stri
 	return command
 }
 
-func applyNativeModelTier(harness string, command []string) error {
-	if err := os.Unsetenv(agentComposeModelClassEnv); err != nil {
-		return fmt.Errorf("unset retired agent-compose model class: %w", err)
-	}
-	model, err := nativeRuntimeModel(harness, command)
-	if err != nil {
-		return err
-	}
-	modelTier, err := modelTierForModel(model)
-	if err != nil {
-		return fmt.Errorf("resolve native %s model tier: %w", harness, err)
-	}
-	if err := os.Setenv(agentComposeModelTierEnv, modelTier); err != nil {
-		return fmt.Errorf("set agent-compose model tier: %w", err)
+func clearDeprecatedModelSelectors() error {
+	for _, variable := range []string{
+		agentComposeModelTierEnv,
+		agentComposeModelClassEnv,
+	} {
+		if err := os.Unsetenv(variable); err != nil {
+			return fmt.Errorf("unset deprecated agent-compose selector %s: %w", variable, err)
+		}
 	}
 	return nil
 }

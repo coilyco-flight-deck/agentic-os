@@ -1,7 +1,6 @@
 ---
 name: writing-voice-adaptation
 description: Adapt source material into an established voice and target register. Use for ghostwriting, channel adaptation, substantive rewriting, or voice-guide-based editing.
-low-context: required
 ---
 
 # Voice adaptation

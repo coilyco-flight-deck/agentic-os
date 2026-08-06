@@ -357,22 +357,17 @@ func TestStageStandaloneRoleHomeCopiesSafeConfigAndDeniesSensitivePaths(t *testi
 	}
 }
 
-func TestNativeShadowExportsAOSModelTier(t *testing.T) {
+func TestNativeShadowClearsDeprecatedModelSelectors(t *testing.T) {
 	t.Setenv(agentComposeModelClassEnv, "legacy-model-class")
-	t.Setenv(agentComposeModelTierEnv, "")
+	t.Setenv(agentComposeModelTierEnv, "legacy-model-tier")
 
-	command := []string{
-		"agent-compose", "launch", "engineer", "goose",
-		"--model", "deploy-backend/deepseek-v4-flash",
-	}
-	if err := applyNativeModelTier("goose", command); err != nil {
+	if err := clearDeprecatedModelSelectors(); err != nil {
 		t.Fatal(err)
 	}
-	if got := os.Getenv(agentComposeModelTierEnv); got != modelTierCommodity {
-		t.Fatalf("model tier = %q, want %s", got, modelTierCommodity)
-	}
-	if _, found := os.LookupEnv(agentComposeModelClassEnv); found {
-		t.Fatalf("retired %s remains set", agentComposeModelClassEnv)
+	for _, variable := range []string{agentComposeModelTierEnv, agentComposeModelClassEnv} {
+		if _, found := os.LookupEnv(variable); found {
+			t.Fatalf("deprecated %s remains set", variable)
+		}
 	}
 }
 

@@ -1,7 +1,6 @@
 ---
 name: tooling-ops-change-risk-modeling
 description: Use before an unfamiliar or high-coupling live change. Models failure propagation, correlated scope, reversibility, detection latency, and controls that bound the experiment.
-low-context: required
 ---
 
 # Change-risk modeling

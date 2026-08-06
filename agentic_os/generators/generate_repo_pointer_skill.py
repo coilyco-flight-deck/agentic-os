@@ -117,7 +117,6 @@ def render_skill(
     name: str,
     description: str,
     org: str = DEFAULT_ORG,
-    low_context: str | None = None,
 ) -> str:
     """Render the full SKILL.md text for `repo-<name>` from a final description.
 
@@ -137,8 +136,6 @@ def render_skill(
     """
     skill_name = repo_skill_name(name, org)
     frontmatter_fields = {"name": skill_name, "description": description}
-    if low_context is not None:
-        frontmatter_fields["low-context"] = low_context
     frontmatter = yaml.safe_dump(
         frontmatter_fields,
         sort_keys=False,
@@ -208,7 +205,6 @@ def check_drift(skill_dir_name: str, text: str, org: str = DEFAULT_ORG) -> list[
             f"match directory name {skill_dir_name!r}"
         )
     description = str(fm.get("description") or "")
-    low_context = fm.get("low-context")
     if _EMOJI_RE.search(description):
         problems.append(
             f"{skill_dir_name}/SKILL.md: description contains emoji. Regenerate."
@@ -221,11 +217,6 @@ def check_drift(skill_dir_name: str, text: str, org: str = DEFAULT_ORG) -> list[
         problems.append(
             f"{skill_dir_name}/SKILL.md: description has no 'Triggers - ' line. Regenerate."
         )
-    if low_context is not None and low_context not in {"required", "optional"}:
-        problems.append(
-            f"{skill_dir_name}/SKILL.md: low-context must be 'required' or 'optional'."
-        )
-
     pointer = _POINTER_RE.search(text)
     if pointer is None:
         problems.append(
@@ -247,7 +238,7 @@ def check_drift(skill_dir_name: str, text: str, org: str = DEFAULT_ORG) -> list[
             f"match configured owner {org!r}"
         )
 
-    expected = render_skill(repo_name, description, org, low_context)
+    expected = render_skill(repo_name, description, org)
     if text != expected:
         problems.append(
             f"{skill_dir_name}/SKILL.md: body or frontmatter drifted from generator "
@@ -311,11 +302,6 @@ def main(argv: list[str] | None = None) -> int:
         help="A GitHub topic. Repeatable. Used with --description.",
     )
     parser.add_argument(
-        "--low-context",
-        choices=("required", "optional"),
-        help="Optional explicit low-context policy for this pointer skill.",
-    )
-    parser.add_argument(
         "--print",
         action="store_true",
         help="Print to stdout instead of writing the SKILL.md file.",
@@ -335,7 +321,7 @@ def main(argv: list[str] | None = None) -> int:
         "repo-pointer-skills", "org", DEFAULT_ORG, repo_root=Path(ns.repo_root)
     )
     final_description = build_description(description, ns.name, topics)
-    content = render_skill(ns.name, final_description, org, ns.low_context)
+    content = render_skill(ns.name, final_description, org)
 
     if ns.print:
         sys.stdout.write(content)

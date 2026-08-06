@@ -23,10 +23,11 @@ def _person_snapshot() -> dict[str, object]:
                     "meticulous",
                     "tenacious",
                 ],
-                "supported_model_classes": ["frontier"],
+                "supported_model_tiers": ["frontier", "commodity"],
             },
             "guide": {
                 "personalities": ["playful", "diplomatic"],
+                "supported_model_tiers": ["oss"],
             },
         },
         "personalities": {
@@ -65,6 +66,7 @@ def test_load_preserves_ordered_role_personalities(person_snapshot: Path) -> Non
         "guide": ("playful", "diplomatic"),
     }
     assert snapshot.skills[0] == ("curious", "personality-curious")
+    assert snapshot.roles[0].model_tiers == ("frontier", "commodity")
 
 
 def test_rejects_invalid_personality_binding(person_snapshot: Path) -> None:

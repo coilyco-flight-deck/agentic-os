@@ -1,7 +1,6 @@
 ---
 name: tooling-discord-community-host
 description: Host an ongoing Discord community conversation with grounded answers, restrained participation, privacy protection, and human escalation. Use when an agent directly replies to community members as a Discord bot.
-low-context: required
 ---
 
 # Discord community host

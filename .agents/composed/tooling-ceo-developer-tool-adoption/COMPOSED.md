@@ -1,7 +1,6 @@
 ---
 name: tooling-ceo-developer-tool-adoption
 description: Use when CEO shapes adoption strategy for developer tools, CLIs, agents, or infrastructure products. Converts attention into repeat workflow use through a wedge, trust, integration, and proof.
-low-context: optional
 ---
 
 # Developer-tool adoption

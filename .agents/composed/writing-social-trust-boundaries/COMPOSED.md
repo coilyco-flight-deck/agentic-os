@@ -1,7 +1,6 @@
 ---
 name: writing-social-trust-boundaries
 description: Use when social handles a correction, conflict, sensitive reply, or moderation-adjacent moment. Protects truth, audience boundaries, promises, and durable relationship trust.
-low-context: required
 ---
 
 # Social trust boundaries

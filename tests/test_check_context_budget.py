@@ -108,7 +108,7 @@ def test_codex_skill_roots_use_portable_standard() -> None:
     ]
 
 
-def test_run_end_to_end(tmp_path: Path, monkeypatch) -> None:
+def test_run_end_to_end(tmp_path: Path, monkeypatch, capsys) -> None:
     config_path = tmp_path / "agent-compose.yaml"
     write(config_path, "sources: []\n")
     nomcp = tmp_path / "no-mcp.json"
@@ -118,17 +118,18 @@ def test_run_end_to_end(tmp_path: Path, monkeypatch) -> None:
         {"claude": tmp_path / "missing-CLAUDE.md"},
     )
     monkeypatch.setattr(budget, "DEFAULT_SKILL_ROOTS", {"claude": []})
-    # Report mode always exits 0.
-    assert budget.run(config_path, {}, nomcp, tmp_path, check=False) == 0
-    # With no installed load point, a tiny document budget still passes.
-    assert budget.run(config_path, {"claude": 1}, nomcp, tmp_path, check=True) == 0
+    assert budget.run(config_path, nomcp, tmp_path) == 0
+    output = capsys.readouterr().out
+    assert "claude         0 tok" in output
+    assert " budget  [" not in output
+    assert "OVER" not in output
     # Tier walk paths flow through run without disturbing the exit code.
     clone = tmp_path / "clone"
     write(clone / "f.txt", "x" * 20)
     _git_repo(clone)
     assert (
         budget.run(
-            config_path, {}, nomcp, tmp_path, check=False,
+            config_path, nomcp, tmp_path,
             immediate=[clone], peripheral=[clone],
         )
         == 0

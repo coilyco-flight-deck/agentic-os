@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
-"""Generate role and cross-role context-budget reports.
+"""Generate the role context measurement inventory.
 
-The checked-in role-seat YAML snapshots are the measurement evidence. This
-generator validates every snapshot, groups the evidence by the AOS-owned
-layout model class, renders one report per canonical role plus the cross-role
-index, and computes class deltas without copying arithmetic into prose.
-`--check` makes the committed reports drift-proof.
+The checked-in role YAML snapshots are the measurement evidence. This generator
+validates one snapshot per AOS launch-profile role and keeps the aggregate report
+drift-proof with ``--check``.
 
-See docs/context-budget-role-seat.md.
+See docs/context-budget-role.md.
 """
 from __future__ import annotations
 
@@ -20,10 +18,7 @@ from pathlib import Path
 
 import yaml
 
-from agentic_os.context_budget_role_seat import (
-    load_aos_layout_model_classes,
-    load_snapshot,
-)
+from agentic_os.context_budget_role import load_snapshot
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 DOCS_DIR = _REPO_ROOT / "docs"
@@ -36,7 +31,6 @@ GENERATED_HEADER = (
     f"{GENERATED_MARKER}\n"
     "<!-- Regenerate: ward exec gen-context-budget-role-reports. -->\n"
 )
-MODEL_CLASSES = ("frontier", "low-context")
 
 
 def _mapping(value: object, label: str) -> Mapping[str, object]:
@@ -59,63 +53,33 @@ def load_canonical_roles(path: Path = ROLE_SCOPE_PATH) -> tuple[str, ...]:
     return roles
 
 
-def _supported_model_classes(layouts: Mapping[str, str]) -> tuple[str, ...]:
-    discovered = set(layouts.values())
-    unknown = discovered.difference(MODEL_CLASSES)
-    if unknown:
-        raise RuntimeError(
-            f"layout registry contains unsupported model classes: {sorted(unknown)}"
-        )
-    return tuple(
-        model_class for model_class in MODEL_CLASSES if model_class in discovered
-    )
-
-
-def _snapshot_identity(path: Path, seats: Iterable[str]) -> tuple[str, str]:
-    prefix = "context-budget-"
-    for seat in sorted(seats, key=len, reverse=True):
-        suffix = f"-{seat}-current.yaml"
-        if path.name.startswith(prefix) and path.name.endswith(suffix):
-            role = path.name[len(prefix) : -len(suffix)]
-            if role:
-                return role, seat
-    raise RuntimeError(f"{path}: current snapshot filename has no supported AOS seat")
+def _snapshot_identity(path: Path, roles: Iterable[str]) -> str:
+    for role in roles:
+        if path.name == f"context-budget-{role}-current.yaml":
+            return role
+    raise RuntimeError(f"{path}: current snapshot filename has no canonical AOS role")
 
 
 def load_role_snapshots(
     docs_dir: Path,
     roles: Iterable[str],
-    layouts: Mapping[str, str],
-) -> dict[str, dict[str, dict[str, object]]]:
-    """Load and validate every current role-seat snapshot."""
+) -> dict[str, dict[str, object]]:
+    """Load and validate exactly one current snapshot per role."""
     role_order = tuple(roles)
-    expected_roles = set(role_order)
-    grouped: dict[str, dict[str, dict[str, object]]] = {
-        role: {} for role in role_order
-    }
+    snapshots: dict[str, dict[str, object]] = {}
     for path in sorted(docs_dir.glob("context-budget-*-current.yaml")):
-        role, seat = _snapshot_identity(path, layouts)
-        if role not in expected_roles:
-            raise RuntimeError(f"{path}: snapshot role {role!r} is not canonical")
+        role = _snapshot_identity(path, role_order)
         snapshot = load_snapshot(path)
         subject = _mapping(snapshot.get("subject"), f"{path}: subject")
-        if subject.get("role") != role or subject.get("seat") != seat:
+        if subject != {"role": role}:
             raise RuntimeError(f"{path}: snapshot subject does not match its filename")
-        bundle = _mapping(snapshot.get("bundle"), f"{path}: bundle")
-        if bundle.get("model_class") != layouts[seat]:
-            raise RuntimeError(
-                f"{path}: expected model class {layouts[seat]!r} for seat {seat!r}"
-            )
-        grouped[role][seat] = snapshot
-    for role, snapshots in grouped.items():
-        if not snapshots:
-            raise RuntimeError(f"role {role!r} has no current seats")
-        if not any(
-            layouts[seat] == "frontier"
-            for seat in snapshots
-        ):
-            raise RuntimeError(f"role {role!r} has no frontier snapshot")
-    return grouped
+        if role in snapshots:
+            raise RuntimeError(f"{path}: duplicate snapshot for {role}")
+        snapshots[role] = snapshot
+    missing = [role for role in role_order if role not in snapshots]
+    if missing:
+        raise RuntimeError(f"roles have no current snapshot: {', '.join(missing)}")
+    return snapshots
 
 
 def _nested_int(snapshot: Mapping[str, object], *keys: str) -> int:
@@ -139,62 +103,14 @@ def _composed_count(snapshot: Mapping[str, object]) -> int:
 
 
 def _role_label(role: str) -> str:
-    if role == "qa":
-        return "QA"
-    if role == "strats":
-        return "Portfolio Strategist"
-    if role == "content":
-        return "Content Manager"
-    if role == "ai":
-        return "AI Engineer"
-    return role.replace("-", " ")
+    labels = {
+        "qa": "QA",
+        "strats": "Portfolio Strategist",
+        "content": "Content Manager",
+        "ai": "AI Engineer",
+    }
+    return labels.get(role, role.replace("-", " ").title())
 
-
-def _role_title(role: str) -> str:
-    if role == "qa":
-        return "QA"
-    if role == "strats":
-        return "Portfolio Strategist"
-    if role == "content":
-        return "Content Manager"
-    if role == "ai":
-        return "AI Engineer"
-    return role.replace("-", " ").title()
-
-
-def _seat_label(seat: str) -> str:
-    if seat == "opencode":
-        return "OpenCode"
-    return seat.capitalize()
-
-
-def _range_text(values: Iterable[int]) -> str:
-    ordered = sorted(set(values))
-    if not ordered:
-        raise RuntimeError("cannot render an empty numeric range")
-    if len(ordered) == 1:
-        return f"{ordered[0]:,}"
-    return f"{ordered[0]:,} to {ordered[-1]:,}"
-
-
-def _class_snapshots(
-    snapshots: Mapping[str, dict[str, object]],
-    layouts: Mapping[str, str],
-    model_class: str,
-) -> list[tuple[str, dict[str, object]]]:
-    selected = [
-        (seat, snapshots[seat])
-        for seat, declared_class in layouts.items()
-        if declared_class == model_class and seat in snapshots
-    ]
-    return selected
-
-
-def _scope_text(model_classes: Iterable[str]) -> str:
-    classes = tuple(model_classes)
-    if len(classes) == 1:
-        return f"{classes[0]} only"
-    return " and ".join(classes)
 
 def _wrapped_lines(text: str, *, subsequent_indent: str = "") -> list[str]:
     return textwrap.wrap(
@@ -206,198 +122,49 @@ def _wrapped_lines(text: str, *, subsequent_indent: str = "") -> list[str]:
     )
 
 
-def _render_class_line(
-    role: str,
-    model_class: str,
-    selected: list[tuple[str, dict[str, object]]],
-) -> list[str]:
-    heading = "Frontier" if model_class == "frontier" else "Low-context"
-    links = [
-        f"[{_seat_label(seat)} {_nested_int(snapshot, 'totals', 'eager', 'tokens'):,}]"
-        f"(context-budget-{role}-{seat}-current.yaml)"
-        for seat, snapshot in selected
-    ]
-    lazy = _range_text(
-        _nested_int(snapshot, "totals", "lazy", "tokens")
-        for _, snapshot in selected
-    )
-    composed = _range_text(_composed_count(snapshot) for _, snapshot in selected)
-    lines = [f"* **{heading} {_role_label(role)}** -"]
-    for index, link in enumerate(links):
-        suffix = "," if index < len(links) - 1 else f", lazy {lazy}, {composed} composed."
-        lines.append(f"  {link}{suffix}")
-    return lines
-
-
-def _change_text(
-    frontier: Iterable[int],
-    low_context: Iterable[int],
-    unit: str,
-) -> str:
-    frontier_values = tuple(frontier)
-    low_values = tuple(low_context)
-    differences = [
-        frontier_value - low_value
-        for frontier_value in frontier_values
-        for low_value in low_values
-    ]
-    low = min(differences)
-    high = max(differences)
-    if low >= 0:
-        return f"saves {_range_text(differences)} {unit}"
-    if high <= 0:
-        return f"adds {_range_text(abs(value) for value in differences)} {unit}"
-    return f"changes by {-high:,} to {-low:,} {unit}"
-
-
-def render_role_report(
-    role: str,
-    snapshots: Mapping[str, dict[str, object]],
-    layouts: Mapping[str, str],
-) -> str:
-    """Render one deterministic role report and its class-level delta."""
-    by_class = {
-        model_class: _class_snapshots(snapshots, layouts, model_class)
-        for model_class in MODEL_CLASSES
-    }
-    lines = [
-        GENERATED_HEADER.rstrip("\n"),
-        "",
-        f"# Current {_role_label(role)} context budget",
-        "",
-    ]
-    lines.extend(
-        _wrapped_lines(
-            "The aggregate includes every checked-in current snapshot for this role."
-        )
-    )
-    lines.append("")
-    for model_class in MODEL_CLASSES:
-        if by_class[model_class]:
-            lines.extend(_render_class_line(role, model_class, by_class[model_class]))
-    frontier = by_class["frontier"]
-    low_context = by_class["low-context"]
-    if low_context:
-        eager_change = _change_text(
-            (
-                _nested_int(snapshot, "totals", "eager", "tokens")
-                for _, snapshot in frontier
-            ),
-            (
-                _nested_int(snapshot, "totals", "eager", "tokens")
-                for _, snapshot in low_context
-            ),
-            "tokens",
-        )
-        lazy_change = _change_text(
-            (
-                _nested_int(snapshot, "totals", "lazy", "tokens")
-                for _, snapshot in frontier
-            ),
-            (
-                _nested_int(snapshot, "totals", "lazy", "tokens")
-                for _, snapshot in low_context
-            ),
-            "tokens",
-        )
-        frontier_composed = _range_text(
-            _composed_count(snapshot) for _, snapshot in frontier
-        )
-        low_composed = _range_text(
-            _composed_count(snapshot) for _, snapshot in low_context
-        )
-        lines.extend(
-            [
-            f"* **Low-context diff** - eager {eager_change}, lazy {lazy_change}, "
-            f"composed sources {frontier_composed} -> {low_composed}.",
-            "",
-            "The programmatic diff compares every frontier seat with every "
-            "low-context seat.",
-            ]
-        )
-    else:
-        lines.extend(
-            [
-                "",
-                "Only frontier snapshots are available for this role.",
-            ]
-        )
-    lines.extend(
-        [
-            "",
-            "## See also",
-            "",
-            "* [Current role-class inventory](context-budget-role-seat-current.md)",
-            "* [Snapshot contract](context-budget-role-seat.md)",
-        ]
-    )
-    return "\n".join(lines) + "\n"
-
-
-def render_inventory_index(
+def render_inventory(
     roles: Iterable[str],
-    snapshots: Mapping[str, Mapping[str, dict[str, object]]],
-    layouts: Mapping[str, str],
+    snapshots: Mapping[str, dict[str, object]],
 ) -> str:
-    """Render the cross-role aggregate measurement inventory."""
+    """Render the cross-role measurement inventory."""
     role_order = tuple(roles)
     lines = [
         GENERATED_HEADER.rstrip("\n"),
         "",
-        "# Current role-class context inventory",
+        "# Current role context inventory",
         "",
     ]
     lines.extend(
         _wrapped_lines(
-            f"The {len(role_order)} AOS launch-profile roles have aggregate context "
-            "reports derived from every checked-in current snapshot. Every snapshot "
-            "is validated before its measurements enter a report."
-        )
-    )
-    lines.append("")
-    lines.extend(
-        _wrapped_lines(
-            "Every entry uses the deterministic characters-divided-by-four token "
-            "proxy. The role reports and available class deltas are generated with "
-            "`ward exec gen-context-budget-role-reports`."
+            f"The {len(role_order)} AOS launch-profile roles each have one "
+            "harness-neutral snapshot. Every snapshot is validated before its "
+            "measurements enter this report."
         )
     )
     lines.extend(["", "## Roles", ""])
     for role in role_order:
-        available_classes = tuple(
-            model_class
-            for model_class in MODEL_CLASSES
-            if any(
-                layouts[seat] == model_class
-                for seat in snapshots[role]
-            )
-        )
+        snapshot = snapshots[role]
+        eager = _nested_int(snapshot, "totals", "eager", "tokens")
+        lazy = _nested_int(snapshot, "totals", "lazy", "tokens")
+        composed = _composed_count(snapshot)
         lines.extend(
             _wrapped_lines(
-                f"* [{_role_title(role)}](context-budget-role-{role}-current.md) - "
-                "available model classes: "
-                f"{_scope_text(available_classes)}.",
+                f"* [{_role_label(role)}](context-budget-{role}-current.yaml) - "
+                f"eager {eager:,}, lazy {lazy:,}, composed {composed}.",
                 subsequent_indent="  ",
             )
         )
-    lines.append("")
     lines.extend(
-        _wrapped_lines(
-            "Goose and OpenCode snapshots have equal token totals where both are "
-            "checked in because each receives the same catalog and AGENTS cascade. "
-            "Their projection paths and payload hashes remain distinct."
-        )
+        [
+            "",
+            "## Interpretation",
+            "",
+        ]
     )
-    lines.extend(["", "## Interpretation", ""])
     lines.extend(
         _wrapped_lines(
-            "The AGENTS cascade is the dominant eager cost in every seat. Low-context "
-            "selection substantially cuts lazy retrieval and trims eager routing "
-            "metadata, but the inherited AGENTS surface keeps low-context snapshots "
-            "above the legacy 5,000-token generic harness budget. Role-composed "
-            "metadata ranges from the small Community set through the broad Director "
-            "catalog. Lazy totals describe available retrieval, not startup prompt "
-            "load."
+            "Snapshots stop at the complete Agent Compose role bundle. They do not "
+            "select a harness, projection layout, model family, or context window."
         )
     )
     lines.extend(
@@ -405,10 +172,10 @@ def render_inventory_index(
             "",
             "## See also",
             "",
-            "* [Role-seat snapshot contract](context-budget-role-seat.md) - capture,",
-            "  comparison, and failure rules.",
-            "* [Context-budget report](context-budget.md) - component definitions and",
-            "  token proxy.",
+            "* [Role snapshot contract](context-budget-role.md) - capture, comparison,",
+            "  and failure rules.",
+            "* [Context measurement report](context-budget.md) - component definitions",
+            "  and token proxy.",
         ]
     )
     return "\n".join(lines) + "\n"
@@ -417,32 +184,21 @@ def render_inventory_index(
 def build_reports(
     docs_dir: Path = DOCS_DIR,
     roles: Iterable[str] | None = None,
-    layouts: Mapping[str, str] | None = None,
 ) -> dict[Path, str]:
-    """Build every expected report without mutating the filesystem."""
+    """Build the expected report without mutating the filesystem."""
     role_order = tuple(roles) if roles is not None else load_canonical_roles()
-    layout_classes = dict(layouts or load_aos_layout_model_classes())
-    _supported_model_classes(layout_classes)
-    snapshots = load_role_snapshots(docs_dir, role_order, layout_classes)
-    reports = {
-        docs_dir / f"context-budget-role-{role}-current.md": render_role_report(
-            role,
-            snapshots[role],
-            layout_classes,
+    snapshots = load_role_snapshots(docs_dir, role_order)
+    return {
+        docs_dir / "context-budget-role-current.md": render_inventory(
+            role_order,
+            snapshots,
         )
-        for role in role_order
     }
-    reports[docs_dir / "context-budget-role-seat-current.md"] = render_inventory_index(
-        role_order,
-        snapshots,
-        layout_classes,
-    )
-    return reports
 
 
 def _stale_generated_reports(docs_dir: Path, expected: set[Path]) -> list[Path]:
     stale: list[Path] = []
-    for path in docs_dir.glob("context-budget-role-*-current.md"):
+    for path in docs_dir.glob("context-budget-role*-current.md"):
         if path in expected or not path.is_file():
             continue
         if path.read_text(encoding="utf-8").startswith(GENERATED_MARKER):
@@ -453,23 +209,21 @@ def _stale_generated_reports(docs_dir: Path, expected: set[Path]) -> list[Path]:
 def generate(
     docs_dir: Path = DOCS_DIR,
     roles: Iterable[str] | None = None,
-    layouts: Mapping[str, str] | None = None,
 ) -> int:
-    reports = build_reports(docs_dir, roles, layouts)
+    reports = build_reports(docs_dir, roles)
     for path, content in reports.items():
         path.write_text(content, encoding="utf-8")
     for path in _stale_generated_reports(docs_dir, set(reports)):
         path.unlink()
-    print(f"context-budget-role-reports: wrote {len(reports)} inventory documents")
+    print(f"context-budget-role-reports: wrote {len(reports)} inventory document")
     return 0
 
 
 def check_drift(
     docs_dir: Path = DOCS_DIR,
     roles: Iterable[str] | None = None,
-    layouts: Mapping[str, str] | None = None,
 ) -> int:
-    reports = build_reports(docs_dir, roles, layouts)
+    reports = build_reports(docs_dir, roles)
     stale = _stale_generated_reports(docs_dir, set(reports))
     drifted = [
         (path, content, path.read_text(encoding="utf-8") if path.exists() else "")
@@ -477,7 +231,7 @@ def check_drift(
         if not path.exists() or path.read_text(encoding="utf-8") != content
     ]
     if not drifted and not stale:
-        print(f"context-budget-role-reports: {len(reports)} inventory documents in sync")
+        print(f"context-budget-role-reports: {len(reports)} inventory document in sync")
         return 0
     for path in stale:
         sys.stderr.write(f"context-budget-role-reports: stale generated report {path.name}\n")
@@ -506,13 +260,13 @@ def main() -> int:
     parser.add_argument(
         "--check",
         action="store_true",
-        help="verify generated role reports match the current YAML snapshots",
+        help="verify the generated role report matches the current YAML snapshots",
     )
     parser.add_argument(
         "--docs",
         type=Path,
         default=DOCS_DIR,
-        help="directory containing the snapshots and generated reports",
+        help="directory containing the snapshots and generated report",
     )
     args = parser.parse_args()
     try:

@@ -1,7 +1,6 @@
 ---
 name: coding-ansible
 description: Ansible umbrella - the host-convergence leg of the Ansible / Terraform / Kubernetes trifecta. If it is not Kubernetes, it is Ansible for ad-hoc infra. Collection canon, the role-vs-collection-vs-builtin decision rule, and Galaxy registry notes.
-low-context: required
 ---
 
 # coding-ansible

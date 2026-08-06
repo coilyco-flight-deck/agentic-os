@@ -1,4 +1,4 @@
-"""Capture and compare structural context for one role and seat."""
+"""Measure and compare structural context for one composed role."""
 
 from __future__ import annotations
 
@@ -12,36 +12,25 @@ import urllib.parse
 from collections import defaultdict
 from contextlib import contextmanager
 from dataclasses import dataclass
-from functools import cache
 from pathlib import Path
 from typing import Iterable, Iterator, Mapping
 
 import yaml
 
-from agentic_os.agents_context_inventory import (
-    ContextSelection,
-    InventoryError,
-    active_cascade,
-    discover_repositories,
-)
 from agentic_os.context_budget_tokens import TOKENIZER_NOTE, count_tokens
 from agentic_os.frontmatter import split_frontmatter
 from agentic_os.agent_compose_person import (
+    RolePersonalities,
     load_person_snapshot,
     personality_skill_id,
 )
 
-FORMAT = "agentic-os.role-seat-context.v1"
+FORMAT = "agentic-os.role-context.v1"
 SOURCE_ID = "aos"
 PERSON_SOURCE_ID = "roster:core"
 PERSON_SOURCE_SEGMENT = urllib.parse.quote(PERSON_SOURCE_ID, safe="")
 AOS_TEMP_ROOT = Path(tempfile.gettempdir()) / "aos"
 SLUG_RE = re.compile(r"^[a-z][a-z0-9-]*$")
-AOS_LAYOUT_MODEL_CLASSES_PATH = (
-    Path(__file__).resolve().parents[1] / "aos-cli" / "layout-model-classes.json"
-)
-AOS_LAYOUT_MODEL_CLASSES_FORMAT = "agentic-os.layout-model-classes.v1"
-
 SKILL_CLASS_KINDS = {
     "ordinary": (
         "ordinary-skill-frontmatter",
@@ -124,15 +113,6 @@ class Component:
         }
 
 
-@dataclass(frozen=True)
-class ProjectedLayout:
-    """Seat-specific home projection entry points."""
-
-    instructions: Path
-    instructions_delivery: str
-    skills_delivery: str
-
-
 def _component(
     component_id: str,
     kind: str,
@@ -163,114 +143,17 @@ def _validate_slug(value: str, label: str) -> None:
         raise RuntimeError(f"{label} must be a lowercase slug, found {value!r}")
 
 
-@cache
-def load_aos_layout_model_classes() -> dict[str, str]:
-    """Read and validate the AOS-owned layout model-class registry."""
-    try:
-        document = json.loads(AOS_LAYOUT_MODEL_CLASSES_PATH.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise RuntimeError(
-            f"read AOS layout model classes {AOS_LAYOUT_MODEL_CLASSES_PATH}: {exc}"
-        ) from exc
-    if (
-        not isinstance(document, dict)
-        or document.get("format") != AOS_LAYOUT_MODEL_CLASSES_FORMAT
-        or set(document) != {"format", "layouts"}
-        or not isinstance(document.get("layouts"), dict)
-        or not document["layouts"]
-    ):
-        raise RuntimeError(
-            f"{AOS_LAYOUT_MODEL_CLASSES_PATH}: malformed layout model class registry"
-        )
-    layouts: dict[str, str] = {}
-    for raw_layout, raw_model_class in document["layouts"].items():
-        if not isinstance(raw_layout, str):
-            raise RuntimeError(
-                f"{AOS_LAYOUT_MODEL_CLASSES_PATH}: layout names must be text"
-            )
-        _validate_slug(raw_layout, "AOS layout")
-        if raw_model_class not in {"frontier", "low-context"}:
-            raise RuntimeError(
-                f"{AOS_LAYOUT_MODEL_CLASSES_PATH}: layout {raw_layout!r} has "
-                f"unsupported model class {raw_model_class!r}"
-            )
-        layouts[raw_layout] = raw_model_class
-    return layouts
-
-
-def model_class_for_seat(seat: str) -> str:
-    """Return the AOS-owned model class for one supported projection layout."""
-    _validate_slug(seat, "seat")
-    layouts = load_aos_layout_model_classes()
-    try:
-        return layouts[seat]
-    except KeyError as exc:
-        supported = ", ".join(sorted(layouts))
-        raise RuntimeError(
-            f"unsupported AOS seat {seat!r}, expected one of: {supported}"
-        ) from exc
-
-
-def validate_role_seat(
-    person_snapshot_path: Path,
-    role: str,
-    seat: str,
-) -> tuple[str, ...]:
-    """Return the canonical meld after validating the role and AOS seat."""
+def validate_role(person_snapshot_path: Path, role: str) -> RolePersonalities:
+    """Return canonical role metadata after validating the role."""
     _validate_slug(role, "role")
-    model_class_for_seat(seat)
     snapshot = load_person_snapshot(person_snapshot_path)
-    roles = {entry.role: entry.personalities for entry in snapshot.roles}
+    roles = {entry.role: entry for entry in snapshot.roles}
     try:
         return roles[role]
     except KeyError as exc:
         raise RuntimeError(
             f"{person_snapshot_path}: role {role} is absent, found {sorted(roles)}"
         ) from exc
-
-
-def _load_projection(projected_root: Path, seat: str) -> ProjectedLayout:
-    manifest_path = projected_root / ".agent-compose" / "projection.json"
-    try:
-        document = json.loads(manifest_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise RuntimeError(f"read agent-compose projection {manifest_path}: {exc}") from exc
-    if document.get("layout") != seat:
-        raise RuntimeError(f"{manifest_path}: expected layout {seat}")
-    files = document.get("files")
-    if not isinstance(files, list) or not all(isinstance(item, str) for item in files):
-        raise RuntimeError(f"{manifest_path}: projection files must be text paths")
-
-    instruction_paths = [
-        item
-        for item in files
-        if Path(item).name in {"AGENTS.md", "CLAUDE.md", ".goosehints"}
-        and "skills" not in Path(item).parts
-    ]
-    skill_roots = {
-        Path(*Path(item).parts[: Path(item).parts.index("skills") + 1]).as_posix()
-        for item in files
-        if "skills" in Path(item).parts
-    }
-    if len(instruction_paths) != 1 or len(skill_roots) != 1:
-        raise RuntimeError(
-            f"{manifest_path}: expected one instruction file and one skill root"
-        )
-    instructions_delivery = instruction_paths[0]
-    skills_delivery = next(iter(skill_roots))
-    instructions = _safe_child_path(
-        projected_root, instructions_delivery, "projection instructions"
-    )
-    projected_skills = _safe_child_path(
-        projected_root, skills_delivery, "projection skills root"
-    )
-    if not instructions.is_file() or not projected_skills.is_dir():
-        raise RuntimeError(f"{manifest_path}: projected entry points are missing")
-    return ProjectedLayout(
-        instructions=instructions,
-        instructions_delivery=instructions_delivery,
-        skills_delivery=skills_delivery,
-    )
 
 
 def repository_identity(repo: Path) -> str:
@@ -297,16 +180,11 @@ def repository_identity(repo: Path) -> str:
 
 
 def _agents_components(
-    provider: Path,
     repo: Path,
     cwd: Path,
-    selection: ContextSelection,
-    provider_identity: str,
     repo_identity: str,
 ) -> list[Component]:
-    """Adapt the shared AGENTS inventory cascade into snapshot components."""
-    if not provider.is_dir():
-        raise RuntimeError(f"provider root does not exist: {provider}")
+    """Measure the harness-neutral repository AGENTS cascade."""
     if not repo.is_dir():
         raise RuntimeError(f"repository root does not exist: {repo}")
     if not cwd.is_dir():
@@ -316,59 +194,27 @@ def _agents_components(
     except ValueError as exc:
         raise RuntimeError(f"CWD {cwd} is outside repository root {repo}") from exc
 
-    sources = {
-        provider_identity: provider,
-        repo_identity: repo,
-    }
-    if provider_identity == repo_identity and provider != repo:
-        raise RuntimeError(
-            f"provider and repository both resolve to {provider_identity} "
-            "but have different roots"
-        )
-
-    with _aos_temporary_directory("role-seat", "agents") as temp:
-        inventory_root = Path(temp)
-        projects_root = inventory_root / "projects"
-        try:
-            for identity, source_root in sources.items():
-                target = projects_root / identity
-                target.parent.mkdir(parents=True, exist_ok=True)
-                target.symlink_to(source_root, target_is_directory=True)
-            substrate_manifest = inventory_root / "substrate.txt"
-            fleet_manifest = inventory_root / "fleet.txt"
-            substrate_manifest.write_text(
-                f"{provider_identity} public\n", encoding="utf-8"
-            )
-            fleet_manifest.write_text(f"{repo_identity} public\n", encoding="utf-8")
-            repositories = discover_repositories(
-                substrate_manifest,
-                fleet_manifest,
-                projects_root,
-            )
-            cascade = active_cascade(
-                repositories,
-                selection,
-                current_repo=repo_identity,
-                cwd=cwd_label,
-                include_global_composed=False,
-            )
-        except (InventoryError, OSError) as exc:
-            raise RuntimeError(f"inventory role-seat AGENTS cascade: {exc}") from exc
-
+    relative_cwd = Path(cwd_label)
+    directories = [repo]
+    current = repo
+    for part in relative_cwd.parts:
+        if part == ".":
+            continue
+        current /= part
+        directories.append(current)
     components: list[Component] = []
-    for index, source in enumerate(cascade["sources"]):
-        source_id = str(source["source"])
-        owner, separator, relative = source_id.partition(":")
-        if not separator or owner not in sources:
-            raise RuntimeError(f"AGENTS inventory returned unknown source {source_id}")
-        path = sources[owner] / relative
+    for index, directory in enumerate(directories):
+        path = directory / "AGENTS.md"
+        if not path.is_file():
+            continue
+        relative = path.relative_to(repo).as_posix()
         components.append(
             _component(
                 f"agents:{index:03}:{relative}",
                 "agents-cascade",
-                owner,
-                source_id,
-                str(source["delivery_path"]),
+                repo_identity,
+                f"{repo_identity}:{relative}",
+                "repo-cascade",
                 True,
                 path.read_bytes(),
             )
@@ -388,7 +234,7 @@ def _safe_child_path(root: Path, relative: object, label: str) -> Path:
 
 
 def _load_manifest(
-    bundle: Path, role: str, model_tier: str
+    bundle: Path, role: str
 ) -> tuple[dict[str, object], Path, Path]:
     manifest_path = bundle / "manifest.json"
     try:
@@ -399,8 +245,6 @@ def _load_manifest(
         raise RuntimeError(f"{manifest_path}: unsupported bundle format")
     if document.get("role") != role:
         raise RuntimeError(f"{manifest_path}: expected role {role}")
-    if document.get("model_tier") != model_tier:
-        raise RuntimeError(f"{manifest_path}: expected model tier {model_tier}")
     delivery = document.get("delivery")
     if not isinstance(delivery, dict) or delivery.get("mode") != "native-skills":
         raise RuntimeError(f"{manifest_path}: expected native-skills delivery")
@@ -624,7 +468,7 @@ def _plugin_skill_components(
 
 
 def read_mcporter_server_names(path: Path) -> list[str]:
-    """Read only stable server names. Seats receive no eager schemas from this file."""
+    """Read stable server names without loading eager schemas."""
     if not path.is_file():
         return []
     try:
@@ -761,21 +605,18 @@ def _component_breakdown(
 
 def build_snapshot(
     bundle: Path,
-    projected_root: Path,
     provider: Path,
     repo: Path,
     cwd: Path,
     *,
     role: str,
-    seat: str,
     expected_personalities: Iterable[str],
     additional_providers: Mapping[str, Path] | None = None,
     plugin_roots: Iterable[Path] = (),
     mcp_servers: Iterable[str] = (),
 ) -> dict[str, object]:
-    """Build one deterministic snapshot from a verified role-seat projection."""
+    """Build one deterministic snapshot from a verified role bundle."""
     _validate_slug(role, "role")
-    _validate_slug(seat, "seat")
     provider = provider.resolve()
     providers = _provider_roots(provider, additional_providers)
     repo = repo.resolve()
@@ -786,38 +627,27 @@ def build_snapshot(
         for source_id, source_root in providers.items()
     }
     repo_identity = repository_identity(repo)
-    model_class = model_class_for_seat(seat)
-    selection = ContextSelection(role=role, harness=seat)
-    manifest, instructions, skills_root = _load_manifest(
-        bundle.resolve(), role, model_class
-    )
+    manifest, instructions, skills_root = _load_manifest(bundle.resolve(), role)
     personalities = _validate_manifest_personalities(
         manifest,
         role,
         tuple(expected_personalities),
     )
-    projection = _load_projection(projected_root.resolve(), seat)
-    if projection.instructions.read_bytes() != instructions.read_bytes():
-        raise RuntimeError("projected role instructions differ from the verified bundle")
-
     components = [
         _component(
             "instructions:role",
             "role-instructions",
             "agent-compose+" + "+".join((PERSON_SOURCE_ID, *providers)),
             "bundle:content/instructions.md",
-            projection.instructions_delivery,
+            "role-instructions",
             True,
             instructions.read_bytes(),
         )
     ]
     components.extend(
         _agents_components(
-            provider,
             repo,
             cwd,
-            selection,
-            provider_identity,
             repo_identity,
         )
     )
@@ -825,7 +655,7 @@ def build_snapshot(
     bundle_components, selected_ids = _bundle_skill_components(
         skills_root,
         providers,
-        projection.skills_delivery,
+        "role-skills",
     )
     expected_personality_skills = {
         personality_skill_id(personality) for personality in personalities
@@ -846,7 +676,7 @@ def build_snapshot(
         _plugin_skill_components(
             plugin_roots,
             selected_ids,
-            projection.skills_delivery,
+            "role-skills",
         )
     )
     servers = sorted(set(mcp_servers))
@@ -876,7 +706,7 @@ def build_snapshot(
     ]
     document: dict[str, object] = {
         "format": FORMAT,
-        "subject": {"role": role, "seat": seat},
+        "subject": {"role": role},
         "provider": provider_identity,
         **({"providers": provider_identities} if len(providers) > 1 else {}),
         "repository": repo_identity,
@@ -884,7 +714,6 @@ def build_snapshot(
         "tokenizer": TOKENIZER_NOTE,
         "bundle": {
             "format": manifest["format"],
-            "model_class": model_class,
             "personalities": list(personalities),
             "sources": manifest.get("sources", []),
         },
@@ -950,10 +779,9 @@ def parse_additional_provider(value: str) -> tuple[str, Path]:
 def _request_text(
     provider_root: str,
     role: str,
-    seat: str,
+    model_tier: str,
     additional_provider_roots: Mapping[str, str] | None = None,
 ) -> str:
-    model_tier = model_class_for_seat(seat)
     lines = [
         "compose {",
         f'    role "{role}"',
@@ -977,20 +805,18 @@ def capture_snapshot(
     cwd: Path,
     *,
     role: str,
-    seat: str,
     agent_compose: str,
     additional_providers: Mapping[str, Path] | None = None,
     plugin_roots: Iterable[Path] = (),
     mcporter_path: Path,
 ) -> dict[str, object]:
-    """Materialize and project one role-seat context without invoking an agent."""
+    """Materialize one role context without invoking an agent."""
     _validate_slug(role, "role")
-    _validate_slug(seat, "seat")
     executable = shutil.which(agent_compose)
     if executable is None:
         raise RuntimeError(f"agent-compose executable not found: {agent_compose}")
     providers = _provider_roots(provider, additional_providers)
-    with _aos_temporary_directory("role-seat", "context") as temp:
+    with _aos_temporary_directory("role", "context") as temp:
         root = Path(temp)
         staged_providers: dict[str, Path] = {}
         for source_id, source_root in providers.items():
@@ -1008,20 +834,6 @@ def capture_snapshot(
         request = root / "request.kdl"
         output = root / "bundles"
         roster = root / "roster"
-        projected = root / "projected"
-        request.write_text(
-            _request_text(
-                "providers/aos",
-                role,
-                seat,
-                {
-                    source_id: f"providers/{source_id}"
-                    for source_id in providers
-                    if source_id != SOURCE_ID
-                },
-            ),
-            encoding="utf-8",
-        )
         try:
             subprocess.run(
                 [
@@ -1036,7 +848,20 @@ def capture_snapshot(
                 encoding="utf-8",
                 check=True,
             )
-            personalities = validate_role_seat(roster / "person.json", role, seat)
+            role_metadata = validate_role(roster / "person.json", role)
+            request.write_text(
+                _request_text(
+                    "providers/aos",
+                    role,
+                    role_metadata.model_tiers[0],
+                    {
+                        source_id: f"providers/{source_id}"
+                        for source_id in providers
+                        if source_id != SOURCE_ID
+                    },
+                ),
+                encoding="utf-8",
+            )
             process = subprocess.run(
                 [executable, "compose", "--out", str(output), str(request)],
                 capture_output=True,
@@ -1047,7 +872,7 @@ def capture_snapshot(
             )
         except (OSError, subprocess.CalledProcessError) as exc:
             detail = exc.stderr.strip() if isinstance(exc, subprocess.CalledProcessError) else str(exc)
-            raise RuntimeError(f"agent-compose failed to resolve role-seat context: {detail}") from exc
+            raise RuntimeError(f"agent-compose failed to resolve role context: {detail}") from exc
         manifests = sorted(output.glob("*/manifest.json"))
         if len(manifests) != 1:
             raise RuntimeError(
@@ -1055,36 +880,13 @@ def capture_snapshot(
                 f"(found {len(manifests)}; output={process.stdout.strip()!r})"
             )
         bundle = manifests[0].parent
-        try:
-            subprocess.run(
-                [
-                    executable,
-                    "project",
-                    "--layout",
-                    seat,
-                    "--target",
-                    str(projected),
-                    "--scope",
-                    "home",
-                    str(bundle),
-                ],
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-                check=True,
-            )
-        except (OSError, subprocess.CalledProcessError) as exc:
-            detail = exc.stderr.strip() if isinstance(exc, subprocess.CalledProcessError) else str(exc)
-            raise RuntimeError(f"agent-compose failed to project seat {seat}: {detail}") from exc
         return build_snapshot(
             bundle,
-            projected,
             provider,
             repo,
             cwd,
             role=role,
-            seat=seat,
-            expected_personalities=personalities,
+            expected_personalities=role_metadata.personalities,
             additional_providers={
                 source_id: source_root
                 for source_id, source_root in providers.items()
@@ -1097,9 +899,9 @@ def capture_snapshot(
 
 def write_snapshot(path: Path, snapshot: dict[str, object]) -> None:
     if path.suffix.lower() not in {".yaml", ".yml"}:
-        raise RuntimeError("role-seat context snapshots must use a .yaml or .yml path")
+        raise RuntimeError("role context snapshots must use a .yaml or .yml path")
     if snapshot.get("format") != FORMAT:
-        raise RuntimeError("only the current role-seat snapshot format can be written")
+        raise RuntimeError("only the current role snapshot format can be written")
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
         yaml.dump(
@@ -1118,20 +920,17 @@ def load_snapshot(path: Path) -> dict[str, object]:
     try:
         document = yaml.safe_load(path.read_text(encoding="utf-8"))
     except (OSError, yaml.YAMLError) as exc:
-        raise RuntimeError(f"read role-seat context snapshot {path}: {exc}") from exc
+        raise RuntimeError(f"read role context snapshot {path}: {exc}") from exc
     if not isinstance(document, dict):
-        raise RuntimeError(f"{path}: role-seat context snapshot must be a mapping")
+        raise RuntimeError(f"{path}: role context snapshot must be a mapping")
     if document.get("format") != FORMAT:
-        raise RuntimeError(f"{path}: unsupported role-seat context snapshot format")
+        raise RuntimeError(f"{path}: unsupported role context snapshot format")
     subject = document.get("subject")
-    if (
-        not isinstance(subject, dict)
-        or not isinstance(subject.get("role"), str)
-        or not isinstance(subject.get("seat"), str)
+    if not isinstance(subject, dict) or set(subject) != {"role"} or not isinstance(
+        subject.get("role"), str
     ):
-        raise RuntimeError(f"{path}: snapshot subject must name a role and seat")
+        raise RuntimeError(f"{path}: snapshot subject must name exactly one role")
     _validate_slug(subject["role"], "snapshot role")
-    _validate_slug(subject["seat"], "snapshot seat")
     components = document.get("components")
     if not isinstance(components, dict):
         raise RuntimeError(f"{path}: grouped snapshot components must be a mapping")
@@ -1231,8 +1030,8 @@ def render_snapshot(snapshot: dict[str, object]) -> str:
         and isinstance(mcp, dict)
     )
     lines = [
-        "Role-seat context baseline",
-        f"  subject    {subject['role']} / {subject['seat']}",
+        "Role context baseline",
+        f"  subject    {subject['role']}",
         f"  repository {snapshot['repository']}  cwd {snapshot['cwd']}",
         f"  payload    {snapshot['payload_hash']}",
     ]
@@ -1275,14 +1074,14 @@ def _snapshot_components(snapshot: dict[str, object]) -> dict[str, dict[str, obj
 
 
 def render_delta(before: dict[str, object], after: dict[str, object]) -> str:
-    """Render stable component and total changes for the same role and seat."""
+    """Render stable component and total changes for the same role."""
     for key in ("subject", "repository", "cwd", "tokenizer"):
         if before.get(key) != after.get(key):
             raise RuntimeError(f"cannot compare snapshots with different {key}")
     before_totals = before["totals"]
     after_totals = after["totals"]
     assert isinstance(before_totals, dict) and isinstance(after_totals, dict)
-    lines = ["Role-seat context delta"]
+    lines = ["Role context delta"]
     for label in ("eager", "lazy"):
         left = before_totals[label]
         right = after_totals[label]

@@ -2,7 +2,6 @@
 name: coding-discord-bot-architect
 description: Build Discord bots in Discord.js or Pycord. Covers gateway intents,
   slash commands, interactive components, rate limiting, and sharding.
-low-context: optional
 risk: unknown
 source: vibeship-spawner-skills (Apache 2.0)
 date_added: 2026-02-27

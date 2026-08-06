@@ -1,7 +1,6 @@
 ---
 name: coding-python
 description: Kai's primary language. Umbrella for Python work across repos. Carries her defaults (3.12+, uv, ruff, pyright/mypy, pytest) so agents inherit them before reaching for generic Python knowledge.
-low-context: required
 seed:
   kind: language
   language: python

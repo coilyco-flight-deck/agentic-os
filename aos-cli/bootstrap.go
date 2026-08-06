@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/fs"
@@ -399,13 +400,27 @@ func composeHome(
 	provider string,
 	runner commandRunner,
 ) error {
-	runtimeModel, err := nativeRuntimeModel(opts.Layout, opts.Command)
+	rosterRoot, err := os.MkdirTemp("", "aos-agent-compose-roster-*")
 	if err != nil {
-		return fmt.Errorf("resolve %s/%s runtime model: %w", opts.Role, opts.Layout, err)
+		return fmt.Errorf("create agent-compose roster directory: %w", err)
 	}
-	modelTier, err := modelTierForModel(runtimeModel)
+	defer os.RemoveAll(rosterRoot)
+	if err := runner.Run(
+		ctx,
+		opts.AgentComposeBin,
+		"roster",
+		"--out",
+		rosterRoot,
+		provider,
+	); err != nil {
+		return fmt.Errorf("resolve role roster: %w", err)
+	}
+	modelTier, err := roleCompatibilityTier(
+		filepath.Join(rosterRoot, "person.json"),
+		opts.Role,
+	)
 	if err != nil {
-		return fmt.Errorf("resolve %s/%s model tier: %w", opts.Role, opts.Layout, err)
+		return err
 	}
 	request, err := os.CreateTemp(provider, ".aos-compose-*.kdl")
 	if err != nil {
@@ -460,6 +475,29 @@ func composeHome(
 		return fmt.Errorf("project composed role %s: %w", opts.Role, err)
 	}
 	return nil
+}
+
+func roleCompatibilityTier(path string, role string) (string, error) {
+	payload, err := os.ReadFile(path)
+	if err != nil {
+		return "", fmt.Errorf("read agent-compose person snapshot: %w", err)
+	}
+	var snapshot struct {
+		Roles map[string]struct {
+			SupportedModelTiers []string `json:"supported_model_tiers"`
+		} `json:"roles"`
+	}
+	if err := json.Unmarshal(payload, &snapshot); err != nil {
+		return "", fmt.Errorf("parse agent-compose person snapshot: %w", err)
+	}
+	metadata, found := snapshot.Roles[role]
+	if !found {
+		return "", fmt.Errorf("agent-compose person snapshot lacks role %q", role)
+	}
+	if len(metadata.SupportedModelTiers) == 0 {
+		return "", fmt.Errorf("agent-compose role %q has no supported model tier", role)
+	}
+	return metadata.SupportedModelTiers[0], nil
 }
 
 func findSingleBundle(root string) (string, error) {

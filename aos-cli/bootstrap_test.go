@@ -19,6 +19,14 @@ type fakeCommandRunner struct {
 
 func (f *fakeCommandRunner) Run(_ context.Context, name string, args ...string) error {
 	f.commands = append(f.commands, strings.Join(append([]string{name}, args...), " "))
+	if name == "agent-compose" && len(args) >= 4 && args[0] == "roster" {
+		out := args[2]
+		if err := os.MkdirAll(out, 0o755); err != nil {
+			return err
+		}
+		person := []byte(`{"roles":{"engineer":{"supported_model_tiers":["frontier","commodity"]},"strats":{"supported_model_tiers":["frontier"]}}}`)
+		return os.WriteFile(filepath.Join(out, "person.json"), person, 0o644)
+	}
 	if name == "git" && len(args) >= 4 && args[0] == "clone" && args[1] == "--mirror" {
 		return os.MkdirAll(args[3], 0o755)
 	}
@@ -57,10 +65,10 @@ func (f *fakeCommandRunner) Run(_ context.Context, name string, args ...string) 
 	return nil
 }
 
-func TestComposeHomeSurfacesRoleCompatibilityFailure(t *testing.T) {
+func TestComposeHomeSurfacesComposeFailureWithRoleCompatibilityTier(t *testing.T) {
 	t.Parallel()
 	runner := &fakeCommandRunner{
-		composeErr: errors.New(`role "strats" requires a frontier model`),
+		composeErr: errors.New("compose failed"),
 	}
 	opts := bootstrapOptions{
 		Role:            "strats",
@@ -70,21 +78,14 @@ func TestComposeHomeSurfacesRoleCompatibilityFailure(t *testing.T) {
 		AgentComposeBin: "agent-compose",
 	}
 	err := composeHome(context.Background(), opts, t.TempDir(), runner)
-	if err == nil || !strings.Contains(
-		err.Error(),
-		`compose role strats: role "strats" requires a frontier model`,
-	) {
+	if err == nil || !strings.Contains(err.Error(), "compose role strats: compose failed") {
 		t.Fatalf("compose error = %v", err)
 	}
-	modelTier, err := modelTierForModel(opts.Layout)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(runner.request, `model-tier "`+modelTier+`"`) {
-		t.Fatalf("compose request omitted selected model tier:\n%s", runner.request)
+	if !strings.Contains(runner.request, `model-tier "frontier"`) {
+		t.Fatalf("compose request omitted the role compatibility tier:\n%s", runner.request)
 	}
 	if strings.Contains(runner.request, "model-class") {
-		t.Fatalf("compose request retained retired model class:\n%s", runner.request)
+		t.Fatalf("compose request retained the deprecated model class:\n%s", runner.request)
 	}
 }
 
@@ -218,20 +219,19 @@ func TestPrepareContainerHydratesSubstrateAndProjectsHome(t *testing.T) {
 			t.Fatalf("substrate path remained writable: %s %o", path, info.Mode().Perm())
 		}
 	}
-	modelTier, err := modelTierForModel("codex")
-	if err != nil {
-		t.Fatal(err)
-	}
 	provider := filepath.Join(substrate, "coilyco-flight-deck", "agentic-os")
 	for _, want := range []string{
 		`role "engineer"`,
 		`delivery "native-skills"`,
-		`model-tier "` + modelTier + `"`,
+		`model-tier "frontier"`,
 		`source "aos" root="." required=#true`,
 	} {
 		if !strings.Contains(runner.request, want) {
 			t.Errorf("compose request missing %q:\n%s", want, runner.request)
 		}
+	}
+	if strings.Contains(runner.request, "model-class") {
+		t.Errorf("compose request retained the deprecated model class:\n%s", runner.request)
 	}
 	if got := filepath.Dir(runner.requestPath); got != provider {
 		t.Errorf("compose request directory = %q, want provider %q", got, provider)

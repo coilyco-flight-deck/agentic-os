@@ -1,7 +1,6 @@
 ---
 name: coding-kubernetes
 description: Kubernetes umbrella skill. K3s on kai-server is the homelab cluster. kubectl via AOSguard. Helm for packaged apps. Plain manifests over Kustomize.
-low-context: required
 ---
 
 # coding-kubernetes

@@ -1,7 +1,6 @@
 ---
 name: coding-shape-tui
 description: Category umbrella for building terminal UIs. Charm stack is the default - bubbletea, lipgloss, gum, glow, huh. Fall back to tview/promptui only when a project already commits to them.
-low-context: optional
 ---
 
 # coding-shape-tui

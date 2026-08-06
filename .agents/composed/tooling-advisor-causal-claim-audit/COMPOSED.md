@@ -1,7 +1,6 @@
 ---
 name: tooling-advisor-causal-claim-audit
 description: Use when advisor evaluates whether evidence supports a causal claim. Forces an estimand, causal graph, identification assumptions, refutation, and calibrated causal language.
-low-context: optional
 ---
 
 # Causal claim audit
