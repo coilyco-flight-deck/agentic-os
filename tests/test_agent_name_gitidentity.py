@@ -33,6 +33,8 @@ def _run(
         env["WARD_CONTAINER_NAME"] = container
     if extra_env is not None:
         env.update(extra_env)
+    # cwd=home keeps this repo's .git/config out of every git resolution below;
+    # a local identity there outranks the isolated global one (dep-bump sets one).
     proc = subprocess.run(
         [str(SCRIPT), mode],
         input=PAYLOAD,
@@ -40,6 +42,7 @@ def _run(
         text=True,
         check=True,
         env=env,
+        cwd=home,
     )
     return proc.stdout.strip()
 
@@ -55,6 +58,7 @@ def _git_global(key: str, home: Path) -> str:
             "GIT_CONFIG_GLOBAL": str(home / ".gitconfig"),
             "GIT_CONFIG_SYSTEM": "/dev/null",
         },
+        cwd=home,
     )
     return proc.stdout.strip()  # empty string when unset (exit 1 ignored)
 
@@ -73,6 +77,7 @@ def _git_effective(key: str, home: Path, system_config: Path | None = None) -> s
         capture_output=True,
         text=True,
         env=env,
+        cwd=home,
     )
     return proc.stdout.strip()
 
