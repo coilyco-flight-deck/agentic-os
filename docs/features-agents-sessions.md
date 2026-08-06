@@ -15,10 +15,9 @@ the hook points they expose. Local computation stays authoritative.
 ### Composed status line
 
 The [status-line composer](statusline.md) discovers ordered providers on hosts
-and in dev-base containers. Its built-ins show the agent self-name, the active
-Agent Compose seat and bundle health, and the optional
-[repo-checkout tracker](repo-tracker.md). User and repository provider
-directories can add, replace, or mask rows without forking the composer.
+and in dev-base containers. Its built-in provider shows the active Agent
+Compose seat and bundle health. User and repository provider directories can
+add, replace, or mask rows without forking the composer.
 
 ## Composed cross-harness agent context
 

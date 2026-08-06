@@ -76,5 +76,5 @@ qualifying startups span at least twenty minutes.
 Leases and the pass cache use the platform cache at `agentic-os/native-shadow`.
 AOS groups temporary state under platform `aos`: worktrees in `native`, requests
 in `compose`, and bundles in `bundles`. `AOS_NATIVE_STATE_DIR` and
-`AOS_NATIVE_SESSIONS_DIR` allow overrides. See the [shell owner](features-shell-secrets.md),
-[repo tracker](repo-tracker.md), and [Claude config](native-claude-config.md).
+`AOS_NATIVE_SESSIONS_DIR` allow overrides. See the [shell owner](features-shell-secrets.md)
+and [Claude config](native-claude-config.md).

@@ -4,21 +4,21 @@
 # Receives Claude Code's statusLine JSON payload on stdin, runs each discovered
 # provider in filename order (handing it the same payload on stdin), and joins
 # their non-empty output into the multi-row status line. Replaces the hand-wired
-# "agent-name.sh appends statusline.sh": agent-name is now the 10-agent-name
-# provider and the repo-tracker the 20-repos provider.
+# "agent-name.sh appends statusline.sh": every segment is now a provider.
 #
 # Provider contract: exit 0 with stdout = that segment; empty stdout or a
 # non-zero exit = skipped, so a segment self-suppresses when irrelevant (the
-# repo-tracker renders nothing in a single-clone container).
+# 15-agent-compose provider renders nothing outside a projected workspace).
 #
 # Provider discovery walks three dirs, lowest precedence first, so an overlay
 # customizes WITHOUT forking this composer:
 #   1. base   - <composer-dir>/statusline.d (baked in; $AOS_STATUSLINE_DIR overrides)
 #   2. user   - ${XDG_CONFIG_HOME:-$HOME/.config}/agentic-os/statusline.d
 #   3. repo   - <project_dir>/.agentic-os/statusline.d
-# Same filename in a higher dir overrides the lower one (drop in 20-repos.sh to
-# replace it, or a NN-*.sh of your own to add a row). A shadowing file that is
-# not executable masks the lower provider, rendering nothing.
+# Same filename in a higher dir overrides the lower one (drop in
+# 15-agent-compose.sh to replace it, or a NN-*.sh of your own to add a row). A
+# shadowing file that is not executable masks the lower provider, rendering
+# nothing.
 #
 # Format-identical to the host status line is the contract this exists to keep:
 # the same providers run on host and in-container, so the composed rows match.
@@ -35,8 +35,7 @@ project_dir="$(printf '%s' "$payload_flat" \
   | sed -n 's/.*"cwd"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)"
 [ -z "$project_dir" ] && project_dir="${CLAUDE_PROJECT_DIR:-$PWD}"
 
-# Resolve the composer's own dir so providers can find sibling scripts
-# (10-agent-name delegates to agent-name.sh next to this composer).
+# Resolve the composer's own dir so providers can find sibling scripts.
 self="${BASH_SOURCE[0]}"
 self_dir="$(cd "$(dirname "$self")" && pwd)"
 export AOS_STATUSLINE_HOME="$self_dir"

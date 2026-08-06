@@ -29,8 +29,8 @@ The image bakes the self-name slice in directly.
 see [statusline.md](statusline.md).
 - [`managed-settings.json`](../docker/dev-base/claude-managed-settings.json) -
   landed at the fixed `/etc/claude-code/managed-settings.json`. It adds a
-  `statusLine` pointing at the [status-line composer](statusline.md) (which runs
-  `agent-name.sh` as its `10-agent-name` provider) and two `SessionStart` hooks
+  `statusLine` pointing at the [status-line composer](statusline.md) and two
+  `SessionStart` hooks
   (the self-name banner and the [git-identity stamp](dev-base-git-identity.md))
   pointing at the baked script. The banner carries the self-name, while the
   git-identity hook stamps the deployment bot.

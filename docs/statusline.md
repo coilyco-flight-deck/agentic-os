@@ -2,8 +2,7 @@
 
 A provider-discovery framework that auto-mounts the **full segment-composed
 status line** into every warded container, so an in-container agent session
-shows the same multi-row line a host session does, not just the agent-name row.
-See [the self-name provider](dev-base-self-name.md).
+shows the same line a host session does.
 
 ## The problem it replaces
 
@@ -23,19 +22,23 @@ payload on stdin), and joins their output into the multi-row line.
 
 **Provider contract:** exit 0 with stdout = that segment; empty stdout or a
 non-zero exit = skipped. So a segment **self-suppresses** when irrelevant - the
-[repo-tracker](repo-tracker.md) renders nothing in a single-clone container,
-where its scan root does not exist.
+Agent Compose provider renders nothing outside a projected workspace, or where
+`acompose` is absent.
 
-The built-in providers are:
+The built-in provider is:
 
-* `10-agent-name.sh` - delegates to the host or image
-  [`agent-name.sh`](dev-base-self-name.md).
 * `15-agent-compose.sh` - asks `acompose statusline` to render the immutable
   bundle identity, role and harness, selected catalog footprint, and
-  composition health. It self-suppresses outside a projected workspace.
-* `20-repos.sh` - renders the [repo checkout tracker](repo-tracker.md).
+  composition health.
 
-Agent Compose owns the second row's content and bundle semantics. AOS only
+Two earlier base providers were removed. `10-agent-name.sh` rendered the
+pre-acompose `<harness>-<os>-<host>-<tag>-<pronouns>` self-name row, which
+duplicated the identity `acompose statusline` already renders. `20-repos.sh`
+rendered a stray-checkout count, which is residency scanning rather than
+session state. The [self-name script](dev-base-self-name.md) itself is
+unchanged and still backs the `SessionStart` hook and git identity.
+
+Agent Compose owns the row's content and bundle semantics. AOS only
 discovers the provider and passes the project directory, so the status line
 does not grow a second projection parser or identity cache.
 
@@ -66,8 +69,7 @@ installer, keeping rollout separate from the provider authored here.
 
 ## See also
 
-- [docs/dev-base-self-name.md](dev-base-self-name.md) - the agent self-name segment + the baked managed settings.
-- [docs/repo-tracker.md](repo-tracker.md) - the `20-repos` provider.
+- [docs/dev-base-self-name.md](dev-base-self-name.md) - the agent self-name script + the baked managed settings.
 - [docs/features-agents-sessions.md](features-agents-sessions.md) - the host self-name feature.
 - [docs/dev-base-image.md](dev-base-image.md) - the image this rides in.
 - [docs/FEATURES.md](FEATURES.md) - feature inventory.

@@ -34,5 +34,4 @@ into the verified Agent Compose bundle that AOS adapts for Ward.
 ## See also
 
 * [Native workspaces](native-agent-workspaces.md) - worktree projection and cleanup.
-* [Repo tracker](repo-tracker.md) - stray-checkout status line.
 * [AOS context bundle](aos-context-bundle.md) - selected role handoff.
