@@ -121,3 +121,91 @@ def test_kdl_rejects_three_contiguous_line_comments_after_content() -> None:
 def test_kdl_flags_block_comment_run_after_content() -> None:
     lines = ["node 1", "/* one", " * two", " * three */", "node 2"]
     assert len(scan_lines(Path("c.kdl"), ".kdl", lines)) == 1
+
+
+def test_rust_deref_is_not_a_comment_for_the_char_cap() -> None:
+    deref = "    *self.warehouse_stock.entry(item).or_default() += " + "n" * 60
+    assert len(deref) > MAX_COMMENT_LINE_CHARS
+    lines = ["fn tick() {", deref, "}"]
+    assert scan_lines(Path("player.rs"), ".rs", lines) == []
+
+
+def test_rust_deref_run_is_not_a_contiguous_comment_block() -> None:
+    lines = [
+        "fn tick() {",
+        "    *a += 1;",
+        "    *b += 1;",
+        "    *c += 1;",
+        "}",
+    ]
+    assert scan_lines(Path("player.rs"), ".rs", lines) == []
+
+
+def test_c_deref_is_not_a_comment() -> None:
+    lines = ["void f(int *p) {", "    *p = 5;", "    *p += 1;", "    *p -= 1;", "}"]
+    assert scan_lines(Path("f.c"), ".c", lines) == []
+
+
+def test_go_deref_is_not_a_comment() -> None:
+    lines = ["func f() {", "\t*count += 1", "\t*count += 2", "\t*count += 3", "}"]
+    assert scan_lines(Path("f.go"), ".go", lines) == []
+
+
+def test_rust_block_continuation_is_still_a_comment() -> None:
+    lines = ["fn f() {}", "/* one", " * two", " * three", " */", "fn g() {}"]
+    violations = scan_lines(Path("m.rs"), ".rs", lines)
+    assert len(violations) == 2
+    assert "m.rs:4:" in violations[0]
+    assert "m.rs:5:" in violations[1]
+
+
+def test_rust_block_continuation_obeys_the_char_cap() -> None:
+    long_continuation = " * " + "x" * MAX_COMMENT_LINE_CHARS
+    lines = ["fn f() {}", "/* one", long_continuation, " */", "fn g() {}"]
+    violations = scan_lines(Path("m.rs"), ".rs", lines)
+    assert len(violations) == 2
+    assert "char cap" in violations[0]
+    assert "m.rs:3:" in violations[0]
+
+
+def test_rust_deref_after_a_closed_block_is_not_a_comment() -> None:
+    lines = [
+        "fn f() {",
+        "    /* set up the counters */",
+        "    *a += 1;",
+        "    *b += 1;",
+        "    *c += 1;",
+        "}",
+    ]
+    assert scan_lines(Path("m.rs"), ".rs", lines) == []
+
+
+def test_rust_block_opened_mid_line_shields_the_next_lines() -> None:
+    lines = ["fn f() {} /* one", " * two", " * three", " */", "fn g() {}"]
+    violations = scan_lines(Path("m.rs"), ".rs", lines)
+    assert len(violations) == 1
+    assert "m.rs:4:" in violations[0]
+
+
+def test_block_open_inside_a_string_does_not_shield_a_deref() -> None:
+    lines = [
+        "fn f() {",
+        '    let s = "/*";',
+        "    *a += 1;",
+        "    *b += 1;",
+        "    *c += 1;",
+        "}",
+    ]
+    assert scan_lines(Path("m.rs"), ".rs", lines) == []
+
+
+def test_block_open_inside_a_line_comment_does_not_shield_a_deref() -> None:
+    lines = [
+        "fn f() {",
+        "    // see /* below",
+        "    *a += 1;",
+        "    *b += 1;",
+        "    *c += 1;",
+        "}",
+    ]
+    assert scan_lines(Path("m.rs"), ".rs", lines) == []

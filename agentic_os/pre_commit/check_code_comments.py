@@ -149,19 +149,67 @@ def is_shebang_or_encoding(line: str, line_no: int) -> bool:
     return False
 
 
-def is_comment_line(line: str, suffix: str, line_no: int) -> bool:
+def block_state_after(line: str, suffix: str, in_block: bool) -> bool:
+    """Return whether a `/* ... */` block is still open after this line.
+
+    A leading `*` is also the dereference operator, so continuation lines are
+    only recognizable from real open/close state rather than per-line shape.
+    """
+    prefixes = LINE_COMMENT_PREFIXES.get(suffix, ())
+    index = 0
+    end = len(line)
+    while index < end:
+        if in_block:
+            if line.startswith("*/", index):
+                in_block = False
+                index += 2
+                continue
+            index += 1
+            continue
+        if line.startswith("/*", index):
+            in_block = True
+            index += 2
+            continue
+        if any(line.startswith(prefix, index) for prefix in prefixes):
+            # Rest of the line is a line comment, so no block can open in it.
+            return False
+        if line[index] == '"':
+            index = skip_string(line, index)
+            continue
+        index += 1
+    return in_block
+
+
+def skip_string(line: str, index: int) -> int:
+    """Return the index just past the double-quoted run starting at `index`."""
+    index += 1
+    end = len(line)
+    while index < end:
+        if line[index] == "\\":
+            index += 2
+            continue
+        if line[index] == '"':
+            return index + 1
+        index += 1
+    return index
+
+
+def is_comment_line(
+    line: str,
+    suffix: str,
+    line_no: int,
+    in_block: bool = False,
+) -> bool:
     if is_shebang_or_encoding(line, line_no):
         return False
+    if in_block:
+        return True
     stripped = line.lstrip()
     for prefix in LINE_COMMENT_PREFIXES.get(suffix, ()):
         if stripped.startswith(prefix):
             return True
     if suffix in BLOCK_COMMENT_EXTS:
-        return (
-            stripped.startswith("/*")
-            or stripped.startswith("*")
-            or stripped.startswith("*/")
-        )
+        return stripped.startswith("/*")
     return False
 
 
@@ -210,8 +258,13 @@ def scan_lines(rel: Path, suffix: str, lines: list[str]) -> list[str]:
     streak_start: int | None = None
     streak_len = 0
     seen_content = False
+    tracks_blocks = suffix in BLOCK_COMMENT_EXTS
+    in_block = False
     for line_no, line in enumerate(lines, start=1):
-        if not is_comment_line(line, suffix, line_no):
+        opened_in_block = in_block
+        if tracks_blocks:
+            in_block = block_state_after(line, suffix, opened_in_block)
+        if not is_comment_line(line, suffix, line_no, opened_in_block):
             if line.strip() != "" and not is_shebang_or_encoding(line, line_no):
                 seen_content = True
             streak_start = None
