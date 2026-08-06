@@ -389,6 +389,51 @@ func TestIntegratedStandaloneDryRunUsesNativeShadowWorkspace(t *testing.T) {
 	}
 }
 
+func TestIntegratedStandaloneDryRunFromProjectsRootMountsFleetSurface(t *testing.T) {
+	runtime, _ := useStandaloneWorkspaceFixture(t)
+	t.Chdir(runtime.ProjectsRoot)
+	command := newCommand()
+	var output bytes.Buffer
+	command.Writer = &output
+	command.ErrWriter = &output
+	if err := command.Run(context.Background(), []string{
+		"aos",
+		"--agent", "codex",
+		"--role", "engineer",
+		"--image", "aos:test",
+		"--auth=false",
+		"--dry-run",
+		"--",
+		"--version",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	rendered := output.String()
+	for _, want := range []string{
+		",target=/workspace",
+		"--workdir /workspace",
+		"--workspace /workspace",
+	} {
+		if !strings.Contains(rendered, want) {
+			t.Errorf("projects-root dry run missing %q:\n%s", want, rendered)
+		}
+	}
+	if strings.Contains(rendered, "source="+runtime.ProjectsRoot) {
+		t.Fatalf("standalone dry run mounted canonical projects root directly:\n%s", rendered)
+	}
+	_, lease := onlyNativeLease(t, runtime)
+	if len(lease.Artifacts) != 1 {
+		t.Fatalf("lease artifacts = %#v", lease.Artifacts)
+	}
+	worktree := lease.Artifacts[0].Worktree
+	if !strings.Contains(worktree, filepath.Join("projects", "owner", "one")) {
+		t.Fatalf("lease artifact lost owner/repo hierarchy: %#v", lease.Artifacts[0])
+	}
+	if _, err := os.Stat(filepath.Join(worktree, "README.md")); err != nil {
+		t.Fatalf("leased repository is unavailable: %v", err)
+	}
+}
+
 func TestIntegratedStandaloneCodexAuthFailurePrecedesDockerPlan(t *testing.T) {
 	clearCodexAuthEnvironment(t)
 	codexHome := t.TempDir()
