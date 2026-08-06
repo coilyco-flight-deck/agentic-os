@@ -341,6 +341,44 @@ func TestBuildLaunchPlanMountsCWDAndRunsInternalCompose(t *testing.T) {
 	}
 }
 
+func TestBuildLaunchPlanMountsWorkspaceSourceAndNestedCWD(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	source := filepath.Join(root, "projects")
+	cwd := filepath.Join(source, "owner", "repo", "docs")
+	if err := os.MkdirAll(cwd, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	plan, err := buildLaunchPlan(launchOptions{
+		Image:           "agentic-os:test",
+		Role:            "engineer",
+		Layout:          "codex",
+		Delivery:        "native-skills",
+		Composed:        true,
+		CWD:             cwd,
+		WorkspaceSource: source,
+		Command:         []string{"codex"},
+		UID:             1000,
+		GID:             1000,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	joined := strings.Join(plan.DockerArgs, "\n")
+	for _, want := range []string{
+		"type=bind,source=" + source + ",target=/workspace",
+		"--workdir\n/workspace/owner/repo/docs",
+		"--workspace\n/workspace/owner/repo/docs",
+	} {
+		if !strings.Contains(joined, want) {
+			t.Errorf("launch plan missing %q:\n%s", want, joined)
+		}
+	}
+	if strings.Contains(joined, "source="+cwd) {
+		t.Fatalf("launch plan mounted nested CWD directly:\n%s", joined)
+	}
+}
+
 func TestBuildLaunchPlanNamesAgentContainerForRole(t *testing.T) {
 	t.Parallel()
 	plan, err := buildLaunchPlan(launchOptions{

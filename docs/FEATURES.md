@@ -10,7 +10,7 @@ Major shipped capabilities, not files.
 - **Karabiner key bindings** - external keyboard and Remote Desktop mappings.
 - [Agents and sessions](features-agents-sessions.md) - self-name, composition status, and harness policy.
 - [Native agent workspaces](native-agent-workspaces.md) - fleet worktrees,
-  leases, cleanup, the `aos` temp namespace, and native agent launches.
+  leases, cleanup, the `aos` temp namespace, and standalone launches.
 - [Agent-compose provider](personality-provider.md) - scoped skills and
   personality under the `aos` source namespace.
 - [Agent tool evaluation](../.agents/skills/tooling-agent-tool-evaluation/SKILL.md) - cross-harness tool evals.

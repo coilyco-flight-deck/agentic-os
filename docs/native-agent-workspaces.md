@@ -21,8 +21,8 @@ with the owner/repository hierarchy reproduced below `projects`. A repository
 subdirectory maps to its session twin. An outside launch keeps its directory.
 It still receives the full leased fleet workspace.
 
-The shadow invokes agent-compose after projection, then execs the harness. Bare
-harness commands let the native roster infer a role.
+Native and standalone AOS use this shadow before agent-compose or Docker runs.
+Bare harness commands let the native roster infer a role.
 `acompose <role> <harness> [args...]` enters the clean shadow workspace for
 non-directors. Director uses warded AOS because Ward owns dispatch and its
 broker. Native AOS maps a model override or its profile fallback to `frontier`,

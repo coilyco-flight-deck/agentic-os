@@ -49,8 +49,8 @@ incompatible agents and translated Ward flags before starting a container.
 
 ## Standalone contract
 
-* The moving default image is pulled before each launch. Custom images keep Docker's local behavior.
-* CWD mounts read-write at `/workspace/<cwd-name>` and becomes the workdir.
+* The moving default image is pulled before each launch. Custom images stay local.
+* Standalone uses native shadow: worktrees mount at `/workspace`, mapped CWD is workdir.
 * Composition hydrates the baked provider through `aos-substrate-cache`.
 * [Codex authentication](aos-codex-auth.md) fails closed before Docker, projects
   file-backed or direct macOS Keychain credentials read-only, and preserves

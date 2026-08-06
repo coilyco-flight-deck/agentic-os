@@ -12,6 +12,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -74,6 +75,7 @@ type launchOptions struct {
 	Composed        bool
 	Guarded         bool
 	CWD             string
+	WorkspaceSource string
 	Command         []string
 	UID             int
 	GID             int
@@ -149,12 +151,33 @@ func buildLaunchPlan(opts launchOptions) (launchPlan, error) {
 	if err != nil {
 		return launchPlan{}, fmt.Errorf("resolve workspace: %w", err)
 	}
-	name := workspaceNamePattern.ReplaceAllString(filepath.Base(cwd), "-")
-	name = strings.Trim(name, "-.")
-	if name == "" {
-		name = "cwd"
+	mountSource := cwd
+	mountTarget := ""
+	workspace := ""
+	if strings.TrimSpace(opts.WorkspaceSource) != "" {
+		source, err := filepath.Abs(opts.WorkspaceSource)
+		if err != nil {
+			return launchPlan{}, fmt.Errorf("resolve workspace source: %w", err)
+		}
+		relative, inside := relativeWithin(source, cwd)
+		if !inside {
+			return launchPlan{}, fmt.Errorf("workspace %s is outside workspace source %s", cwd, source)
+		}
+		mountSource = source
+		mountTarget = containerWorkspaceRoot
+		workspace = containerWorkspaceRoot
+		if relative != "." {
+			workspace = path.Join(containerWorkspaceRoot, filepath.ToSlash(relative))
+		}
+	} else {
+		name := workspaceNamePattern.ReplaceAllString(filepath.Base(cwd), "-")
+		name = strings.Trim(name, "-.")
+		if name == "" {
+			name = "cwd"
+		}
+		workspace = containerWorkspaceRoot + "/" + name
+		mountTarget = workspace
 	}
-	workspace := containerWorkspaceRoot + "/" + name
 
 	args := []string{"run", "--rm", "--interactive", "--name", containerName}
 	if opts.Image == defaultImage {
@@ -166,7 +189,7 @@ func buildLaunchPlan(opts launchOptions) (launchPlan, error) {
 	args = append(args,
 		"--label", "aos.container=1",
 		"--label", "aos.role="+opts.Role,
-		"--mount", "type=bind,source="+cwd+",target="+workspace,
+		"--mount", "type=bind,source="+mountSource+",target="+mountTarget,
 	)
 	if opts.Composed {
 		args = append(

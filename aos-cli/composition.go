@@ -42,6 +42,11 @@ type wardLaunchPlan struct {
 	Args        []string
 }
 
+type standaloneWorkspace struct {
+	CWD    string
+	Source string
+}
+
 func runIntegratedLaunch(
 	ctx context.Context,
 	cmd *cli.Command,
@@ -235,10 +240,6 @@ func runStandaloneIntegratedLaunch(
 	cmd *cli.Command,
 	opts integratedLaunchOptions,
 ) (returnErr error) {
-	cwd, err := filepath.Abs(".")
-	if err != nil {
-		return fmt.Errorf("resolve current working directory: %w", err)
-	}
 	command := append([]string{opts.Agent}, opts.Arguments...)
 	uid, gid := hostIdentity()
 	auth, err := authForLaunch(ctx, opts.Auth, opts.Agent)
@@ -248,6 +249,10 @@ func runStandaloneIntegratedLaunch(
 	defer func() {
 		returnErr = errors.Join(returnErr, auth.Close())
 	}()
+	workspace, err := prepareStandaloneWorkspace(opts.Agent)
+	if err != nil {
+		return err
+	}
 	mcp, err := discoverMCPLaunch(ctx)
 	if err != nil {
 		return err
@@ -263,7 +268,8 @@ func runStandaloneIntegratedLaunch(
 		Delivery:        opts.Delivery,
 		Composed:        opts.Composed,
 		Guarded:         opts.Guarded,
-		CWD:             cwd,
+		CWD:             workspace.CWD,
+		WorkspaceSource: workspace.Source,
 		Command:         command,
 		UID:             uid,
 		GID:             gid,
@@ -285,6 +291,28 @@ func runStandaloneIntegratedLaunch(
 		return nil
 	}
 	return runDocker(ctx, plan.DockerArgs)
+}
+
+func prepareStandaloneWorkspace(harness string) (standaloneWorkspace, error) {
+	runtime, err := resolveNativeRuntime()
+	if err != nil {
+		return standaloneWorkspace{}, err
+	}
+	workspace, err := prepareNativeLaunchWorkspaceWithOptions(
+		runtime,
+		harness,
+		nativeLaunchOptions{},
+	)
+	if err != nil {
+		return standaloneWorkspace{}, err
+	}
+	result := standaloneWorkspace{CWD: workspace.CWD}
+	if workspace.SessionProjects != "" {
+		if _, inside := relativeWithin(workspace.SessionProjects, workspace.CWD); inside {
+			result.Source = workspace.SessionProjects
+		}
+	}
+	return result, nil
 }
 
 func runWardedLaunch(

@@ -51,6 +51,7 @@ func TestResolveAcomposeCheckinRejectsMissingAndUnknownAgents(t *testing.T) {
 }
 
 func TestAcomposeCheckinCodexDryRun(t *testing.T) {
+	useStandaloneWorkspaceFixture(t)
 	var output bytes.Buffer
 	cmd := newCommand()
 	cmd.Writer = &output
@@ -143,9 +144,8 @@ func TestAcomposeCheckinRejectsConflictingLayout(t *testing.T) {
 }
 
 func TestAcomposeCheckinStagesCodexAuthByDefault(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
-	t.Setenv("USERPROFILE", home)
+	runtime, _ := useStandaloneWorkspaceFixture(t)
+	home := runtime.Home
 	auth := filepath.Join(home, ".codex", "auth.json")
 	t.Setenv("CODEX_HOME", filepath.Dir(auth))
 	if err := os.MkdirAll(filepath.Dir(auth), 0o755); err != nil {

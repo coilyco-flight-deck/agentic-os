@@ -9,6 +9,66 @@ import (
 	"testing"
 )
 
+func useStandaloneWorkspaceFixture(t *testing.T) (nativeRuntime, string) {
+	t.Helper()
+	root := t.TempDir()
+	repository, _ := createNativeTestRepository(t, root, "owner", "one")
+	profiles := filepath.Join(repository, harnessLaunchProfilesRelativePath)
+	if err := os.MkdirAll(filepath.Dir(profiles), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(profiles, []byte(`roles:
+  engineer:
+    agent: codex
+  director:
+    agent: claude
+  qa:
+    agent: codex
+  ops:
+    agent: claude
+  design:
+    agent: claude
+  community:
+    agent: claude
+  strats:
+    agent: claude
+  content:
+    agent: codex
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	testGit(t, repository, "add", filepath.ToSlash(harnessLaunchProfilesRelativePath))
+	testGit(t, repository, "commit", "-m", "add harness launch profiles")
+	testGit(t, repository, "push", "origin", "main")
+	runtime := nativeTestRuntime(t, root)
+	writeNativeTestPlan(t, runtime.PlanFile, "one")
+	writeNativeTestList(t, runtime.FleetFile, "owner")
+	t.Setenv("AOS_REPOSITORY_PLAN", runtime.PlanFile)
+	t.Setenv("PROJECTS_ROOT", runtime.ProjectsRoot)
+	t.Setenv("AOS_NATIVE_STATE_DIR", runtime.StateRoot)
+	t.Setenv("AOS_NATIVE_SESSIONS_DIR", runtime.SessionsRoot)
+	t.Setenv("HOME", runtime.Home)
+	t.Setenv("USERPROFILE", runtime.Home)
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(runtime.Home, ".config"))
+	t.Chdir(repository)
+	return runtime, repository
+}
+
+func addNativeTestDirectory(t *testing.T, repository, relative string) string {
+	t.Helper()
+	directory := filepath.Join(repository, filepath.FromSlash(relative))
+	if err := os.MkdirAll(directory, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(directory, "README.md"), []byte(relative+"\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	testGit(t, repository, "add", filepath.ToSlash(filepath.Join(relative, "README.md")))
+	testGit(t, repository, "commit", "-m", "add "+relative)
+	testGit(t, repository, "push", "origin", "main")
+	return directory
+}
+
 func TestValidateIntegratedLaunchMatrix(t *testing.T) {
 	t.Parallel()
 	valid := []integratedLaunchOptions{
@@ -255,7 +315,7 @@ func TestIntegratedWardedDryRunStartsNoProcess(t *testing.T) {
 }
 
 func TestIntegratedStandaloneDryRunAlwaysUsesComposedAndGuardedContexts(t *testing.T) {
-	t.Parallel()
+	useStandaloneWorkspaceFixture(t)
 	command := newCommand()
 	var output bytes.Buffer
 	command.Writer = &output
@@ -291,6 +351,44 @@ func TestIntegratedStandaloneDryRunAlwaysUsesComposedAndGuardedContexts(t *testi
 	}
 }
 
+func TestIntegratedStandaloneDryRunUsesNativeShadowWorkspace(t *testing.T) {
+	runtime, repository := useStandaloneWorkspaceFixture(t)
+	docs := addNativeTestDirectory(t, repository, "docs")
+	t.Chdir(docs)
+	command := newCommandForInvocation("/usr/local/bin/aoscompose")
+	var output bytes.Buffer
+	command.Writer = &output
+	command.ErrWriter = &output
+	args := normalizeRoleShortcutArgs(commandDefaultsForInvocation("/usr/local/bin/aoscompose"), []string{
+		"aoscompose",
+		"--image", "aos:test",
+		"--auth=false",
+		"--dry-run",
+		"engineer",
+		"--version",
+	})
+	if err := command.Run(context.Background(), args); err != nil {
+		t.Fatal(err)
+	}
+	rendered := output.String()
+	for _, want := range []string{
+		",target=/workspace",
+		"--workdir /workspace/owner/one/docs",
+		"--workspace /workspace/owner/one/docs",
+	} {
+		if !strings.Contains(rendered, want) {
+			t.Errorf("shadow workspace dry run missing %q:\n%s", want, rendered)
+		}
+	}
+	if strings.Contains(rendered, "source="+docs) {
+		t.Fatalf("standalone dry run mounted the caller subdirectory directly:\n%s", rendered)
+	}
+	_, lease := onlyNativeLease(t, runtime)
+	if len(lease.Artifacts) != 1 || !strings.Contains(lease.Artifacts[0].Worktree, filepath.Join("projects", "owner", "one")) {
+		t.Fatalf("lease artifacts = %#v", lease.Artifacts)
+	}
+}
+
 func TestIntegratedStandaloneCodexAuthFailurePrecedesDockerPlan(t *testing.T) {
 	clearCodexAuthEnvironment(t)
 	codexHome := t.TempDir()
@@ -320,7 +418,7 @@ func TestIntegratedStandaloneCodexAuthFailurePrecedesDockerPlan(t *testing.T) {
 }
 
 func TestIntegratedStandaloneCompatibilityFlagsCannotDisableContexts(t *testing.T) {
-	t.Parallel()
+	useStandaloneWorkspaceFixture(t)
 	command := newCommand()
 	var output bytes.Buffer
 	command.Writer = &output
@@ -390,10 +488,10 @@ func TestAOSWardInvocationAlwaysUsesWardAndBothContexts(t *testing.T) {
 }
 
 func TestAOSComposeAliasesUseBothContextsWithoutWard(t *testing.T) {
-	t.Parallel()
 	for _, alias := range []string{"aoscompose", "aoscomposed"} {
 		alias := alias
 		t.Run(alias, func(t *testing.T) {
+			useStandaloneWorkspaceFixture(t)
 			command := newCommandForInvocation("/usr/local/bin/" + alias + "-linux-amd64")
 			var output bytes.Buffer
 			command.Writer = &output
@@ -433,10 +531,10 @@ func TestAOSComposeAliasesUseBothContextsWithoutWard(t *testing.T) {
 }
 
 func TestAOSComposeAliasesAcceptRoleShortcutWithDefaultAgent(t *testing.T) {
-	t.Parallel()
 	for _, alias := range []string{"aoscompose", "aoscomposed"} {
 		alias := alias
 		t.Run(alias, func(t *testing.T) {
+			useStandaloneWorkspaceFixture(t)
 			command := newCommandForInvocation("/usr/local/bin/" + alias)
 			var output bytes.Buffer
 			command.Writer = &output
@@ -466,7 +564,7 @@ func TestAOSComposeAliasesAcceptRoleShortcutWithDefaultAgent(t *testing.T) {
 }
 
 func TestAOSComposeAliasRoleShortcutAcceptsPositionalHarnessOverride(t *testing.T) {
-	t.Parallel()
+	useStandaloneWorkspaceFixture(t)
 	command := newCommandForInvocation("/usr/local/bin/aoscompose")
 	var output bytes.Buffer
 	command.Writer = &output
@@ -505,7 +603,7 @@ func TestNormalizeRoleShortcutArgsLeavesSubcommandsAlone(t *testing.T) {
 }
 
 func TestIntegratedStandaloneKubeconfigDryRun(t *testing.T) {
-	t.Parallel()
+	useStandaloneWorkspaceFixture(t)
 	kubeconfig := writeTestKubeconfig(
 		t,
 		filepath.Join(t.TempDir(), "operator config", "cluster config.yaml"),

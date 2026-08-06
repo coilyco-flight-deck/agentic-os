@@ -388,10 +388,6 @@ func runComposedLaunch(
 	command []string,
 	noSubstrate bool,
 ) (returnErr error) {
-	cwd, err := filepath.Abs(".")
-	if err != nil {
-		return fmt.Errorf("resolve current working directory: %w", err)
-	}
 	uid, gid := hostIdentity()
 	auth, err := authForLaunch(ctx, cmd.Bool("auth"), layout)
 	if err != nil {
@@ -400,6 +396,10 @@ func runComposedLaunch(
 	defer func() {
 		returnErr = errors.Join(returnErr, auth.Close())
 	}()
+	workspace, err := prepareStandaloneWorkspace(layout)
+	if err != nil {
+		return err
+	}
 	mcp, err := discoverMCPLaunch(ctx)
 	if err != nil {
 		return err
@@ -410,7 +410,8 @@ func runComposedLaunch(
 		Layout:          layout,
 		Delivery:        cmd.String("delivery"),
 		Composed:        true,
-		CWD:             cwd,
+		CWD:             workspace.CWD,
+		WorkspaceSource: workspace.Source,
 		Command:         command,
 		UID:             uid,
 		GID:             gid,

@@ -297,6 +297,12 @@ type nativeLaunchOptions struct {
 	WorkspaceRoot bool
 }
 
+type nativeLaunchWorkspace struct {
+	CWD             string
+	SessionProjects string
+	SessionHome     string
+}
+
 func prepareNativeLaunch(runtime nativeRuntime, harness string) (string, error) {
 	return prepareNativeLaunchWithOptions(runtime, harness, nativeLaunchOptions{})
 }
@@ -306,10 +312,22 @@ func prepareNativeLaunchWithOptions(
 	harness string,
 	options nativeLaunchOptions,
 ) (string, error) {
-	if err := os.MkdirAll(runtime.StateRoot, 0o700); err != nil {
-		return "", fmt.Errorf("create native state root: %w", err)
+	workspace, err := prepareNativeLaunchWorkspaceWithOptions(runtime, harness, options)
+	if err != nil {
+		return "", err
 	}
-	var launchCWD string
+	return workspace.CWD, nil
+}
+
+func prepareNativeLaunchWorkspaceWithOptions(
+	runtime nativeRuntime,
+	harness string,
+	options nativeLaunchOptions,
+) (nativeLaunchWorkspace, error) {
+	if err := os.MkdirAll(runtime.StateRoot, 0o700); err != nil {
+		return nativeLaunchWorkspace{}, fmt.Errorf("create native state root: %w", err)
+	}
+	var workspace nativeLaunchWorkspace
 	err := withNativeStartupLock(runtime, func() error {
 		live, err := cleanDeadNativeSessions(runtime)
 		if err != nil {
@@ -324,7 +342,7 @@ func prepareNativeLaunchWithOptions(
 				return err
 			}
 		}
-		launchCWD, err = createNativeSession(
+		workspace, err = createNativeSession(
 			runtime,
 			harness,
 			repositories,
@@ -333,12 +351,12 @@ func prepareNativeLaunchWithOptions(
 		return err
 	})
 	if err != nil {
-		return "", err
+		return nativeLaunchWorkspace{}, err
 	}
-	if launchCWD == "" {
-		return runtime.CWD, nil
+	if workspace.CWD == "" {
+		workspace.CWD = runtime.CWD
 	}
-	return launchCWD, nil
+	return workspace, nil
 }
 
 func withNativeStartupLock(runtime nativeRuntime, action func() error) error {
@@ -849,11 +867,11 @@ func createNativeSession(
 	harness string,
 	repositories []nativeRepository,
 	workspaceRoot bool,
-) (string, error) {
+) (nativeLaunchWorkspace, error) {
 	relative, inside := relativeWithin(runtime.ProjectsRoot, runtime.CWD)
 	id, err := nativeSessionID(runtime)
 	if err != nil {
-		return "", err
+		return nativeLaunchWorkspace{}, err
 	}
 	sessionRoot := filepath.Join(runtime.SessionsRoot, id)
 	sessionProjects := filepath.Join(sessionRoot, "projects")
@@ -862,7 +880,7 @@ func createNativeSession(
 		sessionHome = filepath.Join(sessionRoot, "home")
 		if err := stageNativeRoleHome(runtime.Home, sessionHome); err != nil {
 			_ = os.RemoveAll(sessionRoot)
-			return "", err
+			return nativeLaunchWorkspace{}, err
 		}
 	}
 	branch := "aos/" + harness + "/" + id
@@ -871,7 +889,7 @@ func createNativeSession(
 	for _, repository := range repositories {
 		target := filepath.Join(sessionProjects, repository.Owner, repository.Name)
 		if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
-			return "", err
+			return nativeLaunchWorkspace{}, err
 		}
 		if _, err := nativeGit(repository.Path,
 			"worktree", "add", "--quiet", "-b", branch, target, "origin/main"); err != nil {
@@ -888,7 +906,7 @@ func createNativeSession(
 	}
 	if len(artifacts) == 0 {
 		_ = os.RemoveAll(sessionRoot)
-		return runtime.CWD, nil
+		return nativeLaunchWorkspace{CWD: runtime.CWD}, nil
 	}
 	lease := nativeLease{
 		Format:          "agentic-os.native-lease.v1",
@@ -903,11 +921,11 @@ func createNativeSession(
 		Artifacts:       artifacts,
 	}
 	if err := writeNativeJSON(nativeStatePath(runtime, "leases", id+".json"), lease); err != nil {
-		return "", fmt.Errorf("write native lease: %w", err)
+		return nativeLaunchWorkspace{}, fmt.Errorf("write native lease: %w", err)
 	}
 	if sessionHome != "" {
 		if err := os.Setenv(agentComposeRuntimeHomeEnv, sessionHome); err != nil {
-			return "", fmt.Errorf("set agent-compose runtime home: %w", err)
+			return nativeLaunchWorkspace{}, fmt.Errorf("set agent-compose runtime home: %w", err)
 		}
 	}
 	launch := runtime.CWD
@@ -933,7 +951,11 @@ func createNativeSession(
 		}
 	}
 	fmt.Fprintf(runtime.Stderr, "aos: native session workspace %s\n", sessionProjects)
-	return launch, nil
+	return nativeLaunchWorkspace{
+		CWD:             launch,
+		SessionProjects: sessionProjects,
+		SessionHome:     sessionHome,
+	}, nil
 }
 
 func stageNativeRoleHome(source, target string) error {
