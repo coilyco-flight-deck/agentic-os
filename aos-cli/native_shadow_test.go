@@ -565,7 +565,7 @@ func TestNativeLaunchMapsOwnerDirectoryIntoSession(t *testing.T) {
 	}
 }
 
-func TestLegacyDeadSessionIsCleanedAfterGrace(t *testing.T) {
+func TestConfirmedDeadSessionReleasesRecoverableWorktree(t *testing.T) {
 	root := t.TempDir()
 	repository, _ := createNativeTestRepository(t, root, "owner", "one")
 	runtime := nativeTestRuntime(t, root)
@@ -602,24 +602,31 @@ func TestLegacyDeadSessionIsCleanedAfterGrace(t *testing.T) {
 		t.Fatalf("newly dead worktree was removed: %v", err)
 	}
 
-	runtime.Now = runtime.Now.Add(nativeDeadSessionGrace - time.Second)
-	if _, err := cleanDeadNativeSessions(runtime); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := os.Stat(oldWorktree); err != nil {
-		t.Fatalf("worktree was removed before grace expiry: %v", err)
-	}
-
-	runtime.Now = runtime.Now.Add(time.Second)
+	runtime.Now = runtime.Now.Add(time.Minute)
 	if _, err := cleanDeadNativeSessions(runtime); err != nil {
 		t.Fatal(err)
 	}
 
 	if _, err := os.Stat(oldWorktree); !os.IsNotExist(err) {
-		t.Fatalf("expired worktree remains: %v", err)
+		t.Fatalf("confirmed dead worktree remains: %v", err)
 	}
 	if output := testGit(t, repository, "branch", "--list", oldBranch); output != "" {
-		t.Fatalf("expired branch remains: %s", output)
+		t.Fatalf("confirmed dead branch remains: %s", output)
+	}
+	if _, err := os.Stat(lease.SessionRoot); err != nil {
+		t.Fatalf("session root was removed before grace expiry: %v", err)
+	}
+	if _, err := os.Stat(leasePath); err != nil {
+		t.Fatalf("lease was removed before grace expiry: %v", err)
+	}
+
+	runtime.Now = runtime.Now.Add(nativeDeadSessionGrace)
+	if _, err := cleanDeadNativeSessions(runtime); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := os.Stat(lease.SessionRoot); !os.IsNotExist(err) {
+		t.Fatalf("expired session root remains: %v", err)
 	}
 	if _, err := os.Stat(leasePath); !os.IsNotExist(err) {
 		t.Fatalf("expired lease remains: %v", err)

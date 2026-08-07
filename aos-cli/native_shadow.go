@@ -655,13 +655,9 @@ func cleanDeadNativeSessions(runtime nativeRuntime) (nativeLiveWorktrees, error)
 			}
 			continue
 		}
-		if runtime.Now.Before(lease.DeadSince.Add(nativeDeadSessionGrace)) {
-			live.addArtifacts(lease.Artifacts)
-			continue
-		}
-		runtime.Progress.Item("release", released+1, len(held),
-			"session %s (%d worktrees)", lease.ID, len(lease.Artifacts))
-		released++
+		// A second dead reading confirms the first, so a worktree holding no
+		// local-only state is released now. docs/native-agent-workspaces.md
+		expired := !runtime.Now.Before(lease.DeadSince.Add(nativeDeadSessionGrace))
 		remaining := make([]nativeArtifact, 0, len(lease.Artifacts))
 		for _, artifact := range lease.Artifacts {
 			cleaned, err := cleanNativeArtifact(artifact)
@@ -674,9 +670,18 @@ func cleanDeadNativeSessions(runtime nativeRuntime) (nativeLiveWorktrees, error)
 				remaining = append(remaining, artifact)
 			}
 		}
-		if len(remaining) > 0 {
-			lease.PID = 0
-			lease.ProcessStart = ""
+		if len(remaining) < len(lease.Artifacts) {
+			runtime.Progress.Item("release", released+1, len(held),
+				"session %s (%d of %d worktrees)", lease.ID,
+				len(lease.Artifacts)-len(remaining), len(lease.Artifacts))
+			released++
+		}
+		live.addArtifacts(remaining)
+		if len(remaining) > 0 || !expired {
+			if expired {
+				lease.PID = 0
+				lease.ProcessStart = ""
+			}
 			lease.Artifacts = remaining
 			if err := writeNativeJSON(path, lease); err != nil {
 				return nativeLiveWorktrees{}, fmt.Errorf("update preserved native lease: %w", err)
