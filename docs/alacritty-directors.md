@@ -42,13 +42,16 @@ The launcher calls `agent-compose overlay --json`, validates the overlay, then
 launches Alacritty with `aoscompose <role> <seat> ...` as its executable tail.
 It derives:
 
-* a title from personality glyphs, the named seat, expression, and task
+* a title from personality glyphs, the seat annotation, expression, and task
 * the canonical melded favorite color as the cursor and selection accent
 * a subtle opaque background tint
 * readable selection text selected by contrast
 
 The launcher passes every value to Alacritty as an argument. It invokes no
 shell and emits no terminal control sequences into the director process.
+
+The seat annotation is the overlay's composed `annotation` field, `solar
+director [she] (Director)`, so this title matches every other agent surface.
 
 ## Inspect
 

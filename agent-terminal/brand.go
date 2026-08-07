@@ -26,6 +26,23 @@ type overlaySeat struct {
 	Pronouns string `json:"pronouns"`
 }
 
+// annotation composes the title identity when the overlay predates the composed
+// field. See docs/alacritty-directors.md.
+func (s overlaySeat) annotation(roleDisplayName string) string {
+	name := strings.TrimSpace(s.Name)
+	if name == "" {
+		return ""
+	}
+	subject, _, _ := strings.Cut(strings.TrimSpace(s.Pronouns), "/")
+	if subject = strings.TrimSpace(subject); subject != "" {
+		name += " [" + subject + "]"
+	}
+	if label := strings.TrimSpace(roleDisplayName); label != "" {
+		name += " (" + label + ")"
+	}
+	return name
+}
+
 type overlayEmblem struct {
 	Glyph string `json:"glyph"`
 }
@@ -37,12 +54,16 @@ type overlayPersonality struct {
 }
 
 type overlayDocument struct {
-	Format        string               `json:"format"`
-	SchemaVersion int                  `json:"schema_version"`
-	Person        string               `json:"person"`
-	Role          string               `json:"role"`
-	Purpose       string               `json:"purpose"`
-	Seat          overlaySeat          `json:"seat"`
+	Format          string      `json:"format"`
+	SchemaVersion   int         `json:"schema_version"`
+	Person          string      `json:"person"`
+	Role            string      `json:"role"`
+	RoleDisplayName string      `json:"role_display_name"`
+	Purpose         string      `json:"purpose"`
+	Seat            overlaySeat `json:"seat"`
+	// Annotation and RoleDisplayName are additive to the v1 contract, so an
+	// older agent-compose leaves them empty and the title falls back.
+	Annotation    string               `json:"annotation"`
 	Expression    string               `json:"expression"`
 	FavoriteColor string               `json:"favorite_color"`
 	Personalities []overlayPersonality `json:"personalities"`
@@ -62,13 +83,15 @@ type launchRequest struct {
 }
 
 type launchIdentity struct {
-	Person        string `json:"person"`
-	Role          string `json:"role"`
-	Seat          string `json:"seat"`
-	Name          string `json:"name"`
-	Pronouns      string `json:"pronouns"`
-	Expression    string `json:"expression"`
-	FavoriteColor string `json:"favorite_color"`
+	Person          string `json:"person"`
+	Role            string `json:"role"`
+	RoleDisplayName string `json:"role_display_name"`
+	Seat            string `json:"seat"`
+	Name            string `json:"name"`
+	Pronouns        string `json:"pronouns"`
+	Annotation      string `json:"annotation"`
+	Expression      string `json:"expression"`
+	FavoriteColor   string `json:"favorite_color"`
 }
 
 type launchBrand struct {
@@ -165,13 +188,15 @@ func buildLaunchPlan(
 	return launchPlan{
 		Format: launchFormat,
 		Identity: launchIdentity{
-			Person:        document.Person,
-			Role:          document.Role,
-			Seat:          document.Seat.Harness,
-			Name:          document.Seat.Name,
-			Pronouns:      document.Seat.Pronouns,
-			Expression:    document.Expression,
-			FavoriteColor: accent,
+			Person:          document.Person,
+			Role:            document.Role,
+			RoleDisplayName: document.RoleDisplayName,
+			Seat:            document.Seat.Harness,
+			Name:            document.Seat.Name,
+			Pronouns:        document.Seat.Pronouns,
+			Annotation:      seatAnnotation(document),
+			Expression:      document.Expression,
+			FavoriteColor:   accent,
 		},
 		Brand: launchBrand{
 			Title:         title,
@@ -185,6 +210,19 @@ func buildLaunchPlan(
 	}, nil
 }
 
+// seatAnnotation prefers the string agent-compose composed, so the window title,
+// the Claude Code prompt box, and the status row all read the same identity.
+func seatAnnotation(document overlayDocument) string {
+	if annotation := strings.TrimSpace(document.Annotation); annotation != "" {
+		return annotation
+	}
+	roleLabel := strings.TrimSpace(document.RoleDisplayName)
+	if roleLabel == "" {
+		roleLabel = strings.TrimSpace(document.Role)
+	}
+	return document.Seat.annotation(roleLabel)
+}
+
 func buildTitle(document overlayDocument, taskTitle string) (string, error) {
 	parts := make([]string, 0, len(document.Personalities))
 	for _, personality := range document.Personalities {
@@ -193,8 +231,7 @@ func buildTitle(document overlayDocument, taskTitle string) (string, error) {
 			parts = append(parts, glyph)
 		}
 	}
-	name := strings.TrimSpace(document.Seat.Name)
-	title := strings.TrimSpace(strings.Join(parts, " ") + " " + name)
+	title := strings.TrimSpace(strings.Join(parts, " ") + " " + seatAnnotation(document))
 	title += " · " + strings.TrimSpace(document.Expression)
 	taskTitle = strings.TrimSpace(taskTitle)
 	if taskTitle != "" {

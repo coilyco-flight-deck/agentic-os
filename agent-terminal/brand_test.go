@@ -115,10 +115,11 @@ func TestBuildLaunchPlanUsesCanonicalIdentity(t *testing.T) {
 	if plan.Format != launchFormat {
 		t.Fatalf("format = %q", plan.Format)
 	}
-	if plan.Identity.Name != "solar director" || plan.Identity.FavoriteColor != "#94974a" {
+	if plan.Identity.Name != "solar director" || plan.Identity.FavoriteColor != "#94974a" ||
+		plan.Identity.Annotation != "solar director [she] (Director)" {
 		t.Fatalf("identity = %+v", plan.Identity)
 	}
-	if plan.Brand.Title != "▲ ◆ ⇄ solar director · acting · agentic-os#730" {
+	if plan.Brand.Title != "▲ ◆ ⇄ solar director [she] (Director) · acting · agentic-os#730" {
 		t.Fatalf("title = %q", plan.Brand.Title)
 	}
 	if plan.Brand.Background != "#1b1d1a" || plan.Brand.SelectionText != baseBackground {
@@ -135,6 +136,49 @@ func TestBuildLaunchPlanUsesCanonicalIdentity(t *testing.T) {
 	}
 	if !reflect.DeepEqual(plan.Arguments[len(plan.Arguments)-len(wantTail):], wantTail) {
 		t.Fatalf("arguments tail = %#v", plan.Arguments)
+	}
+}
+
+// TestSeatAnnotationFallsBackForOlderAgentCompose covers the release window
+// where agent-compose predates the composed field.
+func TestSeatAnnotationFallsBackForOlderAgentCompose(t *testing.T) {
+	request := directorRequest()
+	raw := strings.Replace(
+		strings.Replace(
+			directorOverlay,
+			"  \"annotation\": \"solar director [she] (Director)\",\n",
+			"",
+			1,
+		),
+		"  \"role_display_name\": \"Director\",\n",
+		"",
+		1,
+	)
+	if strings.Contains(raw, "annotation") || strings.Contains(raw, "role_display_name") {
+		t.Fatal("fixture still carries the composed fields")
+	}
+	document, err := parseOverlay([]byte(raw), request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// The role slug stands in for the label an older document never carried.
+	if got := seatAnnotation(document); got != "solar director [she] (director)" {
+		t.Fatalf("fallback annotation = %q", got)
+	}
+}
+
+// TestSeatAnnotationDegradesWithoutPronouns keeps an external person package
+// that omits pronouns launchable instead of rendering an empty bracket.
+func TestSeatAnnotationDegradesWithoutPronouns(t *testing.T) {
+	request := directorRequest()
+	raw := strings.Replace(directorOverlay, `"pronouns": "she"`, `"pronouns": ""`, 1)
+	raw = strings.Replace(raw, `"annotation": "solar director [she] (Director)",`, "", 1)
+	document, err := parseOverlay([]byte(raw), request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := seatAnnotation(document); got != "solar director (Director)" {
+		t.Fatalf("annotation without pronouns = %q", got)
 	}
 }
 
