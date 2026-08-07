@@ -19,7 +19,7 @@ id = "main"
 type = "terminal"
 directory = "/Users/kai/projects/coilysiren"
 commands = [
-  "printf '\\033]0;agent · work\\007' && /Users/kai/projects/coilyco-flight-deck/agentic-os/warp/launch_configurations/claude-agent-work.sh",
+  "printf '\\033]0;agent // work\\007' && /Users/kai/projects/coilyco-flight-deck/agentic-os/warp/launch_configurations/claude-agent-work.sh",
 ]
 
 [params]

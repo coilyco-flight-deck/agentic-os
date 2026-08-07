@@ -232,13 +232,13 @@ func buildTitle(document overlayDocument, taskTitle string) (string, error) {
 		}
 	}
 	title := strings.TrimSpace(strings.Join(parts, " ") + " " + seatAnnotation(document))
-	title += " · " + strings.TrimSpace(document.Expression)
+	title += " // " + strings.TrimSpace(document.Expression)
 	taskTitle = strings.TrimSpace(taskTitle)
 	if taskTitle != "" {
 		if containsControl(taskTitle) {
 			return "", fmt.Errorf("task title contains a control character")
 		}
-		title += " · " + taskTitle
+		title += " // " + taskTitle
 	}
 	if containsControl(title) {
 		return "", fmt.Errorf("derived title contains a control character")

@@ -17,9 +17,9 @@ name: claude-agent-work
 windows:
   - active_tab_index: 0
     tabs:
-      - title: "agent · work"
+      - title: "agent // work"
         color: yellow
         layout:
           cwd: /Users/kai/projects/coilysiren
           commands:
-            - exec: printf '\033]0;agent · work\007' && /Users/kai/projects/coilyco-flight-deck/agentic-os/warp/launch_configurations/claude-agent-work.sh
+            - exec: printf '\033]0;agent // work\007' && /Users/kai/projects/coilyco-flight-deck/agentic-os/warp/launch_configurations/claude-agent-work.sh

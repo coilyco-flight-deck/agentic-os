@@ -119,7 +119,7 @@ func TestBuildLaunchPlanUsesCanonicalIdentity(t *testing.T) {
 		plan.Identity.Annotation != "solar director [she] (Director)" {
 		t.Fatalf("identity = %+v", plan.Identity)
 	}
-	if plan.Brand.Title != "▲ ◆ ⇄ solar director [she] (Director) · acting · agentic-os#730" {
+	if plan.Brand.Title != "▲ ◆ ⇄ solar director [she] (Director) // acting // agentic-os#730" {
 		t.Fatalf("title = %q", plan.Brand.Title)
 	}
 	if plan.Brand.Background != "#1b1d1a" || plan.Brand.SelectionText != baseBackground {

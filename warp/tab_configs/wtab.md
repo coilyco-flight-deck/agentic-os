@@ -8,12 +8,12 @@ This doc walks the design top to bottom. If you know Warp's `tab_configs/` direc
 
 ```
 $ cd ~/projects/coilysiren/inbox
-$ warp tab cyan "📥 inbox · scratch"
+$ warp tab cyan "📥 inbox // scratch"
 ```
 
 opens a new tab in the active Warp Preview window:
 
-- Tab title: `📥 inbox · scratch`
+- Tab title: `📥 inbox // scratch`
 - Tab color: cyan (the ANSI cyan from your theme)
 - cwd: `~/projects/coilysiren/inbox` (whatever `$PWD` was when you ran the command)
 - Otherwise indistinguishable from a plus-button new tab: your normal shell, your normal startup, no extra processes
@@ -21,10 +21,10 @@ opens a new tab in the active Warp Preview window:
 A few more in the wild:
 
 ```
-$ warp tab magenta "inbox · debug"              # match the per-repo color you use elsewhere
+$ warp tab magenta "inbox // debug"              # match the per-repo color you use elsewhere
 $ warp tab red    "🔥 prod incident"            # so the angry tab is visibly angry
 $ warp tab green  "🌱 fresh branch"
-$ warp tab yellow "inbox · readme polish"
+$ warp tab yellow "inbox // readme polish"
 ```
 
 `warp colors` lists the valid color set. `warp tab` with no args prints usage plus the list. Tab completion offers the same list.
