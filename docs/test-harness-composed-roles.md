@@ -47,7 +47,7 @@ ward exec aos-role-question -- local qa
 ward exec aos-role-question -- local ops
 ward exec aos-role-question -- local design
 ward exec aos-role-question -- local community
-ward exec aos-role-question -- local strats
+ward exec aos-role-question -- local exec
 ward exec aos-role-question -- local content
 ```
 

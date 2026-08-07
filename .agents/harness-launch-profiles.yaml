@@ -9,7 +9,7 @@ roles:
     agent: claude
   design:
     agent: claude
-  strats:
+  exec:
     agent: claude
   creator:
     agent: claude

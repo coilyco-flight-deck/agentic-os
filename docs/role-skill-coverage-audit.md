@@ -10,7 +10,8 @@ trigger and operating boundary are useful regardless of the selected role.
 
 Every composed source is selected by at least one role except the two sales
 methods. AOS has no deployed sales role, and those B2B commercial methods do not match
-the career or portfolio-investment boundary closely enough to burden Strats.
+the career or portfolio-investment boundary closely enough to burden the
+Executive Strategist.
 
 ## Corrections
 

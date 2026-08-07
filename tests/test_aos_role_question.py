@@ -74,8 +74,8 @@ def test_question_accepts_display_name_marker(tmp_path: Path) -> None:
     proc, _ = _run(
         tmp_path,
         "local",
-        "strats",
-        response="ROLE-CONFIRMED: strats",
+        "exec",
+        response="ROLE-CONFIRMED: exec",
     )
 
     assert proc.returncode == 0, proc.stderr

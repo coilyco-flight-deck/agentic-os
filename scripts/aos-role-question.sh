@@ -26,7 +26,7 @@ question_for() {
         community)
             echo "A Discord newcomer asks a repeated setup question in a busy channel. Give a welcoming grounded answer, one useful next step, and the condition for a human handoff."
             ;;
-        strats)
+        exec)
             echo "Several Flight Deck repositories claim overlapping portfolio priority. Name the evidence needed, make the smallest reversible allocation decision, and delegate the bounded outcomes."
             ;;
         content)

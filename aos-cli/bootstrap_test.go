@@ -24,7 +24,7 @@ func (f *fakeCommandRunner) Run(_ context.Context, name string, args ...string) 
 		if err := os.MkdirAll(out, 0o755); err != nil {
 			return err
 		}
-		person := []byte(`{"roles":{"engineer":{"supported_model_tiers":["frontier","commodity"]},"strats":{"supported_model_tiers":["frontier"]}}}`)
+		person := []byte(`{"roles":{"engineer":{"supported_model_tiers":["frontier","commodity"]},"exec":{"supported_model_tiers":["frontier"]}}}`)
 		return os.WriteFile(filepath.Join(out, "person.json"), person, 0o644)
 	}
 	if name == "git" && len(args) >= 4 && args[0] == "clone" && args[1] == "--mirror" {
@@ -71,14 +71,14 @@ func TestComposeHomeSurfacesComposeFailureWithRoleCompatibilityTier(t *testing.T
 		composeErr: errors.New("compose failed"),
 	}
 	opts := bootstrapOptions{
-		Role:            "strats",
+		Role:            "exec",
 		Layout:          "goose",
 		Delivery:        "native-skills",
 		AgentHome:       t.TempDir(),
 		AgentComposeBin: "agent-compose",
 	}
 	err := composeHome(context.Background(), opts, t.TempDir(), runner)
-	if err == nil || !strings.Contains(err.Error(), "compose role strats: compose failed") {
+	if err == nil || !strings.Contains(err.Error(), "compose role exec: compose failed") {
 		t.Fatalf("compose error = %v", err)
 	}
 	if !strings.Contains(runner.request, `model-tier "frontier"`) {
@@ -331,7 +331,7 @@ func TestPrepareContainerWithoutSubstrateStillMaterializesProvider(t *testing.T)
 	runner := &fakeCommandRunner{}
 	uid, gid := hostIdentity()
 	_, err := prepareContainer(context.Background(), bootstrapOptions{
-		Role:              "strats",
+		Role:              "exec",
 		Layout:            "codex",
 		Delivery:          "compiled",
 		Composed:          true,

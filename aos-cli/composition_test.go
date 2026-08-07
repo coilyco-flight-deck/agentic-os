@@ -30,7 +30,7 @@ func useStandaloneWorkspaceFixture(t *testing.T) (nativeRuntime, string) {
     agent: claude
   community:
     agent: claude
-  strats:
+  exec:
     agent: claude
   content:
     agent: codex

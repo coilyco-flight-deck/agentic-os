@@ -19,7 +19,7 @@ the role allowlists in [`.agents/roles.kdl`](../.agents/roles.kdl).
   coding pair.
 * **Community** - Discord, customer-success, and social-writing methods,
   including the editorial loop.
-* **Portfolio Strategist** - the deduplicated advisor, PM, and CEO methods for
+* **Executive Strategist** - the deduplicated advisor, PM, and CEO methods for
   evidence synthesis, portfolio allocation, program decomposition, scouts,
   skill authoring, and issue writing.
 * **Content Manager** - the complete writing family for public-repository
@@ -28,13 +28,13 @@ the role allowlists in [`.agents/roles.kdl`](../.agents/roles.kdl).
 
 ## Handoffs
 
-Portfolio Strategist owns scout discovery, ranking, and portfolio recommendations. Engineer or
+Executive Strategist owns scout discovery, ranking, and portfolio recommendations. Engineer or
 ops owns supply-chain verification, installation, implementation, validation,
-and landing. Portfolio Strategist records returned evidence and outcomes without inheriting
+and landing. Executive Strategist records returned evidence and outcomes without inheriting
 execution authority.
 
 Community owns routine member interaction and a clean handoff. Human stewards
-retain moderation decisions, while Portfolio Strategist, ops, and engineering
+retain moderation decisions, while Executive Strategist, ops, and engineering
 receive signals that belong to their work.
 
 Composition grants knowledge only. Ward's fixed workflow and the separately

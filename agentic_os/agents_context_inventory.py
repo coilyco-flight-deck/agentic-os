@@ -47,7 +47,7 @@ ROLE_TERMS = {
     "engineer",
     "ops",
     "qa",
-    "strats",
+    "exec",
 }
 TASK_TERMS = {
     "ci/cd",

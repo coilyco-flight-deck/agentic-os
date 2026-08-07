@@ -420,7 +420,7 @@ func TestBuildLaunchPlanMountsIssuePinContext(t *testing.T) {
 	digest := strings.Repeat("a", 64)
 	plan, err := buildLaunchPlan(launchOptions{
 		Image:    "agentic-os:test",
-		Role:     "strats",
+		Role:     "exec",
 		Layout:   "codex",
 		Delivery: "native-skills",
 		Composed: true,
@@ -550,7 +550,7 @@ func TestBuildLaunchPlanCanSkipSubstrate(t *testing.T) {
 	t.Parallel()
 	plan, err := buildLaunchPlan(launchOptions{
 		Image:       "agentic-os:test",
-		Role:        "strats",
+		Role:        "exec",
 		Layout:      "claude",
 		Delivery:    "compiled",
 		Composed:    true,

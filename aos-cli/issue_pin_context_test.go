@@ -16,7 +16,7 @@ import (
 func writeIssuePinConfig(t *testing.T, path, baseURL string, failClosed bool, maxBytes int, freshness string) {
 	t.Helper()
 	body := "roles:\n" +
-		"  strats:\n" +
+		"  exec:\n" +
 		"    forgejo:\n" +
 		"      base_url: " + baseURL + "\n" +
 		"      owner: owner\n" +
@@ -62,7 +62,7 @@ func TestPrepareIssuePinLaunchContextPreservesPinsAndExcludesToken(t *testing.T)
 	t.Setenv("AOS_ISSUE_PIN_CACHE_DIR", t.TempDir())
 	t.Setenv("FORGEJO_TOKEN", "secret-token")
 
-	launchContext, err := prepareIssuePinLaunchContext(context.Background(), "strats")
+	launchContext, err := prepareIssuePinLaunchContext(context.Background(), "exec")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -109,7 +109,7 @@ func TestIssuePinHydratorCacheFreshnessStaleFallbackAndFailClosed(t *testing.T) 
 	}))
 	defer server.Close()
 	config := resolvedIssuePinConfig{
-		Role: "strats", BaseURL: server.URL, Owner: "owner", Repo: "inbox",
+		Role: "exec", BaseURL: server.URL, Owner: "owner", Repo: "inbox",
 		MaxBytes: 4096, Freshness: time.Hour,
 	}
 	hydrator := issuePinHydrator{
@@ -149,7 +149,7 @@ func TestIssuePinHydratorCacheFreshnessStaleFallbackAndFailClosed(t *testing.T) 
 
 func TestIssuePinHydratorClipsBodiesAndSkipsRoleMismatch(t *testing.T) {
 	snapshot := issuePinSnapshot{
-		Format: issuePinSnapshotFormat, Role: "strats", BaseURL: "https://forgejo.example.test",
+		Format: issuePinSnapshotFormat, Role: "exec", BaseURL: "https://forgejo.example.test",
 		Owner: "owner", Repo: "inbox", HydratedAt: time.Date(2026, 8, 6, 1, 0, 0, 0, time.UTC),
 		Issues: []issuePinIssue{{
 			Number: 302, Title: "Campaign", HTMLURL: serverIssueURL("302"),

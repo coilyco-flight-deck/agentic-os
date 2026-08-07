@@ -14,7 +14,7 @@ Place the generic config at `.agents/issue-pin-context.yaml`, or point
 
 ```yaml
 roles:
-  strats:
+  exec:
     forgejo:
       owner: coilysiren
       repo: inbox

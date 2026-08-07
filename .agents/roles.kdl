@@ -33,7 +33,7 @@ roles {
         composed-skill "tooling-pm-*"
         composed-skill "*design*"
     }
-    role strats {
+    role exec {
         composed-skill tooling-director-decision-architecture
         composed-skill tooling-skill-authoring
         composed-skill "tooling-advisor-*"

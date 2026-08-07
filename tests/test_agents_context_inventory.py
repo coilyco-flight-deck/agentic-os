@@ -126,7 +126,7 @@ def test_active_cascade_orders_global_override_bridge_root_and_nested(
 
     claude = inventory.active_cascade(
         repositories,
-        inventory.ContextSelection(role="strats", harness="claude"),
+        inventory.ContextSelection(role="exec", harness="claude"),
         current_repo="coilyco-bridge/product",
         cwd="service",
     )
