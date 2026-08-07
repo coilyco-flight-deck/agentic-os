@@ -102,7 +102,9 @@ def test_workflows_publish_parallel_payloads_then_full_and_release_only_full() -
     assert language_tiers
     for tier in language_tiers:
         assert f"          - {tier}" not in release
-    assert "max-parallel: 4" in publish
+    # Derived, not restated: every language tier fans out at once, so a sixth
+    # language must widen the matrix rather than silently queue behind the rest.
+    assert f"max-parallel: {len(language_tiers)}" in publish
     assert "tier: ${{ matrix.tier }}" in publish
     assert "tier: ${{ matrix.tier }}" not in release
     assert "needs: [plan-draft, publish-language-payloads]" in publish
