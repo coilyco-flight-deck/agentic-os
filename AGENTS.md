@@ -111,7 +111,7 @@ A read-only clone cannot push itself, so push or merge workflows need a writable
 
 ### Voice rules
 
-* No em-dashes - use periods, commas, parens, or ` - `.
+* No em-dashes and no `·` separators - use periods, commas, parens, or ` - `. This covers rendered agent output, not only prose.
 * No italics - bold only, for structural anchors.
 * No semicolons in prose.
 * No prose tables - flat bullets `* <anchor> - <cats> - <details>`.
