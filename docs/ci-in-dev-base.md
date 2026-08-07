@@ -51,7 +51,6 @@ the default used by the AOS launcher.
 
 ## The release source of truth
 
-<!-- freshness: as-of=2026-07-05 decay-class=pointer half-life=slow -->
 The release pipeline promotes the successfully published full image to
 `agentic-os:release`, so consumers share one registry-owned source of truth.
 [dev-base-image.md](dev-base-image.md) covers how that alias publishes.

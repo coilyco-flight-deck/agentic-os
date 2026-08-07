@@ -48,8 +48,6 @@ Left in on purpose. Revisit if real dictation error rates justify it.
 
 ## Reference implementation
 
-<!-- freshness: as-of=2026-07-04 decay-class=derived half-life=slow source="agentic_os/agent_id.py" -->
-
 The canonical generator now lives in aos at
 [`agentic_os/agent_id.py`](../agentic_os/agent_id.py): `secrets`-backed `new_id`,
 a `normalize`/`is_valid` validator, and a seedable `seeded_id` used only to pin

@@ -45,7 +45,6 @@ Major shipped capabilities, not files.
 - [Repository residency](repository-residency.md) - Agent Compose native-workspace adapter and status tracking.
 - [Catalog caps reference](catalog-caps-reference.md) - generated numeric caps for validators.
 - [Canonical agent-id generator](dictatable-id-alphabet.md) - short lowercase agent IDs.
-- [Knowledge-base freshness](knowledge-base-freshness.md) - age-based fact markers.
 - [Agent SDK patterns](agent-sdk-patterns.md) - coordination, context, operations, tools, and managed agents.
 
 ## See also

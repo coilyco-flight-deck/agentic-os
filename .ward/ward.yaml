@@ -196,9 +196,6 @@ commands:
   agents-context-inventory:
     run: uv run python -m agentic_os.agents_context_inventory
     description: "Inventory AGENTS-family sources across the committed substrate and an infrastructure-supplied managed-repo manifest. Emits stable Markdown or JSON with repository provenance, paragraph hashes, clipping candidates, and active role/harness cascades without copying doctrine text. See docs/agents-context-inventory.md."
-  freshness:
-    run: uv run python -m agentic_os.freshness
-    description: "Knowledge-base freshness probe: parse `<!-- freshness: as-of= half-life= -->` provenance markers across tracked docs and grade each fact by age against its half-life horizon. `-- --check` exits non-zero when any fast-decay fact is past its horizon (the loud trigger a scheduled CI job fails on), `-- --lint` checks markers are well-formed. Hermetic, on-demand/scheduled, not a commit-path hook since rot is time-based. See docs/knowledge-base-freshness.md."
   forgejo-actions-logs:
     run: uv run python -m agentic_os.forgejo_actions_logs
     description: "Fetch exact Forgejo 16 Actions log bytes: `ward exec forgejo-actions-logs -- <owner> <repo> <run> [job] [attempt] [--max-bytes N]`. Omit job for a whole-run ZIP. Visible run/job indexes, explicit `id:<n>`, and exact job names are supported. Needs FORGEJO_TOKEN."

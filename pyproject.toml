@@ -66,7 +66,6 @@ check-leak-guard = "agentic_os.pre_commit.check_leak_guard:main"
 check-unresolved-placeholders = "agentic_os.pre_commit.check_unresolved_placeholders:main"
 check-issue-references = "agentic_os.pre_commit.check_issue_references:main"
 leak-guard-encode = "agentic_os.pre_commit.encode_leak_term:main"
-freshness = "agentic_os.freshness:main"
 agent-id = "agentic_os.agent_id:main"
 prod-install-ref = "agentic_os.prod_install_ref:main"
 
@@ -134,15 +133,6 @@ excludes = [
 # This repo migrated from the coilysiren org to coilyco-flight-deck, so its
 # repo-pointer skills point at ~/projects/coilyco-flight-deck/.
 org = "coilyco-flight-deck"
-
-# Knowledge-base freshness probe. Half-life horizons in days:
-# a fast-decay fact (verbs, model ids, pricing) goes stale after fast_days, a
-# slow-decay one (doctrine, voice) after slow_days. The probe is on-demand /
-# scheduled (`ward freshness --check`), not a commit-path hook, since rot is
-# time-based, not change-based. See docs/knowledge-base-freshness.md.
-[tool.agentic-os.freshness]
-fast_days = 30
-slow_days = 365
 
 [tool.agentic-os.issue-reference-guard]
 enabled = true
