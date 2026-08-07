@@ -3,6 +3,13 @@ description: |
   Build and push one multi-arch language payload or the full image. Promotion
   is restricted to the already-pushed full-image draft.
 
+  Promote verifies the draft by its source tag and only then moves the version
+  tag and the release aliases, so a verification failure leaves the moving
+  aliases pointing at the last image that passed. Promotion is the final step,
+  which is what makes the job safe to retry. Build mode verifies the draft it
+  just pushed, because the image cannot be verified before it exists, and the
+  draft tag is not a fleet alias.
+
   Build mode installs binfmt as part of the buildx builder setup. Promote mode
   skips that setup and lands on the `docker` runner instead of `docker-build`,
   so it inherits no handler from a build-mode run. The full-tier verification
@@ -99,6 +106,20 @@ runs:
       shell: bash
       run: bash "${GITHUB_ACTION_PATH}/scripts/setup-builder.sh"
 
+    - name: Install binfmt so promote can verify the foreign architecture
+      if: ${{ inputs.tier == 'full' && inputs.mode == 'promote' }}
+      shell: bash
+      run: docker run --privileged --rm tonistiigi/binfmt --install all
+
+    - name: Verify the promotion source before the release tags move
+      if: ${{ inputs.tier == 'full' && inputs.mode == 'promote' }}
+      shell: bash
+      env:
+        IMAGE_BASE: ${{ inputs.image-base }}
+        TAG: ${{ inputs.source-tag }}
+        PLATFORMS: ${{ inputs.platforms }}
+      run: bash "${GITHUB_ACTION_PATH}/scripts/verify-full.sh"
+
     - name: Publish or promote the image
       if: ${{ steps.checkpoint.outputs.skip_publish != 'true' }}
       shell: bash
@@ -114,13 +135,8 @@ runs:
         BUILD_TIMEOUT: ${{ inputs.build-timeout }}
       run: bash "${GITHUB_ACTION_PATH}/scripts/publish-image.sh"
 
-    - name: Install binfmt so promote can verify the foreign architecture
-      if: ${{ inputs.tier == 'full' && inputs.mode == 'promote' }}
-      shell: bash
-      run: docker run --privileged --rm tonistiigi/binfmt --install all
-
     - name: Verify the full development surface on both architectures
-      if: ${{ inputs.tier == 'full' }}
+      if: ${{ inputs.tier == 'full' && inputs.mode == 'build' }}
       shell: bash
       env:
         IMAGE_BASE: ${{ inputs.image-base }}

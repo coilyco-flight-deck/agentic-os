@@ -205,6 +205,29 @@ def test_shared_docker_bootstrap_retries_downloads_without_partial_files() -> No
     )
 
 
+def test_promote_verifies_the_draft_before_the_release_tags_move() -> None:
+    action = PUBLISH_ACTION.read_text(encoding="utf-8")
+    steps = [
+        block.splitlines()[0].strip()
+        for block in action.split("\n    - name: ")[1:]
+    ]
+    promote_verify = steps.index(
+        "Verify the promotion source before the release tags move"
+    )
+    promote_binfmt = steps.index(
+        "Install binfmt so promote can verify the foreign architecture"
+    )
+    publish = steps.index("Publish or promote the image")
+
+    # Promotion is the last thing the job does, so a failed verification never
+    # leaves release and latest on an image that did not pass.
+    assert promote_binfmt < promote_verify < publish
+    promote_block = action.split(
+        "\n    - name: Verify the promotion source before the release tags move", 1
+    )[1].split("\n    - name:", 1)[0]
+    assert "TAG: ${{ inputs.source-tag }}" in promote_block
+
+
 def test_publish_action_verifies_every_toolchain_and_aosguard() -> None:
     action = PUBLISH_ACTION.read_text(encoding="utf-8")
     script = VERIFY_FULL.read_text(encoding="utf-8")
@@ -212,7 +235,8 @@ def test_publish_action_verifies_every_toolchain_and_aosguard() -> None:
     assert "inputs:\n  tier:" in action
     assert "required: true" in action
     assert "Verify the full development surface on both architectures" in action
-    assert "if: ${{ inputs.tier == 'full' }}" in action
+    assert "if: ${{ inputs.tier == 'full' && inputs.mode == 'build' }}" in action
+    assert "if: ${{ inputs.tier == 'full' && inputs.mode == 'promote' }}" in action
     assert "scripts/verify-full.sh" in action
     assert 'image="${IMAGE_BASE}:${TAG}"' in script
     assert "PLATFORMS:-linux/amd64,linux/arm64" in script
