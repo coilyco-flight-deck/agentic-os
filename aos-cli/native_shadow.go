@@ -294,7 +294,7 @@ func resolveNativeRuntime() (nativeRuntime, error) {
 	}
 	sessionsRoot := strings.TrimSpace(os.Getenv("AOS_NATIVE_SESSIONS_DIR"))
 	if sessionsRoot == "" {
-		sessionsRoot = aosTempPath("native")
+		sessionsRoot = filepath.Join(ensureAOSTempAlias(), "native")
 	}
 	config := strings.TrimSpace(os.Getenv("XDG_CONFIG_HOME"))
 	if config == "" {
