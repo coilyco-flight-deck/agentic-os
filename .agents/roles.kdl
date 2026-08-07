@@ -5,6 +5,7 @@ roles {
         composed-skill design-system
         composed-skill "coding-*"
     }
+    
     role director {
         composed-skill tooling-director-decision-architecture
         composed-skill writing-system-improvement-vocab
@@ -16,6 +17,7 @@ roles {
         composed-skill "coding-core-*"
         composed-skill "tooling-pm-*"
     }
+    
     role qa {
         composed-skill writing-public-repos
         composed-skill tooling-code-review
@@ -23,16 +25,20 @@ roles {
         composed-skill "tooling-qa-*"
         composed-skill "coding-*"
     }
+    
     role ops {
         composed-skill writing-system-improvement-vocab
         composed-skill "tooling-ops-*"
         composed-skill "coding-*"
     }
+    
     role design {
         composed-skill "coding-javascript*"
         composed-skill "tooling-pm-*"
         composed-skill "*design*"
     }
+
+/*
     role exec {
         composed-skill tooling-director-decision-architecture
         composed-skill tooling-skill-authoring
@@ -43,9 +49,12 @@ roles {
         composed-skill "tooling-ceo-*"
         composed-skill "tooling-pm-*"
     }
+*/
+    
     role creator {
         composed-skill "writing-*"
     }
+    
     role ai {
         composed-skill "coding-*"
     }
