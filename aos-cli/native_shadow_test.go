@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"errors"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -250,7 +252,7 @@ func TestStageNativeRoleHomeFiltersUserSkills(t *testing.T) {
 		}
 	}
 
-	if err := stageNativeRoleHome(source, target); err != nil {
+	if err := stageNativeRoleHome(source, target, ""); err != nil {
 		t.Fatal(err)
 	}
 
@@ -278,6 +280,37 @@ func TestStageNativeRoleHomeFiltersUserSkills(t *testing.T) {
 		}
 		if info.Mode()&os.ModeSymlink == 0 {
 			t.Errorf("preserved native home entry is not a symlink: %s", path)
+		}
+	}
+}
+
+func TestStageNativeRoleHomeLeavesProjectsRootAbsent(t *testing.T) {
+	source := filepath.Join(t.TempDir(), "source")
+	target := filepath.Join(t.TempDir(), "target")
+	projects := filepath.Join(source, "projects")
+	for _, path := range []string{projects, filepath.Join(source, "projects-oss")} {
+		if err := os.MkdirAll(path, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.WriteFile(filepath.Join(source, ".gitconfig"), []byte("test\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := stageNativeRoleHome(source, target, projects); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := os.Lstat(filepath.Join(target, "projects")); !errors.Is(err, fs.ErrNotExist) {
+		t.Fatalf("projects root must stay absent from the shadow home, got %v", err)
+	}
+	for _, name := range []string{"projects-oss", ".gitconfig"} {
+		info, err := os.Lstat(filepath.Join(target, name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if info.Mode()&os.ModeSymlink == 0 {
+			t.Errorf("unrelated native home entry is not a symlink: %s", name)
 		}
 	}
 }

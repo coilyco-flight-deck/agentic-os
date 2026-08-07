@@ -55,7 +55,7 @@ func TestStageNativeRoleHomeLinksHomeRootClaudeConfig(t *testing.T) {
 	config := filepath.Join(source, ".claude.json")
 	writeTestClaudeConfig(t, config, map[string]any{"mcpServers": map[string]any{"forgejo": map[string]any{}}})
 
-	if err := stageNativeRoleHome(source, target); err != nil {
+	if err := stageNativeRoleHome(source, target, ""); err != nil {
 		t.Fatal(err)
 	}
 
@@ -122,7 +122,7 @@ func TestSeedNativeClaudeTrustWritesThroughShadowSymlink(t *testing.T) {
 	config := filepath.Join(hostHome, ".claude.json")
 	writeTestClaudeConfig(t, config, map[string]any{})
 	sessionHome := filepath.Join(t.TempDir(), "home")
-	if err := stageNativeRoleHome(hostHome, sessionHome); err != nil {
+	if err := stageNativeRoleHome(hostHome, sessionHome, ""); err != nil {
 		t.Fatal(err)
 	}
 	session := filepath.Join(t.TempDir(), "projects")

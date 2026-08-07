@@ -1072,15 +1072,17 @@ func createNativeSession(
 	sessionHome := ""
 	if options.WorkspaceRoot || options.StandaloneHome {
 		sessionHome = filepath.Join(sessionRoot, "home")
-		stageHome := stageNativeRoleHome
-		if options.StandaloneHome {
-			stageHome = stageStandaloneRoleHome
-		}
 		stage := runtime.Progress.Step("stage session home")
-		if err := stageHome(runtime.Home, sessionHome); err != nil {
-			stage.Fail(err)
+		stageErr := error(nil)
+		if options.StandaloneHome {
+			stageErr = stageStandaloneRoleHome(runtime.Home, sessionHome)
+		} else {
+			stageErr = stageNativeRoleHome(runtime.Home, sessionHome, runtime.ProjectsRoot)
+		}
+		if stageErr != nil {
+			stage.Fail(stageErr)
 			_ = os.RemoveAll(sessionRoot)
-			return nativeLaunchWorkspace{}, err
+			return nativeLaunchWorkspace{}, stageErr
 		}
 		stage.Done("%s", sessionHome)
 	}
@@ -1211,7 +1213,7 @@ func createNativeSession(
 	}, nil
 }
 
-func stageNativeRoleHome(source, target string) error {
+func stageNativeRoleHome(source, target, projectsRoot string) error {
 	info, err := os.Stat(source)
 	if err != nil {
 		return fmt.Errorf("inspect native host home %s: %w", source, err)
@@ -1232,6 +1234,11 @@ func stageNativeRoleHome(source, target string) error {
 	}
 	for _, entry := range entries {
 		name := entry.Name()
+		// Left absent so ~/projects fails instead of resolving past the session
+		// worktrees. See docs/native-agent-workspaces.md.
+		if projectsRoot != "" && samePath(filepath.Join(source, name), projectsRoot) {
+			continue
+		}
 		if filtered[name] {
 			if err := stageNativeRoleConfigDirectory(
 				filepath.Join(source, name),
