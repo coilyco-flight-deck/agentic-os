@@ -62,10 +62,10 @@ language pin lives in its payload target. Shared agents, internal tools,
 operator CLIs, and full-only gates live in the full Dockerfile, so changing
 them reuses cached language payloads instead of rebuilding their toolchains.
 
-`ward exec dep-bump -- check` compares the planner's managed pins with upstream
-releases. `ward exec dep-bump -- apply --arg NAME --version VERSION` rewrites
-one owning declaration. Pins outside the planner remain an explicit inventory
-responsibility rather than being implied current.
+Every pin is manual. Nothing resolves these versions against upstream and
+nothing fails when one falls behind, so currency is a recurring human task and
+a pin is only as current as the last person who checked it. Treat the whole set
+as an explicit inventory responsibility rather than implied current.
 
 Source ownership follows the tool boundary. The image owns this deployment's
 Git identity and maps it onto Ward's provider-neutral `WARD_GIT_*` environment

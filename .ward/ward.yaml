@@ -115,9 +115,6 @@ commands:
   dev-base-check:
     run: bash scripts/dev-base-check.sh
     description: "Run Docker buildx static checks against every language payload and the full fan-in image without building or publishing layers."
-  dep-bump:
-    run: uv run python scripts/dep-bump.py
-    description: "Resolve the planner-managed dev-base pins against upstream and bump them. `ward exec dep-bump -- check` reports managed drift (exit 1 if stale); `-- plan` emits the stale set as TSV (`--json` for machines); `-- apply --arg UV_VERSION --version X` rewrites one ARG. The planner is not a complete Dockerfile pin inventory. See docs/dev-base-auto-bump.md."
   apply-agentic-os-hooks:
     run: uv run python scripts/apply-agentic-os-hooks.py
     description: "Roll out the canonical pre-commit hook block to every consumer repo under ~/projects/<org>/* (all org dirs). Idempotent."

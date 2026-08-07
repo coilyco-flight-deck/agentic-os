@@ -71,7 +71,6 @@ dev-base image fix (agentic-os#327): with it fixed, parity holds green.
 ## See also
 
 - [dev-base container image](dev-base-image.md) - the image CI follows.
-- [dev-base auto-bump](dev-base-auto-bump.md) - how pinned tool `ARG`s refresh.
 - [pull-request dev-base validation](pr-dev-base-build-validation.md) - the build-only image gate.
 - [dev-base image](dev-base-image.md) - the full image and release contract.
 - [FEATURES.md](FEATURES.md) - the feature inventory this lands in.

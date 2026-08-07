@@ -33,8 +33,8 @@ def _run(
         env["WARD_CONTAINER_NAME"] = container
     if extra_env is not None:
         env.update(extra_env)
-    # cwd=home keeps this repo's .git/config out of every git resolution below;
-    # a local identity there outranks the isolated global one (dep-bump sets one).
+    # cwd=home keeps this repo's .git/config out of every git resolution below.
+    # Any repo-local identity outranks the isolated global one these tests stage.
     proc = subprocess.run(
         [str(SCRIPT), mode],
         input=PAYLOAD,
