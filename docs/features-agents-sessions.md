@@ -10,7 +10,9 @@ The claude-hooks ansible role wires Claude Code's status line and SessionStart
 hook without clobbering an operator setting. Its base merge also disables
 auto-memory and denies the `claude-in-chrome` computer-use MCP while preserving
 other user denies. Other harnesses export `AOS_AGENT_HARNESS=<harness>` and use
-the hook points they expose. Local computation stays authoritative.
+the hook points they expose. Local computation stays authoritative. The fleet
+permission denies and the issue-ref Stop hook it also converges are described in
+[claude-settings-guardrails.md](claude-settings-guardrails.md).
 
 ### Composed status line
 

@@ -27,5 +27,39 @@ def test_base_settings_disable_memory_and_chrome_without_losing_local_denies() -
         {"serverName": "local-browser"},
         {"serverName": "claude-in-chrome"},
     ]
-    assert set(changed) == {"autoMemoryEnabled", "deniedMcpServers"}
+    assert set(changed) == {
+        "autoMemoryEnabled",
+        "deniedMcpServers",
+        "permissions.deny",
+    }
+    assert MODULE.merge_base_settings(settings) == []
+
+
+def test_permission_denies_append_without_touching_sibling_permission_keys() -> None:
+    settings = {
+        "permissions": {
+            "allow": ["Bash(coily:*)"],
+            "deny": ["Bash(rm -rf /*)"],
+            "defaultMode": "auto",
+        },
+    }
+
+    MODULE.merge_base_settings(settings)
+
+    permissions = settings["permissions"]
+    assert permissions["allow"] == ["Bash(coily:*)"]
+    assert permissions["defaultMode"] == "auto"
+    assert permissions["deny"][0] == "Bash(rm -rf /*)"
+    assert permissions["deny"][1:] == MODULE.BASE_DENIED_PERMISSIONS
+    assert "Bash(kubectl *)" in permissions["deny"]
+    assert "Write(**/.claude/projects/**/memory/**)" in permissions["deny"]
+
+
+def test_permission_denies_are_created_when_the_key_is_absent() -> None:
+    settings: dict = {}
+
+    changed = MODULE.merge_base_settings(settings)
+
+    assert settings["permissions"]["deny"] == MODULE.BASE_DENIED_PERMISSIONS
+    assert "permissions.deny" in changed
     assert MODULE.merge_base_settings(settings) == []

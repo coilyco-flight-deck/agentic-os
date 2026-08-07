@@ -8,7 +8,9 @@ Major shipped capabilities, not files.
 - [Branded agent terminal](alacritty-directors.md) - `aosterm` wraps `aoscompose` in native Sombra Alacritty.
 - [Speech helper](aos-say.md) - `aos-say` client plus relay for status speech.
 - **Karabiner key bindings** - external keyboard and Remote Desktop mappings.
-- [Agents and sessions](features-agents-sessions.md) - self-name, composition status, and harness policy.
+- [Agents and sessions](features-agents-sessions.md) - self-name, composition
+  status, harness policy, and
+  [settings guardrails](claude-settings-guardrails.md).
 - [Native agent workspaces](native-agent-workspaces.md) - fleet worktrees,
   leases, cleanup, the `aos` temp namespace, and standalone launches.
 - [Agent-compose provider](personality-provider.md) - scoped skills,

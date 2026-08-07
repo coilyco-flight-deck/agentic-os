@@ -4,7 +4,9 @@
 Holds the fleet-wide, public-safe Claude Code settings keys that every host
 gets regardless of whether the private bridge overlay is present. Auto-memory
 is off because point-in-time memory drifts. Claude in Chrome is denied because
-browser computer-use should be an explicit session opt-in.
+browser computer-use should be an explicit session opt-in. The permission deny
+list keeps live-infrastructure CLIs and the memory directory out of an agent's
+raw shell.
 
 Additive and key-scoped: it sets only the keys it owns and preserves every
 other key verbatim, so the harness, ward, and the bridge merge can all keep
@@ -28,10 +30,27 @@ SETTINGS_PATH = HOME / ".claude" / "settings.json"
 
 # Public-safe keys applied on every host. Private/personal keys stay in the
 # bridge overlay's own merge, never here.
+
+# effortLevel is deliberately absent: operator-local preference, not a fleet
+# guardrail. Reasoning in docs/claude-settings-guardrails.md.
 BASE_SETTINGS: dict = {
     "autoMemoryEnabled": False,
 }
 BASE_DENIED_MCP_SERVERS = [{"serverName": "claude-in-chrome"}]
+
+# Fleet-wide permission denies: live-infrastructure CLIs that belong to a
+# guarded verb, plus the memory dir. See docs/claude-settings-guardrails.md.
+BASE_DENIED_PERMISSIONS = [
+    "Bash(gcloud *)",
+    "Bash(kubectl *)",
+    "Bash(helm *)",
+    "Bash(terraform *)",
+    "Bash(gsutil *)",
+    "Bash(mongosh *)",
+    "Bash(mongo *)",
+    "Write(**/.claude/projects/**/memory/**)",
+    "Edit(**/.claude/projects/**/memory/**)",
+]
 
 
 def load_settings(path: Path) -> dict:
@@ -56,6 +75,22 @@ def merge_base_settings(settings: dict) -> list[str]:
             if "deniedMcpServers" not in changed:
                 changed.append("deniedMcpServers")
     settings["deniedMcpServers"] = denied
+
+    # Append-only against permissions.deny so an operator's own denies and the
+    # sibling allow/ask/defaultMode keys survive untouched.
+    permissions = settings.get("permissions")
+    if not isinstance(permissions, dict):
+        permissions = {}
+    deny = permissions.get("deny")
+    if not isinstance(deny, list):
+        deny = []
+    for rule in BASE_DENIED_PERMISSIONS:
+        if rule not in deny:
+            deny.append(rule)
+            if "permissions.deny" not in changed:
+                changed.append("permissions.deny")
+    permissions["deny"] = deny
+    settings["permissions"] = permissions
     return changed
 
 
