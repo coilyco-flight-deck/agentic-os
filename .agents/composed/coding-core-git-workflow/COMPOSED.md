@@ -14,6 +14,7 @@ Default across `~/projects/coilyco-*/*` and `~/projects/coilysiren/*`:
 - `pull-request` - push a branch and open a human-gated Forgejo PR.
 - `pull-request-and-merge` - push a branch and mark the PR for the director merge lane.
 - `remote-branch-only` - push a branch and stop. No PR and no merge.
+- A pushed branch always gets a PR. Only `remote-branch-only` stops at the branch, and only when the caller resolved that lane. Unassigned work defaults to `pull-request`. A branch with no PR is litter nobody reviews.
 - Run tests, linters, builds without asking. Fix failures.
 - Never `--no-verify`.
 - Readonly git/shell auto-allowed.
