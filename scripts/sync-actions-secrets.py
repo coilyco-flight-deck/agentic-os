@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 import urllib.request
@@ -82,9 +83,25 @@ MAPPING: dict[str, dict[str, str]] = {
     # repo already sets those two, and their live values are unreadable here.
     slug("deploy", "coilyco-bridge"): {
         "DEPLOY_PUSH_TOKEN": "/forgejo/coilyco-ops/ci-release-token",
-        "FORGEJO_REGISTRY_READ_TOKEN": "/forgejo/coilyco-ops/registry-read-token",
+        "REGISTRY_READ_TOKEN": "/forgejo/coilyco-ops/registry-read-token",
     },
 }
+
+# Mirrors Forgejo's own models/secret ValidateName, so a bad name fails here at
+# plan time instead of as a mid-write HTTP 400 that half-applies the plan.
+SECRET_NAME_PATTERN = re.compile("(?i)^[A-Z_][A-Z0-9_]*$")
+FORBIDDEN_SECRET_PREFIX = re.compile("(?i)^(FORGEJO_|GITEA_|GITHUB_|[0-9])")
+
+
+def invalid_secret_names(mapping: dict[str, dict[str, str]]) -> list[str]:
+    """Return `repo_slug: NAME` for every secret Forgejo would reject."""
+    return [
+        f"{repo_slug}: {name}"
+        for repo_slug, secrets in mapping.items()
+        for name in secrets
+        if not SECRET_NAME_PATTERN.match(name)
+        or FORBIDDEN_SECRET_PREFIX.match(name)
+    ]
 
 
 def ssm_get(name: str) -> str:
@@ -142,6 +159,15 @@ def main() -> int:
     ]
     for repo_slug, name, param in plan:
         print(f"{repo_slug}: {name} <- ssm {param}")
+
+    # Before any write, so a rejected name cannot half-apply the plan.
+    rejected = invalid_secret_names(MAPPING)
+    if rejected:
+        raise SystemExit(
+            "Forgejo would reject these secret names (no FORGEJO_/GITEA_/GITHUB_ "
+            "prefix, no leading digit):\n  " + "\n  ".join(rejected)
+        )
+
     if args.dry_run:
         return 0
 

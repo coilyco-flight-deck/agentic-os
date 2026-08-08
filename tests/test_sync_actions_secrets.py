@@ -55,9 +55,39 @@ def test_deploy_pin_reconciler_secrets_are_mapped() -> None:
     deploy = mod.MAPPING[mod.slug("deploy", "coilyco-bridge")]
     assert deploy["DEPLOY_PUSH_TOKEN"] == "/forgejo/coilyco-ops/ci-release-token"
     assert (
-        deploy["FORGEJO_REGISTRY_READ_TOKEN"]
-        == "/forgejo/coilyco-ops/registry-read-token"
+        deploy["REGISTRY_READ_TOKEN"] == "/forgejo/coilyco-ops/registry-read-token"
     )
+
+
+def test_every_mapped_secret_name_is_acceptable_to_forgejo() -> None:
+    """The real mapping must not contain a name the server would 400 on."""
+    mod = _load_script()
+    assert mod.invalid_secret_names(mod.MAPPING) == []
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "FORGEJO_REGISTRY_READ_TOKEN",
+        "forgejo_lowercase_is_also_reserved",
+        "GITEA_TOKEN",
+        "GITHUB_TOKEN",
+        "1LEADING_DIGIT",
+        "HAS-A-DASH",
+        "",
+    ],
+)
+def test_invalid_secret_names_flags_rejected_names(name) -> None:
+    mod = _load_script()
+    assert mod.invalid_secret_names({"o/r": {name: "/p"}}) == [f"o/r: {name}"]
+
+
+@pytest.mark.parametrize(
+    "name", ["DEPLOY_PUSH_TOKEN", "REGISTRY_READ_TOKEN", "_UNDERSCORE_LEAD", "A1"]
+)
+def test_invalid_secret_names_accepts_valid_names(name) -> None:
+    mod = _load_script()
+    assert mod.invalid_secret_names({"o/r": {name: "/p"}}) == []
 
 
 def test_put_secret_targets_the_mapping_key(monkeypatch) -> None:
