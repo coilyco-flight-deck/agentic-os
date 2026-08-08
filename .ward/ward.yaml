@@ -214,8 +214,6 @@ agent:
   release-channel: release
   workflow: pull-request-and-merge
 
-# Catalog metadata for the cross-repo knowledge graph.
-# Schema: ward catalog block tracker.
 catalog:
   description: "Personal agentic OS: shell config, terminal config, GPG/SSM tooling, Claude skills, and shared utility scripts symlinked into sibling coilysiren/* repos. Growing beyond just dotfiles into broader personal-OS scope."
   dependsOn: []
