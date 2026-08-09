@@ -17,7 +17,7 @@ aos: done     reclaim finished sessions 0.31s (4 live worktrees)
 aos: start    fleet pass over 19 repositories
 aos: fetch    1/19 coilyco-flight-deck/agentic-os
 aos: fetch    2/19 coilyco-flight-deck/ward
-aos: done     fleet pass over 19 repositories 14.8s (slowest coilyco-bridge/deploy 2.10s)
+aos: done     fleet pass over 19 repositories 14.8s (slowest coilyco-flight-deck/infrastructure 2.10s)
 aos: start    link 19 session worktrees
 aos: worktree 1/19 coilyco-flight-deck/agentic-os
 aos: done     link 19 session worktrees 1.10s (19 linked)

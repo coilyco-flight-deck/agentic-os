@@ -18,7 +18,7 @@ does not shadow `aosguard ops forgejo`. The sibling
 `kubectl exec` operations from an embedded script invoked by absolute path.
 `aosguard ops signoz` reads only the converged SigNoz MCP server. The snapshot
 excludes Ward role policy.
-Forgejo pin actions are fixed to `coilysiren/inbox`, where coilyco-ops is admin.
+Forgejo pin actions are fixed to a single tracker where coilyco-ops holds admin.
 Forgejo metadata includes attended `forgejo-admin repo edit` and `forgejo-admin
 repo-topic replace-all` leaves. Description edits accept only owner, repository,
 and replacement description. Topics replace the complete set. The ordinary
@@ -70,8 +70,7 @@ generated skill. `ward exec aosguard-run --` passes subsequent arguments to the
 generated command. `ward exec aosguard-lock` is the only lock-writing step and
 uses the packaged `specgen` executable.
 
-Cross-repository composition is tracked in
-[inbox#267](https://forgejo.coilysiren.me/coilysiren/inbox/issues/267), with AOS
+Cross-repository composition is tracked on the intake tracker, with AOS
 implementation in [agentic-os#755](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/issues/755).
 
 ## See also
