@@ -205,18 +205,6 @@ A checkout whose directory basename ends in `-workdir` is reserved for Kai's man
 
 Proceed autonomously on anything reversible. Stop only for a destructive, irreversible, or externally-visible action (force-push, data loss, a post or email on the human's behalf, a public surface), or a genuine multi-path fork where the wrong choice is costly to undo. Everything short of that wall: pick the sensible default, name it inline in one line ("picking X because Y"), and keep going. A 5-second "no, do X" after the fact is cheaper than a run parked for an hour waiting on a question the human could have answered either way. Batch any genuine questions and surface them at the end with the work already done, not mid-run.
 
-### Engineers and QA: never debug or iterate against live operations
-
-This rule binds the **sealed roles - engineer and QA**. Their ephemeral clones are sealed against live mutation, not approved read-only observation. Director and ops retain their wider operational surfaces and remediation authority.
-
-An engineer or QA may inspect approved read-only observability surfaces, including logs, traces, metrics, health, events, resource state, and rollout status. The engineer may use directly observed evidence for diagnosis, and QA may use it in a verdict. Neither role may execute commands inside workloads, inspect secrets or raw customer payloads, mutate live systems, deploy, or iterate against production. When the next diagnostic or verification step needs a live action beyond observation, the role names the exact live action and expected evidence, then stops at that boundary.
-
-CI/CD is live operations for this rule. The engineer or QA may read workflow logs, summarize evidence, and make one locally grounded push for a change whose behavior the repo proves. Repeated pushes to probe Forgejo Actions, release promotion, package registries, runner configuration, Actions secrets, rollout jobs, or deployment pipelines are ops debugging. If the failure only appears in live CI/CD or registry state, the engineer or QA stops after gathering evidence, files an `interactive`-labeled issue with the exact failing run and needed live verification, and hands it to a director or ops run.
-
-Deploys already have established precedent (exposure patterns, exemplar services, shared charts). For deploy work: **match the precedent and copy the exemplar, do not invent or iterate.** The engineer or QA may report health, log, trace, metric, and rollout evidence visible through an approved read-only surface. Neither role initiates a deployment or live verification action. When verification needs such an action, the engineer or QA files an `interactive`-labeled issue describing exactly what the human must do and what evidence must return, then hands it to the human, director, or ops. Do not push a speculative fix and hope CI confirms it.
-
-Cross-reference the deploy precedent doc (`coilyco-bridge/deploy/docs/deploy-patterns.md`, forthcoming) and the burndown repo-exclusion filter (`coilyco-flight-deck/ward#1105`).
-
 ### Front-load the context you know you need
 
 Ranking the evidence you hold comes second. Acquiring it comes first. Before you
@@ -253,7 +241,9 @@ needs the most grounding, because that first entry sets the schema everything
 after it copies.
 
 Acquisition is bounded. It reaches only sources that would change a specific
-pending claim or decision, and curiosity alone is not a warrant. Cost scales
+pending claim or decision, and curiosity alone is not a warrant. Role doctrine
+may narrow the reach this rule grants, and where the two disagree about which
+sources are yours to open, the narrower boundary wins. Cost scales
 with stakes, so a durable artifact or an external commitment earns more digging
 than a passing remark. This rule grants no new authority. It adds no permission,
 credential, network access, or mutation right, leaves every live-operations

@@ -5,7 +5,7 @@ Every carve-out from the default `documentation-layout` rule: Markdown lives onl
 ## Active in this repo
 
 - **`excludes` (config)** - fully exempt from location AND size checks, per the layout escape hatch. Today: `warp/launch_configurations/**` (README) and `warp/tab_configs/**` (wtab.md, claude-agent-work.md). This is the one hand-maintained surface, so it drifts - prune it when a file moves.
-- **AGENTS.md size override** - config keys `agents_md_max_lines = 320` and `agents_md_max_chars = 34000` replace the shared 320/25000 default for `AGENTS.md` only. The extra character room holds aos-specific universal doctrine while selective capability detail stays in ordinary and composed skills.
+- **AGENTS.md size override** - config keys `agents_md_max_lines = 290` and `agents_md_max_chars = 26000` replace the shared 320/25000 default for `AGENTS.md` only. Lowered from 320/34000 once role-scoped doctrine moved to the agent-compose role melds that own it. The remaining room holds universal doctrine that must stay in-context, and the margin is one section wide on purpose.
 - **FEATURES.md size cap** - `docs/FEATURES.md` uses the tight inventory cap from `check_documentation_layout.py`: 80 lines / 4000 chars. That keeps it a major-capability index, not a changelog.
 - **Root allowlist** - present: `AGENTS.md`, `CLAUDE.md`, `CODE-REVIEW.md`, `README.md`. Any other root `*.md` fails the location check and would need either a move into `docs/` or an explicit exclude.
 - **Skill-path location carve-out** - `*.md` under `.agents/skills/`, `.claude/skills/`, or `skills/` may live outside `docs/` at any depth (~220 files here). Location-only: the 80/4000 size cap still applies.

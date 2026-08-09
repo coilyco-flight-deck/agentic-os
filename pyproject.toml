@@ -76,26 +76,16 @@ generate-caps-reference = "agentic_os.generators.generate_caps_reference:main"
 
 # Self-compliance config for the hooks this repo ships. See docs/features-release-tooling.md.
 [tool.agentic-os.documentation-layout]
-# AGENTS.md here is the canonical operating-doctrine base, so it opts into
-# the larger cap. Raised from 12000 for the Command-delivery split into
-# execution-model-aware (container/surface vs host-harness) guidance grew the
-# always-composed base past the old cap, and moving it to a docs/*.md file
-# would drop it out of in-context load - defeating the point. agentic-os-kai's
-# private overlay carries the parallel split and needs the matching bump.
-# Raised again from 12600 for the config-placement law (config lives at
-# the lowest determining layer, never fetched downward) lands beside the
-# authoring-vs-rollout contract as always-composed doctrine, same in-context
-# rationale as the earlier bump - a docs/*.md split would drop the law out of load.
-# Raised again from 14200 when the config-placement law gained its AOS to Ward
-# deployment-boundary pointer, which must ride beside the law it amends as
-# always-composed doctrine. The full reasoning lives in docs/ward-specs.md.
-# Raised again from 14500 for the sealed engineer/QA live-deployment
-# prohibition, which must live beside the base doctrine as always-composed
-# guidance instead of being split into a detached doc.
-# Doubled as selective skill organization moves task capability out of the
-# eager layer while baseline person and operating context remains universal.
-agents_md_max_lines = 320
-agents_md_max_chars = 34000
+# AGENTS.md here is the canonical operating-doctrine base, always composed into
+# every session, so the cap is deliberate back-pressure rather than headroom.
+# Lowered from 320/34000 once role-scoped doctrine moved out to the
+# agent-compose role melds that own it, leaving only what binds every session
+# regardless of role. The margin over the current file is one section, not five.
+# Anything that binds one role belongs in that role's source, so the next entry
+# here should displace one rather than extend the file. Raise these numbers only
+# with a reason that survives that test.
+agents_md_max_lines = 290
+agents_md_max_chars = 26000
 # Subsystem dirs carry idiomatic co-located READMEs and config docs that the
 # root/docs/skills location rule does not model. Excluded per the root layout
 # hatch: warp (Go module).
