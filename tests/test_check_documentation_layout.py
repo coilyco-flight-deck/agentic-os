@@ -26,6 +26,18 @@ from agentic_os.pre_commit.check_documentation_layout import (
 )
 
 
+def write(path: Path, text: str = "x\n") -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+
+
+def _point_repo_root_at(tmp_path: Path, monkeypatch) -> None:
+    # Reaches both REPO_ROOT (the tree walk) and config.REPO_ROOT (the options
+    # and excludes a fixture repo declares in its own pyproject.toml).
+    monkeypatch.setattr(docs_layout, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(config, "REPO_ROOT", tmp_path)
+
+
 def test_features_gets_the_tighter_cap() -> None:
     # docs/FEATURES.md gets the tighter inventory cap.
     assert caps_for(Path("docs/FEATURES.md")) == (
@@ -34,14 +46,39 @@ def test_features_gets_the_tighter_cap() -> None:
     )
     assert FEATURES_MAX_LINES < TRIFECTA_MAX_LINES
     assert FEATURES_MAX_CHARS < TRIFECTA_MAX_CHARS
-    # README.md uses the overview cap and carries a per-repo opt-up.
-    readme_lines, readme_chars = caps_for(Path("README.md"))
-    assert readme_lines >= TRIFECTA_MAX_LINES
-    assert readme_chars >= TRIFECTA_MAX_CHARS
-    # AGENTS.md has a larger default and may opt higher per repo.
-    agents_lines, agents_chars = caps_for(Path("AGENTS.md"))
-    assert agents_lines >= AGENTS_DEFAULT_MAX_LINES
-    assert agents_chars >= AGENTS_DEFAULT_MAX_CHARS
+
+
+def test_overview_caps_fall_back_to_the_shared_defaults(
+    tmp_path: Path, monkeypatch
+) -> None:
+    # A repo that declares no keys rides the shared defaults: README.md on the
+    # overview cap, AGENTS.md on its larger one.
+    _point_repo_root_at(tmp_path, monkeypatch)
+    assert caps_for(Path("README.md")) == (TRIFECTA_MAX_LINES, TRIFECTA_MAX_CHARS)
+    assert caps_for(Path("AGENTS.md")) == (
+        AGENTS_DEFAULT_MAX_LINES,
+        AGENTS_DEFAULT_MAX_CHARS,
+    )
+    assert AGENTS_DEFAULT_MAX_LINES > TRIFECTA_MAX_LINES
+    assert AGENTS_DEFAULT_MAX_CHARS > TRIFECTA_MAX_CHARS
+
+
+def test_overview_caps_take_the_declared_value_in_either_direction(
+    tmp_path: Path, monkeypatch
+) -> None:
+    # The keys replace the default outright: one repo may buy README headroom
+    # and tighten AGENTS.md as back-pressure in the same declaration.
+    write(
+        tmp_path / "pyproject.toml",
+        "[tool.agentic-os.documentation-layout]\n"
+        "readme_max_lines = 400\n"
+        "readme_max_chars = 30000\n"
+        "agents_md_max_lines = 40\n"
+        "agents_md_max_chars = 3000\n",
+    )
+    _point_repo_root_at(tmp_path, monkeypatch)
+    assert caps_for(Path("README.md")) == (400, 30_000)
+    assert caps_for(Path("AGENTS.md")) == (40, 3_000)
 
 
 def test_non_trifecta_markdown_keeps_the_standard_cap() -> None:
@@ -77,11 +114,6 @@ def test_harness_override_filenames_are_recognized() -> None:
     assert not is_harness_override("AGENTS.COMPOSE.md")
     assert not is_harness_override("AGENTS.md")
     assert not is_harness_override("notes.md")
-
-
-def write(path: Path, text: str = "x\n") -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(text, encoding="utf-8")
 
 
 def test_support_subdirs_are_allowed(tmp_path: Path) -> None:
@@ -252,11 +284,6 @@ def test_root_absolute_back_link_is_reciprocal(tmp_path: Path) -> None:
 
 # Generated-document exclusion checks that a wildcard reaches both REPO_ROOT
 # (the tree walk) and config.REPO_ROOT (the excludes).
-
-def _point_repo_root_at(tmp_path: Path, monkeypatch) -> None:
-    monkeypatch.setattr(docs_layout, "REPO_ROOT", tmp_path)
-    monkeypatch.setattr(config, "REPO_ROOT", tmp_path)
-
 
 def _write_generated_docs(tmp_path: Path) -> None:
     # Oversized (> 80-line cap) generated docs emitted at two locations.

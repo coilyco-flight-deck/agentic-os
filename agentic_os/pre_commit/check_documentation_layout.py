@@ -53,14 +53,15 @@ gets the tighter FEATURES_MAX_LINES / FEATURES_MAX_CHARS cap. Bounded, not
 infinite: durable detail still belongs in docs/*.md. README.md only at repo
 root; a co-located module README stays on the tight outpost / homestead shape.
 
-AGENTS.md may opt past its default cap, per-repo, via config keys
-`agents_md_max_lines` / `agents_md_max_chars` under the documentation-layout
-hook section. Repos that don't set them get the shared AGENTS.md default.
-The canonical agentic-os-kai AGENTS.md is loader-bound (read on every session)
-and holds universal-fire doctrine that can't split into docs/*.md without
-losing unconditional firing, so that repo opts higher.
+AGENTS.md sets its own cap, per-repo, via config keys `agents_md_max_lines` /
+`agents_md_max_chars` under the documentation-layout hook section. The declared
+value replaces the default outright, in either direction: a loader-bound
+AGENTS.md holding universal-fire doctrine that can't split into docs/*.md may
+buy headroom, and a repo whose role-scoped doctrine has already moved out to
+the sources that own it may set a tighter cap as deliberate back-pressure.
+Repos that don't set them get the shared AGENTS.md default.
 
-The root README.md gets the same per-repo opt-up, via `readme_max_lines` /
+The root README.md gets the same per-repo override, via `readme_max_lines` /
 `readme_max_chars`. It is the launch-grade front page a cold visitor (human or
 agent) reads to decide in under a minute whether the tool is for them, so a
 release repo may need room to say who it's for and what it requires, show a
@@ -106,7 +107,7 @@ FEATURES_MAX_LINES = 80
 FEATURES_MAX_CHARS = 4_000
 
 # AGENTS.md carries universal-fire context after selective capability detail
-# moves into ordinary and composed skills. Repos may opt higher via config.
+# moves into ordinary and composed skills. Repos may set their own via config.
 AGENTS_DEFAULT_MAX_LINES = TRIFECTA_MAX_LINES * 2
 AGENTS_DEFAULT_MAX_CHARS = TRIFECTA_MAX_CHARS * 2
 
