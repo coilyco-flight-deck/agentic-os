@@ -61,4 +61,4 @@ Runs `check-documentation-layout`. Enforces Markdown placement across the repo:
 
 ### code-comments (pre-commit)
 
-Runs `check-code-comments`. Enforces code-comment discipline for common source files: standalone comments are up to two contiguous lines, max 90 chars each. Longer durable explanation belongs in `docs/*.md`; code gets a short pointer only. YAML is stricter: a key-sorter would drift any lower comment off its target, so YAML allows just one comment line and only as the first line of the file.
+Runs `check-code-comments`. Enforces code-comment discipline for common source files: standalone comments are up to two contiguous lines, max 90 chars each once content begins, with a top-of-file header block exempt from that limit. Longer durable explanation belongs in `docs/*.md`; code gets a short pointer only. YAML is stricter: a key-sorter would drift any lower comment off its target, so YAML allows comments only in that header block, above the first content line.

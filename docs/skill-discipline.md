@@ -14,7 +14,7 @@ The validators ship in the `aos-precommit` distribution, preserve the
 - `check-source-doc-refs` - walks source comments, fails if a path-like documentation reference no longer resolves.
 - `check-code-review-contract` - requires a root `CODE-REVIEW.md` that names repo-local invariants, historical issues, and refresh triggers instead of generic review advice.
 - `check-documentation-layout` - keeps Markdown at repo root, flat `docs/*.md`, or skill folders only.
-- `check-code-comments` - keeps standalone code comments to two contiguous lines max, 90 chars each. YAML is stricter: one comment line, first line only, so a key-sorter cannot drift it.
+- `check-code-comments` - keeps standalone code comments to two contiguous lines max, 90 chars each, with a top-of-file header block exempt from the line limit. YAML is stricter: comments only in that top block, above the first content line, so a key-sorter cannot drift one off its target.
 
 See [`skill-discipline-example-pre-commit-config.yaml`](skill-discipline-example-pre-commit-config.yaml) for the managed `.pre-commit-config.yaml` block.
 
