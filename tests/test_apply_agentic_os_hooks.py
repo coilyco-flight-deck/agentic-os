@@ -15,6 +15,7 @@ import subprocess
 from pathlib import Path
 
 import pytest
+import yaml
 
 SCRIPT = Path(__file__).resolve().parent.parent / "scripts" / "apply-agentic-os-hooks.py"
 REPO_ROOT = SCRIPT.parent.parent
@@ -164,6 +165,59 @@ def test_managed_block_includes_standard_hygiene_hooks() -> None:
         "args: []",
     ):
         assert needle in block
+
+
+def _write_actionlint_config(repo_dir: Path) -> None:
+    (repo_dir / ".github").mkdir(parents=True, exist_ok=True)
+    (repo_dir / ".github" / "actionlint.yaml").write_text(
+        "self-hosted-runner:\n  labels:\n    - docker\n", encoding="utf-8"
+    )
+
+
+def _actionlint_hook(rendered: str) -> dict:
+    config = yaml.safe_load(rendered)
+    for repo in config["repos"]:
+        if repo["repo"] == "https://github.com/rhysd/actionlint":
+            return repo["hooks"][0]
+    raise AssertionError("no actionlint repo in the rendered block")
+
+
+def test_actionlint_config_flag_follows_the_consumer(tmp_path: Path) -> None:
+    """agentic-os#984: a Forgejo-only repo needs the flag to see its labels.
+
+    actionlint keys project detection off .github/workflows, so a repo whose
+    workflows live in .forgejo/workflows never auto-discovers its config and
+    reports a declared self-hosted runner label as unknown. The flag is not
+    emitted unconditionally: actionlint exits non-zero on a config path it
+    cannot read, which would break every consumer that ships no config.
+    """
+    script = _load_script()
+    without = _actionlint_hook(f"repos:\n{script.managed_block('v9.9.9', repo_dir=tmp_path)}")
+    assert "args" not in without
+
+    _write_actionlint_config(tmp_path)
+    with_config = _actionlint_hook(
+        f"repos:\n{script.managed_block('v9.9.9', repo_dir=tmp_path)}"
+    )
+    assert with_config["args"] == ["-config-file", ".github/actionlint.yaml"]
+    assert with_config["files"] == r"^\.forgejo/workflows/.*\.(ya?ml)$"
+
+
+def test_apply_carries_the_actionlint_config_flag(tmp_path: Path) -> None:
+    # The consumer dir is derived from the config path, so a real apply, not
+    # just the template helper, has to carry the flag.
+    script = _load_script()
+    _write_actionlint_config(tmp_path)
+    config = tmp_path / ".pre-commit-config.yaml"
+
+    assert script.upsert_managed_block(config, "v2.0.0")[0] == "created"
+    created = _actionlint_hook(config.read_text(encoding="utf-8"))
+    assert created["args"] == ["-config-file", ".github/actionlint.yaml"]
+
+    # The refresh path rewrites the block from scratch, so it has to keep it.
+    script.upsert_managed_block(config, "v2.0.0")
+    refreshed = _actionlint_hook(config.read_text(encoding="utf-8"))
+    assert refreshed["args"] == ["-config-file", ".github/actionlint.yaml"]
 
 
 def test_refresh_protects_current_block_and_preserves_local_hooks(

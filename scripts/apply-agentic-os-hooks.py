@@ -15,7 +15,8 @@ For each repo checked out under ~/projects/<org>/<name> across every org dir
      skill-discipline).
   3. Insert/refresh the managed block: the agentic-os hook set plus the
      standard hygiene hooks, actionlint, Forgejo Runner validation, shellcheck,
-     and typos.
+     and typos. The actionlint hook takes `-config-file` only where the
+     consumer ships `.github/actionlint.yaml` (see `actionlint_args`).
   4. Run `pre-commit install --hook-type pre-commit --hook-type commit-msg
      --hook-type prepare-commit-msg`.
 
@@ -126,6 +127,9 @@ PRECOMMIT_HOOKS = [
 ACTIONLINT_REPO_URL = "https://github.com/rhysd/actionlint"
 ACTIONLINT_REV = "v1.7.12"
 FORGEJO_WORKFLOW_FILES = r"^\.forgejo/workflows/.*\.(ya?ml)$"
+# actionlint keys project detection off .github/workflows, so a Forgejo-only
+# repo never auto-discovers this config. See actionlint_args.
+ACTIONLINT_CONFIG_REL = ".github/actionlint.yaml"
 
 FORGEJO_RUNNER_REPO_URL = "https://code.forgejo.org/forgejo/runner"
 FORGEJO_RUNNER_REV = "v12.10.1"
@@ -210,7 +214,25 @@ def hook_ids_for(repo: str) -> list[str]:
     return [h for h in DEFAULT_HOOK_IDS if h not in skips]
 
 
-def managed_block(rev: str, hook_ids: list[str] | None = None) -> str:
+def actionlint_args(repo_dir: Path | None) -> str:
+    """The -config-file lines for a consumer that ships an actionlint config.
+
+    Emitted only when the file exists: actionlint exits non-zero on a config
+    path it cannot read, so an unconditional flag would break every consumer
+    without one.
+    """
+    if repo_dir is None or not (repo_dir / ACTIONLINT_CONFIG_REL).is_file():
+        return ""
+    return (
+        "\n        args:"
+        "\n          - -config-file"
+        f"\n          - {ACTIONLINT_CONFIG_REL}"
+    )
+
+
+def managed_block(
+    rev: str, hook_ids: list[str] | None = None, repo_dir: Path | None = None
+) -> str:
     ids = hook_ids if hook_ids is not None else DEFAULT_HOOK_IDS
     hook_lines = "\n".join(f"      - id: {h}" for h in ids)
     precommit_hook_lines = "\n".join(
@@ -238,7 +260,7 @@ def managed_block(rev: str, hook_ids: list[str] | None = None) -> str:
     rev: {ACTIONLINT_REV}
     hooks:
       # Forgejo workflows use GitHub Actions syntax; no exclude split is needed yet.
-      - id: actionlint
+      - id: actionlint{actionlint_args(repo_dir)}
         files: {FORGEJO_WORKFLOW_FILES}
   - repo: {FORGEJO_RUNNER_REPO_URL}
     rev: {FORGEJO_RUNNER_REV}
@@ -259,10 +281,12 @@ def managed_block(rev: str, hook_ids: list[str] | None = None) -> str:
 """
 
 
-def empty_config_template(rev: str, hook_ids: list[str] | None = None) -> str:
+def empty_config_template(
+    rev: str, hook_ids: list[str] | None = None, repo_dir: Path | None = None
+) -> str:
     return f"""\
 repos:
-{managed_block(rev, hook_ids)}"""
+{managed_block(rev, hook_ids, repo_dir)}"""
 
 
 def list_local_repo_dirs() -> list[Path]:
@@ -322,12 +346,13 @@ def upsert_managed_block(
 
     Returns (status, legacy_blocks_removed).
     """
+    repo_dir = config_path.parent
     if not config_path.exists():
-        config_path.write_text(empty_config_template(rev, hook_ids))
+        config_path.write_text(empty_config_template(rev, hook_ids, repo_dir))
         return "created", 0
 
     original_text = config_path.read_text()
-    block = managed_block(rev, hook_ids)
+    block = managed_block(rev, hook_ids, repo_dir)
     if BEGIN_MARKER in original_text and END_MARKER in original_text:
         before, _, rest = original_text.partition(BEGIN_MARKER)
         _, _, after = rest.partition(END_MARKER)
