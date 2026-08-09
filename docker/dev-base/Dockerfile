@@ -8,6 +8,8 @@ ARG GO_VERSION=1.26.5
 ARG DOTNET_VERSION=10.0.302
 ARG TRUNK_VERSION=0.21.14
 ARG NODE_VERSION=22.23.2
+ARG WASM_PACK_VERSION=0.15.0
+ARG BINARYEN_VERSION=119
 
 FROM ubuntu:24.04 AS dev-base-lang-node
 ARG NODE_VERSION
@@ -70,6 +72,8 @@ RUN set -eux; . /opt/agentic-os/arch.env; \
 
 FROM ubuntu:24.04 AS dev-base-lang-rust
 ARG TRUNK_VERSION
+ARG WASM_PACK_VERSION
+ARG BINARYEN_VERSION
 ARG TARGETARCH
 ENV PATH=/usr/local/cargo/bin:/usr/local/bin:/usr/bin:/bin \
     CARGO_HOME=/usr/local/cargo RUSTUP_HOME=/usr/local/rustup
@@ -94,6 +98,32 @@ RUN set -eux; . /opt/agentic-os/arch.env; \
       -o /tmp/trunk.tar.gz; \
     tar -xzf /tmp/trunk.tar.gz -C /usr/local/cargo/bin trunk; \
     chmod 0755 /usr/local/cargo/bin/trunk; rm /tmp/trunk.tar.gz; trunk --version
+# wasm-pack is the second Rust-to-WASM front end alongside trunk: trunk serves
+# whole-app Rust bundles, wasm-pack emits an npm package a JS bundler consumes.
+# Pinned rather than `cargo install wasm-pack`, which resolves to whatever is
+# newest that day and made every consumer's bundle a different artifact.
+RUN set -eux; . /opt/agentic-os/arch.env; \
+    curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
+      "https://github.com/rustwasm/wasm-pack/releases/download/v${WASM_PACK_VERSION}/wasm-pack-v${WASM_PACK_VERSION}-${WASM_PACK_ARCH}-unknown-linux-musl.tar.gz" \
+      -o /tmp/wasm-pack.tar.gz; \
+    tar -xzf /tmp/wasm-pack.tar.gz -C /usr/local/cargo/bin --strip-components=1 \
+      "wasm-pack-v${WASM_PACK_VERSION}-${WASM_PACK_ARCH}-unknown-linux-musl/wasm-pack"; \
+    chmod 0755 /usr/local/cargo/bin/wasm-pack; rm /tmp/wasm-pack.tar.gz; \
+    wasm-pack --version
+# binaryen supplies wasm-opt, which wasm-pack runs as its optimization pass.
+# wasm-pack takes wasm-opt from PATH when it finds one and otherwise downloads
+# its own floating "latest" build, so an unpinned image silently reoptimizes
+# every bundle differently. Pinning it here is what makes the wasm output a
+# function of the source rather than of the build date. Only bin/wasm-opt is
+# kept: the tarball's lib/libbinaryen.a is a static archive the binary has
+# already absorbed, and include/ is for C API consumers this image has none of.
+RUN set -eux; . /opt/agentic-os/arch.env; \
+    curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
+      "https://github.com/WebAssembly/binaryen/releases/download/version_${BINARYEN_VERSION}/binaryen-version_${BINARYEN_VERSION}-${BINARYEN_ARCH}-linux.tar.gz" \
+      -o /tmp/binaryen.tar.gz; \
+    tar -xzf /tmp/binaryen.tar.gz -C /usr/local/bin --strip-components=2 \
+      "binaryen-version_${BINARYEN_VERSION}/bin/wasm-opt"; \
+    chmod 0755 /usr/local/bin/wasm-opt; rm /tmp/binaryen.tar.gz; wasm-opt --version
 RUN printf '%s\n' '#include <wayland-client.h>' '#include <xkbcommon/xkbcommon.h>' \
       'int main(void) { return 0; }' > /tmp/rust-native-smoke.c; \
     cc /tmp/rust-native-smoke.c $(pkg-config --cflags --libs wayland-client xkbcommon) \

@@ -148,7 +148,8 @@ RUN set -eux; . /opt/agentic-os/arch.env; \
     rm /tmp/kdlfmt.tar.xz; kdlfmt --version
 
 RUN node --version && go version && dotnet --list-sdks && cargo --version && \
-    trunk --version && python --version && pipenv --version && aosguard --version
+    trunk --version && wasm-pack --version && wasm-opt --version && \
+    python --version && pipenv --version && aosguard --version
 WORKDIR /workspace
 ENTRYPOINT ["/opt/agentic-os/ward-shell-entrypoint.sh"]
 CMD ["bash"]

@@ -5,6 +5,7 @@ set -euo pipefail
 case "${TARGETARCH:?TARGETARCH is required}" in
   amd64)
     AWS_ARCH=x86_64
+    BINARYEN_ARCH=x86_64
     CODEX_ARCH=x86_64
     DOCKER_ARCH=x86_64
     DOTNET_ARCH=x64
@@ -18,10 +19,12 @@ case "${TARGETARCH:?TARGETARCH is required}" in
     NODE_ARCH=x64
     TRUFFLEHOG_ARCH=amd64
     TS_ARCH=amd64
+    WASM_PACK_ARCH=x86_64
     YQ_ARCH=amd64
     ;;
   arm64)
     AWS_ARCH=aarch64
+    BINARYEN_ARCH=aarch64
     CODEX_ARCH=aarch64
     DOCKER_ARCH=aarch64
     DOTNET_ARCH=arm64
@@ -35,6 +38,7 @@ case "${TARGETARCH:?TARGETARCH is required}" in
     NODE_ARCH=arm64
     TRUFFLEHOG_ARCH=arm64
     TS_ARCH=arm64
+    WASM_PACK_ARCH=aarch64
     YQ_ARCH=arm64
     ;;
   *)
@@ -46,6 +50,7 @@ esac
 install -d /opt/agentic-os
 printf '%s\n' \
   "AWS_ARCH=${AWS_ARCH}" \
+  "BINARYEN_ARCH=${BINARYEN_ARCH}" \
   "CODEX_ARCH=${CODEX_ARCH}" \
   "DOCKER_ARCH=${DOCKER_ARCH}" \
   "DOTNET_ARCH=${DOTNET_ARCH}" \
@@ -59,5 +64,6 @@ printf '%s\n' \
   "NODE_ARCH=${NODE_ARCH}" \
   "TRUFFLEHOG_ARCH=${TRUFFLEHOG_ARCH}" \
   "TS_ARCH=${TS_ARCH}" \
+  "WASM_PACK_ARCH=${WASM_PACK_ARCH}" \
   "YQ_ARCH=${YQ_ARCH}" \
   > /opt/agentic-os/arch.env
