@@ -17,12 +17,12 @@ Same scouting instinct, inverted flow. See **Paired with** below.
 capability scout, scout capability, find me skills, find me mcps, gap analysis, missing capabilities.
 
 Six-phase routine. Each phase runs independently and checkpoints to a
-task-scoped scratch directory, so the user can run "scout-capability phase 3"
+task-scoped scratch directory, so the human can run "scout-capability phase 3"
 from the train and resume without re-running phase 1.
 
 **Why six phases:** the full pipeline is too large for one model run, and
 each phase has a different cost/risk profile. Phase 1 is open-ended
-ideation, phase 4 is a security gate, phase 6 mutates the user's personal-OS repo. Mixing
+ideation, phase 4 is a security gate, phase 6 mutates the human's personal-OS repo. Mixing
 them into one invocation either blows context or makes the security gate
 easier to skip. Splitting forces an explicit checkpoint between
 "speculate" and "install."
@@ -30,7 +30,7 @@ easier to skip. Splitting forces an explicit checkpoint between
 **Outputs go to the notes/scratch location, not the personal-OS repo.** Speculative discovery
 incidentally surfaces private repo intent and personal context. Only the
 final per-install commits land in the personal-OS repo. Inbox path:
-`<notes-dir>/YYYY-MM-DD-scout-capability-{phase}.md` (parameterize to the user's scratch/notes location).
+`<notes-dir>/YYYY-MM-DD-scout-capability-{phase}.md` (parameterize to the human's scratch/notes location).
 
 ## Phases
 

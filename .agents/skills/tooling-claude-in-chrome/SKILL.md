@@ -14,10 +14,10 @@ The `mcp__Claude_in_Chrome__*` MCP attaches to a live local Chrome via the Claud
 ## When to reach for it
 
 * The site has no public/working API for the action.
-* The action depends on a logged-in browser session that lives only in the user's Chrome.
+* The action depends on a logged-in browser session that lives only in the human's Chrome.
 * The repetition count is high enough that a checklist isn't faster (rough rule: 8+ identical clicks).
 
-If fewer than ~5 clicks, just hand the user a checklist with deep links. Browser automation has setup cost.
+If fewer than ~5 clicks, just hand the human a checklist with deep links. Browser automation has setup cost.
 
 ## Two rules that keep the session alive
 

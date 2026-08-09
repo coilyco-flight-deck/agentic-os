@@ -8,10 +8,10 @@ entirely 🥉; that's expected and intentional.
 
 Ranking criteria, in priority order:
 
-1. Direct fit to current repo work or open issues across the user's repo set.
-2. Reduces a manual workflow the user is currently doing by hand.
+1. Direct fit to current repo work or open issues across the human's repo set.
+2. Reduces a manual workflow the human is currently doing by hand.
 3. Reusable across multiple projects.
-4. Speculative entries the user has personal leverage on (someone they know)
+4. Speculative entries the human has personal leverage on (someone they know)
    rank higher than ones they don't.
 
 **Do not rank skills by skillsmp `stars`.** The star count reflects the

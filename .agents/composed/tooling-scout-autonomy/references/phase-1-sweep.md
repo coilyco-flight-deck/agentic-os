@@ -10,7 +10,7 @@ deep-read code, read the shape.
 - Recent commit subjects (`git log --oneline -50`) - direction and momentum.
 - Open issues (the tracker's `--state open` list) - already-wanted work.
 
-Plus the operator's notes: the index, the most recent 14 days of inbox, and any
+Plus Kai's notes: the index, the most recent 14 days of inbox, and any
 ideas/tasks files. And, **if present, the outputs of the sibling scouts and the
 backlog**:
 

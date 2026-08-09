@@ -7,8 +7,8 @@ Symptoms: every call returns `Cannot access a chrome-extension:// URL of differe
 In order of cost:
 
 1. `select_browser` with the deviceId from `list_connected_browsers` - sometimes nudges the session back. Cheap, try first.
-2. Ask the user to click on the target tab to refocus it, and dismiss any extension popup.
-3. Ask the user to **Cmd+Q Chrome** and relaunch, then reattach the Claude in Chrome extension by clicking its toolbar icon. The Bash path to quit Chrome (`osascript ... quit`) is in the harness deny list.
+2. Ask the human to click on the target tab to refocus it, and dismiss any extension popup.
+3. Ask the human to **Cmd+Q Chrome** and relaunch, then reattach the Claude in Chrome extension by clicking its toolbar icon. The Bash path to quit Chrome (`osascript ... quit`) is in the harness deny list.
 
 Don't loop on a wedged session - it stays wedged until human intervention.
 

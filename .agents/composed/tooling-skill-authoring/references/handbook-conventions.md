@@ -34,14 +34,14 @@ The validator rejects unknown prefixes by design. It forces this discussion to h
 
 ## 10. Voice + writing conventions
 
-Inherited from the user's AGENTS.md. Highlights:
+Inherited from the human's AGENTS.md. Highlights:
 
 * No em-dashes (U+2014). Use periods, commas, parens, or ` - `.
 * No italics, no semicolons in prose.
 * No tables in prose. Use flat bullet lists.
 * "Load-bearing" is physical-only.
-* See the user's voice guide for pronoun rules.
-* Match the user's intent, not literal trigger keywords. Trigger lists are examples, not exhaustive.
+* See the human's voice guide for pronoun rules.
+* Match the human's intent, not literal trigger keywords. Trigger lists are examples, not exhaustive.
 * Imperative voice. Explain why over MUSTs.
 
 The validator's em-dash check flags U+2014 in SKILL.md prose. Wrap legitimate uses (e.g. quoted prose from someone else) in backticks or double quotes.

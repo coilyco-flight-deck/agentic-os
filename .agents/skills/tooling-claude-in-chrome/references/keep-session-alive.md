@@ -16,4 +16,4 @@ Use `mcp__Claude_in_Chrome__javascript_tool` instead:
 
 If a form has unsaved state and you navigate or close-tab, Chrome shows the native **"Leave site? Changes you made may not be saved."** modal. The extension cannot dismiss it. Every subsequent call errors until the user clicks Leave by hand.
 
-Recovery: ask the user to click Leave. Prevention: only ever leave a form by submitting it (the post-submit redirect counts as a clean exit) or by clearing every input you touched before navigating.
+Recovery: ask the human to click Leave. Prevention: only ever leave a form by submitting it (the post-submit redirect counts as a clean exit) or by clearing every input you touched before navigating.

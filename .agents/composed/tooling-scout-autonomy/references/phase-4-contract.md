@@ -4,7 +4,7 @@ For the top picks, turn each ranked entry into a **long-run contract** - the art
 long-run execution skill consumes at the start of an overnight session. A ranked idea is
 not runnable. A contract is.
 
-Write each contract in the shape the operator's long-run discipline expects (see your
+Write each contract in the shape Kai's long-run discipline expects (see your
 long-run execution skill). At minimum, three fields:
 
 - **Goal** - the done-state in one or two sentences.

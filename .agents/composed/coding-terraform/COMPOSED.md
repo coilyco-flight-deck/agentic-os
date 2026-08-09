@@ -26,7 +26,7 @@ Umbrella for any Terraform work.
 ## Plan-and-apply discipline
 
 - `terraform plan` is read-only and free, run it often.
-- `terraform apply` only after the plan output is reviewed by the operator. No `--auto-approve` in interactive sessions.
+- `terraform apply` only after the plan output is reviewed by the human. No `--auto-approve` in interactive sessions.
 - For destroys, double-confirm. State drift is recoverable, deleted resources often are not.
 
 ## When this skill is active

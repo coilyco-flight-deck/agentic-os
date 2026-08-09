@@ -4,7 +4,7 @@ This is the operational walkthrough for drafting a new skill. The personal-OS-sp
 
 ## Capture intent
 
-Start by understanding what the user wants. The current conversation often already contains the workflow (an investigation that worked, a recurring debug pattern, a checklist the user keeps redoing). Extract from history first: tools used, sequence of steps, corrections, input/output formats observed. Confirm with the user before drafting.
+Start by understanding what the human wants. The current conversation often already contains the workflow (an investigation that worked, a recurring debug pattern, a checklist the user keeps redoing). Extract from history first: tools used, sequence of steps, corrections, input/output formats observed. Confirm with the user before drafting.
 
 Run the [admission test](admission.md) and
 [placement decision](placement.md) before drafting. Stop when the proposed

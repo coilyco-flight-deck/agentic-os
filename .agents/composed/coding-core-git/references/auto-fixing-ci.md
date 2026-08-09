@@ -61,4 +61,4 @@ When asked to auto-fix CI, follow this loop:
 3. Use `read_file` + `patch`/`write_file` → fix the code
 4. `git add . && git commit -m "fix: ..." && git push`
 5. Wait for CI → re-check status
-6. Repeat if still failing (up to 3 attempts, then ask the user)
+6. Repeat if still failing (up to 3 attempts, then ask the human)

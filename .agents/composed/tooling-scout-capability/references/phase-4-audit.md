@@ -8,7 +8,7 @@ point. Once mcporter execution is verified, revise this rubric:
 🔴 should narrow to real supply-chain audit failures (malicious code,
 abandoned projects, anonymous maintainers writing privileged tools),
 not "duplicates a ward wrapper." Until then, treat the ward-overlap
-red flag with skepticism and surface the call to the user instead of
+red flag with skepticism and surface the call to the human instead of
 auto-rejecting.
 
 For every 🥈 and 🥇 entry, run `coding-core-supply-chain-audit`. 🥉 entries are

@@ -11,7 +11,7 @@ Use when there is a problem area but no defined target. Goal: understand the pro
 - Ask "who has this problem?" and "what are they doing about it today?" before anything else
 - Map the problem ecosystem: who is involved, what triggers it, what are the consequences
 - Distinguish symptoms from root causes. Keep asking "why" until you hit something structural.
-- Surface adjacent problems the user might not have considered
+- Surface adjacent problems the human might not have considered
 - Useful prompts: "What happens if we do nothing?" / "Who has solved a version of this in a different context?" / "Is this awareness, ability, or motivation?"
 
 ## Solution Ideation
@@ -22,7 +22,7 @@ Use when the problem is well-defined and you need to generate multiple possible 
 - Vary along meaningful dimensions: scope (small vs big bet), approach (product vs process vs policy), timing (quick win vs long-term)
 - Include at least one "what if we did the opposite?" option
 - Include at least one option that removes something rather than adding
-- Resist converging early. If the user latches onto the first decent idea, push for more.
+- Resist converging early. If the human latches onto the first decent idea, push for more.
 
 ## Assumption Testing
 

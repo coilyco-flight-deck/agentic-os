@@ -23,7 +23,7 @@ The point of this gate is to avoid splitting issues that don't need it. The skil
 
 ### 1. Gather context
 
-Work from whatever is already in the conversation context. If the user passes
+Work from whatever is already in the conversation context. If the human passes
 an issue number or URL, read the issue and comments through the repository's
 configured tracker surface.
 
@@ -43,7 +43,7 @@ Slices may be 'HITL' or 'AFK'. HITL slices require human interaction, such as an
 - Prefer many thin slices over few thick ones
 </vertical-slice-rules>
 
-### 4. Quiz the user
+### 4. Quiz the human
 
 Present the proposed breakdown as a numbered list. For each slice, show:
 
@@ -52,14 +52,14 @@ Present the proposed breakdown as a numbered list. For each slice, show:
 - **Blocked by**: which other slices (if any) must complete first
 - **User stories covered**: which user stories this addresses (if the source material has them)
 
-Ask the user:
+Ask the human:
 
 - Does the granularity feel right? (too coarse / too fine)
 - Are the dependency relationships correct?
 - Should any slices be merged or split further?
 - Are the correct slices marked as HITL and AFK?
 
-Iterate until the user approves the breakdown.
+Iterate until the human approves the breakdown.
 
 ### 5. Create the tracker issues
 

@@ -1,6 +1,6 @@
 # Phase 1 - Grounded sweep + speculative ideation
 
-Walk the user's working surface and build a verbose candidate list. Two
+Walk the human's working surface and build a verbose candidate list. Two
 sub-passes, in order, kept separate so speculation does not drown out
 real signal.
 
@@ -20,13 +20,13 @@ note}`. Kind is `skill` or `mcp`.
 
 **Speculative pass.** After the grounded pass, brainstorm 10-30
 additional entries that **don't currently exist**. The point is to
-surface things the user might want to ask people about (eg. "no Reddit MCP
-exists, would be cool, the user doesn't know anyone there" vs "no Discord
-MCP for X workflow, the user knows someone there"). Mark these
+surface things the human might want to ask people about (eg. "no Reddit MCP
+exists, would be cool, the human doesn't know anyone there" vs "no Discord
+MCP for X workflow, the human knows someone there"). Mark these
 `speculative: true` and include a **required** `nudge:` field naming
 who or where to ask. Valid values include a specific contact ("friend
 at Discord"), a project owner ("Anthropic official"), a build path
-("self-build"), or `no known leverage` for entries the user might want but
+("self-build"), or `no known leverage` for entries the human might want but
 has no contact for. An entry without a nudge value is half a thought.
 The speculative pass exists primarily to surface "who could I ask about
 this" candidates, so the leverage question must be answered up front.

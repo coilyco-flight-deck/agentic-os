@@ -6,7 +6,7 @@ Score the merged candidate pool and rank. The score is leverage, not novelty.
 
 `leverage = (value x reach x confidence) / cost`, each term 1-5, then a kind multiplier.
 
-- **value** - how much it helps a user who has the toolset. 1 marginal, 5 transformative.
+- **value** - how much it helps someone who has the toolset. 1 marginal, 5 transformative.
 - **reach** - how many repos / people / runs it touches. A one-repo fix is low, a
   cross-repo backfill is high. Reach is usually the term that decides the ranking.
 - **confidence** - how sure the build path is. A vague idea is 1, a known refactor is 5.

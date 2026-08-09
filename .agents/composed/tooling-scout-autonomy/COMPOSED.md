@@ -44,7 +44,7 @@ surfaces private intent, and only an actual build lands commits.
 
 Supplied at invoke, not hardcoded (this is a public-safe method): target repo list,
 notes/scratch path, and a **reserved-surface fence** - subsystems this run must not touch
-or propose work on, the operator's way to keep a scout off reserved or boundary code.
+or propose work on, the human's way to keep a scout off reserved or boundary code.
 Schema in [references/scoring-and-config.md](references/scoring-and-config.md).
 
 ## PM handoff

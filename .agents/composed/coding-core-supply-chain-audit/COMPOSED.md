@@ -20,9 +20,9 @@ Run this skill BEFORE:
 - Installing a new MCP server (`claude mcp add` / `codex mcp add`, `~/.claude.json` / `~/.codex/config.toml`, or a plugin marketplace install).
 - Adding a new GitHub Action (`uses: org/action@vX`) or workflow that pulls a third-party container.
 - Pulling a new brew tap or formula.
-- Cloning and running an upstream repo the user found in a search result, blog post, or social link.
+- Cloning and running an upstream repo the human found in a search result, blog post, or social link.
 - The harness denies a `cargo fetch` / `npm install` / `pip install` / similar action with a "guessed external dependency" or "untrusted external code" error.
-- the user says "audit this," "vet this," "deep scan this," "is this real," or "should I trust this."
+- the human says "audit this," "vet this," "deep scan this," "is this real," or "should I trust this."
 
 Skip this skill for:
 
@@ -34,7 +34,7 @@ Skip this skill for:
 
 - **Green** - Allow. Proceed normally. Ordinary maintenance risk (any dep can rot or get compromised later); use `cargo audit` / `npm audit` / dependabot for ongoing watch.
 - **Yellow** - Allow with caveats. Document the yellow flags in the audit writeup so future-you knows the soft spots. Examples: bus factor of 1, very young project, single small maintainer.
-- **Red** - Stop. Do not add. Surface findings to the user. Examples: typosquat, code suggests data exfiltration, account hijack signals, abandoned with no path forward, license mismatch with project.
+- **Red** - Stop. Do not add. Surface findings to the human. Examples: typosquat, code suggests data exfiltration, account hijack signals, abandoned with no path forward, license mismatch with project.
 
 ## Audit checklist
 

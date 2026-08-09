@@ -22,7 +22,7 @@ Default across `~/projects/coilyco-*/*` and `~/projects/coilysiren/*`:
 - `agentic-os-kai` only: one commit per discrete additive change.
 - `git commit --amend` is fine pre-push, preferred over a "fix lint" follow-on for hook fixes. If the amend changes substance relative to the closing-issue description, post a comment on that issue so the audit trail survives. Force-push off-limits. Overrides the default Claude Code rule.
 
-Never run destructive git commands unless the operator explicitly asks. Never revert changes you didn't make.
+Never run destructive git commands unless the human explicitly asks. Never revert changes you didn't make.
 
 Below are the exceptions and details.
 
