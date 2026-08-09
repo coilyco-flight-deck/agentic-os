@@ -35,4 +35,4 @@ Broad Python keyword surface - python, python3, .py, pip, uv, poetry, pyenv, pyt
 
 ## When this skill is active
 
-Kai is editing or writing Python. Inherit her preferences before reaching for general Python knowledge from training data.
+Editing or writing Python. Inherit Kai's preferences before reaching for general Python knowledge from training data.

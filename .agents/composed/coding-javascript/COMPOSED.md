@@ -32,7 +32,7 @@ Umbrella for anything in the JS/TS world. Subskills (frameworks, runtimes, build
 
 ## When this skill is active
 
-Kai is editing or writing JS/TS. Inherit her defaults before falling back to training-data conventions.
+Editing or writing JS/TS. Inherit Kai's defaults before falling back to training-data conventions.
 
 ## Triggers
 

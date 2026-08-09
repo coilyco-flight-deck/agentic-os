@@ -21,5 +21,5 @@ runner-up without re-scouting.
 
 If the current role is PM, hand the chosen contract to engineer and stop. PM owns
 the contract and prioritization, not implementation. In another authorized role,
-Kai may choose a separate overnight session or a dispatched headless job. Preserve
+the operator may choose a separate overnight session or a dispatched headless job. Preserve
 the contract verbatim across the handoff.

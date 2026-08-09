@@ -33,15 +33,15 @@ Alias discipline:
 Templates:
 
 ```yaml
-description: Use when Kai asks to <verb> <domain>, especially <2-4 concrete trigger phrases>.
+description: Use when the operator asks to <verb> <domain>, especially <2-4 concrete trigger phrases>.
 ```
 
 ```yaml
-description: Router for <domain> skills. Use when Kai asks about <broad domain>, then open the child skill for the specific verb or system.
+description: Router for <domain> skills. Use when the operator asks about <broad domain>, then open the child skill for the specific verb or system.
 ```
 
 ```yaml
-description: Pointer for <rule/domain>. Use when Kai asks about <trigger>; read <canonical file> for the full procedure.
+description: Pointer for <rule/domain>. Use when the operator asks about <trigger>; read <canonical file> for the full procedure.
 ```
 
 Audit baseline from a 2026-05-21 Codex scan of 103 local skills:

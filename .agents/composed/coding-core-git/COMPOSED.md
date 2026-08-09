@@ -15,9 +15,9 @@ git, github, gh, gh cli, gh api, octokit, graphql, repo, repository, pull reques
 
 ## Hard rule: never use the GitHub GraphQL API without confirming first
 
-Never reach for the GitHub GraphQL API (`gh api graphql`, `octokit.graphql`, raw POSTs to `/graphql`, etc.) without double-confirming with Kai first. State that the proposed approach uses GraphQL, name a REST alternative if one exists, and wait for an explicit go-ahead before running or writing the call.
+Never reach for the GitHub GraphQL API (`gh api graphql`, `octokit.graphql`, raw POSTs to `/graphql`, etc.) without double-confirming with the operator first. State that the proposed approach uses GraphQL, name a REST alternative if one exists, and wait for an explicit go-ahead before running or writing the call.
 
-Applies to one-off commands, scripts, workflows, skills, and any code Kai will run.
+Applies to one-off commands, scripts, workflows, skills, and any code the operator will run.
 
 **Why:** GraphQL rate limits have burned three days of Kai's time. The recovery is slow and annoying, and the burn is silent until limits hit.
 

@@ -2,7 +2,7 @@
 
 ## Default TODO destination
 
-When Kai asks to file a todo without naming a destination, default to a Forgejo issue on `coilyco-bridge/agentic-os-kai` (forgejo.coilysiren.me, the canonical tracker). If it clearly belongs elsewhere, file there and say so. Close it from a commit with a full same-repo Forgejo URL (`closes https://forgejo.coilysiren.me/<owner>/<repo>/issues/N`) - encouraged house style now that the `closes-issue` hook is retired.
+When the operator asks to file a todo without naming a destination, default to a Forgejo issue on `coilyco-bridge/agentic-os-kai` (forgejo.coilysiren.me, the canonical tracker). If it clearly belongs elsewhere, file there and say so. Close it from a commit with a full same-repo Forgejo URL (`closes https://forgejo.coilysiren.me/<owner>/<repo>/issues/N`) - encouraged house style now that the `closes-issue` hook is retired.
 
 Kai's own work routes through Forgejo. GitHub issues on external-facing `coilysiren/*` repos are an inbox for external contributors only; agents never file there. Split by `hasIssuesEnabled` flag: on = external-facing, off = deployment-of-one or private. Either way, route to Forgejo.
 
