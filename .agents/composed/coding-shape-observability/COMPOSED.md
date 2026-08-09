@@ -50,4 +50,4 @@ Designing instrumentation, building dashboards, configuring alerts, debugging vi
 
 ## See also
 
-- `coilyco-bridge/deploy/services/ser8-observability/docs/ser8-signoz.md` - canonical SigNoz ingest and exception-grouping contract.
+- SigNoz - the canonical ingest and exception-grouping contract, documented alongside the deployment that runs it.
