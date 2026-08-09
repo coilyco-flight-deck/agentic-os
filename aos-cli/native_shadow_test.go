@@ -271,7 +271,6 @@ func TestStageNativeRoleHomeFiltersUserSkills(t *testing.T) {
 	for _, path := range []string{
 		filepath.Join(target, ".agents", "settings.json"),
 		filepath.Join(target, ".claude", "settings.json"),
-		filepath.Join(target, ".config"),
 		filepath.Join(target, ".gitconfig"),
 	} {
 		info, err := os.Lstat(path)
@@ -281,6 +280,60 @@ func TestStageNativeRoleHomeFiltersUserSkills(t *testing.T) {
 		if info.Mode()&os.ModeSymlink == 0 {
 			t.Errorf("preserved native home entry is not a symlink: %s", path)
 		}
+	}
+	// .config holds the goose and opencode load points, so the session owns it
+	// outright rather than resolving through to the host.
+	info, err := os.Lstat(filepath.Join(target, ".config"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if info.Mode()&os.ModeSymlink != 0 {
+		t.Errorf("a linked .config lets projection write the host copy")
+	}
+}
+
+// A home-scope projection resolves symlinks, so any host copy standing at a
+// load point would be written through instead of replaced.
+func TestStageNativeRoleHomeReservesProjectedLoadPoints(t *testing.T) {
+	source := filepath.Join(t.TempDir(), "source")
+	target := filepath.Join(t.TempDir(), "target")
+	for _, dir := range []string{
+		filepath.Join(source, ".claude"),
+		filepath.Join(source, ".codex"),
+		filepath.Join(source, ".config", "goose"),
+		filepath.Join(source, ".config", "opencode"),
+	} {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	loadPoints := []string{
+		filepath.Join(".claude", "CLAUDE.md"),
+		filepath.Join(".codex", "AGENTS.md"),
+		filepath.Join(".config", "goose", ".goosehints"),
+		filepath.Join(".config", "opencode", "AGENTS.md"),
+	}
+	for _, rel := range loadPoints {
+		if err := os.WriteFile(filepath.Join(source, rel), []byte("host\n"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.WriteFile(filepath.Join(source, ".codex", "auth.json"), []byte("{}\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := stageNativeRoleHome(source, target, ""); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, rel := range loadPoints {
+		if _, err := os.Lstat(filepath.Join(target, rel)); !os.IsNotExist(err) {
+			t.Errorf("host copy still shadows the projected load point %s: %v", rel, err)
+		}
+	}
+	// Everything beside a load point still reaches the host.
+	if _, err := os.Lstat(filepath.Join(target, ".codex", "auth.json")); err != nil {
+		t.Errorf("staging dropped a neighbouring config entry: %v", err)
 	}
 }
 

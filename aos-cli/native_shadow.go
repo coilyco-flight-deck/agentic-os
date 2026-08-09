@@ -1233,10 +1233,6 @@ func stageNativeRoleHome(source, target, projectsRoot string) error {
 	if err != nil {
 		return fmt.Errorf("read native host home: %w", err)
 	}
-	filtered := map[string]bool{
-		".agents": true,
-		".claude": true,
-	}
 	for _, entry := range entries {
 		name := entry.Name()
 		// Left absent so ~/projects fails instead of resolving past the session
@@ -1244,10 +1240,11 @@ func stageNativeRoleHome(source, target, projectsRoot string) error {
 		if projectsRoot != "" && samePath(filepath.Join(source, name), projectsRoot) {
 			continue
 		}
-		if filtered[name] {
+		if nativeStagedConfigPaths[name] {
 			if err := stageNativeRoleConfigDirectory(
 				filepath.Join(source, name),
 				filepath.Join(target, name),
+				name,
 			); err != nil {
 				return err
 			}
@@ -1342,7 +1339,29 @@ func copyStandaloneHomeDirectory(source, target string, blocked map[string]bool)
 	return nil
 }
 
-func stageNativeRoleConfigDirectory(source, target string) error {
+// nativeStagedConfigPaths are the home-relative directories the session owns
+// outright, so projection cannot write through. See docs/native-shadow-home.md.
+var nativeStagedConfigPaths = map[string]bool{
+	".agents":          true,
+	".claude":          true,
+	".codex":           true,
+	".config":          true,
+	".config/goose":    true,
+	".config/opencode": true,
+}
+
+// nativeProjectedLoadPoints mirrors agent-compose's home layout registry. A
+// host copy at one of these paths would shadow the projected role bundle.
+var nativeProjectedLoadPoints = map[string]bool{
+	".agents/skills":             true,
+	".claude/CLAUDE.md":          true,
+	".claude/skills":             true,
+	".codex/AGENTS.md":           true,
+	".config/goose/.goosehints":  true,
+	".config/opencode/AGENTS.md": true,
+}
+
+func stageNativeRoleConfigDirectory(source, target, relative string) error {
 	if err := os.MkdirAll(target, 0o700); err != nil {
 		return fmt.Errorf("create filtered native config %s: %w", target, err)
 	}
@@ -1354,14 +1373,26 @@ func stageNativeRoleConfigDirectory(source, target string) error {
 		return fmt.Errorf("read native config %s: %w", source, err)
 	}
 	for _, entry := range entries {
-		if entry.Name() == "skills" {
+		name := entry.Name()
+		child := relative + "/" + name
+		if nativeProjectedLoadPoints[child] {
+			continue
+		}
+		if nativeStagedConfigPaths[child] {
+			if err := stageNativeRoleConfigDirectory(
+				filepath.Join(source, name),
+				filepath.Join(target, name),
+				child,
+			); err != nil {
+				return err
+			}
 			continue
 		}
 		if err := os.Symlink(
-			filepath.Join(source, entry.Name()),
-			filepath.Join(target, entry.Name()),
+			filepath.Join(source, name),
+			filepath.Join(target, name),
 		); err != nil {
-			return fmt.Errorf("link native config entry %s: %w", entry.Name(), err)
+			return fmt.Errorf("link native config entry %s: %w", name, err)
 		}
 	}
 	return nil

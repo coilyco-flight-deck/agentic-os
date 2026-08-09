@@ -336,15 +336,15 @@ func discoverAuthProjection(
 	if layout == "codex" {
 		return discoverCodexAuthProjection(ctx, readKeyring)
 	}
+	if layout == "claude" {
+		return discoverClaudeAuthProjection(ctx, readClaudeKeyringSecret)
+	}
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return authProjection{}, nil
 	}
 	var source, target string
 	switch layout {
-	case "claude":
-		source = filepath.Join(home, ".claude", ".credentials.json")
-		target = containerAuthRoot + "/claude.json"
 	case "goose":
 		source = filepath.Join(home, ".config", "goose", "config.yaml")
 		target = containerAuthRoot + "/goose.yaml"
@@ -356,6 +356,112 @@ func discoverAuthProjection(
 		return authProjection{}, nil
 	}
 	return authProjection{Mounts: []authMount{{HostPath: source, ContainerPath: target}}}, nil
+}
+
+// claudeKeyringReader isolates the platform keyring so the discovery order is
+// testable without a real Keychain.
+type claudeKeyringReader func(ctx context.Context, service, account string) ([]byte, error)
+
+func readClaudeKeyringSecret(ctx context.Context, service, account string) ([]byte, error) {
+	return readClaudeKeyring(ctx, service, account)
+}
+
+// claudeEnvironmentAuthPresent mirrors the Codex path: a credential already in
+// the environment crosses by name, so no file needs projecting.
+func claudeEnvironmentAuthPresent() bool {
+	for _, key := range []string{
+		"ANTHROPIC_API_KEY",
+		"ANTHROPIC_AUTH_TOKEN",
+		"CLAUDE_CODE_OAUTH_TOKEN",
+	} {
+		if value, ok := os.LookupEnv(key); ok && strings.TrimSpace(value) != "" {
+			return true
+		}
+	}
+	return false
+}
+
+// discoverClaudeAuthProjection stages the host login for a container. Claude
+// Code keeps it in the Keychain on macOS, so a missing file is not an absence.
+func discoverClaudeAuthProjection(
+	ctx context.Context,
+	readKeyring claudeKeyringReader,
+) (authProjection, error) {
+	if claudeEnvironmentAuthPresent() {
+		return authProjection{}, nil
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return authProjection{}, fmt.Errorf("claude auth: resolve host home: %w", err)
+	}
+	source := filepath.Join(home, ".claude", ".credentials.json")
+	info, err := os.Stat(source)
+	if err == nil {
+		if !info.Mode().IsRegular() {
+			return authProjection{}, fmt.Errorf(
+				"claude auth: unsupported credential source at %s: want a regular .credentials.json file",
+				source,
+			)
+		}
+		return authProjection{Mounts: []authMount{{
+			HostPath: source, ContainerPath: containerAuthRoot + "/claude.json",
+		}}}, nil
+	}
+	if !os.IsNotExist(err) {
+		return authProjection{}, fmt.Errorf("claude auth: credentials at %s are unreadable: %w", source, err)
+	}
+
+	service := nativeClaudeKeychainService(home, os.Getenv("CLAUDE_CONFIG_DIR"))
+	payload, keyringErr := readKeyring(ctx, service, nativeClaudeKeychainAccount())
+	if keyringErr == nil {
+		if !json.Valid(payload) {
+			return authProjection{}, fmt.Errorf(
+				"claude auth: macOS Keychain credential for service %s is not valid JSON",
+				service,
+			)
+		}
+		return writeTemporaryClaudeAuth(payload)
+	}
+	if errors.Is(keyringErr, errClaudeKeyringUnsupported) {
+		return authProjection{}, fmt.Errorf(
+			"claude auth: file-backed credentials not found at %s and host keyring projection is unsupported on this platform (use --auth=false for unauthenticated commands)",
+			source,
+		)
+	}
+	if !errors.Is(keyringErr, errClaudeKeyringNotFound) {
+		return authProjection{}, fmt.Errorf("claude auth: macOS Keychain credentials are unreadable: %w", keyringErr)
+	}
+	return authProjection{}, fmt.Errorf(
+		"claude auth: credentials were not found at %s or in the macOS Keychain under service %s; run `claude /login` on the host, export ANTHROPIC_API_KEY, or use --auth=false for unauthenticated commands",
+		source,
+		service,
+	)
+}
+
+func writeTemporaryClaudeAuth(payload []byte) (authProjection, error) {
+	directory, err := os.MkdirTemp("", "aos-claude-auth-")
+	if err != nil {
+		return authProjection{}, fmt.Errorf("claude auth: create private projection directory: %w", err)
+	}
+	cleanup := func() error { return os.RemoveAll(directory) }
+	fail := func(err error) (authProjection, error) {
+		_ = cleanup()
+		return authProjection{}, err
+	}
+	if err := os.Chmod(directory, 0o700); err != nil {
+		return fail(fmt.Errorf("claude auth: secure private projection directory: %w", err))
+	}
+	path := filepath.Join(directory, "claude.json")
+	if err := os.WriteFile(path, payload, 0o600); err != nil {
+		return fail(fmt.Errorf("claude auth: write private projection: %w", err))
+	}
+	if err := os.Chmod(path, 0o600); err != nil {
+		return fail(fmt.Errorf("claude auth: secure private projection: %w", err))
+	}
+	return authProjection{
+		Mounts:  []authMount{{HostPath: path, ContainerPath: containerAuthRoot + "/claude.json"}},
+		cleanup: cleanup,
+	}, nil
 }
 
 func discoverCodexAuthProjection(

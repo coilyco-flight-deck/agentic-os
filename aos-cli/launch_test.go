@@ -846,3 +846,87 @@ func writeTestKubeconfig(t *testing.T, path string) string {
 	}
 	return path
 }
+
+// Claude Code keeps its macOS login in the Keychain, so an absent credentials
+// file is not an absence and must never yield a container that starts logged out.
+func TestClaudeAuthProjectionStagesTheKeychainCredential(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("CLAUDE_CONFIG_DIR", "")
+	for _, key := range []string{"ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "CLAUDE_CODE_OAUTH_TOKEN"} {
+		t.Setenv(key, "")
+	}
+
+	secret := []byte(`{"claudeAiOauth":{"accessToken":"test"}}`)
+	projection, err := discoverClaudeAuthProjection(
+		context.Background(),
+		func(context.Context, string, string) ([]byte, error) { return secret, nil },
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer projection.Close()
+	if len(projection.Mounts) != 1 {
+		t.Fatalf("keychain credential did not produce one mount: %+v", projection.Mounts)
+	}
+	mount := projection.Mounts[0]
+	if mount.ContainerPath != containerAuthRoot+"/claude.json" {
+		t.Errorf("unexpected container path %q", mount.ContainerPath)
+	}
+	staged, err := os.ReadFile(mount.HostPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(staged) != string(secret) {
+		t.Errorf("staged payload = %q, want %q", staged, secret)
+	}
+	info, err := os.Stat(mount.HostPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if info.Mode().Perm() != 0o600 {
+		t.Errorf("staged credential mode = %v, want 0600", info.Mode().Perm())
+	}
+}
+
+// The reported failure was a container that composed, projected, and only then
+// said "Not logged in". Discovery fails closed instead.
+func TestClaudeAuthProjectionFailsClosedWithoutACredential(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("CLAUDE_CONFIG_DIR", "")
+	for _, key := range []string{"ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "CLAUDE_CODE_OAUTH_TOKEN"} {
+		t.Setenv(key, "")
+	}
+
+	_, err := discoverClaudeAuthProjection(
+		context.Background(),
+		func(context.Context, string, string) ([]byte, error) { return nil, errClaudeKeyringNotFound },
+	)
+	if err == nil {
+		t.Fatal("a missing Claude credential must fail before the container starts")
+	}
+	if !strings.Contains(err.Error(), "--auth=false") {
+		t.Errorf("diagnostic does not name the unauthenticated escape hatch: %v", err)
+	}
+}
+
+// An environment credential crosses by name, so no file needs projecting.
+func TestClaudeAuthProjectionDefersToTheEnvironment(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	t.Setenv("ANTHROPIC_API_KEY", "sk-test")
+
+	projection, err := discoverClaudeAuthProjection(
+		context.Background(),
+		func(context.Context, string, string) ([]byte, error) {
+			t.Fatal("environment credential must short-circuit the keyring read")
+			return nil, nil
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(projection.Mounts) != 0 {
+		t.Errorf("environment credential still projected a mount: %+v", projection.Mounts)
+	}
+}

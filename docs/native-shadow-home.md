@@ -2,8 +2,28 @@
 
 An assigned-role launch stages a shadow `HOME` under the session root. Every
 host entry becomes a symlink back to the real home, so credentials, caches, and
-tool config keep working. `.agents` and `.claude` are filtered rather than
-linked whole, and their `skills` directories stay empty for the composed role.
+tool config keep working.
+
+## Staged config directories
+
+`.agents`, `.claude`, `.codex`, and `.config` (plus its `goose` and `opencode`
+children) are staged rather than linked whole: each becomes a real directory
+whose entries are symlinks. Agent-compose projects the composed role into this
+home at the harness global load points, and a projection resolves symlinks, so
+a directory linked whole would write the host's copy instead of the session's.
+
+Inside those directories the projected load points are reserved, which means no
+host copy is linked over them: `.claude/CLAUDE.md`, `.codex/AGENTS.md`,
+`.config/goose/.goosehints`, `.config/opencode/AGENTS.md`, and the `skills`
+directories. Projection refuses foreign files, so a leftover host link there
+would fail the launch rather than be replaced. Reserving them is also what makes
+role scoping real: the host instructions file carries every role, and leaving it
+in place put all of them in context beside the one selected role.
+
+Staging changes where new writes land. An entry that already exists still
+resolves to the host through its symlink, but a file the session creates under a
+staged directory stays in the session. `~/.config` is the one worth knowing,
+since tools write there without being asked.
 
 ## The projects hole
 
