@@ -6,9 +6,12 @@ Autonomous triage can only run where a repo is explicitly opted in.
 ## Current containment
 
 - `burndown default=#false` is the fleet default.
-- `coilyco-bridge/agentic-os-kai` and `coilyco-bridge/agentic-os-hardware` are the only explicit burndown opt-ins.
-- `coilysiren/inbox`, `coilyco-flight-deck/infrastructure`, and `coilyco-bridge/deploy` stay off.
+- Opt-in is per repo and explicit. A small number of repos carry it, all of them unreachable for writes from the public Forgejo API.
 - Public repos stay available for normal issue reporting and human triage, but they do not inherit autonomous execution.
+
+The roster itself lives in Ward's actor-aware queue filter and the host-local
+`director.default-scope`, which are the surfaces that decide admission. This doc
+records the policy, not the list.
 
 ## Rollout order
 
@@ -19,15 +22,12 @@ Autonomous triage can only run where a repo is explicitly opted in.
 4. Fail closed when the setting is missing or unknown.
 5. Re-enable an external tracker only after Ward provenance checks and snapshot tests pass.
 
-## Current inventory
+## Admission rule
 
-- `coilyco-bridge/agentic-os-kai` - not externally writable from the public Forgejo API, enabled explicitly.
-- `coilyco-bridge/agentic-os-hardware` - not externally writable from the public Forgejo API, enabled explicitly.
-- `coilysiren/inbox` - externally writable, denied.
-- `coilyco-flight-deck/infrastructure` - externally writable, denied.
-- `coilyco-bridge/deploy` - not externally writable from the public Forgejo API, denied.
-- `coilyco-flight-deck/agentic-os` - externally writable, denied.
-- `coilysiren/coilysiren` - externally writable, denied.
+- Externally writable from the public Forgejo API - denied, no exceptions, whoever owns the repo.
+- Not externally writable - eligible for an explicit opt-in, and denied until it has one.
+- Unreachable from the public API is necessary but not sufficient. Repos in that state are still denied by default, because containment tracks the trust of the issue actor rather than the reachability of the repo.
+- Neither state is inherited. A repo that changes writability keeps its current admission until the opt-in is revisited deliberately.
 
 ## Acceptance trail
 
