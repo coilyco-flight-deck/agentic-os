@@ -268,7 +268,9 @@ When a change adds, removes, or materially reshapes a feature, update that repo'
 
 ### Comment the surprise, not the diff
 
-An inline comment earns its place by carrying what the code cannot say - a non-obvious constraint, a rejected alternative, a reason the shape looks wrong. It never narrates the change that introduced it. A one-line edit takes zero or one line of comment, and restating the line above, summarizing the commit, or parking the session's reasoning in a comment block is noise that goes stale on the next edit. Match the comment density of the surrounding code rather than raising it. Durable explanation belongs in `docs/*.md` behind a short pointer from the code. The `code-comments` hook enforces the mechanical shape in catalog repos (caps in [docs/catalog-caps-reference.md](docs/catalog-caps-reference.md)), but the discipline is upstream of the hook and binds every repo an agent touches, hooked or not.
+Route explanation by readership. Kai reads a `docs/` page top to bottom most times she opens one, and a given code comment close to never. Agents have been writing as if the reverse held: paragraphs of comment stapled to one-line changes, at a volume that is not thoroughness but landfill burying the one line a reader needed. Cutting comment volume is the point here, not a side effect. Send the explanation to a docs page and leave a short pointer in the code.
+
+What survives inline is what the code cannot say - a non-obvious constraint, a rejected alternative, a reason the shape looks wrong. A comment never narrates the change that introduced it. A one-line edit takes zero or one line of comment, and restating the line above, summarizing the commit, or parking session reasoning in a block goes stale on the next edit. Match the comment density of the surrounding code rather than raising it. The `code-comments` hook enforces shape in catalog repos (caps in [docs/catalog-caps-reference.md](docs/catalog-caps-reference.md)) but cannot see change size, so this binds every repo an agent touches, hooked or not.
 
 ### No auto-memory
 
