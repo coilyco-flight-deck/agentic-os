@@ -15,10 +15,31 @@ text hygiene that are too disruptive to flip on everywhere at once.
 - `check-json`
 - `check-toml`
 - `actionlint` on `.forgejo/workflows/*.yml` and `.yaml`. `.github/actionlint.yaml` teaches it the Forgejo runner label `docker`
-- `actions-run-one-line` rejects block, folded, escaped-newline, and physically split `run:` commands in GitHub and Forgejo workflows plus composite actions. A tracked script or `ward exec` verb owns the implementation while YAML invokes it from one line
+- `actions-run-one-line` rejects block, folded, escaped-newline, and physically split `run:` commands in GitHub and Forgejo workflows plus composite actions, and rejects a program body inlined into one line. A tracked script, composite action, or `ward exec` verb owns the implementation while YAML invokes it from one line. See [one line, and no inlined body](#one-line-and-no-inlined-body)
 - `forgejo-runner-validate` for Forgejo-native workflow and local-action semantics
 - `shellcheck` on shell scripts
 - `typos` with repo-specific words in [`.typos.toml`](../.typos.toml)
+
+## One line, and no inlined body
+
+The one-line half alone is satisfiable by escaping a whole program into a
+single string, cheaper than creating a file, so agents reach for it: 24
+workflows in `coilyco-bridge/deploy` and 12 steps here landed one ~50-line
+Python program as `python3 -c 'exec("import os\n...")'`, unreadable by `ruff`,
+`shellcheck`, review, and `git diff`. Unshareable too, so one copy had drifted.
+
+So the hook checks both halves. A `run:` fails when it:
+
+- passes an inline source string to `python`, `node`, `ruby`, `perl`, or a shell
+  through `-c`, `-e`, `-E`, `-p`, `--eval`, `--exec`, or `--print`, and that
+  string carries an escaped newline or runs past `MAX_INLINE_BODY_CHARS` in
+  [`check_actions_run_one_line.py`](../agentic_os/pre_commit/check_actions_run_one_line.py)
+- opens a heredoc
+
+A short direct one-liner still passes: the bar is "names a file to execute, or
+is a short direct command," not "contains a program." Move the body to a tracked
+script or a composite action under `actions/`, pass inputs through `env:` or
+`with:`, and leave the step as the call.
 
 ## Manual opt-ins
 

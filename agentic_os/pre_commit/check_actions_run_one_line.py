@@ -2,16 +2,19 @@
 """Keep GitHub and Forgejo Actions workflow YAML orchestration-only.
 
 Every Actions step ``run`` value must be a scalar written on one physical YAML
-line and must decode without embedded newlines. Script bodies belong in tracked
-language-native files where ordinary linters and tests can exercise them.
+line, must decode without embedded newlines, and must not carry a program body
+inline. Script bodies belong in tracked language-native files where ordinary
+linters and tests can exercise them. See docs/pre-commit-hygiene.md.
 """
 
 from __future__ import annotations
 
+import re
+import shlex
 import subprocess
 import sys
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Iterator
 
 import yaml
@@ -23,6 +26,20 @@ WORKFLOW_DIRS = {".github", ".forgejo"}
 ACTION_FILENAMES = {"action.yml", "action.yaml"}
 YAML_SUFFIXES = {".yml", ".yaml"}
 SKIP_DIR_NAMES = {".git", ".mypy_cache", ".venv", "__pycache__", "node_modules"}
+
+# Why a length bar and not just the one-line rule: docs/pre-commit-hygiene.md.
+MAX_INLINE_BODY_CHARS = 100
+INLINE_SOURCE_FLAGS = {"-c", "-e", "-E", "-p", "--eval", "--exec", "--print"}
+INTERPRETER_PATTERN = re.compile(
+    r"^(python|node|nodejs|ruby|perl|bash|sh|zsh|dash|ksh)[0-9.]*$"
+)
+ESCAPED_NEWLINE_PATTERN = re.compile(r"\\+n")
+# `<<<` is a herestring, which carries a word rather than a body.
+HEREDOC_PATTERN = re.compile(r"(?<!<)<<-?\s*(?![<\s])(['\"]?)([A-Za-z_][A-Za-z0-9_]*)\1")
+INLINE_FALLBACK_PATTERN = re.compile(
+    r"(?:^|[\s;|&(])(?P<name>[\w./+-]+)\s+"
+    r"(?P<flag>-c|-e|-E|-p|--eval|--exec|--print)\s+(?P<body>\S.*)$"
+)
 
 
 @dataclass(frozen=True)
@@ -86,6 +103,54 @@ def _step_run_nodes(root: Node) -> Iterator[Node]:
     yield from walk(root)
 
 
+def _is_interpreter(token: str) -> bool:
+    return bool(INTERPRETER_PATTERN.match(PurePosixPath(token).name))
+
+
+def _strip_quotes(body: str) -> str:
+    if len(body) >= 2 and body[0] == body[-1] and body[0] in {"'", '"'}:
+        return body[1:-1]
+    return body
+
+
+def _inline_program_bodies(command: str) -> Iterator[tuple[str, str, str]]:
+    """Yield ``(interpreter, flag, body)`` for every inline-source invocation."""
+    try:
+        tokens = shlex.split(command)
+    except ValueError:
+        # Unbalanced quoting the shell would reject too. Fall back to reading
+        # the tail of the line as the body rather than skipping the check.
+        match = INLINE_FALLBACK_PATTERN.search(command)
+        if match and _is_interpreter(match.group("name")):
+            yield (
+                match.group("name"),
+                match.group("flag"),
+                _strip_quotes(match.group("body")),
+            )
+        return
+    for index in range(len(tokens) - 2):
+        if _is_interpreter(tokens[index]) and tokens[index + 1] in INLINE_SOURCE_FLAGS:
+            yield tokens[index], tokens[index + 1], tokens[index + 2]
+
+
+def _inline_body_reason(command: str) -> str | None:
+    """Why ``command`` carries a program body rather than invoking one."""
+    for name, flag, body in _inline_program_bodies(command):
+        if ESCAPED_NEWLINE_PATTERN.search(body):
+            return (
+                f"Actions step run inlines a multi-line program body "
+                f"through `{name} {flag}`."
+            )
+        if len(body) > MAX_INLINE_BODY_CHARS:
+            return (
+                f"Actions step run inlines a {len(body)}-character program body "
+                f"through `{name} {flag}` (max {MAX_INLINE_BODY_CHARS})."
+            )
+    if HEREDOC_PATTERN.search(command):
+        return "Actions step run cannot open a heredoc body."
+    return None
+
+
 def _display_path(path: Path, root: Path) -> Path:
     try:
         return path.resolve().relative_to(root.resolve())
@@ -131,7 +196,10 @@ def check_file(path: Path, root: Path | None = None) -> list[Violation]:
             elif "\n" in run_node.value or "\r" in run_node.value:
                 reason = "Actions step run cannot decode to multiple lines."
             else:
-                continue
+                inline_reason = _inline_body_reason(run_node.value)
+                if inline_reason is None:
+                    continue
+                reason = inline_reason
             violations.append(Violation(display_path, line, column, reason))
     return violations
 
@@ -192,7 +260,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     for violation in violations:
         sys.stderr.write(f"FAIL: {violation.render()}\n")
-    sys.stderr.write(f"\n{len(violations)} multiline Actions run violation(s).\n")
+    sys.stderr.write(f"\n{len(violations)} Actions run shape violation(s).\n")
     return 1
 
 

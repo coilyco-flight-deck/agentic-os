@@ -97,7 +97,7 @@
 
 - id: actions-run-one-line
   name: Actions run steps stay one line
-  description: "Reject multiline run commands in GitHub and Forgejo workflows and composite actions. Move script bodies into tracked language-native files. See docs/pre-commit-hygiene.md."
+  description: "Reject multiline run commands, and program bodies inlined onto one line, in GitHub and Forgejo workflows and composite actions. Move script bodies into tracked language-native files. See docs/pre-commit-hygiene.md."
   entry: check-actions-run-one-line
   language: python
   additional_dependencies: [pyyaml]

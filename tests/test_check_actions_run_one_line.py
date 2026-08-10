@@ -86,6 +86,79 @@ def test_escaped_newline_fails(tmp_path: Path) -> None:
     assert "cannot decode to multiple lines" in violations[0].reason
 
 
+def run_step(command: str) -> str:
+    """One step whose ``run`` decodes to ``command`` verbatim.
+
+    Single-quoted YAML processes no escapes, so a backslash in the command
+    reaches the checker as the shell would see it.
+    """
+    quoted = command.replace("'", "''")
+    return f"      - run: '{quoted}'\n"
+
+
+def test_inlined_python_program_fails(tmp_path: Path) -> None:
+    body = r"import os\nimport sys\nprint(os.environ, file=sys.stderr)"
+    path = write(
+        tmp_path / ".forgejo/workflows/test.yml",
+        workflow(run_step(f'python3 -c \'exec("{body}")\'')),
+    )
+    violations = check.check_file(path, tmp_path)
+    assert len(violations) == 1
+    assert "inlines a multi-line program body" in violations[0].reason
+
+
+def test_long_inlined_body_fails(tmp_path: Path) -> None:
+    body = "; ".join(f"value_{index} = {index}" for index in range(12))
+    assert len(body) > check.MAX_INLINE_BODY_CHARS
+    path = write(
+        tmp_path / ".github/workflows/test.yml",
+        workflow(run_step(f"python3 -c '{body}'")),
+    )
+    violations = check.check_file(path, tmp_path)
+    assert len(violations) == 1
+    assert f"(max {check.MAX_INLINE_BODY_CHARS})" in violations[0].reason
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "python3 -c 'import sys; print(sys.version_info[0])'",
+        "node -e 'console.log(process.version)'",
+        "ruby -e 'puts 1'",
+        'python3 "$GITHUB_WORKSPACE/scripts/ci/alert-telegram.py"',
+        r"printf 'first\nsecond\n' > /tmp/values",
+        "echo hello <<< world",
+        "echo $(( 1 << 3 ))",
+    ],
+)
+def test_short_or_file_invoking_commands_pass(tmp_path: Path, command: str) -> None:
+    path = write(
+        tmp_path / ".forgejo/workflows/test.yml",
+        workflow(run_step(command)),
+    )
+    assert check.check_file(path, tmp_path) == []
+
+
+def test_single_line_heredoc_fails(tmp_path: Path) -> None:
+    path = write(
+        tmp_path / ".forgejo/workflows/test.yml",
+        workflow(run_step("cat > /tmp/config <<EOF setting = 1 EOF")),
+    )
+    violations = check.check_file(path, tmp_path)
+    assert len(violations) == 1
+    assert "cannot open a heredoc body" in violations[0].reason
+
+
+def test_unbalanced_quoting_still_reports_the_inline_body(tmp_path: Path) -> None:
+    path = write(
+        tmp_path / ".github/workflows/test.yml",
+        workflow(run_step(r"""python3 -c "print('a')\nprint('b')""")),
+    )
+    violations = check.check_file(path, tmp_path)
+    assert len(violations) == 1
+    assert "inlines a multi-line program body" in violations[0].reason
+
+
 def test_nested_input_named_run_is_not_a_step_command(tmp_path: Path) -> None:
     path = write(
         tmp_path / "action.yaml",
