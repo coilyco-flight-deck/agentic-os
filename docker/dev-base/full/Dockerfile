@@ -117,7 +117,15 @@ COPY --from=dev-base-tool-builder /usr/local/bin/aosguard /usr/local/bin/aosguar
 COPY --from=dev-base-tool-builder /opt/agentic-os/aosguard-skill /opt/agentic-os/aosguard-skill
 # aos#771: the system interpreter carries the operator modules. A global
 # PYTHONPATH would also reach every isolated venv and void a pinned hook rev.
-COPY --from=aosguard-python . /usr/lib/python3/dist-packages/agentic_os/
+COPY --from=aosguard-python . /tmp/agentic-os-python/agentic_os/
+# Ask site where this interpreter looks rather than hardcoding a distribution
+# path, then prove the import in the same layer.
+RUN set -eux; \
+    site="$(python3 -c 'import site; print(site.getsitepackages()[0])')"; \
+    mkdir -p "${site}"; \
+    mv /tmp/agentic-os-python/agentic_os "${site}/agentic_os"; \
+    rmdir /tmp/agentic-os-python; \
+    python3 -c 'import agentic_os; print(agentic_os.__file__)'
 RUN --mount=type=bind,source=verify-common.sh,target=/tmp/verify-common.sh \
     bash /tmp/verify-common.sh
 

@@ -26,10 +26,12 @@ python3 -m agentic_os.forgejo_actions_list --help >/dev/null
 isolated_dir="$(mktemp -d)"
 trap 'rm -rf "$roster_dir" "$isolated_dir"' EXIT
 python3 -m venv --without-pip "$isolated_dir/venv"
-sentinel_site="$(
-  "$isolated_dir/venv/bin/python" -c \
-    'import sysconfig; print(sysconfig.get_paths()["purelib"])'
-)"
+# Glob the venv's own layout. sysconfig's default scheme is distribution
+# patched, and a wrong answer here would write the sentinel into the image.
+for candidate in "$isolated_dir"/venv/lib/python*/site-packages; do
+  sentinel_site="$candidate"
+done
+test -d "$sentinel_site"
 mkdir -p "$sentinel_site/agentic_os"
 printf 'SENTINEL = "isolated"\n' >"$sentinel_site/agentic_os/__init__.py"
 test "$(
