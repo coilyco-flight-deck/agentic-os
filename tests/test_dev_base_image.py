@@ -105,6 +105,10 @@ def test_common_verification_covers_the_composed_runtime_surface() -> None:
         "WARD_DOCTOR_ALLOW_PLACEHOLDERS=1 ward doctor",
     ):
         assert command in text
+    # aos#771: the isolated-import proof is the only thing standing between a
+    # pinned hook rev and the image copy, so it may not quietly disappear.
+    assert 'printf \'SENTINEL = "isolated"\\n\'' in text
+    assert "import agentic_os; print(agentic_os.SENTINEL)" in text
     assert "test -s /opt/agentic-os/aosguard-skill/aosguard/SKILL.md" in text
     assert "references/commands.yaml" in text
 

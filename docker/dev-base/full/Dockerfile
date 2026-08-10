@@ -88,8 +88,7 @@ ENV PATH=/usr/local/go/bin:/usr/local/dotnet:/usr/local/node/bin:/usr/local/carg
     UV_PYTHON_INSTALL_DIR=/opt/uv/python AWS_DEFAULT_REGION=us-east-1 \
     AWS_REGION=us-east-1 DOTNET_ROOT=/usr/local/dotnet \
     DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 \
-    AOS_GIT_NAME=coilyco-ops AOS_GIT_EMAIL=coilyco-ops@coilysiren.me \
-    PYTHONPATH=/opt/agentic-os/python
+    AOS_GIT_NAME=coilyco-ops AOS_GIT_EMAIL=coilyco-ops@coilysiren.me
 LABEL org.opencontainers.image.source="https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os" \
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.title="agentic-os full"
@@ -116,7 +115,9 @@ COPY --from=dev-base-tool-builder /usr/local/bin/ward /usr/local/bin/ward
 COPY --from=dev-base-tool-builder /usr/local/bin/aos /usr/local/bin/aos
 COPY --from=dev-base-tool-builder /usr/local/bin/aosguard /usr/local/bin/aosguard
 COPY --from=dev-base-tool-builder /opt/agentic-os/aosguard-skill /opt/agentic-os/aosguard-skill
-COPY --from=aosguard-python . /opt/agentic-os/python/agentic_os/
+# aos#771: the system interpreter carries the operator modules. A global
+# PYTHONPATH would also reach every isolated venv and void a pinned hook rev.
+COPY --from=aosguard-python . /usr/lib/python3/dist-packages/agentic_os/
 RUN --mount=type=bind,source=verify-common.sh,target=/tmp/verify-common.sh \
     bash /tmp/verify-common.sh
 

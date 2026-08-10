@@ -20,5 +20,21 @@ test -n "$(
 )"
 
 python3 -m agentic_os.forgejo_actions_list --help >/dev/null
+
+# aos#771: a pinned pre-commit hook must import its own agentic_os, not the
+# image copy. Proven by behavior, not by asserting PYTHONPATH is unset.
+isolated_dir="$(mktemp -d)"
+trap 'rm -rf "$roster_dir" "$isolated_dir"' EXIT
+python3 -m venv --without-pip "$isolated_dir/venv"
+sentinel_site="$(
+  "$isolated_dir/venv/bin/python" -c \
+    'import sysconfig; print(sysconfig.get_paths()["purelib"])'
+)"
+mkdir -p "$sentinel_site/agentic_os"
+printf 'SENTINEL = "isolated"\n' >"$sentinel_site/agentic_os/__init__.py"
+test "$(
+  "$isolated_dir/venv/bin/python" -c 'import agentic_os; print(agentic_os.SENTINEL)'
+)" = isolated
+
 ward --version
 CLIGUARD_NO_SANDBOX=1 WARD_DOCTOR_ALLOW_PLACEHOLDERS=1 ward doctor
