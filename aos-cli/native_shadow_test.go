@@ -230,6 +230,29 @@ func TestNativeLaunchCanStartAtSessionProjectsRoot(t *testing.T) {
 	}
 }
 
+func TestNativeLaunchExportsSessionMarkers(t *testing.T) {
+	root := t.TempDir()
+	repository, _ := createNativeTestRepository(t, root, "owner", "one")
+	runtime := nativeTestRuntime(t, root)
+	runtime.CWD = repository
+	writeNativeTestPlan(t, runtime.PlanFile, "one")
+	writeNativeTestList(t, runtime.FleetFile, "owner")
+	t.Setenv(nativeSessionEnv, "")
+	t.Setenv(nativeSessionProjectsEnv, "")
+
+	if _, err := prepareNativeLaunch(runtime, "claude"); err != nil {
+		t.Fatal(err)
+	}
+
+	_, lease := onlyNativeLease(t, runtime)
+	if got := os.Getenv(nativeSessionEnv); got != lease.ID {
+		t.Fatalf("session id = %s, want %s", got, lease.ID)
+	}
+	if got := os.Getenv(nativeSessionProjectsEnv); got != lease.SessionProjects {
+		t.Fatalf("session projects = %s, want %s", got, lease.SessionProjects)
+	}
+}
+
 func TestStageNativeRoleHomeFiltersUserSkills(t *testing.T) {
 	source := filepath.Join(t.TempDir(), "source")
 	target := filepath.Join(t.TempDir(), "target")

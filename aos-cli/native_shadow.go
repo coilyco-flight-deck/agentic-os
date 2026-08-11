@@ -33,6 +33,8 @@ const (
 	agentComposeModelClassEnv   = "AGENT_COMPOSE_MODEL_CLASS"
 	agentComposeRuntimeHomeEnv  = "AGENT_COMPOSE_RUNTIME_HOME"
 	claudeDisableAutoUpdaterEnv = "DISABLE_AUTOUPDATER"
+	nativeSessionEnv            = "AOS_NATIVE_SESSION"
+	nativeSessionProjectsEnv    = "AOS_NATIVE_SESSION_PROJECTS"
 )
 
 type nativeArtifact struct {
@@ -1173,6 +1175,14 @@ func createNativeSession(
 	}
 	if err := writeNativeJSON(nativeStatePath(runtime, "leases", id+".json"), lease); err != nil {
 		return nativeLaunchWorkspace{}, fmt.Errorf("write native lease: %w", err)
+	}
+	// A session with no linked worktree launches in the canonical checkout, so
+	// only this path may tell the agent it is isolated.
+	if err := os.Setenv(nativeSessionEnv, id); err != nil {
+		return nativeLaunchWorkspace{}, fmt.Errorf("set native session id: %w", err)
+	}
+	if err := os.Setenv(nativeSessionProjectsEnv, sessionProjects); err != nil {
+		return nativeLaunchWorkspace{}, fmt.Errorf("set native session projects: %w", err)
 	}
 	if sessionHome != "" {
 		if err := os.Setenv(agentComposeRuntimeHomeEnv, sessionHome); err != nil {

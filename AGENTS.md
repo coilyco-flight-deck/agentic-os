@@ -176,26 +176,28 @@ Unless told otherwise, "done" includes the obvious follow-through, not the first
 
 ### Native checkpoints must be remote
 
-A native host session writes into a long-lived checkout. Whenever an agent doing native work outside `warded` reaches a checkpoint with local repository changes, the agent **must commit the in-scope changes and push the commit to the canonical remote before pausing, reporting the checkpoint, switching tasks, or ending the turn**. A checkpoint includes a human decision wall, a blocked dependency, a handoff, a context boundary, and any point where the agent may not continue immediately.
+Whenever an agent doing native work outside `warded` reaches a checkpoint with local repository changes, the agent **must commit the in-scope changes and push the commit to the canonical remote before pausing, reporting the checkpoint, switching tasks, or ending the turn**. A checkpoint includes a human decision wall, a blocked dependency, a handoff, a context boundary, and any point where the agent may not continue immediately.
 
 If the resolved workflow allows the work to land, the agent pushes it to `main` as usual. If the work should not yet land on `main`, the agent creates or reuses a task-specific branch and pushes the checkpoint there. The remote branch is the recovery artifact. Uncommitted changes, local-only commits, stashes, reflogs, and a clean local worktree without a remote ref **do not count**. Test failures or incomplete follow-up may keep a checkpoint off `main`, but they never justify leaving the only copy local. Never force-push to satisfy this rule. If an ordinary push cannot succeed, the agent preserves the local state and reports the exact blocker as the current wall.
 
+### Native session shadow
+
+A native AOS launch runs the agent in a per-session shadow, not the canonical checkout. `AOS_NATIVE_SESSION` and `AOS_NATIVE_SESSION_PROJECTS` are set exactly when it exists, so the agent reads them rather than guessing. The shadow shares canonical Git objects, so a commit is durable at once while its working tree stays exposed to temporary-root purges, the mechanism behind the rule above. Placement and mechanics: [session shadow](docs/native-session-shadow.md).
+
 ### Foreign work requires a worktree
 
-Before the first mutation in any native checkout, the agent inspects the worktree, current branch, and local divergence. If the checkout contains work the agent did not create for the current task, the agent **must not edit, format, stage, stash, reset, switch branches, commit, or otherwise mutate that checkout**. The agent creates a separate task-specific branch and linked worktree from the appropriate clean canonical base, then performs all current-task work inside that worktree. The agent places the linked worktree inside the local operating system's resolved temporary directory, with a task-specific basename, rather than beside the canonical checkout or elsewhere in the project workspace. Pre-existing staged, unstaged, or untracked files, local commits, an in-progress Git operation, and a branch owned by another task all count as foreign work. Ambiguous ownership counts as foreign.
-
-The agent leaves the original checkout exactly as found. The agent never absorbs foreign changes into its commit or uses stash as a substitute for isolation. If the agent cannot create a separate worktree safely, the agent stops before any mutation and reports the exact blocker. The remote-checkpoint rule applies to the new worktree and its task branch.
+This rule governs a session with no native shadow. Before the first mutation in any native checkout, the agent inspects the worktree, current branch, and local divergence. If the checkout contains work the agent did not create for the current task, the agent **must not edit, format, stage, stash, reset, switch branches, commit, or otherwise mutate that checkout**. The agent instead takes a task-specific branch and linked worktree from a clean canonical base, leaves the original checkout exactly as found, and never absorbs foreign changes or substitutes stash for isolation. Pre-existing staged, unstaged, or untracked files, local commits, an in-progress Git operation, and a branch owned by another task all count as foreign, as does ambiguous ownership. If the agent cannot create that worktree safely, it stops before any mutation and reports the exact blocker.
 
 ### Unlisted repository clones stay temporary
 
 Before cloning a repository, the agent checks the host's expected-repositories
 list when that surface is configured. If the repository is not explicitly
-listed as one that belongs on disk, the agent clones it into the local
-operating system's resolved temporary directory with a task-specific basename,
-never under the persistent projects or workspace tree. The agent treats that
-clone as task-scoped and removes it when the work is complete and the
-remote-checkpoint requirements are satisfied. An absent or unreadable list
-does not authorize a persistent checkout.
+listed as one that belongs on disk, the agent clones it into the resolved
+temporary directory with a task-specific basename, never under the persistent
+projects or workspace tree. The agent treats that clone as task-scoped and
+removes it once the work is complete and remote-checkpoint requirements are
+satisfied. An absent or unreadable list does not authorize a persistent
+checkout.
 
 ### Human-only workdirs
 
