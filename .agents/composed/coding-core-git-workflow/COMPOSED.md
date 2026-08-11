@@ -10,7 +10,7 @@ Default across `~/projects/coilyco-*/*` and `~/projects/coilysiren/*`:
 <!-- TODO: a different ruleset for bridge -->
 
 - Follow the resolved workflow for the repo and run:
-- `direct-to-main` - commit to `main` directly, then push.
+- `merge-remote-main` - commit to `main` directly, then push. Ward's default lane.
 - `pull-request` - push a branch and open a human-gated Forgejo PR.
 - `pull-request-and-merge` - push a branch and mark the PR for the director merge lane.
 - `remote-branch-only` - push a branch and stop. No PR and no merge.
