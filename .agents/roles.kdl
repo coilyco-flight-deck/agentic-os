@@ -1,7 +1,6 @@
 roles {
     role engineer {
         composed-skill writing-system-improvement-vocab
-        composed-skill writing-public-repos
         composed-skill design-system
         composed-skill "coding-*"
     }
@@ -19,7 +18,6 @@ roles {
     }
 
     role qa {
-        composed-skill writing-public-repos
         composed-skill tooling-code-review
         composed-skill design-system
         composed-skill "tooling-qa-*"
