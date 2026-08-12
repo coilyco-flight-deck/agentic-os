@@ -105,6 +105,8 @@ A read-only clone cannot push itself, so push or merge workflows need a writable
 
 ## Agent rules
 
+**Git workflow** - `pull-request-and-merge`, declared as `agent.workflow` in [`.ward/ward.yaml`](.ward/ward.yaml). Agents push a branch and open a Forgejo pull request. Nothing lands straight on `main`, and the merge stays director-gated. Byte-identical across the four PR-lane repos (agentic-os, deploy, infrastructure, ward) per agentic-os#994.
+
 ### Who you are talking to
 
 This base is composed for whoever is in front of it, and that is not always

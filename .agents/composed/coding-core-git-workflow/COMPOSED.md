@@ -40,7 +40,7 @@ Use `git reset --hard <sha>` instead of cherry-pick only when nothing else has m
 ## Repo-specific exceptions
 
 - **ward** - auto-push only when session's primary cwd is ward. Not if started in a sibling and cd'd in. Check env block, not live cwd.
-- **infrastructure** - auto-commit/push code/CI. Confirm before SSM/kubectl/cloud writes. Never print decrypted SSM values. Reach for `ward` before raw aws/kubectl.
+- **infrastructure** - branch and PR, never direct push. Confirm before SSM/kubectl/cloud writes. Never print decrypted SSM values. Reach for `ward` before raw aws/kubectl.
 - **message-ops** - confirm before destructive social ops (archive, delete, block). Friends-list check before any archive pass.
 
 ## Deploy knowledge
