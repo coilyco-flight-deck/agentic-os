@@ -34,10 +34,15 @@ roles {
         composed-skill "coding-javascript*"
         composed-skill "tooling-pm-*"
         composed-skill "*design*"
+        composed-skill "personal-preference-*"
+        composed-skill "personal-preferences"
+        composed-skill "writing-*-voice"
     }
 
     role creator {
         composed-skill "writing-*"
+        composed-skill "personal-preference-*"
+        composed-skill "personal-preferences"
     }
 
     role ai {

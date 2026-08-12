@@ -24,6 +24,19 @@ categories:
     prefix: writing-
     enforce_status: false
 
+  # House taste promoted from agentic-os-kai. Org-owned, so it lives in the
+  # public catalogue. See docs/composed-house-taste.md.
+  - id: personal-preferences
+    kind: exact
+    exact: personal-preferences
+    role: router
+    enforce_status: false
+
+  - id: personal-preference
+    kind: prefix
+    prefix: personal-preference-
+    enforce_status: false
+
   - id: kai
     kind: prefix
     prefix: kai-
