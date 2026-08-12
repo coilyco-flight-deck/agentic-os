@@ -366,19 +366,34 @@ func readClaudeKeyringSecret(ctx context.Context, service, account string) ([]by
 	return readClaudeKeyring(ctx, service, account)
 }
 
-// claudeEnvironmentAuthPresent mirrors the Codex path: a credential already in
-// the environment crosses by name, so no file needs projecting.
-func claudeEnvironmentAuthPresent() bool {
-	for _, key := range []string{
+// Accepting a key and forwarding it are one decision. A key accepted but not
+// forwarded projects nothing, so the harness starts logged out.
+var (
+	claudeEnvironmentAuthKeys = []string{
 		"ANTHROPIC_API_KEY",
 		"ANTHROPIC_AUTH_TOKEN",
 		"CLAUDE_CODE_OAUTH_TOKEN",
-	} {
+	}
+	codexEnvironmentAuthKeys = []string{
+		"CODEX_API_KEY",
+		"CODEX_ACCESS_TOKEN",
+		"OPENAI_API_KEY",
+	}
+)
+
+func environmentAuthPresent(keys []string) bool {
+	for _, key := range keys {
 		if value, ok := os.LookupEnv(key); ok && strings.TrimSpace(value) != "" {
 			return true
 		}
 	}
 	return false
+}
+
+// claudeEnvironmentAuthPresent mirrors the Codex path: a credential already in
+// the environment crosses by name, so no file needs projecting.
+func claudeEnvironmentAuthPresent() bool {
+	return environmentAuthPresent(claudeEnvironmentAuthKeys)
 }
 
 // discoverClaudeAuthProjection stages the host login for a container. Claude
@@ -619,12 +634,7 @@ func supportedCodexAuthPayload(payload map[string]json.RawMessage) bool {
 }
 
 func codexEnvironmentAuthPresent() bool {
-	for _, key := range []string{"CODEX_API_KEY", "CODEX_ACCESS_TOKEN", "OPENAI_API_KEY"} {
-		if value, ok := os.LookupEnv(key); ok && strings.TrimSpace(value) != "" {
-			return true
-		}
-	}
-	return false
+	return environmentAuthPresent(codexEnvironmentAuthKeys)
 }
 
 func forwardedEnvironment(includeAuth bool) []string {
@@ -634,12 +644,8 @@ func forwardedEnvironment(includeAuth bool) []string {
 		"OLLAMA_HOST",
 	}
 	if includeAuth {
-		keys = append(keys,
-			"ANTHROPIC_API_KEY",
-			"CODEX_API_KEY",
-			"CODEX_ACCESS_TOKEN",
-			"OPENAI_API_KEY",
-		)
+		keys = append(keys, claudeEnvironmentAuthKeys...)
+		keys = append(keys, codexEnvironmentAuthKeys...)
 	}
 	var present []string
 	for _, key := range keys {

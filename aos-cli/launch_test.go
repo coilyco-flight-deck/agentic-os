@@ -283,6 +283,32 @@ func TestCodexEnvironmentAuthAndDisabledAuthForwarding(t *testing.T) {
 	}
 }
 
+// Reading both key sets rather than restating them keeps this an invariant: a
+// key added to either one has to cross the boundary or this fails.
+func TestEveryAcceptedEnvironmentCredentialCrossesTheBoundary(t *testing.T) {
+	accepted := append(
+		append([]string(nil), claudeEnvironmentAuthKeys...),
+		codexEnvironmentAuthKeys...,
+	)
+	for _, key := range accepted {
+		t.Setenv(key, "synthetic")
+	}
+
+	forwarded := forwardedEnvironment(true)
+	for _, key := range accepted {
+		if !containsArg(forwarded, key) {
+			t.Errorf("environment auth accepts %s but never forwards it: %v", key, forwarded)
+		}
+	}
+
+	unauthenticated := forwardedEnvironment(false)
+	for _, key := range accepted {
+		if containsArg(unauthenticated, key) {
+			t.Errorf("--auth=false forwarded credential %s: %v", key, unauthenticated)
+		}
+	}
+}
+
 func TestBuildLaunchPlanMountsCWDAndRunsInternalCompose(t *testing.T) {
 	t.Parallel()
 	cwd := filepath.Join(t.TempDir(), "my repo")
