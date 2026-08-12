@@ -40,6 +40,12 @@ Codex. The host HOME and credential store never mount into the container.
 Discovery and validation finish before AOS builds or executes the Docker launch.
 Dry-run output contains only the auth path and mount shape, never auth contents.
 
+A dry run starts no container, so it treats unusable credentials as a
+diagnostic rather than a wall. AOS reports the same message on stderr and still
+renders the plan, which then carries no auth mount because none was staged.
+Only a real launch fails closed. A caller that wants neither the projection nor
+the report passes `--auth=false`.
+
 ## Startup and inference proofs
 
 `--auth=false` remains available for deliberate unauthenticated commands and

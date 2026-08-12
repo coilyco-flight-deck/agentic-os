@@ -575,13 +575,18 @@ func TestIntegratedStandaloneDryRunMountsSafeHomeProjection(t *testing.T) {
 	}
 }
 
-func TestIntegratedStandaloneCodexAuthFailurePrecedesDockerPlan(t *testing.T) {
+func unusableCodexAuthHost(t *testing.T) {
+	t.Helper()
 	clearCodexAuthEnvironment(t)
 	codexHome := t.TempDir()
 	t.Setenv("CODEX_HOME", codexHome)
 	if err := os.Mkdir(filepath.Join(codexHome, "auth.json"), 0o700); err != nil {
 		t.Fatal(err)
 	}
+}
+
+func TestIntegratedStandaloneCodexAuthFailurePrecedesDockerLaunch(t *testing.T) {
+	unusableCodexAuthHost(t)
 	command := newCommand()
 	var output bytes.Buffer
 	command.Writer = &output
@@ -591,7 +596,6 @@ func TestIntegratedStandaloneCodexAuthFailurePrecedesDockerPlan(t *testing.T) {
 		"--agent", "codex",
 		"--role", "engineer",
 		"--image", "aos:test",
-		"--dry-run",
 		"--",
 		"exec", "probe",
 	})
@@ -599,7 +603,40 @@ func TestIntegratedStandaloneCodexAuthFailurePrecedesDockerPlan(t *testing.T) {
 		t.Fatalf("missing Codex auth error = %v", err)
 	}
 	if output.Len() != 0 {
-		t.Fatalf("missing Codex auth rendered a Docker plan:\n%s", output.String())
+		t.Fatalf("a real launch with missing Codex auth wrote output:\n%s", output.String())
+	}
+}
+
+// A dry run starts no container, so unusable credentials report and let the
+// plan render. Only a real launch treats them as a wall.
+func TestIntegratedStandaloneDryRunReportsUnusableAuthAndStillRendersPlan(t *testing.T) {
+	useStandaloneWorkspaceFixture(t)
+	unusableCodexAuthHost(t)
+	command := newCommand()
+	var plan bytes.Buffer
+	var diagnostics bytes.Buffer
+	command.Writer = &plan
+	command.ErrWriter = &diagnostics
+	err := command.Run(context.Background(), []string{
+		"aos",
+		"--agent", "codex",
+		"--role", "engineer",
+		"--image", "aos:test",
+		"--dry-run",
+		"--",
+		"exec", "probe",
+	})
+	if err != nil {
+		t.Fatalf("dry run failed on unusable auth: %v", err)
+	}
+	if !strings.Contains(diagnostics.String(), "unsupported credential source") {
+		t.Fatalf("dry run hid the credential diagnostic:\n%s", diagnostics.String())
+	}
+	if !strings.Contains(plan.String(), "docker run") {
+		t.Fatalf("dry run rendered no plan:\n%s", plan.String())
+	}
+	if strings.Contains(plan.String(), containerAuthRoot) {
+		t.Fatalf("dry run claimed an auth mount it never staged:\n%s", plan.String())
 	}
 }
 

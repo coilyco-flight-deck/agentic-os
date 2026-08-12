@@ -37,6 +37,10 @@ Discovery now fails before Docker starts and names the three ways forward: run
 `claude /login` on the host, export `ANTHROPIC_API_KEY`, or pass `--auth=false`
 for unauthenticated commands.
 
+A dry run starts no container, so it reports the same message on stderr and
+still renders the plan, matching
+[aos-codex-auth.md](aos-codex-auth.md#container-staging).
+
 ## See also
 
 * [aos-codex-auth.md](aos-codex-auth.md) - the Codex credential path this mirrors.

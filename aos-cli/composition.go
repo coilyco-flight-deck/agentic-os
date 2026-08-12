@@ -245,7 +245,12 @@ func runStandaloneIntegratedLaunch(
 	uid, gid := hostIdentity()
 	auth, err := authForLaunch(ctx, opts.Auth, opts.Agent)
 	if err != nil {
-		return err
+		if !opts.DryRun {
+			return err
+		}
+		// A dry run starts nothing, so an unusable credential is a diagnostic
+		// rather than a wall. The rendered plan carries no auth mount.
+		fmt.Fprintf(cmd.Root().ErrWriter, "aos: %v; plan omits auth mounts\n", err)
 	}
 	defer func() {
 		returnErr = errors.Join(returnErr, auth.Close())
