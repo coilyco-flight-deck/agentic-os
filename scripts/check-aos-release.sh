@@ -161,6 +161,7 @@ if [ -n "$native_aos" ]; then
         printf '%s\n' "$aoscompose_default_plan" | grep -F -- "-- $engineer_agent" >/dev/null
         aoscompose_director_plan=$("$native_aoscompose" \
             --image agentic-os:test \
+            --auth=false \
             --dry-run \
             director)
         printf '%s\n' "$aoscompose_director_plan" | grep -F -- "--role director" >/dev/null
