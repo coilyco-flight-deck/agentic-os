@@ -156,7 +156,7 @@ def test_agent_cli_ignores_old_aos_without_native_shadow(tmp_path: Path) -> None
     assert result.stdout == "<compose>\n<-->\n<claude>\n<one>\n"
 
 
-def test_explicit_non_director_role_uses_native_shadow(tmp_path: Path) -> None:
+def test_explicit_role_uses_native_shadow(tmp_path: Path) -> None:
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     _write_executable(
@@ -196,12 +196,15 @@ printf "<%s>\\n" "$@"
     )
 
 
-def test_explicit_director_role_uses_warded_aos(tmp_path: Path) -> None:
+def test_explicit_director_role_uses_native_shadow(tmp_path: Path) -> None:
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     _write_executable(
         bin_dir / "aos",
-        '#!/bin/sh\nprintf "<%s>\\n" "$@"\n',
+        """#!/bin/sh
+if [ "$1" = "_native-shadow" ] && [ "$2" = "--probe" ]; then exit 0; fi
+printf "<%s>\\n" "$@"
+""",
     )
     _write_executable(bin_dir / "ward", "#!/bin/sh\nexit 0\n")
     _write_executable(
@@ -220,14 +223,15 @@ def test_explicit_director_role_uses_warded_aos(tmp_path: Path) -> None:
 
     assert result.returncode == 0, result.stderr
     assert result.stdout == (
-        "<--agent>\n"
+        "<_native-shadow>\n"
+        "<--harness>\n"
         "<codex>\n"
-        "<--role>\n"
-        "<director>\n"
-        "<--warded>\n"
-        "<--composed>\n"
-        "<--guarded>\n"
+        "<--assigned-role>\n"
         "<-->\n"
+        "<agent-compose>\n"
+        "<launch>\n"
+        "<director>\n"
+        "<codex>\n"
         "<--repo>\n"
         "<owner/repo>\n"
     )
