@@ -145,7 +145,7 @@ func buildLaunchPlan(opts launchOptions) (launchPlan, error) {
 	if opts.HostNetwork && opts.TailnetNetwork != "" {
 		return launchPlan{}, fmt.Errorf("host networking conflicts with Docker network %q", opts.TailnetNetwork)
 	}
-	kubeconfig, err := resolveKubeconfigMount(opts.Role, opts.Kubeconfig)
+	kubeconfig, err := resolveKubeconfigMount(opts.Kubeconfig)
 	if err != nil {
 		return launchPlan{}, err
 	}

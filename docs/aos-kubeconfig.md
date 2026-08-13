@@ -1,5 +1,5 @@
 ---
-doc_goal: Define role-gated host kubeconfig projection for standalone AOS containers.
+doc_goal: Define host kubeconfig projection for standalone AOS containers.
 ---
 # AOS kubeconfig projection
 
@@ -21,12 +21,12 @@ starts.
 
 ## Role boundary
 
-Standalone `director` and `ops` roles may receive the selected kubeconfig.
-Other roles cause no source inspection, mount, or `KUBECONFIG` environment
-projection. In particular, sealed `engineer` and `qa` launches receive no live
-cluster credentials even when a source was supplied.
+Every standalone role may receive the selected kubeconfig. The explicit
+`--kubeconfig` flag is the only gate, so a launch either projects the source it
+was handed or fails loudly on a missing, malformed, or irregular file. No role
+slug narrows that, `engineer` and `qa` included.
 
-This allowlist belongs to the standalone AOS runtime. It does not transfer a
+The mount belongs to the standalone AOS runtime. It does not transfer a
 permission into Ward, agent-compose, or AOSguard merely because those layers
 use the same role slug.
 

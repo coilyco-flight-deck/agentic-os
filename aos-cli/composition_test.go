@@ -111,6 +111,12 @@ func TestValidateIntegratedLaunchMatrix(t *testing.T) {
 		{
 			Image: "aos:test", Role: "director", Agent: "goose",
 			Delivery: "compiled", Warded: true,
+			Arguments: []string{"supervise the queue"},
+		},
+		{
+			Image: "aos:test", Role: "engineer", Agent: "codex",
+			Delivery: "compiled", Warded: true, Composed: true,
+			AgentID: "engineer-one", Arguments: []string{"owner/repo#1"},
 		},
 		{
 			Image: "aos:test", Role: "qa", Agent: "opencode",
@@ -156,19 +162,11 @@ func TestValidateIntegratedLaunchMatrix(t *testing.T) {
 			want: "needs work text",
 		},
 		{
-			name: "fixed workflow agent id",
-			opts: integratedLaunchOptions{
-				Image: "aos:test", Role: "engineer", Agent: "codex", Warded: true,
-				AgentID: "engineer-one", Arguments: []string{"owner/repo#1"},
-			},
-			want: "only for generic warded roles",
-		},
-		{
 			name: "missing work",
 			opts: integratedLaunchOptions{
 				Image: "aos:test", Role: "engineer", Agent: "codex", Warded: true,
 			},
-			want: "needs an issue reference or freeform work",
+			want: "needs work text",
 		},
 		{
 			name: "authority translation override",
@@ -245,7 +243,7 @@ func TestBuildWardLaunchPlanOwnsSiblingTranslation(t *testing.T) {
 	}
 	got := strings.Join(append([]string{plan.Command}, plan.Args...), " ")
 	for _, want := range []string{
-		"ward agent engineer owner/repo#267 --print",
+		"ward agent run --role engineer owner/repo#267 --print",
 		"--agent codex",
 		"--image aos:test",
 		"--context-bundle /cache/context",
@@ -277,12 +275,14 @@ func TestIntegratedWardedDirectorCodexDryRunUsesOpaqueCompositionMetadata(t *tes
 		"--composed",
 		"--guarded",
 		"--dry-run",
+		"--",
+		"supervise the queue",
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
 	rendered := output.String()
-	for _, want := range []string{"ward agent director", "--agent codex", "--context-bundle '<AOS_CONTEXT_BUNDLE>'"} {
+	for _, want := range []string{"ward agent run --role director", "--agent codex", "--context-bundle '<AOS_CONTEXT_BUNDLE>'"} {
 		if !strings.Contains(rendered, want) {
 			t.Errorf("dry run missing %q:\n%s", want, rendered)
 		}
@@ -329,7 +329,7 @@ func TestIntegratedWardedDryRunStartsNoProcess(t *testing.T) {
 		"_container-context-bundle",
 		"--composed",
 		"--guarded",
-		"ward agent engineer",
+		"ward agent run --role engineer",
 		"--agent codex",
 		"--image aos:test",
 		"--context-bundle '<AOS_CONTEXT_BUNDLE>'",
@@ -692,6 +692,8 @@ func TestAOSWardInvocationAlwaysUsesWardAndBothContexts(t *testing.T) {
 		"--composed=false",
 		"--guarded=false",
 		"--dry-run",
+		"--",
+		"supervise the queue",
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -701,7 +703,7 @@ func TestAOSWardInvocationAlwaysUsesWardAndBothContexts(t *testing.T) {
 		"_container-context-bundle",
 		"--composed",
 		"--guarded",
-		"ward agent director",
+		"ward agent run --role director",
 		"--context-bundle '<AOS_CONTEXT_BUNDLE>'",
 	} {
 		if !strings.Contains(rendered, want) {

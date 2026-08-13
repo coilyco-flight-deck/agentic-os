@@ -152,16 +152,8 @@ func validateIntegratedLaunch(opts integratedLaunchOptions) error {
 				"--kubeconfig is available only for standalone launches because Ward owns warded runtime mounts",
 			)
 		}
-		if (opts.Role == "engineer" || opts.Role == "qa") && len(opts.Arguments) == 0 {
-			return fmt.Errorf("--warded %s needs an issue reference or freeform work", opts.Role)
-		}
-		if opts.Role != "director" && opts.Role != "engineer" && opts.Role != "qa" &&
-			len(opts.Arguments) == 0 {
+		if len(opts.Arguments) == 0 {
 			return fmt.Errorf("--warded role %s needs work text", opts.Role)
-		}
-		if opts.AgentID != "" &&
-			(opts.Role == "director" || opts.Role == "engineer" || opts.Role == "qa") {
-			return fmt.Errorf("--agent-id is available only for generic warded roles")
 		}
 		if forbidden := forbiddenWardArgument(opts.Arguments); forbidden != "" {
 			return fmt.Errorf(
@@ -417,12 +409,9 @@ func runWardedLaunch(
 }
 
 func buildWardLaunchPlan(opts integratedLaunchOptions, bundlePath string) (wardLaunchPlan, error) {
-	args := []string{"agent", opts.Role}
-	if opts.Role != "director" && opts.Role != "engineer" && opts.Role != "qa" {
-		args = []string{"agent", "run", "--role", opts.Role}
-		if opts.AgentID != "" {
-			args = append(args, "--agent-id", opts.AgentID)
-		}
+	args := []string{"agent", "run", "--role", opts.Role}
+	if opts.AgentID != "" {
+		args = append(args, "--agent-id", opts.AgentID)
 	}
 	args = append(args, opts.Arguments...)
 	args = append(args, "--agent", opts.Agent, "--image", opts.Image)

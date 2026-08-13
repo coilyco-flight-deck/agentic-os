@@ -19,15 +19,15 @@ ward agent run --role story-architect --agent-id architect \
 ```
 
 The selected harness, image, model environment, and immutable context bundle
-follow the same AOS-owned translation as fixed workflows.
+follow the same AOS-owned translation for every role.
 
 If a matching Ward director broker is already running for that repository and
 harness, the generic run joins its peer-message group automatically.
 
 The distinction is authority, not identity:
 
-* `director`, `qa`, and `engineer` retain their existing Ward workflows.
-* Every other safe role uses Ward's read-only one-shot lifecycle.
+* Every safe role uses Ward's read-only one-shot lifecycle, `director`, `qa`,
+  and `engineer` included.
 * A role slug selects composed context only. It cannot grant credentials,
   mounts, network access, or landing authority.
 

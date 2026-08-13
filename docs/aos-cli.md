@@ -31,7 +31,7 @@ Auth is default-on. Use `--auth=false` only for startup checks:
 aosward --agent codex --role engineer -- owner/repo#267
 ```
 
-Warded mode uses Ward's fixed workflows and generic broker for Compose, lifecycle, and [credential handoff](aos-ward-credentials.md).
+Warded mode uses Ward's generic runner and broker for Compose, lifecycle, and [credential handoff](aos-ward-credentials.md).
 
 ## Routing
 
@@ -57,7 +57,7 @@ incompatible agents and translated Ward flags before starting a container.
   file-backed or direct macOS Keychain credentials read-only, and preserves
   `--auth=false` for startup checks.
 * [Standalone connectivity](aos-standalone-connectivity.md) keeps host networking, MCP, and tailnet behavior.
-* [Role-gated kubeconfig projection](aos-kubeconfig.md) mounts one operator-selected source read-only for standalone director and ops.
+* [Kubeconfig projection](aos-kubeconfig.md) mounts one operator-selected source read-only for any standalone role.
 * With `--auth=true`, auth env names cross without rendered values.
 * Host HOME, AWS, Git, and Docker stay out. Credentials use auth projection only.
 

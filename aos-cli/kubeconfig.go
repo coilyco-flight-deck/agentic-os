@@ -33,17 +33,8 @@ type kubeconfigUserEntry struct {
 	User map[string]any `json:"user"`
 }
 
-func roleCanUseKubeconfig(role string) bool {
-	switch role {
-	case "director", "ops":
-		return true
-	default:
-		return false
-	}
-}
-
-func resolveKubeconfigMount(role, source string) (string, error) {
-	if source == "" || !roleCanUseKubeconfig(role) {
+func resolveKubeconfigMount(source string) (string, error) {
+	if source == "" {
 		return "", nil
 	}
 	path, err := filepath.Abs(source)

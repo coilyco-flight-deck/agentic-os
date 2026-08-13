@@ -677,7 +677,7 @@ func TestBuildLaunchPlanMountsKubeconfigWithTailnet(t *testing.T) {
 	}
 }
 
-func TestBuildLaunchPlanRejectsInvalidKubeconfigForAuthorizedRoles(t *testing.T) {
+func TestBuildLaunchPlanRejectsInvalidKubeconfig(t *testing.T) {
 	t.Parallel()
 	t.Run("missing", func(t *testing.T) {
 		t.Parallel()
@@ -739,13 +739,13 @@ func TestBuildLaunchPlanRejectsInvalidKubeconfigForAuthorizedRoles(t *testing.T)
 	})
 }
 
-func TestBuildLaunchPlanOmitsKubeconfigForSealedRoles(t *testing.T) {
+func TestBuildLaunchPlanMountsKubeconfigForEveryRole(t *testing.T) {
 	t.Parallel()
-	for _, role := range []string{"engineer", "qa"} {
+	for _, role := range []string{"director", "ops", "engineer", "qa", "design"} {
 		role := role
 		t.Run(role, func(t *testing.T) {
 			t.Parallel()
-			source := filepath.Join(t.TempDir(), "intentionally absent.yaml")
+			source := writeTestKubeconfig(t, filepath.Join(t.TempDir(), "config.yaml"))
 			plan, err := buildLaunchPlan(launchOptions{
 				Image: "agentic-os:test", Role: role, Layout: "codex",
 				Delivery: "native-skills", Composed: true, CWD: t.TempDir(),
@@ -756,8 +756,8 @@ func TestBuildLaunchPlanOmitsKubeconfigForSealedRoles(t *testing.T) {
 				t.Fatal(err)
 			}
 			joined := strings.Join(plan.DockerArgs, "\n")
-			if strings.Contains(joined, source) || strings.Contains(joined, "KUBECONFIG") {
-				t.Fatalf("%s launch received kubeconfig projection:\n%s", role, joined)
+			if !strings.Contains(joined, source) || !strings.Contains(joined, "KUBECONFIG") {
+				t.Fatalf("%s launch lost its kubeconfig projection:\n%s", role, joined)
 			}
 		})
 	}
