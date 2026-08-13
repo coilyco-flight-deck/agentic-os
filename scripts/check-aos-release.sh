@@ -139,10 +139,12 @@ if [ -n "$native_aos" ]; then
         --agent codex \
         --role director \
         --image agentic-os:test \
-        --dry-run)
+        --dry-run \
+        -- \
+        "aos release smoke")
     printf '%s\n' "$aosward_plan" | grep -F -- "--composed" >/dev/null
     printf '%s\n' "$aosward_plan" | grep -F -- "--guarded" >/dev/null
-    printf '%s\n' "$aosward_plan" | grep -F "ward agent director" >/dev/null
+    printf '%s\n' "$aosward_plan" | grep -F "ward agent run --role director" >/dev/null
     smoke_dir=$(mktemp -d)
     trap 'rm -rf "$smoke_dir"' EXIT HUP INT TERM
     # The launch profiles own which agent a role defaults to, so read the
