@@ -211,7 +211,6 @@ commands:
 
 agent:
   image: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os
-  release-channel: release
   workflow: pull-request-and-merge
 
 catalog:
