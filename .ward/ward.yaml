@@ -211,7 +211,6 @@ commands:
 
 agent:
   image: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os
-  workflow: pull-request-and-merge
 
 catalog:
   description: "Personal agentic OS: shell config, terminal config, GPG/SSM tooling, Claude skills, and shared utility scripts symlinked into sibling coilysiren/* repos. Growing beyond just dotfiles into broader personal-OS scope."

@@ -429,13 +429,27 @@ def caps_for(rel: Path) -> tuple[int, int]:
     return MAX_MARKDOWN_LINES, MAX_MARKDOWN_CHARS
 
 
+def strip_frontmatter(text: str) -> str:
+    """Drop a leading YAML frontmatter block.
+
+    The caps bound what a reader loads, and frontmatter is machine-read
+    config rather than prose, so it does not spend a doc's budget.
+    """
+    if not text.startswith("---\n"):
+        return text
+    end = text.find("\n---\n", 3)
+    if end == -1:
+        return text
+    return text[end + len("\n---\n") :]
+
+
 def check_markdown_sizes() -> list[str]:
     violations: list[str] = []
     for rel in markdown_files():
         if rel.name in SIZE_CAP_EXEMPT_BASENAMES:
             continue
         path = REPO_ROOT / rel
-        text = path.read_text(encoding="utf-8", errors="replace")
+        text = strip_frontmatter(path.read_text(encoding="utf-8", errors="replace"))
         n_lines = len(text.splitlines())
         n_chars = len(text)
         max_lines, max_chars = caps_for(rel)

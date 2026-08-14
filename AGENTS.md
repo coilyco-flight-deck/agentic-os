@@ -1,3 +1,7 @@
+---
+ward:
+  workflow: pull-request-and-merge
+---
 # Agent instructions
 
 This file carries the public-safe, universal conventions (pronouns, voice, name-the-actor, command delivery) composed into each supported agent harness's global context on public and work hosts. It also completes the symmetric trifecta (README / AGENTS / docs/FEATURES) and stays grep-discoverable.
@@ -105,7 +109,7 @@ A read-only clone cannot push itself, so push or merge workflows need a writable
 
 ## Agent rules
 
-**Git workflow** - `pull-request-and-merge`, declared as `agent.workflow` in [`.ward/ward.yaml`](.ward/ward.yaml). Agents push a branch and open a Forgejo pull request. Nothing lands straight on `main`, and the merge stays director-gated. Byte-identical across the five PR-lane repos (agentic-os, deploy, infrastructure, sirens-echo, ward) per agentic-os#994.
+**Git workflow** - `pull-request-and-merge`, declared as `ward.workflow` in this file's frontmatter. Agents push a branch and open a Forgejo pull request. Nothing lands straight on `main`, and the merge stays director-gated. Byte-identical across the five PR-lane repos (agentic-os, deploy, infrastructure, sirens-echo, ward) per agentic-os#994. Ward honors it only after ward#1661.
 
 ### Who you are talking to
 
