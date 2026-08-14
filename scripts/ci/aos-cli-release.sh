@@ -6,14 +6,14 @@ repo_root=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)
 
 validate() {
   bash "$repo_root/scripts/ci/repo-test-gate.sh"
-  ward exec aos-test
-  ward exec agent-terminal-test
+  just aos-test
+  just agent-terminal-test
 }
 
 build() {
-  ward exec aos-release-build
-  ward exec aos-release-package
-  ward exec aos-release-check
+  just aos-release-build
+  just aos-release-package
+  just aos-release-check
 }
 
 attach() {

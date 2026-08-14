@@ -42,9 +42,9 @@ jobs:
       - name: Repo test gate
         run: bash "$GITHUB_WORKSPACE/scripts/ci/repo-test-gate.sh"
       - name: Test the AOS CLI
-        run: scripts/run-workflow-ward.sh aos-test
+        run: just aos-test
       - name: Test the native terminal companion
-        run: scripts/run-workflow-ward.sh agent-terminal-test
+        run: just agent-terminal-test
       - name: Validate the supported Ward YAML contract
         run: CLIGUARD_NO_SANDBOX=1 ward doctor
 

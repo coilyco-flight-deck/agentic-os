@@ -61,10 +61,10 @@ non-doc references to `--audit-override-dirty` or the clean-tree gate here.
 
 ## Remaining migration
 
-Executable coupling to `ward exec` here is small - `scripts/run-workflow-ward.sh`,
-`scripts/ci/aos-cli-release.sh`, and the release workflow script asserted by
-`tests/test_aos_cli_release.py`. The rest of the ~97 mentions are prose:
-docstrings, error-message hints, and generated-file headers.
+CI no longer calls `ward exec`. `ci.yml` and `promote.yml` invoke `just`, and
+the two ward shims (`run-workflow-ward.sh`, `prepare-workflow-ward-pr.sh`) are
+deleted. Ward stays where it validates its YAML contract rather than runs
+tasks. What remains is prose: docstrings, hints, and generated headers.
 
 `.ward/ward.yaml` also carries `agent:` and `catalog:` blocks, which are
 metadata rather than task definitions and are destined for `.aos/aos.yaml`.
