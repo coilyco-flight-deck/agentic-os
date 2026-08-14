@@ -4,7 +4,7 @@ set -eu
 
 repo_root=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
 targets="$repo_root/aos-cli/release-targets.txt"
-. "$repo_root/aos-cli/release.env"
+specgen_lock="$repo_root/.specgen/guardfiles/specverb.lock"
 version=${AOS_RELEASE_VERSION:-$(
     git -C "$repo_root" describe --tags --exact-match --match 'aos-v*' 2>/dev/null ||
         git -C "$repo_root" rev-parse --short HEAD
@@ -43,7 +43,12 @@ verify_checksum() {
 download_specgen() {
     host_os=$(go env GOOS | tr -d '\r')
     host_arch=$(go env GOARCH | tr -d '\r')
-    specgen_version=$SPECGEN_VERSION
+    # The driver and the lock must agree on the framework version, so the lock
+    # is the only pin. A second one drifts and the older driver fails closed.
+    specgen_version=$(
+        sed -n 's/^[[:space:]]*"cliGuard":[[:space:]]*"v\{0,1\}\([0-9.]*\)".*/\1/p' \
+            "$specgen_lock"
+    )
     asset="specgen-${host_os}-${host_arch}"
     host_suffix=""
     if [ "$host_os" = "windows" ]; then
@@ -53,7 +58,7 @@ download_specgen() {
     specgen="$release_build/specgen${host_suffix}"
     base="https://forgejo.coilysiren.me/coilyco-flight-deck/umbra/releases/download/v${specgen_version}"
     if [ -z "$specgen_version" ]; then
-        echo "aos-cli/release.env does not pin specgen" >&2
+        echo "$specgen_lock does not pin cliGuard" >&2
         exit 1
     fi
     curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \

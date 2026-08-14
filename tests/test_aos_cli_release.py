@@ -128,3 +128,21 @@ def test_release_workflow_derives_assets_from_dist() -> None:
     assert "agent-compose" in release_check
     assert "--aoscompose-bin" in release_check
     assert "ops actions --help" in release_check
+
+
+def test_specgen_pin_is_owned_by_the_dependency_lock() -> None:
+    lock = json.loads(
+        (ROOT / ".specgen" / "guardfiles" / "specverb.lock").read_text(
+            encoding="utf-8"
+        )
+    )
+    pinned = lock["cliGuard"].removeprefix("v")
+    builder = (ROOT / "scripts" / "aos-release-build.sh").read_text(encoding="utf-8")
+    dockerfile = (ROOT / "docker" / "dev-base" / "full" / "Dockerfile").read_text(
+        encoding="utf-8"
+    )
+
+    assert not (ROOT / "aos-cli" / "release.env").exists()
+    assert '"cliGuard"' in builder
+    assert "SPECGEN_VERSION" not in builder
+    assert f"ARG SPECGEN_VERSION={pinned}\n" in dockerfile
