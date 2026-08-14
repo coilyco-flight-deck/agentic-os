@@ -48,7 +48,7 @@ if ! command -v "$specgen_bin" >/dev/null 2>&1; then
     specgen_path="$tmpdir/specgen"
   fi
 
-  base="https://forgejo.coilysiren.me/coilyco-flight-deck/cli-guard/releases/download/v${specgen_version}"
+  base="https://forgejo.coilysiren.me/coilyco-flight-deck/umbra/releases/download/v${specgen_version}"
   curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
     "${base}/${asset}" -o "$tmpdir/$asset"
   curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \

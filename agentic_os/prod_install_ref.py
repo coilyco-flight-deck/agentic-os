@@ -21,7 +21,7 @@ class Product:
 
 
 _GUARD = Product(
-    repository="cli-guard",
+    repository="umbra",
     tag_pattern=re.compile(r"^v(\d+\.\d+\.\d+)$"),
 )
 _WARD = Product(
@@ -34,7 +34,8 @@ _AOS = Product(
 )
 PRODUCTS = {
     "guard": _GUARD,
-    "cli-guard": _GUARD,
+    "umbra": _GUARD,
+    "cli-guard": _GUARD,  # retained alias
     "specgen": _GUARD,
     "ward": _WARD,
     "aos": _AOS,

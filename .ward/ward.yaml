@@ -87,7 +87,7 @@ commands:
     description: "Launch the selected agent in one standalone AOS container with composed context and the aosguard skill, then print the agent version."
   aosguard-lock:
     run: sh scripts/aosguard-lock.sh
-    description: "Refresh aosguard's vendored API snapshot and frozen cli-guard dependency graph with the packaged specgen driver. Pass specgen lock flags after `--`."
+    description: "Refresh aosguard's vendored API snapshot and frozen umbra dependency graph with the packaged specgen driver. Pass specgen lock flags after `--`."
   aosguard-build:
     run: specgen --project-root .specgen/guardfiles --skills-out dist/skills build --out dist/aosguard
     description: "Materialize the standalone aosguard operator CLI and native generated skill from the independent .specgen snapshot."
@@ -198,7 +198,7 @@ commands:
     description: "Fetch exact Forgejo 16 Actions log bytes: `ward exec forgejo-actions-logs -- <owner> <repo> <run> [job] [attempt] [--max-bytes N]`. Omit job for a whole-run ZIP. Visible run/job indexes, explicit `id:<n>`, and exact job names are supported. Needs FORGEJO_TOKEN."
   sync-actions-secrets:
     run: uv run python scripts/sync-actions-secrets.py
-    description: "Sync Forgejo Actions secrets (Telegram alert creds, release PATs, package-repository writers, and deploy's pin-reconciler pair) from their SSM sources of truth. Entries are keyed `owner/repo`, so the mapping spans orgs: aos + ward + cli-guard under coilyco-flight-deck, plus coilyco-bridge/deploy. Values flow SSM -> Forgejo API in-process, never disk or argv. An attended operator supplies `FORGEJO_ADMIN_TOKEN`; `-- --dry-run` previews the mapping. See docs/release.md."
+    description: "Sync Forgejo Actions secrets (Telegram alert creds, release PATs, package-repository writers, and deploy's pin-reconciler pair) from their SSM sources of truth. Entries are keyed `owner/repo`, so the mapping spans orgs: aos + ward + umbra under coilyco-flight-deck, plus coilyco-bridge/deploy. Values flow SSM -> Forgejo API in-process, never disk or argv. An attended operator supplies `FORGEJO_ADMIN_TOKEN`; `-- --dry-run` previews the mapping. See docs/release.md."
   remint-ci-release-token:
     run: uv run --with boto3 python scripts/remint-ci-release-token.py
     description: "Remint the two-stage promote PAT on the coilyco-ops bot (write:repository + read:user - without read:user Forgejo drops the release enqueue, ward#1117) and overwrite SSM /forgejo/coilyco-ops/ci-release-token. Values stay in-process. `-- --dry-run` previews. Follow with `ward exec sync-actions-secrets`."
@@ -207,7 +207,7 @@ commands:
     description: "Remint the coilyco-ops read:package token, verify it against the Forgejo registry, and overwrite SSM /forgejo/coilyco-ops/registry-read-token. Values stay in-process. `-- --dry-run` previews."
   agent-id:
     run: uv run python -m agentic_os.agent_id
-    description: "Canonical short agent-id generator over the dictatable alphabet (lowercase 2-letter+2-digit, e.g. `ab85`). Bare invocation prints a fresh `secrets`-backed id (`-- -n 5` for more); `-- --seed <s>` prints the deterministic contract id for a seed, `-- --org <forgejo-org>` prints the short container token, `-- --emit-vectors` regenerates agent_id_vectors.json. The cross-repo naming primitive ward and cli-guard's Go port build against. See docs/dictatable-id-alphabet.md."
+    description: "Canonical short agent-id generator over the dictatable alphabet (lowercase 2-letter+2-digit, e.g. `ab85`). Bare invocation prints a fresh `secrets`-backed id (`-- -n 5` for more); `-- --seed <s>` prints the deterministic contract id for a seed, `-- --org <forgejo-org>` prints the short container token, `-- --emit-vectors` regenerates agent_id_vectors.json. The cross-repo naming primitive ward and umbra's Go port build against. See docs/dictatable-id-alphabet.md."
 
 agent:
   image: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os

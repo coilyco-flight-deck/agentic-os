@@ -19,7 +19,7 @@ A `consult` issue waits for a person. A blocked-headless issue should wake on up
 
 Because readiness is orthogonal to mode, `blocked-on-dependency` does **not** replace a mode label - it rides alongside one. The common case is `headless` + `blocked-on-dependency`: settled headless work, parked on an upstream, due to wake on its own.
 
-The triggering case is a ward issue blocked only on cli-guard exporting `ParseIssueRef`/`IssueRef`. Its `ward agent headless` pre-flight NO-GO'd it as a cross-repo coordination **fork** - reading a defer-and-wake as a needs-a-human consult, exactly the misread this state removes.
+The triggering case is a ward issue blocked only on umbra exporting `ParseIssueRef`/`IssueRef`. Its `ward agent headless` pre-flight NO-GO'd it as a cross-repo coordination **fork** - reading a defer-and-wake as a needs-a-human consult, exactly the misread this state removes.
 
 If the blocker pointer is missing or ambiguous, the issue fails closed. The classifier keeps the ordinary mode and tier labels and does not claim wake behavior.
 

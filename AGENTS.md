@@ -75,7 +75,7 @@ Only the supported YAML in [`.ward/ward.yaml`](.ward/ward.yaml) remains for
 repository command and fixture declaration. Full reasoning:
 [docs/ward-specs.md](docs/ward-specs.md).
 
-The layer gradient this keys off (churn and host-awareness rising together, a clone/use breakpoint at each): cli-guard and specgen (generic engines, external contributors, no upstream knowledge), then Ward (fixed workflows and broker), then aos (AOSguard policy, composition inputs, and public docs), then infra (nobody clones it but Kai).
+The layer gradient this keys off (churn and host-awareness rising together, a clone/use breakpoint at each): umbra and specgen (generic engines, external contributors, no upstream knowledge), then Ward (fixed workflows and broker), then aos (AOSguard policy, composition inputs, and public docs), then infra (nobody clones it but Kai).
 
 Config splits on three axes, each a distinct owner: **permission/surface**
 (AOSguard specs and Ward's fixed broker), **deployment tuning** (identity,

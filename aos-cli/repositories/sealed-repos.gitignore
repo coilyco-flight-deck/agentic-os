@@ -7,7 +7,7 @@ coilyco-flight-deck/agent-compose
 coilyco-flight-deck/agent-proxy
 coilyco-flight-deck/agentic-os
 coilyco-flight-deck/bluesky-mcp
-coilyco-flight-deck/cli-guard
+coilyco-flight-deck/umbra
 coilyco-flight-deck/homebrew-tap
 coilyco-flight-deck/infrastructure
 coilyco-flight-deck/lunch-money-k8s
@@ -43,7 +43,7 @@ coilysiren/website
 !coilyco-flight-deck/ward
 !coilyco-flight-deck/agentic-os
 !coilyco-flight-deck/agent-compose
-!coilyco-flight-deck/cli-guard
+!coilyco-flight-deck/umbra
 !coilyco-flight-deck/agent-proxy
 !coilyco-flight-deck/infrastructure
 !coilyco-bridge/

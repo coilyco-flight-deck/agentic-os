@@ -3,7 +3,7 @@
 The drift test (`test_committed_vectors_match_module`) is the load-bearing one:
 it regenerates the vector from the module and byte-compares against the committed
 `agent_id_vectors.json`, so any alphabet or algorithm change that forgets to
-re-emit the file fails CI - the cross-language contract the cli-guard Go port
+re-emit the file fails CI - the cross-language contract the umbra Go port
 against cannot silently drift.
 """
 

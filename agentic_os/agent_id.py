@@ -5,7 +5,7 @@ lowercase letters then two digits (`ab81`, `cd92`). The alphabet drops the
 visually and phonetically ambiguous characters - the same set documented in
 `docs/dictatable-id-alphabet.md` and first used by the archived o2r channel
 protocol (`coilyco-flight-deck/otel-a2a-relay`). This module is the canonical
-home the ward naming rewrite and the cli-guard Go port build
+home the ward naming rewrite and the umbra Go port build
 against, so the alphabet, shape, and the seeded variant here are a cross-language
 contract, mirrored byte-for-byte in `agent_id_vectors.json`.
 

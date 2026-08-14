@@ -49,7 +49,7 @@ Then add a rule to `leak_guard_rules.py`:
 {
     "id": "example",
     "term_hex": "6e6565646c65",   # leak-guard-encode of the term
-    "repos": ["cli-guard"],        # omit / None to fire in every repo
+    "repos": ["umbra"],        # omit / None to fire in every repo
     "only_globs": ["go.mod"],      # fire ONLY in these paths (optional)
     "allow_globs": ["**/resume.md"], # paths where the term is permitted (optional)
     "message": "remediation text - never name the term here",

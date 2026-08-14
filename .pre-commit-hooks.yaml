@@ -31,7 +31,7 @@
 # Intentionally NOT hooks. See docs/features-release-tooling.md for the
 # authoring-vs-rollout split behind these CLI-only validators.
 # Three authored validators are CLI/on-demand tools, not commit-path hooks, and
-# ship as ward verbs instead (cli-guard/ward fenced). Wiring them here would
+# ship as ward verbs instead (umbra/ward fenced). Wiring them here would
 # need new file-discovery logic the issue forbids, and would falsely flag every
 # consumer as missing until a fleet rollout caught up:
 #   - check_ssm_path     -> ward ssm-path     (validates paths passed as args,

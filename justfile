@@ -9,7 +9,7 @@ set positional-arguments
 default:
     @just --list --unsorted
 
-# Canonical short agent-id generator over the dictatable alphabet (lowercase 2-letter+2-digit, e.g. `ab85`). Bare invocation prints a fresh `secrets`-backed id (`-n 5` for more); `--seed <s>` prints the deterministic contract id for a seed, `--org <forgejo-org>` prints the short container token, `--emit-vectors` regenerates agent_id_vectors.json. The cross-repo naming primitive ward and cli-guard's Go port build against. See docs/dictatable-id-alphabet.md.
+# Canonical short agent-id generator over the dictatable alphabet (lowercase 2-letter+2-digit, e.g. `ab85`). Bare invocation prints a fresh `secrets`-backed id (`-n 5` for more); `--seed <s>` prints the deterministic contract id for a seed, `--org <forgejo-org>` prints the short container token, `--emit-vectors` regenerates agent_id_vectors.json. The cross-repo naming primitive ward and umbra's Go port build against. See docs/dictatable-id-alphabet.md.
 agent-id *ARGS:
     @uv run python -m agentic_os.agent_id "$@"
 
@@ -129,7 +129,7 @@ aos-tidy *ARGS:
 aosguard-build *ARGS:
     @specgen --project-root .specgen/guardfiles --skills-out dist/skills build --out dist/aosguard "$@"
 
-# Refresh aosguard's vendored API snapshot and frozen cli-guard dependency graph with the packaged specgen driver. Pass specgen lock flags as trailing arguments.
+# Refresh aosguard's vendored API snapshot and frozen umbra dependency graph with the packaged specgen driver. Pass specgen lock flags as trailing arguments.
 aosguard-lock *ARGS:
     @sh scripts/aosguard-lock.sh "$@"
 
@@ -261,7 +261,7 @@ sweep-documentation-layout *ARGS:
 sweep-precommit *ARGS:
     @uv run python scripts/sweep-precommit.py "$@"
 
-# Sync Forgejo Actions secrets (Telegram alert creds, release PATs, package-repository writers, and deploy's pin-reconciler pair) from their SSM sources of truth. Entries are keyed `owner/repo`, so the mapping spans orgs: aos + ward + cli-guard under coilyco-flight-deck, plus coilyco-bridge/deploy. Values flow SSM -> Forgejo API in-process, never disk or argv. An attended operator supplies `FORGEJO_ADMIN_TOKEN`; `--dry-run` previews the mapping. See docs/release.md.
+# Sync Forgejo Actions secrets (Telegram alert creds, release PATs, package-repository writers, and deploy's pin-reconciler pair) from their SSM sources of truth. Entries are keyed `owner/repo`, so the mapping spans orgs: aos + ward + umbra under coilyco-flight-deck, plus coilyco-bridge/deploy. Values flow SSM -> Forgejo API in-process, never disk or argv. An attended operator supplies `FORGEJO_ADMIN_TOKEN`; `--dry-run` previews the mapping. See docs/release.md.
 sync-actions-secrets *ARGS:
     @uv run python scripts/sync-actions-secrets.py "$@"
 

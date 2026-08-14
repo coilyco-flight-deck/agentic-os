@@ -57,7 +57,7 @@ committed data files sit beside it - `agent_id_vectors.json` (the alphabets plus
 a fixed seed->id map a port asserts against byte-for-byte) and
 `org_shortnames.json` (long Forgejo org -> short container token, last-`-`-segment
 fallback). A drift test regenerates the vector and fails CI if the committed file
-falls behind the module, so the ward naming rewrite and the cli-guard Go port
+falls behind the module, so the ward naming rewrite and the umbra Go port
 build against a file that cannot silently rot. Regenerate the vector
 with `python -m agentic_os.agent_id --emit-vectors`.
 

@@ -70,7 +70,7 @@ and role-independent.
 * AOS owns translation, staged-home validation, guarded assembly, and caching.
 * Agent-compose owns role context and remains usable through `agent-compose`
   and `acompose`.
-* cli-guard and specgen own generic guarded-tool generation.
+* umbra and specgen own generic guarded-tool generation.
 * Ward owns runtime policy, Docker Compose, credentials, teardown, and
   authority in warded mode.
 

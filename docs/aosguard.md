@@ -1,6 +1,6 @@
 # aosguard
 
-`aosguard` is AOS's guarded operator CLI. cli-guard and specgen remain generic,
+`aosguard` is AOS's guarded operator CLI. umbra and specgen remain generic,
 while AOS owns this concrete policy snapshot, release name, and integration.
 
 Packaged `specgen` discovers the [guardfile project](../.specgen/README.md),
@@ -56,7 +56,7 @@ The Forgejo source is vendored from the pruned deployment contract, so
 `aosguard-lock` refreshes the dependency graph without reaching a live Forgejo
 edge. The source Swagger and its generated API lock use deterministic gzip at
 `forgejo.swagger.v1.json.gz` and `forgejo.swagger.lock.json.gz`. Specgen
-decodes each before use. The resulting `specverb.lock` pins cli-guard for
+decodes each before use. The resulting `specverb.lock` pins umbra for
 reproducible builds.
 
 Specgen no longer emits per-member Markdown. `aosguard-lock` instead refreshes

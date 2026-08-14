@@ -75,7 +75,7 @@ MAPPING: dict[str, dict[str, str]] = {
         **TELEGRAM_SECRET_SOURCES,
         "CI_RELEASE_TOKEN": "/forgejo/coilyco-ops/ci-release-token",
     },
-    slug("cli-guard"): {
+    slug("umbra"): {
         **TELEGRAM_SECRET_SOURCES,
         "CI_RELEASE_TOKEN": "/forgejo/coilyco-ops/ci-release-token",
     },

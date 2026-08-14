@@ -51,7 +51,7 @@ download_specgen() {
         asset="${asset}${host_suffix}"
     fi
     specgen="$release_build/specgen${host_suffix}"
-    base="https://forgejo.coilysiren.me/coilyco-flight-deck/cli-guard/releases/download/v${specgen_version}"
+    base="https://forgejo.coilysiren.me/coilyco-flight-deck/umbra/releases/download/v${specgen_version}"
     if [ -z "$specgen_version" ]; then
         echo "aos-cli/release.env does not pin specgen" >&2
         exit 1

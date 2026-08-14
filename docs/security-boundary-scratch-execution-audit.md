@@ -1,4 +1,4 @@
-# 2026-07-04 - Audit: write+execute ad-hoc /tmp entry points are fenced by the cli-guard engine
+# 2026-07-04 - Audit: write+execute ad-hoc /tmp entry points are fenced by the umbra engine
 
 Closes agentic-os#236 (migrated from the archived coily#118).
 
@@ -8,7 +8,7 @@ coily#118 opened against the old `coily` gate. An agent could write an unreviewe
 
 ## What the audit found
 
-**`coily` is gone** (June 2026 surface reduction, agentic-os#261), so its route tables are not the surface to audit. The gate moved down the layer gradient into **cli-guard's PreToolUse hook engine** (`/substrate/cli-guard/cli/hook/hook.go`) as an **engine-owned, non-configurable deny** a consumer cannot opt out of.
+**`coily` is gone** (June 2026 surface reduction, agentic-os#261), so its route tables are not the surface to audit. The gate moved down the layer gradient into **umbra's PreToolUse hook engine** (`/substrate/umbra/cli/hook/hook.go`) as an **engine-owned, non-configurable deny** a consumer cannot opt out of.
 
 `PreToolUse` runs over **every segment**. `SplitSegments` breaks on `$( )`, `||`, `&&`, `|`, `;`, `&`, and `StripEnvPrefix` peels leading `sudo` / `env VAR=val`, so a denied shape cannot launder behind an allowed prefix, pipe, or substitution. Two engine denies cover the surface:
 
@@ -26,4 +26,4 @@ Both are pinned by tests in `hook_test.go`: `TestPreToolUse_DeniesInterpreterEve
 
 ## Rule it produced
 
-When an audit names a gate since retired, it is not moot: the capability moved down the layer gradient, so re-point at wherever it now lives (coily route tables to the cli-guard engine deny), confirm the new home covers every shape the old ask enumerated, then record where coverage stops. For ad-hoc scratch code the durable fence is a capability-layer deny (interpreter-token + scratch-path, per-segment), not a per-name route table, because names have unbounded spellings and capabilities do not.
+When an audit names a gate since retired, it is not moot: the capability moved down the layer gradient, so re-point at wherever it now lives (coily route tables to the umbra engine deny), confirm the new home covers every shape the old ask enumerated, then record where coverage stops. For ad-hoc scratch code the durable fence is a capability-layer deny (interpreter-token + scratch-path, per-segment), not a per-name route table, because names have unbounded spellings and capabilities do not.

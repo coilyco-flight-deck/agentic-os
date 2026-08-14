@@ -87,16 +87,16 @@ RULES: list[dict] = [
             "detail into a private overlay surface."
         ),
     },
-    # Dependency cycle: cli-guard and ward reference each other. Break the cycle
-    # by banning the cli-guard -> ward direction (cli-guard is the lower layer).
+    # Dependency cycle: ban the umbra -> ward direction (umbra is the lower
+    # layer). Both slugs listed so an old checkout still matches.
     {
-        "id": "cli-guard-ward-cycle",
+        "id": "umbra-ward-cycle",
         "term_hex": "77617264",
-        "repos": ["cli-guard"],
+        "repos": ["umbra", "cli-guard"],
         "allow_globs": [],
         "message": (
-            "cli-guard references ward, closing a dependency cycle (ward already "
-            "depends on cli-guard). Drop the back-reference so the edge stays "
+            "umbra references ward, closing a dependency cycle (ward already "
+            "depends on umbra). Drop the back-reference so the edge stays "
             "one-way."
         ),
     },

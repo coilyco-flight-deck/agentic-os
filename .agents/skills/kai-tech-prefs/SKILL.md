@@ -15,7 +15,7 @@ Kai is/was a maintainer of [urfave/cli](https://github.com/urfave/cli). **Defaul
 
 - **Prefer Go for operator CLIs.** Do not introduce a Python CLI surface.
 - **Avoid polyglot repositories.** If a single-language project needs a CLI in another language, put the CLI in its own repository and share contracts through a published schema artifact.
-- **Keep standalone CLIs standalone.** Do not add cli-guard or Ward unless the tool specifically needs audit gating.
+- **Keep standalone CLIs standalone.** Do not add umbra or Ward unless the tool specifically needs audit gating.
 
 ## Charm (preferred TUI/CLI styling family)
 

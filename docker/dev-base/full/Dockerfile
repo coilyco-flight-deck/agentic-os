@@ -11,7 +11,7 @@ FROM ${LANG_PYTHON_IMAGE} AS dev-base-lang-python-graft
 
 FROM ubuntu:24.04 AS dev-base-tool-builder
 ARG WARD_VERSION=0.879.0
-ARG SPECGEN_VERSION=0.134.0
+ARG SPECGEN_VERSION=0.138.0
 ARG AOS_VERSION=0.190.0
 ARG TARGETARCH
 ARG DEBIAN_FRONTEND=noninteractive
@@ -46,7 +46,7 @@ RUN set -eux; \
     rm "/tmp/${aos_asset}" /tmp/aos-SHA256SUMS; aos --version
 RUN set -eux; \
     specgen_asset="specgen-linux-${TARGETARCH}"; \
-    specgen_base="https://forgejo.coilysiren.me/coilyco-flight-deck/cli-guard/releases/download/v${SPECGEN_VERSION}"; \
+    specgen_base="https://forgejo.coilysiren.me/coilyco-flight-deck/umbra/releases/download/v${SPECGEN_VERSION}"; \
     curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
       "${specgen_base}/${specgen_asset}" -o "/tmp/${specgen_asset}"; \
     curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \

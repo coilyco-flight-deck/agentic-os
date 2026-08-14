@@ -69,7 +69,7 @@ and `aoscompose <role> <harness>` overrides that default.
 Auth is default-on, with `--auth=false` for startup checks that should not require a harness credential.
 `aosward` adds `--warded`. Ward remains the fixed workflow and container
 lifecycle owner, agent-compose remains the context producer, and
-cli-guard/specgen remains the guarded-tool generator. Matching
+umbra/specgen remains the guarded-tool generator. Matching
 role names never union authority between those layers. AOS applies its own
 bounded standalone runtime gates, including [kubeconfig projection](docs/aos-kubeconfig.md).
 

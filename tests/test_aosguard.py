@@ -160,8 +160,8 @@ def test_aosguard_dependency_lock_is_committed() -> None:
     lock = json.loads((PROJECT / "specverb.lock").read_text(encoding="utf-8"))
     cli_guard = lock["cliGuard"]
     assert re.fullmatch(r"v\d+\.\d+\.\d+", cli_guard)
-    assert f"cli-guard {cli_guard}" in "\n".join(lock["goMod"])
-    assert any(f"cli-guard {cli_guard} " in line for line in lock["goSum"])
+    assert f"umbra {cli_guard}" in "\n".join(lock["goMod"])
+    assert any(f"umbra {cli_guard} " in line for line in lock["goSum"])
     assert not list(SOURCE.glob("*.md"))
 
 
