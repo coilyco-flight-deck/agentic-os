@@ -63,9 +63,9 @@ operator CLIs, and full-only gates live in the full Dockerfile, so changing
 them reuses cached language payloads instead of rebuilding their toolchains.
 
 Every pin is manual. Nothing resolves these versions against upstream and
-nothing fails when one falls behind, so currency is a recurring human task and
-a pin is only as current as the last person who checked it. Treat the whole set
-as an explicit inventory responsibility rather than implied current.
+nothing fails when one falls behind, so a pin is only as current as the last
+person who checked it - an explicit inventory responsibility. Rust also bakes
+the channels consumers pin, see [pinned toolchains](dev-base-rust-pins.md).
 
 Source ownership follows the tool boundary. The image owns this deployment's
 Git identity and maps it onto Ward's provider-neutral `WARD_GIT_*` environment

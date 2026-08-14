@@ -170,9 +170,20 @@ RUN set -eux; . /opt/agentic-os/arch.env; \
     chmod 0755 /usr/local/bin/kdlfmt; \
     rm /tmp/kdlfmt.tar.xz; kdlfmt --version
 
+ARG RUST_PINNED_VERSIONS
+# Prove each pinned toolchain is resident with the components and target a
+# pinned consumer asks for - without the components rustup fetches them at
+# first use, which is the download this bake exists to remove. The empty
+# guard matters: an unplumbed arg would make the loop below a silent pass.
 RUN node --version && go version && dotnet --list-sdks && cargo --version && \
     trunk --version && wasm-pack --version && wasm-opt --version && \
-    python --version && pipenv --version && aosguard --version
+    python --version && pipenv --version && aosguard --version && \
+    test -n "${RUST_PINNED_VERSIONS}" && \
+    for pin in ${RUST_PINNED_VERSIONS}; do \
+      cargo "+${pin}" --version && cargo "+${pin}" clippy --version && \
+      cargo "+${pin}" fmt --version && \
+      rustup target list --installed --toolchain "${pin}" | grep -qx wasm32-unknown-unknown; \
+    done
 WORKDIR /workspace
 ENTRYPOINT ["/opt/agentic-os/ward-shell-entrypoint.sh"]
 CMD ["bash"]

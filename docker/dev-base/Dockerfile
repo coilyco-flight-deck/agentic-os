@@ -10,6 +10,9 @@ ARG TRUNK_VERSION=0.21.14
 ARG NODE_VERSION=22.23.2
 ARG WASM_PACK_VERSION=0.15.0
 ARG BINARYEN_VERSION=119
+# Toolchains consumers pin in rust-toolchain.toml, baked so a pinned repo
+# never fetches a channel at build time. See docs/dev-base-rust-pins.md.
+ARG RUST_PINNED_VERSIONS="1.90.0"
 
 FROM ubuntu:24.04 AS dev-base-lang-node
 ARG NODE_VERSION
@@ -74,6 +77,7 @@ FROM ubuntu:24.04 AS dev-base-lang-rust
 ARG TRUNK_VERSION
 ARG WASM_PACK_VERSION
 ARG BINARYEN_VERSION
+ARG RUST_PINNED_VERSIONS
 ARG TARGETARCH
 ENV PATH=/usr/local/cargo/bin:/usr/local/bin:/usr/bin:/bin \
     CARGO_HOME=/usr/local/cargo RUSTUP_HOME=/usr/local/rustup
@@ -91,6 +95,12 @@ RUN set -eux; apt-get update; apt-get install -y --no-install-recommends \
       https://sh.rustup.rs -o /tmp/rustup-init.sh; chmod 0755 /tmp/rustup-init.sh; \
     /tmp/rustup-init.sh -y --no-modify-path --profile minimal --default-toolchain stable; \
     rm /tmp/rustup-init.sh; rustup target add wasm32-unknown-unknown; \
+    rustup component add clippy rustfmt; \
+    for pin in ${RUST_PINNED_VERSIONS}; do \
+      rustup toolchain install "${pin}" --profile minimal \
+        --component clippy --component rustfmt; \
+      rustup target add wasm32-unknown-unknown --toolchain "${pin}"; \
+    done; \
     chmod -R a+rwX /usr/local/cargo /usr/local/rustup; cargo --version
 RUN set -eux; . /opt/agentic-os/arch.env; \
     curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \

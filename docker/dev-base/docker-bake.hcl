@@ -6,6 +6,12 @@ variable "PLATFORM" {
   default = "linux/amd64"
 }
 
+# Space-separated rustup toolchains baked in addition to stable, so a repo
+# pinning one in rust-toolchain.toml never fetches a channel at build time.
+variable "RUST_PINNED_VERSIONS" {
+  default = "1.90.0"
+}
+
 group "default" {
   targets = ["full"]
 }
@@ -15,6 +21,9 @@ target "language" {
   dockerfile = "Dockerfile"
   platforms  = [PLATFORM]
   output     = ["type=cacheonly"]
+  args = {
+    RUST_PINNED_VERSIONS = RUST_PINNED_VERSIONS
+  }
 }
 
 target "lang-node" {
@@ -55,6 +64,7 @@ target "full" {
   tags       = ["agentic-os:${TAG}"]
   output     = ["type=docker"]
   args = {
+    RUST_PINNED_VERSIONS = RUST_PINNED_VERSIONS
     BASE_IMAGE        = "agentic-os:lang-rust-${TAG}"
     LANG_NODE_IMAGE   = "agentic-os:lang-node-${TAG}"
     LANG_GO_IMAGE     = "agentic-os:lang-go-${TAG}"
