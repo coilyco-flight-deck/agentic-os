@@ -8,6 +8,12 @@
 // create/edit are additionally policy-disabled per ward#107 (dup P0-P4 prevention).
 // Auto-resolution per umbra#147. See ../../../docs/aosguard.md.
 wrap aosguard ops forgejo {
+    // The ssm value provider: umbra ships no store SDK, so a store-backed
+    // source is an exec contract, declared here rather than linked in.
+    provider ssm {
+        exec aws ssm get-parameter --with-decryption --output text --query "Parameter.Value" --name
+    }
+
     spec forgejo.swagger.v1.json.gz
     base-url "forgejo.coilysiren.me/api/v1"
     // Auth as the coilyco-ops bot, not a personal PAT (ward#151), so automated
