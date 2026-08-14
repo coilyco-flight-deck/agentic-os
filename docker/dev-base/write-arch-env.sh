@@ -14,6 +14,7 @@ case "${TARGETARCH:?TARGETARCH is required}" in
     GOLANGCI_ARCH=amd64
     GOOSE_ARCH=x86_64
     HELM_ARCH=amd64
+    JUST_ARCH=x86_64
     KDL_ARCH=x86_64
     KUBECTL_ARCH=amd64
     NODE_ARCH=x64
@@ -33,6 +34,7 @@ case "${TARGETARCH:?TARGETARCH is required}" in
     GOLANGCI_ARCH=arm64
     GOOSE_ARCH=aarch64
     HELM_ARCH=arm64
+    JUST_ARCH=aarch64
     KDL_ARCH=aarch64
     KUBECTL_ARCH=arm64
     NODE_ARCH=arm64
@@ -59,6 +61,7 @@ printf '%s\n' \
   "GOLANGCI_ARCH=${GOLANGCI_ARCH}" \
   "GOOSE_ARCH=${GOOSE_ARCH}" \
   "HELM_ARCH=${HELM_ARCH}" \
+  "JUST_ARCH=${JUST_ARCH}" \
   "KDL_ARCH=${KDL_ARCH}" \
   "KUBECTL_ARCH=${KUBECTL_ARCH}" \
   "NODE_ARCH=${NODE_ARCH}" \

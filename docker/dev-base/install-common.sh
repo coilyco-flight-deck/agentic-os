@@ -12,7 +12,7 @@ export DEBIAN_FRONTEND=noninteractive
 # shellcheck disable=SC1091
 source /opt/agentic-os/arch.env
 export AWS_ARCH CODEX_ARCH DOCKER_ARCH DOTNET_ARCH GH_ARCH GO_ARCH GOLANGCI_ARCH
-export GOOSE_ARCH HELM_ARCH KDL_ARCH KUBECTL_ARCH NODE_ARCH
+export GOOSE_ARCH HELM_ARCH JUST_ARCH KDL_ARCH KUBECTL_ARCH NODE_ARCH
 export TRUFFLEHOG_ARCH TS_ARCH YQ_ARCH
 
 for attempt in 1 2 3; do
@@ -157,6 +157,14 @@ curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
   -o /usr/local/bin/yq
 chmod 0755 /usr/local/bin/yq
 yq --version
+
+curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
+  "https://github.com/casey/just/releases/download/${JUST_VERSION:?}/just-${JUST_VERSION}-${JUST_ARCH}-unknown-linux-musl.tar.gz" \
+  -o /tmp/just.tar.gz
+tar -xzf /tmp/just.tar.gz -C /usr/local/bin just
+chmod 0755 /usr/local/bin/just
+rm /tmp/just.tar.gz
+just --version
 
 curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
   "https://download.docker.com/linux/static/stable/${DOCKER_ARCH}/docker-${DOCKER_VERSION:?}.tgz" \

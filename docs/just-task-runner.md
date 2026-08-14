@@ -40,9 +40,10 @@ Verified on this branch:
 
 - **Duplication.** Both `.ward/ward.yaml` and `justfile` declare all 69 verbs, so
   a verb added to one will drift. This is why the spike is additive.
-- **Not installed everywhere.** `just` is absent from
-  `docker/dev-base/install-common.sh`, the Homebrew formulae, and the Scoop
-  bucket. It must land in the dev-base image before any CI switches.
+- **Not installed everywhere.** `just` now installs into the dev-base image
+  (`docker/dev-base/install-common.sh`, pinned by `JUST_VERSION`), but is still
+  absent from the Homebrew formulae and the Scoop bucket. CI can switch once
+  dev-base republishes. Host installs are still manual.
 - **Descriptions run long.** `just` reads only the **last** comment line above a
   recipe, so wrapping silently truncates a doc to its tail fragment. They stay
   on one line, and `just --list` rows reach ~144 characters.
