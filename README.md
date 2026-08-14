@@ -17,7 +17,7 @@ Warp configuration remains available.
 - `aos-cli/` - the Go composition root for standalone and Ward-governed agent launches.
 - `aos-say/` - the `ward exec aos-say` Go module for the speech helper client and relay.
 - `karabiner/` - Karabiner-Elements complex modification assets (`brew install --cask karabiner-elements`), symlinked into the local Karabiner config tree.
-- `scripts/` - portable utilities (gpg-ssm wrapper, agent-name hooks, aws-config lint).
+- `scripts/` - portable utilities (gpg-ssm wrapper, session-name hooks, aws-config lint).
 - `.agents/skills/` - ordinary `SKILL.md` sources that every composed role can discover.
 - `.agents/composed/` - role-scoped `COMPOSED.md` sources that agent-compose promotes only for allowlisted roles.
 - `.specgen/guardfiles/` - recursive specgen project for AOSguard policy and

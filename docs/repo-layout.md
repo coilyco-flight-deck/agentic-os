@@ -33,10 +33,9 @@ Setup, after `brew install --cask karabiner-elements`:
 
 - `check-aws-config.py` - reject the `[profile default]` trap in `~/.aws/config` that surfaces later as a cryptic `NoRegion` from SSM/S3.
 - `gpg-ssm` / `gpg-ssm.cmd` - GPG signing wrapper that pulls the passphrase from AWS SSM at `/coilysiren/gpg-passphrase` and bootstraps `/coilysiren/gpg-secret-key` when the configured signing key is missing locally. The `.cmd` is a bash.exe shim Git for Windows needs.
-- `agent-name.sh` - render the agent self-name for the status-line provider or
-  SessionStart hook. The name comes from `ward agent-name` with a local fallback.
-- `install-agent-name.py` - idempotently wire the provider composer as Claude
-  Code's status line and `agent-name.sh` as its SessionStart hook.
+- `install-session-name.py` - idempotently wire the provider composer as Claude
+  Code's status line and `docker/dev-base/session-name.sh` as its SessionStart
+  hook, repointing a host still wired to the retired `agent-name.sh`.
 
 ## agentic_os
 

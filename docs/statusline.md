@@ -6,7 +6,7 @@ shows the same line a host session does.
 
 ## The problem it replaces
 
-The host [`scripts/agent-name.sh`](../scripts/agent-name.sh) hand-wired the
+The retired host `agent-name.sh` hand-wired the
 second row: it ran `$project_dir/.agentic-os/statusline.sh` and
 `$AGENT_STATUSLINE_EXTRA` and appended their output. The container copy did not,
 and `statusline.sh` was never shipped into the [dev-base image](dev-base-image.md),
@@ -31,12 +31,15 @@ The built-in provider is:
   bundle identity, role and harness, selected catalog footprint, and
   composition health.
 
+* `20-container.sh` - names the warded container from `WARD_CONTAINER_NAME`,
+  since inside a container the hostname is an opaque id. Silent on a host.
+
 Two earlier base providers were removed. `10-agent-name.sh` rendered the
 pre-acompose `<harness>-<os>-<host>-<tag>-<pronouns>` self-name row, which
 duplicated the identity `acompose statusline` already renders. `20-repos.sh`
 rendered a stray-checkout count, which is residency scanning rather than
-session state. The [self-name script](dev-base-self-name.md) itself is
-unchanged and still backs the `SessionStart` hook and git identity.
+session state. `agent-name.sh` itself is now retired: the
+[SessionStart banner](dev-base-self-name.md) reads `acompose whoami`.
 
 Agent Compose owns the row's content and bundle semantics. AOS only
 discovers the provider and passes the project directory, so the status line
@@ -63,8 +66,9 @@ Every warded container runs dev-base, and the baked policy-tier
 composer. ward injects no `statusLine` of its own, so the baked one is
 authoritative. A new base provider rides the next image build to **all**
 containers at once, with no per-container edit. On hosts,
-`install-agent-name.py` conservatively migrates its legacy direct self-name
-command to this composer. The infrastructure claude-hooks role invokes that
+`install-session-name.py` conservatively migrates its legacy direct self-name
+command to this composer, and repoints a SessionStart hook still wired to the
+retired `agent-name.sh`. The infrastructure claude-hooks role invokes that
 installer, keeping rollout separate from the provider authored here.
 
 ## See also

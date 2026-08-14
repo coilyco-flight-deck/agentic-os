@@ -1,22 +1,22 @@
 #!/usr/bin/env python3
-"""Wire the composed status line and agent self-name into Claude Code.
+"""Wire the composed status line and session name into Claude Code.
 
 Installs two surfaces:
-  - statusLine: the provider composer, including self-name and composition rows.
-  - SessionStart: the agent self-name injected into the agent's context.
+  - statusLine: the provider composer, including composition rows.
+  - SessionStart: the composed name injected into the agent's context.
 
 Merge rules, idempotent and conservative:
   - statusLine is set only if absent or already managed by this installer.
-    The legacy direct agent-name.sh status line migrates to the composer.
     A status line the operator set to something else is left untouched.
-  - The SessionStart hook is added once; re-runs that find an agent-name.sh
-    command already registered make no change.
+  - The SessionStart hook is added once, and a host still wired to the retired
+    agent-name.sh is REPOINTED rather than skipped. Leaving it would keep a
+    deleted script registered on every already-converged host.
 
 Stdlib only. Run by the claude-hooks ansible role on every host.
 
 Usage:
-    scripts/install-agent-name.py            # write the merged settings
-    scripts/install-agent-name.py --dry-run  # print the result, do not write
+    scripts/install-session-name.py            # write the merged settings
+    scripts/install-session-name.py --dry-run  # print the result, do not write
 """
 from __future__ import annotations
 
@@ -29,7 +29,7 @@ from pathlib import Path
 
 HOME = Path.home()
 SCRIPT_DIR = Path(__file__).resolve().parent
-NAME_SCRIPT = SCRIPT_DIR / "agent-name.sh"
+NAME_SCRIPT = SCRIPT_DIR.parent / "docker" / "dev-base" / "session-name.sh"
 STATUSLINE_SCRIPT = SCRIPT_DIR.parent / "docker" / "dev-base" / "statusline.sh"
 SETTINGS_PATH = HOME / ".claude" / "settings.json"
 
@@ -46,9 +46,12 @@ def _cmd(script: Path, mode: str = "") -> str:
 
 
 STATUSLINE_CMD = _cmd(STATUSLINE_SCRIPT)
-LEGACY_STATUSLINE_CMD = _cmd(NAME_SCRIPT, "statusline")
-SESSIONSTART_CMD = _cmd(NAME_SCRIPT, "sessionstart")
+SESSIONSTART_CMD = _cmd(NAME_SCRIPT)
 SESSIONSTART_MATCHER = "startup|resume|clear"
+
+# Commands this installer owns and may rewrite. agent-name.sh is the retired
+# script; a host converged before its removal still has it registered.
+MANAGED_MARKERS = ("agent-name.sh", "session-name.sh")
 
 
 def load_settings(path: Path) -> dict:
@@ -63,7 +66,8 @@ def merge_statusline(settings: dict) -> bool:
     current = settings.get("statusLine")
     if isinstance(current, dict):
         cmd = current.get("command", "")
-        if cmd not in {"", STATUSLINE_CMD, LEGACY_STATUSLINE_CMD}:
+        managed = cmd in {"", STATUSLINE_CMD} or any(m in cmd for m in MANAGED_MARKERS)
+        if not managed:
             print(f"kept existing statusLine ({cmd!r}); not overwriting")
             return False
     desired = {"type": "command", "command": STATUSLINE_CMD, "padding": 2}
@@ -74,13 +78,18 @@ def merge_statusline(settings: dict) -> bool:
 
 
 def merge_sessionstart_hook(settings: dict) -> bool:
-    """Add the SessionStart hook once. Returns True if it changed anything."""
+    """Add or repoint the SessionStart hook. True if it changed anything."""
     hooks = settings.setdefault("hooks", {})
     groups = hooks.setdefault("SessionStart", [])
     for group in groups:
         for hook in group.get("hooks", []):
-            if "agent-name.sh" in hook.get("command", ""):
+            command = hook.get("command", "")
+            if not any(marker in command for marker in MANAGED_MARKERS):
+                continue
+            if command == SESSIONSTART_CMD:
                 return False
+            hook["command"] = SESSIONSTART_CMD
+            return True
     groups.append(
         {
             "matcher": SESSIONSTART_MATCHER,
@@ -119,11 +128,11 @@ def main() -> int:
         return 0
 
     if not changed:
-        print(f"status line and agent self-name already wired in {SETTINGS_PATH}")
+        print(f"status line and session name already wired in {SETTINGS_PATH}")
         return 0
 
     write_settings(SETTINGS_PATH, settings)
-    print(f"wrote   {SETTINGS_PATH} (provider status line + SessionStart self-name)")
+    print(f"wrote   {SETTINGS_PATH} (provider status line + SessionStart name)")
     return 0
 
 

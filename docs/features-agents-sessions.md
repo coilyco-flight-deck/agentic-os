@@ -4,7 +4,9 @@ Agent naming and composition state.
 
 ## Agent self-name
 
-Every agent session gets a stable name: `<harness>-<os>-<hostname>-<tag>-<pronouns>`, `<tag>` the last four characters of the session id and `<pronouns>` the harness's slug. The five: Claude `she-her`, Codex `he-him`, OpenCode `they-them`, Aider `they-them`, Goose `she-her`. `scripts/agent-name.sh` holds the registry and picks the harness from `AOS_AGENT_HARNESS` (default `claude`).
+Every agent session names itself from its composition: `acompose whoami` prints the composed seat, its subject pronoun, and the dictatable session short id (`Angie [she] uz86`). `docker/dev-base/session-name.sh` wraps that in the SessionStart banner and prints nothing when there is no projection, rather than inventing a name.
+
+This replaces a locally derived `<harness>-<os>-<hostname>-<tag>-<pronouns>` name. That scheme could not know the composed seat, so an agent introduced itself as one thing while its status line said another, and it existed as two copies that had to stay format-identical.
 
 The claude-hooks ansible role wires Claude Code's status line and SessionStart
 hook without clobbering an operator setting. Its base merge also disables

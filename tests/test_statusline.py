@@ -12,7 +12,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 COMPOSER = ROOT / "docker" / "dev-base" / "statusline.sh"
 COMPOSE_PROVIDER = ROOT / "docker" / "dev-base" / "statusline.d" / "15-agent-compose.sh"
-INSTALLER = ROOT / "scripts" / "install-agent-name.py"
+INSTALLER = ROOT / "scripts" / "install-session-name.py"
+CONTAINER_PROVIDER = ROOT / "docker" / "dev-base" / "statusline.d" / "20-container.sh"
 
 
 def _executable(path: Path, content: str) -> None:
@@ -21,7 +22,7 @@ def _executable(path: Path, content: str) -> None:
 
 
 def _load_installer():
-    spec = importlib.util.spec_from_file_location("install_agent_name", INSTALLER)
+    spec = importlib.util.spec_from_file_location("install_session_name", INSTALLER)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -73,7 +74,7 @@ def test_installer_migrates_only_its_legacy_status_line(capsys) -> None:
     settings = {
         "statusLine": {
             "type": "command",
-            "command": installer.LEGACY_STATUSLINE_CMD,
+            "command": "/opt/agentic-os/agent-name.sh statusline",
             "padding": 2,
         }
     }
@@ -85,3 +86,64 @@ def test_installer_migrates_only_its_legacy_status_line(capsys) -> None:
     assert not installer.merge_statusline(custom)
     assert custom["statusLine"]["command"] == "my-status"
     assert "not overwriting" in capsys.readouterr().out
+
+
+def test_installer_repoints_a_retired_sessionstart_hook() -> None:
+    # A host converged before agent-name.sh was deleted still has it
+    # registered. Skipping it would leave a missing script wired forever.
+    installer = _load_installer()
+    settings = {
+        "hooks": {
+            "SessionStart": [
+                {
+                    "matcher": "startup|resume|clear",
+                    "hooks": [
+                        {"type": "command", "command": "/old/agent-name.sh sessionstart"}
+                    ],
+                }
+            ]
+        }
+    }
+    assert installer.merge_sessionstart_hook(settings)
+    wired = settings["hooks"]["SessionStart"][0]["hooks"][0]["command"]
+    assert wired == installer.SESSIONSTART_CMD
+    assert "agent-name.sh" not in wired
+    assert not installer.merge_sessionstart_hook(settings)
+
+
+def test_installer_leaves_a_foreign_sessionstart_hook_alone() -> None:
+    installer = _load_installer()
+    settings = {
+        "hooks": {
+            "SessionStart": [
+                {"matcher": "startup", "hooks": [{"type": "command", "command": "mine"}]}
+            ]
+        }
+    }
+    assert installer.merge_sessionstart_hook(settings)
+    commands = [
+        hook["command"]
+        for group in settings["hooks"]["SessionStart"]
+        for hook in group["hooks"]
+    ]
+    assert "mine" in commands
+    assert installer.SESSIONSTART_CMD in commands
+
+
+def test_container_provider_names_the_warded_container() -> None:
+    result = subprocess.run(
+        [str(CONTAINER_PROVIDER)],
+        text=True,
+        capture_output=True,
+        check=True,
+        env=os.environ | {"WARD_CONTAINER_NAME": "engineer-claude-ward-338"},
+    )
+    assert result.stdout.strip() == "[engineer-claude-ward-338]"
+
+
+def test_container_provider_self_suppresses_on_a_native_host() -> None:
+    env = {k: v for k, v in os.environ.items() if k != "WARD_CONTAINER_NAME"}
+    result = subprocess.run(
+        [str(CONTAINER_PROVIDER)], text=True, capture_output=True, env=env
+    )
+    assert result.stdout == ""

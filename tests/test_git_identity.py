@@ -1,23 +1,20 @@
-"""Tests for the dev-base agent-name.sh `gitidentity` mode (agentic-os#244)."""
+"""Tests for the dev-base git-identity hook (agentic-os#244).
+
+Split out of the retired agent-name.sh, which carried this beside naming for no
+reason beyond both running at SessionStart.
+"""
 from __future__ import annotations
 
 import subprocess
 from pathlib import Path
 
-SCRIPT = Path(__file__).resolve().parent.parent / "docker" / "dev-base" / "agent-name.sh"
-PAYLOAD = '{"session_id":"AbC123xyz"}'
+SCRIPT = Path(__file__).resolve().parent.parent / "docker" / "dev-base" / "git-identity.sh"
 DEPLOYMENT_NAME = "deployment-bot"
 DEPLOYMENT_EMAIL = "deployment-bot@example.com"
 
 
-def _run(
-    mode: str,
-    home: Path,
-    container: str | None = None,
-    extra_env: dict[str, str] | None = None,
-) -> str:
-    # A fresh HOME isolates --global writes/reads to this test's gitconfig, and
-    # TMPDIR isolates the per-session name cache so runs never cross-talk.
+def _run(home: Path, extra_env: dict[str, str] | None = None) -> None:
+    # A fresh HOME isolates --global writes/reads to this test's gitconfig.
     env = {
         "HOME": str(home),
         "TMPDIR": str(home),
@@ -27,24 +24,18 @@ def _run(
         "WARD_GIT_NAME": DEPLOYMENT_NAME,
         "WARD_GIT_EMAIL": DEPLOYMENT_EMAIL,
     }
-    # WARD_CONTAINER_NAME drives the container-name suffix; leave it unset to
-    # exercise the native-host / self-suppress path (agentic-os#296).
-    if container is not None:
-        env["WARD_CONTAINER_NAME"] = container
     if extra_env is not None:
         env.update(extra_env)
     # cwd=home keeps this repo's .git/config out of every git resolution below.
     # Any repo-local identity outranks the isolated global one these tests stage.
-    proc = subprocess.run(
-        [str(SCRIPT), mode],
-        input=PAYLOAD,
+    subprocess.run(
+        [str(SCRIPT)],
         capture_output=True,
         text=True,
         check=True,
         env=env,
         cwd=home,
     )
-    return proc.stdout.strip()
 
 
 def _git_global(key: str, home: Path) -> str:
@@ -82,13 +73,13 @@ def _git_effective(key: str, home: Path, system_config: Path | None = None) -> s
     return proc.stdout.strip()
 
 
-def test_gitidentity_sets_bot_committer_identity_when_unconfigured(tmp_path: Path) -> None:
-    _run("gitidentity", tmp_path)
+def test_sets_bot_committer_identity_when_unconfigured(tmp_path: Path) -> None:
+    _run(tmp_path)
     assert _git_global("user.name", tmp_path) == DEPLOYMENT_NAME
     assert _git_global("user.email", tmp_path) == DEPLOYMENT_EMAIL
 
 
-def test_gitidentity_honors_baked_git_identity(tmp_path: Path) -> None:
+def test_honors_baked_git_identity(tmp_path: Path) -> None:
     system_config = tmp_path / "gitconfig-system"
     system_config.write_text(
         "[user]\n"
@@ -96,16 +87,15 @@ def test_gitidentity_honors_baked_git_identity(tmp_path: Path) -> None:
         "\temail = baked-bot@example.com\n",
         encoding="utf-8",
     )
-    _run("gitidentity", tmp_path, extra_env={"GIT_CONFIG_SYSTEM": str(system_config)})
+    _run(tmp_path, extra_env={"GIT_CONFIG_SYSTEM": str(system_config)})
     assert _git_global("user.name", tmp_path) == ""
     assert _git_global("user.email", tmp_path) == ""
     assert _git_effective("user.name", tmp_path, system_config) == "baked-bot"
     assert _git_effective("user.email", tmp_path, system_config) == "baked-bot@example.com"
 
 
-def test_gitidentity_honors_committer_overrides(tmp_path: Path) -> None:
+def test_honors_committer_overrides(tmp_path: Path) -> None:
     _run(
-        "gitidentity",
         tmp_path,
         extra_env={
             "WARD_GIT_NAME": "custom-bot",
@@ -116,23 +106,8 @@ def test_gitidentity_honors_committer_overrides(tmp_path: Path) -> None:
     assert _git_global("user.email", tmp_path) == "custom-bot@example.com"
 
 
-def test_gitidentity_is_idempotent(tmp_path: Path) -> None:
-    _run("gitidentity", tmp_path)
+def test_is_idempotent(tmp_path: Path) -> None:
+    _run(tmp_path)
     first = _git_global("user.name", tmp_path)
-    _run("gitidentity", tmp_path)
+    _run(tmp_path)
     assert _git_global("user.name", tmp_path) == first
-
-
-def test_statusline_appends_container_name(tmp_path: Path) -> None:
-    # In a warded container ward exports WARD_CONTAINER_NAME; the status line
-    # shows it in brackets next to the agent name (agentic-os#296).
-    out = _run("statusline", tmp_path, container="engineer-claude-ward-338")
-    assert out.startswith("claude-")
-    assert out.endswith("[engineer-claude-ward-338]")
-
-
-def test_statusline_suppresses_container_name_when_unset(tmp_path: Path) -> None:
-    # Native host / before ward ships the env var: no brackets, no error.
-    out = _run("statusline", tmp_path)
-    assert out.startswith("claude-")
-    assert "[" not in out and "]" not in out

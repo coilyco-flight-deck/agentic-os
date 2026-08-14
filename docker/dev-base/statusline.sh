@@ -28,7 +28,7 @@ payload="$(cat)"
 payload_flat="$(printf '%s' "$payload" | tr -d '\n')"
 
 # Project root for the repo overlay: workspace.project_dir (preferred), else cwd,
-# else $CLAUDE_PROJECT_DIR / $PWD. Same extraction as scripts/agent-name.sh.
+# else $CLAUDE_PROJECT_DIR / $PWD. Same extraction as session-name.sh.
 project_dir="$(printf '%s' "$payload_flat" \
   | sed -n 's/.*"workspace"[[:space:]]*:[[:space:]]*{[^}]*"project_dir"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)"
 [ -z "$project_dir" ] && project_dir="$(printf '%s' "$payload_flat" \

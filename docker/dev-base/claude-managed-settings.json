@@ -16,11 +16,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/opt/agentic-os/agent-name.sh sessionstart"
+            "command": "/opt/agentic-os/session-name.sh"
           },
           {
             "type": "command",
-            "command": "/opt/agentic-os/agent-name.sh gitidentity"
+            "command": "/opt/agentic-os/git-identity.sh"
           }
         ]
       }

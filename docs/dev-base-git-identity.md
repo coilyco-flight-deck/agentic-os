@@ -15,8 +15,8 @@ inherits the deployment identity without a runtime write. The
 [`ward-shell-entrypoint.sh`](../docker/dev-base/ward-shell-entrypoint.sh) maps
 the same image-owned values onto Ward's provider-neutral `WARD_GIT_*` transport
 seam before Ward bootstraps the container. The baked
-[`agent-name.sh`](../docker/dev-base/agent-name.sh) still
-carries a `gitidentity` mode as a fallback for older or custom images, and the
+[`git-identity.sh`](../docker/dev-base/git-identity.sh)
+is the fallback for older or custom images, and the
 policy-tier [`managed-settings.json`](../docker/dev-base/claude-managed-settings.json)
 wires it as a second `SessionStart` hook, right after the self-name banner.
 

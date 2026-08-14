@@ -109,7 +109,7 @@ RUN --mount=type=bind,source=install-common.sh,target=/tmp/install-common.sh \
 RUN set -eux; ln -sf /usr/bin/python3 /usr/local/bin/python; \
     ln -sf /usr/bin/pip3 /usr/local/bin/pip; \
     chmod -R a+rX /opt/uv; python --version; pip --version; pipenv --version
-COPY --chmod=0755 agent-name.sh statusline.sh ward-shell-entrypoint.sh /opt/agentic-os/
+COPY --chmod=0755 session-name.sh git-identity.sh statusline.sh ward-shell-entrypoint.sh /opt/agentic-os/
 COPY --chmod=0755 statusline.d/ /opt/agentic-os/statusline.d/
 COPY --chmod=0644 claude-managed-settings.json /etc/claude-code/managed-settings.json
 COPY --from=repo-lists --chmod=0644 substrate-repos.txt /opt/agentic-os/substrate-repos.txt

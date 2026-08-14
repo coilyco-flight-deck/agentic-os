@@ -15,7 +15,7 @@ The ansible `shell` role (in the infrastructure repo) symlinks, by `ansible_syst
 - the `~/.local/bin` PATH helpers
 
 A pre-existing regular shell or Alacritty config is backed up to `<path>.bak`
-before linking. The `claude-hooks` role runs `install-agent-name.py` for the
+before linking. The `claude-hooks` role runs `install-session-name.py` for the
 provider-composed status line and SessionStart self-name hook. It is idempotent
 and never clobbers a status line you set yourself. Agent Compose owns context
 refresh through host convergence and native launch. The manual symlink fallback
