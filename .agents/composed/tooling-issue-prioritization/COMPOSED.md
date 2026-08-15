@@ -41,7 +41,7 @@ Tier ranks urgency, not "can an agent land it unattended?" - independent questio
 
 ## Third axis: role
 
-Which seat the work needs, orthogonal to both others and not exclusive: `role/ai`, `role/creator`, `role/design`, `role/engineer`, `role/qa`, `role/human`. It answers the question `autonomy/async-consult` kept swallowing - a human is needed, but **which** one. See [label-taxonomy](references/label-taxonomy.md).
+Which seat the work needs, orthogonal to both others and not exclusive. Eight values, one per role, plus `role/human` for a person who is not a seat at all. It answers what `autonomy/async-consult` kept swallowing - a human is needed, but **which** one. See [label-taxonomy](references/label-taxonomy.md).
 
 ## Assignment, pruning, and running it over an API
 
