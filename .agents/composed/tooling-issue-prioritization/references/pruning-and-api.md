@@ -2,11 +2,11 @@
 
 ## Pruning - demote, merge, or close
 
-Default to **demoting to P4 (icebox)** rather than closing: speculative-but-kept work stays open and tracked at the lowest tier, and the async triage loop can only move issues between open tiers anyway. Reserve closing for two cases:
+Default to **demoting to `priority/P4` (icebox)** rather than closing: speculative-but-kept work stays open and tracked at the lowest tier, and the async triage loop can only move issues between open tiers anyway. Reserve closing for two cases:
 
 - **Merge** near-duplicates into the lowest-numbered canonical (comment "merged into #N", then close the losers).
 - **Hard close** only the genuinely dead - superseded, abandoned, or one-line stubs with no value. For a bulk burn-down, an `icebox` label on the closed issue keeps it reversible (`state:closed label:icebox`).
-- **Keep** anything concrete, a bug, infra/security/ops, committed-direction, OR anything uncertain - at its earned tier. Keep is the safe default; demotion to P4 is the soft prune, closing is the hard one.
+- **Keep** anything concrete, a bug, infra/security/ops, committed-direction, OR anything uncertain - at its earned tier. Keep is the safe default; demotion to `priority/P4` is the soft prune, closing is the hard one.
 
 ## Running it over an API - lessons
 
