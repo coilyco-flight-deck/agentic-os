@@ -1,6 +1,6 @@
 ---
 name: tooling-issue-prioritization
-description: Tier and prune an issue backlog - priority/P0-P4 definitions, target ranges, percentile-cut assignment, an autonomy axis (autonomy/headless, autonomy/live-collab, autonomy/async-consult, autonomy/epic), and a role axis. Triggers - prioritize, triage the backlog, P0/P1/P2/P3/P4, backlog ratio, icebox, burn down the backlog, tier the issues, automation mode, autonomy, role labels, eligibility to dispatch.
+description: Tier and prune an issue backlog, then drain the async-consult queue through batched AskUserQuestion rounds - priority/P0-P4, target ranges, percentile-cut assignment, an autonomy axis (headless, live-collab, async-consult, epic), and a role axis. Triggers - prioritize, triage the backlog, P0/P1/P2/P3/P4, icebox, burn down the backlog, autonomy, role labels, consult queue, ask the human, AskUserQuestion.
 ---
 
 # Issue Prioritization
@@ -11,6 +11,14 @@ Three scoped axes ship - `priority/*`, `autonomy/*`, `role/*` - and the tracker 
 
 Resolve ranking scope before labels. See
 [pool rules](references/priority-pool.md).
+
+## Primary loop: AskUserQuestion
+
+**Every judgment only a human can make goes through AskUserQuestion, in batched rounds, written back to the tracker before the next round.** Tiering orders the backlog and the autonomy axis names each issue's ceiling, but neither moves anything on its own: `autonomy/async-consult` is a question waiting in a queue, and a queue nobody polls is just a label.
+
+So this is the main loop, not a closing step - **the ranking exists to decide what to ask about next.** Read the issue and its comments before composing a question, because one the ticket already answers spends a round you do not get back.
+
+Loop, option design, recording, and failure modes: [askuserquestion-flow](references/askuserquestion-flow.md).
 
 ## Tier definitions
 
@@ -29,7 +37,7 @@ rules and the bands live in [target-shape](references/target-shape.md).
 
 ## Second axis: autonomy
 
-Tier ranks urgency, not "can an agent land it unattended?" - independent questions. A second orthogonal axis labels each issue `autonomy/headless`, `autonomy/live-collab`, `autonomy/async-consult`, or `autonomy/epic`, the agent-autonomy ceiling it is cleared for; unlabeled and unsure both fail-closed to `autonomy/async-consult`. See [automation-mode-axis](references/automation-mode-axis.md).
+Tier ranks urgency, not "can an agent land it unattended?" - independent questions. A second orthogonal axis labels each issue `autonomy/headless`, `autonomy/live-collab`, `autonomy/async-consult`, or `autonomy/epic`, the agent-autonomy ceiling it is cleared for; unlabeled and unsure both fail-closed to `autonomy/async-consult`. See [automation-mode-axis](references/automation-mode-axis.md). The rounds above are how that queue drains, and `role/*` says whose queue it is.
 
 ## Third axis: role
 
