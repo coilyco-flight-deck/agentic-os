@@ -55,8 +55,4 @@ wrap aosguard ops forgejo-admin {
         op repoEditBranchProtection
         describe "converge an existing rule (PATCH /repos/{owner}/{repo}/branch_protections/{name}). Idempotent: re-running a matching rule changes nothing"
     }
-    can delete branch-protection {
-        op repoDeleteBranchProtection
-        describe "irreversible in effect: the branch is unprotected the moment this returns"
-    }
 }
