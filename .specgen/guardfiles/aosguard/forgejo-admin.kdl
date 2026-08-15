@@ -1,6 +1,8 @@
-// Forgejo operations that require an attended administrator credential. Keep
+// Forgejo operations that need the attended administrator credential. Keep
 // these outside the bot-authenticated wrapper so ordinary reads and writes
-// continue to use the coilyco-ops token.
+// continue to use the coilyco-ops token. Every verb here is refused to
+// coilyco-ops by Forgejo itself, so the credential is the gate and a second
+// per-field narrowing is not needed. Rationale: ../../../docs/aosguard.md.
 wrap aosguard ops forgejo-admin {
     spec forgejo-admin.swagger.v1.json.gz
     base-url "forgejo.coilysiren.me/api/v1"
@@ -10,36 +12,51 @@ wrap aosguard ops forgejo-admin {
         value env FORGEJO_ADMIN_TOKEN
     }
     restrict owner matches coily*
-    can edit repo {
-        op repoEdit
-    }
-    action edit repo {
-        describe "update only a repository description with an attended administrator credential (PATCH /repos/{owner}/{repo}); no other repository settings are exposed"
-        input owner {
-            positional
-            required
-            help "repo owner"
-        }
-        input repo {
-            positional
-            required
-            help "repo name"
-        }
-        input description {
-            flag
-            required
-            help "replacement repository description"
-        }
-        call edit repo {
-            args {
-                owner $owner
-                repo $repo
-                description $description
-            }
-        }
+
+    // Repo settings and cosmetics. EditRepoOption carries the merge policy
+    // forgejo-repo-settings.py converges; `private` and `archived` ride along.
+    can edit repo
+    can get repo {
+        describe "read a repository's current settings, so a converge can diff before it writes"
     }
     can replace-all repo-topic {
         op repoUpdateTopics
-        describe "replace the complete repository topic set with an attended administrator credential (PUT /repos/{owner}/{repo}/topics); repeat --topics for each retained topic"
+        describe "replace the complete repository topic set (PUT /repos/{owner}/{repo}/topics); repeat --topics for each retained topic"
+    }
+
+    // Org labels: every write needs org ownership, which is why the ordinary
+    // wrapper answers a pointer here. Reads stay available on both.
+    can get org-label
+    can list org-label
+    can create org-label {
+        describe "mint an org label (POST /orgs/{org}/labels); pass --exclusive for a scoped group like priority/* or autonomy/* so the tracker enforces one value per issue"
+    }
+    can edit org-label {
+        describe "rename or restyle an org label in place (PATCH /orgs/{org}/labels/{id}). An edit keeps the label id, so every issue carrying it keeps it through a rename - this is the safe way to move a taxonomy"
+    }
+    can delete org-label {
+        describe "irreversible: removes the label from every issue that carries it. Prefer `edit org-label` for a rename, which preserves those associations"
+    }
+
+    // Branch protection: converged whenever the repo set changes, most often
+    // right after creating a repo, so it is routine rather than exceptional.
+    can list branch-protection {
+        op repoListBranchProtection
+        describe "list the protection rules on a repository (GET /repos/{owner}/{repo}/branch_protections). op pinned because a bare `list branch` resolves here rather than to the branch list"
+    }
+    can get branch-protection {
+        op repoGetBranchProtection
+    }
+    can create branch-protection {
+        op repoCreateBranchProtection
+        describe "protect a branch (POST /repos/{owner}/{repo}/branch_protections). Run it on a newly created repo, which starts unprotected"
+    }
+    can edit branch-protection {
+        op repoEditBranchProtection
+        describe "converge an existing rule (PATCH /repos/{owner}/{repo}/branch_protections/{name}). Idempotent: re-running a matching rule changes nothing"
+    }
+    can delete branch-protection {
+        op repoDeleteBranchProtection
+        describe "irreversible in effect: the branch is unprotected the moment this returns"
     }
 }

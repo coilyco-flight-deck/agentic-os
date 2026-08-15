@@ -78,13 +78,19 @@ wrap aosguard ops forgejo {
     can search topic {
         describe "topic finder (GET /topics/search)"
     }
-    // org-labels: org-level labels (/orgs/{org}/labels); the `org` ancestor scopes
-    // them away from repo labels. Issue-label attach/set/remove stays below.
+    // org-labels (/orgs/{org}/labels): reads work as the bot, writes need org
+    // ownership it lacks, so they name the admin verb. See docs/aosguard.md.
     can get org-label
     can list org-label
-    can create org-label
-    can edit org-label
-    can delete org-label
+    never create org-label {
+        message "org label writes need organization ownership, which coilyco-ops lacks; use `aosguard ops forgejo-admin org-label create`"
+    }
+    never edit org-label {
+        message "org label writes need organization ownership, which coilyco-ops lacks; use `aosguard ops forgejo-admin org-label edit`"
+    }
+    never delete org-label {
+        message "org label writes need organization ownership, which coilyco-ops lacks; use `aosguard ops forgejo-admin org-label delete`"
+    }
     // org-members: the org membership roster (GET /orgs/{org}/members); the `org`
     // ancestor scopes it like the org-label/org-repo siblings. Read-only (ward#368).
     can list org-member {
