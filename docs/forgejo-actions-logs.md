@@ -65,7 +65,7 @@ aosguard ops forgejo action-job logs <owner> <repo> <internal-job-id> [--attempt
 aosguard ops forgejo action-run logs <owner> <repo> <internal-run-id>
 ```
 
-These expose the official API directly. Use the resolved command for an Actions URL or job name.
+These expose the official API directly. Use the resolved command for an Actions URL or job name, and note that **both `logs` leaves are broken until the engine bump lands** - see [the raw-response defect](aosguard-raw-response-defect.md).
 
 ## Prior bridge
 
