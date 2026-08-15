@@ -10,9 +10,9 @@ FROM ${LANG_DOTNET_IMAGE} AS dev-base-lang-dotnet-graft
 FROM ${LANG_PYTHON_IMAGE} AS dev-base-lang-python-graft
 
 FROM ubuntu:24.04 AS dev-base-tool-builder
-ARG WARD_VERSION=0.879.0
-ARG SPECGEN_VERSION=0.139.0
-ARG AOS_VERSION=0.190.0
+ARG WARD_VERSION=0.884.0
+ARG SPECGEN_VERSION=0.142.0
+ARG AOS_VERSION=0.202.0
 ARG TARGETARCH
 ARG DEBIAN_FRONTEND=noninteractive
 ENV PATH=/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin
@@ -66,7 +66,7 @@ RUN set -eux; \
     rm -rf /tmp/aosguard-spec; aosguard --version
 
 FROM ${BASE_IMAGE} AS dev-base-full
-ARG AGENT_COMPOSE_VERSION=2.20.0
+ARG AGENT_COMPOSE_VERSION=2.22.0
 ARG CLAUDE_VERSION=2.1.221
 ARG MCPORTER_VERSION=0.12.3
 ARG CODEX_VERSION=0.146.0
