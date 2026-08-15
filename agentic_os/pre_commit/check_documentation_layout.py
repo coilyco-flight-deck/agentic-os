@@ -77,6 +77,7 @@ from pathlib import Path, PurePosixPath
 
 from agentic_os.config import (
     get_int_option,
+    is_build_output,
     is_enabled,
     is_excluded,
     load_excludes,
@@ -191,7 +192,7 @@ def markdown_files() -> list[Path]:
         rel = path.relative_to(REPO_ROOT)
         if should_skip(rel):
             continue
-        if is_excluded(rel, excludes):
+        if is_excluded(rel, excludes) or is_build_output(rel, REPO_ROOT):
             continue
         out.append(rel)
     return sorted(out)
@@ -207,7 +208,7 @@ def check_docs_flatness() -> list[str]:
         rel = path.relative_to(REPO_ROOT)
         if should_skip(rel):
             continue
-        if is_excluded(rel, excludes):
+        if is_excluded(rel, excludes) or is_build_output(rel, REPO_ROOT):
             continue
         if path.is_dir() and path != docs:
             violations.append(
@@ -398,7 +399,7 @@ def check_skill_flatness(repo_root: Path | None = None) -> list[str]:
                     rel = nested.relative_to(root)
                     if should_skip(rel):
                         continue
-                    if is_excluded(rel, excludes):
+                    if is_excluded(rel, excludes) or is_build_output(rel, root):
                         continue
                     violations.append(
                         f"{rel.as_posix()}: nested {entrypoint} must not hide below "

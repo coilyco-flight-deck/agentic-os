@@ -37,7 +37,12 @@ import re
 import sys
 from pathlib import Path
 
-from agentic_os.config import is_enabled, is_excluded, load_excludes
+from agentic_os.config import (
+    is_build_output,
+    is_enabled,
+    is_excluded,
+    load_excludes,
+)
 
 HOOK_ID = "dead-cross-links"
 
@@ -116,9 +121,13 @@ def iter_markdown_files(roots: list[Path]):
         if path.name in SKIP_FILE_BASENAMES:
             return False
         rel = _rel_or_none(path)
-        if rel is not None and (should_skip(rel) or is_excluded(rel, excludes)):
+        if rel is None:
+            return True
+        if should_skip(rel) or is_excluded(rel, excludes):
             return False
-        return True
+        # A baked bundle's relative links resolve in the catalogue it came from,
+        # never in the bundle, and it is not this repo's content either way.
+        return not is_build_output(rel, REPO_ROOT)
 
     for root in roots:
         if root.is_file() and root.suffix == ".md":

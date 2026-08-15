@@ -41,7 +41,7 @@ Setup, after `brew install --cask karabiner-elements`:
 
 - `agentic_os/pre_commit/` - Python entry points for the hook suite exposed through `.pre-commit-hooks.yaml` and `[project.scripts]`.
 - `agentic_os/generators/` - offline generators for managed blocks, repo-pointer skills, seed-skill data, and agent-compose output.
-- `agentic_os/config.py` - shared repo config loader for hook opt-outs, excludes, and workspace scans.
+- `agentic_os/config.py` - shared repo config loader for hook opt-outs, excludes, and workspace scans. Also asks git what the repo carries, so a walking hook skips [build output](build-output-is-not-content.md) unasked.
 - `agentic_os/seed_skills_data.py` - generated seed-skill table shipped with the package so consumer hooks run offline.
 
 ## skills

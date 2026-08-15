@@ -22,11 +22,16 @@ A pattern containing a "/" is anchored to the repo root ("docs/*.md"
 matches docs/x.md but not docs/sub/x.md). A pattern with no "/" matches
 the file's basename at any depth, so one wildcard covers a generated file
 wherever it lands. Patterns and paths use forward slashes on every platform.
+
+`is_build_output` covers the case no per-repo exclude should have to: a path
+git already ignores is not repository content, so a tree-walking hook skips it
+without being told. See docs/build-output-is-not-content.md.
 """
 from __future__ import annotations
 
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path, PurePosixPath
 from typing import Iterable
@@ -256,3 +261,69 @@ def is_excluded(rel_path: Path | str, patterns: Iterable[str]) -> bool:
         if _glob_to_regex(pattern).match(target):
             return True
     return False
+
+
+# Build output is never repository content. See docs/build-output-is-not-content.md.
+
+_UNSET = object()
+_TREE_CACHE: dict[Path, object] = {}
+
+
+def _git_tree(repo_root: Path) -> tuple[frozenset[str], frozenset[str]] | None:
+    """Files git would carry, plus their ancestor dirs, or None for no answer."""
+    try:
+        completed = subprocess.run(
+            ["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard"],
+            cwd=repo_root,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+    except (OSError, ValueError):
+        return None
+    if completed.returncode != 0:
+        return None
+    listed = completed.stdout.decode("utf-8", "surrogateescape").split("\0")
+    files = frozenset(entry for entry in listed if entry)
+    # An empty answer is indistinguishable from a checkout git declined to read,
+    # and reading it as "nothing is content" would silently stop every hook.
+    if not files:
+        return None
+    dirs = set()
+    for entry in files:
+        parent = PurePosixPath(entry).parent
+        while str(parent) != ".":
+            dirs.add(str(parent))
+            parent = parent.parent
+    return files, frozenset(dirs)
+
+
+def reset_build_output_cache() -> None:
+    """Drop the cached git answer. One hook run reads one tree, so only a test
+    that rewrites a checkout between calls needs this."""
+    _TREE_CACHE.clear()
+
+
+def is_build_output(rel_path: Path | str, repo_root: Path | None = None) -> bool:
+    """Whether git would not carry this path, so no hook should read it.
+
+    Tracked plus untracked-but-not-ignored is git's own definition of what the
+    repository holds. These hooks walk the filesystem rather than git's file
+    list, so a baked tree that `git status` shows as absent was still being read
+    as this repository's own content. See sirens-echo#800.
+
+    Returns False whenever git cannot answer - no checkout, no git, a failed
+    call - so a hook never silently stops checking. Directories count as content
+    when anything under them does, which keeps a directory-shaped rule such as
+    docs/ flatness working.
+    """
+    root = repo_root or REPO_ROOT
+    tree = _TREE_CACHE.get(root, _UNSET)
+    if tree is _UNSET:
+        tree = _git_tree(root)
+        _TREE_CACHE[root] = tree
+    if tree is None:
+        return False
+    files, dirs = tree  # type: ignore[misc]
+    s = str(PurePosixPath(str(rel_path).replace("\\", "/")))
+    return s not in files and s not in dirs
