@@ -39,6 +39,17 @@ roles {
         composed-skill "writing-*-voice"
     }
 
+    role exec {
+        composed-skill tooling-director-decision-architecture
+        composed-skill tooling-skill-authoring
+        composed-skill "tooling-advisor-*"
+        composed-skill "writing-voice-*"
+        composed-skill "tooling-issue-*"
+        composed-skill "tooling-scout-*"
+        composed-skill "tooling-ceo-*"
+        composed-skill "tooling-pm-*"
+    }
+
     role creator {
         composed-skill "writing-*"
         composed-skill "personal-preference-*"
