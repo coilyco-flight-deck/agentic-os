@@ -40,6 +40,22 @@ Two entries are credential-shaped rather than config-shaped and are worth
 reading twice. `user-token create` returns the only copy of a new PAT, so its
 stdout is the secret. `package delete` and `user-token delete` are irreversible.
 
+## What it does not do, deliberately
+
+It does not create or delete Forgejo users, and it does not create
+organizations. Those are `never` leaves carrying the reason, so the boundary is
+executable rather than a convention someone has to remember.
+
+The line is that aosguard operates the estate and does not create principals in
+it. A guard that can mint a user can mint one with any rights, which makes every
+other restriction on the wrapper decorative. Kai's call, 2026-08-16.
+
+The two bootstrap scripts that need those operations -
+`provision-coilyco-ops-bot.sh` and `grant-coilyco-ops-org-repo-create.sh` in
+`coilyco-flight-deck/infrastructure` - keep reading `/forgejo/admin-token` from
+SSM directly. They run approximately once, so the standing capability a verb
+would create costs more than the direct read.
+
 ## Credentials
 
 The PAT comes from `/forgejo/admin-token` through the same `provider ssm` block

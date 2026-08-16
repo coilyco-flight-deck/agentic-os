@@ -126,4 +126,19 @@ wrap aosguard ops forgejo-admin {
         op userDeleteAccessToken
         describe "irreversible: revokes the named token immediately"
     }
+
+    // aosguard operates the estate; it does not create principals in it. A
+    // guard that can mint a user can mint one with any rights. Kai, 2026-08-16.
+    never create user {
+        op adminCreateUser
+        message "aosguard does not create Forgejo users: a guard that can mint a principal can mint one with any rights. Bootstrap scripts read /forgejo/admin-token from SSM directly - see scripts/provision-coilyco-ops-bot.sh in coilyco-flight-deck/infrastructure"
+    }
+    never delete user {
+        op adminDeleteUser
+        message "aosguard does not delete Forgejo users; do it in the web UI or from a bootstrap script holding the admin PAT"
+    }
+    never create admin-org {
+        op adminCreateOrg
+        message "aosguard does not create organizations; org creation stays human-only, as it is on the ordinary wrapper"
+    }
 }
