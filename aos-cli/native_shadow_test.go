@@ -841,15 +841,36 @@ func TestNativeSweepPreservesLiveWorktreeAcrossPathAlias(t *testing.T) {
 }
 
 func TestNativeLiveWorktreesFailClosedWhenPathIdentityIsUncertain(t *testing.T) {
+	// Unreadable for a reason other than absence: a path under a regular file
+	// resolves ENOTDIR, so identity is genuinely unknown and the set fails closed.
+	file := filepath.Join(t.TempDir(), "regular")
+	if err := os.WriteFile(file, []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	live := nativeLiveWorktrees{}
+	live.add(filepath.Join(file, "child"))
+
+	if !live.contains(t.TempDir()) {
+		t.Fatal("uncertain live path allowed workspace cleanup")
+	}
+}
+
+// Conflating a purged path with uncertainty disabled the whole pass.
+// agentic-os#1084
+func TestNativeLiveWorktreesTreatAbsentPathAsGoneNotUncertain(t *testing.T) {
 	missing := filepath.Join(t.TempDir(), "missing")
 	if (nativeLiveWorktrees{}).contains(missing) {
 		t.Fatal("empty live set preserved an unrelated missing path")
 	}
+
 	live := nativeLiveWorktrees{}
 	live.add(missing)
 
-	if !live.contains(t.TempDir()) {
-		t.Fatal("uncertain live path allowed workspace cleanup")
+	if live.contains(t.TempDir()) {
+		t.Fatal("a purged worktree path marked every other path live")
+	}
+	if live.contains(missing) {
+		t.Fatal("a purged worktree path reported itself live")
 	}
 }
 
@@ -1141,5 +1162,92 @@ func TestNativeGitOperationInProgressUsesRepositoryRelativePath(t *testing.T) {
 	}
 	if !inProgress {
 		t.Fatal("relative Git operation marker was not detected")
+	}
+}
+
+// A live squatter is skipped by cleanup, so only detaching frees main.
+// agentic-os#1086
+func TestNativeSweepDetachesLiveWorktreeSquattingOnMain(t *testing.T) {
+	root := t.TempDir()
+	repository, _ := createNativeTestRepository(t, root, "owner", "one")
+	testGit(t, repository, "switch", "-c", "task")
+	testGit(t, repository, "push", "-u", "origin", "task")
+	squatter := filepath.Join(root, "live-worktree")
+	testGit(t, repository, "worktree", "add", squatter, "main")
+	runtime := nativeTestRuntime(t, root)
+
+	live := nativeLiveWorktrees{}
+	live.add(squatter)
+
+	if err := normalizeNativeRepository(runtime, nativeRepository{
+		Owner: "owner", Name: "one", Path: repository,
+	}, live); err != nil {
+		t.Fatal(err)
+	}
+
+	if branch := testGit(t, repository, "branch", "--show-current"); branch != "main" {
+		t.Fatalf("canonical branch = %s, want main", branch)
+	}
+	if _, err := os.Stat(squatter); err != nil {
+		t.Fatalf("live worktree was removed rather than detached: %v", err)
+	}
+	if head := testGit(t, squatter, "branch", "--show-current"); head != "" {
+		t.Fatalf("live worktree branch = %q, want detached", head)
+	}
+}
+
+// Branch config is repository-global, so a worktree that pushed with -u while
+// sitting on main repoints branch.main.merge for every checkout.
+func TestNativeSweepRepairsMainUpstream(t *testing.T) {
+	root := t.TempDir()
+	repository, _ := createNativeTestRepository(t, root, "owner", "one")
+	testGit(t, repository, "branch", "session")
+	testGit(t, repository, "push", "-u", "origin", "session")
+	testGit(t, repository, "config", "branch.main.merge", "refs/heads/session")
+	runtime := nativeTestRuntime(t, root)
+
+	if err := normalizeNativeRepository(runtime, nativeRepository{
+		Owner: "owner", Name: "one", Path: repository,
+	}, nativeLiveWorktrees{}); err != nil {
+		t.Fatal(err)
+	}
+
+	if got := testGit(t, repository, "config", "--get", "branch.main.merge"); got != "refs/heads/main" {
+		t.Fatalf("branch.main.merge = %q, want refs/heads/main", got)
+	}
+}
+
+// Fully-pushed task branches accumulated for the life of a clone because
+// nothing reaped them. See agentic-os#1084.
+func TestNativeSweepReapsFullyPushedBranchesOnly(t *testing.T) {
+	root := t.TempDir()
+	repository, _ := createNativeTestRepository(t, root, "owner", "one")
+	testGit(t, repository, "branch", "ops/pushed")
+	testGit(t, repository, "push", "-u", "origin", "ops/pushed")
+	testGit(t, repository, "switch", "-c", "ops/local-only")
+	if err := os.WriteFile(filepath.Join(repository, "local.txt"), []byte("local\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	testGit(t, repository, "add", "local.txt")
+	testGit(t, repository, "commit", "-m", "local only")
+	testGit(t, repository, "switch", "main")
+	testGit(t, repository, "branch", "aos/claude/zz99")
+	runtime := nativeTestRuntime(t, root)
+
+	if err := normalizeNativeRepository(runtime, nativeRepository{
+		Owner: "owner", Name: "one", Path: repository,
+	}, nativeLiveWorktrees{}); err != nil {
+		t.Fatal(err)
+	}
+
+	branches := testGit(t, repository, "for-each-ref", "--format=%(refname:short)", "refs/heads/")
+	if strings.Contains(branches, "ops/pushed") {
+		t.Fatalf("fully-pushed branch survived the reap: %s", branches)
+	}
+	if !strings.Contains(branches, "ops/local-only") {
+		t.Fatalf("branch holding a local-only commit was reaped: %s", branches)
+	}
+	if !strings.Contains(branches, "aos/claude/zz99") {
+		t.Fatalf("session namespace was reaped, which breaks ID uniqueness: %s", branches)
 	}
 }

@@ -486,14 +486,25 @@ func nativePathKey(path string) (string, error) {
 	}
 	resolved, err := filepath.EvalSymlinks(absolute)
 	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return "", errNativePathAbsent
+		}
 		return "", fmt.Errorf("resolve native path %s: %w", path, err)
 	}
 	return filepath.Clean(resolved), nil
 }
 
+// errNativePathAbsent separates "this path is gone" from "this path could not
+// be read". Absence is an answer; only the second is uncertainty.
+var errNativePathAbsent = errors.New("native path does not exist")
+
 func (live *nativeLiveWorktrees) add(path string) {
 	key, err := nativePathKey(path)
 	if err != nil {
+		// Absence is an answer, not uncertainty. docs/native-default-branch.md
+		if errors.Is(err, errNativePathAbsent) {
+			return
+		}
 		live.uncertain = true
 		return
 	}
@@ -518,7 +529,9 @@ func (live nativeLiveWorktrees) contains(path string) bool {
 	}
 	key, err := nativePathKey(path)
 	if err != nil {
-		return true
+		// A path that is gone cannot be a live worktree, so say so rather than
+		// shielding the very purged worktrees the caller wants released.
+		return !errors.Is(err, errNativePathAbsent)
 	}
 	_, found := live.paths[key]
 	return found
@@ -658,7 +671,7 @@ func cleanDeadNativeSessions(runtime nativeRuntime) (nativeLiveWorktrees, error)
 			continue
 		}
 		// A second dead reading confirms the first, so a worktree holding no
-		// local-only state is released now. docs/native-agent-workspaces.md
+		// local-only state is released now. docs/native-default-branch.md
 		expired := !runtime.Now.Before(lease.DeadSince.Add(nativeDeadSessionGrace))
 		remaining := make([]nativeArtifact, 0, len(lease.Artifacts))
 		for _, artifact := range lease.Artifacts {
@@ -753,6 +766,16 @@ func batchProcessPIDs(pids []int) [][]int {
 	return batches
 }
 
+// reconcileNativeArtifactBranch trusts the worktree over the lease, which may
+// name a branch a mid-session switch already removed. Detached yields "".
+func reconcileNativeArtifactBranch(artifact nativeArtifact) string {
+	actual, err := nativeGit(artifact.Worktree, "symbolic-ref", "--short", "-q", "HEAD")
+	if err != nil {
+		return ""
+	}
+	return actual
+}
+
 func cleanNativeArtifact(artifact nativeArtifact) (bool, error) {
 	if _, err := os.Stat(artifact.Worktree); errors.Is(err, fs.ErrNotExist) {
 		_, _ = nativeGit(artifact.Repository, "worktree", "prune")
@@ -761,6 +784,7 @@ func cleanNativeArtifact(artifact nativeArtifact) (bool, error) {
 	if humanWorkdir(artifact.Worktree) {
 		return false, fmt.Errorf("human workdir is outside automation")
 	}
+	artifact.Branch = reconcileNativeArtifactBranch(artifact)
 	clean, err := nativeWorktreeClean(artifact.Worktree, false)
 	if err != nil || !clean {
 		return false, err
@@ -914,6 +938,9 @@ func normalizeNativeRepository(
 		if err := cleanUnleasedNativeWorktrees(runtime, repository, live); err != nil {
 			return err
 		}
+		if err := releaseNativeDefaultBranch(runtime, repository); err != nil {
+			return err
+		}
 		if _, err := nativeGit(repository.Path, "switch", "main"); err != nil {
 			return err
 		}
@@ -923,11 +950,102 @@ func normalizeNativeRepository(
 		fmt.Fprintf(runtime.Stderr, "aos: returned %s to main and removed local branch %s\n",
 			repository.Path, branch)
 	}
+	if err := repairNativeMainUpstream(runtime, repository); err != nil {
+		return err
+	}
 	if _, err := nativeGit(repository.Path, "merge", "--ff-only", "origin/main"); err != nil {
 		return err
 	}
 	if branch == "main" {
-		return cleanUnleasedNativeWorktrees(runtime, repository, live)
+		if err := cleanUnleasedNativeWorktrees(runtime, repository, live); err != nil {
+			return err
+		}
+	}
+	return reapNativeMergedBranches(runtime, repository)
+}
+
+// reapNativeMergedBranches deletes local branches already wholly on origin.
+// Rationale and the safety test: docs/native-default-branch.md
+func reapNativeMergedBranches(runtime nativeRuntime, repository nativeRepository) error {
+	worktrees, err := listNativeWorktrees(repository.Path)
+	if err != nil {
+		return err
+	}
+	held := map[string]bool{}
+	for _, worktree := range worktrees {
+		if worktree.Branch != "" {
+			held[worktree.Branch] = true
+		}
+	}
+	listing, err := nativeGit(repository.Path,
+		"for-each-ref", "--format=%(refname:short)", "refs/heads/")
+	if err != nil {
+		return err
+	}
+	reaped := 0
+	for _, branch := range strings.Split(listing, "\n") {
+		branch = strings.TrimSpace(branch)
+		if branch == "" || branch == "main" || held[branch] {
+			continue
+		}
+		// Session bookkeeping, and session-ID uniqueness reads it to tell whether
+		// an ID is taken. Reaping it would hand out an ID still in use.
+		if strings.HasPrefix(branch, "aos/") {
+			continue
+		}
+		cleaned, err := deleteNativeBranchIfRemote(repository.Path, branch)
+		if err != nil {
+			fmt.Fprintf(runtime.Stderr, "aos: preserving branch %s: %v\n", branch, err)
+			continue
+		}
+		if cleaned {
+			reaped++
+		}
+	}
+	if reaped > 0 {
+		fmt.Fprintf(runtime.Stderr, "aos: reaped %d fully-pushed branch(es) in %s\n",
+			reaped, repository.Path)
+	}
+	return nil
+}
+
+// repairNativeMainUpstream puts `main` back on `origin/main` after a squatting
+// worktree repointed it. docs/native-default-branch.md
+func repairNativeMainUpstream(runtime nativeRuntime, repository nativeRepository) error {
+	merge, err := nativeGit(repository.Path, "config", "--get", "branch.main.merge")
+	if err != nil || merge == "refs/heads/main" {
+		// A missing key exits non-zero. Absent tracking is not corruption.
+		return nil
+	}
+	if _, err := nativeGit(repository.Path,
+		"branch", "--set-upstream-to=origin/main", "main"); err != nil {
+		return fmt.Errorf("repair main upstream in %s: %w", repository.Path, err)
+	}
+	fmt.Fprintf(runtime.Stderr,
+		"aos: repaired %s main upstream, was tracking %s\n", repository.Path, merge)
+	return nil
+}
+
+// releaseNativeDefaultBranch detaches a worktree squatting on `main`, live ones
+// included. Detaching at HEAD leaves files alone. docs/native-default-branch.md
+func releaseNativeDefaultBranch(runtime nativeRuntime, repository nativeRepository) error {
+	worktrees, err := listNativeWorktrees(repository.Path)
+	if err != nil {
+		return err
+	}
+	for _, worktree := range worktrees {
+		if worktree.Branch != "main" || samePath(worktree.Path, repository.Path) {
+			continue
+		}
+		if humanWorkdir(worktree.Path) {
+			continue
+		}
+		if _, err := nativeGit(worktree.Path, "switch", "--detach"); err != nil {
+			return fmt.Errorf("detach %s from main: %w", worktree.Path, err)
+		}
+		fmt.Fprintf(runtime.Stderr,
+			"aos: detached worktree %s from main so %s can hold it\n",
+			worktree.Path, repository.Path)
 	}
 	return nil
 }
@@ -1246,7 +1364,7 @@ func stageNativeRoleHome(source, target, projectsRoot string) error {
 	for _, entry := range entries {
 		name := entry.Name()
 		// Left absent so ~/projects fails instead of resolving past the session
-		// worktrees. See docs/native-agent-workspaces.md.
+		// worktrees. See docs/native-default-branch.md.
 		if projectsRoot != "" && samePath(filepath.Join(source, name), projectsRoot) {
 			continue
 		}

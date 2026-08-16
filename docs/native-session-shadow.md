@@ -42,3 +42,6 @@ foreign work. Those worktrees belong under the platform cache at
 `agentic-os/agent-worktrees`, not in the temporary directory. A hand-made
 worktree carries no session lease, so nothing sweeps or recreates it, and a
 purge there destroys the only copy of anything uncommitted.
+
+A shadow stays on its session branch either way. Why, and the guards that
+enforce it: [default branch ownership](native-default-branch.md).
