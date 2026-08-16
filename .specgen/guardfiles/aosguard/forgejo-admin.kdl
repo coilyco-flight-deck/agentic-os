@@ -59,4 +59,71 @@ wrap aosguard ops forgejo-admin {
         op repoEditBranchProtection
         describe "converge an existing rule (PATCH /repos/{owner}/{repo}/branch_protections/{name}). Idempotent: re-running a matching rule changes nothing"
     }
+
+    // Actions secrets. Five provisioning scripts wrote these with a raw curl
+    // and the PAT in a shell variable; the verb keeps it inside the binary.
+    can list repo-actions-secret {
+        op repoListActionsSecrets
+    }
+    can update repo-actions-secret {
+        op updateRepoSecret
+        describe "create or replace a repository Actions secret (PUT /repos/{owner}/{repo}/actions/secrets/{secretname}); the value never appears in argv"
+    }
+    can delete repo-actions-secret {
+        op deleteRepoSecret
+    }
+    can list org-actions-secret {
+        op orgListActionsSecrets
+    }
+    can update org-actions-secret {
+        op updateOrgSecret
+        describe "create or replace an organization Actions secret (PUT /orgs/{org}/actions/secrets/{secretname})"
+    }
+    can delete org-actions-secret {
+        op deleteOrgSecret
+    }
+
+    // Runner registration tokens, minted per org or per repo when a runner is
+    // provisioned. Read-only against the API; the value is a fresh credential.
+    can get org-runner-registration-token {
+        op orgGetRunnerRegistrationToken
+    }
+    can get repo-runner-registration-token {
+        op repoGetRunnerRegistrationToken
+    }
+
+    // Package retention, which runs on a timer rather than by hand.
+    can list package {
+        op listPackages
+    }
+    can get package {
+        op getPackage
+    }
+    can delete package {
+        op deletePackage
+        describe "irreversible: removes one package version and its files"
+    }
+
+    // Repository contents. Not an admin concern, but the ordinary wrapper has
+    // no contents verb at all, so it lands here for now. See deploy#545.
+    can get repo-content {
+        op repoGetContents
+        describe "read one file from a repository (GET /repos/{owner}/{repo}/contents/{filepath})"
+    }
+    can list repo-content {
+        op repoGetContentsList
+    }
+
+    // Personal access tokens for the bot user, rotated rather than minted once.
+    can list user-token {
+        op userGetTokens
+    }
+    can create user-token {
+        op userCreateToken
+        describe "mint a PAT for a user (POST /users/{username}/tokens). The response carries the only copy of the secret, so treat the output as the credential"
+    }
+    can delete user-token {
+        op userDeleteAccessToken
+        describe "irreversible: revokes the named token immediately"
+    }
 }

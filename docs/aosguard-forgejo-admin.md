@@ -24,6 +24,22 @@ Org-label writes on the ordinary wrapper are `never` leaves that name the admin
 verb. They previously answered a bare `403 Must be an organization owner`, which
 is true and tells the caller nothing about where to go.
 
+## What it covers
+
+Repo settings and cosmetics, org labels, topics, branch protection, Actions
+secrets for repos and orgs, runner registration tokens, package retention,
+repository contents, and the bot's personal access tokens.
+
+The surface grew because provisioning scripts were reading the PAT into a shell
+variable and passing it to `curl`. A guarded verb keeps the credential inside
+the binary, so it never reaches a variable, a log, or `ps`. That is the point of
+the wrapper, and a script that fetches the token itself defeats it however
+carefully it handles it afterwards.
+
+Two entries are credential-shaped rather than config-shaped and are worth
+reading twice. `user-token create` returns the only copy of a new PAT, so its
+stdout is the secret. `package delete` and `user-token delete` are irreversible.
+
 ## Credentials
 
 The PAT comes from `/forgejo/admin-token` through the same `provider ssm` block
