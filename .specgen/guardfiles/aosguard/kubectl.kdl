@@ -6,7 +6,8 @@
 // friendly deploy surface (apply / scale / rollout) mount. Destructive
 // and shell-equivalent verbs (delete, drain/cordon, edit, patch, replace,
 // exec, attach, cp, port-forward) are intentionally left unexposed - they fall
-// to the host lockdown's bare-kubectl deny. Every grant audit-logs through ward.
+// to the host lockdown's bare-kubectl deny. Every grant audit-logs through the
+// generated binary's own umbra audit path, which needs no other tool present.
 // See ../../../docs/aosguard.md.
 wrap aosguard ops kubectl {
     exec kubectl

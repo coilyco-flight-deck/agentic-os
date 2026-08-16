@@ -22,7 +22,7 @@ Major shipped capabilities, not files.
   [kubeconfig](aos-kubeconfig.md), [issue pins](aos-issue-pin-context.md), and
   [check-ins](aos-acompose-checkin.md).
 - [aosguard](aosguard.md) - guarded CLI with fixed
-  [SigNoz MCP reads](signoz.md), issue pins, and sealed
+  [SigNoz MCP reads](signoz.md), issue pins, PR merge, and sealed
   [Forgejo storage measurement](forgejo-storage-measurement.md).
 - [Code review skill](../.agents/composed/tooling-code-review/COMPOSED.md) - QA-only in-container review stance.
 - [Code review contract](../CODE-REVIEW.md) - review invariants.
