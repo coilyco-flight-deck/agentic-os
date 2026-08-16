@@ -17,14 +17,14 @@ the role allowlists in [`.agents/roles.kdl`](../.agents/roles.kdl).
   vocabulary.
 * **Designer** - the PM family and design methods in addition to the frontend
   coding pair.
-* **Community** - Discord, customer-success, and social-writing methods,
-  including the editorial loop.
 * **Executive Strategist** - the deduplicated advisor, PM, and CEO methods for
   evidence synthesis, portfolio allocation, program decomposition, scouts,
   skill authoring, and issue writing.
-* **Content Manager** - the complete writing family for public-repository
+* **Content Creator** - the complete writing family for public-repository
   writing, editorial work, channel context, and voice, excluding issue
-  decomposition after its move into the tooling taxonomy.
+  decomposition after its move into the tooling taxonomy. It also carries the
+  Discord and customer-success methods, which it inherited when Community
+  stopped being a deployed role.
 
 ## Handoffs
 
@@ -33,7 +33,7 @@ ops owns supply-chain verification, installation, implementation, validation,
 and landing. Executive Strategist records returned evidence and outcomes without inheriting
 execution authority.
 
-Community owns routine member interaction and a clean handoff. Human stewards
+Content Creator owns routine member interaction and a clean handoff. Human stewards
 retain moderation decisions, while Executive Strategist, ops, and engineering
 receive signals that belong to their work.
 

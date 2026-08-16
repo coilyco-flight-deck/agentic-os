@@ -14,7 +14,7 @@ Major shipped capabilities, not files.
 - [Native agent workspaces](native-agent-workspaces.md) - fleet worktrees,
   leases, cleanup, the `aos` temp namespace, and standalone launches.
 - [Agent-compose provider](personality-provider.md) - scoped skills,
-  personality, and nine deployed roles including AI Engineer.
+  personality, and eight deployed roles including AI Engineer.
 - [Agent tool evaluation](../.agents/skills/tooling-agent-tool-evaluation/SKILL.md) - cross-harness tool evals.
 - [Role-composed skills](role-composed-skills.md) - v2 Core Roster method slices.
 - [AOS launcher](aos-cli.md) - role context with

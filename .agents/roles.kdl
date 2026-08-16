@@ -54,6 +54,8 @@ roles {
         composed-skill "writing-*"
         composed-skill "personal-preference-*"
         composed-skill "personal-preferences"
+        composed-skill "tooling-customer-success-*"
+        composed-skill tooling-discord-community-host
     }
 
     role ai {

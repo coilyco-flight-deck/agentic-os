@@ -1,7 +1,7 @@
 # Role-skill coverage audit
 
 The 2026-08 second pass reviewed every AOS ordinary and composed source against
-all nine deployed Agent Compose roles.
+all eight deployed Agent Compose roles.
 
 ## Placement result
 
@@ -21,10 +21,11 @@ Executive Strategist.
   an independent-verification concern.
 * **Design** - gains the PM signal-triangulation and program-decomposition methods
   alongside product brainstorming.
-* **Community** - gains the social editorial loop alongside customer-signal,
-  trust-repair, cultural-reading, trust-boundary, and Discord methods.
-* **Content** - drops issue decomposition because converting plans into tracker
-  work belongs with decision and strategy roles rather than content production.
+* **Content Creator** - carries the social editorial loop alongside
+  customer-signal, trust-repair, and Discord methods, inherited when Community
+  stopped being a deployed role. Drops issue decomposition, because converting
+  plans into tracker work belongs with decision and strategy roles rather than
+  content production.
 * **AI Engineer** - receives the coding family used to build benchmark runners,
   probes, aggregation tools, and other AI-measurement artifacts.
 

@@ -23,14 +23,11 @@ question_for() {
         design)
             echo "A role-based agent launcher must hide backend model identity. Shape the smallest clear role-selection interaction, including its default and failure state."
             ;;
-        community)
-            echo "A Discord newcomer asks a repeated setup question in a busy channel. Give a welcoming grounded answer, one useful next step, and the condition for a human handoff."
-            ;;
         exec)
             echo "Several Flight Deck repositories claim overlapping portfolio priority. Name the evidence needed, make the smallest reversible allocation decision, and delegate the bounded outcomes."
             ;;
-        content)
-            echo "Draft a restrained launch note for role-scoped agent skills and name one signal that would show the message helped."
+        creator)
+            echo "A Discord newcomer asks a repeated setup question in a busy channel. Give a welcoming grounded answer, one useful next step, and the condition for a human handoff."
             ;;
         ai)
             echo "A tool-calling model regressed on one benchmark after a prompt change. Define the smallest controlled evaluation, the provenance to preserve, and the condition for changing the prompt."

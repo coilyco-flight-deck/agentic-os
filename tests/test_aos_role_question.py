@@ -81,15 +81,24 @@ def test_question_accepts_display_name_marker(tmp_path: Path) -> None:
     assert proc.returncode == 0, proc.stderr
 
 
-def test_question_accepts_community_role(tmp_path: Path) -> None:
+def test_question_accepts_creator_role(tmp_path: Path) -> None:
     proc, _ = _run(
         tmp_path,
         "local",
-        "community",
-        response="ROLE-CONFIRMED: community",
+        "creator",
+        response="ROLE-CONFIRMED: creator",
     )
 
     assert proc.returncode == 0, proc.stderr
+
+
+def test_question_rejects_the_retired_community_role(tmp_path: Path) -> None:
+    """The roster is eight roles. Creator absorbed this seat's methods."""
+    proc, argv = _run(tmp_path, "local", "community")
+
+    assert proc.returncode == 2
+    assert "unknown role community" in proc.stderr
+    assert argv == ""
 
 
 def test_question_rejects_missing_role_marker(tmp_path: Path) -> None:
