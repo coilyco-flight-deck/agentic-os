@@ -1,15 +1,19 @@
-// Forgejo operations that need the attended administrator credential. Keep
-// these outside the bot-authenticated wrapper so ordinary reads and writes
-// continue to use the coilyco-ops token. Every verb here is refused to
-// coilyco-ops by Forgejo itself, so the credential is the gate and a second
-// per-field narrowing is not needed. Rationale: ../../../docs/aosguard.md.
+// Forgejo operations Forgejo refuses to the coilyco-ops bot, which is an org
+// member holding push rather than an owner holding repo-admin. The separate
+// wrapper keeps ordinary reads and writes on the bot token. Rationale:
+// ../../../docs/aosguard.md.
 wrap aosguard ops forgejo-admin {
+    // Same store and shape as the ordinary wrapper, pointed at the admin PAT.
+    provider ssm {
+        exec aws ssm get-parameter --with-decryption --output text --query "Parameter.Value" --name
+    }
+
     spec forgejo-admin.swagger.v1.json.gz
     base-url "forgejo.coilysiren.me/api/v1"
     auth header-token {
         header Authorization
         prefix "token "
-        value env FORGEJO_ADMIN_TOKEN
+        value ssm "/forgejo/admin-token"
     }
     restrict owner matches coily*
 

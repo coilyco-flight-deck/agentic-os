@@ -19,11 +19,11 @@ does not shadow `aosguard ops forgejo`. The sibling
 `aosguard ops signoz` reads only the converged SigNoz MCP server. The snapshot
 excludes Ward role policy.
 Forgejo pin actions are fixed to a single tracker where coilyco-ops holds admin.
-The ordinary Forgejo wrapper keeps bot auth. The admin wrapper reads
-`FORGEJO_ADMIN_TOKEN` from the environment, so credentials never enter argv,
-logs, or tracked files.
+The ordinary Forgejo wrapper keeps bot auth. The admin wrapper reads its PAT
+from the same SSM store through the same `provider ssm` shape, so credentials
+never enter argv, logs, or tracked files.
 
-The attended wrapper carries repo settings, org labels, topics, and branch
+The admin wrapper carries repo settings, org labels, topics, and branch
 protection: [aosguard-forgejo-admin](aosguard-forgejo-admin.md).
 
 Ward's fixed broker and AOSguard's static operator surface are independent.
