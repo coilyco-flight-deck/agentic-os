@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aos-eval"
-version = "0.1.0"
+version = "0.1.1"
 description = "Shared eval grading layer: schema, boundary pairing, human annotation, failure taxonomy, and a one-way display export."
 readme = "README.md"
 license = { text = "MIT" }
@@ -46,6 +46,11 @@ dev = ["pytest>=9"]
 
 [tool.setuptools.packages.find]
 include = ["aos_eval*"]
+
+# PEP 561. Without the marker a strict-mypy consumer sees this package as
+# untyped, which agent-compose hit on the first adoption.
+[tool.setuptools.package-data]
+aos_eval = ["py.typed"]
 
 # Present so ruff resolves this directory as its own config root. Without it,
 # a root-level `ruff check aos-eval` sorts `aos_eval` as third-party and
