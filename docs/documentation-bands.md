@@ -64,6 +64,21 @@ accumulated exactly where the pressure was highest: one repo excluded nine
 individual `SKILL.md` files, two excluded `docs/FEATURES.md` from the cap that
 exists to keep it an inventory.
 
+## Skill entrypoints belong to check-skills
+
+`SKILL.md` and `COMPOSED.md` take no size cap from this hook. `check-skills`
+owns them through `categories.yaml`, which allows 500 lines and 10,000 bytes.
+
+Sharing one cap made a skill pass the validator that owns skills and fail the
+one that owns layout, and the failure told the author to split a skill into
+`docs/`. A skill does not overflow there. It overflows into its own
+`references/`, which `check-skills` deliberately leaves uncapped. Two hooks in
+one suite disagreeing about the same file is a defect in the suite rather than
+a decision an author can act on.
+
+The exemption is scoped to the two entrypoint basenames. Every other Markdown
+file under a skill directory still takes the band cap.
+
 ## Documentation-layout exceptions
 
 Every carve-out from the default `documentation-layout` rule: Markdown lives only at the root allowlist, `docs/*.md` (flat), or a skill dir, capped at 80 lines / 4000 chars. Enforced by [`check_documentation_layout.py`](https://github.com/coilyco-flight-deck/agentic-os/blob/main/agentic_os/check_documentation_layout.py); per-repo config under `[tool.agentic-os.documentation-layout]` in `pyproject.toml`. File lists are a snapshot and drift; the mechanisms do not.

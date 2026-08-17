@@ -45,9 +45,12 @@ hook config and gets that band's line, char, and docs-count caps. Declaring
 is mandatory in both directions: silence is a missing decision rather than a
 small repo. There is no per-file escape from a size or count cap: `excludes`
 still govern placement
-and flatness, and no longer reach either cap. SKILL.md and COMPOSED.md are
-not special, and neither is docs/FEATURES.md. CLAUDE.md is expected to be a
-one-line `@AGENTS.md` pointer.
+and flatness, and no longer reach either cap. docs/FEATURES.md is not special.
+CLAUDE.md is expected to be a one-line `@AGENTS.md` pointer.
+
+SKILL.md and COMPOSED.md take no size cap from here. check-skills owns them
+through categories.yaml, and a skill overflows into its own references/ rather
+than into docs/.
 
 The count cap exists because a per-doc cap on its own does not bound a docs
 folder, it reshapes it. A repo that caps length and not count answers every
@@ -129,9 +132,12 @@ AGENTS_DEFAULT_MAX_CHARS = TRIFECTA_MAX_CHARS * 2
 README_DEFAULT_MAX_LINES = TRIFECTA_MAX_LINES
 README_DEFAULT_MAX_CHARS = TRIFECTA_MAX_CHARS
 
-# Verbatim upstream files; exempt from size cap, matched by basename.
+# Exempt from the size cap, by basename. The skill entrypoints belong to
+# check-skills instead. See docs/documentation-bands.md.
 SIZE_CAP_EXEMPT_BASENAMES = {
     "CODE_OF_CONDUCT.md",
+    "SKILL.md",
+    "COMPOSED.md",
 }
 
 ROOT_MARKDOWN_ALLOWLIST = {

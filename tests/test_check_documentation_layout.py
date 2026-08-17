@@ -383,3 +383,29 @@ def test_excludes_cannot_shrink_the_docs_count(tmp_path: Path, monkeypatch) -> N
     )
     _point_repo_root_at(tmp_path, monkeypatch)
     assert docs_layout.check_docs_count() != []
+
+
+def test_skill_entrypoints_take_no_size_cap_from_this_hook(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """check-skills owns SKILL.md and COMPOSED.md, and allows far more than a band.
+
+    Both hooks ship in the same suite, so a shared cap here made a skill pass the
+    validator that owns skills and fail the one that owns layout, with an error
+    telling the author to split it into docs/. A skill overflows into its own
+    references/ instead.
+    """
+    write(tmp_path / "pyproject.toml",
+          '[tool.agentic-os.documentation-layout]\nband = "small"\n')
+    long_body = "# Skill\n\n" + "line\n" * 400
+    write(tmp_path / ".agents" / "skills" / "a-skill" / "SKILL.md", long_body)
+    write(tmp_path / ".agents" / "composed" / "b-source" / "COMPOSED.md", long_body)
+    # An ordinary doc of the same size is still capped, so the exemption is
+    # scoped to the entrypoints rather than disabling the check.
+    write(tmp_path / "docs" / "ordinary.md", long_body)
+    _point_repo_root_at(tmp_path, monkeypatch)
+
+    violations = docs_layout.check_markdown_sizes()
+    offenders = {v.split(":")[0] for v in violations}
+    assert "docs/ordinary.md" in offenders
+    assert not [v for v in offenders if v.endswith(("SKILL.md", "COMPOSED.md"))]
