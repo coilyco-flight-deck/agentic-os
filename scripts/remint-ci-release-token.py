@@ -13,7 +13,7 @@ Flow: read the bot password from SSM, replace any prior token of the same
 name, mint with write:repository + read:user, prove attribution works via
 GET /user, then overwrite SSM /forgejo/coilyco-ops/ci-release-token. Values stay
 in-process (boto3, urllib) - never disk, argv, or stdout. Follow with
-`ward exec sync-actions-secrets` to fan the new value out to the repos.
+`just sync-actions-secrets` to fan the new value out to the repos.
 """
 from __future__ import annotations
 

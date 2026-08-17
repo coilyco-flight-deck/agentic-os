@@ -61,7 +61,7 @@ Composition verifies the immutable bundle with `project --scope home`, and
 
 ## Validation and release
 
-`ward exec aos-test` runs Go, and the `aos-composition-dry-run`,
+`just aos-test` runs Go, and the `aos-composition-dry-run`,
 `aos-composition-smoke`, and `aos-standalone-composition-smoke` verbs cover both
 lifecycle shapes. The standalone smoke uses `--auth=false` and a version
 command, so it proves startup rather than authenticated inference. The
@@ -105,7 +105,7 @@ Runtime dependencies and upgrades are in the
 [native launcher walkthrough](agent-terminal-native.md).
 
 Publication consumes the repo-scoped `TAP_WRITE_TOKEN` and `SCOOP_WRITE_TOKEN`
-Actions secrets, synchronized from SSM by `ward exec sync-actions-secrets`. An
+Actions secrets, synchronized from SSM by `just sync-actions-secrets`. An
 operator supplies the attended `FORGEJO_ADMIN_TOKEN` in memory.
 
 Workflow dispatch accepts an existing or explicit `aos-v*` tag, or the operator
@@ -113,7 +113,7 @@ selects patch, minor, or major. Existing releases and same-named assets are
 reused and replaced, so a retry is idempotent.
 ## Local validation
 
-`ward exec aos-release-build` creates the binaries and `SHA256SUMS`. With
+`just aos-release-build` creates the binaries and `SHA256SUMS`. With
 `AOS_RELEASE_VERSION` set, `aos-release-package` renders local metadata and
 `aos-release-check` verifies checksums, versions, `--help`, and an
 `aosterm --dry-run` against an overlay fixture. The ordinary Go tests and

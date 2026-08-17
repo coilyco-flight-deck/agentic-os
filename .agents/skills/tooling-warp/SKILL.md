@@ -10,9 +10,9 @@ docs own platform layout, settings, and failure details.
 
 ## Core loop
 
-* Run `ward exec warp doctor` to inspect the selected channel without changing
+* Run `just warp doctor` to inspect the selected channel without changing
   it.
-* Run `ward exec warp apply` after an approved config change.
+* Run `just warp apply` after an approved config change.
 * Set `WARP_CHANNEL=preview|stable` or pass `--channel` when auto-detection
   should not choose. Preview is preferred when both channels exist.
 * Set `WARP_STARTUP_DIR` to an absolute operator-local path when new tabs

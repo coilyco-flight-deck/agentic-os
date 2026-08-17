@@ -5,7 +5,7 @@ bake became a consuming repository's own skills.
 
 ## What went wrong
 
-`ward exec compose-bundles` in sirens-echo writes `agent/bundles/`, which is
+`just compose-bundles` in sirens-echo writes `agent/bundles/`, which is
 gitignored. The next `pre-commit` run reported 75 documentation-layout
 violations and 8 dead links, all inside that bake, on an otherwise clean `main`.
 

@@ -1,5 +1,5 @@
 # Reference CI workflow: run an app's gate INSIDE the moving :release dev-base image,
-# through the same `ward exec` verbs a dispatched agent runs, so a green CI
+# through the same `just` verbs a dispatched agent runs, so a green CI
 # means "a headless agent can land this." See docs/ci-in-dev-base.md.
 #
 # Copy this into an app's .forgejo/workflows/ci.yml. Keep the promoted :release
@@ -23,8 +23,8 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      # The app's own gate verbs, defined in its .ward/ward.yaml - identical to
-      # what a headless `ward agent` run executes. No hand-rolled uv/pip steps.
-      - run: ward exec lint
-      - run: ward exec test
-      - run: ward exec smoke
+      # The app's own gate verbs, defined in its justfile - identical to what a
+      # headless `ward agent` run executes. No hand-rolled uv/pip steps.
+      - run: just lint
+      - run: just test
+      - run: just smoke

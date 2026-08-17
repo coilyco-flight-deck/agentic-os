@@ -2,8 +2,8 @@
 
 The `warp/` Go module establishes and verifies Kai's Warp terminal config across hosts. Run it through ward, never bare `go`:
 
-- `ward exec warp apply` - host-aware, idempotent: reconcile every state layer.
-- `ward exec warp doctor` - verify only: PASS/FAIL per check, no mutation.
+- `just warp apply` - host-aware, idempotent: reconcile every state layer.
+- `just warp doctor` - verify only: PASS/FAIL per check, no mutation.
 
 The repo is the source of truth. `apply` pushes the repo's intent onto the host, `doctor` reports drift without touching anything. Both resolve the repo root by walking up from cwd to the first `.git`, so they work from any subdir.
 
@@ -45,7 +45,7 @@ The walk exists because hand-made links went orphaned: a new or moved launch con
 
 ## Warp-owned volatile settings
 
-`ward exec warp apply` renders `settings.toml` from `warp/templates/settings.toml.tmpl` and `ward exec warp doctor` checks the on-disk file against that same render. The default check is byte-for-byte: any difference is drift and FAILs.
+`just warp apply` renders `settings.toml` from `warp/templates/settings.toml.tmpl` and `just warp doctor` checks the on-disk file against that same render. The default check is byte-for-byte: any difference is drift and FAILs.
 
 A few keys break that model. The running Warp persists live UI and cloud-account state back into `settings.toml` on every launch, overwriting whatever `apply` wrote. Pinning them in the template guarantees perpetual doctor drift no matter what value the template carries.
 

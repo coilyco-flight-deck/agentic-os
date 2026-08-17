@@ -1,7 +1,15 @@
 # Per-repo task manifest. Run `just` (or `just --list`) to see every verb.
 #
 # Recipes take trailing arguments directly: `just aos-say hello`, where the
-# ward form was `ward exec aos-say -- hello`.
+# retired form was `ward exec aos-say -- hello`.
+#
+# One line of comment per recipe on purpose: just reads only the LAST comment
+# line above a recipe, so a wrapped description silently truncates to its tail.
+# That is agentic-os#1048's finding, kept here rather than rediscovered.
+#
+# Retiring `ward exec` per coilysiren/inbox#366. `.ward/ward.yaml` survives
+# carrying catalog metadata only, because check_catalog_block pins that exact
+# path upstream. Tracked at agentic-os#1101.
 
 set positional-arguments
 

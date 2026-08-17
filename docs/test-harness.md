@@ -84,14 +84,14 @@ default is the local design-production model.
 Build the launcher and local image before the first run:
 
 ```bash
-ward exec aos-build
-ward exec aos-image-build
+just aos-build
+just aos-image-build
 ```
 
 ## Cloud design
 
 ```bash
-ward exec aos-role-question -- cloud design
+just aos-role-question cloud design
 ```
 
 ## Local role matrix
@@ -99,14 +99,14 @@ ward exec aos-role-question -- cloud design
 Run these sequentially:
 
 ```bash
-ward exec aos-role-question -- local engineer
-ward exec aos-role-question -- local director
-ward exec aos-role-question -- local qa
-ward exec aos-role-question -- local ops
-ward exec aos-role-question -- local design
-ward exec aos-role-question -- local community
-ward exec aos-role-question -- local exec
-ward exec aos-role-question -- local content
+just aos-role-question local engineer
+just aos-role-question local director
+just aos-role-question local qa
+just aos-role-question local ops
+just aos-role-question local design
+just aos-role-question local community
+just aos-role-question local exec
+just aos-role-question local content
 ```
 
 Each question targets the role's actual work, such as adversarial verification

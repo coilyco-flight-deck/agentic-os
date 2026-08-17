@@ -13,9 +13,9 @@ Warp configuration remains available.
 - `shell/` - shared `common.sh` plus thin `zshrc` + `bashrc`, so bash and zsh match. `warp.zsh` is the zsh-only Warp dispatcher.
 - `alacritty/` - portable Sombra appearance and terminal security defaults, with host preferences left to the local wrapper.
 - `agent-terminal/` - `aosterm` and compatibility branding for one Alacritty window.
-- `warp/` - transitional Warp config (`settings.toml`, `tab_configs/`) plus the `ward exec warp` Go module.
+- `warp/` - transitional Warp config (`settings.toml`, `tab_configs/`) plus the `just warp` Go module.
 - `aos-cli/` - the Go composition root for standalone and Ward-governed agent launches.
-- `aos-say/` - the `ward exec aos-say` Go module for the speech helper client and relay.
+- `aos-say/` - the `just aos-say` Go module for the speech helper client and relay.
 - `karabiner/` - Karabiner-Elements complex modification assets (`brew install --cask karabiner-elements`), symlinked into the local Karabiner config tree.
 - `scripts/` - portable utilities (gpg-ssm wrapper, session-name hooks, aws-config lint).
 - `.agents/skills/` - ordinary `SKILL.md` sources that every composed role can discover.
@@ -31,7 +31,7 @@ Full breakdown: [docs/repo-layout.md](docs/repo-layout.md).
 Host config is converged by Ansible (rollout lives in infrastructure, per [AGENTS.md](AGENTS.md)). Manual fallback:
 
 ```bash
-ward exec apply-shell-links
+just apply-shell-links
 ```
 
 Equivalent links on Mac and Linux:
@@ -42,10 +42,10 @@ ln -sf "$PWD/shell/bashrc" ~/.bashrc
 ln -sf "$PWD/scripts/gpg-ssm" ~/.local/bin/gpg-ssm
 mkdir -p ~/.config/alacritty
 ln -sf "$PWD/alacritty/alacritty.toml" ~/.config/alacritty/alacritty.toml
-ward exec warp apply                     # warp config
+just warp apply                     # warp config
 ```
 
-On Windows, `ward exec apply-shell-links` manages `~/.zshrc` and the `gpg-ssm.cmd`
+On Windows, `just apply-shell-links` manages `~/.zshrc` and the `gpg-ssm.cmd`
 shim only. It also links the Forgejo git credential helper; Git Bash popup shells
 should not recreate `~/.bashrc`.
 
@@ -155,6 +155,6 @@ grammar.
 - [docs/FEATURES.md](docs/FEATURES.md) - inventory of what ships today.
 - [Repo maps](docs/repo-layout.md) - compact starting points for high-churn warded workflow areas.
 - [CODE-REVIEW.md](CODE-REVIEW.md) - root review contract for repo-local invariants and historical issues.
-- [.ward/ward.yaml](.ward/ward.yaml) - allowlisted dev commands. Agents route through ward.
+- [justfile](justfile) - dev verbs, which agents route through - and [.ward/ward.yaml](.ward/ward.yaml), catalog metadata only.
 
 Cross-reference convention from [release.md](docs/release.md).

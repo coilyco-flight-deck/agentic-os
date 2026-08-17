@@ -140,14 +140,14 @@ repos:
         pass_filenames: false
         stages: [pre-commit]
       - id: warp-go-vet
-        name: vet the ward exec warp module
+        name: vet the warp module
         entry: bash -c 'cd warp && go vet -p 1 ./...'
         language: system
         files: ^warp/.*\.go$
         pass_filenames: false
         stages: [pre-commit]
       - id: warp-gofmt
-        name: gofmt the ward exec warp module
+        name: gofmt the warp module
         entry: bash -c 'cd warp && gofmt -w .'
         language: system
         files: ^warp/.*\.go$

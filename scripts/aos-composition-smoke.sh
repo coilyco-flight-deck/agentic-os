@@ -3,7 +3,7 @@
 set -euo pipefail
 
 if [[ $# -eq 0 ]]; then
-  echo "usage: ward exec aos-composition-smoke -- <issue-or-freeform>" >&2
+  echo "usage: just aos-composition-smoke <issue-or-freeform>" >&2
   exit 2
 fi
 

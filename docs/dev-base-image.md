@@ -26,7 +26,7 @@ kubeconfig, or cluster transport: the standalone launcher may add an
 
 ## Build and publication
 
-`ward exec dev-base-build` executes the declarative
+`just dev-base-build` executes the declarative
 [`docker-bake.hcl`](../docker/dev-base/docker-bake.hcl), building the five
 payload targets as cache-only dependencies and loading only
 `agentic-os:dev-base-local` for smoke verification.

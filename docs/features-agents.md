@@ -18,7 +18,7 @@ The canonical base repos themselves (`agentic-os`, `agentic-os-kai`) are exempt 
 - **`agents-pointer`** (pre-commit hook) regenerates the expected block offline from the repo's org, derived from its git remotes, and fails on drift, a missing block, or a legacy intro line lingering beside it. It no-ops for unmanaged orgs, exempt base repos, a symlinked `AGENTS.md`, or a repo with no root `AGENTS.md`.
 - **`apply-agents-pointer`** injects or refreshes the block in place. Idempotent: it strips any prior managed block and known legacy intro lines, then inserts the fresh block right after the first H1.
 
-This repo ships the validator and the applier. The fleet rollout that lands the block on every managed repo's canonical `main` is `scripts/agents-pointer-migrate.py` in infrastructure (`ward exec agents-pointer-migrate`), per the authoring-vs-rollout split. (The earlier report-only Ansible `agents-pointer` role was retired when fleet pre-commit and pointer rollout moved onto the ward container.)
+This repo ships the validator and the applier. The fleet rollout that lands the block on every managed repo's canonical `main` is `scripts/agents-pointer-migrate.py` in infrastructure (`just agents-pointer-migrate`), per the authoring-vs-rollout split. (The earlier report-only Ansible `agents-pointer` role was retired when fleet pre-commit and pointer rollout moved onto the ward container.)
 
 ## Features: agents and sessions
 

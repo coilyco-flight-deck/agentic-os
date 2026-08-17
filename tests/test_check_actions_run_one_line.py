@@ -30,7 +30,7 @@ def workflow(run: str) -> str:
 def test_plain_one_line_run_passes(tmp_path: Path) -> None:
     path = write(
         tmp_path / ".forgejo/workflows/test.yml",
-        workflow("      - run: ward exec test\n"),
+        workflow("      - run: just test\n"),
     )
     assert check.check_file(path, tmp_path) == []
 

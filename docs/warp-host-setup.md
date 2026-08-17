@@ -24,14 +24,14 @@ defaults to Preview, honoring `WARP_DEFAULT_EDITOR_BUNDLE_ID` and
 `WARP_DEFAULT_EDITOR_APP_PATH` for per-host overrides. Pin WarpPreview in the
 Dock and unpin Warp.
 
-Then `ward exec warp apply` reconciles settings, theme, launch configs, and
+Then `just warp apply` reconciles settings, theme, launch configs, and
 SQLite.
 
 When a Preview regression breaks a workday:
 
 - `open -a Warp` opens Stable by bundle name.
 - `warp://` URIs always route to Stable - useful for known-good URI tests.
-- `ward exec warp apply --channel stable` reconciles Stable's `~/.warp/` config and `dev.warp.Warp-Stable` SQLite directly (or export `WARP_CHANNEL=stable`). Without it, apply/doctor auto-detect and prefer Preview.
+- `just warp apply --channel stable` reconciles Stable's `~/.warp/` config and `dev.warp.Warp-Stable` SQLite directly (or export `WARP_CHANNEL=stable`). Without it, apply/doctor auto-detect and prefer Preview.
 - `ward pkg brew upgrade --cask warp@preview --allow-untapped` picks up the next Preview release. Warp ships weekly.
 
 - `launch_configurations/` - one window, one-or-more tabs per YAML. URI `warppreview://launch/<name>`. `apply` symlinks each into the config dir and sweeps dangling links.

@@ -5,7 +5,7 @@ Repo Actions secrets (Telegram alert credentials, promote/release PAT,
 package-repository writers, and deploy's pin-reconciler pair) are write-only in
 Forgejo, so drift shows up as silently-dead alert, publication, or auto-deploy
 steps. This makes the mapping explicit and re-applying it one verb:
-`ward exec sync-actions-secrets` (add `-- --dry-run` to preview).
+`just sync-actions-secrets` (add `-- --dry-run` to preview).
 
 Entries are keyed `owner/repo`, so the mapping spans orgs.
 

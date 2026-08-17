@@ -42,7 +42,7 @@ except ImportError:  # pragma: no cover
         "  for catalog-block-present to the uv-managed shape (`language: python` +\n"
         "  `additional_dependencies: [pyyaml]`). Canonical block:\n"
         "    agentic-os-kai/scripts/apply-catalog-block-hook.py (MANAGED_BLOCK).\n"
-        "  Refresh fleet-wide with: ward exec apply-catalog-block-hook\n"
+        "  Refresh fleet-wide with: just apply-agentic-os-hooks\n"
         "  Tracker: docs/ward-specs.md",
         file=sys.stderr,
     )

@@ -12,7 +12,7 @@ global endpoint and doesn't need a region. SSM, S3, and friends will fail.
 This check parses ~/.aws/config (or $AWS_CONFIG_FILE) and exits non-zero if
 it finds a `[profile default]` section, printing the remediation.
 
-Run via `make check-aws-config` or `ward exec check-aws-config`.
+Run via `make check-aws-config` or `just check-aws-config`.
 
 Origin: see docs/release.md.
 """

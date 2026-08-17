@@ -51,9 +51,9 @@ builds. `aosguard-lock` refreshes the native skill under ignored
 
 ## Development
 
-`ward exec aosguard-build` materializes `dist/aosguard` and refreshes the
-generated skill. `ward exec aosguard-run --` passes subsequent arguments to the
-generated command. `ward exec aosguard-lock` is the only lock-writing step and
+`just aosguard-build` materializes `dist/aosguard` and refreshes the
+generated skill. `just aosguard-run --` passes subsequent arguments to the
+generated command. `just aosguard-lock` is the only lock-writing step and
 uses the packaged `specgen` executable.
 
 Cross-repository composition is tracked on the intake tracker, with AOS

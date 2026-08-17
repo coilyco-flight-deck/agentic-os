@@ -25,7 +25,7 @@ AOS reads the supplied file and never imports private fleet config.
 ## Run it
 
 ```bash
-ward exec agents-context-inventory -- \
+just agents-context-inventory \
   --fleet-manifest /path/to/managed-repos.txt
 ```
 

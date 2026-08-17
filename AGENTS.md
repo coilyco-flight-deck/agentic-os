@@ -20,9 +20,9 @@ Public hosts and work laptops import this base only. Personal machines may compo
 
 ## Commands
 
-Route every dev command through ward, which reads [`.ward/ward.yaml`](.ward/ward.yaml). Agents invoke `ward <verb>`, not bare `make` / `uv` / `python` / `npm` / `cargo` / `dotnet`. Add new verbs to that file before invoking them.
+Route every dev command through the [`justfile`](justfile). Agents invoke `just <verb> <args>`, not bare `make` / `uv` / `python` / `npm` / `cargo` / `dotnet`. Bare `just` lists every verb. Add new verbs to that file before invoking them.
 
-**Operator verbs** (forgejo, aws/ssm, tailscale, kubectl, ...) live in **aosguard**, surfaced as `aosguard ops <area> ...` from the full dev-base image. Enumerate them with `aosguard ops <area> describe` or `--help` - never guess an operator-verb name from prior. Ward retains fixed workflow policy and repository development commands. The old `coily ops` and human-facing `ward ops` spellings are retired.
+**Operator verbs** (forgejo, aws/ssm, tailscale, kubectl, ...) live in **aosguard**, surfaced as `aosguard ops <area> ...` from the full dev-base image. Enumerate them with `aosguard ops <area> describe` or `--help` - never guess an operator-verb name from prior. Ward retains fixed workflow policy. Repository development commands are the justfile's. The old `coily ops` and human-facing `ward ops` spellings are retired.
 
 **Model transport** goes through Agent Proxy. Whenever a task would invoke
 Ollama or LiteLLM, use Agent Proxy's OpenAI-compatible surface instead because
@@ -75,8 +75,8 @@ The **trigger** for a rollout is a push, not a hand-run publish, keeping it in a
 **Deployment boundary (aos#778).** AOS owns agent-compose inputs, harness
 selection, deployment identity, and standalone AOSguard policy. Ward owns fixed
 workflows and its broker. AOS does not ship a Ward role-policy or KDL bundle.
-Only the supported YAML in [`.ward/ward.yaml`](.ward/ward.yaml) remains for
-repository command and fixture declaration. Full reasoning:
+Only the supported YAML in [`.ward/ward.yaml`](.ward/ward.yaml) remains, and it
+carries catalog metadata since inbox#366 moved dev verbs. Full reasoning:
 [docs/ward-specs.md](docs/ward-specs.md).
 
 The layer gradient this keys off (churn and host-awareness rising together, a clone/use breakpoint at each): umbra and specgen (generic engines, external contributors, no upstream knowledge), then Ward (fixed workflows and broker), then aos (AOSguard policy, composition inputs, and public docs), then infra (nobody clones it but Kai).
@@ -288,6 +288,7 @@ Do not write auto-memory files in any harness that offers them. Skip the save st
 
 - [README.md](README.md) - human-facing intro, per-OS install steps.
 - [docs/FEATURES.md](docs/FEATURES.md) - inventory of what ships today.
-- [.ward/ward.yaml](.ward/ward.yaml) - allowlisted commands. Agents route through ward, not bare `make` / `uv` / `python` / `npm` / `cargo` / `dotnet`.
+- [justfile](justfile) - dev verbs. Agents route through just, not bare tooling.
+- [.ward/ward.yaml](.ward/ward.yaml) - catalog metadata only.
 
 Cross-reference convention from [release.md](docs/release.md).

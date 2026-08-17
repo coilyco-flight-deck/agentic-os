@@ -56,6 +56,7 @@ Major shipped capabilities, not files.
 
 - [README.md](../README.md) - human-facing intro.
 - [AGENTS.md](../AGENTS.md) - public-safe agent operating rules.
-- [.ward/ward.yaml](../.ward/ward.yaml) - allowlisted commands.
+- [justfile](../justfile) - dev verbs.
+- [.ward/ward.yaml](../.ward/ward.yaml) - catalog metadata only.
 
 Cross-reference convention from [release.md](release.md).

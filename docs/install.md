@@ -21,7 +21,7 @@ and never clobbers a status line you set yourself. Agent Compose owns context
 refresh through host convergence and native launch. The manual symlink fallback
 is in [the README](../README.md).
 
-`ward exec apply-shell-links` is the local repair path for the same shell links. It repoints stale symlinks, backs up pre-existing regular files, and supports `ward exec apply-shell-links -- --check` for drift detection. On Windows it intentionally skips `~/.bashrc` and links each `.cmd` wrapper with its sibling Bash implementation; Git Bash popup launchers should not recreate that file.
+`just apply-shell-links` is the local repair path for the same shell links. It repoints stale symlinks, backs up pre-existing regular files, and supports `just apply-shell-links --check` for drift detection. On Windows it intentionally skips `~/.bashrc` and links each `.cmd` wrapper with its sibling Bash implementation; Git Bash popup launchers should not recreate that file.
 
 Wire the helper into Git once:
 
@@ -94,4 +94,4 @@ credentials, tokens, keys, JWTs, and phone numbers.
 
 ## Install surface
 
-[README.md](../README.md) carries per-OS install steps. `ward exec apply-shell-links` repairs shell links, `gpg-ssm`, and the Forgejo git credential helper. Windows skips `~/.bashrc` so Git Bash hook launchers cannot recreate stale state. Mac/Linux can also use plain `ln -sf`. Windows symlinks need Developer Mode or elevation.
+[README.md](../README.md) carries per-OS install steps. `just apply-shell-links` repairs shell links, `gpg-ssm`, and the Forgejo git credential helper. Windows skips `~/.bashrc` so Git Bash hook launchers cannot recreate stale state. Mac/Linux can also use plain `ln -sf`. Windows symlinks need Developer Mode or elevation.

@@ -45,7 +45,7 @@ select engineer or QA or invoke privileged broker operations.
 On macOS, `aos-say` runs `/usr/bin/say` directly.
 
 ```bash
-ward exec aos-say -- --voice Samantha --rate 190 build done
+just aos-say --voice Samantha --rate 190 build done
 ```
 
 Flags:
@@ -61,7 +61,7 @@ On Linux or in a ward container, `aos-say` sends one JSON request to the configu
 
 ```bash
 export AOS_SAY_RELAY=unix:/tmp/aos-say.sock
-ward exec aos-say -- build done
+just aos-say build done
 ```
 
 The relay entrypoint is `aos-say relay`. It reads one request from stdin, runs `/usr/bin/say` by argv, and exits. That keeps the launchd side compatible with socket activation setups that hand the accepted connection to stdin.

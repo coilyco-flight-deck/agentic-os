@@ -94,6 +94,6 @@ omits authentication environment variables as well as file staging. The
 `aos-standalone-composition-smoke` Ward verb uses it with `codex --version`, so
 that smoke proves composition and harness startup only.
 
-`ward exec aos-role-question -- cloud design` uses the default authenticated
+`just aos-role-question cloud design` uses the default authenticated
 path and asks Codex a public-safe question. A successful response proves the
 separate authenticated inference boundary.

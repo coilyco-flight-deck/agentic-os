@@ -1,7 +1,7 @@
 # CI parity in dev-base
 
 Every app's CI runs **inside the moving `:release` [dev-base image](dev-base-image.md),
-through the same `ward exec` verbs the agents run**, so a green CI means "a
+through the same `just` verbs the agents run**, so a green CI means "a
 headless agent can actually land this," not "it passed in some other
 environment" (agentic-os#328).
 
@@ -23,8 +23,8 @@ Each app CI job runs in the dev-base container and invokes the app's own gate
 verbs instead of hand-rolled `uv run` steps:
 
 - `container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release`
-- `ward exec test` / `ward exec lint` / `ward exec smoke` - the same verbs a
-  dispatched agent runs. Each app defines these in its own `.ward/ward.yaml`.
+- `just test` / `just lint` / `just smoke` - the same verbs a
+  dispatched agent runs. Each app defines these in its own `justfile`.
 
 [`ci-in-dev-base-example.yml`](ci-in-dev-base-example.yml) is a copy-paste
 starting point for an app's `.forgejo/workflows/*.yml`.

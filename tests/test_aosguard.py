@@ -169,13 +169,13 @@ def test_aosguard_builds_a_native_skill_out_of_band() -> None:
     lock_script = (ROOT / "scripts" / "aosguard-lock.sh").read_text(
         encoding="utf-8"
     )
-    ward = (ROOT / ".ward" / "ward.yaml").read_text(encoding="utf-8")
+    justfile = (ROOT / "justfile").read_text(encoding="utf-8")
     dockerfile = (
         ROOT / "docker" / "dev-base" / "full" / "Dockerfile"
     ).read_text(encoding="utf-8")
 
     assert "--skills-out dist/skills" in lock_script
-    assert "--skills-out dist/skills" in ward
+    assert "--skills-out dist/skills" in justfile
     assert "--skills-out /opt/agentic-os/aosguard-skill" in dockerfile
 
 

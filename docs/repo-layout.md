@@ -102,7 +102,7 @@ AOSguard own their separate surfaces.
 
 **Container startup and broker dispatch** - a run that starts wrong, mounts the
 wrong root, or has stale dispatch wiring. Run `rg -n
-"AOS_REPO_ROOT|ward agent|entrypoint" docker docs .ward`, then `ward exec
+"AOS_REPO_ROOT|ward agent|entrypoint" docker docs .ward`, then `just
 dev-base-build` as the first check. `ward agent` is the runtime entry point.
 
 **Forgejo ops surface discovery** - what Forgejo surface exists here now. Run
