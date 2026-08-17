@@ -246,6 +246,29 @@ def test_iter_workspace_repos_skips_hidden(tmp_path: Path) -> None:
     assert [r.name for r in repos] == ["repo-a"]
 
 
+def test_iter_workspace_repos_finds_org_profile_repos(tmp_path: Path) -> None:
+    """Every org owns a repo literally named .github, and it is not scaffolding.
+
+    The plain dotfile skip made all three invisible to every fleet rollout, so
+    they never received the managed pre-commit block.
+    """
+    _make_repo(tmp_path / "coilysiren" / "repo-a")
+    _make_repo(tmp_path / "coilysiren" / ".github")
+    # Still scaffolding, and still skipped: only the profile repo is exempt.
+    _make_repo(tmp_path / "coilysiren" / ".dispatch-worktrees" / "wt")
+    repos = iter_workspace_repos(tmp_path)
+    assert [r.name for r in repos] == [".github", "repo-a"]
+
+
+def test_iter_workspace_repos_finds_org_profile_repo_in_single_org_root(
+    tmp_path: Path,
+) -> None:
+    _make_repo(tmp_path / ".github")
+    _make_repo(tmp_path / "repo-a")
+    repos = iter_workspace_repos(tmp_path)
+    assert [r.name for r in repos] == [".github", "repo-a"]
+
+
 def test_iter_workspace_repos_skips_human_workdirs(tmp_path: Path) -> None:
     _make_repo(tmp_path / "coilysiren" / "repo-a")
     _make_repo(tmp_path / "coilysiren" / "repo-a-workdir")

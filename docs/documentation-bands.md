@@ -64,6 +64,14 @@ accumulated exactly where the pressure was highest: one repo excluded nine
 individual `SKILL.md` files, two excluded `docs/FEATURES.md` from the cap that
 exists to keep it an inventory.
 
+## The org profile README belongs to the forge
+
+`<org>/.github/profile/README.md` takes no size cap and no module-README shape
+from this hook. Both forges render it as the organisation's front page, so the
+module-README remedy of "move the body into a `docs/*.md` file" would blank it.
+It sat outside every fleet rollout until the walker learned to see a repo named
+`.github` at all.
+
 ## Skill entrypoints belong to check-skills
 
 `SKILL.md` and `COMPOSED.md` take no size cap from this hook. `check-skills`
@@ -72,12 +80,13 @@ owns them through `categories.yaml`, which allows 500 lines and 10,000 bytes.
 Sharing one cap made a skill pass the validator that owns skills and fail the
 one that owns layout, and the failure told the author to split a skill into
 `docs/`. A skill does not overflow there. It overflows into its own
-`references/`, which `check-skills` deliberately leaves uncapped. Two hooks in
-one suite disagreeing about the same file is a defect in the suite rather than
-a decision an author can act on.
-
-The exemption is scoped to the two entrypoint basenames. Every other Markdown
-file under a skill directory still takes the band cap.
+`references/`, which `check-skills` deliberately leaves uncapped. Two hooks
+disagreeing about one file is a defect in the suite, not a decision an author
+can act on. The exemption is scoped to the two entrypoint basenames, which
+leaves a live tension: `check-skills` answers an over-long `SKILL.md` with
+"move detail into a sibling `references/` file", and a band cap on that sibling
+makes its own instruction hard to follow. Widening to the tree is a decision
+rather than a fix, so it is recorded here rather than taken.
 
 ## Documentation-layout exceptions
 
@@ -90,7 +99,7 @@ Every carve-out from the default `documentation-layout` rule: Markdown lives onl
 - **AGENTS.md size override** - config keys `agents_md_max_lines = 290` and `agents_md_max_chars = 26000` replace the shared 320/25000 default for `AGENTS.md` only. Lowered from 320/34000 once role-scoped doctrine moved to the agent-compose role melds that own it. The remaining room holds universal doctrine that must stay in-context, and the margin is one section wide on purpose.
 - **FEATURES.md size cap** - `docs/FEATURES.md` uses the tight inventory cap from `check_documentation_layout.py`: 80 lines / 4000 chars. That keeps it a major-capability index, not a changelog.
 - **Root allowlist** - present: `AGENTS.md`, `CLAUDE.md`, `CODE-REVIEW.md`, `README.md`. Any other root `*.md` fails the location check and would need either a move into `docs/` or an explicit exclude.
-- **Skill-path location carve-out** - `*.md` under `.agents/skills/`, `.claude/skills/`, or `skills/` may live outside `docs/` at any depth (~220 files here). Location-only: the 80/4000 size cap still applies.
+- **Skill-path carve-out** - `*.md` under `.agents/skills/`, `.claude/skills/`, or `skills/` may live outside `docs/` at any depth (~220 files here), and takes no size cap from this hook at all. See above.
 
 ## Dormant carve-outs
 

@@ -66,6 +66,9 @@ def projects_root(root: Path | None = None) -> Path:
     return Path.home() / "projects"
 
 
+ORG_PROFILE_REPO = ".github"
+
+
 def is_agent_managed_checkout(path: Path) -> bool:
     """Whether fleet tooling may treat ``path`` as an agent-managed checkout.
 
@@ -90,27 +93,38 @@ def iter_workspace_repos(root: Path | None = None) -> list[Path]:
     Handling both shapes means the default ~/projects root covers every org
     dir, while a $PROJECTS_ROOT pointed straight at one org dir still works (it
     mirrors the old single-root behaviour). Hidden dirs (.dispatch-worktrees
-    and other scaffolding) are skipped at both levels. Human-only ``*-workdir``
-    checkouts are skipped wherever they appear. Returns repo directory Paths
-    sorted by (org dir, repo name).
+    and other scaffolding) are skipped at both levels, except the org-profile
+    repo literally named ``.github``: every org owns one, and the plain dotfile
+    skip made all three invisible to every fleet rollout. Human-only
+    ``*-workdir`` checkouts are skipped wherever they appear. Returns repo
+    directory Paths sorted by (org dir, repo name).
     """
     base = projects_root(root)
     if not base.is_dir():
         return []
+
+    def visible(path: Path) -> bool:
+        return not path.name.startswith(".") or path.name == ORG_PROFILE_REPO
+
+    def is_checkout(path: Path) -> bool:
+        return (
+            path.is_dir()
+            and visible(path)
+            and (path / ".git").exists()
+            and is_agent_managed_checkout(path)
+        )
+
     repos: list[Path] = []
     for child in sorted(base.iterdir()):
-        if not child.is_dir() or child.name.startswith("."):
+        if not child.is_dir():
             continue
-        if (child / ".git").exists() and is_agent_managed_checkout(child):
+        if is_checkout(child):
             repos.append(child)
             continue
+        if child.name.startswith("."):
+            continue
         for grandchild in sorted(child.iterdir()):
-            if (
-                grandchild.is_dir()
-                and not grandchild.name.startswith(".")
-                and is_agent_managed_checkout(grandchild)
-                and (grandchild / ".git").exists()
-            ):
+            if is_checkout(grandchild):
                 repos.append(grandchild)
     return repos
 

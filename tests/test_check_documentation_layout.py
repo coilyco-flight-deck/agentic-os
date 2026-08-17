@@ -385,6 +385,31 @@ def test_excludes_cannot_shrink_the_docs_count(tmp_path: Path, monkeypatch) -> N
     assert docs_layout.check_docs_count() != []
 
 
+def test_org_profile_readme_is_not_a_module_readme(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """profile/README.md in an <org>/.github repo is the rendered org page.
+
+    Forgejo and GitHub both publish it as the organisation front page, so its
+    shape is theirs. Holding it to the 3-line module-README signage rule would
+    require moving the body into docs/, which blanks the page.
+    """
+    write(tmp_path / "pyproject.toml",
+          '[tool.agentic-os.documentation-layout]\nband = "small"\n')
+    body = "# coilyco-bridge\n\n" + "a real landing page paragraph.\n" * 60
+    write(tmp_path / "profile" / "README.md", body)
+    # An ordinary co-located README is still held to the signage shape.
+    write(tmp_path / "svc" / "README.md", body)
+    _point_repo_root_at(tmp_path, monkeypatch)
+
+    offenders = {v.split(":")[0] for v in docs_layout.check_markdown_locations()}
+    assert "svc/README.md" in offenders
+    assert "profile/README.md" not in offenders
+
+    sized = {v.split(":")[0] for v in docs_layout.check_markdown_sizes()}
+    assert "profile/README.md" not in sized
+
+
 def test_skill_entrypoints_take_no_size_cap_from_this_hook(
     tmp_path: Path, monkeypatch
 ) -> None:

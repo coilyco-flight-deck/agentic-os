@@ -132,13 +132,17 @@ AGENTS_DEFAULT_MAX_CHARS = TRIFECTA_MAX_CHARS * 2
 README_DEFAULT_MAX_LINES = TRIFECTA_MAX_LINES
 README_DEFAULT_MAX_CHARS = TRIFECTA_MAX_CHARS
 
-# Exempt from the size cap, by basename. The skill entrypoints belong to
-# check-skills instead. See docs/documentation-bands.md.
+# Exempt from the size cap, by basename. CODE_OF_CONDUCT.md is verbatim upstream.
+# The skill entrypoints belong to check-skills. See docs/documentation-bands.md.
 SIZE_CAP_EXEMPT_BASENAMES = {
     "CODE_OF_CONDUCT.md",
     "SKILL.md",
     "COMPOSED.md",
 }
+
+# The org landing page, whose shape belongs to Forgejo and GitHub rather than
+# to this layout. See docs/documentation-bands.md.
+ORG_PROFILE_README = Path("profile") / "README.md"
 
 ROOT_MARKDOWN_ALLOWLIST = {
     "AGENTS.md",
@@ -379,6 +383,8 @@ def check_markdown_locations() -> list[str]:
             continue
         if is_under_examples(rel):
             continue
+        if rel == ORG_PROFILE_README:
+            continue
         if rel.name == "README.md":
             # The one co-located doc the layout allows, held to the tight
             # outpost / homestead shape instead of banned outright.
@@ -448,11 +454,12 @@ def check_band_declaration() -> list[str]:
     names = ", ".join(sorted(BAND_CAPS))
     if not declared:
         return [
-            f"pyproject.toml: no documentation band declared. Every repo "
-            f"declares one of {names} under "
-            f"[tool.agentic-os.{HOOK_ID}], small included."
+            f"no documentation band declared. Every repo declares one of "
+            f"{names}, small included: band under "
+            f"[tool.agentic-os.{HOOK_ID}] in pyproject.toml, or under "
+            f"[{HOOK_ID}] in .agentic-os.toml."
         ]
-    return [f'pyproject.toml: band = "{declared}" is not a band. Declare one of {names}.']
+    return [f'band = "{declared}" is not a band. Declare one of {names}.']
 
 
 def check_docs_count() -> list[str]:
@@ -518,7 +525,10 @@ def strip_frontmatter(text: str) -> str:
 def check_markdown_sizes() -> list[str]:
     violations: list[str] = []
     for rel in markdown_files(apply_excludes=False):
-        if rel.name in SIZE_CAP_EXEMPT_BASENAMES:
+        if (
+            rel.name in SIZE_CAP_EXEMPT_BASENAMES
+            or rel == ORG_PROFILE_README
+        ):
             continue
         path = REPO_ROOT / rel
         text = strip_frontmatter(path.read_text(encoding="utf-8", errors="replace"))

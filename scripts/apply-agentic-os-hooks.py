@@ -192,8 +192,8 @@ DEFAULT_HOOK_IDS = [
     "trufflehog",
 ]
 
-# Per-repo hook opt-outs. eco-* repos skip code-comments (Unity / C# conventions).
-# lore: docs-only / no-skills slice, subtracted set reproduces it.
+# Per-repo hook opt-outs. eco-* repos vendor the Strange Loop Games Unity SDK,
+# whose comments and prose are not ours to lint. lore is a docs-only slice.
 PER_REPO_HOOK_SKIPS: dict[str, set[str]] = {
     "lore": {
         "catalog-doc-size",
@@ -204,7 +204,7 @@ PER_REPO_HOOK_SKIPS: dict[str, set[str]] = {
         "agent-compose-dedup",
     },
 }
-ECO_HOOK_SKIPS = {"code-comments"}
+ECO_HOOK_SKIPS = {"code-comments", "typos"}
 
 
 def hook_ids_for(repo: str) -> list[str]:
@@ -386,6 +386,39 @@ def drop_legacy_stamped_scripts(repo_dir: Path) -> list[str]:
     return dropped
 
 
+def ensure_code_comments_exclude(repo_dir: Path) -> str | None:
+    """Exempt the config this script writes from the code-comments hook.
+
+    The managed block is delimited by marker comments that sit mid-file by
+    construction, which is exactly the shape code-comments rejects. Every
+    consumer was hand-adding the same exclude after adoption.
+    """
+    section = "code-comments"
+    entry = 'excludes = [".pre-commit-config.yaml"]'
+    reason = (
+        "# The managed markers are stamped inside the pre-commit YAML and\n"
+        "# cannot form a single top-of-file comment block.\n"
+    )
+    pyproject = repo_dir / "pyproject.toml"
+    if pyproject.is_file():
+        text = pyproject.read_text()
+        header = f"[tool.agentic-os.{section}]"
+        if header in text:
+            return None
+        pyproject.write_text(
+            text.rstrip("\n") + "\n\n" + reason + header + "\n" + entry + "\n"
+        )
+        return "pyproject.toml"
+    fallback = repo_dir / ".agentic-os.toml"
+    text = fallback.read_text() if fallback.is_file() else ""
+    header = f"[{section}]"
+    if header in text:
+        return None
+    body = (text.rstrip("\n") + "\n\n") if text.strip() else ""
+    fallback.write_text(body + reason + header + "\n" + entry + "\n")
+    return ".agentic-os.toml"
+
+
 def install_pre_commit_hooks(repo_dir: Path) -> str:
     result = subprocess.run(
         [
@@ -442,12 +475,15 @@ def apply_to_repo(repo_dir: Path, rev: str, dry_run: bool) -> tuple[str, str]:
 
     yaml_status, legacy_removed = upsert_managed_block(config_path, rev, hook_ids)
     dropped = drop_legacy_stamped_scripts(repo_dir)
+    excluded = ensure_code_comments_exclude(repo_dir)
     install_status = install_pre_commit_hooks(repo_dir)
     parts = [yaml_status]
     if legacy_removed:
         parts.append(f"legacy-blocks={legacy_removed}")
     if dropped:
         parts.append(f"dropped={len(dropped)}")
+    if excluded:
+        parts.append(f"code-comments-exclude={excluded}")
     parts.append(install_status)
     return ("applied", ", ".join(parts))
 
