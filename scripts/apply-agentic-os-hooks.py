@@ -39,7 +39,7 @@ the org migration of active repos to coilyco-bridge / coilyco-flight-deck no
 longer strands them the way a single hardcoded root did. Override the root
 with $PROJECTS_ROOT (e.g. PROJECTS_ROOT=X:/projects on Windows, where the
 workspace lives off the home drive). See the workspace-root rollout notes and
-the convention design in docs/features-release-tooling.md.
+the convention design in docs/release.md.
 """
 from __future__ import annotations
 

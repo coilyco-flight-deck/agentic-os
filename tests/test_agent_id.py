@@ -27,7 +27,7 @@ def test_new_id_shape() -> None:
 
 
 def test_alphabet_excludes_confusable_characters() -> None:
-    # Lifted from the o2r source / docs/dictatable-id-alphabet.md: the eight
+    # Lifted from the o2r source / docs/build-output-is-not-content.md: the eight
     # dropped characters must never appear in the alphabet.
     for bad in ["i", "l", "o", "n", "0", "1", "2", "3"]:
         assert bad not in agent_id.ID_ALPHABET

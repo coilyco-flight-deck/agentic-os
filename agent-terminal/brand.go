@@ -27,7 +27,7 @@ type overlaySeat struct {
 }
 
 // annotation composes the title identity when the overlay predates the composed
-// field. See docs/alacritty-directors.md.
+// field. See docs/warp-host-setup.md.
 func (s overlaySeat) annotation(roleDisplayName string) string {
 	name := strings.TrimSpace(s.Name)
 	if name == "" {

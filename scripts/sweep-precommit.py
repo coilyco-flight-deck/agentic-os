@@ -14,7 +14,7 @@ Reports a per-repo Passed/Failed summary plus the failing hook ids.
 Spans every git working tree under ~/projects/<org>/* via
 agentic_os.config.iter_workspace_repos, not just the org dir the running
 agentic-os checkout sits in. Override the root with $PROJECTS_ROOT.
-See docs/features-release-tooling.md.
+See docs/release.md.
 """
 from __future__ import annotations
 

@@ -3,7 +3,7 @@
 A short id for naming agents (o2r channels, container tags, dozzle rows): two
 lowercase letters then two digits (`ab81`, `cd92`). The alphabet drops the
 visually and phonetically ambiguous characters - the same set documented in
-`docs/dictatable-id-alphabet.md` and first used by the archived o2r channel
+`docs/build-output-is-not-content.md` and first used by the archived o2r channel
 protocol (`coilyco-flight-deck/otel-a2a-relay`). This module is the canonical
 home the ward naming rewrite and the umbra Go port build
 against, so the alphabet, shape, and the seeded variant here are a cross-language
@@ -23,7 +23,7 @@ import secrets
 from pathlib import Path
 
 # Dictatable alphabet, lowercased: confusable/homophone characters dropped
-# (i l n o, 0 1 2 3). Ground truth + rationale in docs/dictatable-id-alphabet.md.
+# (i l n o, 0 1 2 3). Ground truth + rationale in docs/build-output-is-not-content.md.
 ID_LETTERS = "abcdefghjkmpqrstuvwxyz"
 ID_DIGITS = "456789"
 ID_ALPHABET = ID_LETTERS + ID_DIGITS

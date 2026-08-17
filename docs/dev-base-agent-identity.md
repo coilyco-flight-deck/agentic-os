@@ -1,4 +1,51 @@
-# In-container agent self-name
+# In-container agent identity
+
+Who a warded agent is to git and to itself.
+
+## Warded-agent git identity
+
+Per the self-name display stamp documented in
+[docs/dev-base-agent-identity.md](dev-base-agent-identity.md), a warded aos session keeps
+its self-name on the status line and the session banner. Git identity is
+separate: the committer NAME and EMAIL resolve to the deployment bot so Forgejo
+links the commit to the coilyco-ops account instead of an example fallback.
+
+## What runs
+
+The Dockerfile owns `AOS_GIT_NAME` and `AOS_GIT_EMAIL` once. Every language
+target writes them into Git's system config through
+[`install-common.sh`](../docker/dev-base/install-common.sh), so every user
+inherits the deployment identity without a runtime write. The
+[`ward-shell-entrypoint.sh`](../docker/dev-base/ward-shell-entrypoint.sh) maps
+the same image-owned values onto Ward's provider-neutral `WARD_GIT_*` transport
+seam before Ward bootstraps the container. The baked
+[`git-identity.sh`](../docker/dev-base/git-identity.sh)
+is the fallback for older or custom images, and the
+policy-tier [`managed-settings.json`](../docker/dev-base/claude-managed-settings.json)
+wires it as a second `SessionStart` hook, right after the self-name banner.
+
+## Why SessionStart remains
+
+SessionStart is the earliest the self-name banner and bot identity hook can run
+with the full agent environment in place. The distinguishing `<tag>` is derived
+from the `session_id`, which the entrypoint cannot know before the agent starts.
+The identity hook backfills only when the system config is absent, so it
+respects the Dockerfile-owned config instead of overwriting it.
+
+## Why the bot identity is explicit
+
+The committer identity must not drift back to ward's example bot defaults. The
+image-level `AOS_GIT_NAME` and `AOS_GIT_EMAIL` config owns the deployment
+identity. Ward carries those values only through its generic runtime contract.
+
+## Scope and limits
+
+- **Best-effort.** A git failure is swallowed so it never breaks session start.
+- **all warded harnesses.** The entrypoint establishes the image-owned identity
+  before any harness starts. Claude's SessionStart hook remains a fallback.
+- **Dockerfile owns the baseline.** The runtime hook is fallback only.
+
+## In-container agent self-name
 
 A host session self-names through a Claude Code SessionStart + statusLine hook
 the claude-hooks ansible role wires into `~/.claude/settings.json`. That role
@@ -31,10 +78,10 @@ authority.
   `acompose` on PATH. The same file is what the host wires, so the two surfaces
   cannot drift.
 - [`git-identity.sh`](../docker/dev-base/git-identity.sh) - the
-  [git-identity stamp](dev-base-git-identity.md), split out because it never had
+  [git-identity stamp](dev-base-agent-identity.md), split out because it never had
   anything to do with naming beyond sharing a hook event.
 - [`statusline.d/20-container.sh`](../docker/dev-base/statusline.d/20-container.sh) -
-  a [status-line](statusline.md) row naming the warded container from
+  a [status-line](agent-terminal-native.md) row naming the warded container from
   `WARD_CONTAINER_NAME`, since inside a container the hostname is an opaque id.
   It self-suppresses on a native host.
 - [`managed-settings.json`](../docker/dev-base/claude-managed-settings.json) -
@@ -49,11 +96,3 @@ not depend on the run-as-uid, `HOME`, or `CLAUDE_CONFIG_DIR` ward picks, so a
 fixed `/etc/claude-code/managed-settings.json` reaches the agent regardless. It
 adds only those keys, so it layers over whatever ward injects into user settings
 rather than replacing it.
-
-## See also
-
-- [docs/statusline.md](statusline.md) - the composer that mounts these rows.
-- [docs/dev-base-git-identity.md](dev-base-git-identity.md) - the git-identity stamp.
-- [docs/dev-base-image.md](dev-base-image.md) - the image this rides in.
-- [docs/features-agents-sessions.md](features-agents-sessions.md) - the host feature.
-- [docs/FEATURES.md](FEATURES.md) - feature inventory.

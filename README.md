@@ -71,7 +71,7 @@ Auth is default-on, with `--auth=false` for startup checks that should not requi
 lifecycle owner, agent-compose remains the context producer, and
 umbra/specgen remains the guarded-tool generator. Matching
 role names never union authority between those layers. AOS applies its own
-bounded standalone runtime gates, including [kubeconfig projection](docs/aos-kubeconfig.md).
+bounded standalone runtime gates, including [kubeconfig projection](docs/aos-cluster-access.md).
 
 AOS also converges host-aware runtime inputs with `aos converge`, while
 `aos converge --check` detects drift. That surface owns verified remote
@@ -90,7 +90,7 @@ Docker. The standalone AOS path projects the resolved host mcporter inventory in
 ephemeral agent home. When configured HTTP MCP endpoints resolve into the
 tailnet, AOS attaches the container to the shared tailnet network and bridges
 those endpoints through the standing proxy without invoking Ward. See the
-[standalone connectivity contract](docs/aos-standalone-connectivity.md).
+[standalone connectivity contract](docs/aos-context-bundle.md).
 
 For a bounded role check-in, AOS owns the agent's non-interactive defaults:
 
@@ -107,7 +107,7 @@ aos --agent goose --role ops -- --version
 
 Ward is not part of that standalone path. See the [launch and handoff contract](docs/aos-cli.md).
 Homebrew and Scoop install `aos`, `aoscompose`, `aoscomposed`, `aosward`, `aosguard`, `agent-terminal`, and `aosterm`.
-Direct release binaries and the aligned native update path are documented in the [CLI release walkthrough](docs/aos-cli-release.md).
+Direct release binaries and the aligned native update path are documented in the [CLI release walkthrough](docs/aos-cli.md).
 
 ## Secrets pattern
 
@@ -124,7 +124,7 @@ cleartext-on-disk dump (`~/.cache/ssm-env.sh`) are removed.
 
 ## agent-compose
 
-Opt-in tooling that composes global agent context and symlinks each harness load point to it. Sources are shared unless optional `harnesses` frontmatter selects a harness-specific slice. Agent-compose embeds the canonical personalities. AOS publishes the [capability provider](docs/personality-provider.md): ordinary skills and [role-composed skills](docs/role-composed-skills.md). Host composition stays inert until `~/.config/agent-compose/agent-compose.yaml` exists.
+Opt-in tooling that composes global agent context and symlinks each harness load point to it. Sources are shared unless optional `harnesses` frontmatter selects a harness-specific slice. Agent-compose embeds the canonical personalities. AOS publishes the [capability provider](docs/context-budget.md): ordinary skills and [role-composed skills](docs/role-composed-skills.md). Host composition stays inert until `~/.config/agent-compose/agent-compose.yaml` exists.
 
 **Prior art.** The idea is fresh in the agentic space but well-trodden in config management, and agent-compose is best understood as **Hiera-for-agent-doctrine, deployed Stow-style, scoped chezmoi-style**:
 
@@ -153,8 +153,8 @@ grammar.
 
 - [AGENTS.md](AGENTS.md) - public-safe agent operating conventions and the global load point.
 - [docs/FEATURES.md](docs/FEATURES.md) - inventory of what ships today.
-- [Repo maps](docs/repo-maps.md) - compact starting points for high-churn warded workflow areas.
+- [Repo maps](docs/repo-layout.md) - compact starting points for high-churn warded workflow areas.
 - [CODE-REVIEW.md](CODE-REVIEW.md) - root review contract for repo-local invariants and historical issues.
 - [.ward/ward.yaml](.ward/ward.yaml) - allowlisted dev commands. Agents route through ward.
 
-Cross-reference convention from [features-release-tooling.md](docs/features-release-tooling.md).
+Cross-reference convention from [release.md](docs/release.md).

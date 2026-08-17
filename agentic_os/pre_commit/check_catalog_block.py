@@ -4,7 +4,7 @@
 Reads the repo's `.ward/ward.yaml` catalog config. It must exist and
 carry the block.
 
-Schema and rollout: see docs/ward-specs.md and docs/features-release-tooling.md.
+Schema and rollout: see docs/ward-specs.md and docs/release.md.
 
 Required keys inside `catalog:`:
     dependsOn.

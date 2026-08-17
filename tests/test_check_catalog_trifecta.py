@@ -65,7 +65,7 @@ def test_consumer_crosslinks_without_aos_internal_citation(
     write_valid_consumer(tmp_path)
 
     assert trifecta.main() == 0
-    assert not (tmp_path / "docs" / "features-release-tooling.md").exists()
+    assert not (tmp_path / "docs" / "release.md").exists()
 
 
 def test_consumer_still_needs_every_peer_link(tmp_path: Path, monkeypatch) -> None:

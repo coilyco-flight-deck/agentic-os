@@ -9,7 +9,7 @@ draft succeeds, it calls `release.yml` to publish the next root minor release.
 Manual dispatch overrides the path filter and can resume the image graph.
 `release.yml` is also a no-cancel retry and override queue. It never gates the
 branch. `main` stays yolo-able, while `release` is last-known-good. Forgejo owns releases per
-[forgejo-github-mirror-contract.md](forgejo-github-mirror-contract.md).
+[forgejo-ops.md](forgejo-ops.md).
 
 Promotion only gates and advances the branch. Non-artifact merges produce no
 package tag or draft image.
@@ -25,7 +25,7 @@ Language drafts and stable language cache refs are build-only artifacts.
 
 The root `v*` train serves the dev-base image. Hook consumers pin the
 independent `aos-precommit-v*` train. The standalone CLI publishes binaries and
-packages on its `aos-v*` train. See [aos-cli-release.md](aos-cli-release.md).
+packages on its `aos-v*` train. See [aos-cli.md](aos-cli.md).
 
 ## Version bump
 
@@ -67,10 +67,54 @@ package tag is present.
 `v*`, and `aos-precommit-v*` tags onto the read-only GitHub mirror
 (`coilysiren/agentic-os`) where downstream refs resolve. It is
 fast-forward-only, never `--force`, and no-ops without the PAT. See
-[mirror-to-github.md](mirror-to-github.md) for the mirror-side detail.
+[forgejo-ops.md](forgejo-ops.md) for the mirror-side detail.
 
 ## Skip markers
 
 `scripts/release.py`'s version commit carries `[skip ci]` so the hand-cut bump
 does not re-trigger the workflow. The auto-pipeline no longer pushes a pin
 commit at all. Shared composite actions live under `actions/*` in this repo.
+
+## Cross-repo pre-commit baseline
+
+Managed repos pin `aos-precommit-v*` via `rev:`. The distribution keeps the
+`agentic_os` namespace but releases independently from dev-base and AOS.
+The suite covers Actions policy, contracts, links, source-doc refs,
+`actionlint`, Forgejo, `shellcheck`, and `typos`. `shfmt`, placeholders, and
+issue refs stay opt-in in [pre-commit hygiene](pre-commit-hygiene.md). See the
+[hook manifest](../.pre-commit-hooks.yaml).
+
+`catalog-trifecta` requires the four consumer entrypoints to exist and
+cross-link. It requires no AOS citation.
+
+## Seed-skill propagation
+
+qwen-opencode's per-repo context management wants a little language context living inside each target repo (for a Python repo, a pointer to how Kai writes Python). The composed `coding-<lang>` sources declare how they propagate with a `seed:` frontmatter block: `kind: always` (the `coding-core-git` baseline, seeded into every repo) or `kind: language` with `language` + `extensions` (seeded into repos containing those files). Target repos reference the delivered path, e.g. `.agents/skills/coding-python/SKILL.md`, or the canonical `.agents/composed/coding-python/COMPOSED.md` source.
+
+The composed frontmatter is the source of truth. `generate-seed-skills` renders it into `agentic_os/seed_skills_data.py`, shipped in the package so consumer repos enforce the `seed-skills` hook offline, and `check-seed-skills-drift` (dogfooded in `agentic-os` only) fails if that table goes stale. This repo ships the validator half only: the actual copying and `COMPOSED.md` to `SKILL.md` promotion in target repos is Ansible's job.
+
+## Diagnostic + utility helpers
+
+Single-purpose validators for cryptic failure modes. These plus [`ward context-budget`](context-budget.md) are CLI/on-demand tools, not repo-content hooks, so they ship as ward verbs (agentic-os#233):
+
+- `ward aws-config` - catches the `[profile default]` trap (SDKs read `[default]`; a misplaced region surfaces later as a useless `NoRegion`).
+- `ward ssm-path` - checks parameter paths against the `/<org>/<repo>/<tier>/<tail>` schema before IAM/KMS, where a malformed path silently misses every tier policy.
+- `ward exec prod-install-ref -- guard|ward|aos` - returns the immutable
+  generated product tag attached to the promoted `release` branch. It returns
+  the literal `release` ref when promotion has no matching tag yet.
+- GPG signing doctor that walks every check needed to diagnose `failed to sign the data` and names the likely fix per failure mode.
+
+## Forgejo-canonical release actions
+
+Composite Forgejo Actions for the brew release pipeline, each a forgejo-API-only replacement for a github-coupled marketplace action:
+
+- `actions/tag-bump` - bump the latest semver tag by a fixed amount (minor by default, major hand-driven via the `bump` input), or run in compute-only mode before the public tag exists. Does not parse commit messages. Replaces `mathieudutour/github-tag-action`.
+- `actions/create-release` - POST to forgejo Releases API with bounded JSON marshalling and timeouts. Idempotent on tag collision. Replaces `softprops/action-gh-release` for release creation.
+- `actions/upload-release-asset` - POST a release asset with bounded lookup, delete, and upload calls.
+- `actions/bump-formula` - rewrite a Homebrew Formula's `url ".."` line to pin the new tag + revision and PUT via forgejo Contents API with bounded lookup and write calls.
+
+Forgejo imports use a fully qualified canonical URL:
+`uses: https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/actions/<name>@main`.
+GitHub uses the mirror.
+
+agentic-os dogfoods local `uses:` refs.

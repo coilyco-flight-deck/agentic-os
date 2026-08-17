@@ -177,7 +177,7 @@ func applySQLite(h *HostPaths) error {
 }
 
 // applyShellPref reconciles the Windows-only default-shell pref into warp.sqlite.
-// See shell.go and docs/warp-default-shell.md.
+// See shell.go and docs/warp.md.
 func applyShellPref(db *warpDB, h *HostPaths) error {
 	if h.OS != "windows" {
 		return nil
@@ -292,7 +292,7 @@ func doctorSQLite(r *report, h *HostPaths) {
 }
 
 // doctorShellPref reports drift on the Windows-only default-shell preference.
-// See docs/warp-default-shell.md.
+// See docs/warp.md.
 func doctorShellPref(r *report, db *warpDB, h *HostPaths) {
 	if h.OS != "windows" {
 		return

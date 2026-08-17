@@ -32,14 +32,14 @@ SETTINGS_PATH = HOME / ".claude" / "settings.json"
 # bridge overlay's own merge, never here.
 
 # effortLevel is deliberately absent: operator-local preference, not a fleet
-# guardrail. Reasoning in docs/claude-settings-guardrails.md.
+# guardrail. Reasoning in docs/native-claude-credentials.md.
 BASE_SETTINGS: dict = {
     "autoMemoryEnabled": False,
 }
 BASE_DENIED_MCP_SERVERS = [{"serverName": "claude-in-chrome"}]
 
 # Fleet-wide permission denies: live-infrastructure CLIs that belong to a
-# guarded verb, plus the memory dir. See docs/claude-settings-guardrails.md.
+# guarded verb, plus the memory dir. See docs/native-claude-credentials.md.
 BASE_DENIED_PERMISSIONS = [
     "Bash(gcloud *)",
     "Bash(kubectl *)",

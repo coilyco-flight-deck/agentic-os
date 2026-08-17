@@ -1,7 +1,4 @@
----
-doc_goal: Define AOS-owned catalogue hydration and native MCP convergence for Agent Compose v2 consumers.
----
-# AOS environment convergence
+# AOS convergence and the catalogue cache
 
 AOS owns host-aware agent inputs. `aos converge` hydrates remote skill
 catalogues, emits their local manifest, and projects one mcporter inventory
@@ -53,25 +50,59 @@ that need only the mcporter fallback.
 
 ## Apply and check
 
-```bash
-aos converge
-aos converge --check
-```
-
-Apply writes changed files atomically. `--check` performs no network access
-or filesystem mutation. It exits nonzero on catalogue, manifest, or MCP drift.
+`aos converge` writes changed files atomically. `aos converge --check` performs
+no network access and no filesystem mutation, and exits nonzero on catalogue,
+manifest, or MCP drift.
 
 ## Ownership
 
-AOS owns source selection, cache policy, host paths, MCP projection, and Codex
-approval projection. Infrastructure renders host config and invokes apply or
-check. Agent Compose receives the local manifest and owns role composition.
+AOS owns source selection, cache policy, host paths, and MCP and Codex-approval
+projection. Infrastructure renders host config and invokes apply or check, and
+Agent Compose receives the local manifest and owns role composition.
 
-## See also
+## AOS catalogue cache and manifest
 
-* [Catalogue cache and manifest](aos-catalogue-cache.md) - locator, refresh,
-  fallback, and consumer contracts.
-* [AOS launch CLI](aos-cli.md) - standalone and Ward-governed launch boundary.
-* [AOS standalone connectivity](aos-standalone-connectivity.md) - ephemeral
-  container inventory and tailnet bridging.
-* [Ward integration boundary](ward-specs.md) - workflow ownership split.
+The `catalogues` section of
+[AOS environment convergence](aos-convergence.md) turns remote Git sources
+into verified local roots. Agent Compose consumes the result without network
+access or cache ownership.
+
+## Locators
+
+Each source is a scalar locator selecting a repository, optional path, and
+revision:
+
+```text
+owner/repo/path@ref
+https://example.test/owner/repo.git/path@ref
+ssh://git@example.test/owner/repo.git/path@ref
+```
+
+A bare `owner/repo` uses GitHub. Locators without a path use
+`.agents/skills`. Embedded HTTP credentials are rejected. Authentication
+remains Git's concern and is never copied into the manifest.
+
+## Cache behavior
+
+AOS keeps one locked mirror and detached worktree per normalized source under
+`state_dir/cache/catalogues`. The default freshness window is ten minutes.
+Mutable stale refs refresh with `git remote update --prune`. A full commit SHA
+already present in the mirror needs no network refresh.
+
+First-use failures stop convergence. When a stale refresh fails, AOS reuses
+the last checkout only when that checkout and catalogue directory remain
+valid. The command reports this offline fallback as a warning.
+
+`aos converge --check` never fetches or writes. A stale mutable ref, missing
+checkout, or mismatched commit reports drift. An available immutable commit
+remains current regardless of cache age.
+
+## Manifest
+
+The emitted JSON uses the stable `aos.catalogues.v1` format: a `catalogues`
+array whose entries carry `source`, `path`, and `commit`. Entries preserve
+declaration order, because downstream precedence can depend on it, so consumers
+validate `format`, keep array order, and read `path` as the catalogue root.
+`source` and `commit` make the input auditable without exposing credentials,
+and the manifest is written atomically only after every configured source
+resolves.

@@ -1,4 +1,6 @@
-# Repo layout
+# Repo layout, residency, and maps
+
+## Repo layout
 
 Full breakdown of what lives where. Summary in [the README](../README.md).
 
@@ -47,3 +49,70 @@ Setup, after `brew install --cask karabiner-elements`:
 ## skills
 
 `.agents/skills/` - SKILL.md docs for the configs that live here (`tooling-zsh`, `tooling-gpg-ssm`, and the cross-repo skills). agentic-os-kai's skill mount walks this dir as a peer skill source, symlinking each entry into `~/.claude/skills/`. Co-located with the configs they describe so they don't drift.
+
+## Repository residency
+
+Agent Compose owns repository policy and emits the strict
+`~/.agent-compose/repository-plan.yaml`. AOS validates that machine contract and
+exposes its host-residency projection without parsing `.agents/roles.kdl`:
+
+```sh
+aos repositories --format lines
+aos repositories --format json
+```
+
+The JSON surface uses `aos.repository-residency.v1` and retains the compiled
+projects root plus each selection's source, scope, reason, and provider. Lines
+output is sorted `owner/repository` identities for shell consumers.
+
+AOS consumes Agent Compose's `agent-compose.repositories.v2` YAML and
+temporarily accepts the preceding v1 JSON during host rollout, YAML winning
+when both exist. It rejects unknown fields and formats, unsafe identities,
+duplicate or unsorted selections, incomplete provenance, relative roots, and
+paths outside the compiled root. Missing or invalid plan state fails closed,
+with no embedded fallback, and doctrine source paths never become policy.
+
+Native workspace projection and cleanup, the status-line tracker, and
+infrastructure's clone-and-fetch all read that same compiled set. It is
+distinct from Ward's baked container substrate and grants no role access on its
+own: role selection is sealed into the verified bundle AOS adapts for Ward.
+
+## Running tasks
+
+`.ward/ward.yaml` and the [`justfile`](../justfile) carry the same verbs. Ward
+is out-of-band flight control, so a clone with no ward on `PATH` still runs its
+own tasks through `just`. Neither is authoritative over the other and CI uses
+ward.
+
+## Repo maps
+
+Compact starting points for cross-repo traces, one per question that spans
+repositories. They are search-first rather than frozen inventories: each names
+the commands that rediscover the current files when a surface shifts. Read the
+entry points, then run the first check. If the same repo also exists under
+`/substrate`, `/workspace/agentic-os` is authoritative.
+
+**Ward integration** - a change crossing AOS, Ward, agent-compose, or AOSguard.
+Run `rg -n "context-bundle|--warded|--composed|--guarded" aos docs`, `ward
+doctor`, `aosguard ops forgejo describe`. Ownership splits: `.agents/roles.kdl`
+owns behavioral composition, `.agents/harness-launch-profiles.yaml` owns
+role-to-default-agent mapping, `.ward/ward.yaml` owns repository commands and
+the deployment image, agent-compose owns named seats and pronouns, and Ward and
+AOSguard own their separate surfaces.
+
+**Container startup and broker dispatch** - a run that starts wrong, mounts the
+wrong root, or has stale dispatch wiring. Run `rg -n
+"AOS_REPO_ROOT|ward agent|entrypoint" docker docs .ward`, then `ward exec
+dev-base-build` as the first check. `ward agent` is the runtime entry point.
+
+**Forgejo ops surface discovery** - what Forgejo surface exists here now. Run
+`aosguard ops forgejo describe` first, then `--help` and `rg -n "aosguard ops
+forgejo" docs .specgen`. Prefer runtime help over guessing a verb, and update
+[aosguard](aosguard.md) when the surface changes.
+
+**Ward PR workflow and director merge** - PR lifecycle, director merge, or
+burn-down. Run `rg -n "pull-request-and-merge|director merge|WARD-OUTCOME"
+.ward docs` and `ward agent director --help`. Check
+`aosguard ops forgejo issue view <owner> <repo> <issue>` first: the issue thread
+carries the workflow and the merge authorization. Burndown containment is in
+[ward-specs](ward-specs.md).

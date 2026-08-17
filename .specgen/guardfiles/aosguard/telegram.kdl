@@ -3,7 +3,7 @@
 // cluster-local endpoint with no credential and takes no caller input: every
 // field comes from the runner's own GITHUB_* environment. Sealed for the same
 // reason `forgejo-storage measure` is - a caller cannot turn a fixed POST into
-// an arbitrary one. See ../../../docs/telegram-ci-alerts.md.
+// an arbitrary one. See ../../../docs/signoz.md.
 wrap aosguard ops telegram {
     exec python3
 

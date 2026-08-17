@@ -22,7 +22,7 @@ Rule fields:
 
 The rules below cover the three leak/coupling classes (sensitive data,
 private->public reference, dependency cycle); the dependency-cycle class carries
-more than one edge. See docs/leak-guard.md.
+more than one edge. See docs/pre-commit-hygiene.md.
 """
 from __future__ import annotations
 

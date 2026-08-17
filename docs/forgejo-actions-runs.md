@@ -1,4 +1,52 @@
-# Forgejo Actions logs
+# Forgejo Actions runs and logs
+
+Listing runs and re-running one. Reading their logs is
+[forgejo-actions-runs.md](forgejo-actions-runs.md).
+
+## Forgejo Actions listing
+
+The packaged `agentic_os.forgejo_actions_list` module lists runs or tasks and
+defaults to `page=1`, as does the native `action-run list` wrapper whenever a
+caller passes `--limit`. Forgejo can ignore that limit on the runs endpoint
+unless the page is explicit, which would pull the whole history.
+
+Use AOSguard for live inspection:
+
+- `aosguard ops forgejo action-run list <owner> <repo> --limit N`
+- `aosguard ops forgejo tasks list <owner> <repo> --limit N`
+- `aosguard ops actions runs <owner> <repo> [--page 1] [--limit N]`
+- `aosguard ops actions tasks <owner> <repo> [--page 1] [--limit N]`
+
+Raw API examples should include `page=1` whenever they include `limit`:
+
+- `GET /api/v1/repos/{owner}/{repo}/actions/runs?page=1&limit=1`
+- `GET /api/v1/repos/{owner}/{repo}/actions/tasks?page=1&limit=1`
+
+## Forgejo Actions rerun bridge
+
+`aosguard ops actions rerun` and `rerun-failed-jobs` call the packaged
+`agentic_os.forgejo_actions_rerun` module. The call targets a known run, then
+falls back to dispatching that run's workflow file for the same ref when
+Forgejo does not expose a usable rerun control.
+
+The companion fetch overlay in
+[AOSguard's Forgejo spec](../.specgen/guardfiles/aosguard/forgejo.kdl) pins the
+dead API rerun routes from agentic-os#473, so the dead shape stays documented
+rather than becoming another hand-coded HTTP call.
+
+Forgejo exposes the rerun controls inconsistently on this deployment, so the
+bridge keeps the bot token inside AOSguard and the run id as the authority
+boundary, then dispatches the workflow file when the controls are absent.
+- `actions rerun` and `actions rerun-failed-jobs` each try their web control
+  first, then fall back to workflow dispatch for the same ref.
+
+The resolved routes are:
+
+- `POST /{owner}/{repo}/actions/runs/{run_id}/rerun`
+- `POST /{owner}/{repo}/actions/runs/{run_id}/jobs/{job_index}/rerun`
+- `POST /api/v1/repos/{owner}/{repo}/actions/workflows/{workflowfilename}/dispatches`
+
+## Forgejo Actions logs
 
 `aosguard ops actions logs` fetches workflow-run and job logs through Forgejo's
 official REST API. It requires Forgejo 16.0 or newer. It does not read HTML,
@@ -67,14 +115,3 @@ aosguard ops forgejo action-run logs <owner> <repo> <internal-run-id>
 
 These expose the official API directly. Use the resolved command for an Actions
 URL or job name. Both `logs` leaves return bytes exactly since the lock moved to umbra v0.142.0 (umbra#291).
-
-## Prior bridge
-
-The HTML log-cursor implementation and fixtures are removed. The shared web
-helper remains only for reruns. `agentic-os#415` is closed and superseded.
-
-## See also
-
-* [aosguard](aosguard.md)
-* [Forgejo Actions rerun bridge](forgejo-actions-rerun.md)
-* [Forgejo Actions list bridge](forgejo-actions-listing.md)

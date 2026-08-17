@@ -174,16 +174,16 @@ commands:
     description: "Converge public-safe Claude Code preferences without clobbering local settings."
   gen-repo-pointer-skill:
     run: uv run python -m agentic_os.generators.generate_repo_pointer_skill
-    description: "Generate a repo-<name> pointer skill from repository metadata. Pipe `aosguard ops forgejo repo view --repo coilysiren/<name> --json` into it with `<name> --from-json -`, or pass --description/--topic. See docs/features-agents-pointer.md."
+    description: "Generate a repo-<name> pointer skill from repository metadata. Pipe `aosguard ops forgejo repo view --repo coilysiren/<name> --json` into it with `<name> --from-json -`, or pass --description/--topic. See docs/features-agents.md."
   gen-seed-skills:
     run: uv run python -m agentic_os.generators.generate_seed_skills
-    description: "Regenerate agentic_os/seed_skills_data.py from seed: frontmatter on the composed coding-<lang> sources. Run after editing a seed block; check-seed-skills-drift fails on staleness. See docs/skill-discipline-authoring-shipping.md."
+    description: "Regenerate agentic_os/seed_skills_data.py from seed: frontmatter on the composed coding-<lang> sources. Run after editing a seed block; check-seed-skills-drift fails on staleness. See docs/skill-discipline-authoring.md."
   gen-caps-reference:
     run: uv run python -m agentic_os.generators.generate_caps_reference
     description: "Regenerate docs/catalog-caps-reference.md from the code-comments / documentation-layout validator constants. Run after changing a cap constant; check-caps-reference-drift fails on staleness. Docs and skills point at this render instead of restating a number."
   ssm-path:
     run: uv run python -m agentic_os.pre_commit.check_ssm_path
-    description: "Validate SSM parameter paths against the /<org>/<repo>/<tier>/<tail> schema. `ward exec ssm-path -- /coilysiren/backend/write/ts-authkey [more...]`, or `-- --stdin` for one path per line. A CLI validator (paths arrive as args, not repo files), so it is ward-fenced rather than a commit-path hook. See docs/features-release-tooling.md."
+    description: "Validate SSM parameter paths against the /<org>/<repo>/<tier>/<tail> schema. `ward exec ssm-path -- /coilysiren/backend/write/ts-authkey [more...]`, or `-- --stdin` for one path per line. A CLI validator (paths arrive as args, not repo files), so it is ward-fenced rather than a commit-path hook. See docs/release.md."
   aws-config:
     run: uv run python -m agentic_os.pre_commit.check_aws_config
     description: "Lint ~/.aws/config (or $AWS_CONFIG_FILE) for the [profile default] trap the AWS SDK silently ignores, which surfaces later as a cryptic NoRegion from SSM/S3. No-op when the file is absent. A machine-env check, not repo content, so it is ward-fenced rather than a commit-path hook."
@@ -207,7 +207,7 @@ commands:
     description: "Remint the coilyco-ops read:package token, verify it against the Forgejo registry, and overwrite SSM /forgejo/coilyco-ops/registry-read-token. Values stay in-process. `-- --dry-run` previews."
   agent-id:
     run: uv run python -m agentic_os.agent_id
-    description: "Canonical short agent-id generator over the dictatable alphabet (lowercase 2-letter+2-digit, e.g. `ab85`). Bare invocation prints a fresh `secrets`-backed id (`-- -n 5` for more); `-- --seed <s>` prints the deterministic contract id for a seed, `-- --org <forgejo-org>` prints the short container token, `-- --emit-vectors` regenerates agent_id_vectors.json. The cross-repo naming primitive ward and umbra's Go port build against. See docs/dictatable-id-alphabet.md."
+    description: "Canonical short agent-id generator over the dictatable alphabet (lowercase 2-letter+2-digit, e.g. `ab85`). Bare invocation prints a fresh `secrets`-backed id (`-- -n 5` for more); `-- --seed <s>` prints the deterministic contract id for a seed, `-- --org <forgejo-org>` prints the short container token, `-- --emit-vectors` regenerates agent_id_vectors.json. The cross-repo naming primitive ward and umbra's Go port build against. See docs/build-output-is-not-content.md."
 
 agent:
   image: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os

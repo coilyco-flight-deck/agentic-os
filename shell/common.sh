@@ -1,5 +1,5 @@
 # shellcheck shell=bash
-# Shared bash + zsh init (bash/zsh common subset). See docs/features-shell-secrets.md.
+# Shared bash + zsh init (bash/zsh common subset). See docs/install.md.
 
 # shared-environment: begin
 # Keep this block declarative. The rendered Windows PowerShell profile parses

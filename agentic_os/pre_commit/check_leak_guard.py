@@ -23,7 +23,7 @@ is in flight, every tracked file on `pre-commit run --all-files`. Per-repo opt
 paths out via `[tool.agentic-os.leak-guard] excludes = [...]`; per-rule
 allowlists (`allow_globs`) live with the rule. Rule scope is matched against the
 current repo resolved from `origin`, so a rule fires only where it should.
-See docs/leak-guard.md.
+See docs/pre-commit-hygiene.md.
 """
 from __future__ import annotations
 
@@ -168,7 +168,7 @@ def main() -> int:
         sys.stderr.write(f"FAIL: {violation}\n")
     sys.stderr.write(
         f"\n{len(violations)} leak-guard violation(s). Encode the term out of "
-        f"plaintext (see docs/leak-guard.md) or allowlist a legitimate path.\n"
+        f"plaintext (see docs/pre-commit-hygiene.md) or allowlist a legitimate path.\n"
     )
     return 1
 

@@ -9,7 +9,7 @@ set positional-arguments
 default:
     @just --list --unsorted
 
-# Canonical short agent-id generator over the dictatable alphabet (lowercase 2-letter+2-digit, e.g. `ab85`). Bare invocation prints a fresh `secrets`-backed id (`-n 5` for more); `--seed <s>` prints the deterministic contract id for a seed, `--org <forgejo-org>` prints the short container token, `--emit-vectors` regenerates agent_id_vectors.json. The cross-repo naming primitive ward and umbra's Go port build against. See docs/dictatable-id-alphabet.md.
+# Canonical short agent-id generator over the dictatable alphabet (lowercase 2-letter+2-digit, e.g. `ab85`). Bare invocation prints a fresh `secrets`-backed id (`-n 5` for more); `--seed <s>` prints the deterministic contract id for a seed, `--org <forgejo-org>` prints the short container token, `--emit-vectors` regenerates agent_id_vectors.json. The cross-repo naming primitive ward and umbra's Go port build against. See docs/build-output-is-not-content.md.
 agent-id *ARGS:
     @uv run python -m agentic_os.agent_id "$@"
 
@@ -189,11 +189,11 @@ gen-agents-pointer *ARGS:
 gen-caps-reference *ARGS:
     @uv run python -m agentic_os.generators.generate_caps_reference "$@"
 
-# Generate a repo-<name> pointer skill from repository metadata. Pipe `aosguard ops forgejo repo view --repo coilysiren/<name> --json` into it with `<name> --from-json -`, or pass --description/--topic. See docs/features-agents-pointer.md.
+# Generate a repo-<name> pointer skill from repository metadata. Pipe `aosguard ops forgejo repo view --repo coilysiren/<name> --json` into it with `<name> --from-json -`, or pass --description/--topic. See docs/features-agents.md.
 gen-repo-pointer-skill *ARGS:
     @uv run python -m agentic_os.generators.generate_repo_pointer_skill "$@"
 
-# Regenerate agentic_os/seed_skills_data.py from seed: frontmatter on the composed coding-<lang> sources. Run after editing a seed block; check-seed-skills-drift fails on staleness. See docs/skill-discipline-authoring-shipping.md.
+# Regenerate agentic_os/seed_skills_data.py from seed: frontmatter on the composed coding-<lang> sources. Run after editing a seed block; check-seed-skills-drift fails on staleness. See docs/skill-discipline-authoring.md.
 gen-seed-skills *ARGS:
     @uv run python -m agentic_os.generators.generate_seed_skills "$@"
 
@@ -249,7 +249,7 @@ remint-registry-read-token *ARGS:
 repo-test-gate *ARGS:
     @bash scripts/ci/repo-test-gate.sh "$@"
 
-# Validate SSM parameter paths against the /<org>/<repo>/<tier>/<tail> schema. `just ssm-path /coilysiren/backend/write/ts-authkey [more...]`, or `--stdin` for one path per line. A CLI validator (paths arrive as args, not repo files), so it is ward-fenced rather than a commit-path hook. See docs/features-release-tooling.md.
+# Validate SSM parameter paths against the /<org>/<repo>/<tier>/<tail> schema. `just ssm-path /coilysiren/backend/write/ts-authkey [more...]`, or `--stdin` for one path per line. A CLI validator (paths arrive as args, not repo files), so it is ward-fenced rather than a commit-path hook. See docs/release.md.
 ssm-path *ARGS:
     @uv run python -m agentic_os.pre_commit.check_ssm_path "$@"
 

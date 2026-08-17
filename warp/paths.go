@@ -73,7 +73,7 @@ func resolveHostPaths(channel string) (*HostPaths, error) {
 		}
 		h.ThemeDir = filepath.Join(roaming, "warp", ch.DirName, "data", "themes")
 		// Default-shell pref lives only in warp.sqlite, resolved from disk.
-		// See shell.go and docs/warp-default-shell.md.
+		// See shell.go and docs/warp.md.
 		h.DefaultShell = resolveWindowsDefaultShell()
 	case "darwin":
 		// Two Warp channels coexist; pick config dir and DB as a matched pair.
