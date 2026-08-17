@@ -410,6 +410,70 @@ def test_org_profile_readme_is_not_a_module_readme(
     assert "profile/README.md" not in sized
 
 
+def test_a_vendored_tree_takes_no_size_cap(tmp_path: Path, monkeypatch) -> None:
+    """A repo may declare a tree whose Markdown shape it does not own.
+
+    A vendored SDK's docs are upstream's to shape, and store listing copy is
+    shaped by the surface that renders it. Neither is prose this repo can cut,
+    and cutting it forks upstream or changes what a reader outside sees.
+    """
+    write(
+        tmp_path / "pyproject.toml",
+        '[tool.agentic-os.documentation-layout]\n'
+        'band = "small"\n'
+        'vendored = ["unity/Assets/EcoModKit/", "mods/Mods/UserCode/"]\n',
+    )
+    long_body = "# Upstream\n\n" + "line\n" * 400
+    write(tmp_path / "unity" / "Assets" / "EcoModKit" / "Docs" / "README.md", long_body)
+    write(tmp_path / "mods" / "Mods" / "UserCode" / "AMod" / "README.md", long_body)
+    # An ordinary doc of the same size is still capped, so the declaration is
+    # scoped to the named trees rather than disabling the check.
+    write(tmp_path / "docs" / "ordinary.md", long_body)
+    _point_repo_root_at(tmp_path, monkeypatch)
+
+    offenders = {v.split(":")[0] for v in docs_layout.check_markdown_sizes()}
+    assert offenders == {"docs/ordinary.md"}
+
+
+def test_a_vendored_prefix_is_not_a_basename(tmp_path: Path, monkeypatch) -> None:
+    """A bare basename would exempt one filename everywhere.
+
+    That is the per-file escape hatch the count cap removed, so `vendored`
+    matches a path prefix and nothing else.
+    """
+    write(
+        tmp_path / "pyproject.toml",
+        '[tool.agentic-os.documentation-layout]\n'
+        'band = "small"\nvendored = ["README.md"]\n',
+    )
+    long_body = "# Doc\n\n" + "line\n" * 400
+    write(tmp_path / "svc" / "README.md", long_body)
+    _point_repo_root_at(tmp_path, monkeypatch)
+
+    offenders = {v.split(":")[0] for v in docs_layout.check_markdown_sizes()}
+    assert "svc/README.md" in offenders
+
+
+def test_a_vendored_tree_still_takes_the_placement_rules(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """`vendored` answers the size cap alone.
+
+    Placement and flatness stay with `excludes`, so declaring a tree vendored
+    cannot quietly widen where Markdown may live.
+    """
+    write(
+        tmp_path / "pyproject.toml",
+        '[tool.agentic-os.documentation-layout]\n'
+        'band = "small"\nvendored = ["sdk/"]\n',
+    )
+    write(tmp_path / "sdk" / "guide" / "notes.md", "# Notes\n\nbody.\n")
+    _point_repo_root_at(tmp_path, monkeypatch)
+
+    offenders = {v.split(":")[0] for v in docs_layout.check_markdown_locations()}
+    assert "sdk/guide/notes.md" in offenders
+
+
 def test_skill_entrypoints_take_no_size_cap_from_this_hook(
     tmp_path: Path, monkeypatch
 ) -> None:

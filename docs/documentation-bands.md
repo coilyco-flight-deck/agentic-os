@@ -15,20 +15,19 @@ band = "small"
 
 Every repo declares, small included. There is no default to fall into: an
 undeclared repo and a deliberately small one would otherwise be the same file,
-and only one of them has had the decision made. A repo outgrowing `small`
-should hit a cap and argue for `large`, not find out it was never on a band.
-A typo fails the same way a missing declaration does, so nothing is measured
-against a band it did not name. Non-Python repos declare the same key in
-`.agentic-os.toml`.
+and only one has had the decision made. A repo outgrowing `small` should hit a
+cap and argue for `large`, not find out it was never on a band. A typo fails
+the same way a missing declaration does. Non-Python repos declare the same key
+in `.agentic-os.toml`.
 
 ## Why a count cap exists at all
 
-A per-doc size cap does not bound a docs folder. It reshapes it. A repo that
+A per-doc size cap does not bound a docs folder, it reshapes it. A repo that
 caps length and not count answers every over-long doc by splitting it, and the
 folder grows without any single file ever failing.
 
-`sirens-echo` is the proof: 156 docs, median 2,935 chars, largest 3,989 against
-a 4,000 cap. Not one file over the limit, and a folder nobody can read.
+`sirens-echo` was the proof: 156 docs, median 2,935 chars, largest 3,989
+against a 4,000 cap. Not one file over the limit, and a folder nobody can read.
 
 ## Why lines bind before chars
 
@@ -46,8 +45,7 @@ it would never fire at all.
 Count times lines is a total documentation budget, and it is the number worth
 arguing about rather than either cap alone.
 
-* `small` - 20 x 40 = 800 lines
-* `large` - 40 x 120 = 4,800 lines
+* `small` - 20 x 40 = 800 lines. `large` - 40 x 120 = 4,800 lines.
 
 A repo cannot escape the budget by trading one cap against the other. Merging
 two docs to clear the count spends the line cap, and splitting one to clear the
@@ -59,18 +57,31 @@ line cap spends the count.
 size cap or the count. A generated file that lands over the cap is a generator
 emitting too much, and the fix is the generator.
 
-The rule this replaced allowed a per-file exemption, and the exemptions
-accumulated exactly where the pressure was highest: one repo excluded nine
-individual `SKILL.md` files, two excluded `docs/FEATURES.md` from the cap that
-exists to keep it an inventory.
+The rule this replaced allowed a per-file exemption, and they accumulated
+exactly where the pressure was highest: one repo excluded nine individual
+`SKILL.md` files, two excluded `docs/FEATURES.md` from the cap that exists to
+keep it an inventory.
+
+## A vendored tree is not this repo's prose
+
+A repo may declare `vendored` path prefixes under the hook config. Markdown
+beneath one takes no size cap, because its shape is owned outside this repo: an
+SDK the repo vendors, or copy an external surface renders. Cutting the first
+forks upstream, and cutting the second changes what a reader outside sees.
+
+Prefixes only, never a bare basename, because a basename would exempt one
+filename everywhere, which is the per-file escape hatch the count cap removed.
+It answers the size cap alone, so declaring a tree vendored cannot widen where
+Markdown may live. It is a repo-declared exemption, the thing this rule
+otherwise refuses, so the reason belongs beside the declaration.
 
 ## The org profile README belongs to the forge
 
 `<org>/.github/profile/README.md` takes no size cap and no module-README shape
 from this hook. Both forges render it as the organisation's front page, so the
 module-README remedy of "move the body into a `docs/*.md` file" would blank it.
-It sat outside every fleet rollout until the walker learned to see a repo named
-`.github` at all.
+It sat outside every fleet rollout until the walker learned to see a repo
+named `.github` at all.
 
 ## Skill entrypoints belong to check-skills
 
@@ -80,40 +91,29 @@ owns them through `categories.yaml`, which allows 500 lines and 10,000 bytes.
 Sharing one cap made a skill pass the validator that owns skills and fail the
 one that owns layout, and the failure told the author to split a skill into
 `docs/`. A skill does not overflow there. It overflows into its own
-`references/`, which `check-skills` deliberately leaves uncapped. Two hooks
+`references/`, which `check-skills` deliberately leaves uncapped. **Two hooks
 disagreeing about one file is a defect in the suite, not a decision an author
-can act on. The exemption is scoped to the two entrypoint basenames, which
-leaves a live tension: `check-skills` answers an over-long `SKILL.md` with
-"move detail into a sibling `references/` file", and a band cap on that sibling
-makes its own instruction hard to follow. Widening to the tree is a decision
-rather than a fix, so it is recorded here rather than taken.
+can act on.** The exemption is scoped to the two entrypoint basenames, which
+leaves a tension: `check-skills` answers an over-long `SKILL.md` with "move
+detail into a sibling `references/` file", and a band cap on that sibling makes
+that instruction hard to follow.
 
-## Documentation-layout exceptions
+## Every carve-out, in one place
 
-Every carve-out from the default `documentation-layout` rule: Markdown lives only at the root allowlist, `docs/*.md` (flat), or a skill dir, capped at 80 lines / 4000 chars. Enforced by [`check_documentation_layout.py`](https://github.com/coilyco-flight-deck/agentic-os/blob/main/agentic_os/check_documentation_layout.py); per-repo config under `[tool.agentic-os.documentation-layout]` in `pyproject.toml`. File lists are a snapshot and drift; the mechanisms do not.
+Markdown lives at the root allowlist, in a flat `docs/`, or in a skill dir, and
+takes its band's caps. `docs/FEATURES.md` is not special. The carve-outs are the
+sections above plus these:
 
-## Active in this repo
+- **Gitignored paths and `SKIP_DIR_NAMES`** - never scanned
+  ([why](build-output-is-not-content.md)).
+- **`excludes`** - placement and flatness only. It stopped reaching either size
+  cap, so an entry here no longer answers an over-long file.
+- **`SIZE_CAP_EXEMPT_BASENAMES`** - `CODE_OF_CONDUCT.md`, verbatim upstream,
+  plus the two skill entrypoints. **`examples/`** - any `*.md` under one, at
+  any depth, the Go and Rust idiom.
+- **Size opt-ups** - `agents_md_max_*` and `readme_max_*` lift `AGENTS.md` and the root `README.md` off their defaults.
 
-- **Gitignored paths** - skipped unasked. See [build output is not content](build-output-is-not-content.md).
-- **`excludes` (config)** - fully exempt from location AND size checks, per the layout escape hatch. Today: `warp/launch_configurations/**` (README) and `warp/tab_configs/**` (wtab.md, claude-agent-work.md). This is the one hand-maintained surface, so it drifts - prune it when a file moves.
-- **AGENTS.md size override** - config keys `agents_md_max_lines = 290` and `agents_md_max_chars = 26000` replace the shared 320/25000 default for `AGENTS.md` only. Lowered from 320/34000 once role-scoped doctrine moved to the agent-compose role melds that own it. The remaining room holds universal doctrine that must stay in-context, and the margin is one section wide on purpose.
-- **FEATURES.md size cap** - `docs/FEATURES.md` uses the tight inventory cap from `check_documentation_layout.py`: 80 lines / 4000 chars. That keeps it a major-capability index, not a changelog.
-- **Root allowlist** - present: `AGENTS.md`, `CLAUDE.md`, `CODE-REVIEW.md`, `README.md`. Any other root `*.md` fails the location check and would need either a move into `docs/` or an explicit exclude.
-- **Skill-path carve-out** - `*.md` under `.agents/skills/`, `.claude/skills/`, or `skills/` may live outside `docs/` at any depth (~220 files here), and takes no size cap from this hook at all. See above.
-
-## Dormant carve-outs
-
-These ship in the shared validator for other repos in the family but match nothing here:
-
-- **`SIZE_CAP_EXEMPT_BASENAMES`** - `CODE_OF_CONDUCT.md` is exempt from the size cap by basename (verbatim-upstream file). Not present.
-- **`examples/` carve-out** - any `*.md` under an `examples/` dir is allowed at any depth (Go/Rust idiom). No such file here.
-- **README.md size opt-up** - config keys `readme_max_lines` / `readme_max_chars` lift the root `README.md` past the overview default (160 / 12500), the same mechanism as the AGENTS.md override. Unset here, so this repo's README rides the overview cap. Used by a release repo whose README is the launch-grade front page.
-
-## Suppressed wholesale
-
-- **`SKIP_DIR_NAMES`** - never scanned at all: `.git`, `.claude`, `.venv`, `.mypy_cache`, `.pytest_cache`, `.ruff_cache`, `.terraform`, `.tox`, `__pycache__`, `build`, `dist`, `node_modules`, `target`, `vendor`.
-
-## Baseline (not an exception)
+## Baseline
 
 - `docs/` must stay flat - no subdirectories, use filename prefixes (`features-*.md`, `warp-*.md`, `skill-discipline-*.md`).
 - A nested `SKILL.md` below a top-level skill dir fails: the loader only sees top-level dirs.

@@ -52,6 +52,10 @@ SKILL.md and COMPOSED.md take no size cap from here. check-skills owns them
 through categories.yaml, and a skill overflows into its own references/ rather
 than into docs/.
 
+A repo may declare `vendored` path prefixes whose Markdown takes no size cap,
+for a tree whose shape it does not own: an SDK it vendors, or copy an external
+surface renders. Prefixes only, and placement still applies.
+
 The count cap exists because a per-doc cap on its own does not bound a docs
 folder, it reshapes it. A repo that caps length and not count answers every
 over-long doc by splitting it, which is how one reached 156 files with not a
@@ -94,6 +98,7 @@ from agentic_os.config import (
     is_enabled,
     is_excluded,
     load_excludes,
+    load_str_list,
 )
 
 REPO_ROOT = Path.cwd()
@@ -143,6 +148,26 @@ SIZE_CAP_EXEMPT_BASENAMES = {
 # The org landing page, whose shape belongs to Forgejo and GitHub rather than
 # to this layout. See docs/documentation-bands.md.
 ORG_PROFILE_README = Path("profile") / "README.md"
+
+
+def vendored_trees(repo_root: Path | None = None) -> list[str]:
+    """Path prefixes whose Markdown shape this repo does not own."""
+    return load_str_list(HOOK_ID, "vendored", repo_root)
+
+
+def is_vendored(rel: Path, patterns: list[str]) -> bool:
+    """A file under a declared vendored tree takes no size cap.
+
+    Prefixes only, never a bare basename: a basename would exempt one filename
+    everywhere, which is the per-file escape hatch the count cap removed.
+    """
+    if not patterns:
+        return False
+    s = rel.as_posix()
+    return any(
+        s.startswith(prefix if prefix.endswith("/") else prefix + "/")
+        for prefix in patterns
+    )
 
 ROOT_MARKDOWN_ALLOWLIST = {
     "AGENTS.md",
@@ -524,10 +549,12 @@ def strip_frontmatter(text: str) -> str:
 
 def check_markdown_sizes() -> list[str]:
     violations: list[str] = []
+    vendored = vendored_trees()
     for rel in markdown_files(apply_excludes=False):
         if (
             rel.name in SIZE_CAP_EXEMPT_BASENAMES
             or rel == ORG_PROFILE_README
+            or is_vendored(rel, vendored)
         ):
             continue
         path = REPO_ROOT / rel
