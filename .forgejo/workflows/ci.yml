@@ -38,6 +38,15 @@ jobs:
       - name: Test the native terminal companion
         run: just agent-terminal-test
 
+  aos-eval-tests:
+    runs-on: docker
+    timeout-minutes: 10
+    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release
+    steps:
+      - uses: actions/checkout@v6
+      - name: Test the shared eval grading package
+        run: just aos-eval-test
+
   ward-doctor:
     runs-on: docker
     timeout-minutes: 20

@@ -16,6 +16,10 @@ Major shipped capabilities, not files.
 - [Agent-compose provider](context-budget.md) - scoped skills,
   personality, and eight deployed roles including AI Engineer.
 - [Agent tool evaluation](../.agents/skills/tooling-agent-tool-evaluation/SKILL.md) - cross-harness tool evals.
+- [Shared eval grading](../.agents/skills/tooling-aos-eval/SKILL.md) - the
+  `aos-eval` click CLI and package on its own release train: schema, boundary
+  pairing, human annotation, failure taxonomy, and a one-way display export
+  shared by agent-compose and sirens-echo.
 - [Role-composed skills](role-composed-skills.md) - v2 Core Roster method slices.
 - [AOS launcher](aos-cli.md) - role context with
   [convergence](aos-convergence.md), [connectivity](aos-context-bundle.md),

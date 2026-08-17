@@ -23,9 +23,9 @@ the workflow. `draft-*` tags are staging refs for Forgejo package cleanup rules.
 Language drafts and stable language cache refs are build-only artifacts.
 `:latest` is a compatibility alias for `:release`.
 
-The root `v*` train serves the dev-base image. Hook consumers pin the
-independent `aos-precommit-v*` train. The standalone CLI publishes binaries and
-packages on its `aos-v*` train. See [aos-cli.md](aos-cli.md).
+The root `v*` train serves the dev-base image, the independent `aos-precommit-v*`
+the hooks, and `aos-v*` the standalone CLI binaries and packages. Shared eval
+grading pins `aos-eval-v*`, path-filtered to `aos-eval/**`. See [aos-cli.md](aos-cli.md).
 
 ## Version bump
 
