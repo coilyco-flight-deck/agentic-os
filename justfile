@@ -5,11 +5,9 @@
 #
 # One line of comment per recipe on purpose: just reads only the LAST comment
 # line above a recipe, so a wrapped description silently truncates to its tail.
-# That is agentic-os#1048's finding, kept here rather than rediscovered.
 #
-# Retiring `ward exec` per coilysiren/inbox#366. `.ward/ward.yaml` survives
-# carrying catalog metadata only, because check_catalog_block pins that exact
-# path upstream. Tracked at agentic-os#1101.
+# `ward exec` is retired. `.ward/ward.yaml` survives carrying catalog metadata
+# only, because the catalog hooks upstream in agentic-os pin that exact path.
 
 set positional-arguments
 
