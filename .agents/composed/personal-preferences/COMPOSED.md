@@ -17,7 +17,9 @@ from its section.
 * [Movies](../personal-preference-movies/COMPOSED.md) - favorite film series and movies.
 * [Games](../personal-preference-games/COMPOSED.md) - favorite Steam games.
 * [Animals](../personal-preference-animals/COMPOSED.md) - favorite animals.
-* [Colors](../personal-preference-colors/COMPOSED.md) - preferred colors.
+* [Colors](../personal-preference-colors/COMPOSED.md) - preferred colors, and
+  the one section with a bound: it is a palette rather than your own favorite
+  color, which your identity card owns.
 * [Fabrication](../personal-preference-fabrication/COMPOSED.md) - hands-on, built home projects.
 
 ## Website synchronization
