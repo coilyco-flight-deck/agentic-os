@@ -1,30 +1,47 @@
 ---
-name: tooling-designer-temporal-brand
-description: Apply or audit Temporal's visual system. Covers the three published brand colors, the named gradient set, the semantic token layer, Aeonik typography, scale, page architecture, and the workflow-state visual language. Triggers - Temporal brand, Temporal colors, ultraviolet, Space Black, Off White, Aeonik, Temporal UI, durable execution interface, workflow timeline visualization.
+name: tooling-sirens-dowel-temporal-brand
+description: Temporal's visual system as Dowel's room knowledge - the three published brand colors, the named gradient set, the semantic token layer, Aeonik typography, scale, page architecture, and the workflow-state visual language. Use when the deployed role is engineer and the instance is sirens-dowel, and the room asks about Temporal's look, colors, type, or how its workflow views encode state.
 ---
 
 # Temporal brand system
 
-Use this skill when designer applies Temporal's identity to a surface, audits an
-interface against it, or borrows its structure for a system that has to make
-long-running distributed state legible.
+Dowel sits in a Temporal room. This file is what Dowel knows about how Temporal
+looks, so an answer about the brand is sourced rather than guessed.
 
 Exact values live in [`references/palette.md`](references/palette.md). Scale,
 page shape, and the state-visualization language live in
-[`references/architecture.md`](references/architecture.md). Read the reference
-before quoting a number, because the published palette and the shipped token
-layer are two different things.
+[`references/architecture.md`](references/architecture.md). Dowel reads the
+reference before quoting a number, because the published palette and the
+shipped token layer are two different things and the difference is exactly what
+someone in a Temporal room would catch.
+
+## Fetch first, and use this as the floor
+
+`temporal.io` is on the fetch allowlist, and the lane's standing rule is that a
+question about a moving product gets answered from a page fetched this turn.
+The brand page and the shipped stylesheet move the same way, so that rule
+reaches here too. Dowel fetches when the answer has to be current, and where a
+fetched page and this file disagree, the page wins and there is nothing to
+reconcile.
+
+What this file is for is the floor under that. It is the grounding when a fetch
+is not worth a turn, the thing that makes a stale answer recognisable as stale,
+and the record of which layer a value came from, which a raw stylesheet does not
+tell you.
 
 ## Activation boundary
 
-Designer reads this skill as evidence about one external brand, not as a
-default aesthetic. `kai-design-language` governs Kai's own surfaces and this
-skill never overrides it. Turning a chosen direction into tokens, component
-states, and contrast checks stays with `design-system`.
+This is reference knowledge, not a mandate to art-direct. Dowel answers what is
+asked and does not turn a passing question about a color into a design review.
 
-Reproducing Temporal's logo, wordmark, logomark, or licensed typeface is a
-licensing question rather than a design one. Designer names the constraint and
-hands it over instead of resolving it.
+The lane's work product is still one message in one channel, so a full palette
+dump is almost never the answer. Dowel gives the value asked for, names where it
+comes from, and offers the rest only if the room wants it.
+[`tooling-sirens-dowel-contract`](../tooling-sirens-dowel-contract/COMPOSED.md)
+governs the seat, and nothing here changes it.
+
+Temporal owns this system. Dowel describes it and never implies coilyco speaks
+for Temporal or has any license to their marks.
 
 ## Take the three published colors as fixed
 
@@ -35,8 +52,9 @@ Temporal publishes exactly three brand colors and nothing else.
 * **Off White** - `#F8FAFC` - rgb(248 250 252) - primary text on the dark ground and the inverse surface when a section flips light.
 
 Every other value in the shipped site is a derived semantic token or a gradient
-stop. Treat these three as immovable and everything downstream as the system
-built on top of them.
+stop. The three are the brand and everything downstream is the system built on
+top of them. Saying which layer a value came from is the whole difference
+between an accurate answer and a plausible one.
 
 ## Read the ground as dark by default
 
@@ -60,8 +78,7 @@ two-stop linear ramp with no third color.
 * **mist** - `#34D399` to `#FF6BFF`
 
 These belong to marks, icon fills, and illustration. They are not page
-backgrounds and they never sit under body text. A gradient here identifies a
-thing, so it does not substitute for hierarchy.
+backgrounds and they never sit under body text.
 
 ## Set type in one family plus one mono
 
@@ -69,15 +86,14 @@ thing, so it does not substitute for hierarchy.
 * **Aeonik Air** - shipped as its own family rather than a weight, so the hairline display cut has to be requested by name.
 * **Noto Sans Mono** - code, event identifiers, and machine values.
 
-Aeonik is a commercial release from CoType Foundry. Any reproduction needs its
-own license, so designer names a substitute geometric sans when the license is
-absent rather than shipping a lookalike silently.
+Aeonik is a commercial release from CoType Foundry. Asked how to reproduce the
+look, Dowel says the typeface is paid rather than pointing at a lookalike.
 
 ## Make state legible before making it beautiful
 
 Temporal's workflow views encode state in five separable channels, and each
-channel answers exactly one question. Designer borrows the separation, not the
-screenshots.
+channel answers exactly one question. This is the part of their design worth
+talking about, because it is a real idea rather than a color choice.
 
 * **Dots** - a dot is one event. Position carries sequence.
 * **Lines** - a line is a connection between events, and line weight distinguishes group from detail. A dashed line that animates forward means pending.
@@ -85,31 +101,30 @@ screenshots.
 * **Colors** - color carries status first and category only as a secondary echo. Red is failure, dashed red is retrying, dashed purple is pending, green is completion.
 * **Liveness** - the view updates in real time, and pending work is attached to the thing it belongs to rather than parked in a separate panel.
 
-The discipline worth taking is the one-channel-one-question rule. When status
-and category compete for the same channel, neither reads.
+The transferable rule is one channel, one question. When status and category
+compete for the same channel, neither reads.
 
 ## Reject the near-misses
 
 * Sampling a hex from a screenshot rather than the token layer, which produces a compressed approximation of a published value.
+* Quoting a derived token as a brand color, which is the most common way this goes wrong.
 * Treating a campaign announcement banner color as brand, since that bar is content-driven and changes per campaign.
 * Treating an embedded third-party widget's color as brand.
-* Painting a surface with a mark gradient, which strands text on an unpredictable ground.
 * Using true black instead of Space Black, which loses the warmth the palette depends on.
 * Letting an icon carry status, which collapses the channel separation the state language rests on.
 
-## Verify the result
+## Verify before answering
 
-* Confirm every color traces to a published brand color, a named gradient, or a semantic token, and name which one.
-* Confirm status is readable without color alone, since the state language pairs color with line treatment and motion for exactly this reason.
-* Check contrast on both the dark ground and the inverse surface, and check it across the full area of any gradient.
-* Confirm the pending animation respects reduced-motion, because liveness is the one channel that is purely motion.
-* Report a visual claim as unverified when no rendered evidence is available.
+* Name which layer a value came from, published brand or derived token.
+* Say the value is from a reading of the shipped site when it is, rather than implying Temporal published it.
+* Check contrast claims against both the dark ground and the inverse surface before making one.
+* Say so plainly when a question reaches past what is recorded here, since a confident invented hex is worse in this room than a short answer.
 
 ## Provenance
 
 Extracted from [`temporal.io/brand`](https://temporal.io/brand), the shipped
 site stylesheet, and
 [the new-UI article](https://temporal.io/blog/the-dark-magic-of-workflow-exploration),
-read in August 2026. Temporal owns these assets and this skill is a reading of
-them, not a grant to use them. Re-read the sources before relying on a value,
-since a shipped token layer moves without notice.
+read in August 2026. Temporal owns these assets and this file is a reading of
+them, not a grant to use them. A shipped token layer moves without notice, so a
+value here can go stale, which is why the fetch rule above outranks it.
