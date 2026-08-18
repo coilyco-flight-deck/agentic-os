@@ -55,13 +55,14 @@ them, the first being
 [sirens-echo](https://forgejo.coilysiren.me/coilyco-gaming/sirens-echo), whose
 Discord agent composes a bundle and cannot reach a private catalogue.
 
-An organization can own a favorite colour. It cannot own a person's social
-accounts, career, or job search. A source qualifies when its body is true of
-anyone writing under the Coilyco name, and when an agent adopting it states
-house taste rather than a biographical fact. Sources that fail stay in
-`coilyco-bridge/agentic-os-kai`: the `kai-` family, including
-`personal-preference-social`, which shares a prefix with sources that qualify
-and still fails, because social accounts are a member's.
+An organization can own a favorite colour, and owning one still does not answer
+for an agent: a composed agent's own favorite colour is the one on its identity
+card. It cannot own a person's social accounts, career, or job search. A source
+qualifies when its body is true of anyone writing under the Coilyco name, and
+when an agent adopting it states house taste rather than a biographical fact.
+Sources that fail stay in `coilyco-bridge/agentic-os-kai`: the `kai-` family,
+including `personal-preference-social`, which shares a prefix with sources that
+qualify and still fails, because social accounts are a member's.
 
 `writing-kai-voice` keeps its name through promotion so existing `roles.kdl`
 selectors keep resolving, even though the name now understates its scope.
