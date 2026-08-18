@@ -186,6 +186,12 @@ Whenever an agent doing native work outside `warded` reaches a checkpoint with l
 
 If the resolved workflow allows the work to land, the agent pushes it to `main` as usual. If the work should not yet land on `main`, the agent creates or reuses a task-specific branch and pushes the checkpoint there. The remote branch is the recovery artifact. Uncommitted changes, local-only commits, stashes, reflogs, and a clean local worktree without a remote ref **do not count**. Test failures or incomplete follow-up may keep a checkpoint off `main`, but they never justify leaving the only copy local. Never force-push to satisfy this rule. If an ordinary push cannot succeed, the agent preserves the local state and reports the exact blocker as the current wall.
 
+### A pushed branch owes its pull request
+
+The rule above ends at a remote branch, and **a branch is not a deliverable**. Whenever an agent pushes a branch on any lane that lands through review (`pull-request`, `pull-request-and-merge`), it **opens the pull request in the same turn**, before reporting the checkpoint, handing back, or ending the turn. A branch pushed on a lane that lands on `main` still owes one whenever the merge itself is blocked, because the branch is then the only thing carrying the work. Only `remote-branch-only` stops at a branch, and only when the caller resolved that lane.
+
+**A branch with no PR is litter**: nothing points at it, no review is pending on it, and it is invisible to anyone reading issues or the merge queue, so the work is lost the moment the session ends. When the agent cannot open the PR itself, it reports that as the blocking wall and hands back the branch name with its compare URL rather than describing the work as pushed and done.
+
 ### Native session shadow
 
 A native AOS launch runs the agent in a per-session shadow, not the canonical checkout. `AOS_NATIVE_SESSION` and `AOS_NATIVE_SESSION_PROJECTS` are set exactly when it exists, so the agent reads them rather than guessing. The shadow shares canonical Git objects, so a commit is durable at once while its working tree stays exposed to temporary-root purges, the mechanism behind the rule above. Placement and mechanics: [session shadow](docs/native-shadow.md).
