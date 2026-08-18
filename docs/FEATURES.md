@@ -18,7 +18,8 @@ Major shipped capabilities, not files.
 - [Agent tool evaluation](../.agents/skills/tooling-agent-tool-evaluation/SKILL.md) - cross-harness tool evals.
 - [Shared eval grading](aos-eval.md) - the `aos-eval` CLI and package on its own
   release train: schema, boundary pairing, human annotation, failure taxonomy,
-  and a one-way display export shared by agent-compose and sirens-echo.
+  and a one-way display export. agent-compose and sirens-echo both grade through
+  it. Carries the agent and model probe layer underneath.
 - [Role-composed skills](role-composed-skills.md) - v2 Core Roster method slices.
 - [AOS launcher](aos-cli.md) - role context with
   [convergence](aos-convergence.md), [connectivity](aos-context-bundle.md),

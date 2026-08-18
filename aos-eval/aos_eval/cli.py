@@ -38,8 +38,14 @@ HELP = """aos-eval - shared eval grading for agent-compose and sirens-echo
 WHAT IT IS
   The schema, pairing rule, human grading loop, failure taxonomy, and display
   export that two eval runners were each implementing separately. The runners
-  stay in their own repos: one calls a composed prompt through Agent Proxy, the
-  other drives a live harness against a real tool roster. Both emit this shape.
+  stay in their own repos: agent-compose calls a composed prompt through Agent
+  Proxy, sirens-echo drives a live harness against a real tool roster. Both
+  emit this shape and both grade through this command.
+
+WHAT IT REFUSES TO DO
+  Certify. `boundaries check` reports missing cases rather than a coverage
+  percentage, `export` stops instead of scrubbing, and nothing here scores a
+  sample. A number this command prints can come back negative.
 
 THE PAIRING RULE
   A boundary is scored as a pair, never as a half. The in-half proves the rule

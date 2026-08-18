@@ -6,8 +6,8 @@ license: MIT
 
 # aos-eval
 
-`aos-eval` is the grading half of the eval stack, shared by agent-compose and
-sirens-echo so the pairing rule is implemented once. Committed YAML goes in,
+`aos-eval` is the grading half of the eval stack. agent-compose and sirens-echo
+both grade through it, so the pairing rule is implemented once. Committed YAML goes in,
 human decisions and one-way display payloads come out. No runner and no model
 client live here, so the command never spends a token and never touches a
 deployed system. Run `aos-eval help` for the exhaustive reference.
