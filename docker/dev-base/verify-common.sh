@@ -10,9 +10,19 @@ roster_dir="$(mktemp -d)"
 trap 'rm -rf "$roster_dir"' EXIT
 agent-compose version
 agent-compose roster --out "$roster_dir"
-jq -e \
-  '.source == "roster:core" and (.role_order | length == 8) and (.personalities | length == 16)' \
-  "$roster_dir/person.json" >/dev/null
+# A bare `jq -e` exits 1 naming neither the field nor what it saw, so a roster
+# that grows fails the image build with no way to tell which count moved.
+expect_roster() {
+  local filter=$1 want=$2 got
+  got="$(jq -r "$filter" "$roster_dir/person.json")"
+  if [ "$got" != "$want" ]; then
+    echo "roster $filter = $got, expected $want" >&2
+    return 1
+  fi
+}
+expect_roster '.source' 'roster:core'
+expect_roster '.role_order | length' 8
+expect_roster '.personalities | length' 18
 test -s "$roster_dir/AGENTS.COMPOSE.md"
 test -n "$(
   find "$roster_dir/.agents/skills" \
