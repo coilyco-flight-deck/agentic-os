@@ -94,12 +94,6 @@ Below anything graded sits the cheapest question: does this agent and model pair
 Probes answer that and **produce evidence rather than a verdict**, so a green probe must never read as a
 passed eval. They have no pair structure, no human grader, and no record a second run compares against.
 
-* **`goose-ask`** (`scripts/goose-ask.sh`, ward verb) runs one-shot questions through `goose run
-  --no-session`, stripping the banner, timing each call, and teeing a transcript under
-  `~/.cache/agentic-os/goose-ask/`. `-f` batches a question file, `-s` adds system text, `-m` overrides
-  the model. `scripts/goose-probe.txt` is the capability battery, probing what a model claims about
-  itself against what the `developer` extension can actually do. ward gates repo verbs on a clean tree,
-  so run the raw script while iterating on uncommitted changes.
 * **`aos-role-question`** proves a projected role can answer through a real model rather than only that
   its files exist. One disposable container per invocation, one role-specific question, a ten-minute
   ceiling, and a failure unless the output carries `ROLE-CONFIRMED: <role>`. **The prompt never supplies
