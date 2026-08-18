@@ -2,4 +2,4 @@
 
 The shared eval grading layer, released on its own `aos-eval-v*` train.
 
-Run `aos-eval help` for the full reference.
+Walkthrough: [docs/aos-eval.md](../docs/aos-eval.md). Reference: `aos-eval help`.
