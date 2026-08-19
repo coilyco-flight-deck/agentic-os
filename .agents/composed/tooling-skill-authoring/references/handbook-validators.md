@@ -12,7 +12,7 @@ The structural validator and dead-link checker ship from [`coilyco-flight-deck/a
 * `AGENTS.md` uses the standard repo-local H2 set.
 * Markdown lives only at repo root, flat `docs/*.md`, or flat ordinary and
   composed source folders. Every Markdown file stays under the cap.
-* Code comments are up to two contiguous lines, max 90 chars each, with long explanation moved to docs. A top-of-file header block is exempt, and YAML allows comments only there, above the first content line.
+* Code comments are up to two contiguous lines, max 90 chars each, with long explanation moved to docs. A top-of-file header block is exempt, and YAML allows comments only there, above the first content line. Both of those last two are per-repo dials: `header_cap` caps the header for YAML and KDL, and `yaml_comments_below_content` lets a repo with no `yaml-strict` key-sorter put a capped comment beside the key it explains.
 
 ### `skill-conventions` (upstream) - structural check
 

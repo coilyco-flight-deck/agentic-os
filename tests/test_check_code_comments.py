@@ -12,6 +12,7 @@ from pathlib import Path
 from agentic_os.pre_commit.check_code_comments import (
     MAX_COMMENT_LINE_CHARS,
     scan_lines,
+    sorts_yaml_keys,
 )
 
 
@@ -209,3 +210,116 @@ def test_block_open_inside_a_line_comment_does_not_shield_a_deref() -> None:
         "}",
     ]
     assert scan_lines(Path("m.rs"), ".rs", lines) == []
+
+
+# The two opt-in dials. Both default off, so every test above describes the
+# behaviour a repo that sets neither still gets.
+
+
+def test_header_cap_off_by_default_for_kdl() -> None:
+    lines = ["// one", "// two", "// three", "node 1"]
+    assert scan_lines(Path("spec.kdl"), ".kdl", lines) == []
+
+
+def test_header_cap_rejects_an_over_long_kdl_header() -> None:
+    lines = ["// one", "// two", "// three", "node 1"]
+    violations = scan_lines(Path("spec.kdl"), ".kdl", lines, header_cap=True)
+    assert len(violations) == 1
+    assert "spec.kdl:3:" in violations[0]
+    assert "top-of-file comment header is 3 lines" in violations[0]
+
+
+def test_header_cap_rejects_an_over_long_yaml_header() -> None:
+    lines = ["# one", "# two", "# three", "date: x"]
+    violations = scan_lines(Path("v.yaml"), ".yaml", lines, header_cap=True)
+    assert len(violations) == 1
+    assert "v.yaml:3:" in violations[0]
+
+
+def test_header_cap_allows_exactly_two_header_lines() -> None:
+    lines = ["# one", "# two", "date: x"]
+    assert scan_lines(Path("v.yaml"), ".yaml", lines, header_cap=True) == []
+
+
+def test_header_cap_counts_across_a_blank_line() -> None:
+    """A blank line inside the header must not reset the count and uncap it."""
+    lines = ["# one", "# two", "", "# three", "date: x"]
+    violations = scan_lines(Path("v.yaml"), ".yaml", lines, header_cap=True)
+    assert len(violations) == 1
+    assert "v.yaml:4:" in violations[0]
+
+
+def test_header_cap_reports_once_not_per_surplus_line() -> None:
+    lines = ["# one", "# two", "# three", "# four", "# five", "date: x"]
+    violations = scan_lines(Path("v.yaml"), ".yaml", lines, header_cap=True)
+    assert len(violations) == 1
+
+
+def test_header_cap_leaves_prose_languages_alone() -> None:
+    lines = ["# one", "# two", "# three", "value = 1"]
+    assert scan_lines(Path("m.py"), ".py", lines, header_cap=True) == []
+
+
+def test_yaml_below_content_allows_a_capped_comment_beside_its_key() -> None:
+    lines = ["date: x", "# why this key is set", "id: W1"]
+    assert (
+        scan_lines(Path("v.yaml"), ".yaml", lines, comments_below_content=True) == []
+    )
+
+
+def test_yaml_below_content_still_caps_the_streak() -> None:
+    lines = ["date: x", "# one", "# two", "# three", "id: W1"]
+    violations = scan_lines(
+        Path("v.yaml"), ".yaml", lines, comments_below_content=True
+    )
+    assert len(violations) == 1
+    assert "comment block of 3 lines" in violations[0]
+
+
+def test_yaml_below_content_still_obeys_the_char_cap() -> None:
+    lines = ["date: x", "# " + "y" * MAX_COMMENT_LINE_CHARS, "id: W1"]
+    violations = scan_lines(
+        Path("v.yaml"), ".yaml", lines, comments_below_content=True
+    )
+    assert len(violations) == 1
+    assert "char cap" in violations[0]
+
+
+def test_yaml_below_content_streak_resets_on_a_key() -> None:
+    lines = ["a: 1", "# one", "# two", "b: 2", "# three", "# four", "c: 3"]
+    assert (
+        scan_lines(Path("v.yaml"), ".yaml", lines, comments_below_content=True) == []
+    )
+
+
+def test_the_two_dials_compose() -> None:
+    lines = ["# one", "# two", "# three", "a: 1", "# beside a key", "b: 2"]
+    violations = scan_lines(
+        Path("v.yaml"),
+        ".yaml",
+        lines,
+        header_cap=True,
+        comments_below_content=True,
+    )
+    assert len(violations) == 1
+    assert "top-of-file comment header" in violations[0]
+
+
+def test_sorter_detection_reads_the_pre_commit_config(tmp_path: Path) -> None:
+    (tmp_path / ".pre-commit-config.yaml").write_text(
+        "repos:\n  - repo: x\n    hooks:\n      - id: yaml-strict\n",
+        encoding="utf-8",
+    )
+    assert sorts_yaml_keys(tmp_path) is True
+
+
+def test_sorter_detection_false_without_the_hook(tmp_path: Path) -> None:
+    (tmp_path / ".pre-commit-config.yaml").write_text(
+        "repos:\n  - repo: x\n    hooks:\n      - id: code-comments\n",
+        encoding="utf-8",
+    )
+    assert sorts_yaml_keys(tmp_path) is False
+
+
+def test_sorter_detection_false_without_a_config(tmp_path: Path) -> None:
+    assert sorts_yaml_keys(tmp_path) is False

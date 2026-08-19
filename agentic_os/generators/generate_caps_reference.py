@@ -55,8 +55,8 @@ def _caps() -> list[tuple[str, str, str, str]]:
             "code-comments",
             "contiguous comment lines",
             str(cc.MAX_CONTIGUOUS_COMMENT_LINES),
-            "max consecutive comment lines after content begins "
-            "(a top-of-file header block is exempt)",
+            "max consecutive comment lines. A top-of-file header block is "
+            "exempt unless `header_cap` is set",
         ),
         (
             "documentation-layout",

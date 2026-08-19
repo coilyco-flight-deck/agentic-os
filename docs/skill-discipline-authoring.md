@@ -113,7 +113,8 @@ exempt.
 90 chars, with a top-of-file header block exempt. Longer explanation belongs in
 `docs/*.md` with a short pointer in the code. YAML is stricter, allowing
 comments only in that header block, because a key-sorter would drift any lower
-comment off its target.
+comment off its target. Two dials change both: `header_cap` caps the header,
+and `yaml_comments_below_content` lifts it where no `yaml-strict` sorter runs.
 
-Per-repo excludes for the path-walking hooks live under
-`[tool.agentic-os.<hook>]` in `pyproject.toml`.
+Per-repo excludes and dials live under `[tool.agentic-os.<hook>]` in
+`pyproject.toml`.

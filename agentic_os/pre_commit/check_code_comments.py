@@ -16,6 +16,23 @@ YAML is stricter: a key-sorter rearranges YAML lines, so a comment anywhere
 but the very top would drift away from whatever it described. YAML therefore
 allows comments only as that top header block - everything above the first
 content line. Once a content line appears, any later comment is a violation.
+
+Two per-repo dials under ``[tool.agentic-os.code-comments]`` change the two
+paragraphs above, both defaulting off so no repo moves until it opts in:
+
+``header_cap = true``
+    Applies the two-line cap to the top-of-file header too, for YAML and KDL.
+    The exemption let a header grow without bound, which is where explanation
+    accumulates once every other position is capped.
+
+``yaml_comments_below_content = true``
+    Drops the YAML-only top-block restriction, so YAML takes the same capped
+    comments every other language does. The restriction exists solely because
+    ``yaml-strict`` sorts keys and would drift a comment off its target. A repo
+    that does not run that hook has no sorter, so the restriction only pushes
+    per-key rationale into one unbounded block at the top. Setting this while
+    ``yaml-strict`` is configured is refused rather than silently obeyed: that
+    combination sorts the keys and then strips the comments.
 """
 from __future__ import annotations
 
@@ -24,7 +41,12 @@ import subprocess
 import sys
 from pathlib import Path
 
-from agentic_os.config import is_enabled, is_excluded, load_excludes
+from agentic_os.config import (
+    get_bool_option,
+    is_enabled,
+    is_excluded,
+    load_excludes,
+)
 
 REPO_ROOT = Path.cwd()
 HOOK_ID = "code-comments"
@@ -32,6 +54,13 @@ MAX_COMMENT_LINE_CHARS = 90
 MAX_CONTIGUOUS_COMMENT_LINES = 2
 
 YAML_EXTS = {".yaml", ".yml"}
+
+# Where a top-of-file header is data-like rather than prose: a spec, a manifest,
+# a values file. Prose languages keep the exemption.
+HEADER_CAPPED_EXTS = {".kdl", ".yaml", ".yml"}
+
+PRE_COMMIT_CONFIG = ".pre-commit-config.yaml"
+YAML_SORTER_HOOK = "yaml-strict"
 
 # Header of a `|`/`>` block scalar (`run: |`, `- |`). Lines indented under it
 # are string content, so a leading `#` there is bash, not a YAML comment.
@@ -221,10 +250,28 @@ def char_cap_violation(rel: Path, line_no: int, line: str) -> str:
     )
 
 
-def scan_yaml(rel: Path, suffix: str, lines: list[str]) -> list[str]:
+def header_cap_violation(rel: Path, line_no: int, count: int) -> str:
+    return (
+        f"{rel.as_posix()}:{line_no}: top-of-file comment header is {count} lines, "
+        f"over the {MAX_CONTIGUOUS_COMMENT_LINES}-line cap. Move durable "
+        f"detail to docs/ and leave a short pointer."
+    )
+
+
+def scan_yaml(
+    rel: Path,
+    suffix: str,
+    lines: list[str],
+    *,
+    header_cap: bool = False,
+    comments_below_content: bool = False,
+) -> list[str]:
     violations: list[str] = []
     block_indent: int | None = None
     seen_content = False
+    header_lines = 0
+    streak_start: int | None = None
+    streak_len = 0
     for line_no, line in enumerate(lines, start=1):
         indent = len(line) - len(line.lstrip())
         if block_indent is not None:
@@ -236,14 +283,32 @@ def scan_yaml(rel: Path, suffix: str, lines: list[str]) -> list[str]:
         if is_comment_line(line, suffix, line_no):
             if len(line) > MAX_COMMENT_LINE_CHARS:
                 violations.append(char_cap_violation(rel, line_no, line))
-            if seen_content:
+            if not seen_content:
+                # Counted across blank lines: a blank line inside the header
+                # would otherwise reset the streak and uncap the whole block.
+                header_lines += 1
+                if header_cap and header_lines == MAX_CONTIGUOUS_COMMENT_LINES + 1:
+                    violations.append(
+                        header_cap_violation(rel, line_no, header_lines)
+                    )
+            elif not comments_below_content:
                 violations.append(
                     f"{rel.as_posix()}:{line_no}: YAML comment below the top header "
                     f"block. A key-sorter would drift it away from its "
                     f"target. Keep YAML comments above the first content "
                     f"line; move the rest to docs/."
                 )
+            else:
+                if streak_start is None:
+                    streak_start, streak_len = line_no, 1
+                else:
+                    streak_len += 1
+                    if streak_len > MAX_CONTIGUOUS_COMMENT_LINES:
+                        violations.append(
+                            streak_violation(rel, line_no, streak_start, streak_len)
+                        )
             continue
+        streak_start, streak_len = None, 0
         if line.strip() != "":
             seen_content = True
         if starts_block_scalar(line):
@@ -251,10 +316,35 @@ def scan_yaml(rel: Path, suffix: str, lines: list[str]) -> list[str]:
     return violations
 
 
-def scan_lines(rel: Path, suffix: str, lines: list[str]) -> list[str]:
+def streak_violation(
+    rel: Path, line_no: int, streak_start: int, streak_len: int
+) -> str:
+    return (
+        f"{rel.as_posix()}:{line_no}: comment block of {streak_len} lines "
+        f"starting at {streak_start}. Keep contiguous comment "
+        f"blocks to {MAX_CONTIGUOUS_COMMENT_LINES} lines. Move "
+        f"longer explanations to docs/."
+    )
+
+
+def scan_lines(
+    rel: Path,
+    suffix: str,
+    lines: list[str],
+    *,
+    header_cap: bool = False,
+    comments_below_content: bool = False,
+) -> list[str]:
     if suffix in YAML_EXTS:
-        return scan_yaml(rel, suffix, lines)
+        return scan_yaml(
+            rel,
+            suffix,
+            lines,
+            header_cap=header_cap,
+            comments_below_content=comments_below_content,
+        )
     violations: list[str] = []
+    header_lines = 0
     streak_start: int | None = None
     streak_len = 0
     seen_content = False
@@ -273,8 +363,15 @@ def scan_lines(rel: Path, suffix: str, lines: list[str]) -> list[str]:
         if len(line) > MAX_COMMENT_LINE_CHARS:
             violations.append(char_cap_violation(rel, line_no, line))
         # The top-of-file header block (comments above any content) is exempt
-        # from the contiguous-block limit. See docstring.
+        # from the contiguous-block limit unless the repo opts in. See docstring.
         if not seen_content:
+            header_lines += 1
+            if (
+                header_cap
+                and suffix in HEADER_CAPPED_EXTS
+                and header_lines == MAX_CONTIGUOUS_COMMENT_LINES + 1
+            ):
+                violations.append(header_cap_violation(rel, line_no, header_lines))
             continue
         if streak_start is None:
             streak_start = line_no
@@ -283,27 +380,67 @@ def scan_lines(rel: Path, suffix: str, lines: list[str]) -> list[str]:
             streak_len += 1
             if streak_len > MAX_CONTIGUOUS_COMMENT_LINES:
                 violations.append(
-                    f"{rel.as_posix()}:{line_no}: comment block of {streak_len} lines "
-                    f"starting at {streak_start}. Keep contiguous comment "
-                    f"blocks to {MAX_CONTIGUOUS_COMMENT_LINES} lines. Move "
-                    f"longer explanations to docs/."
+                    streak_violation(rel, line_no, streak_start, streak_len)
                 )
     return violations
 
 
-def check_file(rel: Path) -> list[str]:
+def check_file(
+    rel: Path,
+    *,
+    header_cap: bool = False,
+    comments_below_content: bool = False,
+) -> list[str]:
     path = REPO_ROOT / rel
     lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
-    return scan_lines(rel, path.suffix, lines)
+    return scan_lines(
+        rel,
+        path.suffix,
+        lines,
+        header_cap=header_cap,
+        comments_below_content=comments_below_content,
+    )
+
+
+def sorts_yaml_keys(repo_root: Path | None = None) -> bool:
+    """Whether this repo configures the YAML key-sorter this hook defers to.
+
+    Read textually rather than through a YAML parser: this hook ships with no
+    dependencies, and a hook id is a literal string in the config either way.
+    """
+    config = (repo_root or REPO_ROOT) / PRE_COMMIT_CONFIG
+    try:
+        text = config.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return False
+    return f"id: {YAML_SORTER_HOOK}" in text
 
 
 def main() -> int:
     if not is_enabled(HOOK_ID):
         print(f"{HOOK_ID}: disabled by repo config")
         return 0
+    header_cap = get_bool_option(HOOK_ID, "header_cap", False)
+    comments_below_content = get_bool_option(
+        HOOK_ID, "yaml_comments_below_content", False
+    )
+    if comments_below_content and sorts_yaml_keys():
+        sys.stderr.write(
+            f"FAIL: yaml_comments_below_content is set while {YAML_SORTER_HOOK} "
+            f"is configured in {PRE_COMMIT_CONFIG}. That sorter reorders keys "
+            f"and strips comments, so a comment placed beside its key would "
+            f"be moved and then deleted. Drop one of the two.\n"
+        )
+        return 1
     violations: list[str] = []
     for rel in source_files():
-        violations.extend(check_file(rel))
+        violations.extend(
+            check_file(
+                rel,
+                header_cap=header_cap,
+                comments_below_content=comments_below_content,
+            )
+        )
     if not violations:
         print("code-comments check: OK")
         return 0

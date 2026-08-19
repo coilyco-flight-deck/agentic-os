@@ -87,7 +87,7 @@
 
 - id: code-comments
   name: code comment discipline
-  description: Cap inline comments at two contiguous 90-char lines (a top-of-file header block is exempt); YAML allows comments only in that top block.
+  description: "Cap inline comments at two contiguous 90-char lines. A top-of-file header block is exempt and YAML allows comments only in that block, both changeable per repo via header_cap and yaml_comments_below_content under [tool.agentic-os.code-comments]."
   entry: check-code-comments
   language: python
   always_run: true

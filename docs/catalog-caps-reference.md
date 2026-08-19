@@ -10,7 +10,7 @@ Constants live in [`agentic_os/pre_commit/check_code_comments.py`](../agentic_os
 ## code-comments
 
 * **comment line chars** - 90 - max characters on a standalone comment line.
-* **contiguous comment lines** - 2 - max consecutive comment lines after content begins (a top-of-file header block is exempt).
+* **contiguous comment lines** - 2 - max consecutive comment lines. A top-of-file header block is exempt unless `header_cap` is set.
 
 ## documentation-layout
 
