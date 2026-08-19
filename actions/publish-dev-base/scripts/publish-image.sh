@@ -11,6 +11,14 @@ tier_tag() {
   fi
 }
 
+# Read from the payload Dockerfile's own default rather than restating it, so
+# the full image can only ever verify the pins the rust payload actually baked.
+rust_pins="$(sed -n 's/^ARG RUST_PINNED_VERSIONS="\(.*\)"$/\1/p' docker/dev-base/Dockerfile)"
+if [ -z "$rust_pins" ]; then
+  echo "::error::no RUST_PINNED_VERSIONS default in docker/dev-base/Dockerfile" >&2
+  exit 2
+fi
+
 target_ref="${IMAGE_BASE}:$(tier_tag "$TIER" "$TAG")"
 read -r -a aliases <<< "${ALIAS:-} ${EXTRA_ALIASES:-}"
 target_args=(-t "$target_ref")
@@ -38,6 +46,7 @@ if [ "$MODE" = build ]; then
     )
   elif [ "$TIER" = full ]; then
     command+=(
+      --build-arg "RUST_PINNED_VERSIONS=${rust_pins}"
       --build-arg "BASE_IMAGE=${IMAGE_BASE}:lang-rust-${TAG}"
       --build-arg "LANG_NODE_IMAGE=${IMAGE_BASE}:lang-node-${TAG}"
       --build-arg "LANG_GO_IMAGE=${IMAGE_BASE}:lang-go-${TAG}"
