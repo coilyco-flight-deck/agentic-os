@@ -35,7 +35,6 @@ def agents_body() -> str:
         "\n\n## See also\n\n"
         "* [README](README.md)\n"
         "* [Features](docs/FEATURES.md)\n"
-        "* [Ward](.ward/ward.yaml)\n"
     )
 
 
@@ -45,7 +44,6 @@ def write_valid_consumer(tmp_path: Path) -> None:
         "# Product\n\n## See also\n\n"
         "* [Agents](AGENTS.md)\n"
         "* [Features](docs/FEATURES.md)\n"
-        "* [Ward](.ward/ward.yaml)\n",
     )
     write(tmp_path / "AGENTS.md", agents_body())
     write(
@@ -53,9 +51,7 @@ def write_valid_consumer(tmp_path: Path) -> None:
         "# Features\n\n## See also\n\n"
         "* [README](../README.md)\n"
         "* [Agents](../AGENTS.md)\n"
-        "* [Ward](../.ward/ward.yaml)\n",
     )
-    write(tmp_path / ".ward" / "ward.yaml", "commands: {}\n")
 
 
 def test_consumer_crosslinks_without_aos_internal_citation(
@@ -71,11 +67,12 @@ def test_consumer_crosslinks_without_aos_internal_citation(
 def test_consumer_still_needs_every_peer_link(tmp_path: Path, monkeypatch) -> None:
     point_at(tmp_path, monkeypatch)
     write_valid_consumer(tmp_path)
+    # Drops the FEATURES peer. Before the ward retirement this dropped the
+    # ward.yaml link, which is no longer a trifecta member.
     write(
         tmp_path / "README.md",
         "# Product\n\n## See also\n\n"
-        "* [Agents](AGENTS.md)\n"
-        "* [Features](docs/FEATURES.md)\n",
+        "* [Agents](AGENTS.md)\n",
     )
 
     assert trifecta.main() == 1

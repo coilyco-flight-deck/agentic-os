@@ -12,7 +12,6 @@
 #       - id: code-comments
 #       - id: actions-run-one-line
 #       - id: source-doc-refs
-#       - id: catalog-block-present
 #       - id: check-skills
 #       - id: check-composed-skills
 #       - id: dead-cross-links
@@ -52,7 +51,7 @@
 
 - id: catalog-trifecta
   name: catalog-trifecta cross-link convention
-  description: Enforce that README + AGENTS + docs/FEATURES + .ward/ward.yaml exist and cross-link.
+  description: Enforce that README + AGENTS + docs/FEATURES exist and cross-link.
   entry: check-catalog-trifecta
   language: python
   always_run: true
@@ -111,16 +110,6 @@
   description: Validate path-like documentation references in source comments so doc burndowns cannot leave stale pointers behind.
   entry: check-source-doc-refs
   language: python
-  always_run: true
-  pass_filenames: false
-  stages: [pre-commit]
-
-- id: catalog-block-present
-  name: .ward/ward.yaml catalog block present
-  description: Assert this repo declares its catalog metadata. See docs/ward-specs.md.
-  entry: check-catalog-block
-  language: python
-  additional_dependencies: [pyyaml]
   always_run: true
   pass_filenames: false
   stages: [pre-commit]

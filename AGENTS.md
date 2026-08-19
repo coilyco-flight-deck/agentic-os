@@ -43,7 +43,7 @@ only, not publication or any other external action.
 
 ## Validation
 
-This repo ships and dogfoods the catalog pre-commit suite (catalog-trifecta, documentation-layout, code-comments, catalog-block, check-skills, check-composed-skills, dead-cross-links, repo-pointer-skills, trufflehog). Run `pre-commit run --all-files` before committing. Per-repo opt-outs (excludes, cap overrides) live under `[tool.agentic-os.*]` in `pyproject.toml`.
+This repo ships and dogfoods the catalog pre-commit suite (catalog-trifecta, documentation-layout, code-comments, check-skills, check-composed-skills, dead-cross-links, repo-pointer-skills, trufflehog). Run `pre-commit run --all-files` before committing. Per-repo opt-outs (excludes, cap overrides) live under `[tool.agentic-os.*]` in `pyproject.toml`.
 
 **Tests never encode or reinterpret configuration.** A tunable lives in one
 owning source. Do not add consumer-, service-, or repo-specific test programs

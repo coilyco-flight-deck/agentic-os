@@ -10,7 +10,7 @@ For each repo checked out under ~/projects/<org>/<name> across every org dir
 (coilysiren, coilyco-bridge, coilyco-flight-deck, post org-migration):
   1. Read or create `.pre-commit-config.yaml`.
   2. Strip legacy stamped `repo: local` blocks for the hooks now centralized
-     here (catalog-block-present, catalog-doc-size, catalog-trifecta,
+     here (catalog-doc-size, catalog-trifecta,
      documentation-layout, code-comments, check-skills, dead-cross-links,
      skill-discipline).
   3. Insert/refresh the managed block: the agentic-os hook set plus the
@@ -182,7 +182,6 @@ DEFAULT_HOOK_IDS = [
     "code-comments",
     "actions-run-one-line",
     "source-doc-refs",
-    "catalog-block-present",
     "check-skills",
     "dead-cross-links",
     "repo-pointer-skills",

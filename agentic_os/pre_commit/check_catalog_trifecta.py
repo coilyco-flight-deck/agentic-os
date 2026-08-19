@@ -2,25 +2,23 @@
 """Enforce the catalog-trifecta cross-link convention.
 
 Every catalog repo carries three audience-distinct entry-point markdown
-files at the root plus the ward command spec. Each markdown file
-cross-links to the other two plus to the YAML. This makes the entry
-point reachable from any one of them with a single click.
+files at the root. Each cross-links to the other two, so the entry point
+is reachable from any one of them with a single click.
 
-The four files:
+The three files:
     README.md           - pitch + quick start for human readers
     AGENTS.md           - per-repo agent operating rules
     docs/FEATURES.md    - flat inventory of what ships today
-    .ward/ward.yaml   - allowlisted dev commands
+
+A fourth member, `.ward/ward.yaml`, was required here until ward was
+retired fleet-wide. See coilysiren/inbox#385.
 
 This validator checks, per markdown file:
     1. The file exists.
     2. The file contains a "## See also" section header.
     3. The file contains markdown links resolving to each of the other
-       three canonical paths (the two peer .md files plus .ward/ward.yaml).
+       two canonical paths.
     4. AGENTS.md contains the standard repo-local agent heading set.
-
-The .ward/ward.yaml file only needs to exist; no back-link required,
-since YAML is machine-consumed and the prose home is the .md files.
 
 Usage (when run directly):
     python3 scripts/check-catalog-trifecta.py
@@ -44,9 +42,6 @@ MD_FILES = [
     Path("AGENTS.md"),
     Path("docs/FEATURES.md"),
 ]
-
-# Existence-only fourth member: the ward command spec.
-CATALOG_YAMLS = (Path(".ward/ward.yaml"),)
 
 SEE_ALSO_HEADER = re.compile(r"^##\s+See also\s*$", re.MULTILINE)
 
@@ -99,15 +94,7 @@ def file_links_to(source_path: Path, target_path: Path, body: str) -> bool:
     return False
 
 
-def resolve_catalog_yaml() -> Path | None:
-    """Return whichever catalog yaml this repo carries, if any."""
-    for candidate in CATALOG_YAMLS:
-        if (REPO_ROOT / candidate).is_file():
-            return candidate
-    return None
-
-
-def check_md_file(md_path: Path, catalog_yaml: Path) -> list[str]:
+def check_md_file(md_path: Path) -> list[str]:
     violations: list[str] = []
     abs_path = REPO_ROOT / md_path
 
@@ -120,12 +107,12 @@ def check_md_file(md_path: Path, catalog_yaml: Path) -> list[str]:
     if not SEE_ALSO_HEADER.search(body):
         violations.append(f"{md_path}: missing '## See also' section header.")
 
-    peers = [p for p in MD_FILES if p != md_path] + [catalog_yaml]
+    peers = [p for p in MD_FILES if p != md_path]
     for peer in peers:
         if not file_links_to(md_path, peer, body):
             violations.append(
                 f"{md_path}: no markdown link resolves to {peer}. "
-                f"The 'See also' section must point at the other three "
+                f"The 'See also' section must point at the other two "
                 f"catalog-trifecta files."
             )
 
@@ -162,23 +149,13 @@ def check_agents_headings(body: str) -> list[str]:
     ]
 
 
-def check_catalog_yaml(catalog_yaml: Path | None) -> list[str]:
-    if catalog_yaml is None:
-        return ["catalog yaml missing. Every catalog repo needs .ward/ward.yaml."]
-    return []
-
-
 def main() -> int:
     if not is_enabled(HOOK_ID):
         print(f"{HOOK_ID}: disabled by repo config")
         return 0
-    catalog_yaml = resolve_catalog_yaml()
     all_violations: list[str] = []
-    # Fall back to .ward/ward.yaml so error messages always name a concrete file.
-    link_target = catalog_yaml or CATALOG_YAMLS[0]
     for md in MD_FILES:
-        all_violations.extend(check_md_file(md, link_target))
-    all_violations.extend(check_catalog_yaml(catalog_yaml))
+        all_violations.extend(check_md_file(md))
 
     if not all_violations:
         print("catalog-trifecta check: OK")
