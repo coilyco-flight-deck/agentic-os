@@ -106,7 +106,16 @@ band = "large"
 # owns every byte. The block also spells out that a lane slug names what the
 # AGENT does: `pull-request-and-merge` means the author merges its own PR, and
 # `pull-request` is the lane that stops for the director merge lane instead.
-agents_md_max_lines = 319
+# Raised 319 to 321 for the question-surface rule. The autonomy rules above,
+# and the role sources that narrow them further, suppress asking at all, and
+# agents read that as a reason to avoid the harness's question tool even when
+# they are asking anyway. It binds every session and every role, so no role
+# source can hold it, and it has to land before the first question rather than
+# conditionally. The craft of composing the questions stays in the
+# issue-prioritization reference that owns it. Adding a docs page instead was
+# not available: docs/ sits at the large band's 40-doc cap, and
+# documentation-bands.md forbids trading the count cap against this one.
+agents_md_max_lines = 321
 # The +400 over 26000 carries the byte-identical PR-lane git-workflow stamp
 # shared with deploy, infrastructure, sirens-echo, and ward (agentic-os#994).
 # Same parity argument as the engineer/QA live-deploy block: it cannot be
@@ -117,7 +126,9 @@ agents_md_max_lines = 319
 # handing its reasoning to the Game Developer role that works those checkouts
 # (agent-compose#314) and to docs, keeping only the operative instruction here.
 # The margin over the current file stays one section, not five.
-agents_md_max_chars = 30000
+# Raised 30000 to 30500 alongside the line cap, for the same carve-out and the
+# same reason. The margin over the current file stays one section, not five.
+agents_md_max_chars = 30500
 # Subsystem dirs carry idiomatic co-located READMEs and config docs that the
 # root/docs/skills location rule does not model. Excluded per the root layout
 # hatch: warp (Go module).

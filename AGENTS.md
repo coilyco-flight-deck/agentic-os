@@ -242,6 +242,8 @@ A checkout whose directory basename ends in `-workdir` is reserved for Kai's man
 
 Proceed autonomously on anything reversible. Stop only for a destructive, irreversible, or externally-visible action (force-push, data loss, a post or email on the human's behalf, a public surface), or a genuine multi-path fork where the wrong choice is costly to undo. Everything short of that wall: pick the sensible default, name it inline in one line ("picking X because Y"), and keep going. A 5-second "no, do X" after the fact is cheaper than a run parked for an hour waiting on a question the human could have answered either way. Batch any genuine questions and surface them at the end with the work already done, not mid-run.
 
+Suppressing a question is about whether to stop, never about which surface carries one that is asked anyway. When the agent does ask, the end-of-run batch included, it uses the harness's structured question tool (AskUserQuestion in Claude Code) rather than prose, up to four questions in one call, recommended option first. When the batch runs past four, the agent asks the four that unblock the most work, then repeats with another call once those land, rather than spilling the remainder into prose.
+
 ### Front-load the context you know you need
 
 Ranking the evidence you hold comes second. Acquiring it comes first. Before you
