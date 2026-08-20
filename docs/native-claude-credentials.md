@@ -72,14 +72,13 @@ The fleet guardrails that live in `~/.claude/settings.json`. Both are authored
 here and converged by the `claude-hooks` ansible role in `infrastructure`, per
 the authoring-vs-rollout rule in [AGENTS.md](../AGENTS.md).
 
-## Fleet permission denies
+## Fleet permission rules
 
-`scripts/apply-base-claude-settings.py` appends `BASE_DENIED_PERMISSIONS` to
-`permissions.deny`. It never replaces the list, so operator-authored denies and
-the sibling `allow` / `ask` / `defaultMode` keys survive a converge untouched,
-and a second run reports no change.
+`scripts/apply-base-claude-settings.py` appends to `permissions.deny` and
+`permissions.allow`, never replacing either, so operator rules and the sibling
+`ask` / `defaultMode` keys survive untouched and a second run reports no change.
 
-Two groups:
+Two shut, one open:
 
 * **Live-infrastructure CLIs** - `gcloud`, `kubectl`, `helm`, `terraform`,
   `gsutil`, `mongosh`, `mongo`. Each mutates production or a database, so it
@@ -89,6 +88,9 @@ Two groups:
   `**/.claude/projects/**/memory/**`. This is the enforcement leg of the
   no-auto-memory rule. `autoMemoryEnabled: false` stops the harness from
   writing memory files; it does not stop an agent from authoring them by hand.
+* **Wildcard allow** - a single `*`. Deny outranks allow, so it widens neither
+  group above and only drops the prompt on the rest. The allowlists it replaces
+  bounded nothing: a denied spelling just sent an agent to a permitted one.
 
 `effortLevel` is deliberately not a fleet key. It tunes latency and spend per
 host, which makes it operator-local preference under the config-placement axes,

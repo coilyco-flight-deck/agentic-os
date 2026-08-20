@@ -192,6 +192,9 @@ repos:
         args: [--assume-in-merge]
       - id: check-case-conflict
       - id: check-illegal-windows-names
+        # At commit-msg it is handed an absolute $GIT_DIR/COMMIT_EDITMSG, whose
+        # drive colon reads as illegal, so every worktree commit fails.
+        stages: [pre-commit]
       - id: mixed-line-ending
       - id: check-json
       - id: check-toml

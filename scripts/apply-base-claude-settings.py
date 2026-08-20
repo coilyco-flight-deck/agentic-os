@@ -6,7 +6,8 @@ gets regardless of whether the private bridge overlay is present. Auto-memory
 is off because point-in-time memory drifts. Claude in Chrome is denied because
 browser computer-use should be an explicit session opt-in. The permission deny
 list keeps live-infrastructure CLIs and the memory directory out of an agent's
-raw shell.
+raw shell, and the wildcard allow drops the prompt on everything the deny list
+leaves open.
 
 Additive and key-scoped: it sets only the keys it owns and preserves every
 other key verbatim, so the harness, ward, and the bridge merge can all keep
@@ -52,6 +53,9 @@ BASE_DENIED_PERMISSIONS = [
     "Edit(**/.claude/projects/**/memory/**)",
 ]
 
+# Deny outranks allow, so the wildcard widens nothing the list above closes.
+BASE_ALLOWED_PERMISSIONS = ["*"]
+
 
 def load_settings(path: Path) -> dict:
     if not path.exists():
@@ -76,8 +80,8 @@ def merge_base_settings(settings: dict) -> list[str]:
                 changed.append("deniedMcpServers")
     settings["deniedMcpServers"] = denied
 
-    # Append-only against permissions.deny so an operator's own denies and the
-    # sibling allow/ask/defaultMode keys survive untouched.
+    # Append-only against deny and allow, so an operator's own rules and the
+    # sibling ask/defaultMode keys survive untouched.
     permissions = settings.get("permissions")
     if not isinstance(permissions, dict):
         permissions = {}
@@ -90,6 +94,15 @@ def merge_base_settings(settings: dict) -> list[str]:
             if "permissions.deny" not in changed:
                 changed.append("permissions.deny")
     permissions["deny"] = deny
+    allow = permissions.get("allow")
+    if not isinstance(allow, list):
+        allow = []
+    for rule in BASE_ALLOWED_PERMISSIONS:
+        if rule not in allow:
+            allow.append(rule)
+            if "permissions.allow" not in changed:
+                changed.append("permissions.allow")
+    permissions["allow"] = allow
     settings["permissions"] = permissions
     return changed
 

@@ -31,11 +31,12 @@ def test_base_settings_disable_memory_and_chrome_without_losing_local_denies() -
         "autoMemoryEnabled",
         "deniedMcpServers",
         "permissions.deny",
+        "permissions.allow",
     }
     assert MODULE.merge_base_settings(settings) == []
 
 
-def test_permission_denies_append_without_touching_sibling_permission_keys() -> None:
+def test_permission_rules_append_without_touching_sibling_permission_keys() -> None:
     settings = {
         "permissions": {
             "allow": ["Bash(coily:*)"],
@@ -47,7 +48,8 @@ def test_permission_denies_append_without_touching_sibling_permission_keys() -> 
     MODULE.merge_base_settings(settings)
 
     permissions = settings["permissions"]
-    assert permissions["allow"] == ["Bash(coily:*)"]
+    assert permissions["allow"][0] == "Bash(coily:*)"
+    assert permissions["allow"][1:] == MODULE.BASE_ALLOWED_PERMISSIONS
     assert permissions["defaultMode"] == "auto"
     assert permissions["deny"][0] == "Bash(rm -rf /*)"
     assert permissions["deny"][1:] == MODULE.BASE_DENIED_PERMISSIONS
@@ -55,11 +57,13 @@ def test_permission_denies_append_without_touching_sibling_permission_keys() -> 
     assert "Write(**/.claude/projects/**/memory/**)" in permissions["deny"]
 
 
-def test_permission_denies_are_created_when_the_key_is_absent() -> None:
+def test_permission_rules_are_created_when_the_key_is_absent() -> None:
     settings: dict = {}
 
     changed = MODULE.merge_base_settings(settings)
 
     assert settings["permissions"]["deny"] == MODULE.BASE_DENIED_PERMISSIONS
+    assert settings["permissions"]["allow"] == MODULE.BASE_ALLOWED_PERMISSIONS
     assert "permissions.deny" in changed
+    assert "permissions.allow" in changed
     assert MODULE.merge_base_settings(settings) == []
