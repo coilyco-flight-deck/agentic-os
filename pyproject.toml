@@ -115,7 +115,16 @@ band = "large"
 # issue-prioritization reference that owns it. Adding a docs page instead was
 # not available: docs/ sits at the large band's 40-doc cap, and
 # documentation-bands.md forbids trading the count cap against this one.
-agents_md_max_lines = 321
+# Raised 321 to 331 for "A deferral owes its issue" and the work-product half
+# of the checkpoint rule. Both bind every session and every role, so no role
+# source can hold them, and both must land before the first action rather than
+# conditionally. Neither can displace the rules above: those govern repository
+# state, and the gap these close is work that never becomes a file at all. An
+# agent followed every checkpoint rule correctly, pushed every commit, answered
+# "everything pushed?" truthfully, and still nearly lost a night of design that
+# existed only in a chat transcript on a purge-exposed shadow, because a clean
+# `git status` satisfied every rule that was watching. See agent-compose#317.
+agents_md_max_lines = 331
 # The +400 over 26000 carries the byte-identical PR-lane git-workflow stamp
 # shared with deploy, infrastructure, sirens-echo, and ward (agentic-os#994).
 # Same parity argument as the engineer/QA live-deploy block: it cannot be
@@ -128,7 +137,10 @@ agents_md_max_lines = 321
 # The margin over the current file stays one section, not five.
 # Raised 30000 to 30500 alongside the line cap, for the same carve-out and the
 # same reason. The margin over the current file stays one section, not five.
-agents_md_max_chars = 30500
+# Raised 30500 to 32500 alongside the line cap, for the same two entries and
+# the same reason. The margin over the current file stays well under one
+# section, matching the back-pressure the band comment above asks for.
+agents_md_max_chars = 32500
 # Subsystem dirs carry idiomatic co-located READMEs and config docs that the
 # root/docs/skills location rule does not model. Excluded per the root layout
 # hatch: warp (Go module).

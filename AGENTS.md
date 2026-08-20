@@ -201,15 +201,25 @@ Unless told otherwise, "done" includes the obvious follow-through, not the first
 
 ### Native checkpoints must be remote
 
-Whenever an agent doing native work outside `warded` reaches a checkpoint with local repository changes, the agent **must commit the in-scope changes and push the commit to the canonical remote before pausing, reporting the checkpoint, switching tasks, or ending the turn**. A checkpoint includes a human decision wall, a blocked dependency, a handoff, a context boundary, and any point where the agent may not continue immediately.
+Whenever an agent doing native work outside `warded` reaches a checkpoint holding local repository changes **or undurable work product**, the agent **must commit the in-scope changes and push the commit to the canonical remote before pausing, reporting the checkpoint, switching tasks, or ending the turn**. A checkpoint includes a human decision wall, a blocked dependency, a handoff, a context boundary, and any point where the agent may not continue immediately.
 
 If the resolved workflow allows the work to land, the agent pushes it to `main` as usual. If the work should not yet land on `main`, the agent creates or reuses a task-specific branch and pushes the checkpoint there. The remote branch is the recovery artifact. Uncommitted changes, local-only commits, stashes, reflogs, and a clean local worktree without a remote ref **do not count**. Test failures or incomplete follow-up may keep a checkpoint off `main`, but they never justify leaving the only copy local. Never force-push to satisfy this rule. If an ordinary push cannot succeed, the agent preserves the local state and reports the exact blocker as the current wall.
+
+**Work product is more than the worktree.** A design, a measurement and the numbers behind it, the reasoning under a decision, a specification the human typed, and a rejected alternative worth not re-litigating are all work product, and none of them appears in `git status`. A clean worktree is evidence about files and nothing else. Durable means committed to a repository or filed on the tracker, so a transcript, a session scratchpad, and a published artifact are renderings rather than stores: an artifact is a view of something already in git or an issue, never the only copy of it.
+
+**This fires when the turn ends, not when the human asks.** "Is everything pushed" is a courtesy and never the safety mechanism, so a truthful answer about files, given while hours of design live only in the transcript, is a wrong answer to what was actually asked. Read that question as "is any of my work at risk", audit every category above, and name what is not yet durable. The human may be exhausted, mid-exit, or silent, and none of that changes the obligation or is required to trigger it. An agent that preserves work only when correctly prompted has moved the risk onto the person least able to carry it.
 
 ### A pushed branch owes its pull request
 
 The rule above ends at a remote branch, and **a branch is not a deliverable**. Whenever an agent pushes a branch on any lane that lands through review (`pull-request`, `pull-request-and-merge`), it **opens the pull request in the same turn**, before reporting the checkpoint, handing back, or ending the turn. A branch pushed on a lane that lands on `main` still owes one whenever the merge itself is blocked, because the branch is then the only thing carrying the work. Only `remote-branch-only` stops at a branch, and only when the caller resolved that lane.
 
 **A branch with no PR is litter**: nothing points at it, no review is pending on it, and it is invisible to anyone reading issues or the merge queue, so the work is lost the moment the session ends. When the agent cannot open the PR itself, it reports that as the blocking wall and hands back the branch name with its compare URL rather than describing the work as pushed and done.
+
+### A deferral owes its issue
+
+Deciding not to do part of the work is a legitimate call. Announcing it only in conversation is not. Whenever an agent defers, descopes, or declines part of a task, it **files the tracking issue in the same turn**, carrying what was not done, why, and what the next agent needs in order to resume it.
+
+**A deferral announced in chat did not happen.** The conversation is the one surface that does not survive the session, so the repository is left holding work that depends on something nobody can find, and no later reader can tell a deliberate stop from a dropped thread. This binds hardest right after the human has said to proceed: scaling the work down is their call rather than the agent's, so the agent either does the work or files the issue that makes the shortfall visible without them.
 
 ### Native session shadow
 
