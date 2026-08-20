@@ -4,6 +4,10 @@
 # main. test_pull_request_ci_workflow.py holds them in step. Draft dev-base
 # image publishing runs in a separate workflow keyed by the promoted SHA, so a
 # transient registry or build failure cannot stall the release branch.
+#
+# uv builds the local packages through PEP 517, which resolves setuptools from
+# PyPI whenever the uv cache is cold. That egress flakes on this runner, so the
+# jobs cache ~/.cache/uv and raise uv's 30s HTTP timeout.
 
 name: promote
 
@@ -18,6 +22,9 @@ concurrency:
 permissions:
   contents: write
 
+env:
+  UV_HTTP_TIMEOUT: "180"
+
 jobs:
   gate:
     runs-on: docker
@@ -30,6 +37,14 @@ jobs:
 
       - name: Install validated ward for repo gate
         run: scripts/install-workflow-ward.sh
+
+      - name: Cache uv downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: uv-${{ runner.os }}-${{ hashFiles('uv.lock', 'aos-eval/uv.lock') }}
+          restore-keys: |
+            uv-${{ runner.os }}-
 
       - name: Cache pre-commit envs
         uses: actions/cache@v4
