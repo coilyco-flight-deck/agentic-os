@@ -254,3 +254,28 @@ repos:
     assert "rev: v2.0.0" in rendered
     assert "repo-specific" in rendered
     assert "rev: v0.1.0" not in rendered
+
+
+def test_vendored_trees_exclude_only_the_rewriting_hooks(tmp_path: Path) -> None:
+    """A vendored tree opts out of the fixers, not the reporting hooks."""
+    script = _load_script()
+    (tmp_path / "pyproject.toml").write_text(
+        '[tool.agentic-os.managed-hooks]\nvendored = ["mods/Mods/", "vendor/sdk"]\n',
+        encoding="utf-8",
+    )
+
+    block = script.managed_block("v1.0.0", ["catalog-trifecta"], tmp_path)
+    expected = "        exclude: ^(mods/Mods/|vendor/sdk/)"
+
+    for hook_id in ("trailing-whitespace", "end-of-file-fixer", "mixed-line-ending"):
+        assert f"      - id: {hook_id}\n{expected}" in block
+
+    for hook_id in ("check-json", "check-toml", "check-case-conflict"):
+        assert f"      - id: {hook_id}\n{expected}" not in block
+
+
+def test_no_vendored_declaration_leaves_the_hooks_bare(tmp_path: Path) -> None:
+    script = _load_script()
+    block = script.managed_block("v1.0.0", ["catalog-trifecta"], tmp_path)
+    assert "exclude: ^(" not in block
+    assert "      - id: trailing-whitespace\n      - id: end-of-file-fixer" in block

@@ -112,17 +112,21 @@ AGENTIC_OS_REPO_URL = "https://forgejo.coilysiren.me/coilyco-flight-deck/agentic
 PRECOMMIT_HOOKS_REPO_URL = "https://github.com/pre-commit/pre-commit-hooks"
 PRECOMMIT_HOOKS_REV = "v6.0.0"
 
+# `rewrites` marks a hook that edits file content rather than reporting on it.
+# Those are the ones a vendored tree opts out of. See vendored_exclude.
 PRECOMMIT_HOOKS = [
-    {"id": "trailing-whitespace"},
-    {"id": "end-of-file-fixer"},
+    {"id": "trailing-whitespace", "rewrites": True},
+    {"id": "end-of-file-fixer", "rewrites": True},
     {"id": "check-added-large-files", "args": ["--maxkb=2048"]},
     {"id": "check-merge-conflict", "args": ["--assume-in-merge"]},
     {"id": "check-case-conflict"},
     {"id": "check-illegal-windows-names"},
-    {"id": "mixed-line-ending"},
+    {"id": "mixed-line-ending", "rewrites": True},
     {"id": "check-json"},
     {"id": "check-toml"},
 ]
+
+VENDORED_CONFIG_SECTION = "managed-hooks"
 
 ACTIONLINT_REPO_URL = "https://github.com/rhysd/actionlint"
 ACTIONLINT_REV = "v1.7.12"
@@ -230,14 +234,35 @@ def actionlint_args(repo_dir: Path | None) -> str:
     )
 
 
+def vendored_exclude(repo_dir: Path | None) -> str:
+    """The `exclude:` line for the hooks that rewrite file content.
+
+    A consumer lists upstream-owned path prefixes under
+    `[tool.agentic-os.managed-hooks] vendored`. Stripping whitespace from a
+    vendored tree is permanent drift against upstream that turns each re-sync
+    into a conflict, and where a generator writes those files the fixer and
+    the generator ping-pong forever. Reporting hooks still read the tree, so
+    a secret or a broken JSON there is still caught.
+    """
+    if repo_dir is None:
+        return ""
+    trees = cfg.load_str_list(VENDORED_CONFIG_SECTION, "vendored", repo_dir)
+    if not trees:
+        return ""
+    alternatives = "|".join(re.escape(t.rstrip("/")) + "/" for t in sorted(trees))
+    return f"\n        exclude: ^({alternatives})"
+
+
 def managed_block(
     rev: str, hook_ids: list[str] | None = None, repo_dir: Path | None = None
 ) -> str:
     ids = hook_ids if hook_ids is not None else DEFAULT_HOOK_IDS
     hook_lines = "\n".join(f"      - id: {h}" for h in ids)
+    vendored = vendored_exclude(repo_dir)
     precommit_hook_lines = "\n".join(
-        "      - id: {id}{args}".format(
+        "      - id: {id}{exclude}{args}".format(
             id=hook["id"],
+            exclude=vendored if hook.get("rewrites") else "",
             args=(
                 f"\n        args: [{', '.join(hook['args'])}]"
                 if "args" in hook
