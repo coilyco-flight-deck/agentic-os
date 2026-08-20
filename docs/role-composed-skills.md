@@ -79,7 +79,7 @@ the role allowlists in [`.agents/roles.kdl`](../.agents/roles.kdl).
 
 ## Matrix
 
-Selection lives in `.agents/roles.kdl`. In summary: **Director** takes core Git,
+`.agents/roles.kdl` is authoritative. In summary: **Director** takes core Git,
 licensing, supply-chain, and architecture guidance plus decision architecture,
 PM methods, prioritization, scouts, observer voice, voice linting,
 system-improvement vocabulary, issue decomposition, and skill authoring.
@@ -88,10 +88,10 @@ with QA adding code review, Engineer and Content Creator adding
 public-repository writing, and Engineer and Ops adding system-improvement
 vocabulary. **Designer** takes the PM family, design methods, and the frontend
 coding pair. **Executive Strategist** takes deduplicated advisor, PM, and CEO
-methods for evidence synthesis, portfolio allocation, program decomposition,
-scouts, skill authoring, and issue writing. **Content Creator** takes the whole
-writing family plus the Discord and customer-success methods it inherited when
-Community stopped being a deployed role.
+methods. **Content Creator** takes the whole writing family plus the Discord
+and customer-success methods it inherited from Community. **AI Engineer**
+takes the coding family whole. **Game Developer** narrows it to C#, Rust,
+Python, JavaScript, and `coding-core-*`, plus design methods and preferences.
 
 ## Handoffs
 
