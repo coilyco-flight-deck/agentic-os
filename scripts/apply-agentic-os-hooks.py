@@ -197,7 +197,7 @@ DEFAULT_HOOK_IDS = [
 ]
 
 # Per-repo hook opt-outs. eco-* repos vendor the Strange Loop Games Unity SDK,
-# whose comments and prose are not ours to lint. lore is a docs-only slice.
+# whose comments are not ours to lint. lore is a docs-only slice.
 PER_REPO_HOOK_SKIPS: dict[str, set[str]] = {
     "lore": {
         "catalog-doc-size",
@@ -208,7 +208,9 @@ PER_REPO_HOOK_SKIPS: dict[str, set[str]] = {
         "agent-compose-dedup",
     },
 }
-ECO_HOOK_SKIPS = {"code-comments", "typos"}
+# typos is absent by design: managed_block() emits it unconditionally, so an
+# entry here never fires (#1155). Vendored trees go in the repo's _typos.toml.
+ECO_HOOK_SKIPS = {"code-comments"}
 
 
 def hook_ids_for(repo: str) -> list[str]:
