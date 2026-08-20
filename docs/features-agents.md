@@ -20,6 +20,17 @@ The canonical base repos themselves (`agentic-os`, `agentic-os-kai`) are exempt 
 
 This repo ships the validator and the applier. The fleet rollout that lands the block on every managed repo's canonical `main` is `scripts/agents-pointer-migrate.py` in infrastructure (`just agents-pointer-migrate`), per the authoring-vs-rollout split. (The earlier report-only Ansible `agents-pointer` role was retired when fleet pre-commit and pointer rollout moved onto the ward container.)
 
+## Features: managed git-workflow block
+
+Every repo declares its landing lane once, as `ward.workflow` in the AGENTS.md frontmatter, and used to restate it by hand as a one-line `**Git workflow** -` stamp that named the lane without ever saying the lane **is** a standing authorization, so agents kept stopping to ask before a commit, a branch, a push, or a pull request. A turn that stops there strands the work in a dirty worktree.
+
+`generate-git-workflow` replaces it with a marker-delimited managed block rendered from that declared lane. The block details both fleet lanes, names this repo's, and states the pre-authorization in MUST / ALWAYS / NEVER terms, with `--no-verify` and force-push held closed. It also says outright that a slug names what the **agent** does: `pull-request-and-merge` carries the merge because the author merges its own PR, `pull-request` drops it because the author stops there for the director merge lane. Two drafts inverted it. A repo declaring no lane renders the `pull-request` variant, which neither pushes `main` nor merges.
+
+- **`git-workflow`** (pre-commit hook) regenerates the block offline and fails on drift, a missing block, a block that no longer matches the declared lane, or a legacy stamp beside it. Org-agnostic, no base repo exempt: a lane binds in the base as in a consumer.
+- **`apply-git-workflow`** injects or refreshes the block in place, under `## Agent rules`. Idempotent: the lane comes from the file it rewrites.
+
+Fleet rollout waits on a tagged `aos-precommit` release, then runs in order: `apply-git-workflow` lands the block, the rollout enables the hook. Reversed, every commit breaks.
+
 ## Features: agents and sessions
 
 Agent naming and composition state.
