@@ -122,7 +122,9 @@ PRECOMMIT_HOOKS = [
     {"id": "check-case-conflict"},
     {"id": "check-illegal-windows-names"},
     {"id": "mixed-line-ending", "rewrites": True},
-    {"id": "check-json"},
+    # VS Code documents launch/tasks/settings.json as JSONC, so the whole
+    # directory is comment-bearing by design and check-json cannot read it.
+    {"id": "check-json", "exclude": r"(^|/)\.vscode/"},
     {"id": "check-toml"},
 ]
 
@@ -236,6 +238,13 @@ def actionlint_args(repo_dir: Path | None) -> str:
     )
 
 
+def _exclude_line(hook: dict, vendored: str) -> str:
+    """A hook's own fixed exclude, or the repo's vendored trees for a fixer."""
+    if "exclude" in hook:
+        return f"\n        exclude: {hook['exclude']}"
+    return vendored if hook.get("rewrites") else ""
+
+
 def vendored_exclude(repo_dir: Path | None) -> str:
     """The `exclude:` line for the hooks that rewrite file content.
 
@@ -264,7 +273,7 @@ def managed_block(
     precommit_hook_lines = "\n".join(
         "      - id: {id}{exclude}{args}".format(
             id=hook["id"],
-            exclude=vendored if hook.get("rewrites") else "",
+            exclude=_exclude_line(hook, vendored),
             args=(
                 f"\n        args: [{', '.join(hook['args'])}]"
                 if "args" in hook

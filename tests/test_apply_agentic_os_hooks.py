@@ -279,3 +279,11 @@ def test_no_vendored_declaration_leaves_the_hooks_bare(tmp_path: Path) -> None:
     block = script.managed_block("v1.0.0", ["catalog-trifecta"], tmp_path)
     assert "exclude: ^(" not in block
     assert "      - id: trailing-whitespace\n      - id: end-of-file-fixer" in block
+
+
+def test_check_json_always_skips_vscode_jsonc(tmp_path: Path) -> None:
+    """VS Code documents launch/tasks/settings.json as JSONC, so it never parses."""
+    script = _load_script()
+    block = script.managed_block("v1.0.0", ["catalog-trifecta"], tmp_path)
+    expected = "      - id: check-json" + chr(10) + "        exclude: (^|/)" + chr(92) + ".vscode/"
+    assert expected in block
