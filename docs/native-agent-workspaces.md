@@ -71,6 +71,28 @@ consecutive qualifying fleet pass deletes the clone. Any failed proof or
 changed fingerprint resets its count. With the ten-minute pass interval, three
 qualifying startups span at least twenty minutes.
 
+## Serialized repositories
+
+The serialized set is three checkouts on a native Windows host:
+`coilyco-gaming/eco-app`, `coilyco-gaming/eco-mods`, and
+`coilyco-gaming/eco-ops`. Projection links no worktree for them, the fleet pass
+neither switches nor deletes their branches, and unexpected-clone detection
+never counts them, so a direct checkout under `$PROJECTS_ROOT` survives every
+qualifying pass whether or not compiled residency names it.
+
+Unity serializes its project through an editor lock and a single asset
+database, and the Eco server state those assets drive is one mutable world. A
+second writable tree is not isolation there: both trees resolve the same lock,
+and the merge back is a corrupt scene rather than a conflict Git can show. The
+exemption therefore removes the isolation instead of tuning it, and the agent
+carries the serialization itself.
+
+Scope is the host, not the repository. The same three identities keep ordinary
+projection everywhere else, because the lock lives on the Windows tower where
+the Unity editor and the server run. `eco-app` holds no Unity assets and earns
+the exemption by sharing their release cycle, so one agent covers all three
+rather than splitting a rule nobody can recall correctly under pressure.
+
 ## Local state
 
 Leases and the pass cache use the platform cache at `agentic-os/native-shadow`. AOS

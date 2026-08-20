@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 	"time"
@@ -1654,6 +1655,35 @@ func (expected nativeExpected) matches(owner, name string) bool {
 	return expected.Full[filepath.Join(owner, name)]
 }
 
+// nativeSerializedIdentities invert workspace isolation instead of receiving
+// it: one editor lock, one world, one writer. docs/native-agent-workspaces.md
+var nativeSerializedIdentities = map[string]bool{
+	"coilyco-gaming/eco-app":  true,
+	"coilyco-gaming/eco-mods": true,
+	"coilyco-gaming/eco-ops":  true,
+}
+
+// nativeSerializedGOOS scopes the exemption to the tower running the editor.
+// A variable so the test reaches both branches from either platform.
+var nativeSerializedGOOS = runtime.GOOS
+
+func nativeSerialized(owner, name string) bool {
+	return nativeSerializedGOOS == "windows" && nativeSerializedIdentities[owner+"/"+name]
+}
+
+// seedNativeExpected marks serialized checkouts as belonging on disk, so the
+// unexpected-clone scan never deletes what projection deliberately skipped.
+func seedNativeExpected() map[string]bool {
+	seed := map[string]bool{}
+	for identity := range nativeSerializedIdentities {
+		owner, name, _ := strings.Cut(identity, "/")
+		if nativeSerialized(owner, name) {
+			seed[filepath.Join(owner, name)] = true
+		}
+	}
+	return seed
+}
+
 func resolveExpectedRepositories(
 	runtime nativeRuntime,
 ) ([]nativeRepository, nativeExpected, error) {
@@ -1661,7 +1691,7 @@ func resolveExpectedRepositories(
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return nil, nativeExpected{
-				Full:      map[string]bool{},
+				Full:      seedNativeExpected(),
 				FleetOrgs: readNativeListSet(runtime.FleetFile),
 			}, nil
 		}
@@ -1671,7 +1701,7 @@ func resolveExpectedRepositories(
 		return nil, nativeExpected{}, fmt.Errorf("Agent Compose repository plan projects_root %q does not match %s", plan.ProjectsRoot, runtime.ProjectsRoot)
 	}
 	expected := nativeExpected{
-		Full:      map[string]bool{},
+		Full:      seedNativeExpected(),
 		FleetOrgs: readNativeListSet(runtime.FleetFile),
 	}
 	prior := ""
@@ -1685,6 +1715,9 @@ func resolveExpectedRepositories(
 	}
 	var repositories []nativeRepository
 	for _, repository := range scanNativeRepositories(runtime.ProjectsRoot) {
+		if nativeSerialized(repository.Owner, repository.Name) {
+			continue
+		}
 		if expected.matches(repository.Owner, repository.Name) {
 			repositories = append(repositories, repository)
 		}

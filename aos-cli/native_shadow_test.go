@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strings"
 	"testing"
@@ -1007,6 +1008,84 @@ func TestNativeSweepReclaimsMainBeforeSwitchingCanonicalCheckout(t *testing.T) {
 	}
 	if _, err := os.Stat(mainWorktree); !os.IsNotExist(err) {
 		t.Fatalf("main worktree remains: %v", err)
+	}
+}
+
+func TestSerializedRepositoryIsNotProjected(t *testing.T) {
+	nativeSerializedGOOS = "windows"
+	t.Cleanup(func() { nativeSerializedGOOS = runtime.GOOS })
+	root := t.TempDir()
+	createNativeTestRepository(t, root, "coilyco-gaming", "eco-mods")
+	createNativeTestRepository(t, root, "owner", "one")
+	testRuntime := nativeTestRuntime(t, root)
+	writeNativeTestPlan(t, testRuntime.PlanFile, "coilyco-gaming/eco-mods", "owner/one")
+	writeNativeTestList(t, testRuntime.FleetFile, "coilyco-gaming", "owner")
+
+	repositories, expected, err := resolveExpectedRepositories(testRuntime)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, repository := range repositories {
+		if repository.Name == "eco-mods" {
+			t.Fatal("serialized repository was projected into the session")
+		}
+	}
+	if len(repositories) != 1 {
+		t.Fatalf("projected %d repositories, want 1", len(repositories))
+	}
+	if !expected.matches("coilyco-gaming", "eco-mods") {
+		t.Fatal("serialized repository is not expected on disk")
+	}
+}
+
+func TestSerializedRepositorySurvivesUnexpectedCloneScan(t *testing.T) {
+	nativeSerializedGOOS = "windows"
+	t.Cleanup(func() { nativeSerializedGOOS = runtime.GOOS })
+	root := t.TempDir()
+	repository, _ := createNativeTestRepository(t, root, "coilyco-gaming", "eco-ops")
+	testRuntime := nativeTestRuntime(t, root)
+	writeNativeTestPlan(t, testRuntime.PlanFile)
+	writeNativeTestList(t, testRuntime.FleetFile, "coilyco-gaming")
+
+	_, expected, err := resolveExpectedRepositories(testRuntime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	state := nativeSweepState{
+		Format: "agentic-os.native-sweep.v1", Candidates: map[string]nativeCandidate{},
+	}
+	for scan := 1; scan <= nativeDeleteScans; scan++ {
+		testRuntime.Now = testRuntime.Now.Add(nativeSweepInterval)
+		if err := runNativeWorkspaceSweep(
+			testRuntime, nil, expected, nativeLiveWorktrees{}, state,
+		); err != nil {
+			t.Fatal(err)
+		}
+		_ = readNativeJSON(nativeStatePath(testRuntime, "sweep.json"), &state)
+	}
+
+	if _, err := os.Stat(repository); err != nil {
+		t.Fatalf("serialized checkout deleted by the unexpected-clone scan: %v", err)
+	}
+}
+
+func TestSerializedExemptionIsWindowsOnly(t *testing.T) {
+	nativeSerializedGOOS = "linux"
+	t.Cleanup(func() { nativeSerializedGOOS = runtime.GOOS })
+	root := t.TempDir()
+	createNativeTestRepository(t, root, "coilyco-gaming", "eco-mods")
+	testRuntime := nativeTestRuntime(t, root)
+	writeNativeTestPlan(t, testRuntime.PlanFile, "coilyco-gaming/eco-mods")
+	writeNativeTestList(t, testRuntime.FleetFile, "coilyco-gaming")
+
+	repositories, _, err := resolveExpectedRepositories(testRuntime)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(repositories) != 1 {
+		t.Fatalf("projected %d repositories off Windows, want 1", len(repositories))
 	}
 }
 

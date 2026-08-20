@@ -211,6 +211,10 @@ removes it once the work is complete and remote-checkpoint requirements are
 satisfied. An absent or unreadable list does not authorize a persistent
 checkout.
 
+### Serialized checkouts invert isolation
+
+A repository in the serialized set inverts the three rules above. The agent works it in the canonical checkout under `$PROJECTS_ROOT`, never in a session shadow, a linked worktree, or a temporary clone, and treats it as belonging on disk whether or not the residency plan lists it. A serialized project holds an editor or world lock that one writer takes at a time, so a second tree resolves that same lock and merges back as corruption rather than as a conflict Git can show. Before its first mutation the agent confirms that nothing else holds the checkout, and stops and reports when something does rather than branching around it. The set and its host scope: [native agent workspaces](docs/native-agent-workspaces.md).
+
 ### Human-only workdirs
 
 A checkout whose directory basename ends in `-workdir` is reserved for Kai's manual work. Agents treat it as outside the workspace: agents do not inspect, enter, edit, validate, format, stage, stash, or include it in fleet or recursive tooling. If an agent launches inside one, the agent stops before inspecting repository contents and moves to the canonical checkout or an agent-owned linked worktree.
