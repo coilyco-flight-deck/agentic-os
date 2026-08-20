@@ -14,6 +14,7 @@ on:
       - "agentic_os/pre_commit/**"
       - "agentic_os/seed_skills_data.py"
       - "pyproject.toml"
+      - "scripts/pr-guard-pre-push.sh"
       - "scripts/trufflehog-scan.sh"
   workflow_dispatch:
     inputs:
