@@ -498,3 +498,27 @@ def test_skill_entrypoints_take_no_size_cap_from_this_hook(
     offenders = {v.split(":")[0] for v in violations}
     assert "docs/ordinary.md" in offenders
     assert not [v for v in offenders if v.endswith(("SKILL.md", "COMPOSED.md"))]
+
+
+# `size_excludes`: the honest key for docs a repo owns but sizes differently,
+# distinct from `excludes` (placement only) and `vendored` (not ours).
+
+
+def test_size_excludes_defaults_to_empty(tmp_path: Path) -> None:
+    assert docs_layout.size_excluded_trees(tmp_path) == []
+
+
+def test_size_excludes_reads_the_hook_section(tmp_path: Path) -> None:
+    (tmp_path / "pyproject.toml").write_text(
+        "[tool.agentic-os.documentation-layout]\n"
+        'size_excludes = ["services/**", "charts/**"]\n',
+        encoding="utf-8",
+    )
+    assert docs_layout.size_excluded_trees(tmp_path) == ["services/**", "charts/**"]
+
+
+def test_size_excludes_matches_a_nested_doc() -> None:
+    from agentic_os.config import is_excluded
+
+    assert is_excluded(Path("services/a/docs/b.md"), ["services/**"]) is True
+    assert is_excluded(Path("docs/b.md"), ["services/**"]) is False

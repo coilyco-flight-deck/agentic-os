@@ -66,14 +66,14 @@ keep it an inventory.
 
 A repo may declare `vendored` path prefixes under the hook config. Markdown
 beneath one takes no size cap, because its shape is owned outside this repo: an
-SDK the repo vendors, or copy an external surface renders. Cutting the first
-forks upstream, and cutting the second changes what a reader outside sees.
+SDK the repo vendors, or copy an external surface renders. Prefixes only, never
+a bare basename, which would exempt one filename everywhere. It answers the size
+cap alone, so it cannot widen where Markdown may live.
 
-Prefixes only, never a bare basename, because a basename would exempt one
-filename everywhere, which is the per-file escape hatch the count cap removed.
-It answers the size cap alone, so declaring a tree vendored cannot widen where
-Markdown may live. It is a repo-declared exemption, the thing this rule
-otherwise refuses, so the reason belongs beside the declaration.
+`size_excludes` is the sibling key for prose a repo owns but sizes differently,
+such as a monorepo co-locating a README and `docs/` under each component.
+`excludes` governs placement and never reaches the size caps, so without it such
+a repo could buy the exemption only by calling its own docs vendored.
 
 ## The org profile README belongs to the forge
 

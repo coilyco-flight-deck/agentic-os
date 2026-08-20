@@ -155,6 +155,19 @@ def vendored_trees(repo_root: Path | None = None) -> list[str]:
     return load_str_list(HOOK_ID, "vendored", repo_root)
 
 
+def size_excluded_trees(repo_root: Path | None = None) -> list[str]:
+    """Path prefixes this repo owns but sizes differently.
+
+    `excludes` governs placement and deliberately does not reach the size caps,
+    and `vendored` says the Markdown is not ours. A monorepo that co-locates a
+    README and docs/ under each component fits neither: those docs are ours,
+    and the root-plus-flat-docs shape the caps assume does not describe them.
+    Declaring them vendored to buy the exemption would be a false statement
+    about provenance, so this is the separate, honest key.
+    """
+    return load_str_list(HOOK_ID, "size_excludes", repo_root)
+
+
 def is_vendored(rel: Path, patterns: list[str]) -> bool:
     """A file under a declared vendored tree takes no size cap.
 
@@ -550,11 +563,13 @@ def strip_frontmatter(text: str) -> str:
 def check_markdown_sizes() -> list[str]:
     violations: list[str] = []
     vendored = vendored_trees()
+    size_excludes = size_excluded_trees()
     for rel in markdown_files(apply_excludes=False):
         if (
             rel.name in SIZE_CAP_EXEMPT_BASENAMES
             or rel == ORG_PROFILE_README
             or is_vendored(rel, vendored)
+            or is_excluded(rel, size_excludes)
         ):
             continue
         path = REPO_ROOT / rel
