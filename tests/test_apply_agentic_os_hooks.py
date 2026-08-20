@@ -287,3 +287,62 @@ def test_check_json_always_skips_vscode_jsonc(tmp_path: Path) -> None:
     block = script.managed_block("v1.0.0", ["catalog-trifecta"], tmp_path)
     expected = "      - id: check-json" + chr(10) + "        exclude: (^|/)" + chr(92) + ".vscode/"
     assert expected in block
+
+
+def test_gitattributes_pins_the_working_tree_not_just_text_auto() -> None:
+    """text=auto alone still checks out CRLF under core.autocrlf=true."""
+    script = _load_script()
+    block = script.gitattributes_block(None)
+    assert "* text=auto eol=lf" in block
+    assert "*.bat text eol=crlf" in block
+    assert "*.cmd text eol=crlf" in block
+    assert block.startswith(script.BEGIN_MARKER)
+    assert script.END_MARKER in block
+
+
+def test_gitattributes_keeps_vendored_trees_byte_exact(tmp_path: Path) -> None:
+    script = _load_script()
+    (tmp_path / "pyproject.toml").write_text(
+        '[tool.agentic-os.managed-hooks]\nvendored = ["mods/Mods/", "vendor/sdk"]\n',
+        encoding="utf-8",
+    )
+    block = script.gitattributes_block(tmp_path)
+    assert "mods/Mods/** -text" in block
+    assert "vendor/sdk/** -text" in block
+
+
+def test_gitattributes_block_goes_first_and_keeps_local_rules(tmp_path: Path) -> None:
+    """Git takes the last matching pattern, so a general rule below LFS lines wins."""
+    script = _load_script()
+    path = tmp_path / ".gitattributes"
+    path.write_text("*.png filter=lfs diff=lfs merge=lfs -text" + chr(92) + "n", encoding="utf-8")
+
+    assert script.ensure_gitattributes(tmp_path) == "prepended"
+    text = path.read_text(encoding="utf-8")
+    assert text.startswith(script.BEGIN_MARKER)
+    assert text.index("* text=auto eol=lf") < text.index("*.png filter=lfs")
+
+    assert script.ensure_gitattributes(tmp_path) is None
+    assert path.read_text(encoding="utf-8") == text
+
+
+def test_gitattributes_created_where_a_repo_has_none(tmp_path: Path) -> None:
+    script = _load_script()
+    assert script.ensure_gitattributes(tmp_path) == "created"
+    assert (tmp_path / ".gitattributes").read_text(encoding="utf-8").startswith(
+        script.BEGIN_MARKER
+    )
+
+
+def test_vendor_org_checkouts_are_never_written_to(tmp_path: Path) -> None:
+    """An upstream checkout owns its own eol rules; a managed block would fight them."""
+    script = _load_script()
+    repo = tmp_path / "StrangeLoopGames" / "Eco"
+    repo.mkdir(parents=True)
+    (repo / ".git").mkdir()
+
+    status, detail = script.apply_to_repo(repo, "v1.0.0", dry_run=False)
+    assert status == "skipped"
+    assert "vendor org" in detail
+    assert not (repo / ".gitattributes").exists()
+    assert not (repo / ".pre-commit-config.yaml").exists()

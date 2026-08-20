@@ -17,7 +17,9 @@ For each repo checked out under ~/projects/<org>/<name> across every org dir
      standard hygiene hooks, actionlint, Forgejo Runner validation, shellcheck,
      and typos. The actionlint hook takes `-config-file` only where the
      consumer ships `.github/actionlint.yaml` (see `actionlint_args`).
-  4. Run `pre-commit install --hook-type pre-commit --hook-type commit-msg
+  4. Insert/refresh the managed `.gitattributes` block pinning the working
+     tree to LF. See docs/pre-commit-hygiene.md.
+  5. Run `pre-commit install --hook-type pre-commit --hook-type commit-msg
      --hook-type prepare-commit-msg`.
 
 Pin a package tag with `--rev`. Default tracks the latest aos-precommit release.
@@ -32,6 +34,8 @@ Usage:
 A repo carrying a .agentic-os-ignore file at its root is skipped entirely
 (declarative, repo-owned opt-out). Use --skip for one-off exclusions, the
 marker for durable ones. Honored fail-closed: presence skips, no override.
+An org dir listed in VENDOR_ORGS is skipped whole: those are upstream
+checkouts nobody here owns.
 
 Drives off the on-disk checkout set via agentic_os.config.iter_workspace_repos
 (every git working tree under ~/projects/<org>/*), so it is owner-agnostic:
@@ -102,6 +106,19 @@ IGNORE_MARKER = ".agentic-os-ignore"
 
 BEGIN_MARKER = "# BEGIN managed by agentic-os/scripts/apply-agentic-os-hooks.py"
 END_MARKER = "# END managed by agentic-os/scripts/apply-agentic-os-hooks.py"
+
+# Org dirs of upstream checkouts nobody here owns, so nothing is written
+# into them. See docs/pre-commit-hygiene.md.
+VENDOR_ORGS = {"StrangeLoopGames"}
+
+GITATTRIBUTES_FILE = ".gitattributes"
+# `text=auto` alone still checks out CRLF under core.autocrlf=true. See
+# docs/pre-commit-hygiene.md.
+GITATTRIBUTES_RULES = [
+    "* text=auto eol=lf",
+    "*.bat text eol=crlf",
+    "*.cmd text eol=crlf",
+]
 
 # Canonical source for the hook suite. Forgejo, not the GitHub mirror: it is
 # the source of truth and lands release tags first.
@@ -456,6 +473,69 @@ def ensure_code_comments_exclude(repo_dir: Path) -> str | None:
     return ".agentic-os.toml"
 
 
+def gitattributes_block(repo_dir: Path | None) -> str:
+    """The managed eol rules, plus `-text` for every declared vendored tree.
+
+    A vendored tree keeps upstream's bytes exactly, so it opts out of eol
+    translation rather than taking the fleet's. This reuses the same
+    `vendored` declaration the fixer excludes read.
+    """
+    lines = list(GITATTRIBUTES_RULES)
+    trees = (
+        cfg.load_str_list(VENDORED_CONFIG_SECTION, "vendored", repo_dir)
+        if repo_dir is not None
+        else []
+    )
+    for tree in sorted(trees):
+        lines.append(f"{tree.rstrip('/')}/** -text")
+    body = "\n".join(lines)
+    return f"{BEGIN_MARKER}\n{body}\n{END_MARKER}\n"
+
+
+def _with_gitattributes_block(before: str, block: str, after: str) -> str:
+    """One shape for create, prepend, and refresh, so a re-run is a no-op."""
+    tail = after.lstrip("\n")
+    return before + block + ("\n" + tail if tail else "")
+
+
+def _gitattributes_plan(repo_dir: Path) -> str | None:
+    """What ensure_gitattributes would do, without writing it."""
+    path = repo_dir / GITATTRIBUTES_FILE
+    if not path.is_file():
+        return "create"
+    text = path.read_text(encoding="utf-8")
+    if BEGIN_MARKER not in text or END_MARKER not in text:
+        return "prepend"
+    before, _, rest = text.partition(BEGIN_MARKER)
+    _, _, after = rest.partition(END_MARKER)
+    current = _with_gitattributes_block(before, gitattributes_block(repo_dir), after)
+    return None if current == text else "refresh"
+
+
+def ensure_gitattributes(repo_dir: Path) -> str | None:
+    """Insert or refresh the managed eol block, leaving local rules alone."""
+    path = repo_dir / GITATTRIBUTES_FILE
+    block = gitattributes_block(repo_dir)
+    if not path.is_file():
+        path.write_text(block, encoding="utf-8", newline="\n")
+        return "created"
+    text = path.read_text(encoding="utf-8")
+    if BEGIN_MARKER in text and END_MARKER in text:
+        before, _, rest = text.partition(BEGIN_MARKER)
+        _, _, after = rest.partition(END_MARKER)
+        new_text = _with_gitattributes_block(before, block, after)
+        if new_text == text:
+            return None
+        path.write_text(new_text, encoding="utf-8", newline="\n")
+        return "updated"
+    # First, never last: git takes the last matching pattern per attribute, so a
+    # general `*` rule below a repo's own LFS or eol lines would override them.
+    path.write_text(
+        _with_gitattributes_block("", block, text), encoding="utf-8", newline="\n"
+    )
+    return "prepended"
+
+
 def install_pre_commit_hooks(repo_dir: Path) -> str:
     result = subprocess.run(
         [
@@ -473,6 +553,8 @@ def install_pre_commit_hooks(repo_dir: Path) -> str:
 
 def apply_to_repo(repo_dir: Path, rev: str, dry_run: bool) -> tuple[str, str]:
     repo = repo_dir.name
+    if repo_dir.parent.name in VENDOR_ORGS:
+        return ("skipped", f"vendor org ({repo_dir.parent.name})")
     if repo == "agentic-os":
         # Source repo dogfoods via repo: local; upstream-ref would duplicate IDs.
         return ("skipped", "self (source repo)")
@@ -508,11 +590,15 @@ def apply_to_repo(repo_dir: Path, rev: str, dry_run: bool) -> tuple[str, str]:
             if n_stamped:
                 parts.append(f"drop {n_stamped} stamped script(s)")
             yaml_status = ", ".join(parts)
+        attributes = _gitattributes_plan(repo_dir)
+        if attributes:
+            yaml_status = f"{yaml_status}, gitattributes {attributes}"
         return ("dryrun", yaml_status)
 
     yaml_status, legacy_removed = upsert_managed_block(config_path, rev, hook_ids)
     dropped = drop_legacy_stamped_scripts(repo_dir)
     excluded = ensure_code_comments_exclude(repo_dir)
+    attributes = ensure_gitattributes(repo_dir)
     install_status = install_pre_commit_hooks(repo_dir)
     parts = [yaml_status]
     if legacy_removed:
@@ -521,6 +607,8 @@ def apply_to_repo(repo_dir: Path, rev: str, dry_run: bool) -> tuple[str, str]:
         parts.append(f"dropped={len(dropped)}")
     if excluded:
         parts.append(f"code-comments-exclude={excluded}")
+    if attributes:
+        parts.append(f"gitattributes={attributes}")
     parts.append(install_status)
     return ("applied", ", ".join(parts))
 

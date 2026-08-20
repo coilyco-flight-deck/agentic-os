@@ -44,6 +44,9 @@ Major shipped capabilities, not files.
 - [AGENTS pointer](features-agents.md) - generated sibling-repo workspace pointer.
 - [AGENTS git-workflow block](features-agents.md) - generated per-lane standing authorization to commit, branch, push, and open a PR.
 - [Encoded leak guard](pre-commit-hygiene.md) - hex-encoded leak-term detector.
+- [Managed line endings](pre-commit-hygiene.md) - generated `.gitattributes`
+  block pinning the working tree to LF, with vendored trees and vendor orgs
+  left alone.
 - [Context measurement](context-budget.md) - reusable harness-neutral role
   capture, multi-provider attribution, and deterministic component diffs.
 - [AGENTS inventory](agents-context-inventory.md) - fleet corpus and clipping candidates.

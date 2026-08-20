@@ -7,15 +7,10 @@ text hygiene that are too disruptive to flip on everywhere at once.
 
 ## Active hooks
 
-- `trailing-whitespace`
-- `end-of-file-fixer`
-- `check-added-large-files` with a 2048 KB ceiling
-- `check-merge-conflict`
-- `check-case-conflict`
-- `check-illegal-windows-names`
-- `mixed-line-ending`
-- `check-json`
-- `check-toml`
+- the upstream hygiene set: `trailing-whitespace`, `end-of-file-fixer`,
+  `check-added-large-files` (2048 KB), `check-merge-conflict`,
+  `check-case-conflict`, `check-illegal-windows-names`, `mixed-line-ending`,
+  `check-json`, `check-toml`
 - `actionlint` on `.forgejo/workflows/*.yml` and `.yaml`. `.github/actionlint.yaml` teaches it the Forgejo runner label `docker`
 - `actions-run-one-line` rejects block, folded, escaped-newline, and physically split `run:` commands in GitHub and Forgejo workflows plus composite actions, and rejects a program body inlined into one line. A tracked script, composite action, or `just` verb owns the implementation while YAML invokes it from one line. See [one line, and no inlined body](#one-line-and-no-inlined-body)
 - `forgejo-runner-validate` for Forgejo-native workflow and local-action semantics
@@ -118,3 +113,8 @@ worktree-safe. A rule with `repos` fires only there, and one without fires
 everywhere it is installed. The hook is authored and dogfooded here, and fleet
 rollout is a deliberate ansible step run after each target repo's occurrences
 are cleaned or allowlisted. The guard is staged, never flipped on fleet-wide.
+
+## Managed line endings
+
+The rollout also writes a `.gitattributes` block pinning `* text=auto eol=lf`.
+`text=auto` alone leaves it to `core.autocrlf`, splitting Windows from Linux.
