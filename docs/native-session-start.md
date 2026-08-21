@@ -56,6 +56,10 @@ phase runs and reports the phase's elapsed time when it ends, so the wait is
 attributable rather than silent. Owner:
 [native agent workspaces](native-agent-workspaces.md).
 
+## Terminal identity
+
+An assigned native Codex launch projects Agent Compose's canonical annotation and short session ID into its interactive terminal title, keeping concurrent sessions recognizable by seat, role, and session. `aosterm` keeps its static title for new Alacritty windows.
+
 ## What a launch prints
 
 ```text

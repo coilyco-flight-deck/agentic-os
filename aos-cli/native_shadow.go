@@ -181,6 +181,11 @@ func runNativeShadow(ctx context.Context, cmd *cli.Command) error {
 			}
 		}
 	}
+	if cmd.Bool("assigned-role") && harness == "codex" {
+		if err := projectNativeCodexTerminalTitle(ctx, command); err != nil {
+			fmt.Fprintf(runtime.Stderr, "aos: warning: project native Codex terminal title: %v\n", err)
+		}
+	}
 	runtime.Progress.Ready()
 	runtime.Progress.Exec(command)
 	return execNative(command)
