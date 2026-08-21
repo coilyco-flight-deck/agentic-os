@@ -62,17 +62,18 @@ changed attribution definition while keeping trust scoped to that one hook.
 
 ## Trust flow
 
-AOS starts Codex app-server over its local standard-input transport and uses
-the supported `hooks/list` method. A hook qualifies only when all of these
-properties match:
+AOS starts Codex app-server over its local standard-input transport with the
+new shadow's `CODEX_HOME`, then uses the supported `hooks/list` method. A hook
+qualifies only when all of these properties match:
 
-* the source is the user's `~/.codex/hooks.json`
+* the source is that shadow's `$CODEX_HOME/hooks.json`
 * the event is `PreToolUse` with the `Bash` matcher
 * the handler is an enabled, non-managed command
 * the command exactly matches the converged `agent-git-attribution` path
 
 For an untrusted or modified match, AOS writes Codex's reported hook key and
-current hash through `config/batchWrite`. The `hooks.state` edit uses an upsert,
+current hash through `config/batchWrite`. This records the shadow-local source
+key that the new Codex process will use. The `hooks.state` edit uses an upsert,
 so unrelated trust entries remain unchanged. An already trusted definition
 needs no write.
 

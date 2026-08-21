@@ -59,6 +59,7 @@ func trustNativeCodexAttributionHook(
 	parent context.Context,
 	cwd string,
 	home string,
+	codexHome string,
 ) (int, error) {
 	binary, err := exec.LookPath("codex")
 	if errors.Is(err, exec.ErrNotFound) {
@@ -72,7 +73,7 @@ func trustNativeCodexAttributionHook(
 	defer cancel()
 	command := exec.CommandContext(ctx, binary, "app-server", "--listen", "stdio://")
 	command.Dir = cwd
-	command.Env = os.Environ()
+	command.Env = replaceEnvironment(os.Environ(), "CODEX_HOME", codexHome)
 	stdin, err := command.StdinPipe()
 	if err != nil {
 		return 0, fmt.Errorf("open Codex app-server input: %w", err)
@@ -92,6 +93,7 @@ func trustNativeCodexAttributionHook(
 		json.NewDecoder(stdout),
 		cwd,
 		home,
+		codexHome,
 	)
 	closeErr := stdin.Close()
 	waitErr := command.Wait()
@@ -116,6 +118,7 @@ func trustCodexAttributionHookRPC(
 	decoder *json.Decoder,
 	cwd string,
 	home string,
+	codexHome string,
 ) (int, error) {
 	if err := encoder.Encode(map[string]any{
 		"method": "initialize",
@@ -163,7 +166,7 @@ func trustCodexAttributionHookRPC(
 			continue
 		}
 		for _, hook := range entry.Hooks {
-			if !nativeCodexAttributionHook(hook, home) {
+			if !nativeCodexAttributionHook(hook, home, codexHome) {
 				continue
 			}
 			switch hook.TrustStatus {
@@ -239,23 +242,51 @@ func readCodexRPCResponse(
 	}
 }
 
-func nativeCodexAttributionHook(hook codexHookMetadata, home string) bool {
+func nativeCodexAttributionHook(hook codexHookMetadata, home, codexHome string) bool {
 	if !hook.Enabled ||
 		hook.IsManaged ||
 		hook.Source != "user" ||
 		hook.EventName != "preToolUse" ||
 		hook.HandlerType != "command" ||
 		hook.Matcher != "Bash" ||
-		!samePath(hook.SourcePath, filepath.Join(home, ".codex", "hooks.json")) {
+		!samePath(hook.SourcePath, filepath.Join(codexHome, "hooks.json")) {
 		return false
 	}
 	command := strings.ReplaceAll(strings.TrimSpace(hook.Command), `\`, "/")
-	normalizedHome := strings.ReplaceAll(filepath.Clean(home), `\`, "/")
 	candidates := map[string]bool{
-		normalizedHome + "/.local/share/agent-git-attribution/agent_git_attribution.py hook codex": true,
-		normalizedHome + "/.local/share/agent-git-attribution/hook-codex":                          true,
-		normalizedHome + "/.local/share/agent-git-attribution/hook-codex.cmd":                      true,
-		`"$HOME/.local/share/agent-git-attribution/hook-codex"`:                                    true,
+		`"$HOME/.local/share/agent-git-attribution/hook-codex"`: true,
+	}
+	for _, path := range nativeCodexAttributionPaths(home) {
+		normalized := strings.ReplaceAll(path, `\`, "/")
+		candidates[normalized+" hook codex"] = true
 	}
 	return candidates[command] || candidates[strings.Trim(command, `"`)]
+}
+
+func nativeCodexAttributionPaths(home string) []string {
+	paths := make([]string, 0, 6)
+	seen := map[string]bool{}
+	for _, name := range []string{
+		"agent_git_attribution.py",
+		"hook-codex",
+		"hook-codex.cmd",
+	} {
+		path := filepath.Join(home, ".local", "share", "agent-git-attribution", name)
+		for _, candidate := range []string{path, nativeCodexResolvedPath(path)} {
+			if candidate == "" || seen[candidate] {
+				continue
+			}
+			seen[candidate] = true
+			paths = append(paths, candidate)
+		}
+	}
+	return paths
+}
+
+func nativeCodexResolvedPath(path string) string {
+	resolved, err := filepath.EvalSymlinks(path)
+	if err != nil {
+		return ""
+	}
+	return resolved
 }

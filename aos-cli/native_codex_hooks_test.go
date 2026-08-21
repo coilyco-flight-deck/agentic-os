@@ -9,11 +9,13 @@ import (
 	"testing"
 )
 
-func TestTrustCodexAttributionHookRPCWritesExactCurrentHash(t *testing.T) {
+func TestTrustCodexAttributionHookRPCWritesShadowHookKey(t *testing.T) {
 	t.Parallel()
 	home := t.TempDir()
+	codexHome := filepath.Join(t.TempDir(), ".codex")
 	cwd := t.TempDir()
-	source := filepath.Join(home, ".codex", "hooks.json")
+	source := filepath.Join(codexHome, "hooks.json")
+	shadowKey := source + ":pre_tool_use:0:0"
 	input := strings.Join([]string{
 		`{"method":"remoteControl/status/changed","params":{"status":"disabled"}}`,
 		`{"id":1,"result":{"userAgent":"test"}}`,
@@ -25,7 +27,7 @@ func TestTrustCodexAttributionHookRPCWritesExactCurrentHash(t *testing.T) {
 				source,
 			) + `,` +
 			codexHookJSON(
-				"git-attribution",
+				shadowKey,
 				"modified",
 				filepath.Join(home, ".local", "share", "agent-git-attribution", "agent_git_attribution.py")+" hook codex",
 				source,
@@ -40,6 +42,7 @@ func TestTrustCodexAttributionHookRPCWritesExactCurrentHash(t *testing.T) {
 		json.NewDecoder(strings.NewReader(input)),
 		cwd,
 		home,
+		codexHome,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -66,8 +69,8 @@ func TestTrustCodexAttributionHookRPCWritesExactCurrentHash(t *testing.T) {
 	if len(value) != 1 {
 		t.Fatalf("trust edit changed %d hooks, want 1", len(value))
 	}
-	trust := value["git-attribution"].(map[string]any)
-	if trust["trusted_hash"] != "hash-git-attribution" {
+	trust := value[shadowKey].(map[string]any)
+	if trust["trusted_hash"] != "hash-"+shadowKey {
 		t.Fatalf("trusted hash = %v", trust["trusted_hash"])
 	}
 }
@@ -75,8 +78,9 @@ func TestTrustCodexAttributionHookRPCWritesExactCurrentHash(t *testing.T) {
 func TestTrustCodexAttributionHookRPCIsIdempotent(t *testing.T) {
 	t.Parallel()
 	home := t.TempDir()
+	codexHome := filepath.Join(t.TempDir(), ".codex")
 	cwd := t.TempDir()
-	source := filepath.Join(home, ".codex", "hooks.json")
+	source := filepath.Join(codexHome, "hooks.json")
 	input := strings.Join([]string{
 		`{"id":1,"result":{}}`,
 		`{"id":2,"result":{"data":[{"cwd":` + jsonString(cwd) + `,"hooks":[` +
@@ -94,6 +98,7 @@ func TestTrustCodexAttributionHookRPCIsIdempotent(t *testing.T) {
 		json.NewDecoder(strings.NewReader(input)),
 		cwd,
 		home,
+		codexHome,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -109,8 +114,9 @@ func TestTrustCodexAttributionHookRPCIsIdempotent(t *testing.T) {
 func TestTrustCodexAttributionHookRPCRejectsNearMatch(t *testing.T) {
 	t.Parallel()
 	home := t.TempDir()
+	codexHome := filepath.Join(t.TempDir(), ".codex")
 	cwd := t.TempDir()
-	source := filepath.Join(home, ".codex", "hooks.json")
+	source := filepath.Join(codexHome, "hooks.json")
 	input := strings.Join([]string{
 		`{"id":1,"result":{}}`,
 		`{"id":2,"result":{"data":[{"cwd":` + jsonString(cwd) + `,"hooks":[` +
@@ -128,6 +134,7 @@ func TestTrustCodexAttributionHookRPCRejectsNearMatch(t *testing.T) {
 		json.NewDecoder(strings.NewReader(input)),
 		cwd,
 		home,
+		codexHome,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -148,6 +155,7 @@ func TestTrustCodexAttributionHookRPCReportsServerError(t *testing.T) {
 		)),
 		t.TempDir(),
 		t.TempDir(),
+		t.TempDir(),
 	)
 	if err == nil || !strings.Contains(err.Error(), "method unavailable") {
 		t.Fatalf("error = %v", err)
@@ -158,6 +166,7 @@ func TestTrustNativeCodexAttributionHookWithoutCodexIsNoOp(t *testing.T) {
 	t.Setenv("PATH", t.TempDir())
 	trusted, err := trustNativeCodexAttributionHook(
 		context.Background(),
+		t.TempDir(),
 		t.TempDir(),
 		t.TempDir(),
 	)

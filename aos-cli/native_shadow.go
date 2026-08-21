@@ -144,12 +144,13 @@ func runNativeShadow(ctx context.Context, cmd *cli.Command) error {
 	if err := convergeNativeEnvironment(ctx, runtime); err != nil {
 		return fmt.Errorf("converge native environment: %w", err)
 	}
-	launchCWD, err := prepareNativeLaunchWithOptions(runtime, harness, nativeLaunchOptions{
+	workspace, err := prepareNativeLaunchWorkspaceWithOptions(runtime, harness, nativeLaunchOptions{
 		WorkspaceRoot: cmd.Bool("assigned-role"),
 	})
 	if err != nil {
 		return err
 	}
+	launchCWD := workspace.CWD
 	if err := os.Chdir(launchCWD); err != nil {
 		return fmt.Errorf("enter native session workspace %s: %w", launchCWD, err)
 	}
@@ -165,7 +166,16 @@ func runNativeShadow(ctx context.Context, cmd *cli.Command) error {
 	}
 	if cmd.Bool("assigned-role") {
 		if harness == "codex" {
-			trusted, err := trustNativeCodexAttributionHook(ctx, launchCWD, runtime.Home)
+			codexHome := filepath.Join(workspace.SessionHome, ".codex")
+			if err := os.Setenv("CODEX_HOME", codexHome); err != nil {
+				return fmt.Errorf("set native Codex home: %w", err)
+			}
+			trusted, err := trustNativeCodexAttributionHook(
+				ctx,
+				launchCWD,
+				runtime.Home,
+				codexHome,
+			)
 			if err != nil {
 				fmt.Fprintf(
 					runtime.Stderr,
