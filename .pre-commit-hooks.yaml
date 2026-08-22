@@ -137,7 +137,7 @@
 
 - id: check-composed-skills
   name: composed skill conventions
-  description: Validate role-composed COMPOSED.md sources against the ordinary skill taxonomy while preventing native discovery and name collisions.
+  description: Validate role-composed COMPOSED.md sources against the ordinary skill taxonomy while preventing native discovery and name collisions, and pair the catalogue with .agents/roles.kdl in both directions - every role selects something, and every source is selected by some role or listed under [tool.agentic-os.check-composed-skills] unselected.
   entry: check-composed-skills
   language: python
   additional_dependencies: [pyyaml]

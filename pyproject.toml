@@ -137,6 +137,21 @@ excludes = [
     "warp/launch_configurations/**",
 ]
 
+# Composed sources no role in .agents/roles.kdl selects. Each entry is a
+# deliberate exception rather than a gap, so it is listed with its reason
+# instead of weakening the gate. See agentic-os#1073.
+[tool.agentic-os.check-composed-skills]
+unselected = [
+    # No sales role exists in the roster. The methods are kept as reference
+    # material for one that may, and composing them into a role that does not
+    # sell would be worse than leaving them unselected.
+    "tooling-sales-*",
+    # Instance-scoped rather than role-scoped: both say "the deployed role is
+    # engineer and the instance is sirens-dowel", so a deployment overlay
+    # promotes them. A base-role selector would give them to every engineer.
+    "tooling-sirens-dowel-*",
+]
+
 [tool.agentic-os.repo-pointer-skills]
 # This repo migrated from the coilysiren org to coilyco-flight-deck, so its
 # repo-pointer skills point at ~/projects/coilyco-flight-deck/.
