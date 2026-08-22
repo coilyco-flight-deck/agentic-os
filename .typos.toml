@@ -1,14 +1,14 @@
+# Path exclusion binds only because the generated hook passes --force-exclude:
+# pre-commit hands typos explicit paths. See agentic-os#969 and #1152.
 [files]
 extend-exclude = [
   "*.json",
   "*.lock",
-  "docs/ward-ops-forgejo-reference.md",
 ]
 
 [default.extend-words]
 aos = "aos"
 coilyco = "coilyco"
-commiter = "commiter"
 forgejo = "forgejo"
 glitchtip = "glitchtip"
 hashi = "hashi"
@@ -17,14 +17,9 @@ mcporter = "mcporter"
 mis = "mis"
 opencode = "opencode"
 qwen = "qwen"
-reqests = "reqests"
 requets = "requets"
-ser = "ser"
 SOM = "SOM"
-unparseable = "unparseable"
 Iz = "Iz"
-aks = "aks"
-embeded = "embeded"
 signoz = "signoz"
 ward = "ward"
 warp = "warp"
