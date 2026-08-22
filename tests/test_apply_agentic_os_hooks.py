@@ -346,3 +346,24 @@ def test_vendor_org_checkouts_are_never_written_to(tmp_path: Path) -> None:
     assert "vendor org" in detail
     assert not (repo / ".gitattributes").exists()
     assert not (repo / ".pre-commit-config.yaml").exists()
+
+
+def test_a_created_config_is_unchanged_on_its_next_refresh(tmp_path: Path) -> None:
+    # Two renderings of the blank line after `repos:` meant a fresh config
+    # reported `updated` once and settled only on run three. agentic-os#985.
+    script = _load_script()
+    config = tmp_path / ".pre-commit-config.yaml"
+    statuses = [script.upsert_managed_block(config, "v2.0.0")[0] for _ in range(3)]
+
+    assert statuses == ["created", "unchanged", "unchanged"]
+
+
+def test_a_hand_written_preamble_keeps_its_blank_line(tmp_path: Path) -> None:
+    # The separator divides a repo's own hooks from the managed block. Only
+    # the bare document opener has nothing to divide.
+    script = _load_script()
+    block = script.managed_block("v2.0.0")
+
+    assert script.render_config("repos:", block) == "repos:\n" + block
+    local = "repos:\n  - repo: local\n    hooks:\n      - id: mine"
+    assert script.render_config(local, block) == local + "\n\n" + block

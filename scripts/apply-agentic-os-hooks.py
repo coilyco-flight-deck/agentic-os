@@ -335,12 +335,27 @@ def managed_block(
 """
 
 
+DOCUMENT_OPENER = "repos:"
+
+
+def render_config(before: str, block: str, after: str = "") -> str:
+    """The one rendering both the create and refresh paths use.
+
+    A blank line separates hand-written content from the managed block, and
+    there is nothing to separate when `before` is only the document opener.
+    Two renderings meant a fresh config always reported `updated` on its next
+    refresh and only settled on the third run. See agentic-os#985.
+    """
+    before = before.rstrip()
+    after = after.lstrip("\n")
+    separator = "\n\n" if before and before != DOCUMENT_OPENER else "\n"
+    return before + separator + block + after
+
+
 def empty_config_template(
     rev: str, hook_ids: list[str] | None = None, repo_dir: Path | None = None
 ) -> str:
-    return f"""\
-repos:
-{managed_block(rev, hook_ids, repo_dir)}"""
+    return render_config(DOCUMENT_OPENER, managed_block(rev, hook_ids, repo_dir))
 
 
 def list_local_repo_dirs() -> list[Path]:
@@ -413,9 +428,7 @@ def upsert_managed_block(
         before, removed_before = strip_legacy_blocks(before)
         after, removed_after = strip_legacy_blocks(after)
         legacy_removed = removed_before + removed_after
-        before = before.rstrip()
-        after = after.lstrip("\n")
-        new_text = before + "\n\n" + block + (after if after else "")
+        new_text = render_config(before, block, after)
         if new_text == original_text:
             return "unchanged", legacy_removed
         config_path.write_text(new_text)
