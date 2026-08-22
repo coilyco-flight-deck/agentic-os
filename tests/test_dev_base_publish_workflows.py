@@ -109,7 +109,8 @@ def test_workflows_publish_parallel_payloads_then_full_and_release_only_full() -
     assert "tier: ${{ matrix.tier }}" not in release
     assert "needs: [plan-draft, publish-language-payloads]" in publish
     assert "needs: [plan-release, retag-full]" in release
-    assert publish.count("uses: ./actions/publish-dev-base") == 2
+    # Two publishers plus the post-release verify (agentic-os#1032).
+    assert publish.count("uses: ./actions/publish-dev-base") == 3
     assert release.count("uses: ./actions/publish-dev-base") == 1
 
 
@@ -174,7 +175,8 @@ def test_publish_workflow_keeps_resume_inputs_and_non_blocking_alerts() -> None:
 def test_full_image_build_uses_the_dedicated_runner() -> None:
     publish = PUBLISH.read_text(encoding="utf-8")
 
-    assert publish.count("runs-on: docker-build") == 2
+    # The verify job needs the same runner: it reads the registry through docker.
+    assert publish.count("runs-on: docker-build") == 3
     assert "publish-language-payloads:" in publish
     assert "publish-full:" in publish
     assert "needs: [plan-draft, publish-language-payloads]" in publish
@@ -254,3 +256,115 @@ def test_publish_action_verifies_every_toolchain_and_aosguard() -> None:
         "test -s /opt/agentic-os/aosguard-skill/aosguard/references/commands.yaml",
     ):
         assert command in script
+
+
+VERIFY_ALIAS = ROOT / "actions" / "publish-dev-base" / "scripts" / "verify-alias.sh"
+
+
+def _run_verify_alias(tmp_path: Path, digests: dict[str, str], **env: str):
+    """Run verify-alias.sh against a docker stub with a fixed tag -> digest map."""
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    cases = "\n".join(
+        f'  *:{tag}) printf "Digest: {digest}\\\\n" ;;' for tag, digest in digests.items()
+    )
+    docker = bin_dir / "docker"
+    docker.write_text(
+        f'#!/usr/bin/env bash\nref=${{@: -1}}\ncase "$ref" in\n{cases}\n  *) exit 1 ;;\nesac\n',
+        encoding="utf-8",
+    )
+    docker.chmod(0o755)
+    return subprocess.run(
+        ["bash", str(VERIFY_ALIAS)],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=os.environ
+        | {
+            "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
+            "IMAGE_BASE": "registry.example.invalid/org/image",
+            "TIER": "full",
+            "TAG": "release",
+            "ALIAS": "",
+            "EXTRA_ALIASES": "latest",
+            "SOURCE_TAG": "draft-abc",
+            **env,
+        },
+    )
+
+
+def test_a_moved_alias_passes() -> None:
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as d:
+        got = _run_verify_alias(
+            Path(d),
+            {"draft-abc": "sha256:built", "release": "sha256:built", "latest": "sha256:built"},
+        )
+    assert got.returncode == 0, got.stderr
+
+
+def test_a_stale_alias_fails_loudly() -> None:
+    # The defect: every job green, `release` still on the previous digest.
+    # See agentic-os#1032.
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as d:
+        got = _run_verify_alias(
+            Path(d),
+            {"draft-abc": "sha256:built", "release": "sha256:previous", "latest": "sha256:built"},
+        )
+    assert got.returncode == 1
+    assert "expected sha256:built" in got.stderr
+
+
+def test_an_alias_that_does_not_resolve_fails() -> None:
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as d:
+        got = _run_verify_alias(Path(d), {"draft-abc": "sha256:built"})
+    assert got.returncode == 1
+    assert "The promotion did not happen" in got.stderr
+
+
+def test_a_missing_source_is_an_error_not_a_pass() -> None:
+    # Comparing against nothing must never read as agreement.
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as d:
+        got = _run_verify_alias(Path(d), {"release": "sha256:anything"})
+    assert got.returncode == 1
+    assert "nothing this run built" in got.stderr
+
+
+def test_promote_asserts_and_the_caller_asserts_again() -> None:
+    action = PUBLISH_ACTION.read_text(encoding="utf-8")
+    publish = PUBLISH.read_text(encoding="utf-8")
+
+    assert "inputs.mode == 'promote' || inputs.mode == 'verify'" in action
+    # A reusable-workflow call reported success without running, so the caller
+    # checks the registry rather than the job colour. See agentic-os#1032.
+    assert "assert-release-moved:" in publish
+    assert "needs: [plan-draft, publish-release]" in publish
+    assert "mode: verify" in publish
+
+
+def test_verifying_nothing_is_not_a_pass() -> None:
+    # An empty tag list once exited 0 having checked nothing, which is the same
+    # shape the script already refuses for an unresolvable source.
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as d:
+        got = _run_verify_alias(
+            Path(d), {"draft-abc": "sha256:built"}, TAG="", ALIAS="", EXTRA_ALIASES=""
+        )
+    assert got.returncode == 2
+    assert "Verifying nothing is not a pass" in got.stderr
+
+
+def test_the_dispatch_guard_has_one_spelling() -> None:
+    # Two spellings of the same condition lived in this file. A backstop must
+    # not be guarded differently from the job it backstops.
+    publish = PUBLISH.read_text(encoding="utf-8")
+    assert "|| inputs.tier ==" not in publish
+    assert publish.count("github.event.inputs.tier == 'all'") == 5

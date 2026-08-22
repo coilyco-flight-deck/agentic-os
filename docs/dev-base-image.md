@@ -39,7 +39,9 @@ payload drafts, the full job consumes those exact manifests and publishes
 [`release.yml`](../.forgejo/workflows/release.yml) promotes only the full
 manifest to its next minor tag, `release`, and `latest`, and manual dispatch
 reuses it for retries and overrides. Payload drafts and cache refs are internal
-transport with no release alias or compatibility contract.
+transport with no release alias or compatibility contract. Promotion is asserted
+rather than assumed: a `verify` job re-reads the registry after the call, since
+a reusable-workflow call once reported success without running (agentic-os#1032).
 
 Pull requests touching `docker/` build the complete source graph through
 [`actions/dev-base-build`](../actions/dev-base-build/action.yml) with no

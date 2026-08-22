@@ -135,10 +135,41 @@ jobs:
 
   publish-release:
     needs: [plan-draft, publish-full]
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.tier == 'all' || inputs.tier == 'full' }}
+    if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.tier == 'all' || github.event.inputs.tier == 'full' }}
     uses: ./.forgejo/workflows/release.yml
     with:
       sha: ${{ inputs.sha || github.sha }}
       source-tag: ${{ needs.plan-draft.outputs.draft_tag }}
       bump: minor
     secrets: inherit
+
+  assert-release-moved:
+    needs: [plan-draft, publish-release]
+    if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.tier == 'all' || github.event.inputs.tier == 'full' }}
+    runs-on: docker-build
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - name: Assert release and latest moved, see actions/publish-dev-base
+        uses: ./actions/publish-dev-base
+        with:
+          tier: full
+          mode: verify
+          tag: release
+          extra-aliases: latest
+          source-tag: ${{ needs.plan-draft.outputs.draft_tag }}
+          registry-token: ${{ secrets.REGISTRY_TOKEN }}
+      - name: Alert Telegram on release failure
+        if: ${{ failure() && github.ref == 'refs/heads/release' }}
+        continue-on-error: true
+        uses: ./actions/telegram-alert
+        with:
+          bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
+      - name: Alert Telegram on main failure
+        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        continue-on-error: true
+        uses: ./actions/telegram-alert
+        with:
+          bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
