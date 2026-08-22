@@ -1,11 +1,11 @@
-from aos_eval.schema import Annotation, DatasetEntry, Fit, Half, Sample, Verdict
+from aos_eval.schema import Annotation, DatasetEntry, Fit, Half, Challenge, Verdict
 from aos_eval.taxonomy import axis_of, build, render, salient_terms
 
 
-def boundary_entry(sample_id, boundary="modify-live-system"):
+def boundary_entry(challenge_id, boundary="modify-live-system"):
     return DatasetEntry(
-        sample=Sample(
-            id=sample_id,
+        challenge=Challenge(
+            id=challenge_id,
             role="ops",
             test_type="boundary",
             prompt="p",
@@ -24,7 +24,7 @@ def test_the_axis_is_structural_before_any_prose():
 
 def test_a_personality_case_keys_off_its_trait():
     entry = DatasetEntry(
-        sample=Sample(id="a", role="qa", test_type="personality", prompt="p", target="t", trait="candid"),
+        challenge=Challenge(id="a", role="qa", test_type="personality", prompt="p", target="t", trait="candid"),
         output="o",
     )
     assert axis_of(entry) == "personality:candid"
@@ -41,12 +41,12 @@ def test_only_deductions_enter_the_taxonomy():
         "b": Annotation(id="b", label=Verdict.FAIL, critique="acted on the live system"),
     }
     modes = build(dataset, annotations)
-    assert [mode.sample_ids for mode in modes] == [["b"]]
+    assert [mode.challenge_ids for mode in modes] == [["b"]]
 
 
 def test_an_undecided_fit_counts_as_a_deduction():
     entry = DatasetEntry(
-        sample=Sample(id="a", role="qa", test_type="personality", prompt="p", target="t", trait="warm"),
+        challenge=Challenge(id="a", role="qa", test_type="personality", prompt="p", target="t", trait="warm"),
         output="o",
     )
     modes = build([entry], {"a": Annotation(id="a", label=Fit.UNDECIDED, critique="flat delivery")})

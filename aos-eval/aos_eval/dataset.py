@@ -1,4 +1,4 @@
-"""Join authored samples to what a runner returned, and record every drop.
+"""Join authored challenges to what a runner returned, and record every drop.
 
 There is no mechanical scorer here. On agent-compose's first graded board a
 regex tier disagreed with the human on every case where either deviated from a
@@ -10,12 +10,12 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass, field
 
-from aos_eval.schema import AGENT_COMPOSE, DatasetEntry, Profile, Response, Sample
+from aos_eval.schema import AGENT_COMPOSE, DatasetEntry, Profile, Response, Challenge
 
 
 @dataclass(frozen=True)
 class Dropped:
-    sample_id: str
+    challenge_id: str
     reason: str
 
 
@@ -31,29 +31,29 @@ class DatasetReport:
         return f"{len(self.kept)} kept, {len(self.dropped)} dropped"
 
 
-def build(samples: list[Sample], responses: list[Response], epoch: int = 1) -> DatasetReport:
-    """One entry per sample, carrying the named epoch's text for annotation.
+def build(challenges: list[Challenge], responses: list[Response], epoch: int = 1) -> DatasetReport:
+    """One entry per challenge, carrying the named epoch's text for annotation.
 
     The other epochs stay in the runner's own log as evidence a reader can open.
     """
-    by_sample: dict[str, list[Response]] = defaultdict(list)
+    by_challenge: dict[str, list[Response]] = defaultdict(list)
     for response in responses:
-        by_sample[response.sample_id].append(response)
+        by_challenge[response.challenge_id].append(response)
 
     report = DatasetReport()
-    for sample in samples:
-        runs = sorted(by_sample[sample.id], key=lambda run: run.epoch)
+    for challenge in challenges:
+        runs = sorted(by_challenge[challenge.id], key=lambda run: run.epoch)
         if not runs:
-            report.dropped.append(Dropped(sample.id, "no subject runs"))
+            report.dropped.append(Dropped(challenge.id, "no subject runs"))
             continue
         chosen = next((run for run in runs if run.epoch == epoch), runs[0])
-        report.kept.append(DatasetEntry(sample=sample, output=chosen.text))
+        report.kept.append(DatasetEntry(challenge=challenge, output=chosen.text))
     return report
 
 
-def validate(samples: list[Sample], profile: Profile = AGENT_COMPOSE) -> list[str]:
-    """Profile-level shape for a whole sample list, in one pass."""
+def validate(challenges: list[Challenge], profile: Profile = AGENT_COMPOSE) -> list[str]:
+    """Profile-level shape for a whole challenge list, in one pass."""
     problems: list[str] = []
-    for sample in samples:
-        problems.extend(sample.check_against(profile))
+    for challenge in challenges:
+        problems.extend(challenge.check_against(profile))
     return problems

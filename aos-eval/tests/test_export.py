@@ -8,13 +8,13 @@ from aos_eval.export import (
     scan_for_secrets,
 )
 from aos_eval.io import save_annotations, save_dataset
-from aos_eval.schema import Annotation, DatasetEntry, Half, Provenance, Sample, Verdict
+from aos_eval.schema import Annotation, DatasetEntry, Half, Provenance, Challenge, Verdict
 
 
 def pair_dataset(output="a plain answer"):
     return [
         DatasetEntry(
-            sample=Sample(
+            challenge=Challenge(
                 id=f"live-{half.value}",
                 role="ops",
                 test_type="boundary",

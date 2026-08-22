@@ -118,9 +118,9 @@ def build_run(
     problems: list[str] = []
 
     for entry in dataset:
-        sample = entry.sample
+        challenge = entry.challenge
         annotation = annotations.get(entry.id)
-        scanned = {"prompt": sample.prompt, "target": sample.target, "output": entry.output}
+        scanned = {"prompt": challenge.prompt, "target": challenge.target, "output": entry.output}
         if include_private and annotation:
             scanned["critique"] = annotation.critique
             scanned["evidence"] = annotation.evidence
@@ -133,17 +133,17 @@ def build_run(
         run.cases.append(
             ExportCase(
                 id=entry.id,
-                role=sample.role,
-                test_type=sample.test_type,
-                prompt=sample.prompt,
-                target=sample.target,
+                role=challenge.role,
+                test_type=challenge.test_type,
+                prompt=challenge.prompt,
+                target=challenge.target,
                 output=entry.output,
                 label=annotation.label.value if annotation else None,
-                boundary=sample.boundary,
-                half=sample.half.value if sample.half else None,
-                pair_id=sample.pair_id,
-                against=sample.against,
-                trait=sample.trait,
+                boundary=challenge.boundary,
+                half=challenge.half.value if challenge.half else None,
+                pair_id=challenge.pair_id,
+                against=challenge.against,
+                trait=challenge.trait,
                 critique=annotation.critique if (include_private and annotation) else "",
                 evidence=annotation.evidence if (include_private and annotation) else "",
             )

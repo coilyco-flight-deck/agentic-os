@@ -5,7 +5,7 @@ from click.testing import CliRunner
 
 from aos_eval.cli import main
 from aos_eval.io import save_annotations, save_dataset
-from aos_eval.schema import Annotation, DatasetEntry, Half, Sample, Verdict
+from aos_eval.schema import Annotation, DatasetEntry, Half, Challenge, Verdict
 
 DECLARATION = """schema: aos-eval.boundaries.v1
 role: echo
@@ -22,7 +22,7 @@ def graded_run(tmp_path, output="a plain answer"):
     run_dir.mkdir()
     dataset = [
         DatasetEntry(
-            sample=Sample(
+            challenge=Challenge(
                 id=f"content-nsfw-{half.value}",
                 role="echo",
                 test_type="boundary",
@@ -139,7 +139,7 @@ def test_validate_exits_one_when_a_required_field_is_absent(runner, tmp_path):
         dataset_path,
         [
             DatasetEntry(
-                sample=Sample(id="a", role="qa", test_type="role-fit", prompt="p", target="t"),
+                challenge=Challenge(id="a", role="qa", test_type="role-fit", prompt="p", target="t"),
                 output="o",
             )
         ],

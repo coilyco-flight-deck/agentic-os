@@ -12,7 +12,7 @@ taxonomy, and the one-way display export. **Not shared**: the runners, listed be
 no model client lives here**, so grading never spends a token and never touches a deployed system.
 
 Both consumers are real. sirens-echo's `board-deep` emits the `dataset:` key with each record carrying
-`Sample` plus its `output`, so `annotate`, `taxonomy`, and `export` read it with no adapter, and a contract
+`Challenge` plus its `output`, so `annotate`, `taxonomy`, and `export` read it with no adapter, and a contract
 test on that side fails loudly if either shape drifts. Its epochs ride along in fields this layer ignores,
 which is how the evidence stays in one file.
 
@@ -29,13 +29,13 @@ the case a coverage count reading out-halves alone would call perfect.
 
 ## It measures rather than certifies
 
-`boundaries derive` turns a declaration into the slots a board must contain, and `boundaries check`
-compares those slots to what a dataset actually authored, naming every missing case, half-authored pair,
+`boundaries derive` turns a declaration into the unwritten challenges a board must contain, and
+`boundaries check` compares those to what a dataset wrote, naming every missing one, half-written pair,
 and case no declaration derived. Both run without a model, so a consumer can tell coverage from
 intention before spending anything.
 
 **The first honest output in a new repo is usually a gap.** Against sirens-echo's pilot board it reports
-56 derived slots with none authored and 10 authored cases no declaration derived. That is the number a
+56 derived challenges with none written and 10 written ones no declaration derived. That is the number a
 tool that measures gives you, where one that certified would have called the board complete and said
 nothing. A coverage report that cannot come back negative is decoration.
 
@@ -45,7 +45,7 @@ Test types, label sets, word caps, and required fields are per deployment. A con
 profile YAML and passes `--profile`, rather than widening the schema for its own case. Without one the
 built-in agent-compose profile applies.
 
-`Sample` enforces only what is true of every deployment, and everything a deployment adds is validated
+`Challenge` enforces only what is true of every deployment, and everything a deployment adds is validated
 against its own profile, so a board whose cases would read as coverage they do not have is refused rather
 than accepted with a shrug. Declare the profile before the first case: **the first authored case sets the
 shape every case after it copies.**
@@ -75,7 +75,7 @@ text is not scanned because text that never leaves cannot leak.
 ## Running it
 
 ```bash
-just aos-eval boundaries derive eval/boundaries.yaml --out slots.yaml
+just aos-eval boundaries derive eval/boundaries.yaml --out challenges.yaml
 just aos-eval boundaries check eval/boundaries.yaml --dataset run1/dataset.yaml
 just aos-eval annotate --dataset run1/dataset.yaml --out run1/annotations.yaml
 just aos-eval taxonomy --dataset run1/dataset.yaml --annotations run1/annotations.yaml

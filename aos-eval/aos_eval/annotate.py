@@ -1,4 +1,4 @@
-"""Human annotation loop. One sample per screen, one keystroke per decision.
+"""Human annotation loop. One challenge per screen, one keystroke per decision.
 
 Annotations are appended after every decision, so an interrupted session keeps
 everything already annotated.
@@ -90,40 +90,40 @@ def render(
     profile: Profile,
     roster: dict[str, Any] | None = None,
 ) -> None:
-    sample = entry.sample
-    style = style_for(profile, sample.test_type)
+    challenge = entry.challenge
+    style = style_for(profile, challenge.test_type)
     console.clear()
     if roster:
-        role_header(console, roster, sample.role)
+        role_header(console, roster, challenge.role)
 
     header = Table.grid(padding=(0, 2))
     header.add_column(style="bold")
     header.add_column()
-    header.add_row("sample", f"[bold]{sample.id}[/bold]")
-    header.add_row("role", sample.role)
-    header.add_row("test type", f"[{style}]{sample.test_type}[/]")
-    if sample.boundary:
-        header.add_row("boundary", f"{sample.boundary} ({sample.half.value if sample.half else ''})")
-    if sample.against:
-        header.add_row("against", sample.against)
-    if sample.trait:
-        header.add_row("trait", sample.trait)
+    header.add_row("challenge", f"[bold]{challenge.id}[/bold]")
+    header.add_row("role", challenge.role)
+    header.add_row("test type", f"[{style}]{challenge.test_type}[/]")
+    if challenge.boundary:
+        header.add_row("boundary", f"{challenge.boundary} ({challenge.half.value if challenge.half else ''})")
+    if challenge.against:
+        header.add_row("against", challenge.against)
+    if challenge.trait:
+        header.add_row("trait", challenge.trait)
     header.add_row("progress", progress(position, total, started))
     console.print(header)
     console.print()
 
-    console.print(Panel(sample.prompt, title="prompt", border_style="dim"))
+    console.print(Panel(challenge.prompt, title="prompt", border_style="dim"))
     words = len(entry.output.split())
     console.print(
         Panel(
             entry.output,
-            title=f"output ({words} words, cap {sample.word_cap(profile)})",
+            title=f"output ({words} words, cap {challenge.word_cap(profile)})",
             border_style=style,
         )
     )
-    console.print(Panel(sample.target, title="target", border_style="green"))
+    console.print(Panel(challenge.target, title="target", border_style="green"))
 
-    keys = LABEL_SETS[sample.label_set(profile)]
+    keys = LABEL_SETS[challenge.label_set(profile)]
     hints = "    ".join(f"[bold]{key}[/bold] {LABEL_HELP[label]}" for key, label in keys.items())
     console.print(f"{hints}    [bold]s[/bold] skip    [bold]q[/bold] quit")
 
@@ -167,7 +167,7 @@ def annotate_session(
     started = time.monotonic()
 
     for index, entry in enumerate(pending, start=1):
-        keys = LABEL_SETS[entry.sample.label_set(profile)]
+        keys = LABEL_SETS[entry.challenge.label_set(profile)]
         while True:
             render(console, entry, index, len(pending), started, profile, roster)
             key = read_key().lower()

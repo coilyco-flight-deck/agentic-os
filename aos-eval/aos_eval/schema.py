@@ -1,6 +1,6 @@
 """The shared contract between an eval runner and the humans who grade it.
 
-Vocabulary follows the references where they have a word for something. Sample,
+Vocabulary follows the references where they have a word for something. Challenge,
 dataset, and target are Inspect's. Test type is CheckList's. Annotation, label,
 and critique are Phoenix's and Hamel's.
 
@@ -54,7 +54,7 @@ class TestTypeSpec:
     name: str
     label_set: str = "binary"
     word_cap: int = DEFAULT_WORD_CAP
-    # Sample fields a case of this type cannot omit. A missing field here is a
+    # Challenge fields a case of this type cannot omit. A missing field here is a
     # case that looks graded and is not.
     requires: tuple[str, ...] = ()
 
@@ -117,8 +117,13 @@ AGENT_COMPOSE = Profile(
 )
 
 
-class Sample(BaseModel):
-    """One authored case: an input, and a target that says what passing means."""
+class Challenge(BaseModel):
+    """One question put to the subject, and a target saying what passing means.
+
+    A roster derives it unwritten, carrying only what the roster knows, and a
+    human writes the prompt into it. Both states are one type, so `written` is
+    the gate rather than a second model. See docs/aos-eval.md.
+    """
 
     model_config = ConfigDict(frozen=True, extra="ignore")
 
@@ -127,31 +132,35 @@ class Sample(BaseModel):
     # one deployment, a deployed agent in another.
     role: str
     test_type: str
-    prompt: str
-    target: str
+    prompt: str | None = None
+    target: str | None = None
     boundary: str | None = None
     half: Half | None = None
     pair_id: str | None = None
     against: str | None = None
     trait: str | None = None
+    seed: str = ""
+
+    @property
+    def written(self) -> bool:
+        return bool(self.prompt and self.target)
 
     @model_validator(mode="after")
-    def _check_pairing(self) -> Sample:
+    def _check_pairing(self) -> Challenge:
         if bool(self.half) != bool(self.pair_id):
             raise ValueError(f"{self.id}: half and pair_id travel together or not at all")
         return self
 
     def check_against(self, profile: Profile) -> list[str]:
-        """Profile-level shape, kept off the validator so a Sample stays portable."""
+        """Profile-level shape, kept off the validator so a Challenge stays portable."""
         try:
             spec = profile.spec(self.test_type)
         except KeyError as unknown:
             return [str(unknown)]
-        return [
-            f"{self.id}: {self.test_type} sample needs {name}"
-            for name in spec.requires
-            if getattr(self, name, None) is None
-        ]
+        missing = [name for name in spec.requires if getattr(self, name, None) is None]
+        if not self.written:
+            missing.append("prompt" if not self.prompt else "target")
+        return [f"{self.id}: {self.test_type} challenge needs {name}" for name in missing]
 
     def label_set(self, profile: Profile) -> str:
         return profile.spec(self.test_type).label_set
@@ -161,11 +170,11 @@ class Sample(BaseModel):
 
 
 class Response(BaseModel):
-    """One run of one sample. Inspect calls the repetition an epoch."""
+    """One run of one challenge. Inspect calls the repetition an epoch."""
 
     model_config = ConfigDict(frozen=True)
 
-    sample_id: str
+    challenge_id: str
     epoch: int
     text: str
     finish_reason: str = "stop"
@@ -182,7 +191,7 @@ class Response(BaseModel):
 
 
 class RunRecord(BaseModel):
-    """A sample measured over N runs, for a runner that scores intermittency.
+    """A challenge measured over N runs, for a runner that scores intermittency.
 
     A single-run board has no use for this. A live-harness board cannot report
     without it, because the defect it hunts appears in 2 runs out of 10.
@@ -190,7 +199,7 @@ class RunRecord(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    sample_id: str
+    challenge_id: str
     runs: int
     passed: int = 0
     failed: int = 0
@@ -221,26 +230,32 @@ class Provenance(BaseModel):
 
 
 class DatasetEntry(BaseModel):
-    """An authored sample carrying the output to annotate."""
+    """A written challenge carrying the output to annotate."""
 
     model_config = ConfigDict(frozen=True)
 
-    sample: Sample
+    challenge: Challenge
     output: str
+
+    @model_validator(mode="after")
+    def _check_written(self) -> DatasetEntry:
+        if not self.challenge.written:
+            raise ValueError(f"{self.challenge.id}: an unwritten challenge cannot be annotated")
+        return self
 
     @property
     def id(self) -> str:
-        return self.sample.id
+        return self.challenge.id
 
     def to_dict(self) -> dict[str, Any]:
-        """Flattened so a dataset file reads as one record per sample."""
-        payload = self.sample.model_dump(mode="json", exclude_none=True)
+        """Flattened so a dataset file reads as one record per challenge."""
+        payload = self.challenge.model_dump(mode="json", exclude_none=True)
         payload["output"] = self.output
         return payload
 
     @classmethod
     def from_dict(cls, raw: dict[str, Any]) -> DatasetEntry:
-        return cls(sample=Sample.model_validate(raw), output=str(raw["output"]))
+        return cls(challenge=Challenge.model_validate(raw), output=str(raw["output"]))
 
 
 class Annotation(BaseModel):
@@ -298,23 +313,23 @@ def annotation_order(
     profile: Profile = AGENT_COMPOSE,
     group_order: list[str] | None = None,
 ) -> list[DatasetEntry]:
-    """Group-major, so an annotator holds one charter across a group's samples.
+    """Group-major, so an annotator holds one charter across a group's challenges.
 
     Test-type-major degrades more gracefully, but annotation is resumable and
     group context is the expensive thing to reload.
     """
     order = list(group_order or profile.group_order) or sorted(
-        {entry.sample.role for entry in dataset}
+        {entry.challenge.role for entry in dataset}
     )
     boundaries = list(profile.boundary_order)
 
     def key(entry: DatasetEntry) -> tuple[int, int, int, str]:
-        sample = entry.sample
-        group_rank = order.index(sample.role) if sample.role in order else len(order)
+        challenge = entry.challenge
+        group_rank = order.index(challenge.role) if challenge.role in order else len(order)
         boundary_rank = (
-            boundaries.index(sample.boundary) if sample.boundary in boundaries else 0
+            boundaries.index(challenge.boundary) if challenge.boundary in boundaries else 0
         )
-        return (group_rank, profile.rank(sample.test_type), boundary_rank, entry.id)
+        return (group_rank, profile.rank(challenge.test_type), boundary_rank, entry.id)
 
     return sorted(dataset, key=key)
 
@@ -325,15 +340,15 @@ def pair_results(
     """Every pair the dataset declares, scored only where both halves are graded."""
     pairs: dict[str, PairResult] = {}
     for entry in dataset:
-        sample = entry.sample
-        if sample.pair_id is None or sample.half is None:
+        challenge = entry.challenge
+        if challenge.pair_id is None or challenge.half is None:
             continue
         annotation = annotations.get(entry.id)
         if annotation is None or not isinstance(annotation.label, Verdict):
             continue
         pair = pairs.setdefault(
-            sample.pair_id,
-            PairResult(pair_id=sample.pair_id, role=sample.role, boundary=sample.boundary or ""),
+            challenge.pair_id,
+            PairResult(pair_id=challenge.pair_id, role=challenge.role, boundary=challenge.boundary or ""),
         )
-        pair.halves[sample.half.value] = annotation.label
+        pair.halves[challenge.half.value] = annotation.label
     return sorted(pairs.values(), key=lambda pair: pair.pair_id)
