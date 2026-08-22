@@ -1330,3 +1330,111 @@ func TestNativeSweepReapsFullyPushedBranchesOnly(t *testing.T) {
 		t.Fatalf("session namespace was reaped, which breaks ID uniqueness: %s", branches)
 	}
 }
+
+// Ten leases sat eleven days holding commits with no second copy, and nothing
+// said so. Preserving them is right; the silence is the defect. agentic-os#1084
+func TestAPurgedWorktreeHoldingUnpushedCommitsIsReported(t *testing.T) {
+	root := t.TempDir()
+	createNativeTestRepository(t, root, "owner", "one")
+	runtime := nativeTestRuntime(t, root)
+	stderr := captureNativeStderr(t, &runtime)
+	writeNativeTestPlan(t, runtime.PlanFile, "one")
+	writeNativeTestList(t, runtime.FleetFile, "owner")
+	if _, err := prepareNativeLaunch(runtime, "codex"); err != nil {
+		t.Fatal(err)
+	}
+	leasePath, lease := onlyNativeLease(t, runtime)
+	worktree := lease.Artifacts[0].Worktree
+	testGit(t, worktree, "config", "user.email", "test@example.com")
+	testGit(t, worktree, "config", "user.name", "AOS Test")
+	if err := os.WriteFile(filepath.Join(worktree, "local.txt"), []byte("local\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	testGit(t, worktree, "add", "local.txt")
+	testGit(t, worktree, "commit", "-m", "local only")
+
+	// The state the issue measured: the worktree is gone, so the branch ref is
+	// the only copy of that commit.
+	if err := os.RemoveAll(worktree); err != nil {
+		t.Fatal(err)
+	}
+	lease.PID = 0
+	lease.ProcessStart = ""
+	deadSince := runtime.Now.Add(-nativeDeadSessionGrace)
+	lease.DeadSince = &deadSince
+	if err := writeNativeJSON(leasePath, lease); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := cleanDeadNativeSessions(runtime); err != nil {
+		t.Fatal(err)
+	}
+
+	report := stderr()
+	if !strings.Contains(report, "hold 1 unpushed commit(s)") {
+		t.Fatalf("stuck lease was not surfaced: %q", report)
+	}
+	if !strings.Contains(report, lease.Artifacts[0].Branch) {
+		t.Fatalf("report does not name the branch to act on: %q", report)
+	}
+	// Still preserved. Reporting must not become deleting.
+	if _, err := nativeGit(lease.Artifacts[0].Repository,
+		"show-ref", "--verify", "--quiet", "refs/heads/"+lease.Artifacts[0].Branch); err != nil {
+		t.Fatal("the branch holding the only copy was deleted")
+	}
+}
+
+func TestAFullyPushedPurgedWorktreeIsNotReported(t *testing.T) {
+	// The control. A branch git can recover from origin releases silently, and
+	// a line about it every launch is noise that trains the eye past the real one.
+	root := t.TempDir()
+	createNativeTestRepository(t, root, "owner", "one")
+	runtime := nativeTestRuntime(t, root)
+	stderr := captureNativeStderr(t, &runtime)
+	writeNativeTestPlan(t, runtime.PlanFile, "one")
+	writeNativeTestList(t, runtime.FleetFile, "owner")
+	if _, err := prepareNativeLaunch(runtime, "codex"); err != nil {
+		t.Fatal(err)
+	}
+	leasePath, lease := onlyNativeLease(t, runtime)
+	if err := os.RemoveAll(lease.Artifacts[0].Worktree); err != nil {
+		t.Fatal(err)
+	}
+	lease.PID = 0
+	lease.ProcessStart = ""
+	deadSince := runtime.Now.Add(-nativeDeadSessionGrace)
+	lease.DeadSince = &deadSince
+	if err := writeNativeJSON(leasePath, lease); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := cleanDeadNativeSessions(runtime); err != nil {
+		t.Fatal(err)
+	}
+
+	if report := stderr(); strings.Contains(report, "unpushed commit") {
+		t.Fatalf("a recoverable branch was reported as stuck: %q", report)
+	}
+}
+
+// nativeRuntime.Stderr is an *os.File, so a test reads the report back off disk.
+func captureNativeStderr(t *testing.T, runtime *nativeRuntime) func() string {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), "stderr.log")
+	file, err := os.Create(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = file.Close() })
+	runtime.Stderr = file
+	return func() string {
+		if err := file.Sync(); err != nil {
+			t.Fatal(err)
+		}
+		raw, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return string(raw)
+	}
+}

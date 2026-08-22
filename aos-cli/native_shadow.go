@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -639,6 +640,7 @@ func cleanDeadNativeSessions(runtime nativeRuntime) (nativeLiveWorktrees, error)
 	}
 	live := nativeLiveWorktrees{}
 	released := 0
+	stuck := []nativeStuckArtifact{}
 	runtime.Progress.Note("%d lease(s) on disk", len(entries))
 	held := make([]nativeHeldLease, 0, len(entries))
 	pids := make([]int, 0, len(entries))
@@ -699,6 +701,11 @@ func cleanDeadNativeSessions(runtime nativeRuntime) (nativeLiveWorktrees, error)
 			}
 			if !cleaned {
 				remaining = append(remaining, artifact)
+				if expired {
+					if item, ok := nativeStuckReading(lease.ID, artifact); ok {
+						stuck = append(stuck, item)
+					}
+				}
 			}
 		}
 		if len(remaining) < len(lease.Artifacts) {
@@ -724,7 +731,61 @@ func cleanDeadNativeSessions(runtime nativeRuntime) (nativeLiveWorktrees, error)
 			return nativeLiveWorktrees{}, fmt.Errorf("remove native lease: %w", err)
 		}
 	}
+	reportNativeStuckLeases(runtime, stuck)
 	return live, nil
+}
+
+// A purged worktree whose branch holds local-only commits is preserved forever,
+// correctly. Silence about it is the defect. docs/native-session-start.md
+type nativeStuckArtifact struct {
+	session  string
+	artifact nativeArtifact
+	unpushed int
+}
+
+// Stuck only once the worktree is gone. One still on disk is work a later pass
+// can release, which is a different and recoverable state.
+func nativeStuckReading(session string, artifact nativeArtifact) (nativeStuckArtifact, bool) {
+	if _, err := os.Stat(artifact.Worktree); !errors.Is(err, fs.ErrNotExist) {
+		return nativeStuckArtifact{}, false
+	}
+	if artifact.Branch == "" || artifact.Branch == "main" {
+		return nativeStuckArtifact{}, false
+	}
+	count, err := nativeGit(artifact.Repository, "rev-list", "--count",
+		"refs/heads/"+artifact.Branch, "--not", "--remotes=origin")
+	if err != nil {
+		return nativeStuckArtifact{}, false
+	}
+	unpushed, err := strconv.Atoi(strings.TrimSpace(count))
+	if err != nil || unpushed == 0 {
+		return nativeStuckArtifact{}, false
+	}
+	return nativeStuckArtifact{session: session, artifact: artifact, unpushed: unpushed}, true
+}
+
+// One line: the branches are named so an operator acts without opening leases.
+func reportNativeStuckLeases(runtime nativeRuntime, stuck []nativeStuckArtifact) {
+	if len(stuck) == 0 {
+		return
+	}
+	commits := 0
+	repositories := map[string]bool{}
+	names := make([]string, 0, len(stuck))
+	for _, item := range stuck {
+		commits += item.unpushed
+		repositories[filepath.Base(item.artifact.Repository)] = true
+		names = append(names, filepath.Base(item.artifact.Repository)+" "+item.artifact.Branch)
+	}
+	sort.Strings(names)
+	scope := fmt.Sprintf("%d repositories", len(repositories))
+	if len(repositories) == 1 {
+		scope = "1 repository"
+	}
+	fmt.Fprintf(runtime.Stderr,
+		"aos: %d dead session branch(es) hold %d unpushed commit(s) in %s and "+
+			"nothing will release them: %s. Push or delete each branch.\n",
+		len(stuck), commits, scope, strings.Join(names, ", "))
 }
 
 func nativeLeaseIsLive(lease nativeLease) bool {
