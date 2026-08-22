@@ -949,6 +949,7 @@ func runNativeWorkspaceSweep(
 		}
 	}
 	pass.Done("")
+	reportNativeResidentDrift(runtime, repositories, live)
 	scan := runtime.Progress.Step("scan for unexpected clones")
 	next := map[string]nativeCandidate{}
 	for _, repository := range scanNativeRepositories(runtime.ProjectsRoot) {
@@ -986,6 +987,69 @@ func runNativeWorkspaceSweep(
 		return fmt.Errorf("write native sweep state: %w", err)
 	}
 	return nil
+}
+
+// Normalization leaves exactly these cases alone, and they change what a tool
+// reading the checkout composes. docs/native-session-start.md
+type nativeResidentDrift struct {
+	path    string
+	branch  string
+	reasons []string
+}
+
+// readNativeResidentDrift reports only what normalization could not correct. A
+// detached HEAD is deliberate here, since that is how a shadow releases main.
+func readNativeResidentDrift(repository nativeRepository) (nativeResidentDrift, bool) {
+	if humanWorkdir(repository.Path) {
+		return nativeResidentDrift{}, false
+	}
+	branch, err := nativeGit(repository.Path, "symbolic-ref", "--short", "-q", "HEAD")
+	if err != nil || branch == "" {
+		return nativeResidentDrift{}, false
+	}
+	drift := nativeResidentDrift{path: repository.Path, branch: branch}
+	if clean, err := nativeWorktreeClean(repository.Path, false); err == nil && !clean {
+		drift.reasons = append(drift.reasons, "dirty")
+	}
+	if safe, err := nativeHeadIsRemote(repository.Path); err == nil && !safe {
+		drift.reasons = append(drift.reasons, "unpushed")
+	}
+	if branch == "main" && len(drift.reasons) == 0 {
+		return nativeResidentDrift{}, false
+	}
+	return drift, true
+}
+
+// One line, matching the dead-lease report: drift is only actionable once
+// someone can see all of it at once.
+func reportNativeResidentDrift(
+	runtime nativeRuntime,
+	repositories []nativeRepository,
+	live nativeLiveWorktrees,
+) {
+	readings := make([]string, 0, len(repositories))
+	for _, repository := range repositories {
+		if live.contains(repository.Path) {
+			continue
+		}
+		drift, ok := readNativeResidentDrift(repository)
+		if !ok {
+			continue
+		}
+		reading := filepath.Base(drift.path) + " on " + drift.branch
+		if len(drift.reasons) > 0 {
+			reading += " (" + strings.Join(drift.reasons, ", ") + ")"
+		}
+		readings = append(readings, reading)
+	}
+	if len(readings) == 0 {
+		return
+	}
+	sort.Strings(readings)
+	fmt.Fprintf(runtime.Stderr,
+		"aos: %d resident checkout(s) are not clean on main, so a tool reading one "+
+			"composes something other than origin: %s\n",
+		len(readings), strings.Join(readings, ", "))
 }
 
 func normalizeNativeRepository(

@@ -1438,3 +1438,94 @@ func captureNativeStderr(t *testing.T, runtime *nativeRuntime) func() string {
 		return string(raw)
 	}
 }
+
+// Six of twelve resident checkouts were off main and nothing said so, and one
+// of them silently changed what a composed artifact recorded. agentic-os#1033
+func TestAResidentCheckoutOffMainIsReported(t *testing.T) {
+	root := t.TempDir()
+	createNativeTestRepository(t, root, "owner", "one")
+	repository := nativeRepository{
+		Owner: "owner", Name: "one",
+		Path: filepath.Join(root, "projects", "owner", "one"),
+	}
+	testGit(t, repository.Path, "switch", "-c", "feature/drifted")
+
+	drift, ok := readNativeResidentDrift(repository)
+
+	if !ok {
+		t.Fatal("a checkout off main was not reported")
+	}
+	if drift.branch != "feature/drifted" {
+		t.Fatalf("wrong branch reported: %q", drift.branch)
+	}
+}
+
+func TestACleanCheckoutOnMainIsSilent(t *testing.T) {
+	// The control. A line every launch on a healthy fleet trains the eye past
+	// the one that matters.
+	root := t.TempDir()
+	createNativeTestRepository(t, root, "owner", "one")
+	repository := nativeRepository{
+		Owner: "owner", Name: "one",
+		Path: filepath.Join(root, "projects", "owner", "one"),
+	}
+
+	if _, ok := readNativeResidentDrift(repository); ok {
+		t.Fatal("a clean checkout on main was reported as drifted")
+	}
+}
+
+func TestADirtyCheckoutOnMainIsStillReported(t *testing.T) {
+	// Being on main is not enough: uncommitted changes alter what a tool reads.
+	root := t.TempDir()
+	createNativeTestRepository(t, root, "owner", "one")
+	repository := nativeRepository{
+		Owner: "owner", Name: "one",
+		Path: filepath.Join(root, "projects", "owner", "one"),
+	}
+	if err := os.WriteFile(filepath.Join(repository.Path, "scratch.txt"),
+		[]byte("uncommitted\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	drift, ok := readNativeResidentDrift(repository)
+
+	if !ok || !slices.Contains(drift.reasons, "dirty") {
+		t.Fatalf("a dirty checkout on main was not reported: %+v", drift)
+	}
+}
+
+func TestADetachedCheckoutIsNotDrift(t *testing.T) {
+	// Detaching is how a shadow releases main, so it must not read as drift.
+	root := t.TempDir()
+	createNativeTestRepository(t, root, "owner", "one")
+	repository := nativeRepository{
+		Owner: "owner", Name: "one",
+		Path: filepath.Join(root, "projects", "owner", "one"),
+	}
+	testGit(t, repository.Path, "switch", "--detach")
+
+	if _, ok := readNativeResidentDrift(repository); ok {
+		t.Fatal("a detached checkout was reported as drifted")
+	}
+}
+
+func TestALiveSessionsCheckoutIsNotReported(t *testing.T) {
+	root := t.TempDir()
+	createNativeTestRepository(t, root, "owner", "one")
+	runtime := nativeTestRuntime(t, root)
+	stderr := captureNativeStderr(t, &runtime)
+	repository := nativeRepository{
+		Owner: "owner", Name: "one",
+		Path: filepath.Join(root, "projects", "owner", "one"),
+	}
+	testGit(t, repository.Path, "switch", "-c", "feature/drifted")
+	live := nativeLiveWorktrees{}
+	live.add(repository.Path)
+
+	reportNativeResidentDrift(runtime, []nativeRepository{repository}, live)
+
+	if report := stderr(); strings.Contains(report, "resident checkout") {
+		t.Fatalf("a checkout a live session holds was reported: %q", report)
+	}
+}
