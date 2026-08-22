@@ -240,7 +240,7 @@ func newCommandWithDefaults(name string, defaults launchDefaults) *cli.Command {
 			},
 			{
 				Name:      "acompose",
-				Usage:     "launch a composed agent in the AOS image",
+				Usage:     "launch a standalone composed agent in the AOS image (no Ward: use the root action for --warded)",
 				ArgsUsage: "-- <harness> [args...]",
 				Action:    runAcompose,
 			},
@@ -359,7 +359,37 @@ func newCommandWithDefaults(name string, defaults launchDefaults) *cli.Command {
 	}
 }
 
+// The legacy subcommand honors none of these. --composed is absent on purpose:
+// it is a documented no-op rather than a dropped capability.
+var acomposeRefusedFlags = []string{"warded", "guarded", "agent"}
+
+func refuseIntegratedFlags(cmd *cli.Command) error {
+	ignored := make([]string, 0, len(acomposeRefusedFlags))
+	for _, name := range acomposeRefusedFlags {
+		if cmd.IsSet(name) {
+			ignored = append(ignored, "--"+name)
+		}
+	}
+	if len(ignored) == 0 {
+		return nil
+	}
+	return fmt.Errorf(
+		"acompose does not honor %s: it launches a standalone AOS container "+
+			"with no Ward lifecycle and no broker boundary.\n"+
+			"For the integrated launch, use the root action:\n"+
+			"  aos --warded --guarded --composed --role <role> --agent <agent>\n"+
+			"For the standalone container, keep the documented form:\n"+
+			"  aos --role <role> acompose -- <harness>",
+		strings.Join(ignored, " "),
+	)
+}
+
 func runAcompose(ctx context.Context, cmd *cli.Command) error {
+	// Before validateLegacyDensity and before any fleet work: the point is to
+	// stop ahead of materialization, not to report after it. agentic-os#810.
+	if err := refuseIntegratedFlags(cmd); err != nil {
+		return err
+	}
 	if err := validateLegacyDensity(cmd.String("density")); err != nil {
 		return err
 	}
