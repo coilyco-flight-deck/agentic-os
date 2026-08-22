@@ -48,8 +48,21 @@ def should_skip(rel: Path | str) -> bool:
 
 
 def is_repo_content(rel: Path | str, root: Path | None = None) -> bool:
-    """Whether a walking hook should read this repo-relative path."""
+    """Whether a hook walking the repository root should read this path."""
     return not should_skip(rel) and not is_build_output(rel, root)
+
+
+def carries_content(rel: Path | str, root: Path | None = None) -> bool:
+    """The build-output half alone, for a hook whose walk root is skipped.
+
+    `.claude/skills` and friends sit inside `SKIP_DIR_NAMES`, so asking
+    `is_repo_content` there is not a filter on the walk but a veto on the whole
+    hook: every entry answers False and the hook exits clean having read
+    nothing. A hook that deliberately walks into a skip-set directory asks this
+    instead, which still excludes a bake and still fails open. See
+    agentic-os#1183.
+    """
+    return not is_build_output(rel, root)
 
 
 def walk_files(root: Path, pattern: str = "*") -> Iterator[Path]:

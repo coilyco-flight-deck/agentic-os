@@ -27,7 +27,7 @@ from agentic_os.generators.generate_repo_pointer_skill import (
     SKILL_PREFIX,
     check_drift,
 )
-from agentic_os.pre_commit.tree import is_repo_content
+from agentic_os.pre_commit.tree import carries_content
 
 HOOK_ID = "repo-pointer-skills"
 TRACKER = "docs/features-agents.md"
@@ -71,7 +71,7 @@ def main() -> int:
     for d in sorted(skills_dir.glob(f"{SKILL_PREFIX}*")):
         if not d.is_dir() or d.is_symlink():
             continue
-        if not is_repo_content(d.relative_to(root), root):
+        if not carries_content(d.relative_to(root), root):
             continue
         skill_md = d / "SKILL.md"
         if not skill_md.is_file():

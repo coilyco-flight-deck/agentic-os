@@ -367,3 +367,17 @@ def test_a_hand_written_preamble_keeps_its_blank_line(tmp_path: Path) -> None:
     assert script.render_config("repos:", block) == "repos:\n" + block
     local = "repos:\n  - repo: local\n    hooks:\n      - id: mine"
     assert script.render_config(local, block) == local + "\n\n" + block
+
+
+def test_this_repos_own_typos_entry_matches_the_block_it_ships() -> None:
+    # The repo that authors the block did not run it, so its own config drifted
+    # to `args: []` and its .typos.toml path excludes went inert. #1186.
+    script = _load_script()
+    generated = script.managed_block("v2.0.0")
+    own = (Path(__file__).resolve().parent.parent / ".pre-commit-config.yaml").read_text(
+        encoding="utf-8"
+    )
+
+    assert "args: [--force-exclude]" in generated
+    typos_entry = own.split("- id: typos", 1)[1].split("- repo:", 1)[0]
+    assert "--force-exclude" in typos_entry, typos_entry

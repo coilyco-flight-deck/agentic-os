@@ -8,7 +8,7 @@ from pathlib import Path
 
 from agentic_os.config import is_enabled
 from agentic_os.pre_commit import check_skill
-from agentic_os.pre_commit.tree import is_repo_content
+from agentic_os.pre_commit.tree import carries_content
 
 HOOK_ID = "check-composed-skills"
 
@@ -42,7 +42,7 @@ def layout_problems(repo_root: Path) -> list[str]:
         if entry.name.startswith("."):
             continue
         rel = entry.relative_to(repo_root)
-        if not is_repo_content(rel, repo_root):
+        if not carries_content(rel, repo_root):
             continue
         if entry.is_symlink() or not entry.is_dir():
             problems.append(f"{rel}: composed entries must be real directories")

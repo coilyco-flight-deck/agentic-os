@@ -1,5 +1,5 @@
-# Path exclusion binds only because the generated hook passes --force-exclude:
-# pre-commit hands typos explicit paths. See agentic-os#969 and #1152.
+# extend-exclude binds only with --force-exclude, since pre-commit hands typos
+# explicit paths. Keep it on this repo's own hook entry. agentic-os#1186.
 [files]
 extend-exclude = [
   "*.json",

@@ -276,7 +276,7 @@ def scan_yaml(
     header_lines = 0
     streak_start: int | None = None
     streak_len = 0
-    managed = False
+    managed_from: int | None = None
     for line_no, line in enumerate(lines, start=1):
         indent = len(line) - len(line.lstrip())
         if block_indent is not None:
@@ -287,14 +287,14 @@ def scan_yaml(
             block_indent = None
         if is_comment_line(line, suffix, line_no):
             if MANAGED_END_RE.match(line):
-                managed = False
+                managed_from = None
                 streak_start, streak_len = None, 0
                 continue
             if MANAGED_BEGIN_RE.match(line):
-                managed = True
+                managed_from = line_no
                 streak_start, streak_len = None, 0
                 continue
-            if managed:
+            if managed_from is not None:
                 continue
             if len(line) > MAX_COMMENT_LINE_CHARS:
                 violations.append(char_cap_violation(rel, line_no, line))
@@ -328,7 +328,17 @@ def scan_yaml(
             seen_content = True
         if starts_block_scalar(line):
             block_indent = indent
+    if managed_from is not None:
+        violations.append(unterminated_region_violation(rel, managed_from))
     return violations
+
+
+def unterminated_region_violation(rel: Path, start: int) -> str:
+    return (
+        f"{rel.as_posix()}:{start}: managed region opened here and never closed. "
+        f"Everything after it is exempt, so an unterminated marker is a silent "
+        f"whole-file opt-out. Close it with a matching `# END managed by ...`."
+    )
 
 
 def streak_violation(

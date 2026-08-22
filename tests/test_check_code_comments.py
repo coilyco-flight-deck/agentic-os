@@ -382,3 +382,21 @@ def test_a_marker_inside_a_block_scalar_is_not_a_marker() -> None:
     violations = scan_lines(Path("v.yaml"), ".yaml", lines)
     assert len(violations) == 1
     assert "v.yaml:5" in violations[0]
+
+
+def test_an_unterminated_managed_region_fails(tmp_path: Path) -> None:
+    # The region latched on and nothing cleared it at EOF, so one hand-written
+    # line matching the prefix silently exempted the rest. agentic-os#1185.
+    lines = ["repos:", "  - repo: local", BEGIN, *GENERATED]
+    violations = scan_lines(Path("v.yaml"), ".yaml", lines)
+
+    assert len(violations) == 1
+    assert "v.yaml:3" in violations[0]
+    assert "never closed" in violations[0]
+
+
+def test_a_closed_region_is_still_silent(tmp_path: Path) -> None:
+    # The control, so the fix cannot become "flag every managed region".
+    lines = ["repos:", "  - repo: local", BEGIN, *GENERATED, END]
+
+    assert scan_lines(Path("v.yaml"), ".yaml", lines) == []

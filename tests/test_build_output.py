@@ -213,3 +213,27 @@ def test_every_walker_shares_one_skip_set() -> None:
         mod = __import__(f"agentic_os.pre_commit.{module}", fromlist=["_"])
         own = getattr(mod, "SKIP_DIR_NAMES", None)
         assert own is None or own is tree.SKIP_DIR_NAMES, module
+
+
+def test_a_hook_walking_into_a_skip_dir_still_checks_it(tmp_path: Path) -> None:
+    # `.claude` is in SKIP_DIR_NAMES, so a hook rooted at .claude/skills got a
+    # veto rather than a filter and exited clean having read nothing. #1183.
+    from agentic_os.pre_commit import tree
+
+    _checkout(tmp_path, ignore="agent/bundles/")
+    _write(tmp_path, ".claude/skills/repo-x/SKILL.md", "")
+    _git(tmp_path, "add", "-A")
+    config.reset_build_output_cache()
+
+    assert tree.is_repo_content(".claude/skills/repo-x", tmp_path) is False
+    assert tree.carries_content(".claude/skills/repo-x", tmp_path) is True
+
+
+def test_the_skipped_walk_root_gate_still_excludes_a_bake(tmp_path: Path) -> None:
+    # The control. Dropping should_skip must not drop the build-output half.
+    from agentic_os.pre_commit import tree
+
+    _checkout(tmp_path, ignore="agent/bundles/")
+    config.reset_build_output_cache()
+
+    assert tree.carries_content("agent/bundles/qa", tmp_path) is False
