@@ -92,11 +92,29 @@ jobs:
     steps:
       - if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.tier == 'all' || github.event.inputs.tier == matrix.tier || github.event.inputs.tier == 'full' }}
         uses: actions/checkout@v6
-      - if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.tier == 'all' || github.event.inputs.tier == matrix.tier || github.event.inputs.tier == 'full' }}
+      - id: payload
+        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.tier == 'all' || github.event.inputs.tier == matrix.tier || github.event.inputs.tier == 'full' }}
+        continue-on-error: true
         uses: ./actions/publish-dev-base
         with:
           tier: ${{ matrix.tier }}
           tag: ${{ needs.plan-draft.outputs.draft_tag }}
+          registry-token: ${{ secrets.REGISTRY_TOKEN }}
+      - name: Retry the payload once, contract in actions/publish-dev-base
+        if: ${{ steps.payload.outcome == 'failure' }}
+        uses: ./actions/publish-dev-base
+        with:
+          tier: ${{ matrix.tier }}
+          tag: ${{ needs.plan-draft.outputs.draft_tag }}
+          registry-token: ${{ secrets.REGISTRY_TOKEN }}
+      - name: Assert the payload actually landed, not just that the job is green
+        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.tier == 'all' || github.event.inputs.tier == matrix.tier || github.event.inputs.tier == 'full' }}
+        uses: ./actions/publish-dev-base
+        with:
+          tier: ${{ matrix.tier }}
+          mode: verify
+          tag: ${{ needs.plan-draft.outputs.draft_tag }}
+          source-tag: ${{ needs.plan-draft.outputs.draft_tag }}
           registry-token: ${{ secrets.REGISTRY_TOKEN }}
       - name: Alert Telegram on release failure
         if: ${{ failure() && github.ref == 'refs/heads/release' }}

@@ -22,8 +22,8 @@ LABEL org.opencontainers.image.source="https://forgejo.coilysiren.me/coilyco-fli
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.title="agentic-os Node build payload"
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-RUN --mount=type=bind,source=write-arch-env.sh,target=/tmp/write-arch-env.sh \
-    TARGETARCH="${TARGETARCH}" bash /tmp/write-arch-env.sh
+RUN --mount=type=bind,source=prepare-build-stage.sh,target=/tmp/prepare-build-stage.sh \
+    TARGETARCH="${TARGETARCH}" bash /tmp/prepare-build-stage.sh
 RUN set -eux; . /opt/agentic-os/arch.env; \
     apt-get update; apt-get install -y --no-install-recommends ca-certificates curl xz-utils; \
     rm -rf /var/lib/apt/lists/*; \
@@ -43,8 +43,8 @@ LABEL org.opencontainers.image.source="https://forgejo.coilysiren.me/coilyco-fli
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.title="agentic-os Go build payload"
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-RUN --mount=type=bind,source=write-arch-env.sh,target=/tmp/write-arch-env.sh \
-    TARGETARCH="${TARGETARCH}" bash /tmp/write-arch-env.sh
+RUN --mount=type=bind,source=prepare-build-stage.sh,target=/tmp/prepare-build-stage.sh \
+    TARGETARCH="${TARGETARCH}" bash /tmp/prepare-build-stage.sh
 RUN set -eux; . /opt/agentic-os/arch.env; \
     apt-get update; apt-get install -y --no-install-recommends ca-certificates curl; \
     rm -rf /var/lib/apt/lists/*; \
@@ -61,8 +61,8 @@ LABEL org.opencontainers.image.source="https://forgejo.coilysiren.me/coilyco-fli
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.title="agentic-os .NET build payload"
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-RUN --mount=type=bind,source=write-arch-env.sh,target=/tmp/write-arch-env.sh \
-    TARGETARCH="${TARGETARCH}" bash /tmp/write-arch-env.sh
+RUN --mount=type=bind,source=prepare-build-stage.sh,target=/tmp/prepare-build-stage.sh \
+    TARGETARCH="${TARGETARCH}" bash /tmp/prepare-build-stage.sh
 RUN set -eux; . /opt/agentic-os/arch.env; \
     apt-get update; apt-get install -y --no-install-recommends ca-certificates curl; \
     rm -rf /var/lib/apt/lists/*; \
@@ -85,8 +85,8 @@ LABEL org.opencontainers.image.source="https://forgejo.coilysiren.me/coilyco-fli
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.title="agentic-os Rust build payload"
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-RUN --mount=type=bind,source=write-arch-env.sh,target=/tmp/write-arch-env.sh \
-    TARGETARCH="${TARGETARCH}" bash /tmp/write-arch-env.sh
+RUN --mount=type=bind,source=prepare-build-stage.sh,target=/tmp/prepare-build-stage.sh \
+    TARGETARCH="${TARGETARCH}" bash /tmp/prepare-build-stage.sh
 RUN set -eux; apt-get update; apt-get install -y --no-install-recommends \
       build-essential ca-certificates curl libasound2-dev libudev-dev \
       libwayland-dev libxkbcommon-dev pkg-config; \
@@ -150,8 +150,8 @@ LABEL org.opencontainers.image.source="https://forgejo.coilysiren.me/coilyco-fli
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.title="agentic-os Python build payload"
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-RUN --mount=type=bind,source=write-arch-env.sh,target=/tmp/write-arch-env.sh \
-    TARGETARCH="${TARGETARCH}" bash /tmp/write-arch-env.sh
+RUN --mount=type=bind,source=prepare-build-stage.sh,target=/tmp/prepare-build-stage.sh \
+    TARGETARCH="${TARGETARCH}" bash /tmp/prepare-build-stage.sh
 RUN set -eux; apt-get update; apt-get install -y --no-install-recommends \
       ca-certificates curl python3 python3-pip python3-venv; \
     rm -rf /var/lib/apt/lists/*; \

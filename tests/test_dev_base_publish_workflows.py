@@ -109,8 +109,9 @@ def test_workflows_publish_parallel_payloads_then_full_and_release_only_full() -
     assert "tier: ${{ matrix.tier }}" not in release
     assert "needs: [plan-draft, publish-language-payloads]" in publish
     assert "needs: [plan-release, retag-full]" in release
-    # Two publishers plus the post-release verify (agentic-os#1032).
-    assert publish.count("uses: ./actions/publish-dev-base") == 3
+    # Two payload attempts (agentic-os#987), the full image, the payload
+    # existence check, and the post-release verify (agentic-os#1032).
+    assert publish.count("uses: ./actions/publish-dev-base") == 5
     assert release.count("uses: ./actions/publish-dev-base") == 1
 
 
@@ -258,6 +259,43 @@ def test_publish_action_verifies_every_toolchain_and_aosguard() -> None:
         assert command in script
 
 
+def test_a_payload_gets_one_bounded_retry() -> None:
+    # One transient payload failure used to skip the whole release. agentic-os#987.
+    text = PUBLISH.read_text(encoding="utf-8")
+    payload = text[text.index("publish-language-payloads:") : text.index("publish-full:")]
+
+    assert "id: payload" in payload
+    assert "continue-on-error: true" in payload
+    assert "steps.payload.outcome == 'failure'" in payload
+    # Two attempts and one check. A third attempt would turn a real defect into
+    # a slow failure, and the check is what keeps two attempts honest.
+    assert payload.count("uses: ./actions/publish-dev-base") == 3
+    assert "mode: verify" in payload
+
+
+def test_the_retry_cannot_turn_a_loud_failure_into_a_silent_one() -> None:
+    # continue-on-error swallows attempt one, so a retry that never fires would
+    # leave the job green with nothing published. The registry settles it.
+    text = PUBLISH.read_text(encoding="utf-8")
+    payload = text[text.index("publish-language-payloads:") : text.index("publish-full:")]
+    check = payload[payload.index("Assert the payload actually landed") :]
+
+    # Unconditional on the payload steps' outcomes: it runs whether attempt one
+    # passed, the retry rescued it, or the retry never fired at all.
+    assert "steps.payload" not in check.split("- name: Alert")[0]
+    assert "continue-on-error" not in check.split("- name: Alert")[0]
+
+
+def test_the_retry_does_not_swallow_a_second_failure() -> None:
+    # continue-on-error keeps attempt one from failing the job. The retry has no
+    # such guard, so its failure still fails the job and still alerts.
+    text = PUBLISH.read_text(encoding="utf-8")
+    payload = text[text.index("publish-language-payloads:") : text.index("publish-full:")]
+    retry = payload[payload.index("name: Retry the payload once") :]
+    assert "continue-on-error" not in retry.split("- name: Alert")[0]
+    assert "failure() && github.ref == 'refs/heads/release'" in payload
+
+
 VERIFY_ALIAS = ROOT / "actions" / "publish-dev-base" / "scripts" / "verify-alias.sh"
 
 
@@ -367,4 +405,8 @@ def test_the_dispatch_guard_has_one_spelling() -> None:
     # not be guarded differently from the job it backstops.
     publish = PUBLISH.read_text(encoding="utf-8")
     assert "|| inputs.tier ==" not in publish
-    assert publish.count("github.event.inputs.tier == 'all'") == 5
+    # One per guarded step or job, derived rather than restated: adding a
+    # guarded step must not be able to reintroduce the other spelling.
+    assert publish.count("github.event.inputs.tier == 'all'") == publish.count(
+        "github.event_name != 'workflow_dispatch'"
+    )

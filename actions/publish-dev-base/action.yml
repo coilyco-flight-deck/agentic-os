@@ -28,6 +28,15 @@ description: |
   The failure verify exists for is a job log of `.MISSING`, whose content is
   "job has not been executed yet", reported alongside a green caller.
 
+  Callers act on that retry-safety: dev-base-publish gives each payload one
+  bounded retry, since the full job needs the whole matrix green in one run and
+  a single transient used to skip the release for a thirty-minute manual
+  rebuild of all five payloads. Attempt one carries `continue-on-error` so a
+  transient does not fail the job, the retry carries none so a real defect
+  still fails loudly, and there is never a third: that turns a defect into a
+  slow failure. The checkpoint step below skips a payload that already landed,
+  so a retry after a late failure is cheap. See agentic-os#987.
+
 inputs:
   tier:
     description: "Build artifact tier. Only full is promotable."
