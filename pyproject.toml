@@ -119,6 +119,12 @@ excludes = [
 # grandfathered so the rule enforces net-new YAML.
 # Cleanup tracked in the code-comments docs. Bash comments inside `run: |`
 # block scalars are no longer over-read, so actions/** needs no exclude.
+# .pre-commit-config.yaml is no longer excluded for the generated comments the
+# managed-marker region now covers (agentic-os#993). It stays excluded because
+# this repo authors the generator rather than being stamped by it, so its own
+# config is hand-written and carries three below-content notes on the keys they
+# explain. Consumer repos, whose config is generated end to end, can drop the
+# exclude entirely. See agentic-os#1181.
 [tool.agentic-os.code-comments]
 excludes = [
     ".agents/skills/categories.yaml",
