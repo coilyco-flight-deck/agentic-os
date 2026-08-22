@@ -19,13 +19,13 @@ from typing import Iterator
 
 import yaml
 from yaml.nodes import MappingNode, Node, ScalarNode, SequenceNode
+from agentic_os.pre_commit.tree import is_repo_content
 
 HOOK_ID = "actions-run-one-line"
 REPO_ROOT = Path.cwd()
 WORKFLOW_DIRS = {".github", ".forgejo"}
 ACTION_FILENAMES = {"action.yml", "action.yaml"}
 YAML_SUFFIXES = {".yml", ".yaml"}
-SKIP_DIR_NAMES = {".git", ".mypy_cache", ".venv", "__pycache__", "node_modules"}
 
 # Why a length bar and not just the one-line rule: docs/pre-commit-hygiene.md.
 MAX_INLINE_BODY_CHARS = 100
@@ -223,7 +223,7 @@ def _walk_paths(root: Path) -> list[Path]:
         path
         for path in root.rglob("*")
         if path.is_file()
-        and not any(part in SKIP_DIR_NAMES for part in path.parts)
+        and is_repo_content(path.relative_to(root), root)
         and is_actions_yaml(path)
     ]
 

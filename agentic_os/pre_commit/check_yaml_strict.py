@@ -52,10 +52,10 @@ from agentic_os.config import (
     load_excludes,
     load_str_list,
 )
+from agentic_os.pre_commit.tree import is_repo_content
 
 HOOK_ID = "yaml-strict"
 YAML_SUFFIXES = (".yaml", ".yml")
-SKIP_DIR_NAMES = {".git", "node_modules", ".venv", "__pycache__", ".mypy_cache"}
 REPO_ROOT = Path.cwd()
 
 
@@ -217,7 +217,7 @@ def check_file(path: Path, opts: "Options") -> tuple[bool, list[str]]:
 
 
 def _should_skip(rel: Path) -> bool:
-    return any(part in SKIP_DIR_NAMES for part in rel.parts)
+    return not is_repo_content(rel, REPO_ROOT)
 
 
 def _walk_repo() -> list[Path]:

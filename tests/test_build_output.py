@@ -131,3 +131,85 @@ def test_an_untracked_source_file_is_still_content(tmp_path: Path) -> None:
     _write(tmp_path, "docs/new.md", "")
     config.reset_build_output_cache()
     assert config.is_build_output("docs/new.md", tmp_path) is False
+
+
+# The other eleven walkers (agentic-os#1062). Each pair is the same shape as
+# above: the bake is invisible, and the identical tracked tree still fails.
+
+COMPOSE_SRC = "agent/bundles/qa/content/composed/role-qa/AGENTS.COMPOSE.md"
+LOAD_POINT = "agent/bundles/qa/content/CLAUDE.md"
+
+
+def _compose_checkout(root: Path, ignore: str | None, body: str) -> None:
+    _git(root, "init", "-q")
+    _write(root, "README.md", "# Repo\n")
+    _write(root, "pyproject.toml", "")
+    if ignore is not None:
+        _write(root, ".gitignore", f"{ignore}\n")
+    _write(root, COMPOSE_SRC, body)
+    _git(root, "add", "-A")
+    _git(root, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "seed")
+
+
+def test_a_bake_is_not_an_agent_compose_source(tmp_path: Path) -> None:
+    # A bundle carries copies of sources already measured, so counting one
+    # charges the budget twice for the same prose.
+    from agentic_os.pre_commit import check_agent_compose_size as size
+
+    _compose_checkout(tmp_path, "agent/bundles/", "x" * 8_000)
+    config.reset_build_output_cache()
+    assert size.find_violations(tmp_path) == []
+
+
+def test_the_same_compose_source_tracked_still_fails(tmp_path: Path) -> None:
+    from agentic_os.pre_commit import check_agent_compose_size as size
+
+    _compose_checkout(tmp_path, None, "x" * 8_000)
+    config.reset_build_output_cache()
+    assert size.find_violations(tmp_path) != []
+
+
+def test_a_bake_is_not_a_dedup_source(tmp_path: Path) -> None:
+    from agentic_os.pre_commit import check_agent_compose_dedup as dedup
+
+    _compose_checkout(tmp_path, "agent/bundles/", "# Heading\n\nshared line\n")
+    config.reset_build_output_cache()
+    assert dedup.source_files(tmp_path) == []
+
+
+def test_a_bake_carries_no_context_load_point(tmp_path: Path) -> None:
+    # rglob for CLAUDE.md reaches straight into a bundle, which carries one.
+    from agentic_os.pre_commit import check_context_load_points as clp
+
+    _checkout(tmp_path, ignore="agent/bundles/")
+    _write(tmp_path, LOAD_POINT, "not a pure pointer, this is prose\n")
+    config.reset_build_output_cache()
+    assert clp.load_point_files(tmp_path, []) == []
+
+
+def test_the_same_load_point_tracked_is_seen(tmp_path: Path) -> None:
+    from agentic_os.pre_commit import check_context_load_points as clp
+
+    _checkout(tmp_path, ignore=None)
+    _write(tmp_path, LOAD_POINT, "not a pure pointer, this is prose\n")
+    _git(tmp_path, "add", "-A")
+    config.reset_build_output_cache()
+    assert Path(LOAD_POINT) in clp.load_point_files(tmp_path, [])
+
+
+def test_every_walker_shares_one_skip_set() -> None:
+    # Five drifted copies were how one fix reached two hooks and missed eleven.
+    from agentic_os.pre_commit import tree
+
+    for module in (
+        "check_actions_run_one_line",
+        "check_code_comments",
+        "check_dead_links",
+        "check_documentation_layout",
+        "check_seed_skills",
+        "check_source_doc_refs",
+        "check_yaml_strict",
+    ):
+        mod = __import__(f"agentic_os.pre_commit.{module}", fromlist=["_"])
+        own = getattr(mod, "SKIP_DIR_NAMES", None)
+        assert own is None or own is tree.SKIP_DIR_NAMES, module

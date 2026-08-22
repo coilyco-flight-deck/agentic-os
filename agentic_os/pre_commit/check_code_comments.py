@@ -47,6 +47,7 @@ from agentic_os.config import (
     is_excluded,
     load_excludes,
 )
+from agentic_os.pre_commit.tree import is_repo_content
 
 REPO_ROOT = Path.cwd()
 HOOK_ID = "code-comments"
@@ -71,15 +72,6 @@ _BLOCK_SCALAR_HEADER = re.compile(
 
 def starts_block_scalar(line: str) -> bool:
     return bool(_BLOCK_SCALAR_HEADER.search(line))
-
-SKIP_DIR_NAMES = {
-    ".claude",
-    ".git",
-    ".terraform",
-    "build",
-    "target",
-    "vendor",
-}
 
 LINE_COMMENT_PREFIXES = {
     ".bash": ("#",),
@@ -132,7 +124,7 @@ BLOCK_COMMENT_EXTS = {
 
 
 def should_skip(path: Path) -> bool:
-    return any(part in SKIP_DIR_NAMES for part in path.parts)
+    return not is_repo_content(path, REPO_ROOT)
 
 
 def source_files() -> list[Path]:

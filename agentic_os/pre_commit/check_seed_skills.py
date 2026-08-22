@@ -42,6 +42,7 @@ from agentic_os.generators.generate_seed_skills import (
     source_ref,
     suggested_url,
 )
+from agentic_os.pre_commit.tree import is_repo_content
 
 HOOK_ID = "seed-skills"
 TRACKER = "docs/skill-discipline-authoring.md"
@@ -49,23 +50,6 @@ TRACKER = "docs/skill-discipline-authoring.md"
 # Only these files are scanned for a skill reference - the references live in
 # agent-context docs, so reading code/binaries would be wasted work.
 DOC_SUFFIXES = (".md", ".markdown", ".mdx", ".txt")
-
-# Skipped during the filesystem-walk fallback (git ls-files already excludes
-# gitignored trees, so this only matters when the repo is not a git checkout).
-_WALK_SKIP_DIRS = {
-    ".git",
-    "node_modules",
-    ".venv",
-    "venv",
-    "vendor",
-    "target",
-    "dist",
-    "build",
-    "__pycache__",
-    ".mypy_cache",
-    ".ruff_cache",
-}
-
 
 def list_repo_files(root: Path) -> list[str]:
     """Repo-relative POSIX paths of tracked files, or a walk if not a git tree."""
@@ -85,7 +69,7 @@ def list_repo_files(root: Path) -> list[str]:
         if not path.is_file():
             continue
         rel = path.relative_to(root)
-        if any(part in _WALK_SKIP_DIRS for part in rel.parts):
+        if not is_repo_content(rel, root):
             continue
         files.append(str(PurePosixPath(rel)))
     return sorted(files)

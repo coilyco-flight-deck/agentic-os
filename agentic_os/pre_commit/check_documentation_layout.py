@@ -100,6 +100,7 @@ from agentic_os.config import (
     load_excludes,
     load_str_list,
 )
+from agentic_os.pre_commit.tree import should_skip
 
 REPO_ROOT = Path.cwd()
 HOOK_ID = "documentation-layout"
@@ -207,33 +208,12 @@ def is_harness_override(name: str) -> bool:
     return bool(HARNESS_OVERRIDE_RE.match(name))
 
 
-SKIP_DIR_NAMES = {
-    ".claude",
-    ".git",
-    ".mypy_cache",
-    ".pytest_cache",
-    ".ruff_cache",
-    ".terraform",
-    ".tox",
-    ".venv",
-    "__pycache__",
-    "build",
-    "dist",
-    "node_modules",
-    "target",
-    "vendor",
-}
-
 SKILL_PATHS = (
     (".agents", "skills"),
     (".agents", "composed"),
     (".claude", "skills"),
     ("skills",),
 )
-
-
-def should_skip(path: Path) -> bool:
-    return any(part in SKIP_DIR_NAMES for part in path.parts)
 
 
 def is_under_skill_path(rel: Path) -> bool:

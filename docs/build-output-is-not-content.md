@@ -16,8 +16,8 @@ bundle does not carry, because a bundle holds only the skills its role admitted.
 They are not fixable in the consuming repository and are not its content.
 
 The gitignore did not help. These hooks run `always_run: true` with
-`pass_filenames: false` and do their own walks, so pre-commit's file list and
-its `exclude:` directive are both bypassed. See coilyco-gaming/sirens-echo#800.
+`pass_filenames: false` and do their own walks, so pre-commit's file list and its
+`exclude:` directive are both bypassed. See coilyco-gaming/sirens-echo#800.
 
 ## What decides it now
 
@@ -38,8 +38,8 @@ content" and every hook checks exactly what it checked before. A tarball, a
 vendored copy, or a machine without git must never quietly stop being checked.
 An empty answer counts as no answer for the same reason.
 
-**A directory counts as content when anything under it does.** Directories
-never appear in git's file list, and a rule shaped around one, such as `docs/`
+**A directory counts as content when anything under it does.** Directories never
+appear in git's file list, and a rule shaped around one, such as `docs/`
 flatness, would otherwise retire itself.
 
 **Untracked is not ignored.** A new file the author has not staged is source,
@@ -48,9 +48,20 @@ progress.
 
 ## Where it applies
 
-`documentation-layout` (and its `catalog-doc-size` alias) and
-`dead-cross-links`, the two hooks that fired. The other tree-walking hooks each
-carry their own walk and are not converted here. See agentic-os#1062.
+Every tree-walking hook in the catalog, via `agentic_os.pre_commit.tree`, which
+owns the one `SKIP_DIR_NAMES` (five copies had drifted apart) and the
+`is_repo_content` gate they ask: a readable path is one no cache or vendored dir
+holds and one git carries. Two calls deserve their reasons written down.
+
+**The agent-compose pair reads sources, not bakes.** `agent-compose-size` and
+`agent-compose-dedup` measure what a composed source costs a context budget, and
+a bundle carries copies of sources they already counted, so reading one charges
+the same prose twice and fails a repo for its own build output.
+
+**`context-budget` is the exception and stays unconverted.** It measures what a
+session loads at runtime, including skills symlinked into `.claude/skills` that
+git does not carry, and walks only the roots an operator named. Reading outside
+git's file list is the job there, not the bug.
 
 A per-repo `excludes` entry still works and still wins where a repo wants to
 exempt content git does carry. The two are independent.
