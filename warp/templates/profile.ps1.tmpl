@@ -16,13 +16,26 @@ if (Test-Path '{{ .StartupDir }}') {
 $_commonShellPath = '{{ .RepoRoot }}/shell/common.sh'
 if (Test-Path -LiteralPath $_commonShellPath) {
     $_insideSharedEnvironment = $false
+    $_insideSharedClear = $false
     foreach ($_line in [System.IO.File]::ReadLines($_commonShellPath)) {
         if ($_line -eq '# shared-environment: begin') {
             $_insideSharedEnvironment = $true
             continue
         }
         if ($_line -eq '# shared-environment: end') {
+            $_insideSharedEnvironment = $false
+            continue
+        }
+        if ($_line -eq '# shared-environment-clear: begin') {
+            $_insideSharedClear = $true
+            continue
+        }
+        if ($_line -eq '# shared-environment-clear: end') {
             break
+        }
+        if ($_insideSharedClear -and $_line -match '^unset ([A-Za-z_][A-Za-z0-9_]*)$') {
+            [System.Environment]::SetEnvironmentVariable($Matches[1], $null, 'Process')
+            continue
         }
         if ($_insideSharedEnvironment -and $_line -match '^export ([A-Za-z_][A-Za-z0-9_]*)=(.*)$') {
             $_name = $Matches[1]

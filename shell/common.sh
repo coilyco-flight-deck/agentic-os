@@ -20,10 +20,15 @@ export SAVEHIST=100000
 # release alias.
 export WARD_AGENT_IMAGE="forgejo.coilysiren.me/coilyco-flight-deck/agentic-os"
 export WARD_AGENT_TAG="release"
-# Ward no longer consumes checkout-derived KDL references. Clear an inherited
-# value from a pre-#1615 shell or image before launching a harness.
-unset WARD_CONFIG_REF
 # shared-environment: end
+
+# Bare names to clear, so the exports block above stays declarative. Both
+# blocks are parsed by the rendered PowerShell profile. See docs/install.md.
+
+# shared-environment-clear: begin
+# Ward no longer consumes checkout-derived KDL references (ward#1615).
+unset WARD_CONFIG_REF
+# shared-environment-clear: end
 
 _siren_aos_repo_root() {
   local repo source_dir
