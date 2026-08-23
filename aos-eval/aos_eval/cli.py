@@ -17,6 +17,7 @@ import click
 
 from aos_eval import annotate as annotate_mod
 from aos_eval import attributes as attributes_mod
+from aos_eval import board as board_mod
 from aos_eval import dataset as dataset_mod
 from aos_eval import taxonomy as taxonomy_mod
 from aos_eval.export import ExportRefusedError, export_run_dir
@@ -164,6 +165,31 @@ def annotate(
 
     annotate_mod.summarize(console, entries, annotations)
     outro(f"aos-eval taxonomy --dataset {dataset_path} --annotations {out}")
+
+
+@main.group()
+def board() -> None:
+    """Read the contexts and challenges a run needs, without running one."""
+
+
+@board.command(name="check")
+@click.argument("board_path", type=click.Path(exists=True, path_type=Path), metavar="BOARD")
+@click.option("--profile", "profile_path", type=click.Path(exists=True, path_type=Path))
+@click.pass_context
+def board_check(context: click.Context, board_path: Path, profile_path: Path | None) -> None:
+    """Refuse a board that would run incompletely, before it spends a token."""
+    intro(context)
+    try:
+        loaded = board_mod.load_board(read_yaml(board_path), load_profile(profile_path))
+    except board_mod.BoardError as broken:
+        click.echo(f"aos-eval board: {broken}", err=True)
+        raise SystemExit(1) from broken
+
+    click.echo(
+        f"{len(loaded.challenges)} challenges across "
+        f"{len(loaded.entities)} entities, every one written and contexted"
+    )
+    outro("run it with the deployment's own runner, because this layer has none")
 
 
 @main.group()

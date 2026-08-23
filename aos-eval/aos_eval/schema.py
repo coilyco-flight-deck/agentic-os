@@ -122,6 +122,15 @@ AGENT_COMPOSE = Profile(
 )
 
 
+class Turn(BaseModel):
+    """One message in a challenge's transcript. `role` is speaker, not entity."""
+
+    model_config = ConfigDict(frozen=True, extra="ignore")
+
+    role: str
+    content: str
+
+
 class Challenge(BaseModel):
     """One question put to the subject, and a target saying what passing means.
 
@@ -141,15 +150,26 @@ class Challenge(BaseModel):
     # What is being tested about the entity. The deployment's own word for it
     # belongs in its profile rather than in this schema. See docs/aos-eval.md.
     attribute: str | None = None
+    # The question, as one string or as a transcript ending on the turn under
+    # test. A deployment whose subject is conversational needs the second.
     prompt: str | None = None
+    turns: tuple[Turn, ...] = ()
     target: str | None = None
     half: Half | None = None
     pair_id: str | None = None
+    # An expectation on the answer's shape rather than its prose, checked by
+    # the runner and carried as a note. See docs/aos-eval.md.
+    required_tool: str = ""
     seed: str = ""
 
     @property
+    def asked(self) -> bool:
+        """A challenge carries its question either way, never both and never neither."""
+        return bool(self.prompt) != bool(self.turns)
+
+    @property
     def written(self) -> bool:
-        return bool(self.prompt and self.target)
+        return self.asked and bool(self.target)
 
     @model_validator(mode="after")
     def _check_pairing(self) -> Challenge:
@@ -164,8 +184,10 @@ class Challenge(BaseModel):
         except KeyError as unknown:
             return [str(unknown)]
         missing = [name for name in spec.requires if getattr(self, name, None) is None]
-        if not self.written:
-            missing.append("prompt" if not self.prompt else "target")
+        if not self.asked:
+            missing.append("prompt or turns, never both")
+        elif not self.target:
+            missing.append("target")
         return [f"{self.id}: {self.test_type} challenge needs {name}" for name in missing]
 
     def label_set(self, profile: Profile) -> str:

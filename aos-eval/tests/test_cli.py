@@ -147,3 +147,45 @@ def test_validate_exits_one_when_a_required_field_is_absent(runner, tmp_path):
     result = runner.invoke(main, ["--quiet", "validate", "--dataset", str(dataset_path)])
     assert result.exit_code == 1
     assert "needs attribute" in result.stderr
+
+
+def test_board_check_accepts_a_runnable_board(tmp_path, runner):
+    path = tmp_path / "board.yaml"
+    path.write_text(
+        "schema: aos-eval.board.v1\n"
+        "contexts:\n"
+        "  platform: you build things\n"
+        "challenges:\n"
+        "  - id: platform-bfs-in\n"
+        "    entity: platform\n"
+        "    test_type: boundary\n"
+        "    attribute: build-foundational-software\n"
+        "    half: in\n"
+        "    pair_id: platform-bfs\n"
+        "    prompt: ship it\n"
+        "    target: builds it\n"
+    )
+    result = runner.invoke(main, ["--quiet", "board", "check", str(path)])
+    assert result.exit_code == 0
+    assert "1 challenges across 1 entities" in result.stdout
+
+
+def test_board_check_refuses_a_challenge_with_no_context(tmp_path, runner):
+    path = tmp_path / "board.yaml"
+    path.write_text(
+        "schema: aos-eval.board.v1\n"
+        "contexts:\n"
+        "  platform: you build things\n"
+        "challenges:\n"
+        "  - id: sysadmin-bfs-in\n"
+        "    entity: sysadmin\n"
+        "    test_type: boundary\n"
+        "    attribute: build-foundational-software\n"
+        "    half: in\n"
+        "    pair_id: sysadmin-bfs\n"
+        "    prompt: ship it\n"
+        "    target: builds it\n"
+    )
+    result = runner.invoke(main, ["--quiet", "board", "check", str(path)])
+    assert result.exit_code == 1
+    assert "no context for entity 'sysadmin'" in result.stderr

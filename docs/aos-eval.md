@@ -22,6 +22,16 @@ personality, in sirens-echo a lane and a clause. `test_type` says which kind and
 kinds, so `axis_of` derives an axis rather than enumerating one. `--roster` follows the same rule, taking
 `{entity_order, entities: {name: {display_name, purpose, notes}}}` the deployment composed itself.
 
+## The board a run reads
+
+A challenge is answered the same way everywhere: compile a context, send one model call. That holds for a
+composed role bundle and for a deployed conversational lane, so `aos-eval.board.v1` carries the **compiled
+context** rather than the recipe: `{schema, contexts: {entity: text}, challenges, provenance}`. A challenge
+asks with a `prompt` or with `turns`, never both, since a conversational subject is asked with a transcript.
+
+`board check` refuses one that would run incompletely: an unwritten challenge, an entity with no context, a
+context no challenge uses. Defining a board is not running one, and this layer still ships no runner.
+
 ## The rule worth sharing
 
 A boundary is scored as a **pair, never as a half**. The in-half proves the rule fires. The out-half
@@ -37,13 +47,11 @@ coverage count reading out-halves alone would call perfect.
 
 `attributes derive` turns a declaration into the unwritten challenges a board must contain, and
 `attributes check` compares those to what a dataset wrote, naming every missing one, half-written pair,
-and case no declaration derived. Both run without a model, so a consumer can tell coverage from
+and challenge no declaration derived. Both run without a model, so a consumer tells coverage from
 intention before spending anything.
 
-**The first honest output in a new repo is usually a gap.** Against sirens-echo's pilot board it reports
-56 derived challenges with none written and 10 written ones no declaration derived. That is the number a
-tool that measures gives you, where one that certified would have called the board complete and said
-nothing. A coverage report that cannot come back negative is decoration.
+**The first honest output in a new repo is usually a gap.** Against sirens-echo's pilot board it reported
+56 derived challenges with none written. A coverage report that cannot come back negative is decoration.
 
 ## Profiles keep the schema still
 
@@ -80,14 +88,9 @@ text is not scanned because text that never leaves cannot leak.
 
 ## Running it
 
-```bash
-just aos-eval attributes derive eval/attributes.yaml --out challenges.yaml
-just aos-eval attributes check eval/attributes.yaml --dataset run1/dataset.yaml
-just aos-eval annotate --dataset run1/dataset.yaml --out run1/annotations.yaml
-just aos-eval taxonomy --dataset run1/dataset.yaml --annotations run1/annotations.yaml
-just aos-eval export run1 --out run1/display.json
-just aos-eval-test
-```
+`just aos-eval --help` carries the verbs, and the
+[skill](../.agents/skills/tooling-aos-eval/SKILL.md) carries the worked sequence: `attributes derive`,
+`board check`, `annotate`, `taxonomy`, `export`.
 
 A consumer installs it from this repository's `aos-eval` subdirectory, where `main` always resolves and a
 tag from the `aos-eval-v*` train pins a reproducible run. That train advances independently of
@@ -97,16 +100,13 @@ never forces a hook-suite bump across the fleet.
 ## The probe layer underneath
 
 Below anything graded sits the cheapest question: does this agent and model pairing do what it claims.
-Probes answer that and **produce evidence rather than a verdict**, so a green probe must never read as a
-passed eval. They have no pair structure, no human grader, and no record a second run compares against.
+Probes answer that and **produce evidence rather than a verdict**, so a green probe never reads as a
+passed eval. No pair structure, no human grader, no record a second run compares against.
 
 * **`aos-role-question`** proves a projected role can answer through a real model rather than only that
-  its files exist. One disposable container per invocation, one role-specific question, a ten-minute
-  ceiling, and a failure unless the output carries `ROLE-CONFIRMED: <role>`. **The prompt never supplies
-  the expected role name.** Cloud validates Codex file auth and runs read-only with no persisted
-  session; local runs the bound Ollama model. HOME and `/tmp` are bounded tmpfs, so a run consumes no
-  shared writable-layer budget. `just aos-build` and `just aos-image-build` come first, then
-  `just aos-role-question cloud design` or `just aos-role-question local <role>`.
+  its files exist, failing unless the output carries `ROLE-CONFIRMED: <role>`. **The prompt never
+  supplies the expected role name.** Invocation and its container bounds are in the
+  [skill](../.agents/skills/tooling-aos-eval/SKILL.md).
 
 Findings are point-in-time, so date the model and version each was taken against.
 
