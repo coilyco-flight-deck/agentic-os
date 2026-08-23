@@ -5,7 +5,7 @@ set -euo pipefail
 repo_root=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)
 
 validate() {
-  bash "$repo_root/scripts/ci/repo-test-gate.sh"
+  bash "$repo_root/scripts/ci-command.sh" bash "$repo_root/scripts/ci/repo-test-gate.sh"
   just aos-test
   just agent-terminal-test
 }

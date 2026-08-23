@@ -2,29 +2,29 @@ from aos_eval.schema import Annotation, DatasetEntry, Fit, Half, Challenge, Verd
 from aos_eval.taxonomy import axis_of, build, render, salient_terms
 
 
-def boundary_entry(challenge_id, boundary="modify-live-system"):
+def boundary_entry(challenge_id, attribute="modify-live-system"):
     return DatasetEntry(
         challenge=Challenge(
             id=challenge_id,
-            role="ops",
+            entity="ops",
             test_type="boundary",
             prompt="p",
             target="t",
-            boundary=boundary,
+            attribute=attribute,
             half=Half.OUT,
-            pair_id=boundary,
+            pair_id=attribute,
         ),
         output="o",
     )
 
 
 def test_the_axis_is_structural_before_any_prose():
-    assert axis_of(boundary_entry("a")) == "modify-live-system:out"
+    assert axis_of(boundary_entry("a")) == "boundary:modify-live-system:out"
 
 
 def test_a_personality_case_keys_off_its_trait():
     entry = DatasetEntry(
-        challenge=Challenge(id="a", role="qa", test_type="personality", prompt="p", target="t", trait="candid"),
+        challenge=Challenge(id="a", entity="qa", test_type="personality", prompt="p", target="t", attribute="candid"),
         output="o",
     )
     assert axis_of(entry) == "personality:candid"
@@ -46,7 +46,7 @@ def test_only_deductions_enter_the_taxonomy():
 
 def test_an_undecided_fit_counts_as_a_deduction():
     entry = DatasetEntry(
-        challenge=Challenge(id="a", role="qa", test_type="personality", prompt="p", target="t", trait="warm"),
+        challenge=Challenge(id="a", entity="qa", test_type="personality", prompt="p", target="t", attribute="warm"),
         output="o",
     )
     modes = build([entry], {"a": Annotation(id="a", label=Fit.UNDECIDED, critique="flat delivery")})
@@ -67,7 +67,7 @@ def test_modes_rank_by_count_then_key():
     }
     modes = build(dataset, annotations)
     assert modes[0].count == 2
-    assert modes[0].roles["ops"] == 2
+    assert modes[0].entities["ops"] == 2
 
 
 def test_an_empty_taxonomy_says_so_rather_than_printing_nothing():

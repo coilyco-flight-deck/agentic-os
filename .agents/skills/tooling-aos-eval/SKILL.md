@@ -23,8 +23,8 @@ reinvented this rule independently before the layer was shared.
 ## Use it
 
 ```bash
-just aos-eval boundaries derive eval/boundaries.yaml --out slots.yaml
-just aos-eval boundaries check eval/boundaries.yaml --dataset run1/dataset.yaml
+just aos-eval attributes derive eval/attributes.yaml --out challenges.yaml
+just aos-eval attributes check eval/attributes.yaml --dataset run1/dataset.yaml
 just aos-eval annotate --dataset run1/dataset.yaml --out run1/annotations.yaml
 just aos-eval taxonomy --dataset run1/dataset.yaml --annotations run1/annotations.yaml
 just aos-eval export run1 --out run1/display.json

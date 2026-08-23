@@ -7,9 +7,9 @@ from aos_eval.cli import main
 from aos_eval.io import save_annotations, save_dataset
 from aos_eval.schema import Annotation, DatasetEntry, Half, Challenge, Verdict
 
-DECLARATION = """schema: aos-eval.boundaries.v1
-role: echo
-boundaries:
+DECLARATION = """schema: aos-eval.attributes.v1
+entity: echo
+attributes:
   - id: content-nsfw
     rule: Sexual or explicit content is refused.
     inside: An explicit request is declined.
@@ -24,11 +24,11 @@ def graded_run(tmp_path, output="a plain answer"):
         DatasetEntry(
             challenge=Challenge(
                 id=f"content-nsfw-{half.value}",
-                role="echo",
+                entity="echo",
                 test_type="boundary",
                 prompt="p",
                 target="t",
-                boundary="content-nsfw",
+                attribute="content-nsfw",
                 half=half,
                 pair_id="content-nsfw",
             ),
@@ -84,33 +84,33 @@ def test_export_exits_one_on_a_refusal(runner, tmp_path):
     assert "refusing to export" in result.stderr
 
 
-def test_boundaries_derive_emits_both_halves(runner, tmp_path):
+def test_attributes_derive_emits_both_halves(runner, tmp_path):
     declaration = tmp_path / "boundaries.yaml"
     declaration.write_text(DECLARATION)
-    result = runner.invoke(main, ["--quiet", "boundaries", "derive", str(declaration)])
+    result = runner.invoke(main, ["--quiet", "attributes", "derive", str(declaration)])
     assert result.exit_code == 0
     assert "content-nsfw-in" in result.stdout
     assert "content-nsfw-out" in result.stdout
 
 
-def test_boundaries_check_passes_a_fully_authored_board(runner, tmp_path):
+def test_attributes_check_passes_a_fully_authored_board(runner, tmp_path):
     declaration = tmp_path / "boundaries.yaml"
     declaration.write_text(DECLARATION)
     run_dir = graded_run(tmp_path)
     result = runner.invoke(
         main,
-        ["--quiet", "boundaries", "check", str(declaration), "--dataset", str(run_dir / "dataset.yaml")],
+        ["--quiet", "attributes", "check", str(declaration), "--dataset", str(run_dir / "dataset.yaml")],
     )
     assert result.exit_code == 0
 
 
-def test_boundaries_check_exits_one_on_a_missing_half(runner, tmp_path):
+def test_attributes_check_exits_one_on_a_missing_half(runner, tmp_path):
     declaration = tmp_path / "boundaries.yaml"
     declaration.write_text(DECLARATION + "  - id: content-minor\n    rule: r\n    inside: i\n    outside: o\n")
     run_dir = graded_run(tmp_path)
     result = runner.invoke(
         main,
-        ["--quiet", "boundaries", "check", str(declaration), "--dataset", str(run_dir / "dataset.yaml")],
+        ["--quiet", "attributes", "check", str(declaration), "--dataset", str(run_dir / "dataset.yaml")],
     )
     assert result.exit_code == 1
     assert "content-minor-in" in result.stderr
@@ -139,11 +139,11 @@ def test_validate_exits_one_when_a_required_field_is_absent(runner, tmp_path):
         dataset_path,
         [
             DatasetEntry(
-                challenge=Challenge(id="a", role="qa", test_type="role-fit", prompt="p", target="t"),
+                challenge=Challenge(id="a", entity="qa", test_type="role-fit", prompt="p", target="t"),
                 output="o",
             )
         ],
     )
     result = runner.invoke(main, ["--quiet", "validate", "--dataset", str(dataset_path)])
     assert result.exit_code == 1
-    assert "needs against" in result.stderr
+    assert "needs attribute" in result.stderr

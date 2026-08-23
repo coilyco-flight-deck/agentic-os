@@ -150,6 +150,12 @@ unselected = [
     # engineer and the instance is sirens-dowel", so a deployment overlay
     # promotes them. A base-role selector would give them to every engineer.
     "tooling-sirens-dowel-*",
+    # Published for a consumer catalogue to select rather than for a base role
+    # here. Its selection order names concrete servers, playwright_local and
+    # playwright_k3s, so a base-role selector would hand every engineer in the
+    # fleet doctrine about surfaces their deployment may not have. See
+    # coilyco-gaming/sirens-echo#964.
+    "tooling-browser-routing",
 ]
 
 [tool.agentic-os.repo-pointer-skills]

@@ -73,8 +73,8 @@ class Profile:
 
     name: str
     test_types: tuple[TestTypeSpec, ...]
-    group_order: tuple[str, ...] = ()
-    boundary_order: tuple[str, ...] = ()
+    entity_order: tuple[str, ...] = ()
+    attribute_order: tuple[str, ...] = ()
 
     def spec(self, test_type: str) -> TestTypeSpec:
         for candidate in self.test_types:
@@ -99,8 +99,8 @@ class Profile:
                 )
                 for entry in raw.get("test_types", [])
             ),
-            group_order=tuple(str(g) for g in raw.get("group_order", ())),
-            boundary_order=tuple(str(b) for b in raw.get("boundary_order", ())),
+            entity_order=tuple(str(e) for e in raw.get("entity_order", ())),
+            attribute_order=tuple(str(a) for a in raw.get("attribute_order", ())),
         )
 
 
@@ -109,11 +109,16 @@ class Profile:
 AGENT_COMPOSE = Profile(
     name="agent-compose",
     test_types=(
-        TestTypeSpec("boundary", "binary", 50, ("boundary", "half", "pair_id")),
-        TestTypeSpec("role-fit", "binary", 50, ("against",)),
-        TestTypeSpec("personality", "fit", 100),
+        TestTypeSpec("boundary", "binary", 50, ("attribute", "half", "pair_id")),
+        TestTypeSpec("role-fit", "binary", 50, ("attribute",)),
+        TestTypeSpec("personality", "fit", 100, ("attribute",)),
     ),
-    boundary_order=("suggest-human-comms", "modify-live-system", "seek-external-validation"),
+    attribute_order=(
+        "build-foundational-software",
+        "modify-live-backend",
+        "suggest-external-comms",
+        "seek-external-validation",
+    ),
 )
 
 
@@ -128,17 +133,18 @@ class Challenge(BaseModel):
     model_config = ConfigDict(frozen=True, extra="ignore")
 
     id: str
-    # The grouping axis an annotator holds context across. A composed role in
-    # one deployment, a deployed agent in another.
-    role: str
+    # What is under test. A composed role in one deployment, a deployed agent
+    # in another, so the shared layer names the abstraction rather than either.
+    entity: str
+    # Which kind of attribute this challenge tests.
     test_type: str
+    # What is being tested about the entity. The deployment's own word for it
+    # belongs in its profile rather than in this schema. See docs/aos-eval.md.
+    attribute: str | None = None
     prompt: str | None = None
     target: str | None = None
-    boundary: str | None = None
     half: Half | None = None
     pair_id: str | None = None
-    against: str | None = None
-    trait: str | None = None
     seed: str = ""
 
     @property
@@ -285,11 +291,11 @@ class Annotation(BaseModel):
 
 @dataclass
 class PairResult:
-    """A boundary pair. The pair is the scoring unit, never the half."""
+    """One paired attribute. The pair is the scoring unit, never the half."""
 
     pair_id: str
-    role: str
-    boundary: str
+    entity: str
+    attribute: str
     halves: dict[str, Verdict] = field(default_factory=dict)
 
     @property
@@ -311,25 +317,25 @@ def decode_label(value: str) -> Verdict | Fit:
 def annotation_order(
     dataset: list[DatasetEntry],
     profile: Profile = AGENT_COMPOSE,
-    group_order: list[str] | None = None,
+    entity_order: list[str] | None = None,
 ) -> list[DatasetEntry]:
-    """Group-major, so an annotator holds one charter across a group's challenges.
+    """Entity-major, so an annotator holds one charter across that entity's challenges.
 
     Test-type-major degrades more gracefully, but annotation is resumable and
-    group context is the expensive thing to reload.
+    entity context is the expensive thing to reload.
     """
-    order = list(group_order or profile.group_order) or sorted(
-        {entry.challenge.role for entry in dataset}
+    order = list(entity_order or profile.entity_order) or sorted(
+        {entry.challenge.entity for entry in dataset}
     )
-    boundaries = list(profile.boundary_order)
+    attributes = list(profile.attribute_order)
 
     def key(entry: DatasetEntry) -> tuple[int, int, int, str]:
         challenge = entry.challenge
-        group_rank = order.index(challenge.role) if challenge.role in order else len(order)
-        boundary_rank = (
-            boundaries.index(challenge.boundary) if challenge.boundary in boundaries else 0
+        entity_rank = order.index(challenge.entity) if challenge.entity in order else len(order)
+        attribute_rank = (
+            attributes.index(challenge.attribute) if challenge.attribute in attributes else 0
         )
-        return (group_rank, profile.rank(challenge.test_type), boundary_rank, entry.id)
+        return (entity_rank, profile.rank(challenge.test_type), attribute_rank, entry.id)
 
     return sorted(dataset, key=key)
 
@@ -348,7 +354,11 @@ def pair_results(
             continue
         pair = pairs.setdefault(
             challenge.pair_id,
-            PairResult(pair_id=challenge.pair_id, role=challenge.role, boundary=challenge.boundary or ""),
+            PairResult(
+                pair_id=challenge.pair_id,
+                entity=challenge.entity,
+                attribute=challenge.attribute or "",
+            ),
         )
         pair.halves[challenge.half.value] = annotation.label
     return sorted(pairs.values(), key=lambda pair: pair.pair_id)

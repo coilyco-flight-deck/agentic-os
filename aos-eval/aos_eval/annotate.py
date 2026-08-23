@@ -59,26 +59,19 @@ def style_for(profile: Profile, test_type: str) -> str:
     return TYPE_STYLES[profile.rank(test_type) % len(TYPE_STYLES)]
 
 
-def role_header(console: Console, roster: dict[str, Any], role: str) -> None:
-    """Printed once per group, so the charter is loaded rather than implied."""
-    spec = roster.get("roles", {}).get(role)
+def entity_header(console: Console, roster: dict[str, Any], entity: str) -> None:
+    """Printed once per entity, so the charter is loaded rather than implied.
+
+    The roster is a projection the deployment composes, because owns, defers,
+    and traits are its words. This layer renders lines rather than reading a
+    shape it would then have to know. See docs/aos-eval.md.
+    """
+    spec = roster.get("entities", {}).get(entity)
     if not spec:
         return
-    lines = [f"[bold]{spec.get('display_name', role)}[/bold]  {spec.get('purpose', '')}"]
-    owned = [
-        name
-        for name, boundary in roster.get("boundaries", {}).items()
-        if boundary.get("owner") == role
-    ]
-    if owned:
-        lines.append("owns: " + ", ".join(owned))
-    if spec.get("boundaries"):
-        lines.append("defers: " + ", ".join(spec["boundaries"]))
-    if spec.get("personalities"):
-        lines.append("personalities: " + ", ".join(spec["personalities"]))
-    for adjacent in spec.get("adjacents", []):
-        lines.append(f"adjacent {adjacent['role']}: {adjacent['reason']}")
-    console.print(Panel("\n".join(lines), border_style="bright_white", title="role"))
+    lines = [f"[bold]{spec.get('display_name', entity)}[/bold]  {spec.get('purpose', '')}"]
+    lines.extend(str(note) for note in spec.get("notes", []))
+    console.print(Panel("\n".join(lines), border_style="bright_white", title="entity"))
 
 
 def render(
@@ -94,20 +87,17 @@ def render(
     style = style_for(profile, challenge.test_type)
     console.clear()
     if roster:
-        role_header(console, roster, challenge.role)
+        entity_header(console, roster, challenge.entity)
 
     header = Table.grid(padding=(0, 2))
     header.add_column(style="bold")
     header.add_column()
     header.add_row("challenge", f"[bold]{challenge.id}[/bold]")
-    header.add_row("role", challenge.role)
+    header.add_row("entity", challenge.entity)
     header.add_row("test type", f"[{style}]{challenge.test_type}[/]")
-    if challenge.boundary:
-        header.add_row("boundary", f"{challenge.boundary} ({challenge.half.value if challenge.half else ''})")
-    if challenge.against:
-        header.add_row("against", challenge.against)
-    if challenge.trait:
-        header.add_row("trait", challenge.trait)
+    if challenge.attribute:
+        half = f" ({challenge.half.value})" if challenge.half else ""
+        header.add_row("attribute", f"{challenge.attribute}{half}")
     header.add_row("progress", progress(position, total, started))
     console.print(header)
     console.print()
@@ -158,10 +148,10 @@ def annotate_session(
 ) -> bool:
     """Returns False when the annotator quit before finishing."""
     console = Console()
-    group_order = list(roster.get("role_order", [])) if roster else None
+    entity_order = list(roster.get("entity_order", [])) if roster else None
     pending = [
         entry
-        for entry in annotation_order(dataset, profile, group_order)
+        for entry in annotation_order(dataset, profile, entity_order)
         if entry.id not in annotations
     ]
     started = time.monotonic()
@@ -195,7 +185,7 @@ def summarize(
     pairs = pair_results(dataset, annotations)
     if pairs:
         table = Table(title="boundary pairs, the scoring unit")
-        for column in ("pair", "role", "boundary", "result"):
+        for column in ("pair", "entity", "attribute", "result"):
             table.add_column(column)
         for pair in pairs:
             if not pair.complete:
@@ -204,7 +194,7 @@ def summarize(
                 result = "[green]pass[/green]"
             else:
                 result = "[red]fail[/red]"
-            table.add_row(pair.pair_id, pair.role, pair.boundary, result)
+            table.add_row(pair.pair_id, pair.entity, pair.attribute, result)
         console.print(table)
 
     # Only this dataset's ids. An annotations file outlives a case rename, so

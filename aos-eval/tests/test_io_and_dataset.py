@@ -18,12 +18,12 @@ from aos_eval.schema import (
 
 
 def challenge(challenge_id, test_type="personality", **fields):
-    return Challenge(id=challenge_id, role="qa", test_type=test_type, prompt="p", target="t", **fields)
+    return Challenge(id=challenge_id, entity="qa", test_type=test_type, prompt="p", target="t", **fields)
 
 
 def test_a_dataset_round_trips_through_yaml(tmp_path):
     path = tmp_path / "dataset.yaml"
-    original = [DatasetEntry(challenge=challenge("a", trait="candid"), output="answer")]
+    original = [DatasetEntry(challenge=challenge("a", attribute="candid"), output="answer")]
     save_dataset(path, original)
     assert load_dataset(path) == original
 
@@ -54,17 +54,17 @@ def test_a_declared_profile_is_read_from_yaml(tmp_path):
         "  - name: content-class\n"
         "    label_set: binary\n"
         "    word_cap: 40\n"
-        "    requires: [boundary]\n"
-        "group_order: [echo, deep]\n"
+        "    requires: [attribute]\n"
+        "entity_order: [echo, deep]\n"
     )
     profile = load_profile(path)
     assert profile.name == "sirens-echo"
     assert profile.spec("content-class").word_cap == 40
-    assert profile.group_order == ("echo", "deep")
+    assert profile.entity_order == ("echo", "deep")
 
 
 def test_a_sample_with_no_run_is_dropped_rather_than_silently_missing():
-    report = build([challenge("a", trait="t"), challenge("b", trait="t")], [Response(challenge_id="a", epoch=1, text="x")])
+    report = build([challenge("a", attribute="t"), challenge("b", attribute="t")], [Response(challenge_id="a", epoch=1, text="x")])
     assert [entry.id for entry in report.kept] == ["a"]
     assert report.dropped[0].challenge_id == "b"
     assert report.summary == "1 kept, 1 dropped"
@@ -75,8 +75,8 @@ def test_the_named_epoch_is_the_one_annotated():
         Response(challenge_id="a", epoch=2, text="second"),
         Response(challenge_id="a", epoch=1, text="first"),
     ]
-    assert build([challenge("a", trait="t")], responses).kept[0].output == "first"
-    assert build([challenge("a", trait="t")], responses, epoch=2).kept[0].output == "second"
+    assert build([challenge("a", attribute="t")], responses).kept[0].output == "first"
+    assert build([challenge("a", attribute="t")], responses, epoch=2).kept[0].output == "second"
 
 
 def test_validate_reports_every_shape_problem_at_once():

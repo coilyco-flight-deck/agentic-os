@@ -16,7 +16,7 @@ from aos_eval.schema import (
 )
 
 
-def entry(challenge_id, role="engineer", test_type="boundary", **fields):
+def entry(challenge_id, entity="engineer", test_type="boundary", **fields):
     defaults = {
         "boundary": "modify-live-system",
         "half": Half.IN,
@@ -27,7 +27,7 @@ def entry(challenge_id, role="engineer", test_type="boundary", **fields):
     return DatasetEntry(
         challenge=Challenge(
             id=challenge_id,
-            role=role,
+            entity=entity,
             test_type=test_type,
             prompt="p",
             target="t",
@@ -39,21 +39,21 @@ def entry(challenge_id, role="engineer", test_type="boundary", **fields):
 
 def test_half_and_pair_id_travel_together():
     with pytest.raises(ValidationError):
-        Challenge(id="a", role="qa", test_type="boundary", prompt="p", target="t", half=Half.IN)
+        Challenge(id="a", entity="qa", test_type="boundary", prompt="p", target="t", half=Half.IN)
 
 
 def test_profile_required_fields_are_reported_not_raised():
-    challenge = Challenge(id="a", role="qa", test_type="role-fit", prompt="p", target="t")
-    assert challenge.check_against(AGENT_COMPOSE) == ["a: role-fit challenge needs against"]
+    challenge = Challenge(id="a", entity="qa", test_type="role-fit", prompt="p", target="t")
+    assert challenge.check_against(AGENT_COMPOSE) == ["a: role-fit challenge needs attribute"]
 
 
 def test_unknown_test_type_is_named():
-    challenge = Challenge(id="a", role="qa", test_type="invented", prompt="p", target="t")
+    challenge = Challenge(id="a", entity="qa", test_type="invented", prompt="p", target="t")
     assert "invented" in challenge.check_against(AGENT_COMPOSE)[0]
 
 
 def test_label_set_and_word_cap_come_from_the_profile():
-    challenge = Challenge(id="a", role="qa", test_type="personality", prompt="p", target="t", trait="warm")
+    challenge = Challenge(id="a", entity="qa", test_type="personality", prompt="p", target="t", attribute="warm")
     assert challenge.label_set(AGENT_COMPOSE) == "fit"
     assert challenge.word_cap(AGENT_COMPOSE) == 100
 
@@ -61,16 +61,16 @@ def test_label_set_and_word_cap_come_from_the_profile():
 def test_a_second_deployment_declares_its_own_taxonomy():
     echo = Profile(
         name="sirens-echo",
-        test_types=(TestTypeSpec("content-class", "binary", 40, ("boundary",)),),
-        group_order=("echo", "deep"),
+        test_types=(TestTypeSpec("content-class", "binary", 40, ("attribute",)),),
+        entity_order=("echo", "deep"),
     )
     challenge = Challenge(
         id="nsfw-in",
-        role="echo",
+        entity="echo",
         test_type="content-class",
         prompt="p",
         target="t",
-        boundary="content-nsfw",
+        attribute="content-nsfw",
         half=Half.IN,
         pair_id="content-nsfw",
     )
@@ -109,11 +109,11 @@ def test_a_fit_label_never_scores_a_pair():
     assert pair_results(dataset, annotations) == []
 
 
-def test_annotation_order_is_group_major_then_profile_order():
+def test_annotation_order_is_entity_major_then_profile_order():
     dataset = [
-        entry("z-personality", role="qa", test_type="personality", trait="candid"),
-        entry("a-boundary", role="qa", half="in", pair_id="a"),
-        entry("m-boundary", role="engineer", half="in", pair_id="m"),
+        entry("z-personality", entity="qa", test_type="personality", attribute="candid"),
+        entry("a-boundary", entity="qa", half="in", pair_id="a"),
+        entry("m-boundary", entity="engineer", half="in", pair_id="m"),
     ]
     ordered = [e.id for e in annotation_order(dataset, AGENT_COMPOSE, ["engineer", "qa"])]
     assert ordered == ["m-boundary", "a-boundary", "z-personality"]
@@ -126,13 +126,13 @@ def test_a_deduction_is_the_thing_that_needs_a_critique():
 
 
 def test_a_derived_challenge_is_unwritten_until_it_has_both_halves_of_the_question() -> None:
-    derived = Challenge(id="c1", role="platform", test_type="boundary")
+    derived = Challenge(id="c1", entity="platform", test_type="boundary")
     assert not derived.written
     assert not derived.model_copy(update={"prompt": "ask"}).written
     assert derived.model_copy(update={"prompt": "ask", "target": "pass"}).written
 
 
 def test_an_unwritten_challenge_cannot_be_annotated() -> None:
-    unwritten = Challenge(id="c1", role="platform", test_type="boundary", target="pass")
+    unwritten = Challenge(id="c1", entity="platform", test_type="boundary", target="pass")
     with pytest.raises(ValidationError):
         DatasetEntry(challenge=unwritten, output="whatever the subject said")

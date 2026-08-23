@@ -1096,8 +1096,9 @@ func TestUnexpectedCloneDeletedOnThirdSweep(t *testing.T) {
 	writeNativeTestPlan(t, runtime.PlanFile)
 	writeNativeTestList(t, runtime.FleetFile, "owner")
 	expected := nativeExpected{
-		Full:      map[string]bool{},
-		FleetOrgs: map[string]bool{"owner": true},
+		Full:          map[string]bool{},
+		FleetOrgs:     map[string]bool{"owner": true},
+		Authoritative: true,
 	}
 	if eligible, _ := unexpectedCloneEligible(
 		runtime,
@@ -1137,8 +1138,9 @@ func TestUnexpectedCloneCounterResetsWhenStateChanges(t *testing.T) {
 	writeNativeTestPlan(t, runtime.PlanFile)
 	writeNativeTestList(t, runtime.FleetFile, "owner")
 	expected := nativeExpected{
-		Full:      map[string]bool{},
-		FleetOrgs: map[string]bool{"owner": true},
+		Full:          map[string]bool{},
+		FleetOrgs:     map[string]bool{"owner": true},
+		Authoritative: true,
 	}
 	state := nativeSweepState{
 		Format: "agentic-os.native-sweep.v1", Candidates: map[string]nativeCandidate{},
@@ -1527,5 +1529,172 @@ func TestALiveSessionsCheckoutIsNotReported(t *testing.T) {
 
 	if report := stderr(); strings.Contains(report, "resident checkout") {
 		t.Fatalf("a checkout a live session holds was reported: %q", report)
+	}
+}
+
+// An absent plan fell back to a seed expecting almost nothing, so every clean
+// fleet checkout became a deletion candidate. agentic-os#903
+func TestAnAbsentPlanNeverDeletesACheckout(t *testing.T) {
+	root := t.TempDir()
+	repository, _ := createNativeTestRepository(t, root, "coilyco-gaming", "steam-ops")
+	testRuntime := nativeTestRuntime(t, root)
+	// No plan file at all, and a fleet list that admits the org.
+	writeNativeTestList(t, testRuntime.FleetFile, "coilyco-gaming")
+
+	_, expected, err := resolveExpectedRepositories(testRuntime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if expected.Authoritative {
+		t.Fatal("an absent plan reported itself authoritative")
+	}
+	state := nativeSweepState{
+		Format: "agentic-os.native-sweep.v1", Candidates: map[string]nativeCandidate{},
+	}
+	for scan := 1; scan <= nativeDeleteScans; scan++ {
+		testRuntime.Now = testRuntime.Now.Add(nativeSweepInterval)
+		if err := runNativeWorkspaceSweep(
+			testRuntime, nil, expected, nativeLiveWorktrees{}, state,
+		); err != nil {
+			t.Fatal(err)
+		}
+		_ = readNativeJSON(nativeStatePath(testRuntime, "sweep.json"), &state)
+	}
+
+	if _, err := os.Stat(repository); err != nil {
+		t.Fatalf("an unverified plan deleted a checkout: %v", err)
+	}
+	if len(state.Candidates) != 0 {
+		t.Fatalf("candidate state was written from an unverified plan: %v", state.Candidates)
+	}
+}
+
+func TestAValidPlanStaysAuthoritative(t *testing.T) {
+	// The control. Failing closed must not disable the scan outright.
+	root := t.TempDir()
+	createNativeTestRepository(t, root, "owner", "one")
+	testRuntime := nativeTestRuntime(t, root)
+	writeNativeTestPlan(t, testRuntime.PlanFile, "one")
+	writeNativeTestList(t, testRuntime.FleetFile, "owner")
+
+	_, expected, err := resolveExpectedRepositories(testRuntime)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !expected.Authoritative {
+		t.Fatal("a valid plan did not report itself authoritative")
+	}
+}
+
+func TestAMissingRequiredRepositoryIsNamed(t *testing.T) {
+	// Silently omitting a required repository is how a role composes less than
+	// the plan promised, with nothing saying so.
+	root := t.TempDir()
+	testRuntime := nativeTestRuntime(t, root)
+	stderr := captureNativeStderr(t, &testRuntime)
+	writeNativeRequiredTestPlan(t, testRuntime.PlanFile, "owner/absent")
+	writeNativeTestList(t, testRuntime.FleetFile, "owner")
+
+	if _, _, err := resolveExpectedRepositories(testRuntime); err != nil {
+		t.Fatal(err)
+	}
+
+	report := stderr()
+	if !strings.Contains(report, "owner/absent") {
+		t.Fatalf("a missing required repository was not named: %q", report)
+	}
+}
+
+func TestAPresentRequiredRepositoryIsSilent(t *testing.T) {
+	root := t.TempDir()
+	createNativeTestRepository(t, root, "owner", "one")
+	testRuntime := nativeTestRuntime(t, root)
+	stderr := captureNativeStderr(t, &testRuntime)
+	writeNativeRequiredTestPlan(t, testRuntime.PlanFile, "owner/one")
+	writeNativeTestList(t, testRuntime.FleetFile, "owner")
+
+	if _, _, err := resolveExpectedRepositories(testRuntime); err != nil {
+		t.Fatal(err)
+	}
+
+	if report := stderr(); strings.Contains(report, "required") {
+		t.Fatalf("a present required repository was reported: %q", report)
+	}
+}
+
+// writeNativeRequiredTestPlan writes a plan whose residency entries are all
+// required, which is the case a missing checkout has to be loud about.
+func writeNativeRequiredTestPlan(t *testing.T, path string, identities ...string) {
+	t.Helper()
+	slices.Sort(identities)
+	projects := filepath.Join(filepath.Dir(path), "projects")
+	residency := make([]aosRepositorySelection, 0, len(identities))
+	for _, identity := range identities {
+		residency = append(residency, aosRepositorySelection{
+			Identity: identity,
+			Path:     filepath.Join(projects, filepath.FromSlash(identity)),
+			Source:   "test", Scope: "role-union", Reason: "test repository",
+			Required: true,
+		})
+	}
+	payload := aosRepositoryPlan{
+		Format:       agentComposeRepositoryPlanYAMLFormat,
+		ProjectsRoot: projects,
+		Roles:        map[string][]aosRepositorySelection{},
+		Residency:    residency,
+	}
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	raw, err := yaml.Marshal(payload)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, raw, 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// A resident deploy sat 421 commits behind on one untracked file, clean on main
+// by every other reading, and "dirty" alone does not convey that. agentic-os#1033
+func TestABehindCheckoutReportsHowFarBehind(t *testing.T) {
+	root := t.TempDir()
+	repository := nativeRepository{
+		Owner: "owner", Name: "one",
+		Path: filepath.Join(root, "projects", "owner", "one"),
+	}
+	createNativeTestRepository(t, root, "owner", "one")
+	// Push a commit, then step the checkout back, so origin is ahead exactly as
+	// it is on a host whose normalization has been skipped for a while.
+	if err := os.WriteFile(filepath.Join(repository.Path, "ahead.txt"),
+		[]byte("x\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	testGit(t, repository.Path, "add", "ahead.txt")
+	testGit(t, repository.Path, "commit", "-m", "ahead of the checkout")
+	testGit(t, repository.Path, "push", "origin", "main")
+	testGit(t, repository.Path, "reset", "--hard", "HEAD~1")
+
+	drift, ok := readNativeResidentDrift(repository)
+
+	if !ok {
+		t.Fatal("a checkout behind origin was not reported")
+	}
+	if !slices.Contains(drift.reasons, "1 behind origin") {
+		t.Fatalf("the gap was not quantified: %+v", drift.reasons)
+	}
+}
+
+func TestAnUpToDateCheckoutReportsNoGap(t *testing.T) {
+	root := t.TempDir()
+	createNativeTestRepository(t, root, "owner", "one")
+	repository := nativeRepository{
+		Owner: "owner", Name: "one",
+		Path: filepath.Join(root, "projects", "owner", "one"),
+	}
+
+	if _, ok := readNativeResidentDrift(repository); ok {
+		t.Fatal("an up-to-date checkout was reported as drifted")
 	}
 }

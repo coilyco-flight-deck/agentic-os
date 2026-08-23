@@ -177,8 +177,9 @@ func TestNativeSweepNarratesEveryFetch(t *testing.T) {
 		{Owner: "owner", Name: "two", Path: second},
 	}
 	err := runNativeWorkspaceSweep(runtime, repositories, nativeExpected{
-		Full:      map[string]bool{filepath.Join("owner", "one"): true, filepath.Join("owner", "two"): true},
-		FleetOrgs: map[string]bool{"owner": true},
+		Full:          map[string]bool{filepath.Join("owner", "one"): true, filepath.Join("owner", "two"): true},
+		FleetOrgs:     map[string]bool{"owner": true},
+		Authoritative: true,
 	}, nativeLiveWorktrees{}, nativeSweepState{Candidates: map[string]nativeCandidate{}})
 	if err != nil {
 		t.Fatal(err)

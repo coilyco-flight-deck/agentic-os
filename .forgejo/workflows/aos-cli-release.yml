@@ -51,13 +51,6 @@ jobs:
       - name: Install validated Ward for release gate
         run: scripts/install-workflow-ward.sh
 
-      - name: Cache pre-commit envs
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pre-commit
-          key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
-          restore-keys: |
-            pre-commit-${{ runner.os }}-
 
       - name: Validate the release commit
         run: bash "$GITHUB_WORKSPACE/scripts/ci/aos-cli-release.sh" validate

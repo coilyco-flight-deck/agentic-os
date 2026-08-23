@@ -46,16 +46,9 @@ jobs:
           restore-keys: |
             uv-${{ runner.os }}-
 
-      - name: Cache pre-commit envs
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pre-commit
-          key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
-          restore-keys: |
-            pre-commit-${{ runner.os }}-
 
       - name: Repo test gate
-        run: bash "$GITHUB_WORKSPACE/scripts/ci/repo-test-gate.sh"
+        run: bash "$GITHUB_WORKSPACE/scripts/ci-command.sh" bash "$GITHUB_WORKSPACE/scripts/ci/repo-test-gate.sh"
       - name: Test the AOS CLI
         run: just aos-test
       - name: Test the native terminal companion
