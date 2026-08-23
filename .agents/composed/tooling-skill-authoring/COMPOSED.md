@@ -43,7 +43,6 @@ Run the validator before committing for fast feedback:
 ```sh
 pre-commit run skill-conventions --all-files
 pre-commit run dead-cross-links --all-files
-pre-commit run em-dash-check --all-files
 ```
 
 The structural validators enforce the category taxonomy from

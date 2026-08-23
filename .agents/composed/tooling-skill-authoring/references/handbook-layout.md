@@ -30,7 +30,6 @@
 │       └── COMPOSED.md                         # promoted only for selected roles
 ├── .agents/roles.kdl                           # composed-skill allowlists
 ├── scripts/
-│   └── check-em-dashes.py                      # local voice-rule hook
 └── .pre-commit-config.yaml                     # subscribes to coilyco-flight-deck/agentic-os hooks + local hooks
 ```
 

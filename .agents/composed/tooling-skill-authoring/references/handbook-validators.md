@@ -54,12 +54,8 @@ What it skips intentionally:
 * Inside fenced code blocks.
 * Files named `TEMPLATE.md`.
 
-### `em-dash-check` (local) - voice rule
-
-`scripts/check-em-dashes.py` flags U+2014 in SKILL.md prose, masking inline code, fenced code, quoted strings, and link targets first. Stays local because the upstream validator is voice-neutral and em-dashes are a personal preference, not a general convention.
-
 ### Pre-commit wiring
 
-`.pre-commit-config.yaml` subscribes to `coilyco-flight-deck/agentic-os` at a pinned tag for `skill-conventions` and `dead-cross-links`. The four local hooks (`trufflehog`, `leak-check`, `em-dash-check`, `setup-symlinks`) stay as `repo: local` entries.
+`.pre-commit-config.yaml` subscribes to `coilyco-flight-deck/agentic-os` at a pinned tag for `skill-conventions` and `dead-cross-links`. The three local hooks (`trufflehog`, `leak-check`, `setup-symlinks`) stay as `repo: local` entries.
 
 Bump the `rev:` to pull upstream changes. Add new local checks as new `repo: local` hook entries.

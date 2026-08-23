@@ -17,5 +17,5 @@ The handbook is split into topical references so each stays under the documentat
 * [Layout](handbook-layout.md) - §1 ordinary and composed source trees. Routes to [categories](handbook-categories.md) for §2.
 * [Frontmatter](handbook-frontmatter.md) - §3 universal entrypoint frontmatter and hard validator limits. Routes to [description budgets](handbook-description-budgets.md) for target bands, alias discipline, templates, and the audit baseline.
 * [Status lines and required sections](handbook-sections.md) - §4 the status line and its kind/emoji pairings, §5 required H2 sections per category plus the repo AGENTS.md heading set.
-* [Validators and pre-commit wiring](handbook-validators.md) - §6 documentation-wide validators, `skill-conventions`, `dead-cross-links`, `em-dash-check`, pre-commit wiring.
+* [Validators and pre-commit wiring](handbook-validators.md) - §6 documentation-wide validators, `skill-conventions`, `dead-cross-links`, pre-commit wiring.
 * [Templates, cross-linking, categories, voice, symlinks](handbook-conventions.md) - §7 templates, §8 cross-linking rules, §9 adding a new category, §10 voice conventions, §11 symlinks and the global skill surface.
