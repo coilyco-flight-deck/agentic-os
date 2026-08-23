@@ -57,11 +57,11 @@ eleven days unnoticed: startup names them once (agentic-os#1084).
 ## Resident checkout drift
 
 Normalization returns a resident checkout to `main` only when it is clean and
-already on the remote, and said nothing when it was not: six of twelve sat off
-`main` unnoticed, one changing what a composed artifact recorded as live
-deployment state (agentic-os#1033). The fleet pass now names each with its branch
-and whether it is dirty or unpushed. A detached HEAD is not drift, that being how
-a shadow releases `main`, and a live session's checkout is its own.
+already on the remote, and said nothing otherwise: six of twelve sat off `main`
+unnoticed, one changing what a composed artifact recorded as live deployment
+state. The pass names each with its branch and whether it is dirty, unpushed, or
+how far behind origin, that last because one untracked file stops normalization
+and a resident `deploy` then sat 421 commits back, otherwise clean on `main`.
 
 ## Native startup narration
 

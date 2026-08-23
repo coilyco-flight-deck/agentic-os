@@ -998,6 +998,21 @@ func runNativeWorkspaceSweep(
 	return nil
 }
 
+// nativeBehindOrigin counts commits the checkout is missing, or 0 when there is
+// no upstream to compare against.
+func nativeBehindOrigin(path, branch string) int {
+	output, err := nativeGit(path, "rev-list", "--count",
+		"HEAD.."+"origin/"+branch)
+	if err != nil {
+		return 0
+	}
+	behind, err := strconv.Atoi(strings.TrimSpace(output))
+	if err != nil {
+		return 0
+	}
+	return behind
+}
+
 // Normalization leaves exactly these cases alone, and they change what a tool
 // reading the checkout composes. docs/native-session-start.md
 type nativeResidentDrift struct {
@@ -1019,6 +1034,11 @@ func readNativeResidentDrift(repository nativeRepository) (nativeResidentDrift, 
 	drift := nativeResidentDrift{path: repository.Path, branch: branch}
 	if clean, err := nativeWorktreeClean(repository.Path, false); err == nil && !clean {
 		drift.reasons = append(drift.reasons, "dirty")
+	}
+	// One untracked file stops normalization, and the checkout then falls behind
+	// silently. "dirty" alone understates 421 commits. docs/native-session-start.md
+	if behind := nativeBehindOrigin(repository.Path, branch); behind > 0 {
+		drift.reasons = append(drift.reasons, fmt.Sprintf("%d behind origin", behind))
 	}
 	if safe, err := nativeHeadIsRemote(repository.Path); err == nil && !safe {
 		drift.reasons = append(drift.reasons, "unpushed")

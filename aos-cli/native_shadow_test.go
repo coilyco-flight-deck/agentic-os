@@ -1655,3 +1655,46 @@ func writeNativeRequiredTestPlan(t *testing.T, path string, identities ...string
 		t.Fatal(err)
 	}
 }
+
+// A resident deploy sat 421 commits behind on one untracked file, clean on main
+// by every other reading, and "dirty" alone does not convey that. agentic-os#1033
+func TestABehindCheckoutReportsHowFarBehind(t *testing.T) {
+	root := t.TempDir()
+	repository := nativeRepository{
+		Owner: "owner", Name: "one",
+		Path: filepath.Join(root, "projects", "owner", "one"),
+	}
+	createNativeTestRepository(t, root, "owner", "one")
+	// Push a commit, then step the checkout back, so origin is ahead exactly as
+	// it is on a host whose normalization has been skipped for a while.
+	if err := os.WriteFile(filepath.Join(repository.Path, "ahead.txt"),
+		[]byte("x\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	testGit(t, repository.Path, "add", "ahead.txt")
+	testGit(t, repository.Path, "commit", "-m", "ahead of the checkout")
+	testGit(t, repository.Path, "push", "origin", "main")
+	testGit(t, repository.Path, "reset", "--hard", "HEAD~1")
+
+	drift, ok := readNativeResidentDrift(repository)
+
+	if !ok {
+		t.Fatal("a checkout behind origin was not reported")
+	}
+	if !slices.Contains(drift.reasons, "1 behind origin") {
+		t.Fatalf("the gap was not quantified: %+v", drift.reasons)
+	}
+}
+
+func TestAnUpToDateCheckoutReportsNoGap(t *testing.T) {
+	root := t.TempDir()
+	createNativeTestRepository(t, root, "owner", "one")
+	repository := nativeRepository{
+		Owner: "owner", Name: "one",
+		Path: filepath.Join(root, "projects", "owner", "one"),
+	}
+
+	if _, ok := readNativeResidentDrift(repository); ok {
+		t.Fatal("an up-to-date checkout was reported as drifted")
+	}
+}
