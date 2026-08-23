@@ -951,6 +951,15 @@ func runNativeWorkspaceSweep(
 	pass.Done("")
 	reportNativeResidentDrift(runtime, repositories, live)
 	scan := runtime.Progress.Step("scan for unexpected clones")
+	// Counters must not advance either, or three unverified scans delete on the
+	// fourth exactly as three verified ones do.
+	if !expected.Authoritative {
+		scan.Done("skipped, no verified repository plan")
+		fmt.Fprintf(runtime.Stderr,
+			"aos: no repository plan at %s, so unexpected-clone cleanup is skipped\n",
+			runtime.PlanFile)
+		return nil
+	}
 	next := map[string]nativeCandidate{}
 	for _, repository := range scanNativeRepositories(runtime.ProjectsRoot) {
 		if expected.matches(repository.Owner, repository.Name) {
@@ -1789,6 +1798,9 @@ func nativeRandomCharacter(reader io.Reader, alphabet string) (byte, error) {
 type nativeExpected struct {
 	Full      map[string]bool
 	FleetOrgs map[string]bool
+	// Authoritative is false when no plan produced this set. Deleting a
+	// checkout on an unverified expectation is the hazard, not the cleanup.
+	Authoritative bool
 }
 
 func (expected nativeExpected) matches(owner, name string) bool {
@@ -1830,6 +1842,8 @@ func resolveExpectedRepositories(
 	plan, err := loadAOSRepositoryPlan(runtime.PlanFile)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
+			// Projection runs off the seed, cleanup does not: an absent plan
+			// expects almost nothing. docs/native-session-start.md
 			return nil, nativeExpected{
 				Full:      seedNativeExpected(),
 				FleetOrgs: readNativeListSet(runtime.FleetFile),
@@ -1841,8 +1855,9 @@ func resolveExpectedRepositories(
 		return nil, nativeExpected{}, fmt.Errorf("Agent Compose repository plan projects_root %q does not match %s", plan.ProjectsRoot, runtime.ProjectsRoot)
 	}
 	expected := nativeExpected{
-		Full:      seedNativeExpected(),
-		FleetOrgs: readNativeListSet(runtime.FleetFile),
+		Full:          seedNativeExpected(),
+		FleetOrgs:     readNativeListSet(runtime.FleetFile),
+		Authoritative: true,
 	}
 	prior := ""
 	for _, entry := range plan.Residency {
@@ -1853,6 +1868,7 @@ func resolveExpectedRepositories(
 		prior = entry.Identity
 		expected.Full[filepath.FromSlash(entry.Identity)] = true
 	}
+	reportMissingRequiredRepositories(runtime, plan)
 	var repositories []nativeRepository
 	for _, repository := range scanNativeRepositories(runtime.ProjectsRoot) {
 		if nativeSerialized(repository.Owner, repository.Name) {
@@ -1866,6 +1882,31 @@ func resolveExpectedRepositories(
 		return repositories[i].Path < repositories[j].Path
 	})
 	return repositories, expected, nil
+}
+
+// A required repository that is not on disk is silently omitted from
+// projection, so a role composes less than the plan promised.
+func reportMissingRequiredRepositories(runtime nativeRuntime, plan aosRepositoryPlan) {
+	missing := make([]string, 0)
+	for _, entry := range plan.Residency {
+		if !entry.Required {
+			continue
+		}
+		if _, err := os.Stat(filepath.Join(entry.Path, ".git")); err != nil {
+			missing = append(missing, entry.Identity)
+		}
+	}
+	if len(missing) == 0 {
+		return
+	}
+	sort.Strings(missing)
+	scope := fmt.Sprintf("%d repositories", len(missing))
+	if len(missing) == 1 {
+		scope = "1 repository"
+	}
+	fmt.Fprintf(runtime.Stderr,
+		"aos: the plan marks %s required and not checked out: %s\n",
+		scope, strings.Join(missing, ", "))
 }
 
 func readNativeListSet(path string) map[string]bool {
