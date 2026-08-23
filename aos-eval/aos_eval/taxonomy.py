@@ -29,17 +29,17 @@ STOPWORDS = frozenset(
 
 @dataclass
 class FailureMode:
-    """One axial category: a recurring failure with the samples that show it."""
+    """One axial category: a recurring failure with the challenges that show it."""
 
     key: str
-    sample_ids: list[str] = field(default_factory=list)
+    challenge_ids: list[str] = field(default_factory=list)
     roles: Counter[str] = field(default_factory=Counter)
     test_types: Counter[str] = field(default_factory=Counter)
     evidence: list[str] = field(default_factory=list)
 
     @property
     def count(self) -> int:
-        return len(self.sample_ids)
+        return len(self.challenge_ids)
 
     def to_dict(self) -> dict[str, object]:
         payload: dict[str, object] = {
@@ -47,7 +47,7 @@ class FailureMode:
             "count": self.count,
             "roles": dict(self.roles.most_common()),
             "test_types": dict(self.test_types.most_common()),
-            "samples": sorted(self.sample_ids),
+            "challenges": sorted(self.challenge_ids),
         }
         if self.evidence:
             payload["evidence"] = self.evidence[:3]
@@ -56,14 +56,14 @@ class FailureMode:
 
 def axis_of(entry: DatasetEntry) -> str:
     """The structural axis a failure sits on, before its prose is considered."""
-    sample = entry.sample
-    if sample.boundary and sample.half:
-        return f"{sample.boundary}:{sample.half.value}"
-    if sample.against:
-        return f"role-fit:{sample.against}"
-    if sample.trait:
-        return f"personality:{sample.trait}"
-    return sample.test_type
+    challenge = entry.challenge
+    if challenge.boundary and challenge.half:
+        return f"{challenge.boundary}:{challenge.half.value}"
+    if challenge.against:
+        return f"role-fit:{challenge.against}"
+    if challenge.trait:
+        return f"personality:{challenge.trait}"
+    return challenge.test_type
 
 
 def salient_terms(critique: str, limit: int = 3) -> list[str]:
@@ -87,9 +87,9 @@ def build(dataset: list[DatasetEntry], annotations: dict[str, Annotation]) -> li
         if terms:
             key = f"{key} / {' '.join(sorted(terms))}"
         mode = modes.setdefault(key, FailureMode(key=key))
-        mode.sample_ids.append(annotation.id)
-        mode.roles[entry.sample.role] += 1
-        mode.test_types[entry.sample.test_type] += 1
+        mode.challenge_ids.append(annotation.id)
+        mode.roles[entry.challenge.role] += 1
+        mode.test_types[entry.challenge.test_type] += 1
         if annotation.evidence:
             mode.evidence.append(annotation.evidence)
 
@@ -99,10 +99,10 @@ def build(dataset: list[DatasetEntry], annotations: dict[str, Annotation]) -> li
 def render(modes: list[FailureMode], total: int) -> str:
     if not modes:
         return "no deductions recorded, so there is no taxonomy to build"
-    lines = [f"{sum(mode.count for mode in modes)} deductions across {total} samples", ""]
+    lines = [f"{sum(mode.count for mode in modes)} deductions across {total} challenges", ""]
     for index, mode in enumerate(modes, start=1):
         roles = ", ".join(f"{role} x{count}" for role, count in mode.roles.most_common())
         lines.append(f"{index:2d}. [{mode.count}] {mode.key}")
         lines.append(f"      roles: {roles}")
-        lines.append(f"      samples: {', '.join(sorted(mode.sample_ids))}")
+        lines.append(f"      challenges: {', '.join(sorted(mode.challenge_ids))}")
     return "\n".join(lines)

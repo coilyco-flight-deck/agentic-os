@@ -9,26 +9,10 @@ import sys
 from pathlib import Path
 
 from agentic_os.config import is_enabled, is_excluded, load_excludes
+from agentic_os.pre_commit.tree import is_repo_content
 
 HOOK_ID = "source-doc-refs"
 REPO_ROOT = Path.cwd()
-
-SKIP_DIR_NAMES = {
-    ".claude",
-    ".git",
-    ".mypy_cache",
-    ".pytest_cache",
-    ".ruff_cache",
-    ".terraform",
-    ".tox",
-    ".venv",
-    "__pycache__",
-    "build",
-    "dist",
-    "node_modules",
-    "target",
-    "vendor",
-}
 
 LINE_COMMENT_PREFIXES = {
     ".bash": ("#",),
@@ -116,7 +100,7 @@ def _rel_or_none(path: Path) -> Path | None:
 
 
 def _should_skip(rel: Path, excludes: list[str]) -> bool:
-    return any(part in SKIP_DIR_NAMES for part in rel.parts) or is_excluded(rel, excludes)
+    return not is_repo_content(rel, REPO_ROOT) or is_excluded(rel, excludes)
 
 
 def _is_source_file(rel: Path) -> bool:

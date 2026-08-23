@@ -1,6 +1,18 @@
 #!/usr/bin/env bash
+#
+# Per-stage build setup: the architecture map, and apt's retry policy.
+# Runs first in every language stage, before that stage's apt-get.
 
 set -euo pipefail
+
+# Every curl in the Dockerfile retries; apt-get did not, and an apt mirror blip
+# failed one payload and skipped the whole release. See agentic-os#987.
+install -d /etc/apt/apt.conf.d
+printf '%s\n' \
+  'Acquire::Retries "5";' \
+  'Acquire::http::Timeout "30";' \
+  'Acquire::https::Timeout "30";' \
+  > /etc/apt/apt.conf.d/80-agentic-os-retries
 
 case "${TARGETARCH:?TARGETARCH is required}" in
   amd64)

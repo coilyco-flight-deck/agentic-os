@@ -17,6 +17,12 @@ but the very top would drift away from whatever it described. YAML therefore
 allows comments only as that top header block - everything above the first
 content line. Once a content line appears, any later comment is a violation.
 
+Comment lines between ``# BEGIN managed by ...`` and ``# END managed by ...``
+are exempt in YAML. A generator owns every byte in that region, so a comment
+there cannot move to a top header without breaking the delimiters the rollout
+parses, and an in-repo edit is overwritten on the next rollout. Enforcement
+resumes at the END marker, which is what a whole-file exclude gave up.
+
 Two per-repo dials under ``[tool.agentic-os.code-comments]`` change the two
 paragraphs above, both defaulting off so no repo moves until it opts in:
 
@@ -47,6 +53,7 @@ from agentic_os.config import (
     is_excluded,
     load_excludes,
 )
+from agentic_os.pre_commit.tree import is_repo_content
 
 REPO_ROOT = Path.cwd()
 HOOK_ID = "code-comments"
@@ -71,15 +78,6 @@ _BLOCK_SCALAR_HEADER = re.compile(
 
 def starts_block_scalar(line: str) -> bool:
     return bool(_BLOCK_SCALAR_HEADER.search(line))
-
-SKIP_DIR_NAMES = {
-    ".claude",
-    ".git",
-    ".terraform",
-    "build",
-    "target",
-    "vendor",
-}
 
 LINE_COMMENT_PREFIXES = {
     ".bash": ("#",),
@@ -132,7 +130,7 @@ BLOCK_COMMENT_EXTS = {
 
 
 def should_skip(path: Path) -> bool:
-    return any(part in SKIP_DIR_NAMES for part in path.parts)
+    return not is_repo_content(path, REPO_ROOT)
 
 
 def source_files() -> list[Path]:
@@ -258,6 +256,12 @@ def header_cap_violation(rel: Path, line_no: int, count: int) -> str:
     )
 
 
+# A generator owns every byte in here, so the comments cannot move and an edit
+# does not survive the next rollout. Contract in the module docstring.
+MANAGED_BEGIN_RE = re.compile(r"^\s*#\s*BEGIN managed by ")
+MANAGED_END_RE = re.compile(r"^\s*#\s*END managed by ")
+
+
 def scan_yaml(
     rel: Path,
     suffix: str,
@@ -272,6 +276,7 @@ def scan_yaml(
     header_lines = 0
     streak_start: int | None = None
     streak_len = 0
+    managed_from: int | None = None
     for line_no, line in enumerate(lines, start=1):
         indent = len(line) - len(line.lstrip())
         if block_indent is not None:
@@ -281,6 +286,16 @@ def scan_yaml(
                 continue
             block_indent = None
         if is_comment_line(line, suffix, line_no):
+            if MANAGED_END_RE.match(line):
+                managed_from = None
+                streak_start, streak_len = None, 0
+                continue
+            if MANAGED_BEGIN_RE.match(line):
+                managed_from = line_no
+                streak_start, streak_len = None, 0
+                continue
+            if managed_from is not None:
+                continue
             if len(line) > MAX_COMMENT_LINE_CHARS:
                 violations.append(char_cap_violation(rel, line_no, line))
             if not seen_content:
@@ -313,7 +328,17 @@ def scan_yaml(
             seen_content = True
         if starts_block_scalar(line):
             block_indent = indent
+    if managed_from is not None:
+        violations.append(unterminated_region_violation(rel, managed_from))
     return violations
+
+
+def unterminated_region_violation(rel: Path, start: int) -> str:
+    return (
+        f"{rel.as_posix()}:{start}: managed region opened here and never closed. "
+        f"Everything after it is exempt, so an unterminated marker is a silent "
+        f"whole-file opt-out. Close it with a matching `# END managed by ...`."
+    )
 
 
 def streak_violation(

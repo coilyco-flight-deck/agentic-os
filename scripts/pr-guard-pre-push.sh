@@ -12,6 +12,11 @@
 #      allowing further pushes to it. Forgejo API only, and only when
 #      FORGEJO_TOKEN is present; it degrades to a notice otherwise so a missing
 #      token never blocks a push.
+#   3. Name the merged PR when one exists, because "no open PR" and "its PR
+#      already merged" want opposite next moves: open one, versus branch again
+#      from main. Asking the forge is the only way to see a squash or rebase
+#      merge, whose branch tip is not an ancestor of the commit it merged as
+#      (agentic-os#1034).
 #
 # Strength: this is client-side and `git push --no-verify` skips it, as does
 # pushing a ref pre-commit does not surface. It stops accidents, not intent.
@@ -68,20 +73,38 @@ published="$(
 # creates the ref a PR will later point at.
 [ "$published" = "200" ] || exit 0
 
-open_prs="$(
-  curl -sf -H "$auth_header" "$api_root/repos/$slug/pulls?state=open&limit=100" 2>/dev/null |
-    jq --arg b "$branch" '[.[] | select(.head.ref == $b)] | length' 2>/dev/null
-)"
+prs_on_branch() {
+  curl -sf -H "$auth_header" "$api_root/repos/$slug/pulls?state=$1&limit=100" 2>/dev/null |
+    jq -c --arg b "$branch" '[.[] | select(.head.ref == $b)]' 2>/dev/null
+}
+
+# Open-only: one page of every state would drop an older open PR and refuse a
+# legitimate push. The open set is small enough that one page holds it.
+open_json="$(prs_on_branch open)"
 # A failed lookup yields empty, which must not read as "zero open PRs".
-[ -n "$open_prs" ] || {
+[ -n "$open_json" ] || {
   printf '[pr-guard] PR lookup failed for %s; allowing push\n' "$branch" >&2
   exit 0
 }
+[ "$(printf '%s' "$open_json" | jq 'length')" -eq 0 ] || exit 0
 
-if [ "$open_prs" -eq 0 ]; then
-  die "'$branch' is already on the remote but has no open PR.
-       Open one, then push again:
-         ${remote_url%.git}/compare/$default_branch...$branch"
+# The push is refused either way now. This read only picks which refusal is
+# true, so a miss costs the better message rather than the verdict.
+merged_pr="$(
+  prs_on_branch closed |
+    jq -r 'map(select(.merged_at != null)) | max_by(.number) | .number // empty'
+)"
+
+if [ -n "$merged_pr" ]; then
+  die "'$branch' already merged as PR #$merged_pr. This push would strand the
+       work on a dead branch that nothing points at.
+       Branch again from '$default_branch' and open a new PR:
+         git switch $default_branch && git pull && git switch -c <new-branch>
+       Deliberate override: git push --no-verify"
 fi
+
+die "'$branch' is already on the remote but has no open PR.
+     Open one, then push again:
+       ${remote_url%.git}/compare/$default_branch...$branch"
 
 exit 0

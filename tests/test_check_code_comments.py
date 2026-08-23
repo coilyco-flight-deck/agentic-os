@@ -323,3 +323,80 @@ def test_sorter_detection_false_without_the_hook(tmp_path: Path) -> None:
 
 def test_sorter_detection_false_without_a_config(tmp_path: Path) -> None:
     assert sorts_yaml_keys(tmp_path) is False
+
+
+# A generator owns every byte between the managed markers, so those comments
+# cannot move and an in-repo edit does not survive the rollout. agentic-os#993.
+
+BEGIN = "  # BEGIN managed by agentic-os/scripts/apply-agentic-os-hooks.py"
+END = "  # END managed by agentic-os/scripts/apply-agentic-os-hooks.py"
+GENERATED = [
+    "      # Forgejo workflows use GitHub Actions syntax; no exclude split needed.",
+    "      - id: actionlint",
+    "      - id: typos",
+    "        # Report, do not rewrite. --force-exclude keeps _typos.toml binding.",
+]
+
+
+def test_a_managed_region_carries_no_comment_violations() -> None:
+    lines = ["repos:", "  - repo: local", BEGIN, *GENERATED, END]
+    assert scan_lines(Path("v.yaml"), ".yaml", lines) == []
+
+
+def test_the_same_lines_unmanaged_still_fail() -> None:
+    # The control. Without it the test above passes on a hook checking nothing.
+    lines = ["repos:", "  - repo: local", *GENERATED]
+    assert len(scan_lines(Path("v.yaml"), ".yaml", lines)) == 2
+
+
+def test_a_comment_after_the_region_is_still_checked() -> None:
+    # The whole-file exclude this replaces hid these. Enforcement resumes at END.
+    lines = ["repos:", "  - repo: local", BEGIN, *GENERATED, END, "  # stray note"]
+    violations = scan_lines(Path("v.yaml"), ".yaml", lines)
+    assert len(violations) == 1
+    assert "v.yaml:9" in violations[0]
+
+
+def test_a_comment_before_the_region_is_still_checked() -> None:
+    lines = ["repos:", "  - repo: local", "  # stray note", BEGIN, *GENERATED, END]
+    violations = scan_lines(Path("v.yaml"), ".yaml", lines)
+    assert len(violations) == 1
+    assert "v.yaml:3" in violations[0]
+
+
+def test_the_markers_do_not_spend_the_header_budget() -> None:
+    # A managed region can open before any content line in a generated config.
+    lines = [BEGIN, "repos:", *GENERATED, END]
+    assert scan_lines(Path("v.yaml"), ".yaml", lines, header_cap=True) == []
+
+
+def test_a_marker_inside_a_block_scalar_is_not_a_marker() -> None:
+    # Shell inside `run: |` is content, so a `#` line there never opens a region.
+    lines = [
+        "steps:",
+        "  - run: |",
+        "      # BEGIN managed by something",
+        "      echo hi",
+        "  # a real comment below content",
+    ]
+    violations = scan_lines(Path("v.yaml"), ".yaml", lines)
+    assert len(violations) == 1
+    assert "v.yaml:5" in violations[0]
+
+
+def test_an_unterminated_managed_region_fails(tmp_path: Path) -> None:
+    # The region latched on and nothing cleared it at EOF, so one hand-written
+    # line matching the prefix silently exempted the rest. agentic-os#1185.
+    lines = ["repos:", "  - repo: local", BEGIN, *GENERATED]
+    violations = scan_lines(Path("v.yaml"), ".yaml", lines)
+
+    assert len(violations) == 1
+    assert "v.yaml:3" in violations[0]
+    assert "never closed" in violations[0]
+
+
+def test_a_closed_region_is_still_silent(tmp_path: Path) -> None:
+    # The control, so the fix cannot become "flag every managed region".
+    lines = ["repos:", "  - repo: local", BEGIN, *GENERATED, END]
+
+    assert scan_lines(Path("v.yaml"), ".yaml", lines) == []

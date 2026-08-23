@@ -34,12 +34,12 @@ import re
 import sys
 from pathlib import Path
 
+from agentic_os.config import is_enabled, is_excluded, load_excludes
 from agentic_os.pre_commit.check_documentation_layout import (
     is_under_examples,
     is_under_skill_path,
-    should_skip,
 )
-from agentic_os.config import is_enabled, is_excluded, load_excludes
+from agentic_os.pre_commit.tree import is_repo_content
 
 REPO_ROOT = Path.cwd()
 HOOK_ID = "context-load-points"
@@ -77,7 +77,7 @@ def load_point_files(root: Path, excludes: list[str]) -> list[Path]:
     for name in sorted(LOAD_POINT_NAMES):
         for path in root.rglob(name):
             rel = path.relative_to(root)
-            if should_skip(rel):
+            if not is_repo_content(rel, root):
                 continue
             if is_excluded(rel, excludes):
                 continue

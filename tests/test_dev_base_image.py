@@ -44,7 +44,8 @@ def test_language_targets_are_payload_only_and_share_architecture_mapping() -> N
     stage_count = len(_language_stages(text))
 
     assert stage_count == 5
-    assert text.count("source=write-arch-env.sh,target=/tmp/write-arch-env.sh") == stage_count
+    mount = "source=prepare-build-stage.sh,target=/tmp/prepare-build-stage.sh"
+    assert text.count(mount) == stage_count
     for forbidden in (
         "install-common.sh",
         "verify-common.sh",
@@ -150,3 +151,18 @@ def test_full_remains_the_composed_default_surface() -> None:
     assert "COPY --from=dev-base-lang-go-graft /usr/local/go /usr/local/go" in text
     assert "COPY --from=dev-base-lang-dotnet-graft /usr/local/dotnet /usr/local/dotnet" in text
     assert "COPY --from=dev-base-lang-python-graft /opt/uv /opt/uv" in text
+
+
+def test_apt_retries_are_configured_before_every_apt_get() -> None:
+    # An apt mirror blip failed one payload and skipped the whole release, while
+    # every curl beside it already retried. See agentic-os#987.
+    setup = (DOCKERFILE.parent / "prepare-build-stage.sh").read_text(encoding="utf-8")
+    assert 'Acquire::Retries "5";' in setup
+
+    text = DOCKERFILE.read_text(encoding="utf-8")
+    for name in _language_stages(text):
+        stage = _stage_text(text, name)
+        prepare = stage.find("prepare-build-stage.sh")
+        apt = stage.find("apt-get update")
+        assert prepare != -1, name
+        assert apt != -1 and prepare < apt, name

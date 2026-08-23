@@ -39,7 +39,11 @@ payload drafts, the full job consumes those exact manifests and publishes
 [`release.yml`](../.forgejo/workflows/release.yml) promotes only the full
 manifest to its next minor tag, `release`, and `latest`, and manual dispatch
 reuses it for retries and overrides. Payload drafts and cache refs are internal
-transport with no release alias or compatibility contract.
+transport with no release alias or compatibility contract. Writes are asserted
+rather than assumed: each payload and the release promotion are re-read from the
+registry rather than taken from a job colour, each payload gets one bounded
+retry, and `apt-get` retries via
+[`prepare-build-stage.sh`](../docker/dev-base/prepare-build-stage.sh).
 
 Pull requests touching `docker/` build the complete source graph through
 [`actions/dev-base-build`](../actions/dev-base-build/action.yml) with no
@@ -48,14 +52,12 @@ registry credential, publishing nothing. See
 
 Every managed version has one default `ARG` across the two Dockerfiles: a
 language pin in its payload target, and shared agents, internal tools, operator
-CLIs, and full-only gates in the full Dockerfile, so changing them reuses
-cached payloads rather than rebuilding toolchains.
-
-Every pin is manual. Nothing resolves these against upstream and nothing fails
-when one falls behind, so a pin is only as current as the last person who
-checked it. The image owns this deployment's Git identity and maps it onto
-Ward's `WARD_GIT_*` contract, without redefining Ward policy, AOSguard policy,
-or agent-compose source data.
+CLIs, and full-only gates in the full Dockerfile, so changing them reuses cached
+payloads rather than rebuilding toolchains. Every pin is manual, and nothing
+resolves them against upstream or fails when one falls behind, so a pin is only
+as current as the last person who checked it. The image owns this deployment's
+Git identity and maps it onto Ward's `WARD_GIT_*` contract, without redefining
+Ward policy, AOSguard policy, or agent-compose source data.
 ## dev-base build cache
 
 Every multi-architecture payload and full-image build reuses a persistent Buildx

@@ -4,7 +4,7 @@ A boundary is only measured by a pair. The in-half proves the rule fires, the
 out-half proves it does not fire on the neighbouring case that must still be
 served. Grading one half alone rewards a deployment that refuses everything.
 
-Derivation stops at the slot. The target comes from the declaration, the prompt
+Derivation stops at the unwritten challenge. The target comes from the declaration, the prompt
 is written by a human, and nothing here invents one.
 """
 
@@ -13,7 +13,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from aos_eval.schema import DatasetEntry, Half
+from aos_eval.schema import Challenge, DatasetEntry, Half
 
 BOUNDARIES_SCHEMA = "aos-eval.boundaries.v1"
 DEFAULT_TEST_TYPE = "boundary"
@@ -35,37 +35,9 @@ class Boundary:
     seed: str = ""
 
 
-@dataclass(frozen=True)
-class Slot:
-    """One case the dataset must contain, before anyone authors it."""
-
-    id: str
-    role: str
-    test_type: str
-    boundary: str
-    half: Half
-    pair_id: str
-    target: str
-    seed: str = ""
-
-    def to_dict(self) -> dict[str, Any]:
-        payload = {
-            "id": self.id,
-            "role": self.role,
-            "test_type": self.test_type,
-            "boundary": self.boundary,
-            "half": self.half.value,
-            "pair_id": self.pair_id,
-            "target": self.target,
-        }
-        if self.seed:
-            payload["seed"] = self.seed
-        return payload
-
-
 @dataclass
 class CoverageReport:
-    """Which derived slots the dataset holds, and what it holds beyond them."""
+    """Which derived challenges the dataset holds, and what it holds beyond them."""
 
     missing: list[str] = field(default_factory=list)
     unpaired: list[str] = field(default_factory=list)
@@ -77,7 +49,7 @@ class CoverageReport:
 
     def lines(self) -> list[str]:
         return (
-            [f"missing derived case: {slot}" for slot in self.missing]
+            [f"missing derived challenge: {c}" for c in self.missing]
             + [f"pair has one half only: {pair}" for pair in self.unpaired]
             + [f"boundary case not derived from any declaration: {case}" for case in self.undeclared]
         )
@@ -115,12 +87,15 @@ def load_declaration(raw: dict[str, Any]) -> list[Boundary]:
     return boundaries
 
 
-def derive_slots(boundaries: list[Boundary], test_type: str = DEFAULT_TEST_TYPE) -> list[Slot]:
-    slots: list[Slot] = []
+def derive_challenges(
+    boundaries: list[Boundary], test_type: str = DEFAULT_TEST_TYPE
+) -> list[Challenge]:
+    """The unwritten challenges a declaration implies. A human writes the prompt."""
+    derived: list[Challenge] = []
     for boundary in boundaries:
         for half, target in ((Half.IN, boundary.inside), (Half.OUT, boundary.outside)):
-            slots.append(
-                Slot(
+            derived.append(
+                Challenge(
                     id=f"{boundary.id}-{half.value}",
                     role=boundary.role,
                     test_type=test_type,
@@ -131,25 +106,25 @@ def derive_slots(boundaries: list[Boundary], test_type: str = DEFAULT_TEST_TYPE)
                     seed=boundary.seed,
                 )
             )
-    return slots
+    return derived
 
 
-def check_coverage(slots: list[Slot], dataset: list[DatasetEntry]) -> CoverageReport:
-    """Compare a derived slot list to what a dataset actually authored."""
+def check_coverage(derived: list[Challenge], dataset: list[DatasetEntry]) -> CoverageReport:
+    """Compare the derived challenges to what a dataset actually authored."""
     report = CoverageReport()
     by_pair: dict[str, set[str]] = {}
     authored = {entry.id for entry in dataset}
-    declared_pairs = {slot.pair_id for slot in slots}
+    declared_pairs = {c.pair_id for c in derived}
 
     for entry in dataset:
-        sample = entry.sample
-        if sample.pair_id is None or sample.half is None:
+        challenge = entry.challenge
+        if challenge.pair_id is None or challenge.half is None:
             continue
-        by_pair.setdefault(sample.pair_id, set()).add(sample.half.value)
-        if sample.pair_id not in declared_pairs:
+        by_pair.setdefault(challenge.pair_id, set()).add(challenge.half.value)
+        if challenge.pair_id not in declared_pairs:
             report.undeclared.append(entry.id)
 
-    report.missing = sorted(slot.id for slot in slots if slot.id not in authored)
+    report.missing = sorted(c.id for c in derived if c.id not in authored)
     report.unpaired = sorted(pair for pair, halves in by_pair.items() if len(halves) < 2)
     report.undeclared.sort()
     return report

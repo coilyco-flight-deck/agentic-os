@@ -45,7 +45,7 @@ WHAT IT IS
 WHAT IT REFUSES TO DO
   Certify. `boundaries check` reports missing cases rather than a coverage
   percentage, `export` stops instead of scrubbing, and nothing here scores a
-  sample. A number this command prints can come back negative.
+  challenge. A number this command prints can come back negative.
 
 THE PAIRING RULE
   A boundary is scored as a pair, never as a half. The in-half proves the rule
@@ -61,12 +61,12 @@ PROFILES
   fit/undecided/does-not-fit set at 100.
 
 COMMANDS
-  annotate    Grade a dataset by hand. One sample per screen, one keystroke per
+  annotate    Grade a dataset by hand. One challenge per screen, one keystroke per
               decision, saved after every decision so an interrupted session
               keeps its work. A deduction requires a critique and accepts a
               verbatim evidence span, checked against the output.
-  boundaries  derive turns a declaration into the slots the board must contain.
-              check compares those slots to what a dataset actually authored,
+  boundaries  derive turns a declaration into the unwritten challenges the board
+              must contain. check compares those to what a dataset authored,
               and names every missing case, half-authored pair, and boundary
               case no declaration derived.
   pairs       Print pair results for a graded dataset.
@@ -152,7 +152,7 @@ def annotate(
     profile = load_profile(profile_path)
     entries = load_dataset(dataset_path)
     if roles:
-        entries = [entry for entry in entries if entry.sample.role in set(roles)]
+        entries = [entry for entry in entries if entry.challenge.role in set(roles)]
     annotations = load_annotations(out)
     roster_data = json.loads(roster.read_text()) if roster else None
     console = annotate_mod.Console()
@@ -179,7 +179,7 @@ def boundaries() -> None:
 def boundaries_derive(
     context: click.Context, declaration: Path, out: Path | None, test_type: str
 ) -> None:
-    """Turn a declaration into the paired slots a dataset must author."""
+    """Turn a declaration into the paired challenges a dataset must write."""
     intro(context)
     try:
         declared = boundaries_mod.load_declaration(read_yaml(declaration))
@@ -187,9 +187,10 @@ def boundaries_derive(
         click.echo(f"aos-eval boundaries: {broken}", err=True)
         raise SystemExit(1) from broken
 
-    slots = boundaries_mod.derive_slots(declared, test_type)
-    write_out(dump_yaml({"slots": [slot.to_dict() for slot in slots]}), out)
-    outro(f"author a prompt for each of the {len(slots)} slots, then `aos-eval boundaries check`")
+    derived = boundaries_mod.derive_challenges(declared, test_type)
+    payload = [c.model_dump(mode="json", exclude_none=True) for c in derived]
+    write_out(dump_yaml({"challenges": payload}), out)
+    outro(f"write a prompt into each of the {len(derived)} challenges, then `boundaries check`")
 
 
 @boundaries.command(name="check")
@@ -200,7 +201,7 @@ def boundaries_derive(
 def boundaries_check(
     context: click.Context, declaration: Path, dataset_path: Path, test_type: str
 ) -> None:
-    """Compare derived slots to what the dataset actually authored."""
+    """Compare the derived challenges to what the dataset actually wrote."""
     intro(context)
     try:
         declared = boundaries_mod.load_declaration(read_yaml(declaration))
@@ -208,10 +209,10 @@ def boundaries_check(
         click.echo(f"aos-eval boundaries: {broken}", err=True)
         raise SystemExit(1) from broken
 
-    slots = boundaries_mod.derive_slots(declared, test_type)
-    report = boundaries_mod.check_coverage(slots, load_dataset(dataset_path))
+    derived = boundaries_mod.derive_challenges(declared, test_type)
+    report = boundaries_mod.check_coverage(derived, load_dataset(dataset_path))
     if report.ok:
-        click.echo(f"every one of the {len(slots)} derived cases is authored and paired")
+        click.echo(f"every one of the {len(derived)} derived challenges is written and paired")
         return
     for line in report.lines():
         click.echo(line, err=True)
@@ -266,9 +267,9 @@ def validate(context: click.Context, dataset_path: Path, profile_path: Path | No
     """Check a dataset against a profile's required fields."""
     intro(context)
     entries = load_dataset(dataset_path)
-    problems = dataset_mod.validate([entry.sample for entry in entries], load_profile(profile_path))
+    problems = dataset_mod.validate([entry.challenge for entry in entries], load_profile(profile_path))
     if not problems:
-        click.echo(f"{len(entries)} samples match the profile")
+        click.echo(f"{len(entries)} challenges match the profile")
         return
     for problem in problems:
         click.echo(problem, err=True)

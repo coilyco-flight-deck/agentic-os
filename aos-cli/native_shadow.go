@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -639,6 +640,7 @@ func cleanDeadNativeSessions(runtime nativeRuntime) (nativeLiveWorktrees, error)
 	}
 	live := nativeLiveWorktrees{}
 	released := 0
+	stuck := []nativeStuckArtifact{}
 	runtime.Progress.Note("%d lease(s) on disk", len(entries))
 	held := make([]nativeHeldLease, 0, len(entries))
 	pids := make([]int, 0, len(entries))
@@ -699,6 +701,11 @@ func cleanDeadNativeSessions(runtime nativeRuntime) (nativeLiveWorktrees, error)
 			}
 			if !cleaned {
 				remaining = append(remaining, artifact)
+				if expired {
+					if item, ok := nativeStuckReading(lease.ID, artifact); ok {
+						stuck = append(stuck, item)
+					}
+				}
 			}
 		}
 		if len(remaining) < len(lease.Artifacts) {
@@ -724,7 +731,61 @@ func cleanDeadNativeSessions(runtime nativeRuntime) (nativeLiveWorktrees, error)
 			return nativeLiveWorktrees{}, fmt.Errorf("remove native lease: %w", err)
 		}
 	}
+	reportNativeStuckLeases(runtime, stuck)
 	return live, nil
+}
+
+// A purged worktree whose branch holds local-only commits is preserved forever,
+// correctly. Silence about it is the defect. docs/native-session-start.md
+type nativeStuckArtifact struct {
+	session  string
+	artifact nativeArtifact
+	unpushed int
+}
+
+// Stuck only once the worktree is gone. One still on disk is work a later pass
+// can release, which is a different and recoverable state.
+func nativeStuckReading(session string, artifact nativeArtifact) (nativeStuckArtifact, bool) {
+	if _, err := os.Stat(artifact.Worktree); !errors.Is(err, fs.ErrNotExist) {
+		return nativeStuckArtifact{}, false
+	}
+	if artifact.Branch == "" || artifact.Branch == "main" {
+		return nativeStuckArtifact{}, false
+	}
+	count, err := nativeGit(artifact.Repository, "rev-list", "--count",
+		"refs/heads/"+artifact.Branch, "--not", "--remotes=origin")
+	if err != nil {
+		return nativeStuckArtifact{}, false
+	}
+	unpushed, err := strconv.Atoi(strings.TrimSpace(count))
+	if err != nil || unpushed == 0 {
+		return nativeStuckArtifact{}, false
+	}
+	return nativeStuckArtifact{session: session, artifact: artifact, unpushed: unpushed}, true
+}
+
+// One line: the branches are named so an operator acts without opening leases.
+func reportNativeStuckLeases(runtime nativeRuntime, stuck []nativeStuckArtifact) {
+	if len(stuck) == 0 {
+		return
+	}
+	commits := 0
+	repositories := map[string]bool{}
+	names := make([]string, 0, len(stuck))
+	for _, item := range stuck {
+		commits += item.unpushed
+		repositories[filepath.Base(item.artifact.Repository)] = true
+		names = append(names, filepath.Base(item.artifact.Repository)+" "+item.artifact.Branch)
+	}
+	sort.Strings(names)
+	scope := fmt.Sprintf("%d repositories", len(repositories))
+	if len(repositories) == 1 {
+		scope = "1 repository"
+	}
+	fmt.Fprintf(runtime.Stderr,
+		"aos: %d dead session branch(es) hold %d unpushed commit(s) in %s and "+
+			"nothing will release them: %s. Push or delete each branch.\n",
+		len(stuck), commits, scope, strings.Join(names, ", "))
 }
 
 func nativeLeaseIsLive(lease nativeLease) bool {
@@ -888,6 +949,7 @@ func runNativeWorkspaceSweep(
 		}
 	}
 	pass.Done("")
+	reportNativeResidentDrift(runtime, repositories, live)
 	scan := runtime.Progress.Step("scan for unexpected clones")
 	next := map[string]nativeCandidate{}
 	for _, repository := range scanNativeRepositories(runtime.ProjectsRoot) {
@@ -925,6 +987,69 @@ func runNativeWorkspaceSweep(
 		return fmt.Errorf("write native sweep state: %w", err)
 	}
 	return nil
+}
+
+// Normalization leaves exactly these cases alone, and they change what a tool
+// reading the checkout composes. docs/native-session-start.md
+type nativeResidentDrift struct {
+	path    string
+	branch  string
+	reasons []string
+}
+
+// readNativeResidentDrift reports only what normalization could not correct. A
+// detached HEAD is deliberate here, since that is how a shadow releases main.
+func readNativeResidentDrift(repository nativeRepository) (nativeResidentDrift, bool) {
+	if humanWorkdir(repository.Path) {
+		return nativeResidentDrift{}, false
+	}
+	branch, err := nativeGit(repository.Path, "symbolic-ref", "--short", "-q", "HEAD")
+	if err != nil || branch == "" {
+		return nativeResidentDrift{}, false
+	}
+	drift := nativeResidentDrift{path: repository.Path, branch: branch}
+	if clean, err := nativeWorktreeClean(repository.Path, false); err == nil && !clean {
+		drift.reasons = append(drift.reasons, "dirty")
+	}
+	if safe, err := nativeHeadIsRemote(repository.Path); err == nil && !safe {
+		drift.reasons = append(drift.reasons, "unpushed")
+	}
+	if branch == "main" && len(drift.reasons) == 0 {
+		return nativeResidentDrift{}, false
+	}
+	return drift, true
+}
+
+// One line, matching the dead-lease report: drift is only actionable once
+// someone can see all of it at once.
+func reportNativeResidentDrift(
+	runtime nativeRuntime,
+	repositories []nativeRepository,
+	live nativeLiveWorktrees,
+) {
+	readings := make([]string, 0, len(repositories))
+	for _, repository := range repositories {
+		if live.contains(repository.Path) {
+			continue
+		}
+		drift, ok := readNativeResidentDrift(repository)
+		if !ok {
+			continue
+		}
+		reading := filepath.Base(drift.path) + " on " + drift.branch
+		if len(drift.reasons) > 0 {
+			reading += " (" + strings.Join(drift.reasons, ", ") + ")"
+		}
+		readings = append(readings, reading)
+	}
+	if len(readings) == 0 {
+		return
+	}
+	sort.Strings(readings)
+	fmt.Fprintf(runtime.Stderr,
+		"aos: %d resident checkout(s) are not clean on main, so a tool reading one "+
+			"composes something other than origin: %s\n",
+		len(readings), strings.Join(readings, ", "))
 }
 
 func normalizeNativeRepository(

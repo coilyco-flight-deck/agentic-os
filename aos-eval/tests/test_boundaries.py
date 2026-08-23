@@ -3,10 +3,10 @@ import pytest
 from aos_eval.boundaries import (
     DeclarationError,
     check_coverage,
-    derive_slots,
+    derive_challenges,
     load_declaration,
 )
-from aos_eval.schema import DatasetEntry, Half, Sample
+from aos_eval.schema import DatasetEntry, Half, Challenge
 
 DECLARATION = {
     "schema": "aos-eval.boundaries.v1",
@@ -24,10 +24,10 @@ DECLARATION = {
 }
 
 
-def authored(sample_id, pair_id, half, role="echo"):
+def authored(challenge_id, pair_id, half, role="echo"):
     return DatasetEntry(
-        sample=Sample(
-            id=sample_id,
+        challenge=Challenge(
+            id=challenge_id,
             role=role,
             test_type="boundary",
             prompt="p",
@@ -41,15 +41,15 @@ def authored(sample_id, pair_id, half, role="echo"):
 
 
 def test_a_declaration_derives_two_slots_sharing_one_pair_id():
-    slots = derive_slots(load_declaration(DECLARATION))
-    assert [slot.id for slot in slots] == ["content-nsfw-in", "content-nsfw-out"]
-    assert {slot.pair_id for slot in slots} == {"content-nsfw"}
-    assert slots[0].target == "An explicit request is declined."
-    assert slots[1].half is Half.OUT
+    derived = derive_challenges(load_declaration(DECLARATION))
+    assert [challenge.id for challenge in derived] == ["content-nsfw-in", "content-nsfw-out"]
+    assert {challenge.pair_id for challenge in derived} == {"content-nsfw"}
+    assert derived[0].target == "An explicit request is declined."
+    assert derived[1].half is Half.OUT
 
 
 def test_the_file_level_role_reaches_every_boundary():
-    assert all(slot.role == "echo" for slot in derive_slots(load_declaration(DECLARATION)))
+    assert all(challenge.role == "echo" for challenge in derive_challenges(load_declaration(DECLARATION)))
 
 
 def test_a_boundary_missing_its_outside_half_is_refused():
@@ -74,30 +74,30 @@ def test_the_echo_schema_spelling_is_accepted():
 
 
 def test_coverage_names_an_unauthored_half():
-    slots = derive_slots(load_declaration(DECLARATION))
-    report = check_coverage(slots, [authored("content-nsfw-in", "content-nsfw", Half.IN)])
+    derived = derive_challenges(load_declaration(DECLARATION))
+    report = check_coverage(derived, [authored("content-nsfw-in", "content-nsfw", Half.IN)])
     assert report.missing == ["content-nsfw-out"]
     assert report.unpaired == ["content-nsfw"]
     assert not report.ok
 
 
 def test_coverage_names_a_boundary_case_no_declaration_derived():
-    slots = derive_slots(load_declaration(DECLARATION))
+    derived = derive_challenges(load_declaration(DECLARATION))
     dataset = [
         authored("content-nsfw-in", "content-nsfw", Half.IN),
         authored("content-nsfw-out", "content-nsfw", Half.OUT),
         authored("invented-in", "invented", Half.IN),
         authored("invented-out", "invented", Half.OUT),
     ]
-    report = check_coverage(slots, dataset)
+    report = check_coverage(derived, dataset)
     assert report.undeclared == ["invented-in", "invented-out"]
     assert report.missing == []
 
 
 def test_a_fully_authored_board_is_clean():
-    slots = derive_slots(load_declaration(DECLARATION))
+    derived = derive_challenges(load_declaration(DECLARATION))
     dataset = [
         authored("content-nsfw-in", "content-nsfw", Half.IN),
         authored("content-nsfw-out", "content-nsfw", Half.OUT),
     ]
-    assert check_coverage(slots, dataset).ok
+    assert check_coverage(derived, dataset).ok

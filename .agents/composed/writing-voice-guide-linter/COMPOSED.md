@@ -1,18 +1,22 @@
 ---
 name: writing-voice-guide-linter
-description: Lint prose against Kai's voice rules - no em-dashes, no italics, no semicolons, no prose tables, she/her. Triggers - voice lint, voice check, lint prose, em-dash check, pronoun check.
+description: Lint prose against a voice profile you supply - deterministic regex rules with code-fence awareness and a strict exit. Triggers - voice lint, voice check, lint prose, house style check.
 ---
 
 # voice-guide-linter
 
-Pre-flight check for prose Kai writes - commits, PRs, READMEs, issues,
-blog posts, and knowledge notes. Catches the high-frequency voice-rule slips
-before they ship.
+Pre-flight check for prose before it ships: commits, PRs, READMEs, issues,
+posts, notes. Catches the high-frequency slips a house style names.
+
+The engine holds no rules. Every value a house style could disagree about
+lives in a profile, so this skill is reusable and the profile is the thing
+that belongs to whoever wrote the style guide.
 
 ## Procedure
 
 ```sh
-python3 <loaded-skill-dir>/writing-voice-guide-linter/lint.py <file-or-dir> [--strict]
+python3 <loaded-skill-dir>/writing-voice-guide-linter/lint.py \
+  --profile <profile.json> <file-or-dir>... [--strict]
 ```
 
 Reports each violation as `path:line: [rule] 'span' - hint`.
@@ -21,30 +25,38 @@ Resolve `<loaded-skill-dir>` from the current harness's native skill root.
 The source checkout keeps the helper under `.agents/composed/`, while
 agent-compose promotes it into the selected role's native skills bundle.
 
-Default mode reports all rules. `--strict` exits non-zero on any
+Default mode reports and exits zero. `--strict` exits non-zero on any
 violation, suitable for pre-commit hook integration.
 
-## Rules checked
+## Profile contract
 
-- **em-dash** - U+2014 anywhere. Suggest replacement: ` - `.
-- **italics-asterisk** / **italics-underscore** - markdown italics
-  outside code fences.
-- **prose-semicolon** - `;` outside code fences.
-- **prose-table** - markdown `|`-delimited table rows in narrative text.
-- **wrong-pronoun-he / wrong-pronoun-they** - `he`, `him`, `his`,
-  `they`, `them`, `their`. Flagged for human review since pronouns
-  may legitimately refer to someone else; the linter cannot resolve
-  the referent.
-- **email-leak** - `coilysiren@gmail.com` in any file. Allowed only
-  in resume + website.
+A profile is JSON: an object with a non-empty `rules` list.
+
+```json
+{
+  "name": "example-house-style",
+  "rules": [
+    {"id": "em-dash", "pattern": "—", "hint": "replace with ' - '"},
+    {"id": "prose-table", "pattern": "^\\s*\\|.*\\|\\s*$", "scope": "line",
+     "hint": "use flat bullets"}
+  ]
+}
+```
+
+- `id`, `pattern`, `hint` - required non-empty strings. `pattern` is a Python
+  regex.
+- `scope` - `span` (default) reports every match on the line. `line` matches
+  the whole line, reports once, and skips the span rules for that line, which
+  is what keeps a table row from also tripping every punctuation rule.
+- `flags` - any of `i`, `m`, `s`.
+
+A profile that will not load is an error rather than zero rules. Linting
+nothing and reporting success is the failure mode this refuses.
 
 ## Notes
 
-- The skill does NOT enforce the "no people's names in public
-  artifacts" rule - that needs context the regex doesn't have. Kept
-  as a separate human-review concern per AGENTS.
-- Voice guide source: the active composed or project-local voice guide.
-- The pronoun rules over-flag by design. Better to surface false
-  positives than miss a real slip about Kai.
-- Pre-commit-hook integration is a separate piece of work; the linter
-  is callable today either way.
+- Rules are regexes, so any rule needing a referent, a name, or judgement
+  belongs in human review rather than here. A profile can still carry an
+  over-flagging rule deliberately, and should say so in its own hint.
+- Deciding which rules to carry is the profile's job. This skill has no
+  opinion about em-dashes, pronouns, or anyone's address.

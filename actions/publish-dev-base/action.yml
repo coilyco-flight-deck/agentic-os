@@ -16,6 +16,27 @@ description: |
   runs one container per published platform in both modes, so promote installs
   binfmt on its own before that step. See docs/dev-base-image.md.
 
+  Verify mode reads only: it asserts that `tag` and any aliases resolve to the
+  same digest as `source-tag`, and fails when they do not. Promote mode runs the
+  same assertion after it moves the tags, so a promotion that silently did not
+  happen is caught where it happened rather than believed. A caller runs verify
+  after a workflow it does not control, which is how a reusable-workflow call
+  that reported success without executing is caught. See agentic-os#1032.
+
+  A skipped job is not this case and needs no backstop: this runner logs
+  "Skipping job '<id>' due to '<expression>'" and reports the job as skipped.
+  The failure verify exists for is a job log of `.MISSING`, whose content is
+  "job has not been executed yet", reported alongside a green caller.
+
+  Callers act on that retry-safety: dev-base-publish gives each payload one
+  bounded retry, since the full job needs the whole matrix green in one run and
+  a single transient used to skip the release for a thirty-minute manual
+  rebuild of all five payloads. Attempt one carries `continue-on-error` so a
+  transient does not fail the job, the retry carries none so a real defect
+  still fails loudly, and there is never a third: that turns a defect into a
+  slow failure. The checkpoint step below skips a payload that already landed,
+  so a retry after a late failure is cheap. See agentic-os#987.
+
 inputs:
   tier:
     description: "Build artifact tier. Only full is promotable."
@@ -32,7 +53,7 @@ inputs:
     required: false
     default: ""
   mode:
-    description: "Operation mode: build pushes the image, promote retags source-tag."
+    description: "Operation mode: build pushes, promote retags source-tag, verify asserts tags resolve to source-tag."
     required: false
     default: "build"
   source-tag:
@@ -90,6 +111,7 @@ runs:
 
     - name: Check whether the image already landed
       id: checkpoint
+      if: ${{ inputs.mode != 'verify' }}
       shell: bash
       env:
         MODE: ${{ inputs.mode }}
@@ -121,7 +143,7 @@ runs:
       run: bash "${GITHUB_ACTION_PATH}/scripts/verify-full.sh"
 
     - name: Publish or promote the image
-      if: ${{ steps.checkpoint.outputs.skip_publish != 'true' }}
+      if: ${{ inputs.mode != 'verify' && steps.checkpoint.outputs.skip_publish != 'true' }}
       shell: bash
       env:
         MODE: ${{ inputs.mode }}
@@ -143,3 +165,15 @@ runs:
         TAG: ${{ inputs.tag }}
         PLATFORMS: ${{ inputs.platforms }}
       run: bash "${GITHUB_ACTION_PATH}/scripts/verify-full.sh"
+
+    - name: Assert the promoted tags resolve to the source digest
+      if: ${{ inputs.mode == 'promote' || inputs.mode == 'verify' }}
+      shell: bash
+      env:
+        TIER: ${{ inputs.tier }}
+        TAG: ${{ inputs.tag }}
+        ALIAS: ${{ inputs.alias }}
+        EXTRA_ALIASES: ${{ inputs.extra-aliases }}
+        SOURCE_TAG: ${{ inputs.source-tag }}
+        IMAGE_BASE: ${{ inputs.image-base }}
+      run: bash "${GITHUB_ACTION_PATH}/scripts/verify-alias.sh"

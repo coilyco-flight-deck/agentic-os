@@ -44,7 +44,7 @@
 
 - id: pr-guard
   name: pre-push PR guard
-  description: "Refuse pushes whose destination is the remote default branch, and refuse to update an already-published branch that has no open PR. The PR half needs FORGEJO_TOKEN and degrades to a notice without it. Client-side only; git push --no-verify bypasses it."
+  description: "Refuse pushes whose destination is the remote default branch, and refuse to update an already-published branch that has no open PR, naming the merged PR when one exists so a stranded push is told to branch again rather than to open another PR on a dead branch. The PR half needs FORGEJO_TOKEN and degrades to a notice without it. Client-side only; git push --no-verify bypasses it."
   entry: scripts/pr-guard-pre-push.sh
   language: script
   always_run: true
@@ -137,7 +137,7 @@
 
 - id: check-composed-skills
   name: composed skill conventions
-  description: Validate role-composed COMPOSED.md sources against the ordinary skill taxonomy while preventing native discovery and name collisions.
+  description: Validate role-composed COMPOSED.md sources against the ordinary skill taxonomy while preventing native discovery and name collisions, and pair the catalogue with .agents/roles.kdl in both directions - every role selects something, and every source is selected by some role or listed under [tool.agentic-os.check-composed-skills] unselected.
   entry: check-composed-skills
   language: python
   additional_dependencies: [pyyaml]

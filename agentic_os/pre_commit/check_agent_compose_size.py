@@ -21,8 +21,8 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from agentic_os.pre_commit.check_documentation_layout import should_skip
 from agentic_os.config import get_int_option, is_enabled, is_excluded, load_excludes
+from agentic_os.pre_commit.tree import is_repo_content
 
 REPO_ROOT = Path.cwd()
 HOOK_ID = "agent-compose-size"
@@ -36,7 +36,9 @@ def source_files(root: Path) -> list[Path]:
     out: list[Path] = []
     for path in root.rglob(SOURCE_FILENAME):
         rel = path.relative_to(root)
-        if should_skip(rel) or is_excluded(rel, excludes):
+        # A composed bundle carries copies of the sources measured here, so a
+        # bake would charge the budget twice. Output is not a source.
+        if not is_repo_content(rel, root) or is_excluded(rel, excludes):
             continue
         out.append(rel)
     return sorted(out)

@@ -1,15 +1,85 @@
 #!/usr/bin/env python3
-"""Validate role-composed skill sources before agent-compose can promote them."""
+"""Validate role-composed skill sources before agent-compose can promote them.
+
+Also pairs the catalogue with `.agents/roles.kdl` both ways: every role selects
+at least one source, and every source is selected by at least one role. Neither
+direction had a gate, so a role could go empty and a source could go unclaimed
+with every hook still passing. Deliberate exceptions live in
+`[tool.agentic-os.check-composed-skills] unselected`. See agentic-os#1073.
+"""
 
 from __future__ import annotations
 
 import sys
 from pathlib import Path
 
-from agentic_os.config import is_enabled
+import fnmatch
+import re
+
+from agentic_os.config import is_enabled, load_str_list
 from agentic_os.pre_commit import check_skill
+from agentic_os.pre_commit.tree import carries_content
 
 HOOK_ID = "check-composed-skills"
+ROLE_GRAPH = Path(".agents") / "roles.kdl"
+ROLE_OPEN_RE = re.compile(r'^role\s+"?([\w-]+)"?\s*\{')
+SELECTOR_RE = re.compile(r'^composed-skill\s+"?([^"\s]+)"?\s*$')
+
+
+def role_selectors(repo_root: Path) -> dict[str, list[str]] | None:
+    """Each role's composed-skill selectors, or None when there is no graph."""
+    path = repo_root / ROLE_GRAPH
+    if not path.is_file():
+        return None
+    roles: dict[str, list[str]] = {}
+    current: str | None = None
+    for line in path.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if opened := ROLE_OPEN_RE.match(stripped):
+            current = opened.group(1)
+            roles.setdefault(current, [])
+            continue
+        if stripped == "}":
+            current = None
+            continue
+        if current and (selector := SELECTOR_RE.match(stripped)):
+            roles[current].append(selector.group(1))
+    return roles
+
+
+def catalogue_problems(repo_root: Path, composed: Path) -> list[str]:
+    """Assert the role graph and the composed catalogue agree, both ways.
+
+    A role with no selector composes nothing and every other hook still passes:
+    the Executive Strategist shipped empty for eleven days that way. A source no
+    role selects is dead weight nobody notices. See agentic-os#1073.
+    """
+    roles = role_selectors(repo_root)
+    if roles is None:
+        return []
+    problems = [
+        f"{ROLE_GRAPH.as_posix()}: role {name} has no composed-skill selector, "
+        f"so it composes nothing"
+        for name, selectors in sorted(roles.items())
+        if not selectors
+    ]
+    every = [selector for selectors in roles.values() for selector in selectors]
+    allowed = load_str_list(HOOK_ID, "unselected", repo_root)
+    for entry in sorted(composed.iterdir()):
+        if not entry.is_dir() or entry.name.startswith("."):
+            continue
+        if not carries_content(entry.relative_to(repo_root), repo_root):
+            continue
+        if any(fnmatch.fnmatchcase(entry.name, selector) for selector in every):
+            continue
+        if any(fnmatch.fnmatchcase(entry.name, pattern) for pattern in allowed):
+            continue
+        problems.append(
+            f".agents/composed/{entry.name}: no role selects it. Add a "
+            f"composed-skill selector, or list it under "
+            f"[tool.agentic-os.check-composed-skills] unselected with a reason."
+        )
+    return problems
 
 
 def layout_problems(repo_root: Path) -> list[str]:
@@ -41,6 +111,8 @@ def layout_problems(repo_root: Path) -> list[str]:
         if entry.name.startswith("."):
             continue
         rel = entry.relative_to(repo_root)
+        if not carries_content(rel, repo_root):
+            continue
         if entry.is_symlink() or not entry.is_dir():
             problems.append(f"{rel}: composed entries must be real directories")
             continue
@@ -63,7 +135,7 @@ def main(argv: list[str] | None = None) -> int:
     composed = repo_root / ".agents" / "composed"
     if not composed.is_dir():
         return 0
-    problems = layout_problems(repo_root)
+    problems = layout_problems(repo_root) + catalogue_problems(repo_root, composed)
     if problems:
         for problem in problems:
             sys.stderr.write(f"FAIL: {problem}\n")

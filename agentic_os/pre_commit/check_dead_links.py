@@ -37,6 +37,7 @@ import re
 import sys
 from pathlib import Path
 
+from agentic_os.pre_commit.tree import should_skip
 from agentic_os.config import (
     is_build_output,
     is_enabled,
@@ -64,23 +65,6 @@ EXTERNAL_PREFIXES = (
 )
 
 # Directory names never worth walking. Mirrors documentation-layout so the two
-# repo-wide Markdown walks agree on what counts as repo content.
-SKIP_DIR_NAMES = {
-    ".claude",
-    ".git",
-    ".mypy_cache",
-    ".pytest_cache",
-    ".ruff_cache",
-    ".terraform",
-    ".tox",
-    ".venv",
-    "__pycache__",
-    "build",
-    "dist",
-    "node_modules",
-    "target",
-    "vendor",
-}
 SKIP_FILE_BASENAMES = {"TEMPLATE.md"}
 PLACEHOLDER_TARGETS = {"...", "TBD", "TODO"}
 
@@ -101,10 +85,6 @@ def is_external(target: str) -> bool:
 
 def strip_anchor(target: str) -> str:
     return target.split("#", 1)[0]
-
-
-def should_skip(rel: Path) -> bool:
-    return any(part in SKIP_DIR_NAMES for part in rel.parts)
 
 
 def _rel_or_none(path: Path) -> Path | None:

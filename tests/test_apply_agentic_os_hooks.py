@@ -346,3 +346,38 @@ def test_vendor_org_checkouts_are_never_written_to(tmp_path: Path) -> None:
     assert "vendor org" in detail
     assert not (repo / ".gitattributes").exists()
     assert not (repo / ".pre-commit-config.yaml").exists()
+
+
+def test_a_created_config_is_unchanged_on_its_next_refresh(tmp_path: Path) -> None:
+    # Two renderings of the blank line after `repos:` meant a fresh config
+    # reported `updated` once and settled only on run three. agentic-os#985.
+    script = _load_script()
+    config = tmp_path / ".pre-commit-config.yaml"
+    statuses = [script.upsert_managed_block(config, "v2.0.0")[0] for _ in range(3)]
+
+    assert statuses == ["created", "unchanged", "unchanged"]
+
+
+def test_a_hand_written_preamble_keeps_its_blank_line(tmp_path: Path) -> None:
+    # The separator divides a repo's own hooks from the managed block. Only
+    # the bare document opener has nothing to divide.
+    script = _load_script()
+    block = script.managed_block("v2.0.0")
+
+    assert script.render_config("repos:", block) == "repos:\n" + block
+    local = "repos:\n  - repo: local\n    hooks:\n      - id: mine"
+    assert script.render_config(local, block) == local + "\n\n" + block
+
+
+def test_this_repos_own_typos_entry_matches_the_block_it_ships() -> None:
+    # The repo that authors the block did not run it, so its own config drifted
+    # to `args: []` and its .typos.toml path excludes went inert. #1186.
+    script = _load_script()
+    generated = script.managed_block("v2.0.0")
+    own = (Path(__file__).resolve().parent.parent / ".pre-commit-config.yaml").read_text(
+        encoding="utf-8"
+    )
+
+    assert "args: [--force-exclude]" in generated
+    typos_entry = own.split("- id: typos", 1)[1].split("- repo:", 1)[0]
+    assert "--force-exclude" in typos_entry, typos_entry

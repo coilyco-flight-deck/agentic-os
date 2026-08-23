@@ -27,6 +27,7 @@ from agentic_os.generators.generate_repo_pointer_skill import (
     SKILL_PREFIX,
     check_drift,
 )
+from agentic_os.pre_commit.tree import carries_content
 
 HOOK_ID = "repo-pointer-skills"
 TRACKER = "docs/features-agents.md"
@@ -60,7 +61,8 @@ def main() -> int:
         print(f"{HOOK_ID}: disabled by repo config")
         return 0
 
-    skills_dir = find_skills_dir(Path.cwd())
+    root = Path.cwd()
+    skills_dir = find_skills_dir(root)
     if skills_dir is None:
         return 0
 
@@ -68,6 +70,8 @@ def main() -> int:
     failures: list[str] = []
     for d in sorted(skills_dir.glob(f"{SKILL_PREFIX}*")):
         if not d.is_dir() or d.is_symlink():
+            continue
+        if not carries_content(d.relative_to(root), root):
             continue
         skill_md = d / "SKILL.md"
         if not skill_md.is_file():
