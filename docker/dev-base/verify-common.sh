@@ -5,6 +5,8 @@ set -euo pipefail
 aosguard --version
 test -s /opt/agentic-os/aosguard-skill/aosguard/SKILL.md
 test -s /opt/agentic-os/aosguard-skill/aosguard/references/commands.yaml
+test -s /opt/agentic-os/aosguard-skill/aosguard-forgejo/SKILL.md
+test -s /opt/agentic-os/aosguard-skill/aosguard-forgejo/references/commands.yaml
 
 roster_dir="$(mktemp -d)"
 trap 'rm -rf "$roster_dir"' EXIT

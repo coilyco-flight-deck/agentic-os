@@ -20,7 +20,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 COPY --from=dev-base-lang-go-graft /usr/local/go /usr/local/go
 RUN set -eux; \
     apt-get update; apt-get install -y --no-install-recommends \
-      ca-certificates curl git openssh-client; \
+      ca-certificates curl git openssh-client python3 python3-yaml; \
     rm -rf /var/lib/apt/lists/*
 RUN set -eux; \
     ward_asset="ward-linux-${TARGETARCH}"; \
@@ -56,6 +56,7 @@ RUN set -eux; \
     install -m 0755 "/tmp/${specgen_asset}" /usr/local/bin/specgen; \
     rm "/tmp/${specgen_asset}" /tmp/specgen-SHA256SUMS; specgen --version
 COPY --from=aosguard-spec . /tmp/aosguard-spec
+COPY --from=aosguard-python . /tmp/aosguard-python/agentic_os
 RUN set -eux; \
     specgen --project-root /tmp/aosguard-spec/guardfiles \
       --skills-out /opt/agentic-os/aosguard-skill build \
@@ -63,7 +64,10 @@ RUN set -eux; \
     chmod 0755 /usr/local/bin/aosguard; \
     test -s /opt/agentic-os/aosguard-skill/aosguard/SKILL.md; \
     test -s /opt/agentic-os/aosguard-skill/aosguard/references/commands.yaml; \
-    rm -rf /tmp/aosguard-spec; aosguard --version
+    PYTHONPATH=/tmp/aosguard-python python3 -m agentic_os.generators.generate_aosguard_skills \
+      --skills-root /opt/agentic-os/aosguard-skill; \
+    test -s /opt/agentic-os/aosguard-skill/aosguard-forgejo/SKILL.md; \
+    rm -rf /tmp/aosguard-spec /tmp/aosguard-python; aosguard --version
 
 FROM ${BASE_IMAGE} AS dev-base-full
 ARG AGENT_COMPOSE_VERSION=2.32.0

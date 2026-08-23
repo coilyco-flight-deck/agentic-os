@@ -6,7 +6,7 @@ while AOS owns this concrete policy snapshot, release name, and integration.
 Packaged `specgen` discovers the [guardfile project](../.specgen/README.md),
 materializes generated Go out of band, and emits `aosguard` without committed
 Go build glue. Dev-base and native AOS releases build from the same source and
-lock. Homebrew and Scoop install it beside `aos`.
+lock, and Homebrew and Scoop install it beside `aos`.
 
 ## Authority boundary
 
@@ -39,20 +39,22 @@ image's PATH so it cannot shadow an image tool. The skill grants no permission:
 ## Source ownership
 
 `.specgen/guardfiles/aosguard/` owns the operator policy, vendored Swagger
-inputs, and generated API locks. Ward owns its broker internally. Neither
+inputs, and generated API locks. Ward owns its broker internally, neither
 product reads policy from the other, and no drift check forces them to match.
 
 The Forgejo source is vendored from the pruned deployment contract, so
 `aosguard-lock` refreshes the dependency graph without reaching a live Forgejo
-edge. Swagger and its generated lock use deterministic gzip and specgen decodes
-each before use, and the resulting `specverb.lock` pins umbra for reproducible
-builds. `aosguard-lock` refreshes the native skill under ignored
+edge. Swagger and its lock use deterministic gzip and specgen decodes each
+before use, and the resulting `specverb.lock` pins umbra for reproducible
+builds. `aosguard-lock` refreshes the native skills under ignored
 `dist/skills/`, while maintained documentation stays under `docs/`.
 
 ## Development
 
-`just aosguard-build` materializes `dist/aosguard` and refreshes the
-generated skill. `just aosguard-run --` passes subsequent arguments to the
+`just aosguard-build` materializes `dist/aosguard` and refreshes the generated
+skills: specgen writes the `aosguard` index, then `generate_aosguard_skills`
+splits it into one `aosguard-<area>` skill per wrapped entity. Hand-written
+`tooling-aosguard` carries what no spec can (agentic-os#1028). `just aosguard-run --` passes subsequent arguments to the
 generated command. `just aosguard-lock` is the only lock-writing step and
 uses the packaged `specgen` executable.
 
@@ -115,4 +117,4 @@ would create costs more than the direct read.
 The PAT comes from `/forgejo/admin-token` through the same `provider ssm` block
 the ordinary wrapper uses, resolved at call time. There is no environment
 variable to export and no wrapper script to run first. Access to the parameter
-is the boundary, which is where an SSM-backed credential's boundary belongs.
+is the boundary, where an SSM-backed credential's boundary belongs.

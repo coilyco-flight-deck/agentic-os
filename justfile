@@ -142,6 +142,7 @@ aos-tidy *ARGS:
 # Materialize the standalone aosguard operator CLI and native generated skill from the independent .specgen snapshot.
 aosguard-build *ARGS:
     @specgen --project-root .specgen/guardfiles --skills-out dist/skills build --out dist/aosguard "$@"
+    @uv run python -m agentic_os.generators.generate_aosguard_skills --skills-root dist/skills
 
 # Refresh aosguard's vendored API snapshot and frozen umbra dependency graph with the packaged specgen driver. Pass specgen lock flags as trailing arguments.
 aosguard-lock *ARGS:
