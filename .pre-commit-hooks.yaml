@@ -4,7 +4,6 @@
 #   - repo: https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os
 #     rev: aos-precommit-v0.1.0
 #     hooks:
-#       - id: catalog-doc-size
 #       - id: catalog-trifecta
 #       - id: code-review-contract
 #       - id: documentation-layout
@@ -53,12 +52,12 @@
 
 - id: catalog-doc-size
   name: Markdown size caps
-  description: Compatibility alias for documentation-layout Markdown size caps.
+  description: Retired alias for documentation-layout. Manual-only so a consumer still naming it resolves and skips instead of running that check twice.
   entry: check-catalog-doc-size
   language: python
   always_run: true
   pass_filenames: false
-  stages: [pre-commit]
+  stages: [manual]
 
 - id: catalog-trifecta
   name: catalog-trifecta cross-link convention

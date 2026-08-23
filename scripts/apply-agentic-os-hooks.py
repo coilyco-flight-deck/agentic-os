@@ -198,7 +198,6 @@ LEGACY_STAMPED_SCRIPTS = [
 
 # Default hook IDs per repo (hand-editable).
 DEFAULT_HOOK_IDS = [
-    "catalog-doc-size",
     "catalog-trifecta",
     "documentation-layout",
     "context-load-points",
@@ -219,7 +218,6 @@ DEFAULT_HOOK_IDS = [
 # whose comments are not ours to lint. lore is a docs-only slice.
 PER_REPO_HOOK_SKIPS: dict[str, set[str]] = {
     "lore": {
-        "catalog-doc-size",
         "check-skills",
         "repo-pointer-skills",
         "misplaced-skills",
