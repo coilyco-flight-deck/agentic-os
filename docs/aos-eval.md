@@ -7,14 +7,20 @@ this page does not restate.
 
 ## What is shared and what is not
 
-**Shared here**: the record schema, the boundary pairing rule, the human grading loop, the failure
-taxonomy, and the one-way display export. **Not shared**: the runners, listed below, and **no runner and
-no model client lives here**, so grading never spends a token and never touches a deployed system.
+**Shared here**: the record schema, the pairing rule, the human grading loop, the failure taxonomy, and
+the one-way display export. **Not shared**: the runners below, and **no runner and no model client lives
+here**, so grading never spends a token and never touches a deployed system.
 
-Both consumers are real. sirens-echo's `board-deep` emits the `dataset:` key with each record carrying
-`Challenge` plus its `output`, so `annotate`, `taxonomy`, and `export` read it with no adapter, and a contract
-test on that side fails loudly if either shape drifts. Its epochs ride along in fields this layer ignores,
-which is how the evidence stays in one file.
+Both consumers are real. sirens-echo's `board-deep` emits `dataset:` with each record carrying a
+`Challenge` plus its `output`, so `annotate`, `taxonomy`, and `export` read it with no adapter, and a
+contract test there fails if either shape drifts.
+
+## Entity and attribute
+
+A **challenge** tests one **entity** for one **attribute**: in agent-compose a role and a boundary or
+personality, in sirens-echo a lane and a clause. `test_type` says which kind and the profile declares the
+kinds, so `axis_of` derives an axis rather than enumerating one. `--roster` follows the same rule, taking
+`{entity_order, entities: {name: {display_name, purpose, notes}}}` the deployment composed itself.
 
 ## The rule worth sharing
 
@@ -24,13 +30,13 @@ halves pass, so **a deployment that refuses everything scores zero rather than f
 
 Both repos arrived at that rule independently, which is what qualified it: a rule one invented and the
 other inherited would have been a dependency rather than a contract. The out-half is also a negative
-control, and on agent-compose's first graded board the only real boundary failure was an in-half failure,
-the case a coverage count reading out-halves alone would call perfect.
+control, and on agent-compose's first graded board the only real failure was an in-half one, which a
+coverage count reading out-halves alone would call perfect.
 
 ## It measures rather than certifies
 
-`boundaries derive` turns a declaration into the unwritten challenges a board must contain, and
-`boundaries check` compares those to what a dataset wrote, naming every missing one, half-written pair,
+`attributes derive` turns a declaration into the unwritten challenges a board must contain, and
+`attributes check` compares those to what a dataset wrote, naming every missing one, half-written pair,
 and case no declaration derived. Both run without a model, so a consumer can tell coverage from
 intention before spending anything.
 
@@ -75,8 +81,8 @@ text is not scanned because text that never leaves cannot leak.
 ## Running it
 
 ```bash
-just aos-eval boundaries derive eval/boundaries.yaml --out challenges.yaml
-just aos-eval boundaries check eval/boundaries.yaml --dataset run1/dataset.yaml
+just aos-eval attributes derive eval/attributes.yaml --out challenges.yaml
+just aos-eval attributes check eval/attributes.yaml --dataset run1/dataset.yaml
 just aos-eval annotate --dataset run1/dataset.yaml --out run1/annotations.yaml
 just aos-eval taxonomy --dataset run1/dataset.yaml --annotations run1/annotations.yaml
 just aos-eval export run1 --out run1/display.json

@@ -1,6 +1,6 @@
 import pytest
 
-from aos_eval.boundaries import (
+from aos_eval.attributes import (
     DeclarationError,
     check_coverage,
     derive_challenges,
@@ -9,9 +9,9 @@ from aos_eval.boundaries import (
 from aos_eval.schema import DatasetEntry, Half, Challenge
 
 DECLARATION = {
-    "schema": "aos-eval.boundaries.v1",
-    "role": "echo",
-    "boundaries": [
+    "schema": "aos-eval.attributes.v1",
+    "entity": "echo",
+    "attributes": [
         {
             "id": "content-nsfw",
             "origin": "agent/content-classes.yaml#nsfw",
@@ -24,15 +24,15 @@ DECLARATION = {
 }
 
 
-def authored(challenge_id, pair_id, half, role="echo"):
+def authored(challenge_id, pair_id, half, entity="echo"):
     return DatasetEntry(
         challenge=Challenge(
             id=challenge_id,
-            role=role,
+            entity=entity,
             test_type="boundary",
             prompt="p",
             target="t",
-            boundary=pair_id,
+            attribute=pair_id,
             half=half,
             pair_id=pair_id,
         ),
@@ -48,28 +48,28 @@ def test_a_declaration_derives_two_slots_sharing_one_pair_id():
     assert derived[1].half is Half.OUT
 
 
-def test_the_file_level_role_reaches_every_boundary():
-    assert all(challenge.role == "echo" for challenge in derive_challenges(load_declaration(DECLARATION)))
+def test_the_file_level_entity_reaches_every_boundary():
+    assert all(challenge.entity == "echo" for challenge in derive_challenges(load_declaration(DECLARATION)))
 
 
 def test_a_boundary_missing_its_outside_half_is_refused():
-    broken = {"boundaries": [{"id": "x", "rule": "r", "inside": "i"}]}
+    broken = {"attributes": [{"id": "x", "rule": "r", "inside": "i"}]}
     with pytest.raises(DeclarationError, match="outside"):
         load_declaration(broken)
 
 
 def test_an_empty_declaration_is_refused():
-    with pytest.raises(DeclarationError, match="no boundaries"):
-        load_declaration({"boundaries": []})
+    with pytest.raises(DeclarationError, match="no attributes"):
+        load_declaration({"attributes": []})
 
 
 def test_a_foreign_schema_is_refused():
-    with pytest.raises(DeclarationError, match="not a boundaries declaration"):
-        load_declaration({"schema": "sirens-discord-ops.rate-dataset.v1", "boundaries": []})
+    with pytest.raises(DeclarationError, match="not an attributes declaration"):
+        load_declaration({"schema": "sirens-discord-ops.rate-dataset.v1", "attributes": []})
 
 
 def test_the_echo_schema_spelling_is_accepted():
-    declaration = {**DECLARATION, "schema": "sirens-discord-ops.boundaries.v1"}
+    declaration = {**DECLARATION, "schema": "sirens-discord-ops.attributes.v1"}
     assert len(load_declaration(declaration)) == 1
 
 

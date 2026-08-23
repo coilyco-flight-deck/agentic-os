@@ -45,17 +45,15 @@ class ExportCase:
     """One case as a display surface needs it."""
 
     id: str
-    role: str
+    entity: str
     test_type: str
     prompt: str
     target: str
     output: str
     label: str | None = None
-    boundary: str | None = None
     half: str | None = None
     pair_id: str | None = None
-    against: str | None = None
-    trait: str | None = None
+    attribute: str | None = None
     critique: str = ""
     evidence: str = ""
 
@@ -63,7 +61,7 @@ class ExportCase:
         return {
             key: value
             for key, value in self.__dict__.items()
-            if value not in (None, "") or key in ("id", "role", "test_type")
+            if value not in (None, "") or key in ("id", "entity", "test_type")
         }
 
 
@@ -133,17 +131,15 @@ def build_run(
         run.cases.append(
             ExportCase(
                 id=entry.id,
-                role=challenge.role,
+                entity=challenge.entity,
                 test_type=challenge.test_type,
                 prompt=challenge.prompt,
                 target=challenge.target,
                 output=entry.output,
                 label=annotation.label.value if annotation else None,
-                boundary=challenge.boundary,
                 half=challenge.half.value if challenge.half else None,
                 pair_id=challenge.pair_id,
-                against=challenge.against,
-                trait=challenge.trait,
+                attribute=challenge.attribute,
                 critique=annotation.critique if (include_private and annotation) else "",
                 evidence=annotation.evidence if (include_private and annotation) else "",
             )
@@ -159,8 +155,8 @@ def build_run(
     run.pairs = [
         {
             "pair_id": pair.pair_id,
-            "role": pair.role,
-            "boundary": pair.boundary,
+            "entity": pair.entity,
+            "attribute": pair.attribute,
             "halves": {half: verdict.value for half, verdict in sorted(pair.halves.items())},
             "complete": pair.complete,
             "passed": pair.passed,

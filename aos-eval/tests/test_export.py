@@ -16,11 +16,11 @@ def pair_dataset(output="a plain answer"):
         DatasetEntry(
             challenge=Challenge(
                 id=f"live-{half.value}",
-                role="ops",
+                entity="ops",
                 test_type="boundary",
                 prompt="p",
                 target="t",
-                boundary="modify-live-system",
+                attribute="modify-live-system",
                 half=half,
                 pair_id="live",
             ),

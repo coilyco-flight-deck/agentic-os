@@ -16,7 +16,7 @@ from pathlib import Path
 import click
 
 from aos_eval import annotate as annotate_mod
-from aos_eval import boundaries as boundaries_mod
+from aos_eval import attributes as attributes_mod
 from aos_eval import dataset as dataset_mod
 from aos_eval import taxonomy as taxonomy_mod
 from aos_eval.export import ExportRefusedError, export_run_dir
@@ -43,7 +43,7 @@ WHAT IT IS
   emit this shape and both grade through this command.
 
 WHAT IT REFUSES TO DO
-  Certify. `boundaries check` reports missing cases rather than a coverage
+  Certify. `attributes check` reports missing challenges rather than a coverage
   percentage, `export` stops instead of scrubbing, and nothing here scores a
   challenge. A number this command prints can come back negative.
 
@@ -65,7 +65,7 @@ COMMANDS
               decision, saved after every decision so an interrupted session
               keeps its work. A deduction requires a critique and accepts a
               verbatim evidence span, checked against the output.
-  boundaries  derive turns a declaration into the unwritten challenges the board
+  attributes  derive turns a declaration into the unwritten challenges the board
               must contain. check compares those to what a dataset authored,
               and names every missing case, half-authored pair, and boundary
               case no declaration derived.
@@ -80,9 +80,9 @@ COMMANDS
               --include-private asks for them.
 
 FILE SHAPES
-  dataset.yaml      {dataset: [{id, role, test_type, prompt, target, output, ...}]}
+  dataset.yaml      {dataset: [{id, entity, test_type, prompt, target, output, ...}]}
   annotations.yaml  {annotations: [{id, label, critique, evidence}]}
-  boundaries.yaml   {schema, boundaries: [{id, rule, inside, outside, origin, seed}]}
+  attributes.yaml   {schema, attributes: [{id, rule, inside, outside, origin, seed}]}
   profile.yaml      {name, test_types: [{name, label_set, word_cap, requires}], ...}
 
 EXIT CODES
@@ -135,7 +135,7 @@ def help_command() -> None:
 @click.option("--out", type=click.Path(path_type=Path), required=True, help="annotations.yaml")
 @click.option("--profile", "profile_path", type=click.Path(exists=True, path_type=Path))
 @click.option("--roster", type=click.Path(exists=True, path_type=Path), help="person.json")
-@click.option("--role", "roles", multiple=True, help="grade only these groups")
+@click.option("--entity", "entities", multiple=True, help="grade only these entities")
 @click.option("--summary", is_flag=True, help="print results and exit without grading")
 @click.pass_context
 def annotate(
@@ -144,15 +144,15 @@ def annotate(
     out: Path,
     profile_path: Path | None,
     roster: Path | None,
-    roles: tuple[str, ...],
+    entities: tuple[str, ...],
     summary: bool,
 ) -> None:
     """Grade a dataset by hand, one keystroke per decision."""
     intro(context)
     profile = load_profile(profile_path)
     entries = load_dataset(dataset_path)
-    if roles:
-        entries = [entry for entry in entries if entry.challenge.role in set(roles)]
+    if entities:
+        entries = [entry for entry in entries if entry.challenge.entity in set(entities)]
     annotations = load_annotations(out)
     roster_data = json.loads(roster.read_text()) if roster else None
     console = annotate_mod.Console()
@@ -167,50 +167,50 @@ def annotate(
 
 
 @main.group()
-def boundaries() -> None:
-    """Declare boundaries once, derive the cases the board must contain."""
+def attributes() -> None:
+    """Declare paired attributes once, derive the challenges a board must hold."""
 
 
-@boundaries.command(name="derive")
+@attributes.command(name="derive")
 @click.argument("declaration", type=click.Path(exists=True, path_type=Path))
 @click.option("--out", type=click.Path(path_type=Path))
-@click.option("--test-type", default=boundaries_mod.DEFAULT_TEST_TYPE, show_default=True)
+@click.option("--test-type", default=attributes_mod.DEFAULT_TEST_TYPE, show_default=True)
 @click.pass_context
-def boundaries_derive(
+def attributes_derive(
     context: click.Context, declaration: Path, out: Path | None, test_type: str
 ) -> None:
     """Turn a declaration into the paired challenges a dataset must write."""
     intro(context)
     try:
-        declared = boundaries_mod.load_declaration(read_yaml(declaration))
-    except boundaries_mod.DeclarationError as broken:
-        click.echo(f"aos-eval boundaries: {broken}", err=True)
+        declared = attributes_mod.load_declaration(read_yaml(declaration))
+    except attributes_mod.DeclarationError as broken:
+        click.echo(f"aos-eval attributes: {broken}", err=True)
         raise SystemExit(1) from broken
 
-    derived = boundaries_mod.derive_challenges(declared, test_type)
+    derived = attributes_mod.derive_challenges(declared, test_type)
     payload = [c.model_dump(mode="json", exclude_none=True) for c in derived]
     write_out(dump_yaml({"challenges": payload}), out)
     outro(f"write a prompt into each of the {len(derived)} challenges, then `boundaries check`")
 
 
-@boundaries.command(name="check")
+@attributes.command(name="check")
 @click.argument("declaration", type=click.Path(exists=True, path_type=Path))
 @click.option("--dataset", "dataset_path", type=click.Path(exists=True, path_type=Path), required=True)
-@click.option("--test-type", default=boundaries_mod.DEFAULT_TEST_TYPE, show_default=True)
+@click.option("--test-type", default=attributes_mod.DEFAULT_TEST_TYPE, show_default=True)
 @click.pass_context
-def boundaries_check(
+def attributes_check(
     context: click.Context, declaration: Path, dataset_path: Path, test_type: str
 ) -> None:
     """Compare the derived challenges to what the dataset actually wrote."""
     intro(context)
     try:
-        declared = boundaries_mod.load_declaration(read_yaml(declaration))
-    except boundaries_mod.DeclarationError as broken:
-        click.echo(f"aos-eval boundaries: {broken}", err=True)
+        declared = attributes_mod.load_declaration(read_yaml(declaration))
+    except attributes_mod.DeclarationError as broken:
+        click.echo(f"aos-eval attributes: {broken}", err=True)
         raise SystemExit(1) from broken
 
-    derived = boundaries_mod.derive_challenges(declared, test_type)
-    report = boundaries_mod.check_coverage(derived, load_dataset(dataset_path))
+    derived = attributes_mod.derive_challenges(declared, test_type)
+    report = attributes_mod.check_coverage(derived, load_dataset(dataset_path))
     if report.ok:
         click.echo(f"every one of the {len(derived)} derived challenges is written and paired")
         return
@@ -229,7 +229,7 @@ def pairs(context: click.Context, dataset_path: Path, annotations_path: Path) ->
     results = pair_results(load_dataset(dataset_path), load_annotations(annotations_path))
     for pair in results:
         state = "pass" if pair.passed else ("incomplete" if not pair.complete else "fail")
-        click.echo(f"{pair.pair_id}  {pair.role}  {pair.boundary}  {state}")
+        click.echo(f"{pair.pair_id}  {pair.entity}  {pair.attribute}  {state}")
     passed = sum(1 for pair in results if pair.passed)
     click.echo(f"{passed}/{len(results)} pairs passed")
 

@@ -1,6 +1,6 @@
-"""Declare every boundary once, derive the cases the board must contain.
+"""Declare every paired attribute once, derive the challenges a board must hold.
 
-A boundary is only measured by a pair. The in-half proves the rule fires, the
+A paired attribute is only measured by a pair. The in-half proves the rule fires, the
 out-half proves it does not fire on the neighbouring case that must still be
 served. Grading one half alone rewards a deployment that refuses everything.
 
@@ -15,20 +15,21 @@ from typing import Any
 
 from aos_eval.schema import Challenge, DatasetEntry, Half
 
-BOUNDARIES_SCHEMA = "aos-eval.boundaries.v1"
+ATTRIBUTES_SCHEMA = "aos-eval.attributes.v1"
+# The paired kind is the common one, so it is the default a caller may override.
 DEFAULT_TEST_TYPE = "boundary"
 
 
 @dataclass(frozen=True)
-class Boundary:
+class Attribute:
     """One rule, plus the two behaviours that bracket it."""
 
     id: str
     rule: str
     inside: str
     outside: str
-    role: str = ""
-    # Where the rule actually lives. A boundary restated here rather than
+    entity: str = ""
+    # Where the rule actually lives. An attribute restated here rather than
     # derived from its source drifts the moment the source changes.
     origin: str = ""
     derived: bool = False
@@ -56,50 +57,50 @@ class CoverageReport:
 
 
 class DeclarationError(Exception):
-    """Raised on a declaration that cannot be read as boundaries."""
+    """Raised on a declaration that cannot be read as attributes."""
 
 
-def load_declaration(raw: dict[str, Any]) -> list[Boundary]:
+def load_declaration(raw: dict[str, Any]) -> list[Attribute]:
     schema = str(raw.get("schema", ""))
-    if schema and schema != BOUNDARIES_SCHEMA and not schema.endswith(".boundaries.v1"):
-        raise DeclarationError(f"{schema} is not a boundaries declaration")
+    if schema and schema != ATTRIBUTES_SCHEMA and not schema.endswith(".attributes.v1"):
+        raise DeclarationError(f"{schema} is not an attributes declaration")
 
-    default_role = str(raw.get("role", ""))
-    boundaries: list[Boundary] = []
-    for entry in raw.get("boundaries", []):
+    default_entity = str(raw.get("entity", ""))
+    attributes: list[Attribute] = []
+    for entry in raw.get("attributes", []):
         missing = [key for key in ("id", "rule", "inside", "outside") if not entry.get(key)]
         if missing:
             raise DeclarationError(f"{entry.get('id', '<no id>')}: missing {', '.join(missing)}")
-        boundaries.append(
-            Boundary(
+        attributes.append(
+            Attribute(
                 id=str(entry["id"]),
                 rule=str(entry["rule"]),
                 inside=str(entry["inside"]),
                 outside=str(entry["outside"]),
-                role=str(entry.get("role", default_role)),
+                entity=str(entry.get("entity", default_entity)),
                 origin=str(entry.get("origin", "")),
                 derived=bool(entry.get("derived", False)),
                 seed=str(entry.get("seed", "")),
             )
         )
-    if not boundaries:
-        raise DeclarationError("declaration holds no boundaries")
-    return boundaries
+    if not attributes:
+        raise DeclarationError("declaration holds no attributes")
+    return attributes
 
 
 def derive_challenges(
-    boundaries: list[Boundary], test_type: str = DEFAULT_TEST_TYPE
+    attributes: list[Attribute], test_type: str = DEFAULT_TEST_TYPE
 ) -> list[Challenge]:
     """The unwritten challenges a declaration implies. A human writes the prompt."""
     derived: list[Challenge] = []
-    for boundary in boundaries:
+    for boundary in attributes:
         for half, target in ((Half.IN, boundary.inside), (Half.OUT, boundary.outside)):
             derived.append(
                 Challenge(
                     id=f"{boundary.id}-{half.value}",
-                    role=boundary.role,
+                    entity=boundary.entity,
                     test_type=test_type,
-                    boundary=boundary.id,
+                    attribute=boundary.id,
                     half=half,
                     pair_id=boundary.id,
                     target=target,
