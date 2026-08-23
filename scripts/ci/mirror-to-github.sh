@@ -6,7 +6,7 @@ repo_root=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)
 
 case "${1:-}" in
   test)
-    bash "$repo_root/scripts/ci/repo-test-gate.sh"
+    bash "$repo_root/scripts/ci-command.sh" bash "$repo_root/scripts/ci/repo-test-gate.sh"
     ;;
   mirror)
     if [ -z "${PAT}" ]; then

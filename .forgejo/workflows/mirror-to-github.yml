@@ -38,13 +38,6 @@ jobs:
       - name: Install validated ward for repo gate
         run: scripts/install-workflow-ward.sh
 
-      - name: Cache pre-commit envs
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pre-commit
-          key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
-          restore-keys: |
-            pre-commit-${{ runner.os }}-
 
       - name: Repo test gate
         run: bash "$GITHUB_WORKSPACE/scripts/ci/mirror-to-github.sh" test
