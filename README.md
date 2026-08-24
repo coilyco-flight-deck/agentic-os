@@ -3,10 +3,18 @@
 
 ![Sombra hacking skull](static/wallpaper.jpg)
 
-Cross-platform shell and terminal setup plus cross-repo pre-commit hooks for
-coilysiren/* repos. Zsh runs on Mac and Linux, with Bash through Git for
-Windows. Alacritty provides the default direct terminal, while the transitional
-Warp configuration remains available.
+The host layer everything else here runs on: shell and terminal configuration,
+the `aos` launcher, and the cross-repo pre-commit suite.
+
+**This is a reference implementation rather than a product.** It is the working
+setup for one fleet, grab bag and all, and it is public so the shape is
+readable rather than because it is meant to be adopted whole. The one piece
+built to travel is the hook suite below, which every repo in the fleet consumes
+by upstream ref.
+
+Zsh runs on Mac and Linux, with Bash through Git for Windows. Alacritty is the
+default direct terminal, and the Warp configuration remains as a transitional
+path.
 
 ## Layout
 
@@ -25,6 +33,23 @@ Warp configuration remains available.
 - `agentic_os/` - the `aos-precommit` package, generators, shared config/data, and hygiene guardrails behind the independently released hook suite.
 
 Full breakdown: [docs/repo-layout.md](docs/repo-layout.md).
+
+## The pre-commit suite
+
+`agentic_os/` ships `aos-precommit`, released independently as `aos-precommit-v*`
+and consumed by every repo in the fleet through
+[`.pre-commit-config.yaml`](.pre-commit-config.yaml) rather than forked. It
+validates repository layout and documentation shape (`documentation-layout`,
+`catalog-doc-size`), the README, AGENTS, and FEATURES trifecta plus its
+cross-links (`catalog-trifecta`, `dead-cross-links`, `source-doc-refs`), skill
+and composed-skill conventions (`check-skills`, `check-composed-skills`),
+comment density (`code-comments`), and an offline secret scan.
+
+Size caps come from a declared band. A repo picks `small` or `large` and there
+is no default to fall into, because an undeclared repo and a deliberately small
+one would otherwise be the same file. See
+[docs/documentation-bands.md](docs/documentation-bands.md) and
+[docs/catalog-caps-reference.md](docs/catalog-caps-reference.md).
 
 ## Install
 
@@ -53,61 +78,33 @@ Agent self-name and composition hooks, per-host steps, and gpg wiring: [docs/ins
 
 ## aos CLI
 
-AOS always composes the selected role and attaches generated `aosguard`:
+`aos` is the launcher. It always composes the selected role and attaches a
+generated `aosguard`, so a launch carries context and a guarded tool surface
+together.
 
 ```bash
-aoscompose platform --version
-aoscompose platform goose --version
+aoscompose platform                          # role's default agent
+aoscompose platform goose                    # override the agent
 aosward --agent codex --role platform -- owner/repo#267
+aos converge                                 # host runtime inputs, --check for drift
 ```
 
-`aoscompose` is the canonical explicit alias of `aos`. The earlier `aoscomposed`
-spelling remains as a compatibility alias. As a standalone convenience,
-`aoscompose <role>` selects the role's default agent from
-[`.agents/harness-launch-profiles.yaml`](.agents/harness-launch-profiles.yaml),
-and `aoscompose <role> <harness>` overrides that default.
-Auth is default-on, with `--auth=false` for startup checks that should not require a harness credential.
-`aosward` adds `--warded`. Ward remains the fixed workflow and container
-lifecycle owner, agent-compose remains the context producer, and
-umbra/specgen remains the guarded-tool generator. Matching
-role names never union authority between those layers. AOS applies its own
-bounded standalone runtime gates, including [kubeconfig projection](docs/aos-cluster-access.md).
+`aoscompose` is the canonical explicit alias of `aos`, and `aoscomposed`
+survives as a compatibility spelling. `aosward` adds `--warded`. Bare
+`acompose <role> <harness>` is the native-host launcher and starts no Docker,
+while an `aos` prefix is the container boundary.
 
-AOS also converges host-aware runtime inputs with `aos converge`, while
-`aos converge --check` detects drift. That surface owns verified remote
-catalogue caching, a deterministic local manifest, native MCP projection, and
-per-server Codex approval policy. See the [environment convergence contract](docs/aos-convergence.md).
+Role names never union authority across layers. Ward owns fixed workflows and
+container lifecycle, agent-compose produces context, and umbra and specgen
+generate the guarded tools. AOS applies its own bounded standalone gates on top.
 
-The original standalone composed-container command remains available:
-
-```bash
-aos --role platform acompose -- codex
-```
-
-The `aos` prefix is the container boundary. Bare
-`acompose <role> <harness>` is the native-host role launcher and does not start
-Docker. The standalone AOS path projects the resolved host mcporter inventory into the
-ephemeral agent home. When configured HTTP MCP endpoints resolve into the
-tailnet, AOS attaches the container to the shared tailnet network and bridges
-those endpoints through the standing proxy without invoking Ward. See the
-[standalone connectivity contract](docs/aos-context-bundle.md).
-
-For a bounded role check-in, AOS owns the agent's non-interactive defaults:
-
-```bash
-aos --role platform --agent codex acompose-checkin
-```
-
-Goose is the proven local-model launch path. Select it explicitly with the
-role whose context Agent Compose should materialize:
-
-```bash
-aos --agent goose --role sysadmin -- --version
-```
-
-Ward is not part of that standalone path. See the [launch and handoff contract](docs/aos-cli.md).
-Homebrew and Scoop install `aos`, `aoscompose`, `aoscomposed`, `aosward`, `aosguard`, `agent-terminal`, and `aosterm`.
-Direct release binaries and the aligned native update path are documented in the [CLI release walkthrough](docs/aos-cli.md).
+Homebrew and Scoop install `aos`, `aoscompose`, `aoscomposed`, `aosward`,
+`aosguard`, `agent-terminal`, and `aosterm`. The launch and handoff contract,
+release binaries, and the native update path are in
+[docs/aos-cli.md](docs/aos-cli.md). Convergence is in
+[docs/aos-convergence.md](docs/aos-convergence.md), standalone connectivity in
+[docs/aos-context-bundle.md](docs/aos-context-bundle.md), and cluster access in
+[docs/aos-cluster-access.md](docs/aos-cluster-access.md).
 
 ## Secrets pattern
 
