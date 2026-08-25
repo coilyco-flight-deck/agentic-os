@@ -6,7 +6,7 @@ Every triage label is a `prefix/value` pair, and Forgejo treats a prefixed group
 | --- | --- | --- |
 | `priority/*` | yes | `P0` `P1` `P2` `P3` `P4` |
 | `autonomy/*` | yes | `headless` `live-collab` `async-consult` `epic` |
-| `role/*` | no | `ai` `creator` `design` `director` `engineer` `exec` `ops` `qa` `human` |
+| `role/*` | no | `platform` `sysadmin` `eval` `frontend` `gamedev` `tpm` `devrel` `human` |
 
 `role/*` is deliberately not exclusive, because one issue can legitimately need two seats. A decision with a landing carries both - the seat that rules and the seat that applies the result.
 
@@ -31,8 +31,49 @@ IRL          ->  role/human
 director's decisions and an operator's actions in one pile, so `ops`,
 `director` and `exec` followed and `role/human` was retuned from "must
 physically do something" to "a person, and specifically not an agent seat".
+Every one of those spellings was retired in the 2026-08-25 rename below.
 
 Two entries are semantic rather than spelling. `live-collab` means a human has to be **present**, where `interactive` described a mid-flight checkpoint. And `async-consult` names the wait as asynchronous: a question in a queue, not an appointment.
+
+## The 2026-08-25 rename onto Core Roster v2
+
+The values above named the eight-seat roster that Core Roster v2 replaced, so no
+label existed for any of the seven seats that do exist. The seats moved and the
+labels did not, and nothing reported it.
+
+```
+role/engineer  ->  role/platform
+role/ops       ->  role/sysadmin
+role/ai        ->  role/eval
+role/director  ->  role/tpm
+role/creator   ->  role/devrel
+role/design    ->  role/frontend
+                   role/gamedev     new, no predecessor
+role/exec          retired, folded into role/tpm
+role/qa            retired, issues redistributed
+role/human         unchanged, never a seat
+```
+
+Each rename was an edit in place, so all 770 issues kept the label they already
+carried and none was touched. `role/gamedev` starts empty, and the game and mod
+work that predates the seat sits on `role/platform` until the sweep at
+[agent-compose#345](https://forgejo.coilysiren.me/coilyco-flight-deck/agent-compose/issues/345)
+finds it.
+
+The whole change is at
+[agent-compose#342](https://forgejo.coilysiren.me/coilyco-flight-deck/agent-compose/issues/342).
+
+## This page describes, it does not define
+
+The taxonomy is declared in
+[`config/forgejo-label-taxonomy.yaml`](https://forgejo.coilysiren.me/coilyco-flight-deck/infrastructure/src/branch/main/config/forgejo-label-taxonomy.yaml)
+in infrastructure, and converged from there.
+
+That split is new, and it is the fix for what produced the drift above. The
+authority used to be live Forgejo org state in one org, which a script copied
+outward, so a label change was an API call with no diff and no commit. This page
+sat describing a set that had moved, with nothing able to notice. Add a value
+here without adding it there and it does not exist.
 
 ## Why `role/*` exists
 
@@ -54,3 +95,9 @@ An epic is not an autonomy ceiling and does not belong on that scale. It is in t
 Anything that matches on the label **string** breaks silently on a rename. The dispatch gate is the load-bearing case (see [automation-mode-axis](automation-mode-axis.md)), but doc-content tests and triage scripts match too.
 
 The failure mode is the dangerous kind: nothing errors. Every issue stops matching, everything falls to the fail-closed default, and the burndown queue quietly empties while looking healthy. Change the labels, the matchers, and these docs in one batch.
+
+That warning is load-bearing for `priority/*` and `autonomy/*`, which are matched
+by string in a dispatch gate, a doc-content test, two AGENTS files, a worklog,
+and a migration script. It does not reach `role/*`, which the 2026-08-25 rename
+established is matched nowhere outside this page. Check before assuming which
+case you are in, because the two carry very different costs.
