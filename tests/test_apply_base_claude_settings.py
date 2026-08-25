@@ -54,7 +54,7 @@ def test_permission_rules_append_without_touching_sibling_permission_keys() -> N
     assert permissions["deny"][0] == "Bash(rm -rf /*)"
     assert permissions["deny"][1:] == MODULE.BASE_DENIED_PERMISSIONS
     assert "Bash(kubectl *)" in permissions["deny"]
-    assert "Write(**/.claude/projects/**/memory/**)" in permissions["deny"]
+    assert "Edit(**/.claude/projects/**/memory/**)" in permissions["deny"]
 
 
 def test_permission_rules_are_created_when_the_key_is_absent() -> None:
@@ -67,3 +67,28 @@ def test_permission_rules_are_created_when_the_key_is_absent() -> None:
     assert "permissions.deny" in changed
     assert "permissions.allow" in changed
     assert MODULE.merge_base_settings(settings) == []
+
+
+def test_retired_permission_rules_are_pruned_from_an_already_converged_host() -> None:
+    settings = {
+        "permissions": {
+            "deny": [
+                "Write(**/.claude/projects/**/memory/**)",
+                "Edit(**/.claude/projects/**/memory/**)",
+                "Bash(rm -rf /*)",
+            ],
+        },
+    }
+
+    changed = MODULE.merge_base_settings(settings)
+
+    deny = settings["permissions"]["deny"]
+    assert "Write(**/.claude/projects/**/memory/**)" not in deny
+    assert "Edit(**/.claude/projects/**/memory/**)" in deny
+    assert "Bash(rm -rf /*)" in deny
+    assert "permissions.deny" in changed
+    assert MODULE.merge_base_settings(settings) == []
+
+
+def test_no_retired_rule_is_also_a_live_rule() -> None:
+    assert not set(MODULE.RETIRED_DENIED_PERMISSIONS) & set(MODULE.BASE_DENIED_PERMISSIONS)

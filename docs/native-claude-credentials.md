@@ -75,8 +75,8 @@ the authoring-vs-rollout rule in [AGENTS.md](../AGENTS.md).
 ## Fleet permission rules
 
 `scripts/apply-base-claude-settings.py` appends to `permissions.deny` and
-`permissions.allow`, never replacing either, so operator rules and the sibling
-`ask` / `defaultMode` keys survive untouched and a second run reports no change.
+`permissions.allow` and removes only `RETIRED_DENIED_PERMISSIONS`, so operator
+rules and the sibling `ask` / `defaultMode` keys survive, and a rerun no-ops.
 
 Two shut, one open:
 
@@ -84,10 +84,10 @@ Two shut, one open:
   `gsutil`, `mongosh`, `mongo`. Each mutates production or a database, so it
   belongs to an operator or a guarded `aosguard ops` verb, not a raw agent
   shell. The deny is what steers an agent to the guarded surface.
-* **Harness memory directory** - `Write` and `Edit` against
-  `**/.claude/projects/**/memory/**`. This is the enforcement leg of the
-  no-auto-memory rule. `autoMemoryEnabled: false` stops the harness from
-  writing memory files; it does not stop an agent from authoring them by hand.
+* **Harness memory directory** - `Edit` against
+  `**/.claude/projects/**/memory/**`, one rule that binds Write, Edit,
+  MultiEdit, and NotebookEdit. `autoMemoryEnabled: false` stops the harness
+  writing memory files, and the deny stops an agent authoring one by hand.
 * **Wildcard allow** - a single `*`. Deny outranks allow, so it widens neither
   group above and only drops the prompt on the rest. The allowlists it replaces
   bounded nothing: a denied spelling just sent an agent to a permitted one.

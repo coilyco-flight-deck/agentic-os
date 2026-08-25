@@ -49,8 +49,14 @@ BASE_DENIED_PERMISSIONS = [
     "Bash(gsutil *)",
     "Bash(mongosh *)",
     "Bash(mongo *)",
-    "Write(**/.claude/projects/**/memory/**)",
     "Edit(**/.claude/projects/**/memory/**)",
+]
+
+# The one exception to append-only: dropping a rule from the list above leaves
+# it on every converged host. See docs/native-claude-credentials.md.
+RETIRED_DENIED_PERMISSIONS = [
+    # Edit(path) rules cover every file-editing tool. Write(path) matches nothing.
+    "Write(**/.claude/projects/**/memory/**)",
 ]
 
 # Deny outranks allow, so the wildcard widens nothing the list above closes.
@@ -91,6 +97,11 @@ def merge_base_settings(settings: dict) -> list[str]:
     for rule in BASE_DENIED_PERMISSIONS:
         if rule not in deny:
             deny.append(rule)
+            if "permissions.deny" not in changed:
+                changed.append("permissions.deny")
+    for rule in RETIRED_DENIED_PERMISSIONS:
+        while rule in deny:
+            deny.remove(rule)
             if "permissions.deny" not in changed:
                 changed.append("permissions.deny")
     permissions["deny"] = deny
