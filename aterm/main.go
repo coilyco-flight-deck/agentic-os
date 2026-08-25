@@ -97,7 +97,11 @@ func newCommand(deps commandDeps) *cli.Command {
 		Description: "With no role, aterm asks. It validates the role and seat against the\n" +
 			"live Agent Compose roster before opening anything, and the window it\n" +
 			"opens runs the same native session `acompose` runs in place.",
-		Version: version,
+		Version:               version,
+		EnableShellCompletion: true,
+		ShellComplete: func(ctx context.Context, cmd *cli.Command) {
+			completeInvocation(ctx, deps, cmd)
+		},
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:  "expression",

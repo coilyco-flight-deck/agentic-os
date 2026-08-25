@@ -14,3 +14,5 @@ if ! shopt -oq posix; then
     . /etc/bash_completion
   fi
 fi
+
+_siren_aterm_completion bash

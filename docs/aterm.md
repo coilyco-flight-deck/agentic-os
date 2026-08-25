@@ -7,13 +7,12 @@ the window, and the status-line composer, which fills the rows inside it.
 
 `aterm` opens one composed agent session in its own branded Alacritty window. It
 is the windowed sibling of the `acompose` shell function and runs the same
-runtime, a leased native session shadow wrapping `agent-compose launch`.
-`acompose` takes over the terminal you typed in, `aterm` leaves it free.
+runtime, a leased native session shadow wrapping `agent-compose launch`, but
+leaves the terminal you typed in free rather than taking it over.
 
 ```text
 aterm                              # pick a role, then a seat
 aterm platform                     # the role's default seat
-aterm platform codex               # an explicit seat
 aterm platform codex -- --resume   # arguments for the harness
 aterm --list                       # the live roster, no window
 aterm --dry-run platform           # the resolved plan, no window
@@ -21,17 +20,23 @@ aterm --dry-run platform           # the resolved plan, no window
 
 It needs `agent-compose` and Alacritty on `PATH` and bundles neither. `aos`
 supplies the session shadow, and without it `aterm` still launches, just without
-a leased workspace. `aterm --version` reports the same
-`aos-vMAJOR.MINOR.PATCH` release every other AOS binary does.
+a leased workspace. `aterm --version` reports the shared AOS release.
 
 **It refuses a stale role before it opens anything.** Role slugs turn over, so
-`aterm` reads `agent-compose catalog roles --json` on every run, validates
-against it, and names the live roster in the refusal. A transposed `platform`
-comes back as `is not a live role. Did you mean platform?` followed by every
-live slug and its display name. A seat is checked twice: it has to belong to the
+`aterm` reads `agent-compose catalog roles --json` on every run and names the
+live roster in the refusal. A transposed `platform` comes back as `is not a live
+role. Did you mean platform?` plus every live slug and its display name. A seat
+is checked twice: it has to belong to the
 role, and it has to be a harness
 `agent-compose launch` can start. A catalogue seat like `penpot` is real but not
 launchable, and the refusal says which of the two it failed.
+
+**Tab completes from the same roster.** `aterm <TAB>` offers the live slugs,
+`aterm sysadmin <TAB>` only that role's launchable seats, so a slug that turned
+over stops completing rather than completing into a refusal. The read is under
+10ms, so no cache can go stale. `shell/common.sh` registers bash and zsh through
+`aterm completion <shell>`, after `compinit` in zsh. A missing `agent-compose`
+yields silence, never a diagnostic mid-keystroke.
 
 **A failing launch stays on screen.** Alacritty closes the window the moment its
 child exits, so a launch that failed used to vanish before anyone could read

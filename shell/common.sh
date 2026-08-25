@@ -240,6 +240,21 @@ acompose() {
   command acompose "$@"
 }
 
+# aterm completes role slugs and seats from the live Agent Compose roster, so a
+# slug that turned over stops completing. zsh calls this after compinit.
+_siren_aterm_completion() {
+  local shell_name="${1:-}"
+  case "$shell_name" in
+    bash | zsh) ;;
+    *) return 0 ;;
+  esac
+  command -v aterm >/dev/null 2>&1 || return 0
+  local script
+  script="$(command aterm completion "$shell_name" 2>/dev/null)" || return 0
+  [ -n "$script" ] || return 0
+  eval "$script"
+}
+
 claude() { _siren_agent_launch claude "$@"; }
 codex() { _siren_agent_launch codex "$@"; }
 goose() { _siren_agent_launch goose "$@"; }
