@@ -32,12 +32,17 @@ role_default_agent() {
     fi
 )
 
+# One family per released binary, plus the bundle. The total derives from this
+# list, because a bare multiplier went stale on a retired binary.
+release_families="aos aos-bundle aoscompose aosward aosguard aterm"
+family_count=$(printf '%s\n' $release_families | wc -l | tr -d ' ')
 target_count=$(awk '!/^[[:space:]]*(#|$)/ { count++ } END { print count+0 }' \
     "$repo_root/aos-cli/release-targets.txt")
-target_count=$((target_count * 7))
+expected_count=$((target_count * family_count))
 checksum_count=$(wc -l < "$dist/SHA256SUMS" | tr -d ' ')
-if [ "$target_count" -ne "$checksum_count" ]; then
-    echo "checksum count does not match release target count" >&2
+if [ "$expected_count" -ne "$checksum_count" ]; then
+    echo "expected $expected_count checksums ($target_count targets x $family_count families:" >&2
+    echo "  $release_families), found $checksum_count" >&2
     exit 1
 fi
 

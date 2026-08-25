@@ -86,6 +86,34 @@ def test_packaging_covers_every_release_binary(tmp_path: Path) -> None:
         assert f'resource("{program}")' in formula
 
 
+def test_release_check_family_list_matches_the_released_binaries() -> None:
+    """The release train once went red on a bare artifact multiplier.
+
+    check-aos-release.sh asserts a checksum count of targets x families. That
+    total lived as a literal, so retiring a binary left it stale and the failure
+    only surfaced after promote, in the release job. Pin the list here so ci.yml
+    catches the drift on the pull request instead.
+    """
+    release_check = (ROOT / "scripts" / "check-aos-release.sh").read_text(
+        encoding="utf-8"
+    )
+    match = re.search(r'^release_families="([^"]+)"', release_check, re.MULTILINE)
+    assert match, "check-aos-release.sh must declare release_families"
+    families = set(match.group(1).split())
+    assert families == set(RELEASE_BINARIES) | {"aos-bundle"}
+
+    # The builder globs the same families into SHA256SUMS. A family missing
+    # there is caught by the count above only at release time.
+    builder = (ROOT / "scripts" / "aos-release-build.sh").read_text(encoding="utf-8")
+    glob_line = re.search(r"^\s*for asset in ((?:\S+\*\s*)+);", builder, re.MULTILINE)
+    assert glob_line, "aos-release-build.sh must glob release assets for SHA256SUMS"
+    prefixes = [g.rstrip("*") for g in glob_line.group(1).split()]
+    for family in sorted(families):
+        assert any(
+            f"{family}-".startswith(prefix) for prefix in prefixes
+        ), f"{family} has no checksum glob in aos-release-build.sh: {prefixes}"
+
+
 def test_release_workflow_derives_assets_from_dist() -> None:
     workflow = (
         ROOT / ".forgejo" / "workflows" / "aos-cli-release.yml"
