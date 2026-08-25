@@ -39,21 +39,21 @@ tracked script or a composite action under `actions/`, pass inputs through
 `dead-cross-links` returns early on anything carrying a scheme, so every link
 leaving the repo was unchecked. `outbound-link-hygiene` takes that half, offline
 because pre-commit must not depend on the network. Two renames earned it:
-`ward-mcp` became `mcp-beaver` and `cli-guard` became `umbra`, and the profile
-README kept naming and linking both, so a reader searching either name found
-nothing. Three `coilysiren.me/orgs/<org>/` links in the same file had never
-resolved, found only by checking 25 links by hand.
+`ward-mcp` became `mcp-beaver` and `cli-guard` became `umbra` while the profile
+README kept naming and linking both. Three `coilysiren.me/orgs/<org>/` links in
+the same file had never resolved, found by checking 25 links by hand.
 
 Four checks read [`outbound_link_rules.json`](../agentic_os/outbound_link_rules.json),
 so a rename edits a table rather than a validator: retired names and paths,
 canonical host for repository links, link text naming one project while the
 target names another, and placeholder or local URLs. Fenced and inline code are
-stripped first, so a doc narrating a rename backticks the retired name and a doc
-still *using* it does not. That is the whole exemption mechanism, and it is why
-paths keeping a pre-rename spelling, such as SSM parameters and IAM ARNs, pass
-with no allowlist. Liveness is `check-link-liveness`, a report-only CLI rather
-than a hook, and its scheduled job is not built yet. Page-shape validation waits
-until the web-content format has more than one draft instance.
+stripped first, so a doc narrating a rename backticks the retired name and one
+still *using* it does not. That exemption is why paths keeping a pre-rename
+spelling, such as SSM parameters, pass with no allowlist. Liveness is
+`check-link-liveness`, a report-only CLI rather than a hook, and its scheduled
+job is not built yet. Page-shape validation is deferred until the format has
+more than one instance: its only draft is
+[coilysiren/inbox#417](https://forgejo.coilysiren.me/coilysiren/inbox/issues/417).
 
 ## Manual opt-ins
 
