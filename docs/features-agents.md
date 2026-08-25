@@ -51,7 +51,7 @@ permission denies and the issue-ref Stop hook it also converges are described in
 
 ### Composed status line
 
-The [status-line composer](agent-terminal-native.md) discovers ordered providers on hosts
+The [status-line composer](aterm.md) discovers ordered providers on hosts
 and in dev-base containers. Its built-in provider shows the active Agent
 Compose seat and bundle health. User and repository provider directories can
 add, replace, or mask rows without forking the composer.

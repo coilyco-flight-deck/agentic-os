@@ -179,32 +179,26 @@ PY
     echo "$out"
 }
 
-build_agent_terminal() {
+build_aterm() {
     target=$1
     goos=${target%%/*}
     goarch=${target#*/}
-    suffix=""
-    out="$dist/agent-terminal-${goos}-${goarch}"
-    alias_out="$dist/aosterm-${goos}-${goarch}"
+    out="$dist/aterm-${goos}-${goarch}"
     if [ "$goos" = "windows" ]; then
-        suffix=".exe"
-        out="${out}${suffix}"
-        alias_out="${alias_out}${suffix}"
+        out="${out}.exe"
     fi
-    if [ -e "$out" ] || [ -e "$alias_out" ]; then
-        echo "duplicate release output: $out or $alias_out" >&2
+    if [ -e "$out" ]; then
+        echo "duplicate release output: $out" >&2
         exit 1
     fi
     (
-        cd "$repo_root/agent-terminal"
+        cd "$repo_root/aterm"
         GOOS="$goos" GOARCH="$goarch" CGO_ENABLED=0 \
             go build -trimpath \
             -ldflags "-s -w -X main.version=${version} -X main.compiledHarnessLaunchProfilesBase64=${launch_profiles_b64}" \
             -o "$out" .
     )
-    cp "$out" "$alias_out"
     echo "$out"
-    echo "$alias_out"
 }
 
 mkdir -p "$dist"
@@ -252,7 +246,7 @@ while IFS= read -r target || [ -n "$target" ]; do
     )
     cp "$out" "$compose_out"
     cp "$out" "$ward_out"
-    build_agent_terminal "$target"
+    build_aterm "$target"
     build_aosguard "$target"
     build_bundle "$target"
     echo "$out"
@@ -262,7 +256,7 @@ done < "$targets"
 
 (
     cd "$dist"
-    for asset in agent-terminal-* aos-* aoscompose-* aosguard-* aosward-* aosterm-*; do
+    for asset in aos-* aoscompose-* aosguard-* aosward-* aterm-*; do
         checksum "$asset"
     done > SHA256SUMS
 )

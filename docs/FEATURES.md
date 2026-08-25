@@ -5,7 +5,7 @@ Major shipped capabilities, not files.
 ## Inventory
 
 - [Shell and secrets](install.md) - shared shells, Warp, SSM, and GPG.
-- [Branded agent terminal](warp-host-setup.md) - `aosterm` wraps `aoscompose` in native Sombra Alacritty.
+- [Branded agent terminal](aterm.md) - `aterm` opens one composed agent session in its own Sombra Alacritty window, refusing a stale role before it opens anything.
 - [Speech helper](aos-roles-and-voice.md) - `aos-say` client plus relay for status speech.
 - **Karabiner key bindings** - external keyboard and Remote Desktop mappings.
 - [Agents and sessions](features-agents.md) - self-name, composition

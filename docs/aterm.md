@@ -1,37 +1,45 @@
-# Branded agent terminal
+# The native agent terminal
 
-`aosterm` ships on the AOS `aos-vMAJOR.MINOR.PATCH` release train beside its
-compatibility name, `agent-terminal`. The same release defines its
-`agent-compose.overlay.v1` renderer contract and stamps every native binary
-with one version.
+Two things decide what a native agent session looks like: `aterm`, which opens
+the window, and the status-line composer, which fills the rows inside it.
 
-## Requirements
+## `aterm`
 
-The launcher needs these separate native dependencies on `PATH`:
-
-* `agent-compose` supplies the renderer-neutral identity overlay
-* `aoscompose` supplies the composed standalone launch
-* Alacritty receives the translated title, color, and child command arguments
-
-Neither dependency is bundled into the launcher. Packages contain no
-host-specific path or fleet configuration.
-
-## Install, upgrade, rollback
-
-Per-OS steps are in [the README](../README.md).
-## Version reporting
+`aterm` opens one composed agent session in its own branded Alacritty window. It
+is the windowed sibling of the `acompose` shell function and runs the same
+runtime, a leased native session shadow wrapping `agent-compose launch`.
+`acompose` takes over the terminal you typed in, `aterm` leaves it free.
 
 ```text
-aos version
-aoscompose version
-aoscomposed version
-aosward version
-aosguard --version
-agent-terminal --version
-aosterm --version
+aterm                              # pick a role, then a seat
+aterm platform                     # the role's default seat
+aterm platform codex               # an explicit seat
+aterm platform codex -- --resume   # arguments for the harness
+aterm --list                       # the live roster, no window
+aterm --dry-run platform           # the resolved plan, no window
 ```
 
-All outputs must name the same `aos-vMAJOR.MINOR.PATCH` release.
+It needs `agent-compose` and Alacritty on `PATH` and bundles neither. `aos`
+supplies the session shadow, and without it `aterm` still launches, just without
+a leased workspace. `aterm --version` reports the same
+`aos-vMAJOR.MINOR.PATCH` release every other AOS binary does.
+
+**It refuses a stale role before it opens anything.** Role slugs turn over, so
+`aterm` reads `agent-compose catalog roles --json` on every run, validates
+against it, and names the live roster in the refusal. A transposed `platform`
+comes back as `is not a live role. Did you mean platform?` followed by every
+live slug and its display name. A seat is checked twice: it has to belong to the
+role, and it has to be a harness
+`agent-compose launch` can start. A catalogue seat like `penpot` is real but not
+launchable, and the refusal says which of the two it failed.
+
+**A failing launch stays on screen.** Alacritty closes the window the moment its
+child exits, so a launch that failed used to vanish before anyone could read
+why. `aterm` runs the child through its own `_session` stage instead of handing
+it straight to `alacritty -e`. That stage passes the exit code through and holds
+the window on any non-zero exit, and `--hold` also holds after a clean exit. The
+launcher watches the terminal for a startup failure rather than detaching blind,
+so "no window appeared" comes back as a message naming the cause.
 
 ## Status-line composer
 

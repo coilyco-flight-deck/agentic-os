@@ -111,7 +111,7 @@ test-images/
 *.spec.js
 
 # Local Go launcher builds
-/agent-terminal/agent-terminal
-/agent-terminal/agent-terminal.exe
 /aos-cli/aos
 /aos-cli/aos.exe
+/aterm/aterm
+/aterm/aterm.exe

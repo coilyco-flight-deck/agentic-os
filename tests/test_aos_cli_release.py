@@ -17,8 +17,7 @@ RELEASE_BINARIES = (
     "aoscompose",
     "aosward",
     "aosguard",
-    "agent-terminal",
-    "aosterm",
+    "aterm",
 )
 
 
@@ -81,8 +80,7 @@ def test_packaging_covers_every_release_binary(tmp_path: Path) -> None:
     assert ["aoscompose-windows-amd64.exe", "aoscomposed"] in bins
     assert ["aosward-windows-amd64.exe", "aosward"] in bins
     assert ["aosguard-windows-amd64.exe", "aosguard"] in bins
-    assert ["agent-terminal-windows-amd64.exe", "agent-terminal"] in bins
-    assert ["aosterm-windows-amd64.exe", "aosterm"] in bins
+    assert ["aterm-windows-amd64.exe", "aterm"] in bins
     assert 'bin.install_symlink bin/"aoscompose" => "aoscomposed"' in formula
     for program in RELEASE_BINARIES[1:]:
         assert f'resource("{program}")' in formula
@@ -105,12 +103,11 @@ def test_release_workflow_derives_assets_from_dist() -> None:
     assert "build_aosguard_skill" in builder
     assert "build_bundle" in builder
     assert "aos-bundle-${goos}-${goarch}.tar.gz" in builder
-    assert "build_agent_terminal" in builder
+    assert "build_aterm" in builder
     assert "compiledHarnessLaunchProfilesBase64" in builder
     assert "specverb.lock" in builder
     assert "aosguard-*" in builder
-    assert "agent-terminal-*" in builder
-    assert "aosterm-*" in builder
+    assert "aterm-*" in builder
     assert 'host_suffix=".exe"' in builder
     assert "shasum -a 256 -c -" in builder
     assert "go env GOOS | tr -d" in builder
@@ -118,16 +115,18 @@ def test_release_workflow_derives_assets_from_dist() -> None:
     assert "scripts/ci/aos-cli-release.sh" in workflow
     assert "just aos-release-build" in workflow_script
     assert "just aos-release-package" in workflow_script
-    assert "just agent-terminal-test" in workflow_script
+    assert "just aterm-test" in workflow_script
     release_check = (ROOT / "scripts" / "check-aos-release.sh").read_text(encoding="utf-8")
     assert 'grep -Fx "aosguard version $version"' in release_check
-    assert 'grep -Fx "agent-terminal version $version"' in release_check
-    assert 'grep -Fx "aosterm version $version"' in release_check
+    assert 'grep -Fx "aterm version $version"' in release_check
     assert "share/aos/aosguard-skill/aosguard/SKILL.md" in release_check
     assert "--dry-run" in release_check
     assert "agent-compose" in release_check
-    assert "--aoscompose-bin" in release_check
+    assert "--aos-bin" in release_check
     assert "ops actions --help" in release_check
+    assert "aterm.launch.v1" in release_check
+    assert "aterm accepted a role that is not on the roster" in release_check
+    assert '"_session"' in release_check
 
 
 def test_specgen_pin_is_owned_by_the_dependency_lock() -> None:

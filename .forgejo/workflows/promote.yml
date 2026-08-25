@@ -52,7 +52,7 @@ jobs:
       - name: Test the AOS CLI
         run: just aos-test
       - name: Test the native terminal companion
-        run: just agent-terminal-test
+        run: just aterm-test
       - name: Test the shared eval grading package
         run: just aos-eval-test
       - name: Validate the supported Ward YAML contract

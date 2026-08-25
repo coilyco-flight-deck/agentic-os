@@ -1,0 +1,10 @@
+#!/bin/sh
+# Stub AOS for aterm tests. It reports no native shadow, which is the supported
+# degraded path: aterm then launches Agent Compose directly.
+set -eu
+
+if [ "${1:-}" = "_native-shadow" ] && [ "${2:-}" = "--probe" ]; then
+    exit 1
+fi
+echo "stub aos does not implement: $*" >&2
+exit 1

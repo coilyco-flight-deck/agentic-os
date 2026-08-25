@@ -39,14 +39,10 @@ aosguard_darwin_arm64=$(sha "$dist/aosguard-darwin-arm64")
 aosguard_linux_amd64=$(sha "$dist/aosguard-linux-amd64")
 aosguard_linux_arm64=$(sha "$dist/aosguard-linux-arm64")
 aosguard_windows_amd64=$(sha "$dist/aosguard-windows-amd64.exe")
-agent_terminal_darwin_arm64=$(sha "$dist/agent-terminal-darwin-arm64")
-agent_terminal_linux_amd64=$(sha "$dist/agent-terminal-linux-amd64")
-agent_terminal_linux_arm64=$(sha "$dist/agent-terminal-linux-arm64")
-agent_terminal_windows_amd64=$(sha "$dist/agent-terminal-windows-amd64.exe")
-aosterm_darwin_arm64=$(sha "$dist/aosterm-darwin-arm64")
-aosterm_linux_amd64=$(sha "$dist/aosterm-linux-amd64")
-aosterm_linux_arm64=$(sha "$dist/aosterm-linux-arm64")
-aosterm_windows_amd64=$(sha "$dist/aosterm-windows-amd64.exe")
+aterm_darwin_arm64=$(sha "$dist/aterm-darwin-arm64")
+aterm_linux_amd64=$(sha "$dist/aterm-linux-amd64")
+aterm_linux_arm64=$(sha "$dist/aterm-linux-arm64")
+aterm_windows_amd64=$(sha "$dist/aterm-windows-amd64.exe")
 
 cat > "$dist/aos.rb" <<EOF
 class Aos < Formula
@@ -71,13 +67,9 @@ class Aos < Formula
         url "${base}/aosguard-darwin-arm64"
         sha256 "${aosguard_darwin_arm64}"
       end
-      resource "agent-terminal" do
-        url "${base}/agent-terminal-darwin-arm64"
-        sha256 "${agent_terminal_darwin_arm64}"
-      end
-      resource "aosterm" do
-        url "${base}/aosterm-darwin-arm64"
-        sha256 "${aosterm_darwin_arm64}"
+      resource "aterm" do
+        url "${base}/aterm-darwin-arm64"
+        sha256 "${aterm_darwin_arm64}"
       end
     end
   end
@@ -97,13 +89,9 @@ class Aos < Formula
         url "${base}/aosguard-linux-amd64"
         sha256 "${aosguard_linux_amd64}"
       end
-      resource "agent-terminal" do
-        url "${base}/agent-terminal-linux-amd64"
-        sha256 "${agent_terminal_linux_amd64}"
-      end
-      resource "aosterm" do
-        url "${base}/aosterm-linux-amd64"
-        sha256 "${aosterm_linux_amd64}"
+      resource "aterm" do
+        url "${base}/aterm-linux-amd64"
+        sha256 "${aterm_linux_amd64}"
       end
     end
     on_arm do
@@ -121,13 +109,9 @@ class Aos < Formula
         url "${base}/aosguard-linux-arm64"
         sha256 "${aosguard_linux_arm64}"
       end
-      resource "agent-terminal" do
-        url "${base}/agent-terminal-linux-arm64"
-        sha256 "${agent_terminal_linux_arm64}"
-      end
-      resource "aosterm" do
-        url "${base}/aosterm-linux-arm64"
-        sha256 "${aosterm_linux_arm64}"
+      resource "aterm" do
+        url "${base}/aterm-linux-arm64"
+        sha256 "${aterm_linux_arm64}"
       end
     end
   end
@@ -138,8 +122,7 @@ class Aos < Formula
     bin.install_symlink bin/"aoscompose" => "aoscomposed"
     resource("aosward").stage { bin.install Dir["aosward-*"].first => "aosward" }
     resource("aosguard").stage { bin.install Dir["aosguard-*"].first => "aosguard" }
-    resource("agent-terminal").stage { bin.install Dir["agent-terminal-*"].first => "agent-terminal" }
-    resource("aosterm").stage { bin.install Dir["aosterm-*"].first => "aosterm" }
+    resource("aterm").stage { bin.install Dir["aterm-*"].first => "aterm" }
   end
 
   test do
@@ -148,8 +131,7 @@ class Aos < Formula
     assert_match version.to_s, shell_output("#{bin}/aoscomposed version")
     assert_match version.to_s, shell_output("#{bin}/aosward version")
     assert_match version.to_s, shell_output("#{bin}/aosguard --version")
-    assert_match version.to_s, shell_output("#{bin}/agent-terminal --version")
-    assert_match version.to_s, shell_output("#{bin}/aosterm --version")
+    assert_match version.to_s, shell_output("#{bin}/aterm --version")
   end
 end
 EOF
@@ -170,8 +152,7 @@ cat > "$dist/aos.json" <<EOF
                 ["aoscompose-windows-amd64.exe", "aoscomposed"],
                 ["aosward-windows-amd64.exe", "aosward"],
                 ["aosguard-windows-amd64.exe", "aosguard"],
-                ["agent-terminal-windows-amd64.exe", "agent-terminal"],
-                ["aosterm-windows-amd64.exe", "aosterm"]
+                ["aterm-windows-amd64.exe", "aterm"]
             ]
         }
     },
@@ -179,8 +160,7 @@ cat > "$dist/aos.json" <<EOF
         "Invoke-WebRequest -Uri '${base}/aoscompose-windows-amd64.exe' -OutFile \"\$dir/aoscompose-windows-amd64.exe\"; if ((Get-FileHash \"\$dir/aoscompose-windows-amd64.exe\" -Algorithm SHA256).Hash -ne '${aoscompose_windows_amd64}') { throw 'aoscompose checksum mismatch' }",
         "Invoke-WebRequest -Uri '${base}/aosward-windows-amd64.exe' -OutFile \"\$dir/aosward-windows-amd64.exe\"; if ((Get-FileHash \"\$dir/aosward-windows-amd64.exe\" -Algorithm SHA256).Hash -ne '${aosward_windows_amd64}') { throw 'aosward checksum mismatch' }",
         "Invoke-WebRequest -Uri '${base}/aosguard-windows-amd64.exe' -OutFile \"\$dir/aosguard-windows-amd64.exe\"; if ((Get-FileHash \"\$dir/aosguard-windows-amd64.exe\" -Algorithm SHA256).Hash -ne '${aosguard_windows_amd64}') { throw 'aosguard checksum mismatch' }",
-        "Invoke-WebRequest -Uri '${base}/agent-terminal-windows-amd64.exe' -OutFile \"\$dir/agent-terminal-windows-amd64.exe\"; if ((Get-FileHash \"\$dir/agent-terminal-windows-amd64.exe\" -Algorithm SHA256).Hash -ne '${agent_terminal_windows_amd64}') { throw 'agent-terminal checksum mismatch' }",
-        "Invoke-WebRequest -Uri '${base}/aosterm-windows-amd64.exe' -OutFile \"\$dir/aosterm-windows-amd64.exe\"; if ((Get-FileHash \"\$dir/aosterm-windows-amd64.exe\" -Algorithm SHA256).Hash -ne '${aosterm_windows_amd64}') { throw 'aosterm checksum mismatch' }"
+        "Invoke-WebRequest -Uri '${base}/aterm-windows-amd64.exe' -OutFile \"\$dir/aterm-windows-amd64.exe\"; if ((Get-FileHash \"\$dir/aterm-windows-amd64.exe\" -Algorithm SHA256).Hash -ne '${aterm_windows_amd64}') { throw 'aterm checksum mismatch' }"
     ]
 }
 EOF

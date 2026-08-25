@@ -20,7 +20,7 @@ path.
 
 - `shell/` - shared `common.sh` plus thin `zshrc` + `bashrc`, so bash and zsh match. `warp.zsh` is the zsh-only Warp dispatcher.
 - `alacritty/` - portable Sombra appearance and terminal security defaults, with host preferences left to the local wrapper.
-- `agent-terminal/` - `aosterm` and compatibility branding for one Alacritty window.
+- `aterm/` - `aterm`, the branded launcher for one composed agent session.
 - `warp/` - transitional Warp config (`settings.toml`, `tab_configs/`) plus the `just warp` Go module.
 - `aos-cli/` - the Go composition root for standalone and Ward-governed agent launches.
 - `aos-say/` - the `just aos-say` Go module for the speech helper client and relay.
@@ -99,7 +99,7 @@ container lifecycle, agent-compose produces context, and umbra and specgen
 generate the guarded tools. AOS applies its own bounded standalone gates on top.
 
 Homebrew and Scoop install `aos`, `aoscompose`, `aoscomposed`, `aosward`,
-`aosguard`, `agent-terminal`, and `aosterm`. The launch and handoff contract,
+`aosguard`, and `aterm`. The launch and handoff contract,
 release binaries, and the native update path are in
 [docs/aos-cli.md](docs/aos-cli.md). Convergence is in
 [docs/aos-convergence.md](docs/aos-convergence.md), standalone connectivity in

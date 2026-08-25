@@ -65,12 +65,13 @@ investigated and deferred: it must emit to `/dev/tty` guarded by `[ -t 1 ]` to
 avoid injecting escapes into captured output fleet-wide, and that guard may mean
 it never fires for the pipe-backed children that matter.
 
-## Branded Alacritty directors
+## Branded Alacritty sessions
 
-`aosterm` launches one composed session in one statically branded Alacritty
-window. Agent-compose supplies canonical identity, agentic-os renders the
-terminal brand, and `aoscompose` remains the child process. `agent-terminal`
-stays as the compatibility command name.
+`aterm` opens one composed agent session in one statically branded Alacritty
+window. Agent-compose supplies canonical identity and the roster, agentic-os
+renders the terminal brand, and the native session shadow runs the harness. The
+launcher, its refusals, and its flags are in
+[the native agent terminal](aterm.md).
 
 ## Base configuration
 
@@ -81,40 +82,12 @@ scrollback to the host, and defining no tabs, panes, or multiplexer. A
 host-local root config imports this baseline and adds only its shell and
 startup directory.
 
-## Launch
-
-`aosterm` is the repository-scoped entry point, taking `--expression`,
-`--task-title`, `--working-directory`, then a role, a seat, and an executable
-tail. Installation, upgrades, rollbacks, and version checks are in the
-[native launcher walkthrough](agent-terminal-native.md).
-
-`--working-directory` defaults to `$PROJECTS_ROOT`, with `~/projects` as the
-portable fallback, and a caller passes it explicitly to open one director
-inside a specific checkout.
-
-The launcher calls `agent-compose overlay --json`, validates it, then launches
-Alacritty with `aoscompose <role> <seat> ...` as its tail. It derives a title
-from personality glyphs, the seat annotation, expression, and task, plus the
-melded favorite color as cursor and selection accent, a subtle background tint,
-and selection text chosen by contrast. The annotation is the overlay's composed
-`annotation` field, so the title matches every other agent surface.
-
-Every value reaches Alacritty as an argument. The launcher invokes no shell and
-emits no terminal control sequences into the director process.
-
-## Inspect
-
-`--dry-run` before the `aoscompose` arguments prints `agent-terminal.launch.v1`
-JSON without requiring Alacritty, carrying the selected identity, derived brand,
-working directory, and complete argument vector. `AGENT_COMPOSE_BIN`,
-`AOSCOMPOSE_BIN`, and `ALACRITTY_BIN` select non-default executables.
-
 ## Ownership and limits
 
-Agent-compose owns renderer-neutral identity and validates role, seat, and
-expression. Agentic-os owns this Alacritty adapter, Ward owns runtime authority
-and the director lifecycle, and infrastructure owns fleet installation.
+Agent-compose owns renderer-neutral identity and the roster it is validated
+against. Agentic-os owns this Alacritty adapter, Ward owns runtime authority and
+the session lifecycle, and infrastructure owns fleet installation.
 
 Branding is fixed at launch. The adapter manages no tabs, panes, sessions,
 avatars, or interactive loop, and does not remap the ANSI palette because
-director TUIs use those colors semantically.
+harness TUIs use those colors semantically.

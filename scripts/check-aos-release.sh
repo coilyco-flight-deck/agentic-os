@@ -71,32 +71,28 @@ case "$(uname -s)/$(uname -m)" in
         native_aoscompose="$dist/aoscompose-darwin-arm64"
         native_aosward="$dist/aosward-darwin-arm64"
         native_aosguard="$dist/aosguard-darwin-arm64"
-        native_agent_terminal="$dist/agent-terminal-darwin-arm64"
-        native_aosterm="$dist/aosterm-darwin-arm64"
+        native_aterm="$dist/aterm-darwin-arm64"
         ;;
     Linux/x86_64)
         native_aos="$dist/aos-linux-amd64"
         native_aoscompose="$dist/aoscompose-linux-amd64"
         native_aosward="$dist/aosward-linux-amd64"
         native_aosguard="$dist/aosguard-linux-amd64"
-        native_agent_terminal="$dist/agent-terminal-linux-amd64"
-        native_aosterm="$dist/aosterm-linux-amd64"
+        native_aterm="$dist/aterm-linux-amd64"
         ;;
     Linux/aarch64 | Linux/arm64)
         native_aos="$dist/aos-linux-arm64"
         native_aoscompose="$dist/aoscompose-linux-arm64"
         native_aosward="$dist/aosward-linux-arm64"
         native_aosguard="$dist/aosguard-linux-arm64"
-        native_agent_terminal="$dist/agent-terminal-linux-arm64"
-        native_aosterm="$dist/aosterm-linux-arm64"
+        native_aterm="$dist/aterm-linux-arm64"
         ;;
     *)
         native_aos=""
         native_aoscompose=""
         native_aosward=""
         native_aosguard=""
-        native_agent_terminal=""
-        native_aosterm=""
+        native_aterm=""
         ;;
 esac
 if [ -n "$native_aos" ]; then
@@ -173,57 +169,57 @@ if [ -n "$native_aos" ]; then
         "$native_aosguard" --version | grep -Fx "aosguard version $version" >/dev/null
         "$native_aosguard" ops aws --help >/dev/null
         "$native_aosguard" ops actions --help >/dev/null
-        "$native_agent_terminal" --help >/dev/null
-        "$native_agent_terminal" --version |
-            grep -Fx "agent-terminal version $version" >/dev/null
-        "$native_aosterm" --help >/dev/null
-        "$native_aosterm" --version |
-            grep -Fx "aosterm version $version" >/dev/null
+        "$native_aterm" --help >/dev/null
+        "$native_aterm" --version |
+            grep -Fx "aterm version $version" >/dev/null
 
-        cp "$repo_root/agent-terminal/testdata/agent-compose" .
-        cp "$repo_root/agent-terminal/testdata/tpm-overlay.json" .
-        chmod 0755 agent-compose
-        "$native_agent_terminal" \
-            --role tpm \
-            --seat codex \
+        cp "$repo_root/aterm/testdata/agent-compose" .
+        cp "$repo_root/aterm/testdata/aos" .
+        cp "$repo_root/aterm/testdata/roster.json" .
+        cp "$repo_root/aterm/testdata/tpm-codex-overlay.json" .
+        chmod 0755 agent-compose aos
+        # The roster is a live read, so a released aterm that cannot parse it
+        # refuses every launch. Listing it exercises that path without a window.
+        AGENT_COMPOSE_BIN="$smoke_dir/agent-compose" \
+            "$native_aterm" --list | grep -F "tpm" >/dev/null
+        "$native_aterm" \
             --expression acting \
             --task-title agentic-os-release-smoke \
             --working-directory "$smoke_dir" \
             --agent-compose-bin "$smoke_dir/agent-compose" \
-            --aoscompose-bin "$native_aoscompose" \
+            --aos-bin "$smoke_dir/aos" \
             --dry-run \
-            -- printf ready > launch.json
-        "$native_aosterm" \
-            --expression acting \
-            --task-title agentic-os-release-smoke \
-            --working-directory "$smoke_dir" \
-            --agent-compose-bin "$smoke_dir/agent-compose" \
-            --aoscompose-bin "$native_aoscompose" \
-            --dry-run \
-            tpm codex -- printf ready > aosterm-launch.json
-        python3 - "$smoke_dir/launch.json" "$smoke_dir" "$native_aoscompose" <<'PY'
+            tpm codex -- --resume > launch.json
+        # A role that left the roster must be refused, and the refusal has to
+        # name the roster rather than fail for some unrelated reason.
+        if AGENT_COMPOSE_BIN="$smoke_dir/agent-compose" \
+            "$native_aterm" --working-directory "$smoke_dir" \
+            --dry-run engineer codex >stale-role.txt 2>&1; then
+            echo "aterm accepted a role that is not on the roster" >&2
+            exit 1
+        fi
+        grep -F "is not a live role" stale-role.txt >/dev/null
+        python3 - "$smoke_dir/launch.json" "$smoke_dir" "$native_aterm" <<'PY'
 import json
 import pathlib
 import sys
 
 plan = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
-assert plan["format"] == "agent-terminal.launch.v1"
+assert plan["format"] == "aterm.launch.v1", plan["format"]
 assert plan["working_directory"] == sys.argv[2]
 assert plan["executable"] == "alacritty"
-assert plan["arguments"][-6:] == ["-e", sys.argv[3], "tpm", "codex", "printf", "ready"]
-PY
-        python3 - "$smoke_dir/aosterm-launch.json" "$smoke_dir" "$native_aoscompose" <<'PY'
-import json
-import pathlib
-import sys
-
-plan = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
-assert plan["format"] == "agent-terminal.launch.v1"
-assert plan["working_directory"] == sys.argv[2]
-assert plan["executable"] == "alacritty"
-assert plan["arguments"][-6:] == ["-e", sys.argv[3], "tpm", "codex", "printf", "ready"]
+assert plan["identity"]["role"] == "tpm"
+assert plan["identity"]["seat"] == "codex"
+# The stub AOS reports no shadow, so the window runs Agent Compose directly.
+assert plan["shadowed"] is False
+assert plan["child"][-4:] == ["launch", "tpm", "codex", "--resume"], plan["child"]
+# The terminal has to exec the session stage, which is what keeps a failing
+# launch on screen instead of closing the window over it.
+dash = plan["arguments"].index("-e")
+assert plan["arguments"][dash + 1] == sys.argv[3], plan["arguments"][dash + 1]
+assert plan["arguments"][dash + 2] == "_session"
 PY
     )
 fi
 
-echo "verified aos, aoscompose, aosward, aosguard, agent-terminal, and aosterm release $version"
+echo "verified aos, aoscompose, aosward, aosguard, and aterm release $version"

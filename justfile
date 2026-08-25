@@ -19,30 +19,6 @@ default:
 agent-id *ARGS:
     @uv run python -m agentic_os.agent_id "$@"
 
-# Launch one agent-compose branded Alacritty director window. Pass role, seat, task title, and a child command as trailing arguments; use `--dry-run` to inspect without opening a window.
-agent-terminal *ARGS:
-    @go run -C agent-terminal . "$@"
-
-# Compile the branded Alacritty director launcher.
-agent-terminal-build *ARGS:
-    @go build -C agent-terminal ./... "$@"
-
-# Format the branded Alacritty director launcher.
-agent-terminal-fmt *ARGS:
-    @gofmt -w agent-terminal "$@"
-
-# Run Go static analysis for the branded Alacritty director launcher.
-agent-terminal-lint *ARGS:
-    @go vet -C agent-terminal ./... "$@"
-
-# Run the branded Alacritty director launcher tests.
-agent-terminal-test *ARGS:
-    @go test -C agent-terminal ./... "$@"
-
-# Reconcile the branded Alacritty director launcher's Go module metadata.
-agent-terminal-tidy *ARGS:
-    @go mod tidy -C agent-terminal "$@"
-
 # Inventory AGENTS-family sources across the committed substrate and an infrastructure-supplied managed-repo manifest. Emits stable Markdown or JSON with repository provenance, paragraph hashes, clipping candidates, and active role/harness cascades without copying doctrine text. See docs/agents-context-inventory.md.
 agents-context-inventory *ARGS:
     @uv run python -m agentic_os.agents_context_inventory "$@"
@@ -155,6 +131,30 @@ aosguard-release-fmt *ARGS:
 # Materialize and run aosguard from the independent .specgen snapshot, passing arguments through.
 aosguard-run *ARGS:
     @specgen --project-root .specgen/guardfiles run -- "$@"
+
+# Launch one composed agent session in its own branded Alacritty window. Bare invocation picks a role; pass role and seat positionally, and harness arguments after `--`. `--list` prints the live roster, `--dry-run` inspects without opening a window. See docs/aterm.md.
+aterm *ARGS:
+    @go run -C aterm . "$@"
+
+# Compile the branded session launcher.
+aterm-build *ARGS:
+    @go build -C aterm ./... "$@"
+
+# Format the branded session launcher.
+aterm-fmt *ARGS:
+    @gofmt -w aterm "$@"
+
+# Run Go static analysis for the branded session launcher.
+aterm-lint *ARGS:
+    @go vet -C aterm ./... "$@"
+
+# Run the branded session launcher tests.
+aterm-test *ARGS:
+    @go test -C aterm ./... "$@"
+
+# Reconcile the branded session launcher's Go module metadata.
+aterm-tidy *ARGS:
+    @go mod tidy -C aterm "$@"
 
 # Roll out the canonical pre-commit hook block to every consumer repo under ~/projects/<org>/* (all org dirs). Idempotent.
 apply-agentic-os-hooks *ARGS:

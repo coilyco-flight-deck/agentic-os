@@ -32,7 +32,7 @@ func defaultSeatForRole(role string) (string, error) {
 	}
 	agent, ok := agents[role]
 	if !ok {
-		return "", fmt.Errorf("AOS has no default agent for role %s; add a seat", role)
+		return "", fmt.Errorf("AOS pins no default seat for role %s. Name one, or add it to the launch profiles", role)
 	}
 	return agent, nil
 }
@@ -136,7 +136,7 @@ func parseHarnessLaunchProfiles(data []byte) (map[string]string, error) {
 				return nil, fmt.Errorf("line %d: agent without role", lineNumber)
 			}
 			agent := trimYAMLScalar(strings.TrimSpace(strings.TrimPrefix(text, "agent:")))
-			if !isSupportedHarness(agent) {
+			if !isNativeHarness(agent) {
 				return nil, fmt.Errorf("line %d: unsupported agent %q", lineNumber, agent)
 			}
 			agents[currentRole] = agent
@@ -175,26 +175,4 @@ func trimYAMLScalar(value string) string {
 		}
 	}
 	return value
-}
-
-func safeRoleSlug(value string) bool {
-	if value == "" || value[0] < 'a' || value[0] > 'z' {
-		return false
-	}
-	for _, r := range value {
-		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-' {
-			continue
-		}
-		return false
-	}
-	return true
-}
-
-func isSupportedHarness(value string) bool {
-	switch value {
-	case "claude", "codex", "goose", "opencode":
-		return true
-	default:
-		return false
-	}
 }

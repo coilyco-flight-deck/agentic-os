@@ -87,7 +87,7 @@ reuses the Forgejo release, replaces every asset from a clean `dist/`, and
 updates the tap and bucket when their write tokens exist.
 
 Assets group `aos-*`, `aos-bundle-*`, `aoscompose-*`, `aosward-*`, `aosguard-*`,
-`agent-terminal-*`, and `aosterm-*` per target, with `SHA256SUMS`, `aos.rb`, and
+and `aterm-*` per target, with `SHA256SUMS`, `aos.rb`, and
 `aos.json` covering the version-aligned set.
 
 ## Install
@@ -97,11 +97,10 @@ the `coilyco` bucket, and Forgejo also serves every checksummed binary from
 [releases](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/releases).
 Exact commands are in [the README](../README.md).
 
-Both put `aos`, `aoscompose`, `aoscomposed`, `aosward`, `aosguard`,
-`agent-terminal`, and `aosterm` on `PATH`. `aoscomposed` aliases `aoscompose`,
-`aosward` forces warded mode from its executable name, `aosguard` carries the
-operator CLI and Actions bridge, and `aosterm` is the Alacritty wrapper. Runtime
-dependencies: [native launcher walkthrough](agent-terminal-native.md).
+Both put `aos`, `aoscompose`, `aoscomposed`, `aosward`, `aosguard`, and `aterm`
+on `PATH`. `aoscomposed` aliases `aoscompose`, `aosward` forces warded mode from
+its executable name, `aosguard` carries the operator CLI and Actions bridge, and
+`aterm` is the [branded session launcher](aterm.md).
 
 Publication consumes the repo-scoped `TAP_WRITE_TOKEN` and `SCOOP_WRITE_TOKEN`
 Actions secrets, synchronized from SSM by `just sync-actions-secrets`, and an
@@ -115,6 +114,7 @@ reused and replaced, so a retry is idempotent.
 
 `just aos-release-build` creates the binaries and `SHA256SUMS`. With
 `AOS_RELEASE_VERSION` set, `aos-release-package` renders local metadata and
-`aos-release-check` verifies checksums, versions, `--help`, and an `aosterm
---dry-run` against an overlay fixture. The ordinary Go tests and pre-commit
+`aos-release-check` verifies checksums, versions, `--help`, an `aterm --dry-run`
+against roster and overlay fixtures, and that `aterm` refuses an off-roster
+role. The ordinary Go tests and pre-commit
 verbs remain the release gate.

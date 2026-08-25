@@ -43,7 +43,7 @@ jobs:
       - name: Test the AOS CLI
         run: just aos-test
       - name: Test the native terminal companion
-        run: just agent-terminal-test
+        run: just aterm-test
 
   aos-eval-tests:
     runs-on: docker

@@ -81,7 +81,7 @@ authority.
   [git-identity stamp](dev-base-agent-identity.md), split out because it never had
   anything to do with naming beyond sharing a hook event.
 - [`statusline.d/20-container.sh`](../docker/dev-base/statusline.d/20-container.sh) -
-  a [status-line](agent-terminal-native.md) row naming the warded container from
+  a [status-line](aterm.md) row naming the warded container from
   `WARD_CONTAINER_NAME`, since inside a container the hostname is an opaque id.
   It self-suppresses on a native host.
 - [`managed-settings.json`](../docker/dev-base/claude-managed-settings.json) -

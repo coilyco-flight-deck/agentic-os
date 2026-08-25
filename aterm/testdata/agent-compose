@@ -1,0 +1,37 @@
+#!/bin/sh
+# Stub Agent Compose for aterm tests and the release smoke check. It answers the
+# two read-only queries aterm makes, and makes `launch` a visible no-op.
+set -eu
+
+fixture_dir=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
+
+case "${1:-}" in
+    catalog)
+        cat "$fixture_dir/roster.json"
+        ;;
+    overlay)
+        role=""
+        seat=""
+        while [ "$#" -gt 0 ]; do
+            case "$1" in
+                --role) role=$2; shift 2 ;;
+                --seat) seat=$2; shift 2 ;;
+                *) shift ;;
+            esac
+        done
+        if [ -f "$fixture_dir/${role}-${seat}-overlay.json" ]; then
+            cat "$fixture_dir/${role}-${seat}-overlay.json"
+        else
+            echo "stub agent-compose has no overlay fixture for ${role}/${seat}" >&2
+            exit 1
+        fi
+        ;;
+    launch)
+        shift
+        echo "stub agent-compose launch: $*"
+        ;;
+    *)
+        echo "stub agent-compose does not implement ${1:-}" >&2
+        exit 1
+        ;;
+esac

@@ -1,0 +1,98 @@
+package main
+
+import (
+	"bytes"
+	"runtime"
+	"strings"
+	"testing"
+)
+
+func TestParseSessionArgsSplitsOnTheFirstDash(t *testing.T) {
+	hold, argv, err := parseSessionArgs([]string{"--hold", "--", "aos", "_native-shadow", "--", "agent-compose"})
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	if !hold {
+		t.Fatal("--hold should be recognized")
+	}
+	// The child's own `--` has to survive, or the shadow loses its command.
+	if strings.Join(argv, " ") != "aos _native-shadow -- agent-compose" {
+		t.Fatalf("argv = %v", argv)
+	}
+}
+
+func TestParseSessionArgsRejectsGarbage(t *testing.T) {
+	for _, argv := range [][]string{{}, {"--hold"}, {"--nope", "--", "x"}} {
+		if _, _, err := parseSessionArgs(argv); err == nil {
+			t.Fatalf("%v should be rejected", argv)
+		}
+	}
+}
+
+func TestRunSessionPassesTheChildExitCodeThrough(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("the fixture uses a POSIX shell")
+	}
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
+	code := runSession(
+		[]string{"/bin/sh", "-c", "exit 7"},
+		false,
+		strings.NewReader(""),
+		stdout,
+		stderr,
+	)
+	if code != 7 {
+		t.Fatalf("exit code = %d, want 7", code)
+	}
+	// A failing launch always holds, whatever --hold said, so the window keeps
+	// the reason on screen instead of closing over it.
+	if !strings.Contains(stdout.String(), "Session failed") {
+		t.Fatalf("a failure should be announced: %q", stdout.String())
+	}
+}
+
+func TestRunSessionStaysQuietOnACleanExit(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("the fixture uses a POSIX shell")
+	}
+	stdout := &bytes.Buffer{}
+	code := runSession([]string{"/bin/sh", "-c", "exit 0"}, false, strings.NewReader(""), stdout, &bytes.Buffer{})
+	if code != 0 {
+		t.Fatalf("exit code = %d, want 0", code)
+	}
+	if stdout.String() != "" {
+		t.Fatalf("a clean exit should print nothing: %q", stdout.String())
+	}
+}
+
+func TestRunSessionHoldsACleanExitOnRequest(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("the fixture uses a POSIX shell")
+	}
+	stdout := &bytes.Buffer{}
+	if code := runSession([]string{"/bin/sh", "-c", "exit 0"}, true, strings.NewReader(""), stdout, &bytes.Buffer{}); code != 0 {
+		t.Fatalf("exit code = %d", code)
+	}
+	if !strings.Contains(stdout.String(), "Session ended") {
+		t.Fatalf("--hold should announce the end: %q", stdout.String())
+	}
+}
+
+func TestRunSessionReportsAChildThatCannotStart(t *testing.T) {
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
+	code := runSession([]string{"/nonexistent/harness"}, false, strings.NewReader(""), stdout, stderr)
+	if code == 0 {
+		t.Fatal("a child that cannot start is a failure")
+	}
+	if !strings.Contains(stderr.String(), "/nonexistent/harness") {
+		t.Fatalf("the failure should name the child: %q", stderr.String())
+	}
+}
+
+func TestRunSessionRejectsAnEmptyCommand(t *testing.T) {
+	if code := runSession(nil, false, strings.NewReader(""), &bytes.Buffer{}, &bytes.Buffer{}); code != 2 {
+		t.Fatalf("exit code = %d, want 2", code)
+	}
+}
