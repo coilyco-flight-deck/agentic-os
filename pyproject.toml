@@ -42,6 +42,8 @@ check-agent-compose-dedup = "agentic_os.pre_commit.check_agent_compose_dedup:mai
 check-skills = "agentic_os.pre_commit.check_skill:main"
 check-composed-skills = "agentic_os.pre_commit.check_composed_skills:main"
 check-dead-links = "agentic_os.pre_commit.check_dead_links:main"
+check-outbound-links = "agentic_os.pre_commit.check_outbound_links:main"
+check-link-liveness = "agentic_os.link_liveness:main"
 check-catalog-doc-size = "agentic_os.pre_commit.check_catalog_doc_size:main"
 check-catalog-trifecta = "agentic_os.pre_commit.check_catalog_trifecta:main"
 check-code-review-contract = "agentic_os.pre_commit.check_code_review_contract:main"
@@ -184,4 +186,5 @@ include = ["agentic_os*"]
 agentic_os = [
     "agent_id_vectors.json",
     "org_shortnames.json",
+    "outbound_link_rules.json",
 ]

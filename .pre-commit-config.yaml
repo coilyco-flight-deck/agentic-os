@@ -77,6 +77,13 @@ repos:
         always_run: true
         pass_filenames: false
         stages: [pre-commit]
+      - id: outbound-link-hygiene
+        name: outbound link hygiene (offline)
+        entry: python -m agentic_os.pre_commit.check_outbound_links
+        language: python
+        always_run: true
+        pass_filenames: false
+        stages: [pre-commit]
       - id: repo-pointer-skills
         name: repo-pointer skills auto-generated
         entry: python -m agentic_os.pre_commit.check_repo_pointer_skills

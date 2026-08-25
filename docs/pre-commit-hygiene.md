@@ -1,7 +1,5 @@
 # Pre-commit hygiene and the leak guard
 
-## Pre-commit hygiene
-
 This repo ships the baseline cleanliness hooks plus a few staged opt-ins for
 text hygiene that are too disruptive to flip on everywhere at once.
 
@@ -36,6 +34,27 @@ being a short direct command, not containing a program. Move the body to a
 tracked script or a composite action under `actions/`, pass inputs through
 `env:` or `with:`, and leave the step as the call.
 
+## Outbound link hygiene
+
+`dead-cross-links` returns early on anything carrying a scheme, so every link
+leaving the repo was unchecked. `outbound-link-hygiene` takes that half, offline
+because pre-commit must not depend on the network. Two renames earned it:
+`ward-mcp` became `mcp-beaver` and `cli-guard` became `umbra`, and the profile
+README kept naming and linking both, so a reader searching either name found
+nothing. Three `coilysiren.me/orgs/<org>/` links in the same file had never
+resolved, found only by checking 25 links by hand.
+
+Four checks read [`outbound_link_rules.json`](../agentic_os/outbound_link_rules.json),
+so a rename edits a table rather than a validator: retired names and paths,
+canonical host for repository links, link text naming one project while the
+target names another, and placeholder or local URLs. Fenced and inline code are
+stripped first, so a doc narrating a rename backticks the retired name and a doc
+still *using* it does not. That is the whole exemption mechanism, and it is why
+paths keeping a pre-rename spelling, such as SSM parameters and IAM ARNs, pass
+with no allowlist. Liveness is `check-link-liveness`, a report-only CLI rather
+than a hook, and its scheduled job is not built yet. Page-shape validation waits
+until the web-content format has more than one draft instance.
+
 ## Manual opt-ins
 
 - `shfmt` - manual stage only. Shellcheck is the default gate because it is
@@ -47,72 +66,53 @@ tracked script or a composite action under `actions/`, pass inputs through
   upstream issue links alone. Use it once the repo has a staged rollout plan
   and local allowlists for historical references.
 
-## Opting in
-
-Add the hook at `stages: [manual]` and supply repo-local config under
-`[tool.agentic-os.<hook>]` in `pyproject.toml`: `enabled = true` plus optional
-`excludes` and `allow_globs` path lists.
-
-The guard is for durable prose breadcrumbs like `See #337 for the draft`, not
-literal syntax examples or upstream issue links. Manual-only hooks stay out of
-the fleet coverage audit until they roll out as active checks.
+Opting one in means adding it at `stages: [manual]` and supplying repo-local
+config under `[tool.agentic-os.<hook>]` in `pyproject.toml`: `enabled = true`
+plus optional `excludes` and `allow_globs` path lists. The issue guard is for
+durable prose breadcrumbs like `See #337 for the draft`, not literal syntax
+examples or upstream issue links. Manual-only hooks stay out of the fleet
+coverage audit until they roll out as active checks.
 
 ## Encoded leak guard
 
-`leak-guard` is a pre-commit hook that rejects plaintext occurrences of terms
-that should not be grep-bait. It exists because most leaks are not secrets, they
-are *awkward*: an employer name hardcoded in a config path, a partner's name in
-a comment, a private repo named in a public README. None of these trip a secret
-scanner, but any of them turns `rg <term>` into a harvesting tool. See
-the recovered inbox corpus.
+`leak-guard` rejects plaintext occurrences of terms that should not be
+grep-bait. Most leaks are not secrets, they are *awkward*: an employer name in a
+config path, a partner's name in a comment, a private repo named in a public
+README. None trip a secret scanner, but any turns `rg <term>` into a harvesting
+tool. See the recovered inbox corpus.
 
-## The one primitive
-
-Three leak/coupling classes reduce to a single rule shape - *a string S must not
+Three leak and coupling classes reduce to one rule shape - *a string S must not
 appear in scope T, and the rule is stored encoded so grepping the rule reveals
-neither S nor the coupling*:
-
-- **sensitive data** - an employer or personal name that should never be
-  grep-bait. The threat model is `rg <name> | mail-merge`, not decryption, so a
-  reversible encoding is the right grade.
-- **private to public leak** - a bridge (private) identifier referenced from a
-  flight-deck (public) repo. The wrong direction for data lockdown.
-- **dependency cycle** - one direction of a repo-to-repo reference banned so the
-  edge stays one-way.
-
-## How it stays leak-safe
+neither S nor the coupling*. **Sensitive data** is an employer or personal name
+whose threat model is `rg <name> | mail-merge` rather than decryption, so a
+reversible encoding is the right grade. **Private to public leak** is a bridge
+(private) identifier referenced from a flight-deck (public) repo, the wrong
+direction for data lockdown. **Dependency cycle** bans one direction of a
+repo-to-repo reference so the edge stays one-way.
 
 The ruleset (`agentic_os/pre_commit/leak_guard_rules.py`) stores every term as
-lowercase **hex**, never plaintext. Hex was chosen over base64 because it is
-exclusively `[0-9a-f]` with no padding, copy-pastes cleanly, and decodes in one
-line in every language. The hook decodes each term **only in memory** to build
-its matcher, and a violation prints the rule id, path, line, and remediation -
-**never the term**. So neither the ruleset nor the hook output is itself a leak.
-
-Terms match on word boundaries by default, so a rule for `ward` does not fire on
-`forward` or `awkward`.
-
-## Adding a term
+lowercase **hex**, never plaintext. Hex beats base64 because it is exclusively
+`[0-9a-f]` with no padding, copy-pastes cleanly, and decodes in one line in every
+language. The hook decodes each term **only in memory** to build its matcher, and
+a violation prints the rule id, path, line, and remediation - **never the term**,
+so neither the ruleset nor the hook output is itself a leak. Terms match on word
+boundaries, so a rule for `ward` does not fire on `forward` or `awkward`.
 
 `leak-guard-encode` reads stdin and returns hex, so the plaintext never lands in
 shell history, and `--decode <hex>` round-trips. Add the result to
 `leak_guard_rules.py` as a rule carrying `id`, `term_hex`, optional `repos`,
 optional `only_globs` and `allow_globs`, and a `message` that never names the
-term.
-
-`only_globs` and `allow_globs` are duals: the first narrows a rule to a few
+term. `only_globs` and `allow_globs` are duals: the first narrows a rule to a few
 paths, the second exempts known-legitimate ones such as a public bio surface.
 Both follow the catalog glob semantics against repo-relative POSIX paths, where
 `**/x` does not match a top-level `x`. Per repo, opt paths out with
 `[tool.agentic-os.leak-guard] excludes`.
 
-## Scope and rollout
-
 Rule scope matches the current repo, resolved from `origin` so it is
 worktree-safe. A rule with `repos` fires only there, and one without fires
 everywhere it is installed. The hook is authored and dogfooded here, and fleet
-rollout is a deliberate ansible step run after each target repo's occurrences
-are cleaned or allowlisted. The guard is staged, never flipped on fleet-wide.
+rollout is a deliberate ansible step run after each target repo's occurrences are
+cleaned or allowlisted. The guard is staged, never flipped on fleet-wide.
 
 ## Managed line endings
 

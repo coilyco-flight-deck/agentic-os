@@ -1,0 +1,67 @@
+{
+  "note": "Data table for the outbound-link-hygiene hook. A rename edits this file, never the validator. Neutral JSON so any language reads the same committed table; see agentic_os/pre_commit/check_outbound_links.py and docs/pre-commit-hygiene.md.",
+  "estate_orgs": [
+    "coilysiren",
+    "coilyco-flight-deck",
+    "coilyco-bridge",
+    "coilyco-gaming"
+  ],
+  "estate_hosts": [
+    "github.com",
+    "www.github.com",
+    "forgejo.coilysiren.me"
+  ],
+  "retired_names": [
+    {
+      "name": "ward-mcp",
+      "replacement": "mcp-beaver",
+      "kind": "repository",
+      "note": "Renamed on the forge. SSM parameter paths still spell the old slug and stay correct, so they are written in backticks."
+    },
+    {
+      "name": "Ward MCP",
+      "replacement": "mcp-beaver",
+      "kind": "display",
+      "case_sensitive": true,
+      "note": "Case-sensitive: lowercase 'ward mcp' is ordinary prose about ward's MCP surface, which still exists."
+    },
+    {
+      "name": "cli-guard",
+      "replacement": "umbra",
+      "kind": "repository"
+    },
+    {
+      "name": "agent-guard",
+      "replacement": "ward",
+      "kind": "repository",
+      "note": "Retired as a name for ward when the repo transferred to flight-deck."
+    }
+  ],
+  "retired_paths": [
+    {
+      "path": "coilysiren.me/orgs/",
+      "replacement": "https://github.com/<org>",
+      "note": "The site has no /orgs/ route and never had one. The sitemap carries /, /about/, /hiring/ and /resume/ only."
+    }
+  ],
+  "placeholder_hosts": [
+    "example.com",
+    "example.org",
+    "example.net",
+    "localhost",
+    "127.0.0.1",
+    "0.0.0.0",
+    "::1"
+  ],
+  "placeholder_targets": [
+    "",
+    "#",
+    "todo",
+    "tbd",
+    "fixme",
+    "...",
+    "url",
+    "link",
+    "here"
+  ]
+}

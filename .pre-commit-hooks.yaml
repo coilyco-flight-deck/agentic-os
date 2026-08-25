@@ -14,6 +14,7 @@
 #       - id: check-skills
 #       - id: check-composed-skills
 #       - id: dead-cross-links
+#       - id: outbound-link-hygiene
 #       - id: repo-pointer-skills
 #       - id: agents-pointer
 #       - id: git-workflow
@@ -40,6 +41,8 @@
 #                           file, not repo content)
 #   - check_context_budget -> ward context-budget (on-demand by design; see
 #                           docs/context-budget.md)
+#   - link_liveness      -> check-link-liveness (fetches every outbound URL,
+#                           so it needs the network a commit hook must not)
 
 - id: pr-guard
   name: pre-push PR guard
@@ -152,6 +155,15 @@
   pass_filenames: false
   always_run: true
   stages: [pre-commit, pre-push]
+
+- id: outbound-link-hygiene
+  name: outbound link hygiene (offline)
+  description: "Static checks on links that leave the repo, the half dead-cross-links skips: retired names and paths, canonical host when the repo declares one, link text disagreeing with its target, and placeholder or local URLs. Rules are data in agentic_os/outbound_link_rules.json, so a rename edits a table. Fenced and inline code are exempt, which is how a doc mentions a retired name instead of using it. Liveness is check-link-liveness, not this hook. See docs/pre-commit-hygiene.md."
+  entry: check-outbound-links
+  language: python
+  always_run: true
+  pass_filenames: false
+  stages: [pre-commit]
 
 - id: repo-pointer-skills
   name: repo-pointer skills auto-generated
