@@ -28,7 +28,7 @@ Major shipped capabilities, not files.
 - [aosguard](aosguard.md) - guarded CLI with fixed
   [SigNoz MCP reads](signoz.md), issue pins, PR merge, and sealed
   [Forgejo storage measurement](forgejo-ops.md).
-- [Code review skill](../.agents/composed/tooling-code-review/COMPOSED.md) - Technical Program Manager gate-decision review stance.
+- [Code review skill](../.agents/composed/tooling-code-review/COMPOSED.md) - Portfolio Director gate-decision review stance.
 - [Code review contract](../CODE-REVIEW.md) - review invariants.
 - [Forgejo Actions logs](forgejo-actions-runs.md) - job logs and run ZIPs.
 - [Forgejo Actions list bridge](forgejo-actions-runs.md) - safe run/task listing.

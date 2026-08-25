@@ -81,12 +81,12 @@ the role allowlists in [`.agents/roles.kdl`](../.agents/roles.kdl).
 
 `.agents/roles.kdl` is authoritative. In summary:
 
-* **Technical Program Manager** - `tooling-tpm-*`, scouts, issue decomposition,
+* **Portfolio Director** - `tooling-tpm-*`, scouts, issue decomposition,
   skill authoring, voice linting, code review as a gate, decision-relevant coding.
-* **Developer Platform Engineer** - the coding family whole, vocabulary, design system.
+* **Agentic Platform Engineer** - the coding family whole, vocabulary, design system.
 * **Systems Administrator** - `tooling-sysadmin-*`, coding family, vocabulary.
-* **Agent Evaluation Engineer** - `tooling-eval-*`, coding family, design system.
-* **Frontend Design Engineer** - `tooling-frontend-*`, the frontend coding pair,
+* **Evaluation Engineer** - `tooling-eval-*`, coding family, design system.
+* **Design Engineer** - `tooling-frontend-*`, the frontend coding pair,
   three product methods pinned by name, preferences, voice family.
 * **Game Developer** - C#, Rust, Python, JavaScript, `coding-core-*`,
   `tooling-frontend-*`, preferences.
@@ -94,9 +94,9 @@ the role allowlists in [`.agents/roles.kdl`](../.agents/roles.kdl).
 
 ## Handoffs
 
-Technical Program Manager owns scout discovery, ranking, and portfolio
+Portfolio Director owns scout discovery, ranking, and portfolio
 recommendations, recording returned evidence without inheriting execution
-authority, and owns code review as a gate decision. Developer Platform Engineer
+authority, and owns code review as a gate decision. Agentic Platform Engineer
 or Systems Administrator owns verification, implementation, validation, and
 landing. Developer Advocate owns routine member interaction, and human stewards
 retain moderation.

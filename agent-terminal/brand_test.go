@@ -115,11 +115,11 @@ func TestBuildLaunchPlanUsesCanonicalIdentity(t *testing.T) {
 	if plan.Format != launchFormat {
 		t.Fatalf("format = %q", plan.Format)
 	}
-	if plan.Identity.Name != "Saiya" || plan.Identity.FavoriteColor != "#e36966" ||
-		plan.Identity.Annotation != "Saiya [they] (Technical Program Manager)" {
+	if plan.Identity.Name != "Portia" || plan.Identity.FavoriteColor != "#e36966" ||
+		plan.Identity.Annotation != "Portia [they] (Portfolio Director)" {
 		t.Fatalf("identity = %+v", plan.Identity)
 	}
-	if plan.Brand.Title != "✂ ↗ Saiya [they] (Technical Program Manager) // acting // agentic-os#730" {
+	if plan.Brand.Title != "✂ ↗ Portia [they] (Portfolio Director) // acting // agentic-os#730" {
 		t.Fatalf("title = %q", plan.Brand.Title)
 	}
 	if plan.Brand.Background != "#21191c" || plan.Brand.SelectionText != baseBackground {
@@ -146,11 +146,11 @@ func TestSeatAnnotationFallsBackForOlderAgentCompose(t *testing.T) {
 	raw := strings.Replace(
 		strings.Replace(
 			tpmOverlay,
-			"  \"annotation\": \"Saiya [they] (Technical Program Manager)\",\n",
+			"  \"annotation\": \"Portia [they] (Portfolio Director)\",\n",
 			"",
 			1,
 		),
-		"  \"role_display_name\": \"Technical Program Manager\",\n",
+		"  \"role_display_name\": \"Portfolio Director\",\n",
 		"",
 		1,
 	)
@@ -162,7 +162,7 @@ func TestSeatAnnotationFallsBackForOlderAgentCompose(t *testing.T) {
 		t.Fatal(err)
 	}
 	// The role slug stands in for the label an older document never carried.
-	if got := seatAnnotation(document); got != "Saiya [they] (tpm)" {
+	if got := seatAnnotation(document); got != "Portia [they] (tpm)" {
 		t.Fatalf("fallback annotation = %q", got)
 	}
 }
@@ -172,12 +172,12 @@ func TestSeatAnnotationFallsBackForOlderAgentCompose(t *testing.T) {
 func TestSeatAnnotationDegradesWithoutPronouns(t *testing.T) {
 	request := tpmRequest()
 	raw := strings.Replace(tpmOverlay, `"pronouns": "they"`, `"pronouns": ""`, 1)
-	raw = strings.Replace(raw, `"annotation": "Saiya [they] (Technical Program Manager)",`, "", 1)
+	raw = strings.Replace(raw, `"annotation": "Portia [they] (Portfolio Director)",`, "", 1)
 	document, err := parseOverlay([]byte(raw), request)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := seatAnnotation(document); got != "Saiya (Technical Program Manager)" {
+	if got := seatAnnotation(document); got != "Portia (Portfolio Director)" {
 		t.Fatalf("annotation without pronouns = %q", got)
 	}
 }
@@ -277,7 +277,7 @@ func TestRunLaunchDryRunDoesNotRequireAlacritty(t *testing.T) {
 	if err := json.Unmarshal([]byte(output.String()), &plan); err != nil {
 		t.Fatalf("dry-run output: %v\n%s", err, output.String())
 	}
-	if plan.Identity.Name != "Saiya" || plan.Executable != defaultAlacrittyBin {
+	if plan.Identity.Name != "Portia" || plan.Executable != defaultAlacrittyBin {
 		t.Fatalf("dry-run plan = %+v", plan)
 	}
 	wantTail := []string{
