@@ -24,13 +24,15 @@ It needs `agent-compose` and kitty on `PATH` and bundles neither. Without `aos` 
 
 **A failing launch stays on screen.** A terminal closes the window the moment its child exits, so a failed launch used to vanish before anyone could read why. `aterm` runs the child through its own `_session` stage rather than handing the harness to kitty directly. That stage passes the exit code through and holds the window on any non-zero exit, and `--hold` also holds after a clean exit. The launcher watches for a startup failure, so "no window appeared" names its cause.
 
-**The title leads with what separates two windows.** A window manager truncates near 30 characters, so segments run workspace, task title, role, glyphs and seat name, expression. The workspace is the checkout `--working-directory` points at, rendered `repo@branch`, omitted rather than printed as a constant when the directory is the default projects root.
+**The title leads with what separates two windows.** A window manager truncates near 30 characters, so segments run workspace, task title, role, glyphs and seat name, expression. The workspace is `repo@branch` for the checkout `--working-directory` names, left out when that is the default projects root.
 
 **`--dry-run` reads for a person, and failures split by code.** The default renders the identity, workspace, both brand colors as swatches, each personality in its own color, and the child argv. `--dry-run --json` keeps the machine plan that `scripts/check-aos-release.sh` asserts against. Exit codes: 2 usage, 3 off-roster role or seat, 4 a dependency missing from `PATH`, 5 the window failed to open, 1 anything else, and a child's own code passes through.
 
 **The picker follows the terminal, not stdout.** `aterm > log` used to refuse with "a role is required", because the check wanted stdin and stdout both to be character devices. The form runs on `/dev/tty` instead.
 
-**It decodes the whole identity overlay.** `agent-compose overlay --json` ships a complete sensory identity per personality, and a struct naming fewer fields drops the rest in silence. Only the glyphs and `favorite_color` reach the window today; the identity card, the launch motion, and the sound mark are built from the rest. `aterm/overlay.go` declares every leaf, and `TestOverlayDecodesEveryShippedField` fails on any that does not survive a round trip.
+**`aterm doctor` preflights the whole chain**, exits 1 on a broken link, and names the unleased-shadow case a launch makes silently. `--json` is `aterm.doctor.v1`.
+
+**It decodes the whole identity overlay.** `agent-compose overlay --json` ships a complete sensory identity per personality, and a struct naming fewer fields drops the rest in silence. `aterm/overlay.go` declares every leaf, and `TestOverlayDecodesEveryShippedField` fails on any that does not survive a round trip. Only the glyphs and `favorite_color` reach the window today.
 
 ## Status-line composer
 

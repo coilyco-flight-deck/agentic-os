@@ -51,6 +51,11 @@ func stubDeps(t *testing.T, spawns *[]recordedSpawn, shadowed bool) commandDeps 
 			switch {
 			case len(args) > 0 && args[0] == "catalog":
 				return fixture(t, "roster.json"), nil
+			case len(args) > 0 && args[0] == "_launch-agent":
+				// aos owns the launch profiles, and every fixture role seats claude.
+				return []byte("claude\n"), nil
+			case len(args) > 0 && args[0] == "--version":
+				return []byte("stub 1.0\n"), nil
 			case len(args) > 0 && args[0] == "overlay":
 				role, seat := "platform", "claude"
 				for index, value := range args {
@@ -68,7 +73,12 @@ func stubDeps(t *testing.T, spawns *[]recordedSpawn, shadowed bool) commandDeps 
 			}
 			return nil, fmt.Errorf("unexpected read: %v", args)
 		},
-		run: func(_ context.Context, _ string, _ ...string) error {
+		run: func(_ context.Context, _ string, args ...string) error {
+			// Only the shadow probe answers to the shadowed switch. A terminal
+			// asked to parse its own config always can.
+			if len(args) > 0 && args[0] == "+runpy" {
+				return nil
+			}
 			if shadowed {
 				return nil
 			}

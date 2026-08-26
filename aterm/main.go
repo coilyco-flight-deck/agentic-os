@@ -151,6 +151,15 @@ func newCommand(deps commandDeps) *cli.Command {
 				Sources: cli.EnvVars("ATERM_TERMINAL_BIN", "KITTY_BIN"),
 			},
 		},
+		Commands: []*cli.Command{
+			{
+				Name:  "doctor",
+				Usage: "preflight the whole launch chain and say what would stop a window",
+				Action: func(ctx context.Context, cmd *cli.Command) error {
+					return runDoctor(ctx, deps, cmd)
+				},
+			},
+		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			return runLaunch(ctx, deps, cmd)
 		},
