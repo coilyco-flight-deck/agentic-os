@@ -13,19 +13,40 @@ const (
 )
 
 type overlaySeat struct {
+	Key      string `json:"key"`
 	Harness  string `json:"harness"`
 	Name     string `json:"name"`
 	Pronouns string `json:"pronouns"`
+	Tier     string `json:"tier"`
 }
 
 type overlayEmblem struct {
+	Name  string `json:"name"`
+	Emoji string `json:"emoji"`
 	Glyph string `json:"glyph"`
 }
 
+// The visual and audible halves of a personality's sensory identity, decoded
+// whole rather than sampled. See docs/aterm.md.
+type overlayForm struct {
+	Silhouette string `json:"silhouette"`
+	Geometry   string `json:"geometry"`
+	Motion     string `json:"motion"`
+}
+
+type overlaySoundMark struct {
+	Timbre  string `json:"timbre"`
+	Contour string `json:"contour"`
+	Pulse   string `json:"pulse"`
+}
+
 type overlayPersonality struct {
-	Name   string        `json:"name"`
-	Color  string        `json:"color"`
-	Emblem overlayEmblem `json:"emblem"`
+	Name      string           `json:"name"`
+	Color     string           `json:"color"`
+	Motif     string           `json:"motif"`
+	Emblem    overlayEmblem    `json:"emblem"`
+	Form      overlayForm      `json:"form"`
+	SoundMark overlaySoundMark `json:"sound_mark"`
 }
 
 type overlayDocument struct {
