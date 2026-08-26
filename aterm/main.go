@@ -76,6 +76,7 @@ func main() {
 			os.Exit(exitUsage)
 		}
 		options.Motion = options.Motion && cardMotionWanted(os.Stdout, false)
+		options.Audible = options.Audible && soundWanted(os.Stdout, false)
 		os.Exit(runSession(options, os.Stdin, os.Stdout, os.Stderr))
 	}
 	if err := newCommand(systemDeps()).Run(context.Background(), os.Args); err != nil {
@@ -127,6 +128,10 @@ func newCommand(deps commandDeps) *cli.Command {
 			&cli.BoolFlag{
 				Name:  "no-motion",
 				Usage: "skip the identity card animation, for a recording or a log",
+			},
+			&cli.BoolFlag{
+				Name:  "silent",
+				Usage: "skip the launch sound mark",
 			},
 			&cli.BoolFlag{
 				Name:  "json",
@@ -213,6 +218,7 @@ func runLaunch(ctx context.Context, deps commandDeps, cmd *cli.Command) error {
 		TerminalBin:      cmd.String("terminal-bin"),
 		Workspace:        workspaceLabel(ctx, deps, cwd, cmd.IsSet("working-directory")),
 		NoMotion:         cmd.Bool("no-motion"),
+		Silent:           cmd.Bool("silent"),
 		Extra:            extra,
 		Hold:             cmd.Bool("hold"),
 	}

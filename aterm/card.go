@@ -28,6 +28,9 @@ type cardFigure struct {
 	Glyph    string `json:"glyph"`
 	Geometry string `json:"geometry"`
 	Motion   string `json:"motion"`
+	Timbre   string `json:"timbre"`
+	Contour  string `json:"contour"`
+	Pulse    string `json:"pulse"`
 }
 
 type sessionCard struct {
@@ -64,6 +67,9 @@ func buildSessionCard(document overlayDocument, plan launchPlan) sessionCard {
 			Glyph:    personality.Emblem.Glyph,
 			Geometry: personality.Form.Geometry,
 			Motion:   personality.Form.Motion,
+			Timbre:   personality.SoundMark.Timbre,
+			Contour:  personality.SoundMark.Contour,
+			Pulse:    personality.SoundMark.Pulse,
 		})
 	}
 	return card

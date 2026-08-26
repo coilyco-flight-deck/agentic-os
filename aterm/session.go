@@ -30,6 +30,7 @@ func runSession(options sessionOptions, stdin io.Reader, stdout, stderr io.Write
 	// The card is the only moment aterm owns the window by itself, so it is
 	// drawn here rather than by the launcher the operator typed in.
 	if options.Card.Format != "" {
+		playSoundMark(options.Card, options.Audible)
 		playCard(stdout, options.Card, options.Motion)
 	}
 	command := exec.Command(argv[0], argv[1:]...)
@@ -77,22 +78,25 @@ func holdWindow(stdin io.Reader, stdout io.Writer, notice string) {
 }
 
 type sessionOptions struct {
-	Hold   bool
-	Motion bool
-	Card   sessionCard
-	Argv   []string
+	Hold    bool
+	Motion  bool
+	Audible bool
+	Card    sessionCard
+	Argv    []string
 }
 
 // parseSessionArgs hand-parses because everything after the first `--` belongs
 // to the child verbatim, including the child's own `--`.
 func parseSessionArgs(argv []string) (sessionOptions, error) {
-	options := sessionOptions{Motion: true}
+	options := sessionOptions{Motion: true, Audible: true}
 	for index := 0; index < len(argv); index++ {
 		switch value := argv[index]; value {
 		case "--hold":
 			options.Hold = true
 		case "--no-motion":
 			options.Motion = false
+		case "--silent":
+			options.Audible = false
 		case "--card":
 			if index+1 >= len(argv) {
 				return sessionOptions{}, fmt.Errorf("%s --card needs a value", sessionCommand)

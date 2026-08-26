@@ -19,6 +19,7 @@ type launchRequest struct {
 	TerminalBin      string
 	Workspace        string
 	NoMotion         bool
+	Silent           bool
 	Extra            []string
 	Hold             bool
 }
@@ -132,6 +133,9 @@ func buildLaunchPlan(
 	}
 	if request.NoMotion {
 		session = append(session, "--no-motion")
+	}
+	if request.Silent {
+		session = append(session, "--silent")
 	}
 	session = append(session, "--card", encoded, "--")
 	// kitty takes the program as trailing arguments, with no -e separator.
