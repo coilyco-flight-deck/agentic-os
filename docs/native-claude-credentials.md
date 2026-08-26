@@ -96,25 +96,9 @@ so agentic-os#1165's bare `*` only ever warned at startup and is now retired.
 host, which makes it operator-local preference under the config-placement axes,
 so it stays hand-edited and no writer owns it.
 
-## Issue-ref Stop hook
-
-`scripts/check-issue-refs.sh` runs as a `hooks.Stop` entry. It blocks an agent
-turn whose final reply references an issue or PR as a hash-ref (`owner/repo#N`
-or a bare `#NN`) instead of a fully-qualified canonical Forgejo URL, which is
-ambiguous after the org migration and breaks tooling. Fenced and inline code are
-exempt so the convention can be quoted, and a loop guard passes the turn on the
-second stop so an unfixable message cannot wedge the session. Entry-time lines
-land in `~/.claude/check-issue-refs.log`, which separates "never fired" from
-"fired and passed"; `CHECK_ISSUE_REFS_LOG` overrides the path.
-
-The script lived in `agentic-os-kai` until the `settings-shared.json` merge flow
-was retired, which left it with no writer. It moved down here so the fleet
-writer and the ansible role could own it (agentic-os-kai#847). The role unwires
-the old bridge path before wiring this one, so hosts converged before the
-retirement get re-pointed rather than left stale.
-
 ## Read-only assertion
 
-`agentic-os-kai/scripts/up-to-date.py` asserts both guardrails are present and
-reads the deny rules from `BASE_DENIED_PERMISSIONS` rather than restating them.
+`agentic-os-kai/scripts/up-to-date.py` asserts the remaining guardrails are
+present and reads the deny rules from `BASE_DENIED_PERMISSIONS` rather than
+restating them.
 It never writes, so a failure means the host needs convergence.
