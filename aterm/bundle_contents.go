@@ -123,6 +123,10 @@ func renderBundlePlan(writer io.Writer, plan bundlePlan) error {
 	for _, path := range plan.Stale {
 		fmt.Fprintf(lines, "  %s%s\n", bundleLabelStyle.Render("stale"), filepath.Base(path))
 	}
+	if plan.staleLauncher() {
+		fmt.Fprintf(lines, "  %s%s (%s), not this %s build\n",
+			bundleLabelStyle.Render("warning"), plan.Launcher, plan.LauncherBuild, plan.Build)
+	}
 	_, err := io.WriteString(writer, lines.String())
 	return err
 }

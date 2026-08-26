@@ -41,16 +41,17 @@ The window opens maximized at font size 14.5, which `--start-as` and `--font-siz
 `aterm bundles` writes one `.app` per live role into `~/Applications`, so a role opens from Spotlight, the Dock, or Finder with no terminal to type in. Each is a wrapper around `aterm <role>`, so the window it opens is the one above.
 
 ```text
-just aterm-bundles                     # write them
-just aterm-bundles --dry-run           # what would land, rendered
-just aterm-bundles --dry-run --json    # the same plan, for a script
-just aterm-bundles --icon path.icns    # one shared icon for every bundle
+just aterm-bundles                   # write them
+just aterm-bundles --dry-run         # what would land, rendered
+just aterm-bundles --icon path.icns  # one shared icon for every bundle
 ```
 
-**A Finder launch carries none of your shell's PATH.** It starts at `/usr/bin:/bin:/usr/sbin:/sbin`, where neither `aos`, `agent-compose`, nor kitty lives, so generation resolves all four binaries once and pins them through the env vars `aterm` already reads. Pinning those four is not enough on its own: `agent-compose launch` resolves the harness off `PATH` itself, so a bundle that only pinned them reached shadow init and then died on `claude` not found. The wrapper rebuilds `PATH` from a login shell, which stays current as tools move, and falls back to the generation-time copy when a profile exports none.
+**A Finder launch carries none of your shell's PATH.** It starts at `/usr/bin:/bin:/usr/sbin:/sbin`, where none of `aos`, `agent-compose`, kitty, or the harness lives. Pinning the first three through the env vars `aterm` already reads is not enough, since `agent-compose launch` resolves the harness off `PATH` itself, so a bundle that stopped there reached shadow init and died on `claude` not found. The wrapper rebuilds `PATH` from a login shell, which stays current as tools move, over a generation-time copy for a profile exporting none.
 
-**The wrapper claims no Dock tile of its own.** It exits as soon as `aterm` detaches the window, so a tile for it would flicker while the session it opened keeps running. `LSUIElement` leaves the kitty window as the only visible result, and the bundle stays pinnable and searchable regardless. A launch that fails before a window opens has nothing on screen to hold the error, so the wrapper shows it in an `osascript` alert rather than exiting into nothing.
+**The wrapper claims no Dock tile of its own.** It exits as soon as `aterm` detaches the window, so a tile for it would flicker while the session keeps running. `LSUIElement` leaves the kitty window as the only visible result, and the bundle stays pinnable and searchable regardless. A launch failing before a window opens has nothing on screen to hold the error, so the wrapper shows it in an `osascript` alert.
 
-**A bundle is named for who answers.** `Claude // Vera // Systems Administrator` is what the Dock shows, and a POSIX filename cannot hold a slash, so the name is stored with ` :: ` and macOS renders each colon as one. Nothing clips it: the limit is 255 bytes, though Finder and Launchpad wrap a name this long across two lines. Only the bundle directory carries it, since the executable inside is a plain `aterm-<role>`.
+**A bundle is only as new as the `aterm` it calls.** Generation writes the wrapper, so a name or `PATH` fix lands on regeneration, while every window option comes from the installed binary it invokes. Those moving separately once made half a fix look whole, so generation warns when the two builds differ.
 
-**Roles come from the live roster**, the same read the launcher and its completion use, so no second list of roles exists to go stale. A bundle is recognized as ours by a marker inside it rather than by its name, so a renamed scheme reports what the last run wrote instead of orphaning it. What this run no longer writes is reported rather than deleted, an app this command did not write is never overwritten, and every target is checked before any is written, so a refusal cannot half-regenerate the set. Bundles are per-role, taking the seat from the launch profiles, and each click opens a new session rather than focusing a running one.
+**A bundle is named for who answers.** The Dock shows `Claude // Vera // Systems Administrator`, and since a POSIX filename cannot hold a slash the name is stored with ` :: `, which macOS renders as one. Nothing clips before 255 bytes, though Finder wraps a name this long. Only the directory carries it: the executable inside stays a plain `aterm-<role>`.
+
+**Roles come from the live roster**, the same read the launcher and its completion use, so no second list goes stale. A bundle is recognized by a marker inside it rather than by its name, so a renamed scheme reports what the last run wrote instead of orphaning it. What this run no longer writes is reported rather than deleted, an app this command did not write is never overwritten, and every target is checked before any is written, so a refusal cannot half-regenerate the set. Bundles are per-role on the launch profiles' seat, and each click opens a new session.

@@ -77,11 +77,14 @@ type bundleItem struct {
 }
 
 type bundlePlan struct {
-	Format string       `json:"format"`
-	Output string       `json:"output"`
-	Icon   string       `json:"icon"`
-	Items  []bundleItem `json:"items"`
-	Stale  []string     `json:"stale"`
+	Format        string       `json:"format"`
+	Output        string       `json:"output"`
+	Icon          string       `json:"icon"`
+	Launcher      string       `json:"launcher"`
+	LauncherBuild string       `json:"launcher_build"`
+	Build         string       `json:"build"`
+	Items         []bundleItem `json:"items"`
+	Stale         []string     `json:"stale"`
 }
 
 func newBundlesCommand(deps commandDeps) *cli.Command {
@@ -234,7 +237,14 @@ func buildBundlePlan(ctx context.Context, deps commandDeps, cmd *cli.Command) (b
 		return bundlePlan{}, err
 	}
 	bakedPath := livePathEntries(os.Getenv("PATH"))
-	plan := bundlePlan{Format: bundlesFormat, Output: output, Icon: icon}
+	plan := bundlePlan{
+		Format:        bundlesFormat,
+		Output:        output,
+		Icon:          icon,
+		Launcher:      launcher,
+		LauncherBuild: launcherBuild(ctx, deps, launcher),
+		Build:         version,
+	}
 	for _, role := range roster.Items {
 		if len(role.nativeSeats()) == 0 {
 			continue
@@ -276,6 +286,26 @@ func buildBundlePlan(ctx context.Context, deps commandDeps, cmd *cli.Command) (b
 	}
 	plan.Stale = staleBundles(output, keep)
 	return plan, nil
+}
+
+// launcherBuild asks the aterm the bundles will call for its own version. A
+// bundle is only as new as that binary, not as the one generating. See docs.
+func launcherBuild(ctx context.Context, deps commandDeps, launcher string) string {
+	raw, err := deps.output(ctx, launcher, "--version")
+	if err != nil {
+		return ""
+	}
+	fields := strings.Fields(strings.TrimSpace(string(raw)))
+	if len(fields) == 0 {
+		return ""
+	}
+	return fields[len(fields)-1]
+}
+
+// staleLauncher is the split that made half of a fix look like a whole one:
+// names and PATH come from this build, every window option from that one.
+func (p bundlePlan) staleLauncher() bool {
+	return p.LauncherBuild != "" && p.Build != "" && p.LauncherBuild != p.Build
 }
 
 // livePathEntries is the fallback for a login shell exporting no PATH, minus
@@ -452,5 +482,15 @@ func announceBundles(writer io.Writer, plan bundlePlan) error {
 			return err
 		}
 	}
-	return nil
+	return warnStaleLauncher(writer, plan)
+}
+
+func warnStaleLauncher(writer io.Writer, plan bundlePlan) error {
+	if !plan.staleLauncher() {
+		return nil
+	}
+	_, err := fmt.Fprintf(writer,
+		"warning: these bundles call %s (%s), not this %s build, so they carry only what that build does\n",
+		plan.Launcher, plan.LauncherBuild, plan.Build)
+	return err
 }

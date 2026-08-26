@@ -289,3 +289,45 @@ func TestLivePathEntriesKeepsOnlyRealDirectoriesAndDropsRepeats(t *testing.T) {
 		t.Fatalf("only the real directory should survive, got %q", got)
 	}
 }
+
+// Kai's window options landed while the installed aterm stayed three releases
+// back, so half the fix worked and nothing said why. See docs/aterm.md.
+func TestBundlePlanWarnsWhenTheBundlesCallADifferentBuild(t *testing.T) {
+	plan := bundlePlan{
+		Output:        "/Users/kai/Applications",
+		Launcher:      "/opt/homebrew/bin/aterm",
+		LauncherBuild: "aos-v0.231.0",
+		Build:         "aos-v0.242.0",
+		Items:         []bundleItem{{Role: "platform", Name: "Claude // Angie // X"}},
+	}
+	if !plan.staleLauncher() {
+		t.Fatal("a bundle calling an older aterm carries only what that one does")
+	}
+	written := &strings.Builder{}
+	if err := announceBundles(written, plan); err != nil {
+		t.Fatalf("announce: %v", err)
+	}
+	for _, want := range []string{"aos-v0.231.0", "aos-v0.242.0", "/opt/homebrew/bin/aterm"} {
+		if !strings.Contains(written.String(), want) {
+			t.Fatalf("the warning should name %q:\n%s", want, written)
+		}
+	}
+	rendered := &strings.Builder{}
+	if err := renderBundlePlan(rendered, plan); err != nil {
+		t.Fatalf("render: %v", err)
+	}
+	if !strings.Contains(rendered.String(), "aos-v0.231.0") {
+		t.Fatalf("the rendered plan should warn too:\n%s", rendered)
+	}
+}
+
+func TestBundlePlanStaysQuietWhenTheBuildsMatchOrAreUnknown(t *testing.T) {
+	same := bundlePlan{LauncherBuild: "aos-v0.242.0", Build: "aos-v0.242.0"}
+	if same.staleLauncher() {
+		t.Fatal("matching builds are the normal case and earn no warning")
+	}
+	unknown := bundlePlan{LauncherBuild: "", Build: "aos-v0.242.0"}
+	if unknown.staleLauncher() {
+		t.Fatal("a version that could not be read is not evidence of a mismatch")
+	}
+}
