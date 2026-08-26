@@ -21,10 +21,16 @@ var (
 
 // runSession is the inner half of the launch. Holding the window on a non-zero
 // exit is why this exists rather than `-e`. See docs/aterm.md.
-func runSession(argv []string, hold bool, stdin io.Reader, stdout, stderr io.Writer) int {
+func runSession(options sessionOptions, stdin io.Reader, stdout, stderr io.Writer) int {
+	argv := options.Argv
 	if len(argv) == 0 {
 		fmt.Fprintln(stderr, "aterm: "+sessionCommand+" needs a command after `--`")
 		return 2
+	}
+	// The card is the only moment aterm owns the window by itself, so it is
+	// drawn here rather than by the launcher the operator typed in.
+	if options.Card.Format != "" {
+		playCard(stdout, options.Card, options.Motion)
 	}
 	command := exec.Command(argv[0], argv[1:]...)
 	command.Stdin = os.Stdin
@@ -32,7 +38,7 @@ func runSession(argv []string, hold bool, stdin io.Reader, stdout, stderr io.Wri
 	command.Stderr = os.Stderr
 	err := command.Run()
 	if err == nil {
-		if hold {
+		if options.Hold {
 			holdWindow(stdin, stdout, sessionNoticeStyle.Render("Session ended. Press Enter to close."))
 		}
 		return 0
@@ -70,23 +76,43 @@ func holdWindow(stdin io.Reader, stdout io.Writer, notice string) {
 	_, _ = reader.ReadString('\n')
 }
 
+type sessionOptions struct {
+	Hold   bool
+	Motion bool
+	Card   sessionCard
+	Argv   []string
+}
+
 // parseSessionArgs hand-parses because everything after the first `--` belongs
 // to the child verbatim, including the child's own `--`.
-func parseSessionArgs(argv []string) (bool, []string, error) {
-	hold := false
-	for index, value := range argv {
-		switch value {
+func parseSessionArgs(argv []string) (sessionOptions, error) {
+	options := sessionOptions{Motion: true}
+	for index := 0; index < len(argv); index++ {
+		switch value := argv[index]; value {
 		case "--hold":
-			hold = true
+			options.Hold = true
+		case "--no-motion":
+			options.Motion = false
+		case "--card":
+			if index+1 >= len(argv) {
+				return sessionOptions{}, fmt.Errorf("%s --card needs a value", sessionCommand)
+			}
+			index++
+			card, err := decodeSessionCard(argv[index])
+			if err != nil {
+				return sessionOptions{}, err
+			}
+			options.Card = card
 		case "--":
-			return hold, argv[index+1:], nil
+			options.Argv = argv[index+1:]
+			return options, nil
 		default:
-			return false, nil, fmt.Errorf(
+			return sessionOptions{}, fmt.Errorf(
 				"%s has unsupported option %q",
 				sessionCommand,
 				strings.TrimSpace(value),
 			)
 		}
 	}
-	return false, nil, fmt.Errorf("%s needs a command after `--`", sessionCommand)
+	return sessionOptions{}, fmt.Errorf("%s needs a command after `--`", sessionCommand)
 }

@@ -69,12 +69,13 @@ func systemDeps() commandDeps {
 
 func main() {
 	if len(os.Args) > 1 && os.Args[1] == sessionCommand {
-		hold, argv, err := parseSessionArgs(os.Args[2:])
+		options, err := parseSessionArgs(os.Args[2:])
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "aterm:", err)
-			os.Exit(2)
+			os.Exit(exitUsage)
 		}
-		os.Exit(runSession(argv, hold, os.Stdin, os.Stdout, os.Stderr))
+		options.Motion = options.Motion && cardMotionWanted(os.Stdout, false)
+		os.Exit(runSession(options, os.Stdin, os.Stdout, os.Stderr))
 	}
 	if err := newCommand(systemDeps()).Run(context.Background(), os.Args); err != nil {
 		fmt.Fprintln(os.Stderr, "aterm:", err)
@@ -121,6 +122,10 @@ func newCommand(deps commandDeps) *cli.Command {
 			&cli.BoolFlag{
 				Name:  "list",
 				Usage: "print the live roster and exit",
+			},
+			&cli.BoolFlag{
+				Name:  "no-motion",
+				Usage: "skip the identity card animation, for a recording or a log",
 			},
 			&cli.BoolFlag{
 				Name:  "json",
@@ -205,6 +210,7 @@ func runLaunch(ctx context.Context, deps commandDeps, cmd *cli.Command) error {
 		AOSBin:           cmd.String("aos-bin"),
 		TerminalBin:      cmd.String("terminal-bin"),
 		Workspace:        workspaceLabel(ctx, deps, cwd, cmd.IsSet("working-directory")),
+		NoMotion:         cmd.Bool("no-motion"),
 		Extra:            extra,
 		Hold:             cmd.Bool("hold"),
 	}

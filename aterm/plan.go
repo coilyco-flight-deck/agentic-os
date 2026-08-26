@@ -18,6 +18,7 @@ type launchRequest struct {
 	AOSBin           string
 	TerminalBin      string
 	Workspace        string
+	NoMotion         bool
 	Extra            []string
 	Hold             bool
 }
@@ -40,6 +41,7 @@ type launchPlan struct {
 	Brand            launchBrand    `json:"brand"`
 	WorkingDirectory string         `json:"working_directory"`
 	Workspace        string         `json:"workspace"`
+	Card             sessionCard    `json:"card"`
 	Shadowed         bool           `json:"shadowed"`
 	Child            []string       `json:"child"`
 	Executable       string         `json:"executable"`
@@ -86,12 +88,6 @@ func buildLaunchPlan(
 		return launchPlan{}, err
 	}
 	child := composeChild(request, agentCompose, aos, shadowed)
-	session := []string{self, sessionCommand}
-	if request.Hold {
-		session = append(session, "--hold")
-	}
-	session = append(session, "--")
-	session = append(session, child...)
 	// kitty's --title permanently fixes the OS window title against the child,
 	// which is the job Alacritty needed a separate dynamic_title=false for.
 	arguments := []string{
@@ -103,9 +99,7 @@ func buildLaunchPlan(
 		"-o", fmt.Sprintf("selection_background=%s", brand.Accent),
 		"-o", fmt.Sprintf("selection_foreground=%s", brand.SelectionText),
 	}
-	// kitty takes the program as trailing arguments, with no -e separator.
-	arguments = append(arguments, session...)
-	return launchPlan{
+	plan := launchPlan{
 		Format: launchFormat,
 		Identity: launchIdentity{
 			Person:          document.Person,
@@ -124,6 +118,23 @@ func buildLaunchPlan(
 		Shadowed:         shadowed,
 		Child:            child,
 		Executable:       strings.TrimSpace(request.TerminalBin),
-		Arguments:        arguments,
-	}, nil
+	}
+	plan.Card = buildSessionCard(document, plan)
+	// The card renders inside the window, so it travels to the session stage
+	// rather than being drawn by the launcher. See docs/aterm.md.
+	encoded, err := encodeSessionCard(plan.Card)
+	if err != nil {
+		return launchPlan{}, err
+	}
+	session := []string{self, sessionCommand}
+	if request.Hold {
+		session = append(session, "--hold")
+	}
+	if request.NoMotion {
+		session = append(session, "--no-motion")
+	}
+	session = append(session, "--card", encoded, "--")
+	// kitty takes the program as trailing arguments, with no -e separator.
+	plan.Arguments = append(arguments, append(session, child...)...)
+	return plan, nil
 }

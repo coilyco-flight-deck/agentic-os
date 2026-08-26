@@ -40,6 +40,11 @@ func renderPlan(writer io.Writer, document overlayDocument, plan launchPlan) err
 		}
 		fmt.Fprintf(lines, "  %s%s\n", planLabelStyle.Render(field[0]), planValueStyle.Render(field[1]))
 	}
+	// The card is what the window opens with, so a dry run that cannot show it
+	// cannot answer whether the identity looks right.
+	if len(plan.Card.Figures) > 0 {
+		fmt.Fprintf(lines, "\n%s", renderCard(plan.Card, 1))
+	}
 	_, err := io.WriteString(writer, lines.String())
 	return err
 }

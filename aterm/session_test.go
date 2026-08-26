@@ -8,22 +8,25 @@ import (
 )
 
 func TestParseSessionArgsSplitsOnTheFirstDash(t *testing.T) {
-	hold, argv, err := parseSessionArgs([]string{"--hold", "--", "aos", "_native-shadow", "--", "agent-compose"})
+	options, err := parseSessionArgs(
+		[]string{"--hold", "--", "aos", "_native-shadow", "--", "agent-compose"})
 	if err != nil {
 		t.Fatalf("parse: %v", err)
 	}
-	if !hold {
+	if !options.Hold {
 		t.Fatal("--hold should be recognized")
 	}
 	// The child's own `--` has to survive, or the shadow loses its command.
-	if strings.Join(argv, " ") != "aos _native-shadow -- agent-compose" {
-		t.Fatalf("argv = %v", argv)
+	if strings.Join(options.Argv, " ") != "aos _native-shadow -- agent-compose" {
+		t.Fatalf("argv = %v", options.Argv)
 	}
 }
 
 func TestParseSessionArgsRejectsGarbage(t *testing.T) {
-	for _, argv := range [][]string{{}, {"--hold"}, {"--nope", "--", "x"}} {
-		if _, _, err := parseSessionArgs(argv); err == nil {
+	for _, argv := range [][]string{
+		{}, {"--hold"}, {"--nope", "--", "x"}, {"--card"}, {"--card", "not-base64!", "--", "x"},
+	} {
+		if _, err := parseSessionArgs(argv); err == nil {
 			t.Fatalf("%v should be rejected", argv)
 		}
 	}
@@ -36,8 +39,7 @@ func TestRunSessionPassesTheChildExitCodeThrough(t *testing.T) {
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}
 	code := runSession(
-		[]string{"/bin/sh", "-c", "exit 7"},
-		false,
+		sessionOptions{Argv: []string{"/bin/sh", "-c", "exit 7"}},
 		strings.NewReader(""),
 		stdout,
 		stderr,
@@ -57,7 +59,7 @@ func TestRunSessionStaysQuietOnACleanExit(t *testing.T) {
 		t.Skip("the fixture uses a POSIX shell")
 	}
 	stdout := &bytes.Buffer{}
-	code := runSession([]string{"/bin/sh", "-c", "exit 0"}, false, strings.NewReader(""), stdout, &bytes.Buffer{})
+	code := runSession(sessionOptions{Argv: []string{"/bin/sh", "-c", "exit 0"}}, strings.NewReader(""), stdout, &bytes.Buffer{})
 	if code != 0 {
 		t.Fatalf("exit code = %d, want 0", code)
 	}
@@ -71,7 +73,7 @@ func TestRunSessionHoldsACleanExitOnRequest(t *testing.T) {
 		t.Skip("the fixture uses a POSIX shell")
 	}
 	stdout := &bytes.Buffer{}
-	if code := runSession([]string{"/bin/sh", "-c", "exit 0"}, true, strings.NewReader(""), stdout, &bytes.Buffer{}); code != 0 {
+	if code := runSession(sessionOptions{Hold: true, Argv: []string{"/bin/sh", "-c", "exit 0"}}, strings.NewReader(""), stdout, &bytes.Buffer{}); code != 0 {
 		t.Fatalf("exit code = %d", code)
 	}
 	if !strings.Contains(stdout.String(), "Session ended") {
@@ -82,7 +84,7 @@ func TestRunSessionHoldsACleanExitOnRequest(t *testing.T) {
 func TestRunSessionReportsAChildThatCannotStart(t *testing.T) {
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}
-	code := runSession([]string{"/nonexistent/harness"}, false, strings.NewReader(""), stdout, stderr)
+	code := runSession(sessionOptions{Argv: []string{"/nonexistent/harness"}}, strings.NewReader(""), stdout, stderr)
 	if code == 0 {
 		t.Fatal("a child that cannot start is a failure")
 	}
@@ -92,7 +94,7 @@ func TestRunSessionReportsAChildThatCannotStart(t *testing.T) {
 }
 
 func TestRunSessionRejectsAnEmptyCommand(t *testing.T) {
-	if code := runSession(nil, false, strings.NewReader(""), &bytes.Buffer{}, &bytes.Buffer{}); code != 2 {
+	if code := runSession(sessionOptions{}, strings.NewReader(""), &bytes.Buffer{}, &bytes.Buffer{}); code != 2 {
 		t.Fatalf("exit code = %d, want 2", code)
 	}
 }
