@@ -78,7 +78,7 @@ func main() {
 	}
 	if err := newCommand(systemDeps()).Run(context.Background(), os.Args); err != nil {
 		fmt.Fprintln(os.Stderr, "aterm:", err)
-		os.Exit(1)
+		os.Exit(exitCodeFor(err))
 	}
 }
 
@@ -168,7 +168,7 @@ func runLaunch(ctx context.Context, deps commandDeps, cmd *cli.Command) error {
 		return err
 	}
 	if cmd.Bool("json") && !cmd.Bool("list") && !cmd.Bool("dry-run") {
-		return fmt.Errorf("--json applies to --list and --dry-run")
+		return withExit(exitUsage, fmt.Errorf("--json applies to --list and --dry-run"))
 	}
 	if cmd.Bool("list") {
 		if cmd.Bool("json") {
@@ -178,7 +178,7 @@ func runLaunch(ctx context.Context, deps commandDeps, cmd *cli.Command) error {
 	}
 	cwd, err := validateWorkingDirectory(cmd.String("working-directory"))
 	if err != nil {
-		return err
+		return withExit(exitUsage, err)
 	}
 	role, seat, extra, err := resolveInvocation(
 		ctx, deps, cmd.String("aos-bin"), roster, cmd.Args().Slice(),
@@ -217,6 +217,9 @@ func runLaunch(ctx context.Context, deps commandDeps, cmd *cli.Command) error {
 		return err
 	}
 	if cmd.Bool("dry-run") {
+		if !cmd.Bool("json") {
+			return renderPlan(stdout, document, plan)
+		}
 		encoded, err := json.MarshalIndent(plan, "", "  ")
 		if err != nil {
 			return fmt.Errorf("marshal the launch plan: %w", err)
@@ -229,7 +232,7 @@ func runLaunch(ctx context.Context, deps commandDeps, cmd *cli.Command) error {
 		return fmt.Errorf("terminal binary: %w", err)
 	}
 	if err := deps.spawn(ctx, terminal, plan.Arguments...); err != nil {
-		return fmt.Errorf("open the window: %w", err)
+		return withExit(exitSpawn, fmt.Errorf("open the window: %w", err))
 	}
 	return announce(stdout, plan)
 }
@@ -261,9 +264,9 @@ func resolveInvocation(
 	}
 	if role == "" {
 		if !deps.tty() {
-			return "", "", nil, fmt.Errorf(
+			return "", "", nil, withExit(exitUsage, fmt.Errorf(
 				"a role is required when aterm is not attached to a terminal. `aterm --list` names them",
-			)
+			))
 		}
 		picked, pickedSeat, err := deps.pick(document)
 		if err != nil {
@@ -272,7 +275,7 @@ func resolveInvocation(
 		return picked, pickedSeat, args, nil
 	}
 	if !safeRoleSlug(role) {
-		return "", "", nil, fmt.Errorf("role %q is not a safe role slug", role)
+		return "", "", nil, withExit(exitUsage, fmt.Errorf("role %q is not a safe role slug", role))
 	}
 	selected, ok := document.role(role)
 	if !ok {
@@ -280,7 +283,7 @@ func resolveInvocation(
 	}
 	native := selected.nativeSeats()
 	if len(native) == 0 {
-		return "", "", nil, fmt.Errorf("role %s has no launchable native seat", role)
+		return "", "", nil, withExit(exitOffRoster, fmt.Errorf("role %s has no launchable native seat", role))
 	}
 	if seat == "" {
 		return role, defaultSeat(ctx, deps, aosBin, selected), args, nil
@@ -314,11 +317,11 @@ func defaultSeat(ctx context.Context, deps commandDeps, aosBin string, role rost
 func requireBinary(lookPath func(string) (string, error), name string) (string, error) {
 	name = strings.TrimSpace(name)
 	if name == "" {
-		return "", fmt.Errorf("binary name is empty")
+		return "", withExit(exitUsage, fmt.Errorf("binary name is empty"))
 	}
 	resolved, err := lookPath(name)
 	if err != nil {
-		return "", fmt.Errorf("%q was not found on PATH: %w", name, err)
+		return "", withExit(exitMissing, fmt.Errorf("%q was not found on PATH: %w", name, err))
 	}
 	return resolved, nil
 }

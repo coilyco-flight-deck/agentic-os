@@ -140,7 +140,7 @@ func TestCompletionStaysSilentWhenTheRosterIsUnreachable(t *testing.T) {
 // the first positional the launcher reads as a role.
 func TestCompletionSubcommandDoesNotShadowTheRolePositional(t *testing.T) {
 	var spawns []recordedSpawn
-	out, err := runAterm(t, stubDeps(t, &spawns, true), "--dry-run", "platform", "claude")
+	out, err := runAterm(t, stubDeps(t, &spawns, true), "--dry-run", "--json", "platform", "claude")
 	if err != nil {
 		t.Fatalf("a role positional should still launch: %v", err)
 	}

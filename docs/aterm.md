@@ -16,21 +16,21 @@ aterm --list --json                # the same roster, for a script
 
 It needs `agent-compose` and kitty on `PATH` and bundles neither. Without `aos` it still launches, unleased. `--dry-run` prints the plan and opens nothing. `--list --json` prints the launchable projection, every live role carrying only the seats `agent-compose launch` can start, under contract `aterm.roster.v1`.
 
-**It refuses a stale role before it opens anything.** Role slugs turn over, so
-`aterm` reads `agent-compose catalog roles --json` on every run and names the live roster in the refusal. A transposed `platform` comes back as `is not a live role. Did you mean platform?` plus every live slug and display name. A seat is checked twice: it has to belong to the role, and to be a harness `agent-compose launch` can start. A catalogue seat like `penpot` is real but not launchable, and the refusal says which of the two it failed.
+**It refuses a stale role before it opens anything.** Role slugs turn over, so `aterm` reads `agent-compose catalog roles --json` on every run and names the live roster in the refusal. A transposed `platform` comes back as `is not a live role. Did you mean platform?` plus every live slug and display name. A seat is checked twice: it has to belong to the role, and to be a harness `agent-compose launch` can start. A catalogue seat like `penpot` is real but not launchable, and the refusal says which of the two it failed.
 
-**Tab completes from the same roster.** `aterm <TAB>` offers the live slugs,
-`aterm sysadmin <TAB>` only that role's launchable seats, so a slug that turned over stops completing rather than completing into a refusal. The read is under 10ms, so no cache can go stale. `shell/common.sh` registers bash and zsh through `aterm completion <shell>`, after `compinit` in zsh. A missing `agent-compose` yields silence, never a diagnostic mid-keystroke.
+**Tab completes from the same roster.** `aterm <TAB>` offers the live slugs, `aterm sysadmin <TAB>` only that role's launchable seats, so a slug that turned over stops completing rather than completing into a refusal. The read is under 10ms, so no cache can go stale. `shell/common.sh` registers bash and zsh through `aterm completion <shell>`, after `compinit` in zsh. A missing `agent-compose` yields silence, never a diagnostic mid-keystroke.
 
-**A slow pre-flight names itself.** `aterm` shells out for a seat, roster, and
-overlay before it opens anything, and captures their output, so a wrapped `aos` converging the host first presented as a launcher that had stopped. After two seconds `aterm` names the command it waits on.
+**A slow pre-flight names itself.** `aterm` shells out for a seat, roster, and overlay before it opens anything, and captures their output, so a wrapped `aos` converging the host first presented as a launcher that had stopped. After two seconds `aterm` names the command it waits on.
 
-**A failing launch stays on screen.** A terminal closes the window the moment its
-child exits, so a failed launch used to vanish before anyone could read why. `aterm` runs the child through its own `_session` stage rather than handing the harness to kitty directly. That stage passes the exit code through and holds the window on any non-zero exit, and `--hold` also holds after a clean exit. The launcher watches for a startup failure, so "no window appeared" names its cause.
+**A failing launch stays on screen.** A terminal closes the window the moment its child exits, so a failed launch used to vanish before anyone could read why. `aterm` runs the child through its own `_session` stage rather than handing the harness to kitty directly. That stage passes the exit code through and holds the window on any non-zero exit, and `--hold` also holds after a clean exit. The launcher watches for a startup failure, so "no window appeared" names its cause.
 
-**The title leads with what separates two windows.** A window manager truncates near 30 characters, so the segments run workspace, task title, role, glyphs and seat name, expression. The workspace is the checkout `--working-directory` points at, rendered `repo@branch`, and it is left out rather than printed as a constant when the directory is the default projects root. Two `aterm platform` windows in different checkouts used to produce byte-identical titles.
+**The title leads with what separates two windows.** A window manager truncates near 30 characters, so segments run workspace, task title, role, glyphs and seat name, expression. The workspace is the checkout `--working-directory` points at, rendered `repo@branch`, omitted rather than printed as a constant when the directory is the default projects root.
 
-**It decodes the whole identity overlay.** `agent-compose overlay --json` ships a complete sensory identity per personality, and a Go struct that names fewer fields drops the rest in silence. `aterm/overlay.go` declares every leaf the overlay ships: `seat.key` and `seat.tier`, the personality's `name`, `color`, and `motif`, `emblem{name,emoji,glyph}`, `form{silhouette,geometry,motion}`, and `sound_mark{timbre,contour,pulse}`. Only the glyphs and `favorite_color` reach the window today, and the rest is decoded because the identity card, the launch motion, and the sound mark are built from it. `TestOverlayDecodesEveryShippedField` round-trips each fixture through the struct and fails on any leaf that does not come back.
+**`--dry-run` reads for a person, and failures split by code.** The default renders the identity, workspace, both brand colors as swatches, each personality in its own color, and the child argv. `--dry-run --json` keeps the machine plan that `scripts/check-aos-release.sh` asserts against. Exit codes: 2 usage, 3 off-roster role or seat, 4 a dependency missing from `PATH`, 5 the window failed to open, 1 anything else, and a child's own code passes through.
+
+**The picker follows the terminal, not stdout.** `aterm > log` used to refuse with "a role is required", because the check wanted stdin and stdout both to be character devices. The form runs on `/dev/tty` instead.
+
+**It decodes the whole identity overlay.** `agent-compose overlay --json` ships a complete sensory identity per personality, and a struct naming fewer fields drops the rest in silence. Only the glyphs and `favorite_color` reach the window today; the identity card, the launch motion, and the sound mark are built from the rest. `aterm/overlay.go` declares every leaf, and `TestOverlayDecodesEveryShippedField` fails on any that does not survive a round trip.
 
 ## Status-line composer
 
@@ -44,8 +44,7 @@ The retired host `agent-name.sh` hand-wired the second row from `$project_dir/.a
 
 A **composer** ([`docker/dev-base/statusline.sh`](../docker/dev-base/statusline.sh)) is Claude Code's `statusLine` command. It reads the `statusLine` JSON payload on stdin, runs each discovered **provider** in filename order (handing it the same payload on stdin), and joins their output into the multi-row line.
 
-**Provider contract:** exit 0 with stdout = that segment; empty stdout or a
-non-zero exit = skipped. So a segment **self-suppresses** when irrelevant - the Agent Compose provider renders nothing outside a projected workspace, or where `acompose` is absent.
+**Provider contract:** exit 0 with stdout = that segment; empty stdout or a non-zero exit = skipped. So a segment **self-suppresses** when irrelevant - the Agent Compose provider renders nothing outside a projected workspace, or where `acompose` is absent.
 
 The built-in provider is:
 
@@ -66,9 +65,7 @@ The composer walks three provider dirs, lowest precedence first:
 2. **user** - `${XDG_CONFIG_HOME:-$HOME/.config}/agentic-os/statusline.d`.
 3. **repo** - `<project_dir>/.agentic-os/statusline.d`.
 
-A same-named file in a higher dir **overrides** the lower one, a new `NN-*.sh`
-**adds** a row, and a shadowing file that is not executable **masks** the lower
-provider. So a project or an external user customizes the line by dropping in a provider, **no fork** of the composer. Use 2-digit prefixes (lexical sort puts `100` before `20`).
+A same-named file in a higher dir **overrides** the lower one, a new `NN-*.sh` **adds** a row, and a shadowing file that is not executable **masks** the lower provider. So a project or an external user customizes the line by dropping in a provider, **no fork** of the composer. Use 2-digit prefixes (lexical sort puts `100` before `20`).
 
 ## Why it auto-mounts everywhere
 

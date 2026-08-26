@@ -101,7 +101,7 @@ func runAterm(t *testing.T, deps commandDeps, argv ...string) (string, error) {
 func TestLaunchPlanRunsTheNativeSessionInsideTheWindow(t *testing.T) {
 	var spawns []recordedSpawn
 	deps := stubDeps(t, &spawns, true)
-	out, err := runAterm(t, deps, "--dry-run", "platform", "claude")
+	out, err := runAterm(t, deps, "--dry-run", "--json", "platform", "claude")
 	if err != nil {
 		t.Fatalf("dry run: %v", err)
 	}
@@ -138,7 +138,7 @@ func TestLaunchPlanRunsTheNativeSessionInsideTheWindow(t *testing.T) {
 
 func TestLaunchDegradesWhenNoNativeShadowIsAvailable(t *testing.T) {
 	var spawns []recordedSpawn
-	out, err := runAterm(t, stubDeps(t, &spawns, false), "--dry-run", "platform", "claude")
+	out, err := runAterm(t, stubDeps(t, &spawns, false), "--dry-run", "--json", "platform", "claude")
 	if err != nil {
 		t.Fatalf("dry run: %v", err)
 	}
@@ -183,7 +183,7 @@ func TestLaunchOpensExactlyOneWindow(t *testing.T) {
 
 func TestHoldFlagReachesTheSessionStage(t *testing.T) {
 	var spawns []recordedSpawn
-	out, err := runAterm(t, stubDeps(t, &spawns, true), "--dry-run", "--hold", "platform")
+	out, err := runAterm(t, stubDeps(t, &spawns, true), "--dry-run", "--json", "--hold", "platform")
 	if err != nil {
 		t.Fatalf("dry run: %v", err)
 	}
@@ -194,7 +194,7 @@ func TestHoldFlagReachesTheSessionStage(t *testing.T) {
 
 func TestBareInvocationAsksInsteadOfFailing(t *testing.T) {
 	var spawns []recordedSpawn
-	out, err := runAterm(t, stubDeps(t, &spawns, true), "--dry-run")
+	out, err := runAterm(t, stubDeps(t, &spawns, true), "--dry-run", "--json")
 	if err != nil {
 		t.Fatalf("dry run: %v", err)
 	}
@@ -259,7 +259,7 @@ func TestStaleRoleAndSeatAreRejectedBeforeAnyWindowOpens(t *testing.T) {
 
 func TestHarnessArgumentsSurviveToTheLaunch(t *testing.T) {
 	var spawns []recordedSpawn
-	out, err := runAterm(t, stubDeps(t, &spawns, true), "--dry-run", "platform", "codex", "--", "--model", "opus")
+	out, err := runAterm(t, stubDeps(t, &spawns, true), "--dry-run", "--json", "platform", "codex", "--", "--model", "opus")
 	if err != nil {
 		t.Fatalf("dry run: %v", err)
 	}
@@ -468,7 +468,7 @@ func indexOf(values []string, want string) int {
 // a flag-dialect change could drop every color and still pass the suite.
 func TestBrandReachesTheTerminalArguments(t *testing.T) {
 	var spawns []recordedSpawn
-	out, err := runAterm(t, stubDeps(t, &spawns, true), "--dry-run", "platform", "claude")
+	out, err := runAterm(t, stubDeps(t, &spawns, true), "--dry-run", "--json", "platform", "claude")
 	if err != nil {
 		t.Fatalf("dry run: %v", err)
 	}

@@ -193,17 +193,33 @@ if [ -n "$native_aos" ]; then
             --working-directory "$smoke_dir" \
             --agent-compose-bin "$smoke_dir/agent-compose" \
             --aos-bin "$smoke_dir/aos" \
-            --dry-run \
+            --dry-run --json \
             tpm codex -- --resume > launch.json
         # A role that left the roster must be refused, and the refusal has to
         # name the roster rather than fail for some unrelated reason.
-        if AGENT_COMPOSE_BIN="$smoke_dir/agent-compose" \
+        stale_status=0
+        AGENT_COMPOSE_BIN="$smoke_dir/agent-compose" \
             "$native_aterm" --working-directory "$smoke_dir" \
-            --dry-run engineer codex >stale-role.txt 2>&1; then
-            echo "aterm accepted a role that is not on the roster" >&2
+            --dry-run engineer codex >stale-role.txt 2>&1 || stale_status=$?
+        if [ "$stale_status" -ne 3 ]; then
+            echo "an off-roster role should exit 3, got $stale_status" >&2
             exit 1
         fi
         grep -F "is not a live role" stale-role.txt >/dev/null
+        # The human form is the default now, so the machine one has to be asked
+        # for and the operator one has to still name the identity.
+        AGENT_COMPOSE_BIN="$smoke_dir/agent-compose" \
+            "$native_aterm" --working-directory "$smoke_dir" \
+            --aos-bin "$smoke_dir/aos" \
+            --dry-run tpm codex | grep -F "expression" >/dev/null
+        missing_status=0
+        "$native_aterm" --working-directory "$smoke_dir" \
+            --agent-compose-bin "$smoke_dir/definitely-not-here" \
+            --dry-run tpm codex >/dev/null 2>&1 || missing_status=$?
+        if [ "$missing_status" -ne 4 ]; then
+            echo "a missing dependency should exit 4, got $missing_status" >&2
+            exit 1
+        fi
         python3 - "$smoke_dir/launch.json" "$smoke_dir" "$native_aterm" <<'PY'
 import json
 import pathlib

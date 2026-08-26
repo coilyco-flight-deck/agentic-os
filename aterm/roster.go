@@ -171,7 +171,7 @@ func unknownRoleError(slug string, document rosterDocument) error {
 	for _, item := range document.Items {
 		fmt.Fprintf(message, "\n  %s", item.label())
 	}
-	return fmt.Errorf("%s", message.String())
+	return withExit(exitOffRoster, fmt.Errorf("%s", message.String()))
 }
 
 func unknownSeatError(seat string, role rosterRole) error {
@@ -195,7 +195,7 @@ func unknownSeatError(seat string, role rosterRole) error {
 		}
 	}
 	fmt.Fprintf(message, "\n\nlaunchable %s seats: %s", role.Slug, strings.Join(names, ", "))
-	return fmt.Errorf("%s", message.String())
+	return withExit(exitOffRoster, fmt.Errorf("%s", message.String()))
 }
 
 func seatInRole(seat string, role rosterRole) bool {

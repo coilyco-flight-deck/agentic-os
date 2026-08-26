@@ -16,8 +16,23 @@ var (
 	rosterPurposeStyle = lipgloss.NewStyle().Faint(true)
 )
 
+// The controlling terminal, which `aterm > log` still has even though stdout
+// is a file. Absent on Windows, where the open fails and the check degrades.
+const controllingTerminal = "/dev/tty"
+
 func interactiveTTY(stdin, stdout *os.File) bool {
-	for _, file := range []*os.File{stdin, stdout} {
+	if characterDevices(stdin, stdout) {
+		return true
+	}
+	file, err := os.OpenFile(controllingTerminal, os.O_RDWR, 0)
+	if err != nil {
+		return false
+	}
+	return file.Close() == nil
+}
+
+func characterDevices(files ...*os.File) bool {
+	for _, file := range files {
 		if file == nil {
 			return false
 		}
@@ -29,9 +44,24 @@ func interactiveTTY(stdin, stdout *os.File) bool {
 	return true
 }
 
+// openConsole points the form at the terminal rather than at stdout, so
+// redirecting output does not silently disable the picker.
+func openConsole() (io.Reader, io.Writer, func()) {
+	if characterDevices(os.Stdin, os.Stdout) {
+		return os.Stdin, os.Stdout, func() {}
+	}
+	file, err := os.OpenFile(controllingTerminal, os.O_RDWR, 0)
+	if err != nil {
+		return os.Stdin, os.Stdout, func() {}
+	}
+	return file, file, func() { _ = file.Close() }
+}
+
 // pickRoleAndSeat runs in the terminal the operator typed in, before any window
 // is spawned, because the list has to appear where the keyboard already is.
 func pickRoleAndSeat(document rosterDocument) (string, string, error) {
+	input, output, closeConsole := openConsole()
+	defer closeConsole()
 	roleOptions := make([]huh.Option[string], 0, len(document.Items))
 	for _, item := range document.Items {
 		if len(item.nativeSeats()) == 0 {
@@ -49,7 +79,7 @@ func pickRoleAndSeat(document rosterDocument) (string, string, error) {
 			Description("Which charter is this window?").
 			Options(roleOptions...).
 			Value(&role),
-	))
+	)).WithInput(input).WithOutput(output)
 	if err := form.Run(); err != nil {
 		return "", "", pickerError(err)
 	}
@@ -72,7 +102,7 @@ func pickRoleAndSeat(document rosterDocument) (string, string, error) {
 			Description(selected.Purpose).
 			Options(seatOptions...).
 			Value(&seat),
-	))
+	)).WithInput(input).WithOutput(output)
 	if err := seatForm.Run(); err != nil {
 		return "", "", pickerError(err)
 	}
