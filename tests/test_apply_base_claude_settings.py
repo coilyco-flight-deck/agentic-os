@@ -32,7 +32,6 @@ def test_base_settings_disable_memory_and_chrome_without_losing_local_denies() -
         "autoMemoryEnabled",
         "deniedMcpServers",
         "permissions.deny",
-        "permissions.allow",
     }
     assert MODULE.merge_base_settings(settings) == []
 
@@ -64,9 +63,9 @@ def test_permission_rules_are_created_when_the_key_is_absent() -> None:
     changed = MODULE.merge_base_settings(settings)
 
     assert settings["permissions"]["deny"] == MODULE.BASE_DENIED_PERMISSIONS
-    assert settings["permissions"]["allow"] == MODULE.BASE_ALLOWED_PERMISSIONS
+    assert settings["permissions"]["allow"] == []
     assert "permissions.deny" in changed
-    assert "permissions.allow" in changed
+    assert "permissions.allow" not in changed
     assert MODULE.merge_base_settings(settings) == []
 
 
@@ -91,8 +90,23 @@ def test_retired_permission_rules_are_pruned_from_an_already_converged_host() ->
     assert MODULE.merge_base_settings(settings) == []
 
 
+def test_retired_allow_rules_are_pruned_from_an_already_converged_host() -> None:
+    settings = {
+        "permissions": {
+            "allow": ["Bash(coily:*)", "*", "Agent"],
+        },
+    }
+
+    changed = MODULE.merge_base_settings(settings)
+
+    assert settings["permissions"]["allow"] == ["Bash(coily:*)", "Agent"]
+    assert "permissions.allow" in changed
+    assert MODULE.merge_base_settings(settings) == []
+
+
 def test_no_retired_rule_is_also_a_live_rule() -> None:
     assert not set(MODULE.RETIRED_DENIED_PERMISSIONS) & set(MODULE.BASE_DENIED_PERMISSIONS)
+    assert not set(MODULE.RETIRED_ALLOWED_PERMISSIONS) & set(MODULE.BASE_ALLOWED_PERMISSIONS)
 
 
 def test_write_follows_a_symlink_instead_of_replacing_it(tmp_path) -> None:

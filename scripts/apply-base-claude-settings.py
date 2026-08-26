@@ -6,8 +6,7 @@ gets regardless of whether the private bridge overlay is present. Auto-memory
 is off because point-in-time memory drifts. Claude in Chrome is denied because
 browser computer-use should be an explicit session opt-in. The permission deny
 list keeps live-infrastructure CLIs and the memory directory out of an agent's
-raw shell, and the wildcard allow drops the prompt on everything the deny list
-leaves open.
+raw shell.
 
 Additive and key-scoped: it sets only the keys it owns and preserves every
 other key verbatim, so the harness, ward, and the bridge merge can all keep
@@ -59,8 +58,14 @@ RETIRED_DENIED_PERMISSIONS = [
     "Write(**/.claude/projects/**/memory/**)",
 ]
 
-# Deny outranks allow, so the wildcard widens nothing the list above closes.
-BASE_ALLOWED_PERMISSIONS = ["*"]
+# No fleet allow rule. Prompt suppression is defaultMode's job, not an allow
+# rule's, and defaultMode is operator-local like effortLevel below.
+BASE_ALLOWED_PERMISSIONS: list[str] = []
+RETIRED_ALLOWED_PERMISSIONS = [
+    # The harness refuses a bare wildcard in allow and warns at every session
+    # start, so this one was inert from the day it landed (agentic-os#1165).
+    "*",
+]
 
 
 def load_settings(path: Path) -> dict:
@@ -111,6 +116,11 @@ def merge_base_settings(settings: dict) -> list[str]:
     for rule in BASE_ALLOWED_PERMISSIONS:
         if rule not in allow:
             allow.append(rule)
+            if "permissions.allow" not in changed:
+                changed.append("permissions.allow")
+    for rule in RETIRED_ALLOWED_PERMISSIONS:
+        while rule in allow:
+            allow.remove(rule)
             if "permissions.allow" not in changed:
                 changed.append("permissions.allow")
     permissions["allow"] = allow

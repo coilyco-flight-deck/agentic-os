@@ -75,10 +75,10 @@ the authoring-vs-rollout rule in [AGENTS.md](../AGENTS.md).
 ## Fleet permission rules
 
 `scripts/apply-base-claude-settings.py` appends to `permissions.deny` and
-`permissions.allow` and removes only `RETIRED_DENIED_PERMISSIONS`, so operator
+`permissions.allow` and removes only the two `RETIRED_*` lists, so operator
 rules and the sibling `ask` / `defaultMode` keys survive, and a rerun no-ops.
 
-Two shut, one open:
+Two shut, none open:
 
 * **Live-infrastructure CLIs** - `gcloud`, `kubectl`, `helm`, `terraform`,
   `gsutil`, `mongosh`, `mongo`. Each mutates production or a database, so it
@@ -88,9 +88,9 @@ Two shut, one open:
   `**/.claude/projects/**/memory/**`, one rule that binds Write, Edit,
   MultiEdit, and NotebookEdit. `autoMemoryEnabled: false` stops the harness
   writing memory files, and the deny stops an agent authoring one by hand.
-* **Wildcard allow** - a single `*`. Deny outranks allow, so it widens neither
-  group above and only drops the prompt on the rest. The allowlists it replaces
-  bounded nothing: a denied spelling just sent an agent to a permitted one.
+
+`BASE_ALLOWED_PERMISSIONS` is empty. An allow rule must name the tool it widens,
+so agentic-os#1165's bare `*` only ever warned at startup and is now retired.
 
 `effortLevel` is deliberately not a fleet key. It tunes latency and spend per
 host, which makes it operator-local preference under the config-placement axes,
