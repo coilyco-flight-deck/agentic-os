@@ -1001,6 +1001,7 @@ func runNativeWorkspaceSweep(
 	}
 	pass.Done("")
 	reportNativeResidentDrift(runtime, repositories, live)
+	reportNativeOrphanBranches(runtime, repositories, live)
 	scan := runtime.Progress.Step("scan for unexpected clones")
 	// Counters must not advance either, or three unverified scans delete on the
 	// fourth exactly as three verified ones do.
@@ -1130,6 +1131,124 @@ func reportNativeResidentDrift(
 		"aos: %d resident checkout(s) are not clean on main, so a tool reading one "+
 			"composes something other than origin: %s\n",
 		len(readings), strings.Join(readings, ", "))
+}
+
+// A branch no lease recorded is reported by nothing else.
+// docs/native-session-start.md
+type nativeOrphanBranch struct {
+	repository string
+	branch     string
+	unlanded   int
+}
+
+// nativeCheckedOutBranches names the branches this repository's worktrees hold.
+func nativeCheckedOutBranches(path string) map[string]struct{} {
+	held := map[string]struct{}{}
+	listed, err := nativeGit(path, "worktree", "list", "--porcelain")
+	if err != nil {
+		return held
+	}
+	for _, line := range strings.Split(listed, "\n") {
+		reference, found := strings.CutPrefix(strings.TrimSpace(line), "branch ")
+		if found {
+			held[strings.TrimPrefix(reference, "refs/heads/")] = struct{}{}
+		}
+	}
+	return held
+}
+
+// Patch-id, not reachability: a squashed branch is reachable from no origin ref
+// while holding no work. docs/native-session-start.md
+func nativeUnlandedCount(path, branch string) int {
+	ahead, err := nativeGit(path, "rev-list", "--count",
+		"refs/heads/"+branch, "--not", "--remotes=origin")
+	if err != nil {
+		return 0
+	}
+	if count, err := strconv.Atoi(strings.TrimSpace(ahead)); err != nil || count == 0 {
+		return 0
+	}
+	listed, err := nativeGit(path, "cherry", "origin/main", "refs/heads/"+branch)
+	if err != nil {
+		return 0
+	}
+	unlanded := 0
+	for _, line := range strings.Split(listed, "\n") {
+		if strings.HasPrefix(strings.TrimSpace(line), "+") {
+			unlanded++
+		}
+	}
+	return unlanded
+}
+
+// readNativeOrphanBranches lists local branches carrying work origin does not.
+func readNativeOrphanBranches(
+	repository nativeRepository,
+	live nativeLiveWorktrees,
+) []nativeOrphanBranch {
+	if humanWorkdir(repository.Path) {
+		return nil
+	}
+	listed, err := nativeGit(repository.Path, "for-each-ref",
+		"--format=%(refname:short)", "refs/heads")
+	if err != nil {
+		return nil
+	}
+	held := nativeCheckedOutBranches(repository.Path)
+	orphans := []nativeOrphanBranch{}
+	for _, line := range strings.Split(listed, "\n") {
+		branch := strings.TrimSpace(line)
+		if branch == "" || branch == "main" || live.holdsBranch(branch) {
+			continue
+		}
+		if _, found := held[branch]; found {
+			continue
+		}
+		// Origin carrying it is what "released" means here.
+		pushed, err := nativeGitRefExists(repository.Path, "refs/remotes/origin/"+branch)
+		if err != nil || pushed {
+			continue
+		}
+		unlanded := nativeUnlandedCount(repository.Path, branch)
+		if unlanded == 0 {
+			continue
+		}
+		orphans = append(orphans, nativeOrphanBranch{
+			repository: filepath.Base(repository.Path),
+			branch:     branch,
+			unlanded:   unlanded,
+		})
+	}
+	return orphans
+}
+
+// One line, matching the two readings beside it.
+func reportNativeOrphanBranches(
+	runtime nativeRuntime,
+	repositories []nativeRepository,
+	live nativeLiveWorktrees,
+) {
+	orphans := []nativeOrphanBranch{}
+	for _, repository := range repositories {
+		if live.contains(repository.Path) {
+			continue
+		}
+		orphans = append(orphans, readNativeOrphanBranches(repository, live)...)
+	}
+	if len(orphans) == 0 {
+		return
+	}
+	commits := 0
+	names := make([]string, 0, len(orphans))
+	for _, orphan := range orphans {
+		commits += orphan.unlanded
+		names = append(names, orphan.repository+" "+orphan.branch)
+	}
+	sort.Strings(names)
+	fmt.Fprintf(runtime.Stderr,
+		"aos: %d untracked local branch(es) hold %d unlanded commit(s) that no "+
+			"session lease will report: %s. Push or delete each branch.\n",
+		len(orphans), commits, strings.Join(names, ", "))
 }
 
 func normalizeNativeRepository(

@@ -1849,3 +1849,105 @@ func TestARoleWithNoCheckoutOnDiskKeepsFullResidency(t *testing.T) {
 		t.Fatalf("projected %v, want the full residency fallback", projection.Projected)
 	}
 }
+
+// 78 local branches, 13 reported: a hand-made branch holding real work was
+// silent forever. agentic-os#1286
+func TestABranchNoLeaseRecordedIsReported(t *testing.T) {
+	root := t.TempDir()
+	repository, _ := createNativeTestRepository(t, root, "owner", "one")
+	target := nativeRepository{Owner: "owner", Name: "one", Path: repository}
+	testGit(t, repository, "switch", "-c", "task/by-hand")
+	if err := os.WriteFile(filepath.Join(repository, "work.txt"),
+		[]byte("unlanded\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	testGit(t, repository, "add", "work.txt")
+	testGit(t, repository, "commit", "-m", "work nothing carries")
+	testGit(t, repository, "switch", "main")
+
+	orphans := readNativeOrphanBranches(target, nativeLiveWorktrees{})
+
+	if len(orphans) != 1 || orphans[0].branch != "task/by-hand" {
+		t.Fatalf("a branch no lease recorded was not reported: %+v", orphans)
+	}
+	if orphans[0].unlanded != 1 {
+		t.Fatalf("wrong unlanded count: %+v", orphans[0])
+	}
+}
+
+// The reachability test the lease reading uses calls a squash-merged branch
+// unpushed, which on this fleet is every landed branch. agentic-os#1286
+func TestASquashMergedBranchIsNotAnOrphan(t *testing.T) {
+	root := t.TempDir()
+	repository, _ := createNativeTestRepository(t, root, "owner", "one")
+	target := nativeRepository{Owner: "owner", Name: "one", Path: repository}
+	testGit(t, repository, "switch", "-c", "feature/landed")
+	if err := os.WriteFile(filepath.Join(repository, "landed.txt"),
+		[]byte("landed\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	testGit(t, repository, "add", "landed.txt")
+	testGit(t, repository, "commit", "-m", "work that lands")
+	testGit(t, repository, "switch", "main")
+	testGit(t, repository, "merge", "--squash", "feature/landed")
+	testGit(t, repository, "commit", "-m", "work that lands")
+	testGit(t, repository, "push", "origin", "main")
+
+	if orphans := readNativeOrphanBranches(target, nativeLiveWorktrees{}); len(orphans) != 0 {
+		t.Fatalf("a squash-merged branch was reported as holding work: %+v", orphans)
+	}
+}
+
+func TestAPushedBranchIsNotAnOrphan(t *testing.T) {
+	// Origin carries it, so something will release it. That is the whole test.
+	root := t.TempDir()
+	repository, _ := createNativeTestRepository(t, root, "owner", "one")
+	target := nativeRepository{Owner: "owner", Name: "one", Path: repository}
+	testGit(t, repository, "switch", "-c", "feature/pushed")
+	if err := os.WriteFile(filepath.Join(repository, "pushed.txt"),
+		[]byte("pushed\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	testGit(t, repository, "add", "pushed.txt")
+	testGit(t, repository, "commit", "-m", "work origin carries")
+	testGit(t, repository, "push", "origin", "feature/pushed")
+	testGit(t, repository, "switch", "main")
+
+	if orphans := readNativeOrphanBranches(target, nativeLiveWorktrees{}); len(orphans) != 0 {
+		t.Fatalf("a pushed branch was reported: %+v", orphans)
+	}
+}
+
+func TestABranchUnderAWorktreeIsNotAnOrphan(t *testing.T) {
+	// Someone's current work, not residue. The checked-out branch is excluded
+	// whether or not a lease recorded it.
+	root := t.TempDir()
+	repository, _ := createNativeTestRepository(t, root, "owner", "one")
+	target := nativeRepository{Owner: "owner", Name: "one", Path: repository}
+	testGit(t, repository, "switch", "-c", "feature/in-progress")
+	if err := os.WriteFile(filepath.Join(repository, "wip.txt"),
+		[]byte("wip\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	testGit(t, repository, "add", "wip.txt")
+	testGit(t, repository, "commit", "-m", "work in progress")
+
+	if orphans := readNativeOrphanBranches(target, nativeLiveWorktrees{}); len(orphans) != 0 {
+		t.Fatalf("the checked-out branch was reported: %+v", orphans)
+	}
+}
+
+func TestACleanCheckoutReportsNoOrphanBranches(t *testing.T) {
+	// The control. A line every launch trains the eye past the one that matters.
+	root := t.TempDir()
+	repository, _ := createNativeTestRepository(t, root, "owner", "one")
+	runtime := nativeTestRuntime(t, root)
+	stderr := captureNativeStderr(t, &runtime)
+	target := nativeRepository{Owner: "owner", Name: "one", Path: repository}
+
+	reportNativeOrphanBranches(runtime, []nativeRepository{target}, nativeLiveWorktrees{})
+
+	if report := stderr(); strings.Contains(report, "untracked local branch") {
+		t.Fatalf("a clean checkout reported orphan branches: %q", report)
+	}
+}

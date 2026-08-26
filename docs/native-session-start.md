@@ -41,18 +41,18 @@ fourth scan (agentic-os#903).
 ## Branch reaping
 
 The pass deletes a local branch when `rev-list <branch> --not --remotes=origin`
-is empty, so every commit on it already exists on the remote. That is stricter
-than `git branch --merged`, which would delete a branch whose commits reached
-main but never got pushed anywhere.
+is empty, so every commit already exists on the remote, which is stricter than
+`git branch --merged`. Checked-out, worktree-held, and `aos/` branches are
+skipped: `aos/` is session bookkeeping the lease path releases, and session-ID
+uniqueness reads it, so reaping would hand out a live ID. That test also spares
+a dead session's branch whose worktree is gone and whose commits are local-only,
+and startup names those once (agentic-os#1084).
 
-Checked-out branches, worktree-held branches, and the `aos/` namespace are
-skipped. `aos/` is session bookkeeping released by the lease path, and session-ID
-uniqueness reads it to tell whether an ID is taken, so reaping it would hand out
-an ID another session still owns.
-
-The same test spares a dead session's branch whose worktree is gone and commits
-are local-only, that ref being the only copy. Nothing revisits those, so ten sat
-eleven days unnoticed: startup names them once (agentic-os#1084).
+Neither reading sees a branch no lease recorded, made by hand or outliving its
+lease: one checkout held 78 branches with 13 reported (agentic-os#1286). Startup
+now names a branch no worktree or lease holds, with no `origin` counterpart,
+carrying a commit `git cherry origin/main` marks `+`. Patch-id not reachability:
+the merge style is squash, so the test above calls every landed branch unpushed.
 
 ## Resident checkout drift
 
