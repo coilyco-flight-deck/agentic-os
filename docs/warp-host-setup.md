@@ -65,9 +65,9 @@ investigated and deferred: it must emit to `/dev/tty` guarded by `[ -t 1 ]` to
 avoid injecting escapes into captured output fleet-wide, and that guard may mean
 it never fires for the pipe-backed children that matter.
 
-## Branded Alacritty sessions
+## Branded kitty sessions
 
-`aterm` opens one composed agent session in one statically branded Alacritty
+`aterm` opens one composed agent session in one statically branded kitty
 window. Agent-compose supplies canonical identity and the roster, agentic-os
 renders the terminal brand, and the native session shadow runs the harness. The
 launcher, its refusals, and its flags are in
@@ -75,17 +75,25 @@ launcher, its refusals, and its flags are in
 
 ## Base configuration
 
-[`alacritty/alacritty.toml`](../alacritty/alacritty.toml) carries the portable
-Sombra palette, opaque window treatment, padding, font size, live reload, and
-copy-only OSC 52 policy, leaving shell selection, startup directory, and
-scrollback to the host, and defining no tabs, panes, or multiplexer. A
-host-local root config imports this baseline and adds only its shell and
-startup directory.
+[`kitty/kitty.conf`](../kitty/kitty.conf) carries the portable Sombra palette,
+opaque window treatment, padding, font size, and copy-only clipboard policy,
+leaving shell selection, startup directory, and scrollback to the host, and
+defining no tabs, panes, or multiplexer. A host-local root config includes this
+baseline and adds only its shell and startup directory.
+
+kitty has its own tab surface, so hiding the bar is not enough on its own. The
+shortcuts still exist and would silently split an agent session's window, so
+each one is unmapped rather than left to a hidden bar.
+
+[`alacritty/alacritty.toml`](../alacritty/alacritty.toml) carries the same
+baseline for Alacritty and is retained for Windows, where kitty does not ship.
+Pointing `--terminal-bin` at Alacritty there needs its own flag dialect, which
+is not built. Tracked in [aterm's terminal showdown](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/issues/1264).
 
 ## Ownership and limits
 
 Agent-compose owns renderer-neutral identity and the roster it is validated
-against. Agentic-os owns this Alacritty adapter, Ward owns runtime authority and
+against. Agentic-os owns this kitty adapter, Ward owns runtime authority and
 the session lifecycle, and infrastructure owns fleet installation.
 
 Branding is fixed at launch. The adapter manages no tabs, panes, sessions,

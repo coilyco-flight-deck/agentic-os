@@ -91,8 +91,10 @@ func nativeTerminalTitleSupported(stdout *os.File, getenv func(string) string) b
 	if err != nil || info.Mode()&os.ModeCharDevice == 0 {
 		return false
 	}
-	if strings.TrimSpace(getenv("ALACRITTY_WINDOW_ID")) != "" {
-		return true
+	for _, marker := range []string{"KITTY_WINDOW_ID", "ALACRITTY_WINDOW_ID"} {
+		if strings.TrimSpace(getenv(marker)) != "" {
+			return true
+		}
 	}
 	terminal := strings.ToLower(strings.TrimSpace(getenv("TERM")))
 	return terminal != "" && terminal != "dumb" && terminal != "unknown"

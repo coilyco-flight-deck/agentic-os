@@ -21,7 +21,7 @@ const (
 	defaultExpression    = "acting"
 	defaultOverlayBin    = "agent-compose"
 	defaultAOSBin        = "aos"
-	defaultAlacrittyBin  = "alacritty"
+	defaultTerminalBin   = "kitty"
 	defaultWorkingEnvVar = "PROJECTS_ROOT"
 )
 
@@ -141,9 +141,10 @@ func newCommand(deps commandDeps) *cli.Command {
 				Sources: cli.EnvVars("AOS_BIN"),
 			},
 			&cli.StringFlag{
-				Name:    "alacritty-bin",
-				Value:   defaultAlacrittyBin,
-				Sources: cli.EnvVars("ALACRITTY_BIN"),
+				Name:    "terminal-bin",
+				Value:   defaultTerminalBin,
+				Usage:   "terminal to open the window with (kitty's flag dialect)",
+				Sources: cli.EnvVars("ATERM_TERMINAL_BIN", "KITTY_BIN"),
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
@@ -183,7 +184,7 @@ func runLaunch(ctx context.Context, deps commandDeps, cmd *cli.Command) error {
 		WorkingDirectory: cwd,
 		AgentComposeBin:  cmd.String("agent-compose-bin"),
 		AOSBin:           cmd.String("aos-bin"),
-		AlacrittyBin:     cmd.String("alacritty-bin"),
+		TerminalBin:      cmd.String("terminal-bin"),
 		Extra:            extra,
 		Hold:             cmd.Bool("hold"),
 	}
@@ -212,11 +213,11 @@ func runLaunch(ctx context.Context, deps commandDeps, cmd *cli.Command) error {
 		_, err = fmt.Fprintf(stdout, "%s\n", encoded)
 		return err
 	}
-	alacritty, err := requireBinary(deps.lookPath, request.AlacrittyBin)
+	terminal, err := requireBinary(deps.lookPath, request.TerminalBin)
 	if err != nil {
-		return fmt.Errorf("Alacritty binary: %w", err)
+		return fmt.Errorf("terminal binary: %w", err)
 	}
-	if err := deps.spawn(ctx, alacritty, plan.Arguments...); err != nil {
+	if err := deps.spawn(ctx, terminal, plan.Arguments...); err != nil {
 		return fmt.Errorf("open the window: %w", err)
 	}
 	return announce(stdout, plan)

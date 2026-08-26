@@ -212,17 +212,20 @@ import sys
 plan = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
 assert plan["format"] == "aterm.launch.v1", plan["format"]
 assert plan["working_directory"] == sys.argv[2]
-assert plan["executable"] == "alacritty"
+assert plan["executable"] == "kitty"
 assert plan["identity"]["role"] == "tpm"
 assert plan["identity"]["seat"] == "codex"
 # The stub AOS reports no shadow, so the window runs Agent Compose directly.
 assert plan["shadowed"] is False
 assert plan["child"][-4:] == ["launch", "tpm", "codex", "--resume"], plan["child"]
-# The terminal has to exec the session stage, which is what keeps a failing
-# launch on screen instead of closing the window over it.
-dash = plan["arguments"].index("-e")
-assert plan["arguments"][dash + 1] == sys.argv[3], plan["arguments"][dash + 1]
-assert plan["arguments"][dash + 2] == "_session"
+# The terminal runs the session stage, which keeps a failing launch on screen.
+# kitty takes the program as trailing arguments, so the stage is the tail.
+stage = plan["arguments"].index(sys.argv[3])
+assert plan["arguments"][stage + 1] == "_session"
+# The brand has to survive into the terminal's own flags.
+joined = " ".join(plan["arguments"])
+for key in ("background=", "cursor=", "selection_background=", "selection_foreground="):
+    assert key in joined, (key, plan["arguments"])
 PY
     )
 fi

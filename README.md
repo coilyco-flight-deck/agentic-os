@@ -19,7 +19,8 @@ path.
 ## Layout
 
 - `shell/` - shared `common.sh` plus thin `zshrc` + `bashrc`, so bash and zsh match. `warp.zsh` is the zsh-only Warp dispatcher.
-- `alacritty/` - portable Sombra appearance and terminal security defaults, with host preferences left to the local wrapper.
+- `kitty/` - portable Sombra appearance and terminal security defaults for `aterm` windows, with host preferences left to the local wrapper.
+- `alacritty/` - the same baseline for Alacritty, retained for Windows, where kitty does not ship.
 - `aterm/` - `aterm`, the branded launcher for one composed agent session.
 - `warp/` - transitional Warp config (`settings.toml`, `tab_configs/`) plus the `just warp` Go module.
 - `aos-cli/` - the Go composition root for standalone and Ward-governed agent launches.
@@ -65,8 +66,8 @@ Equivalent links on Mac and Linux:
 ln -sf "$PWD/shell/zshrc"  ~/.zshrc      # both source shell/common.sh
 ln -sf "$PWD/shell/bashrc" ~/.bashrc
 ln -sf "$PWD/scripts/gpg-ssm" ~/.local/bin/gpg-ssm
-mkdir -p ~/.config/alacritty
-ln -sf "$PWD/alacritty/alacritty.toml" ~/.config/alacritty/alacritty.toml
+mkdir -p ~/.config/kitty
+ln -sf "$PWD/kitty/kitty.conf" ~/.config/kitty/kitty.conf
 just warp apply                     # warp config
 ```
 

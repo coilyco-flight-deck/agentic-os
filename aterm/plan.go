@@ -16,7 +16,7 @@ type launchRequest struct {
 	WorkingDirectory string
 	AgentComposeBin  string
 	AOSBin           string
-	AlacrittyBin     string
+	TerminalBin      string
 	Extra            []string
 	Hold             bool
 }
@@ -90,17 +90,18 @@ func buildLaunchPlan(
 	}
 	session = append(session, "--")
 	session = append(session, child...)
+	// kitty's --title permanently fixes the OS window title against the child,
+	// which is the job Alacritty needed a separate dynamic_title=false for.
 	arguments := []string{
 		"--title", brand.Title,
-		"--working-directory", cwd,
-		"-o", "window.dynamic_title=false",
-		"-o", "window.opacity=1.0",
-		"-o", fmt.Sprintf(`colors.primary.background="%s"`, brand.Background),
-		"-o", fmt.Sprintf(`colors.cursor.cursor="%s"`, brand.Accent),
-		"-o", fmt.Sprintf(`colors.selection.background="%s"`, brand.Accent),
-		"-o", fmt.Sprintf(`colors.selection.text="%s"`, brand.SelectionText),
-		"-e",
+		"--directory", cwd,
+		"-o", "background_opacity=1.0",
+		"-o", fmt.Sprintf("background=%s", brand.Background),
+		"-o", fmt.Sprintf("cursor=%s", brand.Accent),
+		"-o", fmt.Sprintf("selection_background=%s", brand.Accent),
+		"-o", fmt.Sprintf("selection_foreground=%s", brand.SelectionText),
 	}
+	// kitty takes the program as trailing arguments, with no -e separator.
 	arguments = append(arguments, session...)
 	return launchPlan{
 		Format: launchFormat,
@@ -119,7 +120,7 @@ func buildLaunchPlan(
 		WorkingDirectory: cwd,
 		Shadowed:         shadowed,
 		Child:            child,
-		Executable:       strings.TrimSpace(request.AlacrittyBin),
+		Executable:       strings.TrimSpace(request.TerminalBin),
 		Arguments:        arguments,
 	}, nil
 }

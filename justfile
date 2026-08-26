@@ -23,9 +23,9 @@ agent-id *ARGS:
 agents-context-inventory *ARGS:
     @uv run python -m agentic_os.agents_context_inventory "$@"
 
-# Validate the shared Alacritty configuration against the installed Alacritty schema.
-alacritty-config-check *ARGS:
-    @alacritty migrate --dry-run --config-file alacritty/alacritty.toml "$@"
+# Validate the shared kitty configuration against the installed kitty.
+kitty-config-check *ARGS:
+    @kitty --config kitty/kitty.conf +runpy 'raise SystemExit(0)' "$@"
 
 # Compile the standalone Go `aos` container launcher.
 aos-build *ARGS:
@@ -132,7 +132,7 @@ aosguard-release-fmt *ARGS:
 aosguard-run *ARGS:
     @specgen --project-root .specgen/guardfiles run -- "$@"
 
-# Launch one composed agent session in its own branded Alacritty window. Bare invocation picks a role; pass role and seat positionally, and harness arguments after `--`. `--list` prints the live roster, `--dry-run` inspects without opening a window. See docs/aterm.md.
+# Launch one composed agent session in its own branded kitty window. Bare invocation picks a role; pass role and seat positionally, and harness arguments after `--`. `--list` prints the live roster, `--dry-run` inspects without opening a window. See docs/aterm.md.
 aterm *ARGS:
     @go run -C aterm . "$@"
 

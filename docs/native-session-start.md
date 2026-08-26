@@ -117,4 +117,4 @@ gives up after two minutes naming that PID and the lock path.
 
 ## Terminal titles
 
-An assigned native Codex launch projects Agent Compose's canonical annotation and short session ID into its interactive terminal title, keeping concurrent sessions recognizable by seat, role, and session. `aterm` keeps its static title for new Alacritty windows.
+An assigned native Codex launch projects Agent Compose's canonical annotation and short session ID into its interactive terminal title, keeping concurrent sessions recognizable by seat, role, and session. `aterm` keeps its static title for new kitty windows.

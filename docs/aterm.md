@@ -5,7 +5,7 @@ the window, and the status-line composer, which fills the rows inside it.
 
 ## `aterm`
 
-`aterm` opens one composed agent session in its own branded Alacritty window. It
+`aterm` opens one composed agent session in its own branded kitty window. It
 is the windowed sibling of the `acompose` shell function, runs the same runtime
 of a leased shadow wrapping `agent-compose launch`, and leaves the terminal you
 typed in free. Name a role without a seat and both take the agent from
@@ -19,7 +19,7 @@ aterm platform codex -- --resume   # arguments for the harness
 aterm --list                       # the live roster, no window
 ```
 
-It needs `agent-compose` and Alacritty on `PATH` and bundles neither. Without
+It needs `agent-compose` and kitty on `PATH` and bundles neither. Without
 `aos` it still launches, unleased. `--dry-run` prints the plan and opens nothing.
 
 **It refuses a stale role before it opens anything.** Role slugs turn over, so
@@ -42,10 +42,10 @@ overlay before it opens anything, and captures their output, so a wrapped `aos`
 converging the host first presented as a launcher that had stopped. After two
 seconds `aterm` names the command it waits on.
 
-**A failing launch stays on screen.** Alacritty closes the window the moment its
+**A failing launch stays on screen.** A terminal closes the window the moment its
 child exits, so a failed launch used to vanish before anyone could read why.
-`aterm` runs the child through its own `_session` stage rather than handing it
-to `alacritty -e`. That stage passes the exit code through and holds the window
+`aterm` runs the child through its own `_session` stage rather than handing the
+harness to kitty directly. That stage passes the exit code through and holds the window
 on any non-zero exit, and `--hold` also holds after a clean exit. The launcher
 watches for a startup failure, so "no window appeared" names its cause.
 

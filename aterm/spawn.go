@@ -9,8 +9,8 @@ import (
 	"time"
 )
 
-// earlyExitWindow bounds the wait for a startup failure. Alacritty hands off and
-// exits 0 at once on macOS, so only a failing early exit is news.
+// earlyExitWindow bounds the wait for a startup failure. kitty stays alive for
+// the session, so only a failing early exit is news.
 const earlyExitWindow = 400 * time.Millisecond
 
 // spawnWindow starts the terminal detached without walking away blind, so a

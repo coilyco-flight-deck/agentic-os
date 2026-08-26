@@ -14,7 +14,7 @@ The ansible `shell` role (in the infrastructure repo) symlinks, by `ansible_syst
 - the Forgejo Docker credential helper from `scripts/docker-credential-forgejo-ssm*`
 - the `~/.local/bin` PATH helpers
 
-A pre-existing regular shell or Alacritty config is backed up to `<path>.bak`
+A pre-existing regular shell, kitty, or Alacritty config is backed up to `<path>.bak`
 before linking. The `claude-hooks` role runs `install-session-name.py` for the
 provider-composed status line and SessionStart self-name hook. It is idempotent
 and never clobbers a status line you set yourself. Agent Compose owns context
@@ -78,9 +78,10 @@ harness. See the [AOS to Ward credential handoff](aos-cluster-access.md).
 
 ## Cross-platform terminal
 
-Alacritty supplies the portable Sombra rendering baseline. Mac and Linux
-workstations symlink the live Alacritty config to the canonical AOS file. On
-Windows, infrastructure renders Git Bash as Alacritty's direct shell and keeps
+kitty supplies the portable Sombra rendering baseline for `aterm` windows. Mac
+and Linux workstations symlink the live kitty config to the canonical AOS file.
+kitty does not ship on Windows, so Alacritty keeps the baseline there: infrastructure
+renders Git Bash as Alacritty's direct shell and keeps
 the terminal free of an intermediate multiplexer.
 
 Transitional Warp config still renders into `~/.warp-preview/` on Mac or

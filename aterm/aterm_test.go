@@ -128,10 +128,10 @@ func TestLaunchPlanRunsTheNativeSessionInsideTheWindow(t *testing.T) {
 	if plan.Identity.Annotation != platformOverlay(t).Annotation {
 		t.Fatalf("annotation = %q", plan.Identity.Annotation)
 	}
-	// The window has to run the inner stage, never the child directly, or a
-	// failing launch closes the window before anyone can read the reason.
-	dash := indexOf(plan.Arguments, "-e")
-	if dash < 0 || plan.Arguments[dash+1] != "/stub/aterm" || plan.Arguments[dash+2] != sessionCommand {
+	// The window runs the inner stage, never the child directly, or a failing
+	// launch closes over the reason. kitty puts the program in the tail.
+	stage := indexOf(plan.Arguments, "/stub/aterm")
+	if stage < 0 || plan.Arguments[stage+1] != sessionCommand {
 		t.Fatalf("terminal should exec the aterm session stage: %v", plan.Arguments)
 	}
 }
@@ -173,7 +173,7 @@ func TestLaunchOpensExactlyOneWindow(t *testing.T) {
 	if len(spawns) != 1 {
 		t.Fatalf("opened %d window(s), want 1", len(spawns))
 	}
-	if spawns[0].name != "/stub/alacritty" {
+	if spawns[0].name != "/stub/kitty" {
 		t.Fatalf("spawned %q", spawns[0].name)
 	}
 	if !strings.Contains(out, "Angie") {
@@ -462,4 +462,37 @@ func indexOf(values []string, want string) int {
 		}
 	}
 	return -1
+}
+
+// Nothing else checks that the brand survives into the terminal's arguments, so
+// a flag-dialect change could drop every color and still pass the suite.
+func TestBrandReachesTheTerminalArguments(t *testing.T) {
+	var spawns []recordedSpawn
+	out, err := runAterm(t, stubDeps(t, &spawns, true), "--dry-run", "platform", "claude")
+	if err != nil {
+		t.Fatalf("dry run: %v", err)
+	}
+	var plan launchPlan
+	if err := json.Unmarshal([]byte(out), &plan); err != nil {
+		t.Fatalf("decode plan: %v", err)
+	}
+	joined := strings.Join(plan.Arguments, " ")
+	for _, want := range []string{
+		"background=" + plan.Brand.Background,
+		"cursor=" + plan.Brand.Accent,
+		"selection_background=" + plan.Brand.Accent,
+		"selection_foreground=" + plan.Brand.SelectionText,
+	} {
+		if !strings.Contains(joined, want) {
+			t.Fatalf("terminal arguments are missing %q: %v", want, plan.Arguments)
+		}
+	}
+	if title := indexOf(plan.Arguments, "--title"); title < 0 || plan.Arguments[title+1] != plan.Brand.Title {
+		t.Fatalf("terminal arguments should carry the composed title: %v", plan.Arguments)
+	}
+	// The stage is the tail: kitty has no -e, so a stray leading flag is its own.
+	if plan.Arguments[len(plan.Arguments)-1] != strings.Join(plan.Child, " ") &&
+		indexOf(plan.Arguments, sessionCommand) < indexOf(plan.Arguments, "--title") {
+		t.Fatalf("session stage should follow the terminal's own flags: %v", plan.Arguments)
+	}
 }
