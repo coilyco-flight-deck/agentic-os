@@ -3,9 +3,12 @@ package main
 import (
 	"bytes"
 	"errors"
+	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 )
@@ -98,7 +101,7 @@ func TestNativeProgressReadyRanksSlowestSteps(t *testing.T) {
 		}
 	}
 	want := "aos: ready    native startup 12.0s " +
-		"(fleet pass 5.00s, converge environment 1.00s)"
+		"// slowest fleet pass 5.00s, converge environment 1.00s"
 	if ready != want {
 		t.Fatalf("ready line = %q, want %q\nfull output:\n%s", ready, want, text)
 	}
@@ -269,5 +272,101 @@ func TestFormatNativeDurationSwitchesPrecision(t *testing.T) {
 		if got := formatNativeDuration(elapsed); got != want {
 			t.Fatalf("formatNativeDuration(%s) = %s, want %s", elapsed, got, want)
 		}
+	}
+}
+
+// syncBuffer stands in for a terminal. The redraw goroutine writes to the same
+// stream the launch does, so the test buffer has to tolerate both.
+type syncBuffer struct {
+	mutex sync.Mutex
+	data  bytes.Buffer
+}
+
+func (buffer *syncBuffer) Write(payload []byte) (int, error) {
+	buffer.mutex.Lock()
+	defer buffer.mutex.Unlock()
+	return buffer.data.Write(payload)
+}
+
+func (buffer *syncBuffer) String() string {
+	buffer.mutex.Lock()
+	defer buffer.mutex.Unlock()
+	return buffer.data.String()
+}
+
+// newLiveTestProgress forces the terminal branch without owning a terminal.
+func newLiveTestProgress(t *testing.T) (*nativeProgress, *progressClock, *syncBuffer) {
+	t.Helper()
+	t.Setenv(nativeProgressEnv, "")
+	previous := nativeProgressTerminal
+	nativeProgressTerminal = func(io.Writer) bool { return true }
+	t.Cleanup(func() { nativeProgressTerminal = previous })
+	clock := &progressClock{at: time.Date(2026, 8, 25, 12, 0, 0, 0, time.UTC)}
+	out := &syncBuffer{}
+	return newNativeProgress(out, clock.now), clock, out
+}
+
+func TestLiveProgressCollapsesEveryStepToOneRow(t *testing.T) {
+	progress, clock, out := newLiveTestProgress(t)
+	progress.Begin("claude", nil)
+	step := progress.Step("link 17 session worktrees")
+	for index := 1; index <= 17; index++ {
+		progress.Item("worktree", index, 17, "owner/repo%d", index)
+	}
+	clock.advance(2 * time.Second)
+	step.Done("17 linked")
+	progress.Workspace("/tmp/session/projects", 17)
+	clock.advance(time.Second)
+	progress.Ready()
+
+	text := out.String()
+	for _, absent := range []string{"aos: start", "aos: done", "aos: worktree", "aos: session"} {
+		if strings.Contains(text, absent) {
+			t.Fatalf("live narration spent a line on %q:\n%q", absent, text)
+		}
+	}
+	lines := strings.Split(strings.TrimRight(text, "\n"), "\n")
+	if len(lines) != 1 {
+		t.Fatalf("live narration left %d lines, want 1:\n%q", len(lines), text)
+	}
+	want := "aos: ready    native startup 3.00s // 17 worktrees // /tmp/session/projects"
+	if !strings.Contains(lines[0], want) {
+		t.Fatalf("closing line = %q, want it to carry %q", lines[0], want)
+	}
+	if !strings.Contains(text, "\r") {
+		t.Fatal("the live row never rewrote itself")
+	}
+}
+
+func TestLiveProgressKeepsAWarningOffTheRow(t *testing.T) {
+	progress, _, out := newLiveTestProgress(t)
+	stderr := progress.Writer(out)
+	progress.Step("link 2 session worktrees")
+	fmt.Fprintf(stderr, "aos: worktree skipped for owner/one: boom\n")
+	progress.Ready()
+
+	for _, line := range strings.Split(out.String(), "\n") {
+		if !strings.Contains(line, "worktree skipped") {
+			continue
+		}
+		// The row is erased before the warning, so the warning owns its line
+		// from the last carriage return onwards.
+		tail := line[strings.LastIndex(line, "\r")+1:]
+		if !strings.HasPrefix(tail, "aos: worktree skipped") {
+			t.Fatalf("the spinner leaked into the warning: %q", tail)
+		}
+		return
+	}
+	t.Fatal("the warning never reached the stream")
+}
+
+func TestLiveProgressStaysOffAtDebugLevel(t *testing.T) {
+	previous := nativeProgressTerminal
+	nativeProgressTerminal = func(io.Writer) bool { return true }
+	t.Cleanup(func() { nativeProgressTerminal = previous })
+	t.Setenv(nativeProgressEnv, "debug")
+	progress := newNativeProgress(&syncBuffer{}, nil)
+	if progress.live != nil {
+		t.Fatal("debug collapsed the transcript it was asked for")
 	}
 }

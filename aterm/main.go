@@ -33,6 +33,9 @@ type commandDeps struct {
 	self     func() (string, error)
 	pick     func(rosterDocument) (string, string, error)
 	tty      func() bool
+	// notice carries the slow-call line. A nil writer stays silent, which is
+	// what a test wants unless it is asserting on the notice itself.
+	notice io.Writer
 }
 
 func systemDeps() commandDeps {
@@ -57,9 +60,10 @@ func systemDeps() commandDeps {
 		spawn: func(_ context.Context, name string, args ...string) error {
 			return spawnWindow(name, args)
 		},
-		self: os.Executable,
-		pick: pickRoleAndSeat,
-		tty:  func() bool { return interactiveTTY(os.Stdin, os.Stdout) },
+		self:   os.Executable,
+		pick:   pickRoleAndSeat,
+		tty:    func() bool { return interactiveTTY(os.Stdin, os.Stdout) },
+		notice: os.Stderr,
 	}
 }
 
@@ -279,7 +283,11 @@ func resolveInvocation(
 // no second parser of them. See docs/aterm.md.
 func defaultSeat(ctx context.Context, deps commandDeps, aosBin string, role rosterRole) string {
 	if aos, err := requireBinary(deps.lookPath, aosBin); err == nil {
-		if raw, err := deps.output(ctx, aos, "_launch-agent", role.Slug); err == nil {
+		command := []string{aos, "_launch-agent", role.Slug}
+		raw, err := whileWaiting2(deps.notice, command, func() ([]byte, error) {
+			return deps.output(ctx, command[0], command[1:]...)
+		})
+		if err == nil {
 			seat := strings.TrimSpace(string(raw))
 			if isNativeHarness(seat) && seatInRole(seat, role) {
 				return seat

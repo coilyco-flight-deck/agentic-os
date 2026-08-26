@@ -52,14 +52,22 @@ func composeChild(request launchRequest, agentCompose, aos string, shadowed bool
 	if !shadowed {
 		return launch
 	}
-	child := []string{aos, "_native-shadow", "--harness", request.Seat, "--assigned-role", "--"}
+	child := []string{
+		aos, "_native-shadow",
+		"--harness", request.Seat,
+		"--role", request.Role,
+		"--assigned-role", "--",
+	}
 	return append(child, launch...)
 }
 
 // nativeShadowAvailable probes the same way the acompose shell function does. An
 // AOS without the shadow verb still launches, just without a leased workspace.
 func nativeShadowAvailable(ctx context.Context, deps commandDeps, aos string) bool {
-	return deps.run(ctx, aos, "_native-shadow", "--probe") == nil
+	command := []string{aos, "_native-shadow", "--probe"}
+	return whileWaiting(deps.notice, command, func() error {
+		return deps.run(ctx, command[0], command[1:]...)
+	}) == nil
 }
 
 func buildLaunchPlan(

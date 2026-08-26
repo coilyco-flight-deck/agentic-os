@@ -11,7 +11,7 @@ Major shipped capabilities, not files.
 - [Agents and sessions](features-agents.md) - self-name, composition
   status, harness policy, and
   [settings guardrails](native-claude-credentials.md).
-- [Native agent workspaces](native-agent-workspaces.md) - fleet worktrees,
+- [Native agent workspaces](native-agent-workspaces.md) - role-scoped worktrees,
   leases, cleanup, the `aos` temp namespace, and standalone launches.
 - [Agent-compose provider](context-budget.md) - scoped skills,
   personality, and seven deployed roles across the Agent Compose v3 roster.

@@ -6,10 +6,28 @@ fleet-shaped workspace. No timer, daemon, exit hook, or operator command runs.
 
 ## Workspace projection
 
-Agent Compose's compiled residency plan drives one linked worktree per checkout.
+Agent Compose's compiled repository plan drives one linked worktree per checkout.
 AOS reads `$AOS_REPOSITORY_PLAN` or `~/.agent-compose/repository-plan.yaml`.
 Legacy JSON remains a rollout fallback. No embedded roster exists. Exact
 `owner/repository` identities supply writable worktrees from canonical Git objects.
+
+### Role scope
+
+The plan carries a per-role selection beside residency, and an assigned-role
+launch links only its own role's selection. `aterm gamedev` and `acompose
+gamedev claude` link the `coilyco-gaming` checkouts, a `platform` launch does
+not, and neither pays for worktrees it will never open. AOS grows no second
+opinion about which repository serves which charter: the plan decided, and
+`--role` is how the launch hands AOS that answer.
+
+Residency stays the full set, and everything except projection reads it: the
+[ten-minute fleet pass](#ten-minute-fleet-pass) fetches and normalizes every
+resident checkout, and [unexpected-clone detection](#unexpected-clones) counts
+every resident identity as belonging on disk.
+
+Full residency is the fallback: no role, a role the plan does not name, and a
+role whose every selection is missing from disk. Linking nothing drops the
+session into the canonical checkout while still reporting itself isolated.
 
 A launch from `$PROJECTS_ROOT` enters:
 

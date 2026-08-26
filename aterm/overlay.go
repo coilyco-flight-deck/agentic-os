@@ -50,15 +50,16 @@ func loadOverlay(
 	seat string,
 	expression string,
 ) (overlayDocument, error) {
-	raw, err := deps.output(
-		ctx,
-		agentCompose,
-		"overlay",
+	command := []string{
+		agentCompose, "overlay",
 		"--role", role,
 		"--seat", seat,
 		"--expression", expression,
 		"--json",
-	)
+	}
+	raw, err := whileWaiting2(deps.notice, command, func() ([]byte, error) {
+		return deps.output(ctx, command[0], command[1:]...)
+	})
 	if err != nil {
 		return overlayDocument{}, fmt.Errorf("load the identity overlay: %w", err)
 	}

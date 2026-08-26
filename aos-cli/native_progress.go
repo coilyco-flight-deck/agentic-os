@@ -1,8 +1,9 @@
 // Native startup runs several seconds of local Git and remote fetch work
 // before the harness takes the terminal. nativeProgress narrates that work so
-// the wait is never a silent hang: every step announces itself before it
-// begins, reports its own elapsed time when it ends, and the run closes with a
-// total plus the steps that dominated it. See docs/native-session-start.md.
+// the wait is never a silent hang. On a terminal the narration is one row that
+// rewrites itself (native_progress_live.go) and closes as a single summary
+// line; anywhere else it stays line-per-step for the log. See
+// docs/native-session-start.md.
 
 package main
 
@@ -40,6 +41,11 @@ type nativeProgress struct {
 	now   func() time.Time
 	start time.Time
 	spans []nativeSpan
+	// live is nil unless the stream is a terminal at exactly the step level.
+	// Debug asks for the transcript, so it never collapses to one row.
+	live      *nativeProgressLive
+	workspace string
+	worktrees int
 }
 
 type nativeSpan struct {
@@ -61,12 +67,25 @@ func newNativeProgress(out io.Writer, now func() time.Time) *nativeProgress {
 	if now == nil {
 		now = time.Now
 	}
-	return &nativeProgress{
+	progress := &nativeProgress{
 		out:   out,
 		level: parseNativeProgressLevel(os.Getenv(nativeProgressEnv)),
 		now:   now,
 		start: now(),
 	}
+	if progress.level == nativeProgressSteps && out != nil && nativeProgressTerminal(out) {
+		progress.live = newNativeProgressLive(out, now)
+	}
+	return progress
+}
+
+// Writer wraps a stream so a warning written straight to it never lands on top
+// of the live row. Off a terminal it hands the stream back untouched.
+func (progress *nativeProgress) Writer(stream io.Writer) io.Writer {
+	if progress == nil || progress.live == nil {
+		return stream
+	}
+	return nativeProgressPassthrough{live: progress.live, stream: stream}
 }
 
 // parseNativeProgressLevel keeps step narration the default, because the
@@ -93,7 +112,27 @@ func (progress *nativeProgress) line(verb, format string, args ...any) {
 		return
 	}
 	message := strings.TrimSpace(fmt.Sprintf(format, args...))
+	if progress.live != nil {
+		_ = progress.live.Passthrough(func() error {
+			_, err := fmt.Fprintf(progress.out, "aos: %-8s %s\n", verb, message)
+			return err
+		})
+		return
+	}
 	fmt.Fprintf(progress.out, "aos: %-8s %s\n", verb, message)
+}
+
+// phase moves the narration on to a new label: one rewritten row on a
+// terminal, one more line anywhere else.
+func (progress *nativeProgress) phase(verb, label string) {
+	if !progress.enabled(nativeProgressSteps) {
+		return
+	}
+	if progress.live != nil {
+		progress.live.Set(label)
+		return
+	}
+	progress.line(verb, "%s", label)
 }
 
 // Begin opens the narration with the launch that is about to happen.
@@ -101,7 +140,7 @@ func (progress *nativeProgress) Begin(harness string, command []string) {
 	if !progress.enabled(nativeProgressSteps) {
 		return
 	}
-	progress.line("launch", "native %s startup", harness)
+	progress.phase("launch", fmt.Sprintf("native %s startup", harness))
 	if progress.enabled(nativeProgressDebug) && len(command) > 0 {
 		progress.line("command", "%s", strings.Join(command, " "))
 	}
@@ -110,9 +149,7 @@ func (progress *nativeProgress) Begin(harness string, command []string) {
 // Step announces a phase and returns the handle that closes it.
 func (progress *nativeProgress) Step(format string, args ...any) *nativeStep {
 	label := fmt.Sprintf(format, args...)
-	if progress.enabled(nativeProgressSteps) {
-		progress.line("start", "%s", label)
-	}
+	progress.phase("start", label)
 	begun := time.Now()
 	if progress != nil {
 		begun = progress.now()
@@ -126,6 +163,10 @@ func (progress *nativeProgress) Skip(label, format string, args ...any) {
 	if !progress.enabled(nativeProgressSteps) {
 		return
 	}
+	if progress.live != nil {
+		progress.live.Set(label + " skipped")
+		return
+	}
 	progress.line("skip", "%s (%s)", label, fmt.Sprintf(format, args...))
 }
 
@@ -133,6 +174,10 @@ func (progress *nativeProgress) Skip(label, format string, args ...any) {
 // fetch or worktree names the repository it is stuck on.
 func (progress *nativeProgress) Item(verb string, index, total int, format string, args ...any) {
 	if !progress.enabled(nativeProgressSteps) {
+		return
+	}
+	if progress.live != nil {
+		progress.live.Detail(fmt.Sprintf("%d/%d %s", index, total, fmt.Sprintf(format, args...)))
 		return
 	}
 	progress.line(verb, "%d/%d %s", index, total, fmt.Sprintf(format, args...))
@@ -151,30 +196,58 @@ func (progress *nativeProgress) Wait(format string, args ...any) {
 	if !progress.enabled(nativeProgressSteps) {
 		return
 	}
-	progress.line("wait", format, args...)
+	progress.phase("wait", fmt.Sprintf(format, args...))
+}
+
+// Workspace records the session the launch just linked. The closing line
+// carries it on a terminal, so the whole startup stays one row.
+func (progress *nativeProgress) Workspace(path string, worktrees int) {
+	if progress == nil {
+		return
+	}
+	progress.workspace = path
+	progress.worktrees = worktrees
+	if progress.live == nil {
+		progress.line("session", "workspace %s", path)
+	}
 }
 
 // Exec names the command the harness process becomes, so any remaining wait
 // is attributed to that command rather than to AOS.
 func (progress *nativeProgress) Exec(command []string) {
-	if !progress.enabled(nativeProgressSteps) || len(command) == 0 {
+	if !progress.enabled(nativeProgressSteps) || len(command) == 0 || progress.live != nil {
 		return
 	}
 	progress.line("exec", "%s", command[0])
 }
 
+// Stop ends the live row without closing the narration, so a failing launch
+// does not leave a spinner turning behind its own error.
+func (progress *nativeProgress) Stop() {
+	if progress != nil && progress.live != nil {
+		progress.live.Stop()
+	}
+}
+
 // Ready closes the narration with the total and the slowest phases.
 func (progress *nativeProgress) Ready() {
+	progress.Stop()
 	if !progress.enabled(nativeProgressSummary) {
 		return
 	}
 	total := progress.now().Sub(progress.start)
-	detail := progress.slowestSpans()
-	if detail == "" {
-		progress.line("ready", "native startup %s", formatNativeDuration(total))
-		return
+	parts := []string{"native startup " + formatNativeDuration(total)}
+	if progress.workspace != "" {
+		worktrees := fmt.Sprintf("%d worktrees", progress.worktrees)
+		if progress.worktrees == 1 {
+			worktrees = "1 worktree"
+		}
+		parts = append(parts, worktrees, progress.workspace)
 	}
-	progress.line("ready", "native startup %s (%s)", formatNativeDuration(total), detail)
+	if detail := progress.slowestSpans(); detail != "" {
+		parts = append(parts, "slowest "+detail)
+	}
+	progress.line("ready", "%s", strings.Join(parts, " // "))
 }
 
 func (progress *nativeProgress) slowestSpans() string {
@@ -218,7 +291,9 @@ func (step *nativeStep) Done(format string, args ...any) {
 		return
 	}
 	elapsed := step.close()
-	if !step.progress.enabled(nativeProgressSteps) {
+	// A terminal already showed this phase live and the next Set replaces it,
+	// so only the log form spends a line on the close.
+	if !step.progress.enabled(nativeProgressSteps) || step.progress.live != nil {
 		return
 	}
 	var detail []string
@@ -243,6 +318,7 @@ func (step *nativeStep) Fail(err error) {
 		return
 	}
 	elapsed := step.close()
+	step.progress.Stop()
 	if !step.progress.enabled(nativeProgressSteps) {
 		return
 	}

@@ -116,7 +116,8 @@ func TestLaunchPlanRunsTheNativeSessionInsideTheWindow(t *testing.T) {
 		t.Fatal("a probing AOS should produce a shadowed launch")
 	}
 	want := []string{
-		"/stub/aos", "_native-shadow", "--harness", "claude", "--assigned-role", "--",
+		"/stub/aos", "_native-shadow", "--harness", "claude",
+		"--role", "platform", "--assigned-role", "--",
 		"/stub/agent-compose", "launch", "platform", "claude",
 	}
 	if strings.Join(plan.Child, " ") != strings.Join(want, " ") {

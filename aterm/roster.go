@@ -88,7 +88,10 @@ func (d rosterDocument) slugs() []string {
 }
 
 func loadRoster(ctx context.Context, deps commandDeps, agentCompose string) (rosterDocument, error) {
-	raw, err := deps.output(ctx, agentCompose, "catalog", "roles", "--json")
+	command := []string{agentCompose, "catalog", "roles", "--json"}
+	raw, err := whileWaiting2(deps.notice, command, func() ([]byte, error) {
+		return deps.output(ctx, command[0], command[1:]...)
+	})
 	if err != nil {
 		return rosterDocument{}, fmt.Errorf("load the Agent Compose roster: %w", err)
 	}

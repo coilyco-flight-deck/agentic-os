@@ -6,11 +6,11 @@ the window, and the status-line composer, which fills the rows inside it.
 ## `aterm`
 
 `aterm` opens one composed agent session in its own branded Alacritty window. It
-is the windowed sibling of the `acompose` shell function and runs the same
-runtime, a leased shadow wrapping `agent-compose launch`, but leaves the
-terminal you typed in free. Name a role without a seat and both take the agent
-from [`harness-launch-profiles.yaml`](../.agents/harness-launch-profiles.yaml).
-`aos` owns that file and both ask it, so neither carries a second parser.
+is the windowed sibling of the `acompose` shell function, runs the same runtime
+of a leased shadow wrapping `agent-compose launch`, and leaves the terminal you
+typed in free. Name a role without a seat and both take the agent from
+[`harness-launch-profiles.yaml`](../.agents/harness-launch-profiles.yaml), which
+`aos` owns and both ask, so neither carries a second parser.
 
 ```text
 aterm                              # pick a role, then a seat
@@ -25,11 +25,10 @@ It needs `agent-compose` and Alacritty on `PATH` and bundles neither. Without
 **It refuses a stale role before it opens anything.** Role slugs turn over, so
 `aterm` reads `agent-compose catalog roles --json` on every run and names the
 live roster in the refusal. A transposed `platform` comes back as `is not a live
-role. Did you mean platform?` plus every live slug and its display name. A seat
-is checked twice: it has to belong to the
-role, and it has to be a harness
-`agent-compose launch` can start. A catalogue seat like `penpot` is real but not
-launchable, and the refusal says which of the two it failed.
+role. Did you mean platform?` plus every live slug and display name. A seat is
+checked twice: it has to belong to the role, and to be a harness `agent-compose
+launch` can start. A catalogue seat like `penpot` is real but not launchable,
+and the refusal says which of the two it failed.
 
 **Tab completes from the same roster.** `aterm <TAB>` offers the live slugs,
 `aterm sysadmin <TAB>` only that role's launchable seats, so a slug that turned
@@ -38,13 +37,17 @@ over stops completing rather than completing into a refusal. The read is under
 `aterm completion <shell>`, after `compinit` in zsh. A missing `agent-compose`
 yields silence, never a diagnostic mid-keystroke.
 
+**A slow pre-flight names itself.** `aterm` shells out for a seat, roster, and
+overlay before it opens anything, and captures their output, so a wrapped `aos`
+converging the host first presented as a launcher that had stopped. After two
+seconds `aterm` names the command it waits on.
+
 **A failing launch stays on screen.** Alacritty closes the window the moment its
-child exits, so a launch that failed used to vanish before anyone could read
-why. `aterm` runs the child through its own `_session` stage instead of handing
-it straight to `alacritty -e`. That stage passes the exit code through and holds
-the window on any non-zero exit, and `--hold` also holds after a clean exit. The
-launcher watches the terminal for a startup failure rather than detaching blind,
-so "no window appeared" comes back as a message naming the cause.
+child exits, so a failed launch used to vanish before anyone could read why.
+`aterm` runs the child through its own `_session` stage rather than handing it
+to `alacritty -e`. That stage passes the exit code through and holds the window
+on any non-zero exit, and `--hold` also holds after a clean exit. The launcher
+watches for a startup failure, so "no window appeared" names its cause.
 
 ## Status-line composer
 
@@ -54,12 +57,12 @@ shows the same line a host session does.
 
 ## The problem it replaces
 
-The retired host `agent-name.sh` hand-wired the
-second row: it ran `$project_dir/.agentic-os/statusline.sh` and
-`$AGENT_STATUSLINE_EXTRA` and appended their output. The container copy did not,
-and `statusline.sh` was never shipped into the [dev-base image](dev-base-image.md),
-so everything past the name row was absent in containers. Adding each segment by
-hand does not scale and forces external users to fork the composer to customize.
+The retired host `agent-name.sh` hand-wired the second row from
+`$project_dir/.agentic-os/statusline.sh` and `$AGENT_STATUSLINE_EXTRA`. The
+container copy did not, and `statusline.sh` never shipped into the [dev-base
+image](dev-base-image.md), so everything past the name row was absent in
+containers. Hand-adding each segment does not scale, and it forces an external
+user to fork the composer to customize.
 
 ## How it works
 
@@ -78,15 +81,13 @@ The built-in provider is:
 * `15-agent-compose.sh` - asks `acompose statusline` to render the immutable
   bundle identity, role and harness, selected catalog footprint, and
   composition health.
-
 * `20-container.sh` - names the warded container from `WARD_CONTAINER_NAME`,
   since inside a container the hostname is an opaque id. Silent on a host.
 
-Two earlier base providers were removed. `10-agent-name.sh` rendered the
-pre-acompose `<harness>-<os>-<host>-<tag>-<pronouns>` self-name row, which
-duplicated the identity `acompose statusline` already renders. `20-repos.sh`
-rendered a stray-checkout count, which is residency scanning rather than
-session state. `agent-name.sh` itself is now retired: the
+Two earlier base providers were removed. `10-agent-name.sh` duplicated the
+identity `acompose statusline` already renders, and `20-repos.sh` rendered a
+stray-checkout count, which is residency scanning rather than session state.
+`agent-name.sh` itself is retired: the
 [SessionStart banner](dev-base-agent-identity.md) reads `acompose whoami`.
 
 Agent Compose owns the row's content and bundle semantics. AOS only
@@ -101,10 +102,10 @@ The composer walks three provider dirs, lowest precedence first:
 2. **user** - `${XDG_CONFIG_HOME:-$HOME/.config}/agentic-os/statusline.d`.
 3. **repo** - `<project_dir>/.agentic-os/statusline.d`.
 
-A same-named file in a higher dir **overrides** the lower one; a new `NN-*.sh`
-**adds** a row. A shadowing file that is not executable **masks** the lower
+A same-named file in a higher dir **overrides** the lower one, a new `NN-*.sh`
+**adds** a row, and a shadowing file that is not executable **masks** the lower
 provider. So a project or an external user customizes the line by dropping in a
-provider - **no fork** of the composer. Use 2-digit prefixes (lexical sort puts
+provider, **no fork** of the composer. Use 2-digit prefixes (lexical sort puts
 `100` before `20`).
 
 ## Why it auto-mounts everywhere
@@ -112,9 +113,8 @@ provider - **no fork** of the composer. Use 2-digit prefixes (lexical sort puts
 Every warded container runs dev-base, and the baked policy-tier
 [`managed-settings.json`](dev-base-agent-identity.md) points `statusLine` at the
 composer. ward injects no `statusLine` of its own, so the baked one is
-authoritative. A new base provider rides the next image build to **all**
-containers at once, with no per-container edit. On hosts,
-`install-session-name.py` conservatively migrates its legacy direct self-name
-command to this composer, and repoints a SessionStart hook still wired to the
-retired `agent-name.sh`. The infrastructure claude-hooks role invokes that
-installer, keeping rollout separate from the provider authored here.
+authoritative, and a new base provider rides the next image build to **all**
+containers at once. On hosts, `install-session-name.py` migrates a legacy direct
+self-name command to this composer and repoints a SessionStart hook still wired
+to the retired `agent-name.sh`. The infrastructure claude-hooks role invokes
+that installer, keeping rollout separate from the provider authored here.

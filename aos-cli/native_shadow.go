@@ -106,8 +106,11 @@ type nativeRuntime struct {
 	SessionsRoot string
 	PlanFile     string
 	FleetFile    string
-	Random       io.Reader
-	Stderr       *os.File
+	// Role narrows projection only. docs/native-agent-workspaces.md
+	Role   string
+	Random io.Reader
+	// Stderr is wrapped by the progress seam. docs/native-session-start.md
+	Stderr io.Writer
 	// Progress narrates startup. A nil value stays silent, which keeps tests
 	// and embedded callers quiet without a flag.
 	Progress *nativeProgress
@@ -139,10 +142,15 @@ func runNativeShadow(ctx context.Context, cmd *cli.Command) error {
 			nativeHarnessList(),
 		)
 	}
+	role := strings.TrimSpace(cmd.String("role"))
+	if role != "" && !safeRoleSlug(role) {
+		return fmt.Errorf("_native-shadow has unsafe role slug %q", role)
+	}
 	runtime, err := resolveNativeRuntime()
 	if err != nil {
 		return err
 	}
+	runtime.Role = role
 	runtime.Progress.Begin(harness, command)
 	if err := convergeNativeEnvironment(ctx, runtime); err != nil {
 		return fmt.Errorf("converge native environment: %w", err)
@@ -333,6 +341,7 @@ func resolveNativeRuntime() (nativeRuntime, error) {
 	if err != nil {
 		return nativeRuntime{}, fmt.Errorf("identify native launch process: %w", err)
 	}
+	progress := newNativeProgress(os.Stderr, nil)
 	return nativeRuntime{
 		Now:          time.Now().UTC(),
 		PID:          os.Getpid(),
@@ -345,8 +354,8 @@ func resolveNativeRuntime() (nativeRuntime, error) {
 		PlanFile:     plan,
 		FleetFile:    fleet,
 		Random:       rand.Reader,
-		Stderr:       os.Stderr,
-		Progress:     newNativeProgress(os.Stderr, nil),
+		Stderr:       progress.Writer(os.Stderr),
+		Progress:     progress,
 	}, nil
 }
 
@@ -395,15 +404,17 @@ func prepareNativeLaunchWorkspaceWithOptions(
 		}
 		reclaim.Done("%d live worktrees", len(live.paths))
 		resolve := runtime.Progress.Step("resolve resident repositories")
-		repositories, expected, err := resolveExpectedRepositories(runtime)
+		projection, err := resolveExpectedRepositories(runtime)
 		if err != nil {
 			resolve.Fail(err)
 			return err
 		}
-		resolve.Done("%d resident", len(repositories))
+		resolve.Done("%d resident, %d projected",
+			len(projection.Resident), len(projection.Projected))
 		due, state := nativeSweepDue(runtime)
 		if due {
-			if err := runNativeWorkspaceSweep(runtime, repositories, expected, live, state); err != nil {
+			if err := runNativeWorkspaceSweep(
+				runtime, projection.Resident, projection.Expected, live, state); err != nil {
 				return err
 			}
 		} else {
@@ -413,7 +424,7 @@ func prepareNativeLaunchWorkspaceWithOptions(
 		workspace, err = createNativeSession(
 			runtime,
 			harness,
-			repositories,
+			projection.Projected,
 			options,
 		)
 		return err
@@ -1510,7 +1521,7 @@ func createNativeSession(
 			fmt.Fprintf(runtime.Stderr, "aos: native session trust not seeded: %v\n", err)
 		}
 	}
-	fmt.Fprintf(runtime.Stderr, "aos: native session workspace %s\n", sessionProjects)
+	runtime.Progress.Workspace(sessionProjects, len(artifacts))
 	return nativeLaunchWorkspace{
 		CWD:             launch,
 		SessionProjects: sessionProjects,
@@ -1858,23 +1869,31 @@ func seedNativeExpected() map[string]bool {
 	return seed
 }
 
+// nativeProjection splits what a launch links from what the pass maintains.
+// Role scope reaches only the first. docs/native-agent-workspaces.md
+type nativeProjection struct {
+	Resident  []nativeRepository
+	Projected []nativeRepository
+	Expected  nativeExpected
+}
+
 func resolveExpectedRepositories(
 	runtime nativeRuntime,
-) ([]nativeRepository, nativeExpected, error) {
+) (nativeProjection, error) {
 	plan, err := loadAOSRepositoryPlan(runtime.PlanFile)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			// Projection runs off the seed, cleanup does not: an absent plan
 			// expects almost nothing. docs/native-session-start.md
-			return nil, nativeExpected{
+			return nativeProjection{Expected: nativeExpected{
 				Full:      seedNativeExpected(),
 				FleetOrgs: readNativeListSet(runtime.FleetFile),
-			}, nil
+			}}, nil
 		}
-		return nil, nativeExpected{}, err
+		return nativeProjection{}, err
 	}
 	if plan.ProjectsRoot == "" || !samePath(plan.ProjectsRoot, runtime.ProjectsRoot) {
-		return nil, nativeExpected{}, fmt.Errorf("Agent Compose repository plan projects_root %q does not match %s", plan.ProjectsRoot, runtime.ProjectsRoot)
+		return nativeProjection{}, fmt.Errorf("Agent Compose repository plan projects_root %q does not match %s", plan.ProjectsRoot, runtime.ProjectsRoot)
 	}
 	expected := nativeExpected{
 		Full:          seedNativeExpected(),
@@ -1885,7 +1904,7 @@ func resolveExpectedRepositories(
 	for _, entry := range plan.Residency {
 		parts := strings.Split(entry.Identity, "/")
 		if len(parts) != 2 || !safePathSegment(parts[0]) || !safePathSegment(parts[1]) || entry.Identity <= prior {
-			return nil, nativeExpected{}, fmt.Errorf("Agent Compose repository plan has invalid, unsorted, or duplicate residency identity %q", entry.Identity)
+			return nativeProjection{}, fmt.Errorf("Agent Compose repository plan has invalid, unsorted, or duplicate residency identity %q", entry.Identity)
 		}
 		prior = entry.Identity
 		expected.Full[filepath.FromSlash(entry.Identity)] = true
@@ -1903,7 +1922,39 @@ func resolveExpectedRepositories(
 	sort.Slice(repositories, func(i, j int) bool {
 		return repositories[i].Path < repositories[j].Path
 	})
-	return repositories, expected, nil
+	return nativeProjection{
+		Resident:  repositories,
+		Projected: projectRoleRepositories(runtime.Role, plan, repositories),
+		Expected:  expected,
+	}, nil
+}
+
+// projectRoleRepositories narrows the linked set to the role's own plan
+// selections, and falls back to full residency. docs/native-agent-workspaces.md
+func projectRoleRepositories(
+	role string,
+	plan aosRepositoryPlan,
+	resident []nativeRepository,
+) []nativeRepository {
+	selections := plan.Roles[strings.TrimSpace(role)]
+	if strings.TrimSpace(role) == "" || len(selections) == 0 {
+		return resident
+	}
+	selected := make(map[string]bool, len(selections))
+	for _, selection := range selections {
+		selected[filepath.FromSlash(selection.Identity)] = true
+	}
+	projected := make([]nativeRepository, 0, len(selections))
+	for _, repository := range resident {
+		if selected[filepath.Join(repository.Owner, repository.Name)] {
+			projected = append(projected, repository)
+		}
+	}
+	// Linking nothing drops the session into the canonical tree.
+	if len(projected) == 0 {
+		return resident
+	}
+	return projected
 }
 
 // A required repository that is not on disk is silently omitted from

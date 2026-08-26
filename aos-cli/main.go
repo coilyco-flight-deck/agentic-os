@@ -260,6 +260,7 @@ func newCommandWithDefaults(name string, defaults launchDefaults) *cli.Command {
 				Hidden: true,
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "harness"},
+					&cli.StringFlag{Name: "role"},
 					&cli.BoolFlag{Name: "probe"},
 					&cli.BoolFlag{Name: "assigned-role"},
 				},

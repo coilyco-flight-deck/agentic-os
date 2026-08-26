@@ -1021,10 +1021,11 @@ func TestSerializedRepositoryIsNotProjected(t *testing.T) {
 	writeNativeTestPlan(t, testRuntime.PlanFile, "coilyco-gaming/eco-mods", "owner/one")
 	writeNativeTestList(t, testRuntime.FleetFile, "coilyco-gaming", "owner")
 
-	repositories, expected, err := resolveExpectedRepositories(testRuntime)
+	projection, err := resolveExpectedRepositories(testRuntime)
 	if err != nil {
 		t.Fatal(err)
 	}
+	repositories, expected := projection.Projected, projection.Expected
 
 	for _, repository := range repositories {
 		if repository.Name == "eco-mods" {
@@ -1048,10 +1049,11 @@ func TestSerializedRepositorySurvivesUnexpectedCloneScan(t *testing.T) {
 	writeNativeTestPlan(t, testRuntime.PlanFile)
 	writeNativeTestList(t, testRuntime.FleetFile, "coilyco-gaming")
 
-	_, expected, err := resolveExpectedRepositories(testRuntime)
+	projection, err := resolveExpectedRepositories(testRuntime)
 	if err != nil {
 		t.Fatal(err)
 	}
+	expected := projection.Expected
 	state := nativeSweepState{
 		Format: "agentic-os.native-sweep.v1", Candidates: map[string]nativeCandidate{},
 	}
@@ -1079,10 +1081,11 @@ func TestSerializedExemptionIsWindowsOnly(t *testing.T) {
 	writeNativeTestPlan(t, testRuntime.PlanFile, "coilyco-gaming/eco-mods")
 	writeNativeTestList(t, testRuntime.FleetFile, "coilyco-gaming")
 
-	repositories, _, err := resolveExpectedRepositories(testRuntime)
+	projection, err := resolveExpectedRepositories(testRuntime)
 	if err != nil {
 		t.Fatal(err)
 	}
+	repositories := projection.Projected
 
 	if len(repositories) != 1 {
 		t.Fatalf("projected %d repositories off Windows, want 1", len(repositories))
@@ -1541,10 +1544,11 @@ func TestAnAbsentPlanNeverDeletesACheckout(t *testing.T) {
 	// No plan file at all, and a fleet list that admits the org.
 	writeNativeTestList(t, testRuntime.FleetFile, "coilyco-gaming")
 
-	_, expected, err := resolveExpectedRepositories(testRuntime)
+	projection, err := resolveExpectedRepositories(testRuntime)
 	if err != nil {
 		t.Fatal(err)
 	}
+	expected := projection.Expected
 	if expected.Authoritative {
 		t.Fatal("an absent plan reported itself authoritative")
 	}
@@ -1577,12 +1581,12 @@ func TestAValidPlanStaysAuthoritative(t *testing.T) {
 	writeNativeTestPlan(t, testRuntime.PlanFile, "one")
 	writeNativeTestList(t, testRuntime.FleetFile, "owner")
 
-	_, expected, err := resolveExpectedRepositories(testRuntime)
+	projection, err := resolveExpectedRepositories(testRuntime)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if !expected.Authoritative {
+	if !projection.Expected.Authoritative {
 		t.Fatal("a valid plan did not report itself authoritative")
 	}
 }
@@ -1596,7 +1600,7 @@ func TestAMissingRequiredRepositoryIsNamed(t *testing.T) {
 	writeNativeRequiredTestPlan(t, testRuntime.PlanFile, "owner/absent")
 	writeNativeTestList(t, testRuntime.FleetFile, "owner")
 
-	if _, _, err := resolveExpectedRepositories(testRuntime); err != nil {
+	if _, err := resolveExpectedRepositories(testRuntime); err != nil {
 		t.Fatal(err)
 	}
 
@@ -1614,7 +1618,7 @@ func TestAPresentRequiredRepositoryIsSilent(t *testing.T) {
 	writeNativeRequiredTestPlan(t, testRuntime.PlanFile, "owner/one")
 	writeNativeTestList(t, testRuntime.FleetFile, "owner")
 
-	if _, _, err := resolveExpectedRepositories(testRuntime); err != nil {
+	if _, err := resolveExpectedRepositories(testRuntime); err != nil {
 		t.Fatal(err)
 	}
 
@@ -1696,5 +1700,141 @@ func TestAnUpToDateCheckoutReportsNoGap(t *testing.T) {
 
 	if _, ok := readNativeResidentDrift(repository); ok {
 		t.Fatal("an up-to-date checkout was reported as drifted")
+	}
+}
+
+// writeNativeTestRolePlan writes a plan whose residency holds every identity
+// and whose named role selects only the ones listed for it.
+func writeNativeTestRolePlan(
+	t *testing.T,
+	path string,
+	role string,
+	selected []string,
+	residency []string,
+) {
+	t.Helper()
+	projects := filepath.Join(filepath.Dir(path), "projects")
+	build := func(identities []string) []aosRepositorySelection {
+		sorted := slices.Clone(identities)
+		slices.Sort(sorted)
+		selections := make([]aosRepositorySelection, 0, len(sorted))
+		for _, identity := range sorted {
+			selections = append(selections, aosRepositorySelection{
+				Identity: identity,
+				Path:     filepath.Join(projects, filepath.FromSlash(identity)),
+				Source:   "test", Scope: "role", Reason: "test repository",
+			})
+		}
+		return selections
+	}
+	payload := aosRepositoryPlan{
+		Format:       agentComposeRepositoryPlanYAMLFormat,
+		ProjectsRoot: projects,
+		Roles:        map[string][]aosRepositorySelection{role: build(selected)},
+		Residency:    build(residency),
+	}
+	raw, err := yaml.Marshal(payload)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, raw, 0o600); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRoleProjectionLinksOnlyTheRoleSelections(t *testing.T) {
+	root := t.TempDir()
+	createNativeTestRepository(t, root, "coilyco-gaming", "galaxy-gen")
+	createNativeTestRepository(t, root, "owner", "one")
+	testRuntime := nativeTestRuntime(t, root)
+	testRuntime.Role = "platform"
+	writeNativeTestRolePlan(t, testRuntime.PlanFile, "platform",
+		[]string{"owner/one"},
+		[]string{"coilyco-gaming/galaxy-gen", "owner/one"})
+	writeNativeTestList(t, testRuntime.FleetFile, "coilyco-gaming", "owner")
+
+	projection, err := resolveExpectedRepositories(testRuntime)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(projection.Projected) != 1 || projection.Projected[0].Name != "one" {
+		t.Fatalf("platform projected %v, want only owner/one", projection.Projected)
+	}
+	// The fleet pass keeps every resident checkout current whatever the role
+	// composes, so narrowing projection must not narrow residency.
+	if len(projection.Resident) != 2 {
+		t.Fatalf("resident set was narrowed to %d, want 2", len(projection.Resident))
+	}
+	if !projection.Expected.matches("coilyco-gaming", "galaxy-gen") {
+		t.Fatal("a repository outside the role stopped belonging on disk")
+	}
+}
+
+func TestGamedevProjectionLinksTheGamingCheckouts(t *testing.T) {
+	root := t.TempDir()
+	createNativeTestRepository(t, root, "coilyco-gaming", "galaxy-gen")
+	createNativeTestRepository(t, root, "owner", "one")
+	testRuntime := nativeTestRuntime(t, root)
+	testRuntime.Role = "gamedev"
+	writeNativeTestRolePlan(t, testRuntime.PlanFile, "gamedev",
+		[]string{"coilyco-gaming/galaxy-gen", "owner/one"},
+		[]string{"coilyco-gaming/galaxy-gen", "owner/one"})
+	writeNativeTestList(t, testRuntime.FleetFile, "coilyco-gaming", "owner")
+
+	projection, err := resolveExpectedRepositories(testRuntime)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(projection.Projected) != 2 {
+		t.Fatalf("gamedev projected %d repositories, want 2", len(projection.Projected))
+	}
+}
+
+func TestAnUnknownRoleKeepsFullResidency(t *testing.T) {
+	root := t.TempDir()
+	createNativeTestRepository(t, root, "coilyco-gaming", "galaxy-gen")
+	createNativeTestRepository(t, root, "owner", "one")
+	testRuntime := nativeTestRuntime(t, root)
+	testRuntime.Role = "absent"
+	writeNativeTestRolePlan(t, testRuntime.PlanFile, "platform",
+		[]string{"owner/one"},
+		[]string{"coilyco-gaming/galaxy-gen", "owner/one"})
+	writeNativeTestList(t, testRuntime.FleetFile, "coilyco-gaming", "owner")
+
+	projection, err := resolveExpectedRepositories(testRuntime)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(projection.Projected) != 2 {
+		t.Fatalf("an unnamed role projected %d repositories, want the full 2",
+			len(projection.Projected))
+	}
+}
+
+// A role whose every selection is missing from disk would otherwise link
+// nothing, which drops the session into the canonical checkout silently.
+func TestARoleWithNoCheckoutOnDiskKeepsFullResidency(t *testing.T) {
+	root := t.TempDir()
+	createNativeTestRepository(t, root, "owner", "one")
+	testRuntime := nativeTestRuntime(t, root)
+	testRuntime.Role = "platform"
+	writeNativeTestRolePlan(t, testRuntime.PlanFile, "platform",
+		[]string{"owner/absent"},
+		[]string{"owner/absent", "owner/one"})
+	writeNativeTestList(t, testRuntime.FleetFile, "owner")
+
+	projection, err := resolveExpectedRepositories(testRuntime)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(projection.Projected) != 1 || projection.Projected[0].Name != "one" {
+		t.Fatalf("projected %v, want the full residency fallback", projection.Projected)
 	}
 }

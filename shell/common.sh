@@ -234,8 +234,10 @@ acompose() {
       # and already refuses an unsupported one by name.
       if [ -n "$harness" ] && command -v agent-compose >/dev/null 2>&1; then
         if _siren_native_shadow_available; then
-          command aos _native-shadow --harness "$harness" --assigned-role -- \
-            agent-compose launch "$role" "$harness" "$@"
+          # This file is symlinked live while aos ships on the release train,
+          # so an aos too old to scope projection takes --role and ignores it.
+          command aos _native-shadow --harness "$harness" --role "$role" \
+            --assigned-role -- agent-compose launch "$role" "$harness" "$@"
           return
         fi
         command agent-compose launch "$role" "$harness" "$@"

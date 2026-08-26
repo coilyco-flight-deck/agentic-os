@@ -66,40 +66,45 @@ and a resident `deploy` then sat 421 commits back, otherwise clean on `main`.
 ## Native startup narration
 
 Native startup runs several seconds of local Git and remote fetch work before
-the harness takes the terminal. It announces each phase on stderr before that
-phase runs and reports its elapsed time when it ends, so the wait is
-attributable rather than silent. Owner:
-[native agent workspaces](native-agent-workspaces.md).
+the harness takes the terminal. It announces each phase on stderr so the wait is
+attributable rather than silent. The narration has two forms and the stream
+decides which: a terminal gets one row that rewrites itself, anything else gets
+a line per phase, which is the form a log is read from later.
 
-An assigned native Codex launch projects Agent Compose's canonical annotation and short session ID into its interactive terminal title, keeping concurrent sessions recognizable by seat, role, and session. `aterm` keeps its static title for new Alacritty windows.
-
-## What a launch prints
+On a terminal, the row is redrawn about ten times a second, so a slow phase
+still visibly moves and a frozen frame means a stuck launch:
 
 ```text
-aos: launch   native claude startup
-aos: start    converge environment
-aos: done     converge environment 0.18s (0 catalogues, 12 MCP servers)
-aos: done     reclaim finished sessions 0.31s (4 live worktrees)
-aos: start    fleet pass over 19 repositories
-aos: fetch    1/19 coilyco-flight-deck/agentic-os
-aos: done     fleet pass over 19 repositories 14.8s (slowest coilyco-flight-deck/infrastructure 2.10s)
-aos: done     link 19 session worktrees 1.10s (19 linked)
-aos: ready    native startup 16.2s (fleet pass 14.8s, link 19 session worktrees 1.10s)
-aos: exec     agent-compose
+aos ⠹ fleet pass over 19 repositories // 7/19 coilyco-flight-deck/infrastructure 6.20s
 ```
 
-Every phase prints `start` before it runs and `done` with its elapsed time after,
-elided above. Per-repository `fetch` and `worktree` lines print before their
-command, so a stalled remote names the checkout it is stuck on, and each looping
-phase closes by naming its slowest item.
+Off a terminal, each phase prints `start` before it runs and `done` with its
+elapsed time after. Per-repository `fetch` and `worktree` lines name the
+checkout the command is on, and a looping phase closes by naming its slowest
+item:
 
-## Reading the closing lines
+```text
+aos: start    fleet pass over 19 repositories
+aos: fetch    1/19 coilyco-flight-deck/agentic-os
+aos: done     fleet pass over 19 repositories 14.8s (slowest infrastructure 2.10s)
+```
 
-`ready` totals the run and ranks phases that took at least a tenth of a second,
-so the line names the cost instead of restating the pipeline. `skip` explains a
-phase that did not need to run, which is how a fast startup accounts for itself.
-`exec` marks the boundary, and waiting after it belongs to Agent Compose or the
-harness.
+Either way the run closes on one `ready` line carrying the total, the session,
+and the phases that took at least a tenth of a second. A terminal erases the row
+first, and a warning written straight to stderr erases it too, landing on its
+own clean line with the row restored underneath.
+
+```text
+aos: ready    native startup 16.2s // 19 worktrees // /tmp/aos/native/ab85/projects // slowest fleet pass 14.8s
+```
+
+`skip` explains a phase that did not need to run. `exec` marks the boundary off
+a terminal, and waiting after it belongs to Agent Compose or the harness.
+
+`AOS_NATIVE_PROGRESS` selects the volume: `steps` is the default above,
+`summary` keeps the `ready` total alone, `debug` adds the launch command and
+internal notes and never collapses to one row, and `off` restores silence.
+Warnings and errors print at every level.
 
 ## Waiting on the startup lock
 
@@ -110,11 +115,6 @@ printing `wait  reclaiming startup lock abandoned by pid N`. A live holder is
 never stolen from: the waiting launch reports its PID every five seconds and
 gives up after two minutes naming that PID and the lock path.
 
-## Volume
+## Terminal titles
 
-`AOS_NATIVE_PROGRESS` selects how much reaches stderr.
-
-* `steps` - the default. Every phase, loop item, and the total.
-* `summary` - the `ready` total alone.
-* `debug` - adds the launch command and internal notes.
-* `off` - restores silence. Warnings and errors still print.
+An assigned native Codex launch projects Agent Compose's canonical annotation and short session ID into its interactive terminal title, keeping concurrent sessions recognizable by seat, role, and session. `aterm` keeps its static title for new Alacritty windows.
