@@ -22,6 +22,7 @@ const (
 	defaultOverlayBin    = "agent-compose"
 	defaultAOSBin        = "aos"
 	defaultTerminalBin   = "kitty"
+	defaultATermBin      = "aterm"
 	defaultWorkingEnvVar = "PROJECTS_ROOT"
 )
 
@@ -164,6 +165,7 @@ func newCommand(deps commandDeps) *cli.Command {
 					return runDoctor(ctx, deps, cmd)
 				},
 			},
+			newBundlesCommand(deps),
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			return runLaunch(ctx, deps, cmd)

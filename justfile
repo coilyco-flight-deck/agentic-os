@@ -136,6 +136,10 @@ aosguard-run *ARGS:
 aterm *ARGS:
     @go run -C aterm . "$@"
 
+# Write one macOS .app launcher per live role into ~/Applications, so a role opens from Spotlight or the Dock. `--dry-run` prints the bundles and their launcher scripts without writing. Pass `--icon <file.icns>` to give every bundle the same icon. See docs/aterm.md.
+aterm-bundles *ARGS:
+    @go run -C aterm . bundles "$@"
+
 # Compile the branded session launcher.
 aterm-build *ARGS:
     @go build -C aterm ./... "$@"

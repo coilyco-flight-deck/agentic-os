@@ -1,6 +1,6 @@
 # The native agent terminal
 
-Two things decide what a native agent session looks like: `aterm`, which opens the window, and the status-line composer, which fills the rows inside it.
+`aterm` opens the window a native agent session runs in. The status-line composer that fills the rows inside it is documented with the image that bakes it, in [in-container agent identity](dev-base-agent-identity.md).
 
 ## `aterm`
 
@@ -34,41 +34,19 @@ It needs `agent-compose` and kitty on `PATH` and bundles neither. Without `aos` 
 
 **It decodes the whole identity overlay.** `agent-compose overlay --json` ships a complete sensory identity per personality, and a struct naming fewer fields drops the rest in silence. `aterm/overlay.go` declares every leaf, and `TestOverlayDecodesEveryShippedField` fails on any that does not survive a round trip. Only the glyphs and `favorite_color` reach the window today.
 
-## Status-line composer
+## macOS app bundles
 
-A provider-discovery framework that auto-mounts the **full segment-composed status line** into every warded container, so an in-container agent session shows the same line a host session does.
+`aterm bundles` writes one `.app` per live role into `~/Applications`, so a role opens from Spotlight, the Dock, or Finder with no terminal to type in. Each is a wrapper around `aterm <role>`, so the window it opens is the one above.
 
-## The problem it replaces
+```text
+just aterm-bundles                     # write them
+just aterm-bundles --dry-run           # what would land, rendered
+just aterm-bundles --dry-run --json    # the same plan, for a script
+just aterm-bundles --icon path.icns    # one shared icon for every bundle
+```
 
-The retired host `agent-name.sh` hand-wired the second row from `$project_dir/.agentic-os/statusline.sh` and `$AGENT_STATUSLINE_EXTRA`. The container copy did not, and `statusline.sh` never shipped into the [dev-base image](dev-base-image.md), so everything past the name row was absent in containers. Hand-adding each segment does not scale, and it forces an external user to fork the composer to customize.
+**A Finder launch carries none of your shell's PATH.** It starts at `/usr/bin:/bin:/usr/sbin:/sbin`, where neither `aos`, `agent-compose`, nor kitty lives, so generation resolves all four binaries once and bakes them into the wrapper through the env vars `aterm` already reads. That is why the wrapper is generated rather than hand-written.
 
-## How it works
+**The wrapper claims no Dock tile of its own.** It exits as soon as `aterm` detaches the window, so a tile for it would flicker while the session it opened keeps running. `LSUIElement` leaves the kitty window as the only visible result, and the bundle stays pinnable and searchable regardless. A launch that fails before a window opens has nothing on screen to hold the error, so the wrapper shows it in an `osascript` alert rather than exiting into nothing.
 
-A **composer** ([`docker/dev-base/statusline.sh`](../docker/dev-base/statusline.sh)) is Claude Code's `statusLine` command. It reads the `statusLine` JSON payload on stdin, runs each discovered **provider** in filename order (handing it the same payload on stdin), and joins their output into the multi-row line.
-
-**Provider contract:** exit 0 with stdout = that segment; empty stdout or a non-zero exit = skipped. So a segment **self-suppresses** when irrelevant - the Agent Compose provider renders nothing outside a projected workspace, or where `acompose` is absent.
-
-The built-in provider is:
-
-* `15-agent-compose.sh` - asks `acompose statusline` to render the immutable
-bundle identity, role and harness, selected catalog footprint, and composition health.
-* `20-container.sh` - names the warded container from `WARD_CONTAINER_NAME`,
-since inside a container the hostname is an opaque id. Silent on a host.
-
-Two earlier base providers were removed. `10-agent-name.sh` duplicated the identity `acompose statusline` already renders, and `20-repos.sh` rendered a stray-checkout count, which is residency scanning rather than session state. `agent-name.sh` itself is retired: the [SessionStart banner](dev-base-agent-identity.md) reads `acompose whoami`.
-
-Agent Compose owns the row's content and bundle semantics. AOS only discovers the provider and passes the project directory, so the status line does not grow a second projection parser or identity cache.
-
-## Discovery and overlays
-
-The composer walks three provider dirs, lowest precedence first:
-
-1. **base** - `<composer-dir>/statusline.d` (baked into the image; override with `AOS_STATUSLINE_DIR`).
-2. **user** - `${XDG_CONFIG_HOME:-$HOME/.config}/agentic-os/statusline.d`.
-3. **repo** - `<project_dir>/.agentic-os/statusline.d`.
-
-A same-named file in a higher dir **overrides** the lower one, a new `NN-*.sh` **adds** a row, and a shadowing file that is not executable **masks** the lower provider. So a project or an external user customizes the line by dropping in a provider, **no fork** of the composer. Use 2-digit prefixes (lexical sort puts `100` before `20`).
-
-## Why it auto-mounts everywhere
-
-Every warded container runs dev-base, and the baked policy-tier [`managed-settings.json`](dev-base-agent-identity.md) points `statusLine` at the composer. ward injects no `statusLine` of its own, so the baked one is authoritative, and a new base provider rides the next image build to **all** containers at once. On hosts, `install-session-name.py` migrates a legacy direct self-name command to this composer and repoints a SessionStart hook still wired to the retired `agent-name.sh`. The infrastructure claude-hooks role invokes that installer, keeping rollout separate from the provider authored here.
+**Roles come from the live roster**, the same read the launcher and its completion use, so no second list of roles exists to go stale. A bundle whose role has left the roster is reported as stale rather than deleted, an app this command did not write is never overwritten, and every target is checked before any is written, so a refusal cannot half-regenerate the set. Bundles are per-role, taking the seat from the launch profiles, and each click opens a new session rather than focusing a running one.
