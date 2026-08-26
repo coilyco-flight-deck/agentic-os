@@ -63,6 +63,17 @@ func playSoundMark(card sessionCard, audible bool) {
 	}()
 }
 
+// hasSample answers whether the binary carries audio for a timbre, which is
+// what a roster that grew a personality breaks.
+func hasSample(timbre string) bool {
+	name := soundspec.FileName(timbre)
+	if name == "" {
+		return false
+	}
+	_, err := soundSamples.ReadFile("sounds/" + name)
+	return err == nil
+}
+
 func resolveSoundPlayer() []string {
 	for _, candidate := range soundPlayers[runtime.GOOS] {
 		if resolved, err := exec.LookPath(candidate[0]); err == nil {

@@ -32,7 +32,9 @@ The window opens maximized at font size 14.5, which `--start-as` and `--font-siz
 
 **`aterm doctor` preflights the whole chain**, exits 1 on a broken link, and names the unleased-shadow case a launch makes silently. `--json` is `aterm.doctor.v1`.
 
-**It decodes the whole identity overlay.** `agent-compose overlay --json` ships a complete sensory identity per personality, and a struct naming fewer fields drops the rest in silence. `aterm/overlay.go` declares every leaf, and `TestOverlayDecodesEveryShippedField` fails on any that does not survive a round trip. Only the glyphs and `favorite_color` reach the window today.
+**It decodes the whole identity overlay.** `agent-compose overlay --json` ships a complete sensory identity per personality, and a struct naming fewer fields drops the rest in silence. `aterm/overlay.go` declares every leaf, and `TestOverlayDecodesEveryShippedField` fails on any that does not survive a round trip. The window title takes the glyphs, the brand takes `favorite_color`, and the identity card takes the rest.
+
+**The fixtures do not catch upstream drift, so `just aterm-contract` walks the live roster.** Every launchable seat resolves, every unlaunchable one refuses with exit 3, every timbre has a sample, and the closest background pair holds a dE 3.0 floor. The recipe's own reason: it diffs the live overlay against the typed struct leaf by leaf, so a dropped field fails the day it is added. `ATERM_LIVE_ROSTER` makes a missing `agent-compose` fail rather than skip.
 
 ## macOS app bundles
 

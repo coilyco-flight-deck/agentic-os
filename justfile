@@ -156,6 +156,10 @@ aterm-lint *ARGS:
 aterm-sounds *ARGS:
     @cd aterm && go run ./soundgen sounds "$@"
 
+# Walk the live Agent Compose roster and assert aterm still fits it: every launchable seat resolves, every unlaunchable one refuses, no shipped overlay field is discarded, and every timbre has a sample. Fails rather than skips when agent-compose is missing. See docs/aterm.md.
+aterm-contract *ARGS:
+    @ATERM_LIVE_ROSTER=1 go test -C aterm -run TestLive -v . "$@"
+
 # Run the branded session launcher tests.
 aterm-test *ARGS:
     @go test -C aterm ./... "$@"

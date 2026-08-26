@@ -175,3 +175,38 @@ func relativeLuminance(value [3]uint8) float64 {
 	}
 	return 0.2126*channel(value[0]) + 0.7152*channel(value[1]) + 0.0722*channel(value[2])
 }
+
+// labDistance is the CIE76 difference between two colors. Hex distance says
+// nothing about whether an eye can tell two windows apart. See docs/aterm.md.
+func labDistance(first, second [3]uint8) float64 {
+	firstLab, secondLab := cielab(first), cielab(second)
+	total := 0.0
+	for index := range firstLab {
+		delta := firstLab[index] - secondLab[index]
+		total += delta * delta
+	}
+	return math.Sqrt(total)
+}
+
+func cielab(value [3]uint8) [3]float64 {
+	linear := func(component uint8) float64 {
+		normalized := float64(component) / 255
+		if normalized <= 0.04045 {
+			return normalized / 12.92
+		}
+		return math.Pow((normalized+0.055)/1.055, 2.4)
+	}
+	red, green, blue := linear(value[0]), linear(value[1]), linear(value[2])
+	// D65 white, the reference every sRGB screen is calibrated against.
+	x := (red*0.4124 + green*0.3576 + blue*0.1805) / 0.95047
+	y := red*0.2126 + green*0.7152 + blue*0.0722
+	z := (red*0.0193 + green*0.1192 + blue*0.9505) / 1.08883
+	shape := func(component float64) float64 {
+		if component > 0.008856 {
+			return math.Cbrt(component)
+		}
+		return 7.787*component + 16.0/116
+	}
+	fx, fy, fz := shape(x), shape(y), shape(z)
+	return [3]float64{116*fy - 16, 500 * (fx - fy), 200 * (fy - fz)}
+}
