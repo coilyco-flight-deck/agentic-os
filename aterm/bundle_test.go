@@ -13,12 +13,29 @@ func testSpec() bundleSpec {
 		Role:             "platform",
 		DisplayName:      "Agentic Platform Engineer",
 		Person:           "Angie",
+		SeatLabel:        "Claude",
 		Version:          "1.2.3",
+		BakedPath:        "/opt/homebrew/bin:/usr/bin:/bin",
 		WorkingDirectory: "/Users/kai/projects",
 		ATermBin:         "/opt/homebrew/bin/aterm",
 		AOSBin:           "/Users/kai/.local/bin/aos",
 		AgentComposeBin:  "/opt/homebrew/bin/agent-compose",
 		TerminalBin:      "/Applications/kitty.app/Contents/MacOS/kitty",
+	}
+}
+
+// `agent-compose launch` resolves the harness off PATH, so pinning the three
+// binaries aterm itself needs still left "claude not found" after shadow init.
+func TestBundleLauncherRebuildsPathRatherThanOnlyPinningBinaries(t *testing.T) {
+	launcher := bundleLauncher(testSpec())
+	if !strings.Contains(launcher, "/opt/homebrew/bin:/usr/bin:/bin") {
+		t.Fatalf("the generation-time PATH should be baked in as the fallback:\n%s", launcher)
+	}
+	if !strings.Contains(launcher, "/bin/zsh -lc") {
+		t.Fatalf("a login shell should supply the current PATH:\n%s", launcher)
+	}
+	if !strings.Contains(launcher, "export PATH") {
+		t.Fatalf("PATH has to be exported to reach the harness:\n%s", launcher)
 	}
 }
 
@@ -114,29 +131,42 @@ func writeFixtureBundle(t *testing.T, root, name, body string) string {
 
 // A slug that turned over leaves a tile opening nothing, and its refusal only
 // fires once someone clicks it. Naming it at generation is the earlier warning.
-func TestStaleBundlesNamesARetiredRoleAndLeavesAForeignAppAlone(t *testing.T) {
+func TestStaleBundlesNamesWhatThisRunNoLongerWritesAndSkipsAForeignApp(t *testing.T) {
 	root := t.TempDir()
-	retired := writeFixtureBundle(t, root, "aterm retired", "#!/bin/sh\n"+bundleMarker+"\n")
-	writeFixtureBundle(t, root, "aterm platform", "#!/bin/sh\n"+bundleMarker+"\n")
-	writeFixtureBundle(t, root, "aterm notmine", "#!/bin/sh\nexit 0\n")
-	roster := rosterDocument{Items: []rosterRole{{Slug: "platform"}}}
-	stale := staleBundles(root, roster)
+	retired := writeFixtureBundle(t, root, "Claude :: Rex :: Retired Role", "#!/bin/sh\n"+bundleMarker+"\n")
+	kept := writeFixtureBundle(t, root, "Claude :: Angie :: Agentic Platform Engineer",
+		"#!/bin/sh\n"+bundleMarker+"\n")
+	writeFixtureBundle(t, root, "Some Other App", "#!/bin/sh\nexit 0\n")
+	stale := staleBundles(root, map[string]bool{kept: true})
 	if len(stale) != 1 || stale[0] != retired {
-		t.Fatalf("only the retired generated bundle is stale, got %v", stale)
+		t.Fatalf("only the bundle this run no longer writes is stale, got %v", stale)
+	}
+}
+
+// The scheme renamed once already. Matching on a filename would have orphaned
+// every bundle the previous release wrote instead of reporting it.
+func TestStaleBundlesFindsABundleWrittenUnderTheOldNamingScheme(t *testing.T) {
+	root := t.TempDir()
+	old := writeFixtureBundle(t, root, "aterm platform", "#!/bin/sh\n"+bundleMarker+"\n")
+	stale := staleBundles(root, map[string]bool{})
+	if len(stale) != 1 || stale[0] != old {
+		t.Fatalf("an old-scheme bundle should still be recognized as ours, got %v", stale)
 	}
 }
 
 func TestReplaceableGuardsAnAppThisCommandDidNotWrite(t *testing.T) {
 	root := t.TempDir()
-	mine := writeFixtureBundle(t, root, "aterm platform", "#!/bin/sh\n"+bundleMarker+"\n")
-	theirs := writeFixtureBundle(t, root, "aterm sysadmin", "#!/bin/sh\nexit 0\n")
+	mine := writeFixtureBundle(t, root, "Claude :: Angie :: Agentic Platform Engineer",
+		"#!/bin/sh\n"+bundleMarker+"\n")
+	theirs := writeFixtureBundle(t, root, "Claude :: Vera :: Systems Administrator",
+		"#!/bin/sh\nexit 0\n")
 	if err := replaceable(mine); err != nil {
 		t.Fatalf("regenerating our own bundle should be allowed: %v", err)
 	}
 	if err := replaceable(theirs); err == nil {
 		t.Fatal("an app this command did not write should stay untouched")
 	}
-	if err := replaceable(filepath.Join(root, "aterm absent.app")); err != nil {
+	if err := replaceable(filepath.Join(root, "Claude :: Nobody.app")); err != nil {
 		t.Fatalf("a missing bundle is not a conflict: %v", err)
 	}
 }
@@ -151,7 +181,7 @@ func TestWriteBundleProducesAnExecutableLauncherAndAValidLayout(t *testing.T) {
 		Person:     spec.Person,
 		Identifier: spec.identifier(),
 		Path:       filepath.Join(t.TempDir(), spec.name()+".app"),
-		Executable: spec.name(),
+		Executable: spec.executable(),
 		Launcher:   bundleLauncher(spec),
 		Plist:      bundleInfoPlist(spec),
 	}
@@ -175,16 +205,21 @@ func TestWriteBundleProducesAnExecutableLauncherAndAValidLayout(t *testing.T) {
 func TestRenderBundlePlanNamesEveryBundleAndItsStaleLeftovers(t *testing.T) {
 	plan := bundlePlan{
 		Output: "/Users/kai/Applications",
-		Items: []bundleItem{
-			{Role: "platform", Person: "Angie", Path: "/Users/kai/Applications/aterm platform.app"},
-		},
-		Stale: []string{"/Users/kai/Applications/aterm retired.app"},
+		Items: []bundleItem{{
+			Role:   "platform",
+			Person: "Angie",
+			Name:   "Claude // Angie // Agentic Platform Engineer",
+			Path:   "/Users/kai/Applications/Claude :: Angie :: Agentic Platform Engineer.app",
+		}},
+		Stale: []string{"/Users/kai/Applications/Claude :: Rex :: Retired.app"},
 	}
 	rendered := &strings.Builder{}
 	if err := renderBundlePlan(rendered, plan); err != nil {
 		t.Fatalf("render: %v", err)
 	}
-	for _, want := range []string{"/Users/kai/Applications", "platform", "Angie", "retired"} {
+	// The rendered name is the one the Dock draws, not the one on disk.
+	for _, want := range []string{"/Users/kai/Applications", "platform",
+		"Claude // Angie // Agentic Platform Engineer", "Retired"} {
 		if !strings.Contains(rendered.String(), want) {
 			t.Fatalf("the rendered plan should name %q:\n%s", want, rendered)
 		}
@@ -201,5 +236,56 @@ func TestRenderBundlePlanSaysWhenThereIsNoIcon(t *testing.T) {
 	}
 	if !strings.Contains(rendered.String(), "system app icon") {
 		t.Fatalf("an absent icon should be named rather than blank:\n%s", rendered)
+	}
+}
+
+// Kai asked for "Claude // Angie // ...", and a POSIX filename cannot hold a
+// slash. macOS renders a stored colon as one, so the name round-trips.
+func TestBundleNameStoresTheHouseSeparatorAsMacOSRendersIt(t *testing.T) {
+	spec := testSpec()
+	if got := spec.name(); got != "Claude :: Angie :: Agentic Platform Engineer" {
+		t.Fatalf("on-disk name is %q", got)
+	}
+	if got := spec.displayName(); got != "Claude // Angie // Agentic Platform Engineer" {
+		t.Fatalf("displayed name is %q", got)
+	}
+	if strings.Contains(spec.name(), "/") {
+		t.Fatal("a slash in the basename would read as a path separator")
+	}
+}
+
+// A display name reaching the filesystem is the one place a stray slash could
+// still arrive, since the roster is not this binary's to constrain.
+func TestBundleNameNeutralizesASlashComingFromTheRoster(t *testing.T) {
+	spec := testSpec()
+	spec.DisplayName = "Research/Development"
+	if strings.Contains(spec.name(), "/") {
+		t.Fatalf("the roster's slash should not survive into the basename: %q", spec.name())
+	}
+}
+
+func TestBundleInfoPlistCarriesTheDisplayNameAndAPlainExecutable(t *testing.T) {
+	plist := bundleInfoPlist(testSpec())
+	if !strings.Contains(plist, "Claude // Angie // Agentic Platform Engineer") {
+		t.Fatalf("the plist should carry the rendered name:\n%s", plist)
+	}
+	if !strings.Contains(plist, "<string>aterm-platform</string>") {
+		t.Fatalf("the executable should stay a plain slug:\n%s", plist)
+	}
+}
+
+// A generating session's scratch directories must not outlive it inside seven
+// bundles, and a duplicate entry is noise in a file a person may read.
+func TestLivePathEntriesKeepsOnlyRealDirectoriesAndDropsRepeats(t *testing.T) {
+	real := t.TempDir()
+	file := filepath.Join(real, "not-a-dir")
+	if err := os.WriteFile(file, []byte("x"), 0o644); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+	joined := strings.Join([]string{real, "/nope/gone", file, real, ""},
+		string(filepath.ListSeparator))
+	got := livePathEntries(joined)
+	if got != real {
+		t.Fatalf("only the real directory should survive, got %q", got)
 	}
 }

@@ -506,3 +506,20 @@ func TestBrandReachesTheTerminalArguments(t *testing.T) {
 		t.Fatalf("session stage should follow the terminal's own flags: %v", plan.Arguments)
 	}
 }
+
+// A session window that opens small enough to need resizing before the first
+// prompt is the thing Kai reported. See docs/aterm.md.
+func TestWindowOptionsReachKittyAndRefuseNonsense(t *testing.T) {
+	if err := validateWindow("maximized", "14.5"); err != nil {
+		t.Fatalf("the defaults should validate: %v", err)
+	}
+	if err := validateWindow("embiggened", "14.5"); err == nil {
+		t.Fatal("an unknown window state should be refused before kitty sees it")
+	}
+	if err := validateWindow("maximized", "huge"); err == nil {
+		t.Fatal("a non-numeric font size should be refused")
+	}
+	if err := validateWindow("maximized", "0"); err == nil {
+		t.Fatal("a zero font size should be refused")
+	}
+}

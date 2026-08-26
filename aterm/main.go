@@ -10,6 +10,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/urfave/cli/v3"
@@ -18,11 +20,15 @@ import (
 var version = "dev"
 
 const (
-	defaultExpression    = "acting"
-	defaultOverlayBin    = "agent-compose"
-	defaultAOSBin        = "aos"
-	defaultTerminalBin   = "kitty"
-	defaultATermBin      = "aterm"
+	defaultExpression  = "acting"
+	defaultOverlayBin  = "agent-compose"
+	defaultAOSBin      = "aos"
+	defaultTerminalBin = "kitty"
+	defaultATermBin    = "aterm"
+	// An agent session is the window's whole job, so it opens at the size that
+	// job needs. kitty's own default font is 11.0. See docs/aterm.md.
+	defaultStartAs       = "maximized"
+	defaultFontSize      = "14.5"
 	defaultWorkingEnvVar = "PROJECTS_ROOT"
 )
 
@@ -117,6 +123,16 @@ func newCommand(deps commandDeps) *cli.Command {
 			},
 			&cli.StringFlag{Name: "task-title", Usage: "repository or issue label for the window title"},
 			&cli.StringFlag{
+				Name:  "start-as",
+				Value: defaultStartAs,
+				Usage: "kitty window state at open: normal, maximized, or fullscreen",
+			},
+			&cli.StringFlag{
+				Name:  "font-size",
+				Value: defaultFontSize,
+				Usage: "kitty font size for the session window",
+			},
+			&cli.StringFlag{
 				Name:  "working-directory",
 				Value: defaultWorkingDirectory(),
 				Usage: "agent working directory (defaults to the projects root)",
@@ -207,12 +223,17 @@ func runLaunch(ctx context.Context, deps commandDeps, cmd *cli.Command) error {
 	if err != nil {
 		return err
 	}
+	if err := validateWindow(cmd.String("start-as"), cmd.String("font-size")); err != nil {
+		return err
+	}
 	request := launchRequest{
 		Role:             role,
 		Seat:             seat,
 		Expression:       strings.TrimSpace(cmd.String("expression")),
 		TaskTitle:        cmd.String("task-title"),
 		WorkingDirectory: cwd,
+		StartAs:          strings.TrimSpace(cmd.String("start-as")),
+		FontSize:         strings.TrimSpace(cmd.String("font-size")),
 		AgentComposeBin:  cmd.String("agent-compose-bin"),
 		AOSBin:           cmd.String("aos-bin"),
 		TerminalBin:      cmd.String("terminal-bin"),
@@ -335,6 +356,21 @@ func defaultSeat(ctx context.Context, deps commandDeps, aosBin string, role rost
 	// An aos too old for the verb still launches, on the catalogue's own order
 	// whose first native entry is the frontier seat.
 	return role.nativeSeats()[0].Harness
+}
+
+// validateWindow refuses a bad window option here, where the message can name
+// the flag, rather than letting kitty refuse an argv it did not ask for.
+func validateWindow(startAs, fontSize string) error {
+	states := []string{"normal", "maximized", "fullscreen", "minimized"}
+	if !slices.Contains(states, strings.TrimSpace(startAs)) {
+		return withExit(exitUsage, fmt.Errorf(
+			"--start-as %q is not one of %s", startAs, strings.Join(states, ", ")))
+	}
+	size, err := strconv.ParseFloat(strings.TrimSpace(fontSize), 64)
+	if err != nil || size <= 0 {
+		return withExit(exitUsage, fmt.Errorf("--font-size %q is not a positive number", fontSize))
+	}
+	return nil
 }
 
 func requireBinary(lookPath func(string) (string, error), name string) (string, error) {

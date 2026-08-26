@@ -18,6 +18,8 @@ type launchRequest struct {
 	AOSBin           string
 	TerminalBin      string
 	Workspace        string
+	StartAs          string
+	FontSize         string
 	NoMotion         bool
 	Silent           bool
 	Extra            []string
@@ -94,6 +96,8 @@ func buildLaunchPlan(
 	arguments := []string{
 		"--title", brand.Title,
 		"--directory", cwd,
+		"--start-as", request.StartAs,
+		"-o", fmt.Sprintf("font_size=%s", request.FontSize),
 		"-o", "background_opacity=1.0",
 		"-o", fmt.Sprintf("background=%s", brand.Background),
 		"-o", fmt.Sprintf("cursor=%s", brand.Accent),

@@ -31,11 +31,12 @@ func bundleInfoPlist(spec bundleSpec) string {
 		fmt.Fprintf(body, "\t<key>%s</key>\n\t<string>%s</string>\n", key, xmlEscape(value))
 	}
 	write("CFBundleDevelopmentRegion", "en")
-	write("CFBundleExecutable", spec.name())
+	write("CFBundleExecutable", spec.executable())
 	write("CFBundleGetInfoString", spec.Person+" // "+spec.DisplayName)
 	write("CFBundleIdentifier", spec.identifier())
 	write("CFBundleInfoDictionaryVersion", "6.0")
-	write("CFBundleName", spec.name())
+	write("CFBundleName", spec.displayName())
+	write("CFBundleDisplayName", spec.displayName())
 	write("CFBundlePackageType", "APPL")
 	write("CFBundleShortVersionString", spec.Version)
 	write("CFBundleVersion", spec.Version)
@@ -47,8 +48,8 @@ func bundleInfoPlist(spec bundleSpec) string {
 	return plistPreamble + body.String() + plistEpilogue
 }
 
-// bundleLauncher bakes in every resolved binary, because a Finder launch starts
-// with a login PATH that carries none of them. See docs/aterm.md.
+// bundleLauncher rebuilds the environment a Finder launch does not get, PATH
+// included, since `agent-compose launch` resolves the harness. See docs/aterm.md.
 func bundleLauncher(spec bundleSpec) string {
 	invocation := strings.Join([]string{
 		shellQuote(spec.ATermBin),
@@ -61,6 +62,13 @@ func bundleLauncher(spec bundleSpec) string {
 		bundleMarker,
 		"# Regenerate rather than editing: `aterm bundles`.",
 		"set -u",
+		"",
+		"baked=" + shellQuote(spec.BakedPath),
+		// A login shell keeps PATH current as tools move, and the baked copy
+		// covers a profile that fails or never exports one.
+		`live=$(/bin/zsh -lc 'printf %s "$PATH"' 2>/dev/null) || live=''`,
+		`if [ -n "$live" ]; then PATH="$live:$baked"; else PATH="$baked"; fi`,
+		"export PATH",
 		"",
 		"AGENT_COMPOSE_BIN=" + shellQuote(spec.AgentComposeBin),
 		"AOS_BIN=" + shellQuote(spec.AOSBin),
@@ -79,7 +87,7 @@ func bundleLauncher(spec bundleSpec) string {
 		`rm -f "$log"`,
 		`osascript -e 'on run argv' \`,
 		"\t-e 'display alert (item 1 of argv) message (item 2 of argv) as critical' \\",
-		"\t-e 'end run' " + shellQuote(spec.name()+" could not launch") + ` "$detail" >/dev/null 2>&1`,
+		"\t-e 'end run' " + shellQuote(spec.displayName()+" could not launch") + ` "$detail" >/dev/null 2>&1`,
 		"exit 1",
 	}
 	return strings.Join(lines, "\n") + "\n"
@@ -110,8 +118,7 @@ func renderBundlePlan(writer io.Writer, plan bundlePlan) error {
 	}
 	fmt.Fprintf(lines, "  %s%s\n", bundleLabelStyle.Render("icon"), icon)
 	for _, item := range plan.Items {
-		fmt.Fprintf(lines, "  %s%s\n",
-			bundleLabelStyle.Render(item.Role), filepath.Base(item.Path)+" // "+item.Person)
+		fmt.Fprintf(lines, "  %s%s\n", bundleLabelStyle.Render(item.Role), item.Name)
 	}
 	for _, path := range plan.Stale {
 		fmt.Fprintf(lines, "  %s%s\n", bundleLabelStyle.Render("stale"), filepath.Base(path))

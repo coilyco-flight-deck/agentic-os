@@ -250,9 +250,11 @@ assert plan["child"][-4:] == ["launch", "tpm", "codex", "--resume"], plan["child
 # kitty takes the program as trailing arguments, so the stage is the tail.
 stage = plan["arguments"].index(sys.argv[3])
 assert plan["arguments"][stage + 1] == "_session"
-# The brand has to survive into the terminal's own flags.
+# The brand has to survive into the terminal's own flags, and so does the
+# window size a session opens at.
 joined = " ".join(plan["arguments"])
-for key in ("background=", "cursor=", "selection_background=", "selection_foreground="):
+for key in ("background=", "cursor=", "selection_background=", "selection_foreground=",
+            "font_size=", "--start-as"):
     assert key in joined, (key, plan["arguments"])
 PY
     )
