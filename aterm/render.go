@@ -72,11 +72,11 @@ func shadowLine(shadowed bool) string {
 }
 
 // personalityLine is the first place the sensory identity shows up: each
-// personality in its own color, behind its own glyph.
+// personality in its own color, behind its own emblem.
 func personalityLine(document overlayDocument) string {
 	parts := make([]string, 0, len(document.Personalities))
 	for _, personality := range document.Personalities {
-		label := strings.TrimSpace(personality.Emblem.Glyph + " " + personality.Name)
+		label := strings.TrimSpace(personality.Emblem.Emoji + " " + personality.Name)
 		if hexColorPattern.MatchString(personality.Color) {
 			label = lipgloss.NewStyle().Foreground(lipgloss.Color(personality.Color)).Render(label)
 		}

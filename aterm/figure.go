@@ -2,7 +2,6 @@ package main
 
 import (
 	"math"
-	"sort"
 	"strings"
 )
 
@@ -167,35 +166,4 @@ func motifStipple(motif string) rune {
 		sum = -sum
 	}
 	return palette[sum%len(palette)]
-}
-
-// revealOrder turns `form.motion` into the order the figure arrives in. Nine
-// distinct values ship across the roster and none of them was ever animated.
-func revealOrder(motion string, cells []figureCell) []figureCell {
-	ordered := append([]figureCell(nil), cells...)
-	key := func(cell figureCell) float64 {
-		dx, dy := figureOffset(cell.X, cell.Y)
-		switch strings.ToLower(strings.TrimSpace(motion)) {
-		case "spinning":
-			return math.Atan2(dy, dx)
-		case "settling":
-			return dy
-		case "pulling", "titrating":
-			return -dy
-		case "unfolding", "glowing":
-			return math.Hypot(dx, dy)
-		case "bracing":
-			return -math.Hypot(dx, dy)
-		case "scanning":
-			return dx
-		case "severing":
-			return dx + dy
-		default:
-			return dx*float64(figureHeight) + dy
-		}
-	}
-	sort.SliceStable(ordered, func(first, second int) bool {
-		return key(ordered[first]) < key(ordered[second])
-	})
-	return ordered
 }

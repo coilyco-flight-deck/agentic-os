@@ -25,9 +25,7 @@ type cardFigure struct {
 	Color    string `json:"color"`
 	Motif    string `json:"motif"`
 	Emoji    string `json:"emoji"`
-	Glyph    string `json:"glyph"`
 	Geometry string `json:"geometry"`
-	Motion   string `json:"motion"`
 	Timbre   string `json:"timbre"`
 	Contour  string `json:"contour"`
 	Pulse    string `json:"pulse"`
@@ -64,9 +62,7 @@ func buildSessionCard(document overlayDocument, plan launchPlan) sessionCard {
 			Color:    personality.Color,
 			Motif:    personality.Motif,
 			Emoji:    personality.Emblem.Emoji,
-			Glyph:    personality.Emblem.Glyph,
-			Geometry: personality.Form.Geometry,
-			Motion:   personality.Form.Motion,
+			Geometry: personality.Geometry,
 			Timbre:   personality.SoundMark.Timbre,
 			Contour:  personality.SoundMark.Contour,
 			Pulse:    personality.SoundMark.Pulse,
@@ -146,7 +142,7 @@ func cardDetails(card sessionCard) []string {
 func cardLegend(card sessionCard) string {
 	parts := make([]string, 0, len(card.Figures))
 	for _, figure := range card.Figures {
-		label := strings.TrimSpace(figure.Emoji + " " + figure.Glyph + " " + figure.Name)
+		label := strings.TrimSpace(figure.Emoji + " " + figure.Name)
 		if hexColorPattern.MatchString(figure.Color) {
 			label = lipgloss.NewStyle().Foreground(lipgloss.Color(figure.Color)).Render(label)
 		}
@@ -156,7 +152,7 @@ func cardLegend(card sessionCard) string {
 }
 
 func renderFigure(figure cardFigure, progress float64) []string {
-	ordered := revealOrder(figure.Motion, plotFigure(figure.Geometry))
+	ordered := plotFigure(figure.Geometry)
 	shown := int(float64(len(ordered))*progress + 0.5)
 	if shown > len(ordered) {
 		shown = len(ordered)
@@ -164,15 +160,6 @@ func renderFigure(figure cardFigure, progress float64) []string {
 	ink := lipgloss.NewStyle()
 	if hexColorPattern.MatchString(figure.Color) {
 		ink = ink.Foreground(lipgloss.Color(figure.Color))
-	}
-	// Glowing has nothing to reveal in order, so it arrives dim and brightens.
-	if strings.EqualFold(strings.TrimSpace(figure.Motion), "glowing") {
-		if progress < 1 {
-			ink = ink.Faint(true)
-		}
-		if progress > 0 {
-			shown = len(ordered)
-		}
 	}
 	texture := lipgloss.NewStyle().Faint(true)
 	grid := make([][]string, figureHeight)

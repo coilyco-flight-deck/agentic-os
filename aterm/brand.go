@@ -57,8 +57,8 @@ func buildTitle(document overlayDocument, taskTitle, workspace string) (string, 
 	}
 	glyphs := make([]string, 0, len(document.Personalities))
 	for _, personality := range document.Personalities {
-		if glyph := strings.TrimSpace(personality.Emblem.Glyph); glyph != "" {
-			glyphs = append(glyphs, glyph)
+		if mark := strings.TrimSpace(personality.Emblem.Emoji); mark != "" {
+			glyphs = append(glyphs, mark)
 		}
 	}
 	role := strings.TrimSpace(document.RoleDisplayName)

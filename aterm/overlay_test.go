@@ -91,12 +91,10 @@ func TestOverlayPersonalitiesCarryTheFullSensoryVocabulary(t *testing.T) {
 			"name":               personality.Name,
 			"color":              personality.Color,
 			"motif":              personality.Motif,
-			"emblem.name":        personality.Emblem.Name,
 			"emblem.emoji":       personality.Emblem.Emoji,
-			"emblem.glyph":       personality.Emblem.Glyph,
-			"form.silhouette":    personality.Form.Silhouette,
-			"form.geometry":      personality.Form.Geometry,
-			"form.motion":        personality.Form.Motion,
+			"geometry":           personality.Geometry,
+			"body.archetype":     personality.Body.Archetype,
+			"body.attachment":    personality.Body.Attachment,
 			"sound_mark.timbre":  personality.SoundMark.Timbre,
 			"sound_mark.contour": personality.SoundMark.Contour,
 			"sound_mark.pulse":   personality.SoundMark.Pulse,
@@ -105,6 +103,9 @@ func TestOverlayPersonalitiesCarryTheFullSensoryVocabulary(t *testing.T) {
 			if value == "" {
 				t.Errorf("personality %s has an empty %s", personality.Name, field)
 			}
+		}
+		if len(personality.Emblem.Names) == 0 {
+			t.Errorf("personality %s ships no emblem names", personality.Name)
 		}
 		if !hexColorPattern.MatchString(personality.Color) {
 			t.Errorf("personality %s color %q is not #RRGGBB", personality.Name, personality.Color)

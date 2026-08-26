@@ -60,8 +60,18 @@ func liveOverlay(t *testing.T, deps commandDeps, agentCompose, role, seat string
 // ships and the struct drops is a failure on the day it is added.
 func TestLiveOverlayDiscardsNoField(t *testing.T) {
 	deps, agentCompose, roster := liveRoster(t)
-	// Nothing is waived today. An entry here needs a reason, not a shrug.
+	// An entry here needs a reason, not a shrug. These five come out once the
+	// released roster drops them too. Why, and when: agentic-os#1285.
 	waived := map[string]string{}
+	for index := 0; index < 4; index++ {
+		for _, path := range []string{
+			"emblem.glyph", "emblem.name",
+			"form.silhouette", "form.geometry", "form.motion",
+		} {
+			waived[fmt.Sprintf("personalities[%d].%s", index, path)] =
+				"retired by agent-compose#364, still shipped by an older installed roster"
+		}
+	}
 	for _, role := range roster.Items {
 		for _, seat := range role.nativeSeats() {
 			name := role.Slug + "/" + seat.Harness

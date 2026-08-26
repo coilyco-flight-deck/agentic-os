@@ -377,7 +377,10 @@ func TestBuildTitleRejectsControlCharactersAndTruncates(t *testing.T) {
 }
 
 func TestColorDerivationIsDeterministicAndReadable(t *testing.T) {
-	brand, err := buildBrand(platformOverlay(t), "", "")
+	// The local tint is what a document with no solved background falls back to.
+	document := platformOverlay(t)
+	document.Background = ""
+	brand, err := buildBrand(document, "", "")
 	if err != nil {
 		t.Fatalf("build brand: %v", err)
 	}
@@ -528,6 +531,7 @@ func TestWindowOptionsReachKittyAndRefuseNonsense(t *testing.T) {
 // holding one overlay cannot. agentic-os#1245, agent-compose#358
 func TestTheRosterSolvedBackgroundWinsOverTheLocalTint(t *testing.T) {
 	document := platformOverlay(t)
+	document.Background = ""
 	tinted, err := buildBrand(document, "", "")
 	if err != nil {
 		t.Fatalf("build brand: %v", err)

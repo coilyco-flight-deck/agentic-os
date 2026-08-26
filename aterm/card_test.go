@@ -66,25 +66,6 @@ func TestAnUnshippedGeometryStillDraws(t *testing.T) {
 	}
 }
 
-func TestRevealOrderCoversEveryCellAndVariesByMotion(t *testing.T) {
-	cells := plotFigure("radial-spokes")
-	seen := map[string]int{}
-	for _, motion := range []string{"spinning", "settling", "pulling", "scanning", "severing", "nope"} {
-		ordered := revealOrder(motion, cells)
-		if len(ordered) != len(cells) {
-			t.Fatalf("%s dropped cells: %d of %d", motion, len(ordered), len(cells))
-		}
-		key := ""
-		for _, cell := range ordered {
-			key += string(rune('a'+cell.X)) + string(rune('a'+cell.Y))
-		}
-		seen[key]++
-	}
-	if len(seen) < 4 {
-		t.Fatalf("six motions produced %d distinct orders", len(seen))
-	}
-}
-
 func TestCardRoundTripsThroughTheSessionStage(t *testing.T) {
 	document := platformOverlay(t)
 	plan, err := buildLaunchPlan(
@@ -112,7 +93,7 @@ func TestCardRoundTripsThroughTheSessionStage(t *testing.T) {
 	if len(options.Card.Figures) != len(document.Personalities) {
 		t.Fatalf("card figures = %d, want %d", len(options.Card.Figures), len(document.Personalities))
 	}
-	if options.Card.Figures[0].Geometry != document.Personalities[0].Form.Geometry {
+	if options.Card.Figures[0].Geometry != document.Personalities[0].Geometry {
 		t.Fatalf("the card lost the geometry: %+v", options.Card.Figures[0])
 	}
 }

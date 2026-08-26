@@ -20,18 +20,17 @@ type overlaySeat struct {
 	Tier     string `json:"tier"`
 }
 
+// Names run widest-reading first, the emoji's own name then the roster's reading.
 type overlayEmblem struct {
-	Name  string `json:"name"`
-	Emoji string `json:"emoji"`
-	Glyph string `json:"glyph"`
+	Names []string `json:"names"`
+	Emoji string   `json:"emoji"`
 }
 
-// The visual and audible halves of a personality's sensory identity, decoded
-// whole rather than sampled. See docs/aterm.md.
-type overlayForm struct {
-	Silhouette string `json:"silhouette"`
-	Geometry   string `json:"geometry"`
-	Motion     string `json:"motion"`
+// The creature the emblem belongs to, decoded whole rather than sampled so a
+// dropped upstream field fails here. See docs/aterm.md.
+type overlayBody struct {
+	Archetype  string `json:"archetype"`
+	Attachment string `json:"attachment"`
 }
 
 type overlaySoundMark struct {
@@ -44,8 +43,9 @@ type overlayPersonality struct {
 	Name      string           `json:"name"`
 	Color     string           `json:"color"`
 	Motif     string           `json:"motif"`
+	Geometry  string           `json:"geometry"`
 	Emblem    overlayEmblem    `json:"emblem"`
-	Form      overlayForm      `json:"form"`
+	Body      overlayBody      `json:"body"`
 	SoundMark overlaySoundMark `json:"sound_mark"`
 }
 
@@ -56,6 +56,7 @@ type overlayDocument struct {
 	Role            string      `json:"role"`
 	RoleDisplayName string      `json:"role_display_name"`
 	Purpose         string      `json:"purpose"`
+	Stance          string      `json:"stance"`
 	Seat            overlaySeat `json:"seat"`
 	Annotation      string      `json:"annotation"`
 	Expression      string      `json:"expression"`

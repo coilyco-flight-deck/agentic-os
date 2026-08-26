@@ -154,8 +154,9 @@ func checkSensoryVocabulary(report *doctorReport, document overlayDocument) {
 		for name, value := range map[string]string{
 			"color":      personality.Color,
 			"motif":      personality.Motif,
-			"emblem":     personality.Emblem.Glyph,
-			"form":       personality.Form.Geometry,
+			"emblem":     personality.Emblem.Emoji,
+			"geometry":   personality.Geometry,
+			"body":       personality.Body.Archetype,
 			"sound_mark": personality.SoundMark.Timbre,
 		} {
 			if strings.TrimSpace(value) == "" {
