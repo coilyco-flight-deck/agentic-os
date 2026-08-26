@@ -212,6 +212,9 @@ DEFAULT_HOOK_IDS = [
     "agent-compose-dedup",
     "trufflehog",
     "pr-guard",
+    # Added last: aos wired this one locally and consumers never got it, so the
+    # block drifted everywhere while the authoring repo stayed current (#937).
+    "git-workflow",
 ]
 
 # Per-repo hook opt-outs. eco-* repos vendor the Strange Loop Games Unity SDK,
