@@ -179,14 +179,23 @@ PY
     echo "$out"
 }
 
+# aterm ships on its own target list, which carries no Windows entry. See
+# aterm/release-targets.txt and agentic-os#1264.
+aterm_targets="$repo_root/aterm/release-targets.txt"
+
+aterm_builds_target() {
+    awk -v want="$1" '!/^[[:space:]]*(#|$)/ && $0 == want { found = 1 }
+        END { exit found ? 0 : 1 }' "$aterm_targets"
+}
+
 build_aterm() {
     target=$1
+    if ! aterm_builds_target "$target"; then
+        return 0
+    fi
     goos=${target%%/*}
     goarch=${target#*/}
     out="$dist/aterm-${goos}-${goarch}"
-    if [ "$goos" = "windows" ]; then
-        out="${out}.exe"
-    fi
     if [ -e "$out" ]; then
         echo "duplicate release output: $out" >&2
         exit 1

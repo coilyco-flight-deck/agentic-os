@@ -1,0 +1,9 @@
+# GOOS/GOARCH for aterm, one release binary per line.
+#
+# No Windows target. aterm builds its launch plan in kitty's flag dialect and
+# kitty does not ship on Windows, so a Windows binary opens no window whatever
+# --terminal-bin points at. Dropped in agentic-os#1264; the way back is a
+# two-terminal adapter scoped to exactly two, which that issue priced.
+darwin/arm64
+linux/amd64
+linux/arm64

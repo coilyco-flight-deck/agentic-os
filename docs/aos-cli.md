@@ -86,9 +86,7 @@ target bundle, renders checksums plus Homebrew and Scoop metadata, creates or
 reuses the Forgejo release, replaces every asset from a clean `dist/`, and
 updates the tap and bucket when their write tokens exist.
 
-Assets group `aos-*`, `aos-bundle-*`, `aoscompose-*`, `aosward-*`, `aosguard-*`,
-and `aterm-*` per target, with `SHA256SUMS`, `aos.rb`, and
-`aos.json` covering the version-aligned set.
+Assets group `aos-*`, `aos-bundle-*`, `aoscompose-*`, `aosward-*`, `aosguard-*`, and `aterm-*` per target, with `SHA256SUMS`, `aos.rb`, and `aos.json` covering the version-aligned set. `aterm` reads its own [target list](../aterm/release-targets.txt), which has no Windows entry, so the Scoop manifest installs everything but it.
 
 ## Install
 

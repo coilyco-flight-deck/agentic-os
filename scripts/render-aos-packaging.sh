@@ -42,7 +42,6 @@ aosguard_windows_amd64=$(sha "$dist/aosguard-windows-amd64.exe")
 aterm_darwin_arm64=$(sha "$dist/aterm-darwin-arm64")
 aterm_linux_amd64=$(sha "$dist/aterm-linux-amd64")
 aterm_linux_arm64=$(sha "$dist/aterm-linux-arm64")
-aterm_windows_amd64=$(sha "$dist/aterm-windows-amd64.exe")
 
 cat > "$dist/aos.rb" <<EOF
 class Aos < Formula
@@ -151,16 +150,14 @@ cat > "$dist/aos.json" <<EOF
                 ["aoscompose-windows-amd64.exe", "aoscompose"],
                 ["aoscompose-windows-amd64.exe", "aoscomposed"],
                 ["aosward-windows-amd64.exe", "aosward"],
-                ["aosguard-windows-amd64.exe", "aosguard"],
-                ["aterm-windows-amd64.exe", "aterm"]
+                ["aosguard-windows-amd64.exe", "aosguard"]
             ]
         }
     },
     "pre_install": [
         "Invoke-WebRequest -Uri '${base}/aoscompose-windows-amd64.exe' -OutFile \"\$dir/aoscompose-windows-amd64.exe\"; if ((Get-FileHash \"\$dir/aoscompose-windows-amd64.exe\" -Algorithm SHA256).Hash -ne '${aoscompose_windows_amd64}') { throw 'aoscompose checksum mismatch' }",
         "Invoke-WebRequest -Uri '${base}/aosward-windows-amd64.exe' -OutFile \"\$dir/aosward-windows-amd64.exe\"; if ((Get-FileHash \"\$dir/aosward-windows-amd64.exe\" -Algorithm SHA256).Hash -ne '${aosward_windows_amd64}') { throw 'aosward checksum mismatch' }",
-        "Invoke-WebRequest -Uri '${base}/aosguard-windows-amd64.exe' -OutFile \"\$dir/aosguard-windows-amd64.exe\"; if ((Get-FileHash \"\$dir/aosguard-windows-amd64.exe\" -Algorithm SHA256).Hash -ne '${aosguard_windows_amd64}') { throw 'aosguard checksum mismatch' }",
-        "Invoke-WebRequest -Uri '${base}/aterm-windows-amd64.exe' -OutFile \"\$dir/aterm-windows-amd64.exe\"; if ((Get-FileHash \"\$dir/aterm-windows-amd64.exe\" -Algorithm SHA256).Hash -ne '${aterm_windows_amd64}') { throw 'aterm checksum mismatch' }"
+        "Invoke-WebRequest -Uri '${base}/aosguard-windows-amd64.exe' -OutFile \"\$dir/aosguard-windows-amd64.exe\"; if ((Get-FileHash \"\$dir/aosguard-windows-amd64.exe\" -Algorithm SHA256).Hash -ne '${aosguard_windows_amd64}') { throw 'aosguard checksum mismatch' }"
     ]
 }
 EOF

@@ -86,9 +86,11 @@ shortcuts still exist and would silently split an agent session's window, so
 each one is unmapped rather than left to a hidden bar.
 
 [`alacritty/alacritty.toml`](../alacritty/alacritty.toml) carries the same
-baseline for Alacritty and is retained for Windows, where kitty does not ship.
-Pointing `--terminal-bin` at Alacritty there needs its own flag dialect, which
-is not built. Tracked in [aterm's terminal showdown](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/issues/1264).
+baseline for Alacritty and is retained as the Windows terminal baseline, where
+kitty does not ship. `aterm` is not one of its consumers: rather than grow a
+second flag dialect it is Mac and Linux only and is no longer built or packaged
+for Windows, decided in
+[aterm's terminal showdown](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/issues/1264).
 
 ## Ownership and limits
 

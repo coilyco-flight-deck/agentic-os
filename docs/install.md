@@ -80,9 +80,11 @@ harness. See the [AOS to Ward credential handoff](aos-cluster-access.md).
 
 kitty supplies the portable Sombra rendering baseline for `aterm` windows. Mac
 and Linux workstations symlink the live kitty config to the canonical AOS file.
-kitty does not ship on Windows, so Alacritty keeps the baseline there: infrastructure
-renders Git Bash as Alacritty's direct shell and keeps
-the terminal free of an intermediate multiplexer.
+kitty does not ship on Windows, so **`aterm` is Mac and Linux only** and is not
+built or packaged for Windows (agentic-os#1264). Alacritty keeps the Windows
+terminal baseline for everything else: infrastructure renders Git Bash as
+Alacritty's direct shell and keeps the terminal free of an intermediate
+multiplexer.
 
 Transitional Warp config still renders into `~/.warp-preview/` on Mac or
 `~/.warp/` on Windows. Repo state disables cloud sync and owns its theme,

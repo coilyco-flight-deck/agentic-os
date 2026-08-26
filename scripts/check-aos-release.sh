@@ -32,17 +32,29 @@ role_default_agent() {
     fi
 )
 
-# One family per released binary, plus the bundle. The total derives from this
-# list, because a bare multiplier went stale on a retired binary.
-release_families="aos aos-bundle aoscompose aosward aosguard aterm"
+# One family per released binary, plus the bundle, counted from the owning
+# target lists. aterm has its own, so it is counted apart. See docs/aos-cli.md.
+count_targets() {
+    awk '!/^[[:space:]]*(#|$)/ { count++ } END { print count+0 }' "$1"
+}
+release_families="aos aos-bundle aoscompose aosward aosguard"
 family_count=$(printf '%s\n' $release_families | wc -l | tr -d ' ')
-target_count=$(awk '!/^[[:space:]]*(#|$)/ { count++ } END { print count+0 }' \
-    "$repo_root/aos-cli/release-targets.txt")
-expected_count=$((target_count * family_count))
+target_count=$(count_targets "$repo_root/aos-cli/release-targets.txt")
+aterm_target_count=$(count_targets "$repo_root/aterm/release-targets.txt")
+expected_count=$((target_count * family_count + aterm_target_count))
 checksum_count=$(wc -l < "$dist/SHA256SUMS" | tr -d ' ')
 if [ "$expected_count" -ne "$checksum_count" ]; then
     echo "expected $expected_count checksums ($target_count targets x $family_count families:" >&2
-    echo "  $release_families), found $checksum_count" >&2
+    echo "  $release_families, plus $aterm_target_count aterm), found $checksum_count" >&2
+    exit 1
+fi
+# A Windows aterm would open no window, so the artifact must not exist at all.
+if [ -e "$dist/aterm-windows-amd64.exe" ]; then
+    echo "aterm is unix-only (agentic-os#1264) but a Windows binary was built" >&2
+    exit 1
+fi
+if grep -F 'aterm-windows-amd64.exe' "$dist/aos.json" >/dev/null 2>&1; then
+    echo "the Scoop manifest still installs aterm" >&2
     exit 1
 fi
 
