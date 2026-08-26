@@ -138,13 +138,9 @@ func seatAnnotation(document overlayDocument) string {
 	if annotation := strings.TrimSpace(document.Annotation); annotation != "" {
 		return annotation
 	}
-	name := strings.TrimSpace(document.Seat.Name)
+	name := seatName(document)
 	if name == "" {
 		return ""
-	}
-	subject, _, _ := strings.Cut(strings.TrimSpace(document.Seat.Pronouns), "/")
-	if subject = strings.TrimSpace(subject); subject != "" {
-		name += " [" + subject + "]"
 	}
 	label := strings.TrimSpace(document.RoleDisplayName)
 	if label == "" {
@@ -152,6 +148,20 @@ func seatAnnotation(document overlayDocument) string {
 	}
 	if label != "" {
 		name += " (" + label + ")"
+	}
+	return name
+}
+
+// seatName is the annotation without its role, for a title that already names
+// the role in its own segment.
+func seatName(document overlayDocument) string {
+	name := strings.TrimSpace(document.Seat.Name)
+	if name == "" {
+		return ""
+	}
+	subject, _, _ := strings.Cut(strings.TrimSpace(document.Seat.Pronouns), "/")
+	if subject = strings.TrimSpace(subject); subject != "" {
+		name += " [" + subject + "]"
 	}
 	return name
 }

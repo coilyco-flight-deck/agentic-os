@@ -15,6 +15,7 @@ const (
 	lightForeground = "#f5f7fa"
 	backgroundTint  = 0.08
 	maxTitleRunes   = 120
+	titleSeparator  = " // "
 )
 
 var hexColorPattern = regexp.MustCompile(`^#[0-9a-fA-F]{6}$`)
@@ -26,8 +27,8 @@ type launchBrand struct {
 	SelectionText string `json:"selection_text"`
 }
 
-func buildBrand(document overlayDocument, taskTitle string) (launchBrand, error) {
-	title, err := buildTitle(document, taskTitle)
+func buildBrand(document overlayDocument, taskTitle, workspace string) (launchBrand, error) {
+	title, err := buildTitle(document, taskTitle, workspace)
 	if err != nil {
 		return launchBrand{}, err
 	}
@@ -48,21 +49,36 @@ func buildBrand(document overlayDocument, taskTitle string) (launchBrand, error)
 	}, nil
 }
 
-func buildTitle(document overlayDocument, taskTitle string) (string, error) {
-	parts := make([]string, 0, len(document.Personalities))
+// The window manager truncates near 30 characters, so the segments run from
+// the one that separates two windows to the one every window repeats.
+func buildTitle(document overlayDocument, taskTitle, workspace string) (string, error) {
+	if taskTitle = strings.TrimSpace(taskTitle); containsControl(taskTitle) {
+		return "", fmt.Errorf("task title contains a control character")
+	}
+	glyphs := make([]string, 0, len(document.Personalities))
 	for _, personality := range document.Personalities {
 		if glyph := strings.TrimSpace(personality.Emblem.Glyph); glyph != "" {
-			parts = append(parts, glyph)
+			glyphs = append(glyphs, glyph)
 		}
 	}
-	title := strings.TrimSpace(strings.Join(parts, " ") + " " + seatAnnotation(document))
-	title += " // " + strings.TrimSpace(document.Expression)
-	if taskTitle = strings.TrimSpace(taskTitle); taskTitle != "" {
-		if containsControl(taskTitle) {
-			return "", fmt.Errorf("task title contains a control character")
-		}
-		title += " // " + taskTitle
+	role := strings.TrimSpace(document.RoleDisplayName)
+	if role == "" {
+		role = strings.TrimSpace(document.Role)
 	}
+	segments := []string{
+		strings.TrimSpace(workspace),
+		taskTitle,
+		role,
+		strings.TrimSpace(strings.Join(glyphs, " ") + " " + seatName(document)),
+		strings.TrimSpace(document.Expression),
+	}
+	present := make([]string, 0, len(segments))
+	for _, segment := range segments {
+		if segment != "" {
+			present = append(present, segment)
+		}
+	}
+	title := strings.Join(present, titleSeparator)
 	if containsControl(title) {
 		return "", fmt.Errorf("derived title contains a control character")
 	}

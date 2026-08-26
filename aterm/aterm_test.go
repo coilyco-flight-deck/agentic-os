@@ -351,10 +351,10 @@ func TestParseOverlayRejectsContractAndSelectionDrift(t *testing.T) {
 
 func TestBuildTitleRejectsControlCharactersAndTruncates(t *testing.T) {
 	document := platformOverlay(t)
-	if _, err := buildTitle(document, "bad\x07title"); err == nil {
+	if _, err := buildTitle(document, "bad\x07title", ""); err == nil {
 		t.Fatal("a control character in the task title should be rejected")
 	}
-	title, err := buildTitle(document, strings.Repeat("x", 400))
+	title, err := buildTitle(document, strings.Repeat("x", 400), "")
 	if err != nil {
 		t.Fatalf("build title: %v", err)
 	}
@@ -367,7 +367,7 @@ func TestBuildTitleRejectsControlCharactersAndTruncates(t *testing.T) {
 }
 
 func TestColorDerivationIsDeterministicAndReadable(t *testing.T) {
-	brand, err := buildBrand(platformOverlay(t), "")
+	brand, err := buildBrand(platformOverlay(t), "", "")
 	if err != nil {
 		t.Fatalf("build brand: %v", err)
 	}

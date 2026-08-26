@@ -185,6 +185,7 @@ func runLaunch(ctx context.Context, deps commandDeps, cmd *cli.Command) error {
 		AgentComposeBin:  cmd.String("agent-compose-bin"),
 		AOSBin:           cmd.String("aos-bin"),
 		TerminalBin:      cmd.String("terminal-bin"),
+		Workspace:        workspaceLabel(ctx, deps, cwd, cmd.IsSet("working-directory")),
 		Extra:            extra,
 		Hold:             cmd.Bool("hold"),
 	}

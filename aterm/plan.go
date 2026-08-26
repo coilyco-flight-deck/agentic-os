@@ -17,6 +17,7 @@ type launchRequest struct {
 	AgentComposeBin  string
 	AOSBin           string
 	TerminalBin      string
+	Workspace        string
 	Extra            []string
 	Hold             bool
 }
@@ -38,6 +39,7 @@ type launchPlan struct {
 	Identity         launchIdentity `json:"identity"`
 	Brand            launchBrand    `json:"brand"`
 	WorkingDirectory string         `json:"working_directory"`
+	Workspace        string         `json:"workspace"`
 	Shadowed         bool           `json:"shadowed"`
 	Child            []string       `json:"child"`
 	Executable       string         `json:"executable"`
@@ -79,7 +81,7 @@ func buildLaunchPlan(
 	aos string,
 	shadowed bool,
 ) (launchPlan, error) {
-	brand, err := buildBrand(document, request.TaskTitle)
+	brand, err := buildBrand(document, request.TaskTitle, request.Workspace)
 	if err != nil {
 		return launchPlan{}, err
 	}
@@ -118,6 +120,7 @@ func buildLaunchPlan(
 		},
 		Brand:            brand,
 		WorkingDirectory: cwd,
+		Workspace:        request.Workspace,
 		Shadowed:         shadowed,
 		Child:            child,
 		Executable:       strings.TrimSpace(request.TerminalBin),
