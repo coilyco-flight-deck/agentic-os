@@ -123,6 +123,10 @@ func newCommand(deps commandDeps) *cli.Command {
 				Usage: "print the live roster and exit",
 			},
 			&cli.BoolFlag{
+				Name:  "json",
+				Usage: "machine-readable output, with --list or --dry-run",
+			},
+			&cli.BoolFlag{
 				Name:  "hold",
 				Usage: "keep the window open after a clean exit (a failure always holds)",
 			},
@@ -163,7 +167,13 @@ func runLaunch(ctx context.Context, deps commandDeps, cmd *cli.Command) error {
 	if err != nil {
 		return err
 	}
+	if cmd.Bool("json") && !cmd.Bool("list") && !cmd.Bool("dry-run") {
+		return fmt.Errorf("--json applies to --list and --dry-run")
+	}
 	if cmd.Bool("list") {
+		if cmd.Bool("json") {
+			return writeRosterJSON(stdout, roster)
+		}
 		return writeRoster(stdout, roster)
 	}
 	cwd, err := validateWorkingDirectory(cmd.String("working-directory"))

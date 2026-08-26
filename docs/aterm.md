@@ -11,9 +11,10 @@ aterm                              # pick a role, then a seat
 aterm platform                     # the role's default seat
 aterm platform codex -- --resume   # arguments for the harness
 aterm --list                       # the live roster, no window
+aterm --list --json                # the same roster, for a script
 ```
 
-It needs `agent-compose` and kitty on `PATH` and bundles neither. Without `aos` it still launches, unleased. `--dry-run` prints the plan and opens nothing.
+It needs `agent-compose` and kitty on `PATH` and bundles neither. Without `aos` it still launches, unleased. `--dry-run` prints the plan and opens nothing. `--list --json` prints the launchable projection, every live role carrying only the seats `agent-compose launch` can start, under contract `aterm.roster.v1`.
 
 **It refuses a stale role before it opens anything.** Role slugs turn over, so
 `aterm` reads `agent-compose catalog roles --json` on every run and names the live roster in the refusal. A transposed `platform` comes back as `is not a live role. Did you mean platform?` plus every live slug and display name. A seat is checked twice: it has to belong to the role, and to be a harness `agent-compose launch` can start. A catalogue seat like `penpot` is real but not launchable, and the refusal says which of the two it failed.

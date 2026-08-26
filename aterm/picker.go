@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -98,6 +99,17 @@ func seatLabel(seat rosterSeat) string {
 		label += " // " + tier
 	}
 	return label
+}
+
+// writeRosterJSON is the machine twin of writeRoster, for a launcher, a
+// dashboard, or anything scripting aterm.
+func writeRosterJSON(writer io.Writer, document rosterDocument) error {
+	encoded, err := json.MarshalIndent(listRoster(document), "", "  ")
+	if err != nil {
+		return fmt.Errorf("marshal the roster: %w", err)
+	}
+	_, err = fmt.Fprintf(writer, "%s\n", encoded)
+	return err
 }
 
 // writeRoster is the non-interactive twin of the picker, for a pipe or a

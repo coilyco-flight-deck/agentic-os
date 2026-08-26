@@ -8,7 +8,27 @@ import (
 	"strings"
 )
 
-const catalogFormat = "agent-compose.catalog.v1"
+const (
+	catalogFormat = "agent-compose.catalog.v1"
+	// The machine twin of `--list`. aterm's own contract rather than a relay of
+	// the catalogue, because the launchable view is what aterm knows.
+	rosterFormat = "aterm.roster.v1"
+)
+
+type listedRole struct {
+	Slug          string         `json:"slug"`
+	DisplayName   string         `json:"display_name"`
+	Purpose       string         `json:"purpose"`
+	FavoriteColor string         `json:"favorite_color"`
+	Identity      rosterIdentity `json:"identity"`
+	Launchable    bool           `json:"launchable"`
+	Seats         []rosterSeat   `json:"seats"`
+}
+
+type listedRoster struct {
+	Format string       `json:"format"`
+	Roles  []listedRole `json:"roles"`
+}
 
 // nativeHarnesses is the set `agent-compose launch` accepts. A catalogue seat
 // outside it has nothing to start, so aterm refuses before opening a window.
@@ -85,6 +105,25 @@ func (d rosterDocument) slugs() []string {
 		slugs = append(slugs, item.Slug)
 	}
 	return slugs
+}
+
+// listRoster is the launchable projection: every live role, and for each one
+// only the seats `agent-compose launch` can actually start.
+func listRoster(document rosterDocument) listedRoster {
+	roles := make([]listedRole, 0, len(document.Items))
+	for _, item := range document.Items {
+		seats := item.nativeSeats()
+		roles = append(roles, listedRole{
+			Slug:          item.Slug,
+			DisplayName:   item.DisplayName,
+			Purpose:       item.Purpose,
+			FavoriteColor: item.FavoriteColor,
+			Identity:      item.Identity,
+			Launchable:    len(seats) > 0,
+			Seats:         seats,
+		})
+	}
+	return listedRoster{Format: rosterFormat, Roles: roles}
 }
 
 func loadRoster(ctx context.Context, deps commandDeps, agentCompose string) (rosterDocument, error) {
