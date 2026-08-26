@@ -99,14 +99,18 @@ def merge_sessionstart_hook(settings: dict) -> bool:
     return True
 
 
-def write_settings(path: Path, settings: dict) -> None:
-    """Atomically write settings.json."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp = tempfile.mkstemp(dir=path.parent, suffix=".json")
+def write_settings(path: Path, settings: dict) -> Path:
+    """Atomically write settings.json, returning the path that took the write."""
+    # os.replace swaps a symlink itself, cutting a staged shadow home loose
+    # from the host file it points at. See docs/native-shadow.md.
+    target = Path(os.path.realpath(path))
+    target.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(dir=target.parent, suffix=".json")
     with os.fdopen(fd, "w") as handle:
         json.dump(settings, handle, indent=2)
         handle.write("\n")
-    os.replace(tmp, path)
+    os.replace(tmp, target)
+    return target
 
 
 def main() -> int:
@@ -128,11 +132,11 @@ def main() -> int:
         return 0
 
     if not changed:
-        print(f"status line and session name already wired in {SETTINGS_PATH}")
+        print(f"status line and session name already wired in {os.path.realpath(SETTINGS_PATH)}")
         return 0
 
-    write_settings(SETTINGS_PATH, settings)
-    print(f"wrote   {SETTINGS_PATH} (provider status line + SessionStart name)")
+    target = write_settings(SETTINGS_PATH, settings)
+    print(f"wrote   {target} (provider status line + SessionStart name)")
     return 0
 
 

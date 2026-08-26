@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 from pathlib import Path
 
 
@@ -92,3 +93,30 @@ def test_retired_permission_rules_are_pruned_from_an_already_converged_host() ->
 
 def test_no_retired_rule_is_also_a_live_rule() -> None:
     assert not set(MODULE.RETIRED_DENIED_PERMISSIONS) & set(MODULE.BASE_DENIED_PERMISSIONS)
+
+
+def test_write_follows_a_symlink_instead_of_replacing_it(tmp_path) -> None:
+    host = tmp_path / "host"
+    host.mkdir()
+    host_settings = host / "settings.json"
+    host_settings.write_text('{"theme": "dark"}\n')
+    session = tmp_path / "session"
+    session.mkdir()
+    link = session / "settings.json"
+    link.symlink_to(host_settings)
+
+    target = MODULE.write_settings(link, {"theme": "light"})
+
+    assert link.is_symlink()
+    assert target == host_settings.resolve()
+    assert json.loads(host_settings.read_text()) == {"theme": "light"}
+
+
+def test_write_creates_a_plain_file_when_the_path_is_not_a_link(tmp_path) -> None:
+    path = tmp_path / "nested" / "settings.json"
+
+    target = MODULE.write_settings(path, {"theme": "dark"})
+
+    assert target == path
+    assert not path.is_symlink()
+    assert json.loads(path.read_text()) == {"theme": "dark"}

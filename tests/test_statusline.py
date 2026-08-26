@@ -147,3 +147,21 @@ def test_container_provider_self_suppresses_on_a_native_host() -> None:
         [str(CONTAINER_PROVIDER)], text=True, capture_output=True, env=env
     )
     assert result.stdout == ""
+
+
+def test_installer_writes_through_a_symlinked_settings_file(tmp_path: Path) -> None:
+    module = _load_installer()
+    host = tmp_path / "host"
+    host.mkdir()
+    host_settings = host / "settings.json"
+    host_settings.write_text('{"theme": "dark"}\n')
+    session = tmp_path / "session"
+    session.mkdir()
+    link = session / "settings.json"
+    link.symlink_to(host_settings)
+
+    target = module.write_settings(link, {"theme": "light"})
+
+    assert link.is_symlink()
+    assert target == host_settings.resolve()
+    assert json.loads(host_settings.read_text()) == {"theme": "light"}

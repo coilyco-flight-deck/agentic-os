@@ -118,13 +118,18 @@ def merge_base_settings(settings: dict) -> list[str]:
     return changed
 
 
-def write_settings(path: Path, settings: dict) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp = tempfile.mkstemp(dir=path.parent, suffix=".json")
+def write_settings(path: Path, settings: dict) -> Path:
+    """Write the settings, returning the path that actually took the write."""
+    # os.replace swaps a symlink itself, cutting a staged shadow home loose
+    # from the host file it points at. See docs/native-shadow.md.
+    target = Path(os.path.realpath(path))
+    target.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(dir=target.parent, suffix=".json")
     with os.fdopen(fd, "w") as handle:
         json.dump(settings, handle, indent=2)
         handle.write("\n")
-    os.replace(tmp, path)
+    os.replace(tmp, target)
+    return target
 
 
 def main() -> int:
@@ -140,11 +145,11 @@ def main() -> int:
         return 0
 
     if not changed:
-        print(f"base settings unchanged in {SETTINGS_PATH}")
+        print(f"base settings unchanged in {os.path.realpath(SETTINGS_PATH)}")
         return 0
 
-    write_settings(SETTINGS_PATH, settings)
-    print(f"wrote   {SETTINGS_PATH} (base settings: {', '.join(changed)})")
+    target = write_settings(SETTINGS_PATH, settings)
+    print(f"wrote   {target} (base settings: {', '.join(changed)})")
     return 0
 
 
