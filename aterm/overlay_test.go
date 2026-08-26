@@ -46,6 +46,8 @@ func TestOverlayDecodesEveryShippedField(t *testing.T) {
 		"platform-claude-overlay.json": {"platform", "claude"},
 		"platform-codex-overlay.json":  {"platform", "codex"},
 		"tpm-codex-overlay.json":       {"tpm", "codex"},
+		// frontend is the only seat on the scattered arrangement.
+		"frontend-claude-overlay.json": {"frontend", "claude"},
 	}
 	for name, selection := range cases {
 		t.Run(name, func(t *testing.T) {

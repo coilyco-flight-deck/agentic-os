@@ -93,6 +93,13 @@ func arrangementField(arrangement string) func(float64, float64) bool {
 			radius := math.Hypot(dx/1.15, dy/1.6)
 			return radius > 0.72 && radius < 1.34
 		}
+	// Dabs land irregularly and the mask still has to be deterministic, so the
+	// scatter is a lattice with a hole in it rather than a random draw.
+	case "scattered":
+		return func(dx, dy float64) bool {
+			x, y := int(dx*2)+figureWidth/2, int(dy)+figureHeight/2
+			return (x*3+y*7)%4 != 0 && math.Hypot(dx, dy) < 2.4
+		}
 	default:
 		// An arrangement nobody has shipped yet still draws something, rather
 		// than leaving a role with a blank card.
@@ -146,6 +153,13 @@ func shapeGlyph(shape string) func(float64, float64) rune {
 		}
 	case "barrels":
 		return func(float64, float64) rune { return '═' }
+	case "dabs":
+		return func(dx, dy float64) rune {
+			if math.Hypot(dx, dy) < 1.2 {
+				return '●'
+			}
+			return '◍'
+		}
 	default:
 		return func(float64, float64) rune { return '▪' }
 	}
