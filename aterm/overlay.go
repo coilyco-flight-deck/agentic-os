@@ -50,17 +50,19 @@ type overlayPersonality struct {
 }
 
 type overlayDocument struct {
-	Format          string               `json:"format"`
-	SchemaVersion   int                  `json:"schema_version"`
-	Person          string               `json:"person"`
-	Role            string               `json:"role"`
-	RoleDisplayName string               `json:"role_display_name"`
-	Purpose         string               `json:"purpose"`
-	Seat            overlaySeat          `json:"seat"`
-	Annotation      string               `json:"annotation"`
-	Expression      string               `json:"expression"`
-	FavoriteColor   string               `json:"favorite_color"`
-	Personalities   []overlayPersonality `json:"personalities"`
+	Format          string      `json:"format"`
+	SchemaVersion   int         `json:"schema_version"`
+	Person          string      `json:"person"`
+	Role            string      `json:"role"`
+	RoleDisplayName string      `json:"role_display_name"`
+	Purpose         string      `json:"purpose"`
+	Seat            overlaySeat `json:"seat"`
+	Annotation      string      `json:"annotation"`
+	Expression      string      `json:"expression"`
+	FavoriteColor   string      `json:"favorite_color"`
+	// Solved across the whole roster upstream, which one overlay cannot do.
+	Background    string               `json:"background"`
+	Personalities []overlayPersonality `json:"personalities"`
 }
 
 func loadOverlay(

@@ -523,3 +523,31 @@ func TestWindowOptionsReachKittyAndRefuseNonsense(t *testing.T) {
 		t.Fatal("a zero font size should be refused")
 	}
 }
+
+// The roster solves the background across the whole set, which a launcher
+// holding one overlay cannot. agentic-os#1245, agent-compose#358
+func TestTheRosterSolvedBackgroundWinsOverTheLocalTint(t *testing.T) {
+	document := platformOverlay(t)
+	tinted, err := buildBrand(document, "", "")
+	if err != nil {
+		t.Fatalf("build brand: %v", err)
+	}
+	if tinted.Background != "#1b1c18" {
+		t.Fatalf("an overlay with no background should still tint: %q", tinted.Background)
+	}
+	document.Background = "#1F2000"
+	solved, err := buildBrand(document, "", "")
+	if err != nil {
+		t.Fatalf("build brand: %v", err)
+	}
+	if solved.Background != "#1f2000" {
+		t.Fatalf("background = %q, want the roster's own", solved.Background)
+	}
+	if solved.Accent != tinted.Accent {
+		t.Fatal("the accent is authored identity and must not move")
+	}
+	document.Background = "not a color"
+	if _, err := buildBrand(document, "", ""); err == nil {
+		t.Fatal("an unparsable roster background should be refused, not tinted over")
+	}
+}

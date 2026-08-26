@@ -33,9 +33,9 @@ func buildBrand(document overlayDocument, taskTitle, workspace string) (launchBr
 		return launchBrand{}, err
 	}
 	accent := strings.ToLower(document.FavoriteColor)
-	background, err := mixHex(baseBackground, accent, backgroundTint)
+	background, err := windowBackground(document, accent)
 	if err != nil {
-		return launchBrand{}, fmt.Errorf("derive background tint: %w", err)
+		return launchBrand{}, err
 	}
 	selectionText, err := mostReadable(accent, baseBackground, lightForeground)
 	if err != nil {
@@ -87,6 +87,22 @@ func buildTitle(document overlayDocument, taskTitle, workspace string) (string, 
 		title = string(runes[:maxTitleRunes-1]) + "…"
 	}
 	return title, nil
+}
+
+// windowBackground prefers the roster-solved value, tinting only for an
+// agent-compose too old to ship one. See docs/aterm.md.
+func windowBackground(document overlayDocument, accent string) (string, error) {
+	if solved := strings.ToLower(strings.TrimSpace(document.Background)); solved != "" {
+		if !hexColorPattern.MatchString(solved) {
+			return "", fmt.Errorf("the overlay background %q is not #RRGGBB", solved)
+		}
+		return solved, nil
+	}
+	background, err := mixHex(baseBackground, accent, backgroundTint)
+	if err != nil {
+		return "", fmt.Errorf("derive background tint: %w", err)
+	}
+	return background, nil
 }
 
 func containsControl(value string) bool {
