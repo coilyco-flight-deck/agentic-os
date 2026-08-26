@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -8,6 +9,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/urfave/cli/v3"
 
 	"github.com/goccy/go-yaml"
 )
@@ -131,6 +134,21 @@ func harnessLaunchProfileCandidatePaths() []string {
 		}
 	}
 	return paths
+}
+
+// runLaunchAgent prints the agent a role launches on. The shell asks rather than
+// parsing the profiles itself, so this file stays the one loader. See docs/aterm.md.
+func runLaunchAgent(_ context.Context, cmd *cli.Command) error {
+	role := strings.TrimSpace(cmd.Args().First())
+	if role == "" {
+		return fmt.Errorf("_launch-agent needs a role")
+	}
+	agent, err := standaloneDefaultAgentForRole(role)
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintln(cmd.Root().Writer, agent)
+	return err
 }
 
 func standaloneDefaultAgentForRole(role string) (string, error) {

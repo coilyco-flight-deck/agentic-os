@@ -122,8 +122,8 @@ func rootFlagTakesValue(name string) bool {
 func isRootSubcommand(value string) bool {
 	switch value {
 	case "repositories", "version", "converge", "acompose", "acompose-checkin",
-		"_native-shadow", "_container-acompose", "_container-socks-forward",
-		"_container-context-bundle":
+		"_native-shadow", "_launch-agent", "_container-acompose",
+		"_container-socks-forward", "_container-context-bundle":
 		return true
 	default:
 		return false
@@ -248,6 +248,12 @@ func newCommandWithDefaults(name string, defaults launchDefaults) *cli.Command {
 				Name:   "acompose-checkin",
 				Usage:  "run an agent-specific composed-role check-in",
 				Action: runAcomposeCheckin,
+			},
+			{
+				Name:      "_launch-agent",
+				Hidden:    true,
+				ArgsUsage: "<role>",
+				Action:    runLaunchAgent,
 			},
 			{
 				Name:   "_native-shadow",

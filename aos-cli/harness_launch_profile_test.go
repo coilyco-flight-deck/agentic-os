@@ -1,10 +1,15 @@
 package main
 
 import (
+	"bytes"
+	"context"
 	"encoding/base64"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+
+	"github.com/urfave/cli/v3"
 )
 
 func TestLoadHarnessLaunchProfilesUsesRoleAgents(t *testing.T) {
@@ -123,5 +128,46 @@ roles:
 	}
 	if agent != "opencode" {
 		t.Fatalf("standaloneDefaultAgentForRole(platform) = %q, want opencode", agent)
+	}
+}
+
+// The shell asks this verb instead of parsing the profiles, so its contract is
+// one bare agent name on stdout and a non-zero exit for anything else.
+func TestLaunchAgentVerbPrintsTheConfiguredAgent(t *testing.T) {
+	profiles := filepath.Join(t.TempDir(), "harness-launch-profiles.yaml")
+	body := "roles:\n  platform:\n    agent: codex\n  gamedev:\n    agent: goose\n"
+	if err := os.WriteFile(profiles, []byte(body), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("AOS_HARNESS_LAUNCH_PROFILES", profiles)
+
+	for role, want := range map[string]string{"platform": "codex", "gamedev": "goose"} {
+		out := &bytes.Buffer{}
+		command := &cli.Command{Name: "aos", Writer: out, Action: runLaunchAgent}
+		if err := command.Run(context.Background(), []string{"aos", role}); err != nil {
+			t.Fatalf("resolve %s: %v", role, err)
+		}
+		if got := strings.TrimSpace(out.String()); got != want {
+			t.Fatalf("%s resolved to %q, want %q", role, got, want)
+		}
+	}
+}
+
+func TestLaunchAgentVerbRefusesAnUnusableRole(t *testing.T) {
+	profiles := filepath.Join(t.TempDir(), "harness-launch-profiles.yaml")
+	if err := os.WriteFile(profiles, []byte("roles:\n  platform:\n    agent: claude\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("AOS_HARNESS_LAUNCH_PROFILES", profiles)
+
+	for _, args := range [][]string{{"aos"}, {"aos", "engineer"}, {"aos", "../etc"}} {
+		out := &bytes.Buffer{}
+		command := &cli.Command{Name: "aos", Writer: out, Action: runLaunchAgent}
+		if err := command.Run(context.Background(), args); err == nil {
+			t.Fatalf("%v should be refused", args)
+		}
+		if out.String() != "" {
+			t.Fatalf("a refusal must print no agent: %q", out.String())
+		}
 	}
 }

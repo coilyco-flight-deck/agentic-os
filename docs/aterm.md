@@ -7,20 +7,20 @@ the window, and the status-line composer, which fills the rows inside it.
 
 `aterm` opens one composed agent session in its own branded Alacritty window. It
 is the windowed sibling of the `acompose` shell function and runs the same
-runtime, a leased native session shadow wrapping `agent-compose launch`, but
-leaves the terminal you typed in free rather than taking it over.
+runtime, a leased shadow wrapping `agent-compose launch`, but leaves the
+terminal you typed in free. Name a role without a seat and both take the agent
+from [`harness-launch-profiles.yaml`](../.agents/harness-launch-profiles.yaml),
+which `aos` owns and `acompose` asks rather than parsing a second copy.
 
 ```text
 aterm                              # pick a role, then a seat
 aterm platform                     # the role's default seat
 aterm platform codex -- --resume   # arguments for the harness
 aterm --list                       # the live roster, no window
-aterm --dry-run platform           # the resolved plan, no window
 ```
 
-It needs `agent-compose` and Alacritty on `PATH` and bundles neither. `aos`
-supplies the session shadow, and without it `aterm` still launches, just without
-a leased workspace. `aterm --version` reports the shared AOS release.
+It needs `agent-compose` and Alacritty on `PATH` and bundles neither. Without
+`aos` it still launches, unleased. `--dry-run` prints the plan and opens nothing.
 
 **It refuses a stale role before it opens anything.** Role slugs turn over, so
 `aterm` reads `agent-compose catalog roles --json` on every run and names the
