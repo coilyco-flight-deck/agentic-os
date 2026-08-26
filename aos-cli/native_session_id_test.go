@@ -55,7 +55,10 @@ func TestNativeLaunchRetriesOccupiedShortSessionIDs(t *testing.T) {
 	if err := os.MkdirAll(filepath.Join(runtime.SessionsRoot, "aa44"), 0o700); err != nil {
 		t.Fatal(err)
 	}
+	// A pushed branch is what makes an ID taken. A bare local one no longer is:
+	// the sweep reaps a landed session branch nothing leases, agentic-os#1260.
 	testGit(t, repository, "branch", "aos/codex/bb55")
+	testGit(t, repository, "push", "origin", "aos/codex/bb55")
 
 	if _, err := prepareNativeLaunch(runtime, "codex"); err != nil {
 		t.Fatal(err)

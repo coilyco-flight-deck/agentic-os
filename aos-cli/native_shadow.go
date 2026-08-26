@@ -46,18 +46,21 @@ type nativeArtifact struct {
 }
 
 type nativeLease struct {
-	Format          string           `json:"format"`
-	ID              string           `json:"id"`
-	Harness         string           `json:"harness"`
-	PID             int              `json:"pid"`
-	ProcessStart    string           `json:"process_start"`
-	OriginalCWD     string           `json:"original_cwd"`
-	SessionRoot     string           `json:"session_root"`
-	SessionProjects string           `json:"session_projects"`
-	SessionHome     string           `json:"session_home,omitempty"`
-	ClaudeKeychain  string           `json:"claude_keychain,omitempty"`
-	DeadSince       *time.Time       `json:"dead_since,omitempty"`
-	Artifacts       []nativeArtifact `json:"artifacts"`
+	Format          string     `json:"format"`
+	ID              string     `json:"id"`
+	Harness         string     `json:"harness"`
+	PID             int        `json:"pid"`
+	ProcessStart    string     `json:"process_start"`
+	OriginalCWD     string     `json:"original_cwd"`
+	SessionRoot     string     `json:"session_root"`
+	SessionProjects string     `json:"session_projects"`
+	SessionHome     string     `json:"session_home,omitempty"`
+	ClaudeKeychain  string     `json:"claude_keychain,omitempty"`
+	DeadSince       *time.Time `json:"dead_since,omitempty"`
+	// Released is the session saying it is finished, which skips the grace a
+	// crashed session needs. See docs/native-shadow.md.
+	Released  *time.Time       `json:"released,omitempty"`
+	Artifacts []nativeArtifact `json:"artifacts"`
 }
 
 // nativeLockOwner identifies the launch holding the startup lock, so a later
@@ -92,6 +95,7 @@ type nativeWorktree struct {
 
 type nativeLiveWorktrees struct {
 	paths     map[string]struct{}
+	branches  map[string]struct{}
 	uncertain bool
 }
 
@@ -129,6 +133,15 @@ func (runtime nativeRuntime) claudeKeyring() claudeKeyringPorts {
 func runNativeShadow(ctx context.Context, cmd *cli.Command) error {
 	if cmd.Bool("probe") {
 		return nil
+	}
+	if lifecycle, handled := nativeShadowLifecycleVerb(cmd); handled {
+		runtime, err := resolveNativeRuntime()
+		if err != nil {
+			return err
+		}
+		runtime.Progress = newNativeProgress(io.Discard, nil)
+		runtime.Stderr = os.Stderr
+		return lifecycle(runtime)
 	}
 	command := argvAfterDash(os.Args)
 	if len(command) == 0 {
@@ -547,7 +560,24 @@ func (live *nativeLiveWorktrees) add(path string) {
 func (live *nativeLiveWorktrees) addArtifacts(artifacts []nativeArtifact) {
 	for _, artifact := range artifacts {
 		live.add(artifact.Worktree)
+		if artifact.Branch == "" {
+			continue
+		}
+		if live.branches == nil {
+			live.branches = map[string]struct{}{}
+		}
+		live.branches[artifact.Branch] = struct{}{}
 	}
+}
+
+// holdsBranch reports a branch some lease still claims, purged worktree
+// included. Uncertainty answers yes, since the cost of keeping is a stale ref.
+func (live nativeLiveWorktrees) holdsBranch(branch string) bool {
+	if live.uncertain {
+		return true
+	}
+	_, found := live.branches[branch]
+	return found
 }
 
 func (live nativeLiveWorktrees) contains(path string) bool {
@@ -695,15 +725,20 @@ func cleanDeadNativeSessions(runtime nativeRuntime) (nativeLiveWorktrees, error)
 		if lease.DeadSince == nil {
 			deadSince := runtime.Now
 			lease.DeadSince = &deadSince
-			live.addArtifacts(lease.Artifacts)
 			if err := writeNativeJSON(path, lease); err != nil {
 				return nativeLiveWorktrees{}, fmt.Errorf("start dead native lease grace: %w", err)
 			}
-			continue
+			// A session that said it was finished needs no second reading to
+			// confirm what it already declared. agentic-os#1260
+			if lease.Released == nil {
+				live.addArtifacts(lease.Artifacts)
+				continue
+			}
 		}
 		// A second dead reading confirms the first, so a worktree holding no
 		// local-only state is released now. docs/native-session-start.md
-		expired := !runtime.Now.Before(lease.DeadSince.Add(nativeDeadSessionGrace))
+		expired := lease.Released != nil ||
+			!runtime.Now.Before(lease.DeadSince.Add(nativeDeadSessionGrace))
 		remaining := make([]nativeArtifact, 0, len(lease.Artifacts))
 		for _, artifact := range lease.Artifacts {
 			cleaned, err := cleanNativeArtifact(artifact)
@@ -915,8 +950,11 @@ func deleteNativeBranchIfRemote(repository, branch string) (bool, error) {
 	}
 	output, err := nativeGit(repository,
 		"rev-list", "refs/heads/"+branch, "--not", "--remotes=origin")
-	if err != nil || output != "" {
+	if err != nil {
 		return false, err
+	}
+	if output != "" && !nativeBranchLanded(repository, branch) {
+		return false, nil
 	}
 	if _, err := nativeGit(repository, "branch", "-D", branch); err != nil {
 		return false, err
@@ -1144,12 +1182,16 @@ func normalizeNativeRepository(
 			return err
 		}
 	}
-	return reapNativeMergedBranches(runtime, repository)
+	return reapNativeMergedBranches(runtime, repository, live)
 }
 
 // reapNativeMergedBranches deletes local branches already wholly on origin.
 // Rationale and the safety test: docs/native-session-start.md
-func reapNativeMergedBranches(runtime nativeRuntime, repository nativeRepository) error {
+func reapNativeMergedBranches(
+	runtime nativeRuntime,
+	repository nativeRepository,
+	live nativeLiveWorktrees,
+) error {
 	worktrees, err := listNativeWorktrees(repository.Path)
 	if err != nil {
 		return err
@@ -1171,9 +1213,9 @@ func reapNativeMergedBranches(runtime nativeRuntime, repository nativeRepository
 		if branch == "" || branch == "main" || held[branch] {
 			continue
 		}
-		// Session bookkeeping, and session-ID uniqueness reads it to tell whether
-		// an ID is taken. Reaping it would hand out an ID still in use.
-		if strings.HasPrefix(branch, "aos/") {
+		// Session-ID uniqueness reads these refs, so one goes only once no lease
+		// and no worktree still names it. See docs/native-shadow.md.
+		if strings.HasPrefix(branch, "aos/") && live.holdsBranch(branch) {
 			continue
 		}
 		cleaned, err := deleteNativeBranchIfRemote(repository.Path, branch)

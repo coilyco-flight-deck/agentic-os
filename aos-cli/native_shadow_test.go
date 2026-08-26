@@ -1316,11 +1316,19 @@ func TestNativeSweepReapsFullyPushedBranchesOnly(t *testing.T) {
 	testGit(t, repository, "commit", "-m", "local only")
 	testGit(t, repository, "switch", "main")
 	testGit(t, repository, "branch", "aos/claude/zz99")
+	testGit(t, repository, "branch", "aos/claude/yy88")
 	runtime := nativeTestRuntime(t, root)
+
+	// A lease still naming zz99 is what makes the ID taken, so that one has to
+	// survive. yy88 names a session nothing holds any more. agentic-os#1260
+	live := nativeLiveWorktrees{}
+	live.addArtifacts([]nativeArtifact{
+		{Repository: repository, Worktree: filepath.Join(root, "zz99", "one"), Branch: "aos/claude/zz99"},
+	})
 
 	if err := normalizeNativeRepository(runtime, nativeRepository{
 		Owner: "owner", Name: "one", Path: repository,
-	}, nativeLiveWorktrees{}); err != nil {
+	}, live); err != nil {
 		t.Fatal(err)
 	}
 
@@ -1332,7 +1340,10 @@ func TestNativeSweepReapsFullyPushedBranchesOnly(t *testing.T) {
 		t.Fatalf("branch holding a local-only commit was reaped: %s", branches)
 	}
 	if !strings.Contains(branches, "aos/claude/zz99") {
-		t.Fatalf("session namespace was reaped, which breaks ID uniqueness: %s", branches)
+		t.Fatalf("a leased session branch was reaped, which breaks ID uniqueness: %s", branches)
+	}
+	if strings.Contains(branches, "aos/claude/yy88") {
+		t.Fatalf("an unleased fully-pushed session branch survived: %s", branches)
 	}
 }
 

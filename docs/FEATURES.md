@@ -13,6 +13,7 @@ Major shipped capabilities, not files.
   [settings guardrails](native-claude-credentials.md).
 - [Native agent workspaces](native-agent-workspaces.md) - role-scoped worktrees,
   leases, cleanup, the `aos` temp namespace, and standalone launches.
+  [Shadow lifecycle](native-shadow.md) verbs list, release, and reap them.
 - [Agent-compose provider](context-budget.md) - scoped skills,
   personality, and seven deployed roles across the Agent Compose v3 roster.
 - [Agent tool evaluation](../.agents/skills/tooling-agent-tool-evaluation/SKILL.md) - cross-harness tool evals.
