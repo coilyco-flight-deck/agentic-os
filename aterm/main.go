@@ -165,7 +165,9 @@ func runLaunch(ctx context.Context, deps commandDeps, cmd *cli.Command) error {
 	if err != nil {
 		return err
 	}
-	role, seat, extra, err := resolveInvocation(deps, roster, cmd.Args().Slice())
+	role, seat, extra, err := resolveInvocation(
+		ctx, deps, cmd.String("aos-bin"), roster, cmd.Args().Slice(),
+	)
 	if err != nil {
 		return err
 	}
@@ -224,7 +226,9 @@ func announce(writer io.Writer, plan launchPlan) error {
 // resolveInvocation turns the positional tail into a validated role and seat.
 // A bare invocation asks, since the roster is what the caller usually lacks.
 func resolveInvocation(
+	ctx context.Context,
 	deps commandDeps,
+	aosBin string,
 	document rosterDocument,
 	args []string,
 ) (string, string, []string, error) {
@@ -263,11 +267,7 @@ func resolveInvocation(
 		return "", "", nil, fmt.Errorf("role %s has no launchable native seat", role)
 	}
 	if seat == "" {
-		resolved, err := defaultSeat(selected)
-		if err != nil {
-			return "", "", nil, err
-		}
-		return role, resolved, args, nil
+		return role, defaultSeat(ctx, deps, aosBin, selected), args, nil
 	}
 	if !isNativeHarness(seat) || !seatInRole(seat, selected) {
 		return "", "", nil, unknownSeatError(seat, selected)
@@ -275,14 +275,20 @@ func resolveInvocation(
 	return role, seat, args, nil
 }
 
-// defaultSeat prefers the AOS-owned launch profile, then falls back to the
-// catalogue's own order, whose first native entry is the frontier seat.
-func defaultSeat(role rosterRole) (string, error) {
-	profiled, err := defaultSeatForRole(role.Slug)
-	if err == nil && isNativeHarness(profiled) && seatInRole(profiled, role) {
-		return profiled, nil
+// defaultSeat asks aos, which owns the launch profiles, so this binary carries
+// no second parser of them. See docs/aterm.md.
+func defaultSeat(ctx context.Context, deps commandDeps, aosBin string, role rosterRole) string {
+	if aos, err := requireBinary(deps.lookPath, aosBin); err == nil {
+		if raw, err := deps.output(ctx, aos, "_launch-agent", role.Slug); err == nil {
+			seat := strings.TrimSpace(string(raw))
+			if isNativeHarness(seat) && seatInRole(seat, role) {
+				return seat
+			}
+		}
 	}
-	return role.nativeSeats()[0].Harness, nil
+	// An aos too old for the verb still launches, on the catalogue's own order
+	// whose first native entry is the frontier seat.
+	return role.nativeSeats()[0].Harness
 }
 
 func requireBinary(lookPath func(string) (string, error), name string) (string, error) {

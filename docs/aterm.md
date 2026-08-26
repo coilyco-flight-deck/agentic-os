@@ -9,8 +9,8 @@ the window, and the status-line composer, which fills the rows inside it.
 is the windowed sibling of the `acompose` shell function and runs the same
 runtime, a leased shadow wrapping `agent-compose launch`, but leaves the
 terminal you typed in free. Name a role without a seat and both take the agent
-from [`harness-launch-profiles.yaml`](../.agents/harness-launch-profiles.yaml),
-which `aos` owns and `acompose` asks rather than parsing a second copy.
+from [`harness-launch-profiles.yaml`](../.agents/harness-launch-profiles.yaml).
+`aos` owns that file and both ask it, so neither carries a second parser.
 
 ```text
 aterm                              # pick a role, then a seat

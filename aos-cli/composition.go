@@ -168,13 +168,27 @@ func validateIntegratedLaunch(opts integratedLaunchOptions) error {
 	return nil
 }
 
+// nativeHarnesses is every harness AOS starts natively, and the only list of
+// them. The shell asks for it instead of restating it. See docs/aterm.md.
+var nativeHarnesses = []string{"claude", "codex", "goose", "opencode"}
+
 func isSupportedHarness(value string) bool {
-	switch value {
-	case "claude", "codex", "goose", "opencode":
-		return true
-	default:
-		return false
+	for _, harness := range nativeHarnesses {
+		if harness == value {
+			return true
+		}
 	}
+	return false
+}
+
+// nativeHarnessList renders the set for an error message, so prose cannot drift
+// from the set it describes.
+func nativeHarnessList() string {
+	if len(nativeHarnesses) < 2 {
+		return strings.Join(nativeHarnesses, "")
+	}
+	head := nativeHarnesses[:len(nativeHarnesses)-1]
+	return strings.Join(head, ", ") + ", or " + nativeHarnesses[len(nativeHarnesses)-1]
 }
 
 func safeRoleSlug(value string) bool {

@@ -215,31 +215,24 @@ _siren_agent_launch() {
 acompose() {
   local role="${1:-}"
   local harness="${2:-}"
-  local launch_args
   case "$role" in
     ""|-*) ;;
     *)
+      # A flag in second place is a harness argument, never a seat.
       case "$harness" in
-        claude|codex|goose|opencode)
-          launch_args="explicit"
-          ;;
-        *)
-          # No seat typed, so take the role's configured agent. aos owns the
-          # launch profiles, so the shell asks rather than parsing them.
-          if command -v aos >/dev/null 2>&1; then
-            harness=$(command aos _launch-agent "$role" 2>/dev/null) || harness=""
-          else
-            harness=""
-          fi
-          [ -n "$harness" ] && launch_args="defaulted"
-          ;;
+        -*) harness="" ;;
       esac
-      if [ -n "$launch_args" ] && command -v agent-compose >/dev/null 2>&1; then
-        if [ "$launch_args" = "explicit" ]; then
-          shift 2
-        else
-          shift 1
-        fi
+      if [ -n "$harness" ]; then
+        shift 2
+      else
+        # No seat typed, so take the role's configured agent. aos owns the
+        # launch profiles, so the shell asks rather than parsing them.
+        harness=$(command aos _launch-agent "$role" 2>/dev/null) || harness=""
+        [ -n "$harness" ] && shift 1
+      fi
+      # The seat is handed on unchecked: agent-compose owns the launchable set
+      # and already refuses an unsupported one by name.
+      if [ -n "$harness" ] && command -v agent-compose >/dev/null 2>&1; then
         if _siren_native_shadow_available; then
           command aos _native-shadow --harness "$harness" --assigned-role -- \
             agent-compose launch "$role" "$harness" "$@"

@@ -272,29 +272,60 @@ func TestHarnessArgumentsSurviveToTheLaunch(t *testing.T) {
 	}
 }
 
-func TestDefaultSeatPrefersTheLaunchProfile(t *testing.T) {
+// aos owns the launch profiles, so the seat aterm defaults to is whatever that
+// binary reports rather than anything this one parses.
+func TestDefaultSeatTakesTheAgentAosReports(t *testing.T) {
 	document := loadRosterFixture(t)
 	role, _ := document.role("platform")
-	t.Setenv("AOS_HARNESS_LAUNCH_PROFILES", filepath.Join("testdata", "harness-launch-profiles.yaml"))
-	seat, err := defaultSeat(role)
-	if err != nil {
-		t.Fatalf("default seat: %v", err)
+	var asked []string
+	deps := commandDeps{
+		lookPath: func(name string) (string, error) { return "/stub/" + name, nil },
+		output: func(_ context.Context, name string, args ...string) ([]byte, error) {
+			asked = append(asked, name+" "+strings.Join(args, " "))
+			return []byte("codex\n"), nil
+		},
 	}
-	if seat != "codex" {
-		t.Fatalf("default seat = %q, want the profiled codex", seat)
+	if got := defaultSeat(context.Background(), deps, "aos", role); got != "codex" {
+		t.Fatalf("default seat = %q, want the reported codex", got)
+	}
+	if len(asked) != 1 || !strings.Contains(asked[0], "_launch-agent platform") {
+		t.Fatalf("aos should be asked for the role's agent: %v", asked)
 	}
 }
 
-func TestDefaultSeatFallsBackToTheCatalogueOrder(t *testing.T) {
+func TestDefaultSeatFallsBackWhenAosCannotAnswer(t *testing.T) {
 	document := loadRosterFixture(t)
 	role, _ := document.role("platform")
-	t.Setenv("AOS_HARNESS_LAUNCH_PROFILES", filepath.Join("testdata", "missing-profiles.yaml"))
-	seat, err := defaultSeat(role)
-	if err != nil {
-		t.Fatalf("default seat: %v", err)
+	want := role.nativeSeats()[0].Harness
+	cases := map[string]commandDeps{
+		"no aos on PATH": {
+			lookPath: func(string) (string, error) { return "", fmt.Errorf("absent") },
+		},
+		"aos too old for the verb": {
+			lookPath: func(name string) (string, error) { return "/stub/" + name, nil },
+			output: func(context.Context, string, ...string) ([]byte, error) {
+				return nil, fmt.Errorf("unknown command")
+			},
+		},
+		"reports a seat outside the role": {
+			lookPath: func(name string) (string, error) { return "/stub/" + name, nil },
+			output: func(context.Context, string, ...string) ([]byte, error) {
+				return []byte("goose\n"), nil
+			},
+		},
+		"reports something unlaunchable": {
+			lookPath: func(name string) (string, error) { return "/stub/" + name, nil },
+			output: func(context.Context, string, ...string) ([]byte, error) {
+				return []byte("penpot\n"), nil
+			},
+		},
 	}
-	if seat != role.nativeSeats()[0].Harness {
-		t.Fatalf("default seat = %q, want the first catalogue seat", seat)
+	for name, deps := range cases {
+		t.Run(name, func(t *testing.T) {
+			if got := defaultSeat(context.Background(), deps, "aos", role); got != want {
+				t.Fatalf("default seat = %q, want the catalogue's %q", got, want)
+			}
+		})
 	}
 }
 

@@ -99,21 +99,17 @@ type launchPlan struct {
 
 func resolveLayout(explicit, command string) (string, error) {
 	if layout := strings.TrimSpace(explicit); layout != "" {
-		switch layout {
-		case "claude", "codex", "goose", "opencode":
+		if isSupportedHarness(layout) {
 			return layout, nil
-		default:
-			return "", fmt.Errorf("unknown --layout %q: want claude, codex, goose, or opencode", layout)
 		}
+		return "", fmt.Errorf("unknown --layout %q: want %s", layout, nativeHarnessList())
 	}
 	base := filepath.Base(command)
 	base = strings.TrimSuffix(base, filepath.Ext(base))
-	switch base {
-	case "claude", "codex", "goose", "opencode":
+	if isSupportedHarness(base) {
 		return base, nil
-	default:
-		return "", fmt.Errorf("cannot infer a harness layout from %q; add --layout", command)
 	}
+	return "", fmt.Errorf("cannot infer a harness layout from %q; add --layout", command)
 }
 
 func buildLaunchPlan(opts launchOptions) (launchPlan, error) {

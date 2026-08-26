@@ -195,7 +195,7 @@ build_aterm() {
         cd "$repo_root/aterm"
         GOOS="$goos" GOARCH="$goarch" CGO_ENABLED=0 \
             go build -trimpath \
-            -ldflags "-s -w -X main.version=${version} -X main.compiledHarnessLaunchProfilesBase64=${launch_profiles_b64}" \
+            -ldflags "-s -w -X main.version=${version}" \
             -o "$out" .
     )
     echo "$out"

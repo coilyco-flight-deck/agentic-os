@@ -86,6 +86,31 @@ def test_packaging_covers_every_release_binary(tmp_path: Path) -> None:
         assert f'resource("{program}")' in formula
 
 
+def _go_string_slice(source: str, name: str) -> list[str]:
+    match = re.search(rf"{name} = \[\]string\{{([^}}]*)\}}", source)
+    assert match, f"{name} must be a Go string slice literal"
+    return re.findall(r'"([^"]+)"', match.group(1))
+
+
+def test_native_harness_set_is_stated_once_per_binary() -> None:
+    """aos and aterm ship from one commit, so their harness sets must agree.
+
+    The set used to be written out in six places with nothing holding them in
+    step, and a missed one failed differently at each site. The shell no longer
+    carries a copy at all, and these two are pinned equal here.
+    """
+    aos_cli = (ROOT / "aos-cli" / "composition.go").read_text(encoding="utf-8")
+    aterm = (ROOT / "aterm" / "roster.go").read_text(encoding="utf-8")
+    assert _go_string_slice(aos_cli, "nativeHarnesses") == _go_string_slice(
+        aterm, "nativeHarnesses"
+    )
+
+    # The shell decides launch-vs-converge and hands the seat on unchecked, so
+    # reintroducing a list there would silently diverge from the binaries.
+    shell = (ROOT / "shell" / "common.sh").read_text(encoding="utf-8")
+    assert "claude|codex|goose|opencode" not in shell
+
+
 def test_release_check_family_list_matches_the_released_binaries() -> None:
     """The release train once went red on a bare artifact multiplier.
 

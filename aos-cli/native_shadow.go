@@ -132,10 +132,12 @@ func runNativeShadow(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("_native-shadow needs a command after `--`")
 	}
 	harness := strings.TrimSpace(cmd.String("harness"))
-	switch harness {
-	case "claude", "codex", "goose", "opencode":
-	default:
-		return fmt.Errorf("_native-shadow has unsupported harness %q", harness)
+	if !isSupportedHarness(harness) {
+		return fmt.Errorf(
+			"_native-shadow has unsupported harness %q: want %s",
+			harness,
+			nativeHarnessList(),
+		)
 	}
 	runtime, err := resolveNativeRuntime()
 	if err != nil {
