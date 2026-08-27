@@ -8,7 +8,7 @@ description: Multi-agent orchestration patterns Ward and o2r formalized, kept pa
 Two subsystems in this estate formalized how autonomous agents coordinate, and both are leaving service.
 
 * **o2r** (`otel-a2a-relay`) is archived. It carried the wire: sessions, handoff, liveness, and agent activity as OTel spans.
-* **Ward** is frozen as a contract under [agentic-os#1299](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/issues/1299), with its runtime coming out of CI and the dev-base image. It governed unattended runs: dispatch, reservation, lifecycle, recovery, and landing evidence. Frozen is not deleted, so read that issue for the current posture before assuming anything about the repository.
+* **Ward** is being archived. [agentic-os#1299](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/issues/1299) cuts its runtime from AOS CI and the dev-base image, and Kai superseded that issue's freeze-rather-than-archive posture on 2026-08-27. It governed unattended runs: dispatch, reservation, lifecycle, recovery, and landing evidence.
 
 What they learned does not leave with them. This skill is the inventory.
 
@@ -34,7 +34,7 @@ What they learned does not leave with them. This skill is the inventory.
 
 Read from `coilyco-flight-deck/ward` at `040f159` and `coilyco-flight-deck/otel-a2a-relay` at `8b96ed1`, both public. Where a pattern below disagrees with one of those repositories, the repository was right and this file has drifted.
 
-**What Ward's freeze deliberately keeps**, per agentic-os#1299: `.ward/ward.yaml` stays and carries catalog metadata, and the `ward:` AGENTS.md frontmatter key stays as the lane vocabulary, read by composition rather than by any Ward process. The freeze removes a runtime, not a schema.
+**What survives Ward's archival.** `.ward/ward.yaml` still carries catalog metadata, and the `ward:` AGENTS.md frontmatter key still selects a landing lane in every repository that declares one. Both are read by the catalog hooks and by composition rather than by any Ward process, so archiving the repository retires neither. What ends is the runtime, and with it the enforcement behind every pattern here.
 
 ## See also
 
