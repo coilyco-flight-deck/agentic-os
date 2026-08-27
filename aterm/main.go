@@ -275,6 +275,9 @@ func runLaunch(ctx context.Context, deps commandDeps, cmd *cli.Command) error {
 	if err != nil {
 		return fmt.Errorf("terminal binary: %w", err)
 	}
+	if installed := bundleTerminal(request.Role); installed != "" {
+		terminal = installed
+	}
 	if err := deps.spawn(ctx, terminal, plan.Arguments...); err != nil {
 		return withExit(exitSpawn, fmt.Errorf("open the window: %w", err))
 	}

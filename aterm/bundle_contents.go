@@ -23,8 +23,8 @@ var (
 	bundleLabelStyle   = lipgloss.NewStyle().Faint(true).Width(bundleFieldWidth)
 )
 
-// bundleInfoPlist describes the wrapper rather than the session. LSUIElement
-// keeps it off the Dock, so only the window it opens claims a tile there.
+// bundleInfoPlist names the app the window belongs to, not just the wrapper.
+// The linked terminal draws under this identity. See docs/aterm.md.
 func bundleInfoPlist(spec bundleSpec) string {
 	body := &strings.Builder{}
 	write := func(key, value string) {
@@ -44,7 +44,7 @@ func bundleInfoPlist(spec bundleSpec) string {
 		write("CFBundleIconFile", bundleIconName)
 	}
 	write("ATermRole", spec.Role)
-	body.WriteString("\t<key>LSUIElement</key>\n\t<true/>\n")
+	body.WriteString("\t<key>NSHighResolutionCapable</key>\n\t<true/>\n")
 	return plistPreamble + body.String() + plistEpilogue
 }
 
@@ -72,7 +72,11 @@ func bundleLauncher(spec bundleSpec) string {
 		"",
 		"AGENT_COMPOSE_BIN=" + shellQuote(spec.AgentComposeBin),
 		"AOS_BIN=" + shellQuote(spec.AOSBin),
-		"ATERM_TERMINAL_BIN=" + shellQuote(spec.TerminalBin),
+		// The window belongs to whichever bundle holds the binary that draws
+		// it, so the session opens through this bundle's own terminal.
+		`here=$(cd "$(dirname "$0")" && pwd)`,
+		"ATERM_TERMINAL_BIN=\"$here/" + bundleTerminalName + "\"",
+		`if [ ! -x "$ATERM_TERMINAL_BIN" ]; then ATERM_TERMINAL_BIN=` + shellQuote(spec.TerminalBin) + "; fi",
 		"export AGENT_COMPOSE_BIN AOS_BIN ATERM_TERMINAL_BIN",
 		"",
 		`log=$(mktemp -t aterm-bundle) || exit 1`,

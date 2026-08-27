@@ -76,12 +76,59 @@ func TestBundleLauncherQuotesAPathHoldingASingleQuote(t *testing.T) {
 	}
 }
 
-// The wrapper exits as soon as the window is detached, so a Dock tile of its
-// own would flicker while the session it opened keeps running.
-func TestBundleInfoPlistKeepsTheWrapperOffTheDock(t *testing.T) {
+// Hiding from the Dock was right while the window belonged to kitty. It is
+// this bundle's now, and an accessory app cannot own the front window.
+func TestBundleInfoPlistLetsTheSessionWindowClaimTheTile(t *testing.T) {
 	plist := bundleInfoPlist(testSpec())
-	if !strings.Contains(plist, "<key>LSUIElement</key>\n\t<true/>") {
-		t.Fatalf("the wrapper should declare LSUIElement:\n%s", plist)
+	if strings.Contains(plist, "LSUIElement") {
+		t.Fatalf("an accessory app cannot own the window it opened:\n%s", plist)
+	}
+}
+
+// The linked terminal is what makes the window this app's rather than the
+// terminal's, so the launcher runs the one inside the bundle it lives in.
+func TestBundleLauncherOpensThroughTheBundlesOwnTerminal(t *testing.T) {
+	launcher := bundleLauncher(testSpec())
+	if !strings.Contains(launcher, `here=$(cd "$(dirname "$0")" && pwd)`) {
+		t.Fatalf("the launcher should locate its own bundle:\n%s", launcher)
+	}
+	if !strings.Contains(launcher, `ATERM_TERMINAL_BIN="$here/kitty"`) {
+		t.Fatalf("the session should open through the linked terminal:\n%s", launcher)
+	}
+	// A bundle whose link went missing still opens a window, unbranded.
+	if !strings.Contains(launcher, "if [ ! -x \"$ATERM_TERMINAL_BIN\" ]") {
+		t.Fatalf("a missing link should fall back rather than fail:\n%s", launcher)
+	}
+}
+
+func TestWriteBundleLinksTheTerminalBesideTheLauncher(t *testing.T) {
+	root := t.TempDir()
+	terminal := filepath.Join(root, "kitty-real")
+	if err := os.WriteFile(terminal, []byte{0xcf, 0xfa, 0xed, 0xfe}, 0o755); err != nil {
+		t.Fatalf("write the terminal fixture: %v", err)
+	}
+	item := bundleItem{
+		Path:       filepath.Join(root, "Angie :: Agentic Platform Engineer.app"),
+		Executable: "aterm-platform",
+		Terminal:   terminal,
+		Launcher:   "#!/bin/sh\n" + bundleMarker + "\n",
+		Plist:      bundleInfoPlist(testSpec()),
+	}
+	if err := writeBundle(item, ""); err != nil {
+		t.Fatalf("write the bundle: %v", err)
+	}
+	link := filepath.Join(item.Path, "Contents", "MacOS", bundleTerminalName)
+	got, err := os.Readlink(link)
+	if err != nil {
+		t.Fatalf("the bundle should carry a linked terminal: %v", err)
+	}
+	if got != terminal {
+		t.Fatalf("linked %q, want %q", got, terminal)
+	}
+	// The stale scan reads what is beside the launcher, and reading a linked
+	// application binary to look for a marker is a hundred megabytes wasted.
+	if role, ours := generatedRole(item.Path); !ours || role != "platform" {
+		t.Fatalf("generatedRole = %q, %v", role, ours)
 	}
 }
 
