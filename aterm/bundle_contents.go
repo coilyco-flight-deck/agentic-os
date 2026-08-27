@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
@@ -45,6 +46,10 @@ func bundleInfoPlist(spec bundleSpec) string {
 	}
 	write("ATermRole", spec.Role)
 	body.WriteString("\t<key>NSHighResolutionCapable</key>\n\t<true/>\n")
+	// A script executable carries no Mach-O slices to read, so LaunchServices
+	// starts the bundle under Rosetta unless the plist names an architecture.
+	fmt.Fprintf(body, "\t<key>LSArchitecturePriority</key>\n\t<array>\n\t\t<string>%s</string>\n\t</array>\n",
+		xmlEscape(machineArchitecture(runtime.GOARCH)))
 	return plistPreamble + body.String() + plistEpilogue
 }
 
@@ -95,6 +100,18 @@ func bundleLauncher(spec bundleSpec) string {
 		"exit 1",
 	}
 	return strings.Join(lines, "\n") + "\n"
+}
+
+// machineArchitecture spells Go's name the way LaunchServices does. Only the
+// two macOS ever ran on matter, and an unknown one names itself unchanged.
+func machineArchitecture(goarch string) string {
+	switch goarch {
+	case "arm64":
+		return "arm64"
+	case "amd64":
+		return "x86_64"
+	}
+	return goarch
 }
 
 func shellQuote(value string) string {

@@ -132,6 +132,24 @@ func TestWriteBundleLinksTheTerminalBesideTheLauncher(t *testing.T) {
 	}
 }
 
+// `brew upgrade aos` inside a session refused an arm-only formula because
+// every session was an x86_64 one. See docs/aterm.md and agentic-os#1291.
+func TestBundleInfoPlistNamesTheArchitectureLaunchServicesShouldPick(t *testing.T) {
+	plist := bundleInfoPlist(testSpec())
+	want := "<string>" + machineArchitecture(runtime.GOARCH) + "</string>"
+	if !strings.Contains(plist, "<key>LSArchitecturePriority</key>") || !strings.Contains(plist, want) {
+		t.Fatalf("the plist should name %s:\n%s", want, plist)
+	}
+}
+
+func TestMachineArchitectureSpellsBothMacArchitectures(t *testing.T) {
+	for goarch, want := range map[string]string{"arm64": "arm64", "amd64": "x86_64"} {
+		if got := machineArchitecture(goarch); got != want {
+			t.Fatalf("machineArchitecture(%q) = %q, want %q", goarch, got, want)
+		}
+	}
+}
+
 func TestBundleInfoPlistGivesEachRoleItsOwnIdentifier(t *testing.T) {
 	second := testSpec()
 	second.Role = "sysadmin"

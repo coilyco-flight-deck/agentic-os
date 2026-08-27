@@ -40,6 +40,9 @@ type recordedSpawn struct {
 // window it would have opened, so no test needs a terminal or a real harness.
 func stubDeps(t *testing.T, spawns *[]recordedSpawn, shadowed bool) commandDeps {
 	t.Helper()
+	// A launch prefers the role's installed app, so a home with none is what
+	// keeps these answers about the code rather than about this machine.
+	t.Setenv("HOME", t.TempDir())
 	return commandDeps{
 		lookPath: func(name string) (string, error) {
 			if strings.HasPrefix(name, "/missing") {
