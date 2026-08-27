@@ -3,10 +3,10 @@
 Ward owns fixed workflow commands, container isolation, lifecycle, repository
 workflow mechanics, and its fixed broker. AOS does not ship a Ward role bundle.
 
-The only Ward-consumed AOS file is [`.ward/ward.yaml`](../.ward/ward.yaml). It
-declares repository development commands, the AOS image and release channel,
-and the repository landing workflow. `ward doctor` validates that YAML through
-Ward's loader.
+The only Ward-consumed AOS file was [`.ward/ward.yaml`](../.ward/ward.yaml),
+validated by `ward doctor` through Ward's loader. That runtime is being cut
+under agentic-os#1299 and the file outlives it, so its surviving contract is
+written out below rather than left in a repository that is going read-only.
 
 ## Ownership
 
@@ -41,6 +41,18 @@ follows:
   and the separately selected AOSguard surface determine executable authority.
   AOS owns only its bounded standalone runtime inputs, including kubeconfig
   projection.
+
+## The `.ward/ward.yaml` schema
+
+Ward's own schema page goes read-only when that repository is archived, so the surviving contract lives here. Source: ward `docs/ward-yaml.md` at `040f159`, read before the archive. Fifteen of the sixteen repositories on this host declare the file, nothing in Ward reads it any more, and `catalog-trifecta` stopped requiring it fleet-wide (`coilysiren/inbox#385`).
+
+* **`catalog.description` and `catalog.dependsOn`** - the cross-repo knowledge graph. Declared almost everywhere, and **no code on this host reads either one today**. An inventory a later consumer may pick up rather than a live input.
+* **`capabilities`** - a list of `provider/skill-dir` strings, read by `agentic-os-kai/scripts/pull-capabilities.py` to pull capability skills down into one leaf repo. Never part of Ward's documented schema, and today only `coilyco-gaming/galaxy-gen` declares it.
+* **Retiring with the runtime** - `agent.image`, `agent.workflow`, and `agent.release-channel` were Ward launch inputs, and the landing lane lives in AGENTS.md frontmatter instead. `commands` is retired because dev verbs are justfile recipes (`coilysiren/inbox#366`). `security` is retired because AOSguard and umbra own that surface.
+
+**Two files, not one.** A separate `ward.yaml` at a repository root carries `tailnet.shortcut` and is fetched over the Forgejo API by `infrastructure/scripts/generate-caddy-shortcuts.py`, with `coily.yaml` and `config.yml` as migration fallbacks. Different path, different schema, different consumer. `pull-capabilities.py` accepts either path, which is the one place they meet.
+
+**And the frontmatter key is a third thing.** `ward.workflow` in a repository's AGENTS.md selects one of four landing lanes and is read by `agentic_os.generators.generate_git_workflow`. Vocabulary rather than a runtime, so archiving Ward does not reach it.
 
 ## Release and validation
 
