@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
 	"errors"
+	"fmt"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -93,6 +95,28 @@ func writeNativeTestList(t *testing.T, path string, values ...string) {
 	}
 }
 
+// The policy source is a plain directory: the digest Agent Compose seals is of
+// the file, and a checkout here would join the scan every caller counts.
+func writeNativeTestPolicySource(t *testing.T, projects string) aosRepositoryPlanInput {
+	t.Helper()
+	policy := filepath.Join(projects, "owner", "policy", ".agents", "roles.kdl")
+	if err := os.MkdirAll(filepath.Dir(policy), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	body := []byte("role \"platform\" {}\n")
+	if err := os.WriteFile(policy, body, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	return aosRepositoryPlanInput{
+		Identity: "owner/policy",
+		Revision: "0123456789abcdef0123456789abcdef01234567",
+		Policy: aosRepositoryPolicyInput{
+			Path:   ".agents/roles.kdl",
+			SHA256: fmt.Sprintf("sha256:%x", sha256.Sum256(body)),
+		},
+	}
+}
+
 func writeNativeTestPlan(t *testing.T, path string, values ...string) {
 	t.Helper()
 	identities := make([]string, 0, len(values))
@@ -114,10 +138,9 @@ func writeNativeTestPlan(t *testing.T, path string, values ...string) {
 	payload := aosRepositoryPlan{
 		Format:       agentComposeRepositoryPlanYAMLFormat,
 		ProjectsRoot: filepath.Join(filepath.Dir(path), "projects"),
-		Inputs: []aosRepositoryPlanInput{{
-			Identity: "owner/policy", Revision: "0123456789abcdef",
-			Policy: aosRepositoryPolicyInput{Path: ".agents/roles.kdl", SHA256: "sha256:test"},
-		}},
+		Inputs: []aosRepositoryPlanInput{
+			writeNativeTestPolicySource(t, filepath.Join(filepath.Dir(path), "projects")),
+		},
 		Roles:     map[string][]aosRepositorySelection{},
 		Residency: residency,
 	}

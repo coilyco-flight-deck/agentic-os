@@ -37,6 +37,9 @@ const (
 	claudeDisableAutoUpdaterEnv = "DISABLE_AUTOUPDATER"
 	nativeSessionEnv            = "AOS_NATIVE_SESSION"
 	nativeSessionProjectsEnv    = "AOS_NATIVE_SESSION_PROJECTS"
+	// Every session worktree is cut from this ref, so provenance verification
+	// judges the same commit the session will read. docs/native-session-start.md
+	nativeWorktreeBase = "origin/main"
 )
 
 type nativeArtifact struct {
@@ -1583,7 +1586,7 @@ func createNativeSession(
 		runtime.Progress.Item("worktree", index+1, len(repositories), "%s", identity)
 		began := time.Now()
 		_, err := nativeGit(repository.Path,
-			"worktree", "add", "--quiet", "-b", branch, target, "origin/main")
+			"worktree", "add", "--quiet", "-b", branch, target, nativeWorktreeBase)
 		link.Track(identity, time.Since(began))
 		if err != nil {
 			fmt.Fprintf(runtime.Stderr, "aos: worktree skipped for %s: %v\n", identity, err)
@@ -2041,7 +2044,7 @@ type nativeProjection struct {
 func resolveExpectedRepositories(
 	runtime nativeRuntime,
 ) (nativeProjection, error) {
-	plan, err := loadAOSRepositoryPlan(runtime.PlanFile)
+	plan, err := verifiedRepositoryPlan(runtime)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			// Projection runs off the seed, cleanup does not: an absent plan
@@ -2057,9 +2060,11 @@ func resolveExpectedRepositories(
 		return nativeProjection{}, fmt.Errorf("Agent Compose repository plan projects_root %q does not match %s", plan.ProjectsRoot, runtime.ProjectsRoot)
 	}
 	expected := nativeExpected{
-		Full:          seedNativeExpected(),
-		FleetOrgs:     readNativeListSet(runtime.FleetFile),
-		Authoritative: true,
+		Full:      seedNativeExpected(),
+		FleetOrgs: readNativeListSet(runtime.FleetFile),
+		// An unverified plan expects nothing it can prove, so cleanup stays off
+		// even though projection runs. docs/native-session-start.md
+		Authoritative: !plan.Unverified,
 	}
 	prior := ""
 	for _, entry := range plan.Residency {

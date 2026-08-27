@@ -18,6 +18,10 @@ Major shipped capabilities, not files.
 - [Native agent workspaces](native-agent-workspaces.md) - role-scoped worktrees,
   leases, cleanup, the `aos` temp namespace, and standalone launches.
   [Shadow lifecycle](native-shadow.md) verbs list, release, and reap them.
+- [Fail-closed launch provenance](native-session-start.md) - native startup
+  fetches each policy source, verifies the digest Agent Compose sealed into the
+  repository plan, regenerates once on a mismatch, and stops before any worktree
+  exists when that cannot converge.
 - [Agent-compose provider](context-budget.md) - scoped skills,
   personality, and seven deployed roles across the Agent Compose v3 roster.
 - [Agent tool evaluation](../.agents/skills/tooling-agent-tool-evaluation/SKILL.md) - cross-harness tool evals.

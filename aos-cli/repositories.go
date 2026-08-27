@@ -50,6 +50,10 @@ type aosRepositoryPlan struct {
 	Inputs       []aosRepositoryPlanInput            `json:"-" yaml:"inputs,omitempty"`
 	Roles        map[string][]aosRepositorySelection `json:"roles" yaml:"roles"`
 	Residency    []aosRepositorySelection            `json:"residency" yaml:"residency"`
+	// Legacy and Unverified travel with the plan rather than beside it, so a
+	// caller cannot hold a plan and forget how much of it was proven.
+	Legacy     bool `json:"-" yaml:"-"`
+	Unverified bool `json:"-" yaml:"-"`
 }
 
 func defaultRepositoryPlanPath() string {
@@ -113,6 +117,8 @@ func loadAOSRepositoryPlan(filename string) (aosRepositoryPlan, error) {
 			return aosRepositoryPlan{}, err
 		}
 	}
+	plan.Legacy = expectedFormat == agentComposeRepositoryPlanJSONFormat
+	plan.Unverified = plan.Legacy
 	return plan, nil
 }
 
