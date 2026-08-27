@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Apply this repo's host shell entry-point symlinks.
+"""Apply this repo's host shell entry-point symlinks and git wire-up.
 
 This is a local repair path for the shell half of the ansible shell role. It
 does not replace fleet convergence, but it fixes one host when links drift.
@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import subprocess
 import sys
 from pathlib import Path
 from typing import NamedTuple
@@ -25,6 +26,45 @@ class LinkSpec(NamedTuple):
     name: str
     source: Path
     dest: Path
+
+
+class ConfigSpec(NamedTuple):
+    key: str
+    value: str
+    config_path: Path
+
+
+def native_session_root(path: Path) -> Path | None:
+    """Return the `.../aos/native` ancestor of path, when it has one.
+
+    A native session home and its shadow worktrees live under a temporary root
+    that outlives no session. Absolute paths taken from one are durable enough
+    to write into git config and not durable enough to resolve later, which is
+    the whole failure this script guards (agentic-os#1137).
+    """
+    parts = path.parts
+    for index in range(len(parts) - 1):
+        if parts[index] == "aos" and parts[index + 1] == "native":
+            return Path(*parts[: index + 2])
+    return None
+
+
+def canonical_home(home: Path) -> Path:
+    """Resolve a session home to the durable host home it links back to.
+
+    A native session home mirrors the real one entry by entry as symlinks, so
+    any of them names the durable parent.
+    """
+    if native_session_root(home) is None:
+        return home
+    for probe in (".gitconfig", ".local", ".zshrc"):
+        entry = home / probe
+        if not entry.is_symlink():
+            continue
+        parent = entry.resolve().parent
+        if native_session_root(parent) is None:
+            return parent
+    return home
 
 
 def _target_for_gpg_ssm(repo_root: Path) -> Path:
@@ -89,6 +129,54 @@ def link_specs(home: Path, repo_root: Path = REPO_ROOT) -> list[LinkSpec]:
     return specs
 
 
+def config_specs(home: Path, repo_root: Path = REPO_ROOT) -> list[ConfigSpec]:
+    """Git settings whose value is a path this script also owns.
+
+    The value names the durable home rather than `$HOME`, so wiring this up
+    from inside a native session cannot record a path the session takes with
+    it when it is purged.
+    """
+    durable = canonical_home(home)
+    signer = durable / ".local" / "bin" / _target_for_gpg_ssm(repo_root).name
+    return [
+        ConfigSpec("gpg.program", str(signer), home / ".gitconfig"),
+    ]
+
+
+def _git_config_get(spec: ConfigSpec) -> str | None:
+    result = subprocess.run(
+        ["git", "config", "--file", str(spec.config_path), "--get", spec.key],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        return None
+    return result.stdout.strip() or None
+
+
+def apply_config(spec: ConfigSpec, *, dry_run: bool) -> tuple[str, str]:
+    target = Path(spec.value)
+    if not target.exists():
+        return "failed", f"missing signer {target}; link it first"
+
+    current = _git_config_get(spec)
+    if current == spec.value:
+        return "ok", "already current"
+    if not dry_run:
+        spec.config_path.parent.mkdir(parents=True, exist_ok=True)
+        subprocess.run(
+            ["git", "config", "--file", str(spec.config_path), spec.key, spec.value],
+            check=True,
+        )
+    if current is None:
+        return ("would-set" if dry_run else "set"), spec.value
+    detail = f"{current} -> {spec.value}"
+    if native_session_root(Path(current)) is not None:
+        detail = f"purged session path {detail}"
+    return ("would-repoint" if dry_run else "repointed"), detail
+
+
 def _backup_path(path: Path) -> Path:
     base = path.with_name(path.name + ".bak")
     if not base.exists() and not base.is_symlink():
@@ -151,10 +239,22 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--check", action="store_true", help="fail if any link would change")
     ap.add_argument("--home", type=Path, default=Path.home(), help=argparse.SUPPRESS)
+    ap.add_argument("--repo-root", type=Path, default=REPO_ROOT, help=argparse.SUPPRESS)
     args = ap.parse_args(argv)
 
     dry_run = args.dry_run or args.check
-    specs = link_specs(args.home)
+    session = native_session_root(args.repo_root)
+    if session is not None:
+        print(
+            f"Refusing to apply from a native-session checkout under {session}.\n"
+            "Every link and setting would name a path the session takes with it.\n"
+            "Re-run from the canonical checkout.",
+            file=sys.stderr,
+        )
+        return 1
+
+    specs = link_specs(args.home, args.repo_root)
+    settings = config_specs(args.home, args.repo_root)
     print(f"Applying shell links for {args.home}")
     if args.dry_run:
         print("(dry run)")
@@ -169,6 +269,12 @@ def main(argv: list[str] | None = None) -> int:
         action, detail = apply_link(spec, dry_run=dry_run)
         counts[action] = counts.get(action, 0) + 1
         print(f"  {spec.name:8} {action:14} {detail}")
+        failed = failed or action == "failed"
+        changed = changed or action.startswith("would-")
+    for setting in settings:
+        action, detail = apply_config(setting, dry_run=dry_run)
+        counts[action] = counts.get(action, 0) + 1
+        print(f"  {setting.key:8} {action:14} {detail}")
         failed = failed or action == "failed"
         changed = changed or action.startswith("would-")
 

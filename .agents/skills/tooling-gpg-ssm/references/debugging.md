@@ -1,5 +1,6 @@
 # Debugging gpg-ssm
 
+- **`error: cannot run .../gpg-ssm`, or signing silently off** - `gpg.program` names a path that no longer exists, usually a purged native-session home. Run `just apply-shell-links -- --check` from the canonical checkout to confirm, then `just apply-shell-links` to repoint it.
 - **`user.signingkey is unset`** - run `git config --global user.signingkey <KEYID>`. The keyid comes from `gpg --list-secret-keys --keyid-format LONG`.
 - **`AWS credentials expired or missing`** - the message says it: run `aws sso login`, then retry.
 - **`failed to fetch /coilysiren/gpg-secret-key` or `/coilysiren/gpg-passphrase`** - the shared param doesn't exist or IAM denies. Check `aosguard ops aws ssm get-parameter --name /coilysiren/gpg-secret-key --with-decryption` or `aosguard ops aws ssm get-parameter --name /coilysiren/gpg-passphrase --with-decryption` directly. If 404, the shared SSM row is missing.

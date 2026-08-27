@@ -180,7 +180,7 @@ apply-agents-pointer *ARGS:
 apply-base-claude-settings *ARGS:
     @python3 scripts/apply-base-claude-settings.py "$@"
 
-# Repoint this host's shell entry symlinks (~/.zshrc, ~/.bashrc, gpg-ssm) to the canonical agentic-os files. Idempotent; pass -- --check to fail on drift.
+# Repoint this host's shell entry symlinks (~/.zshrc, ~/.bashrc, gpg-ssm) and the git settings naming them (gpg.program) at the canonical agentic-os files. Idempotent; pass -- --check to fail on drift. Refuses to run from a native-session checkout.
 apply-shell-links *ARGS:
     @uv run python scripts/apply-shell-links.py "$@"
 

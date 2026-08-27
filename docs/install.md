@@ -21,7 +21,9 @@ and never clobbers a status line you set yourself. Agent Compose owns context
 refresh through host convergence and native launch. The manual symlink fallback
 is in [the README](../README.md).
 
-`just apply-shell-links` is the local repair path for the same shell links. It repoints stale symlinks, backs up pre-existing regular files, and supports `just apply-shell-links --check` for drift detection. On Windows it intentionally skips `~/.bashrc` and links each `.cmd` wrapper with its sibling Bash implementation; Git Bash popup launchers should not recreate that file.
+`just apply-shell-links` is the local repair path for the same shell links, and it also owns the git settings whose value is one of those paths. It repoints stale symlinks, backs up pre-existing regular files, wires `gpg.program`, and supports `just apply-shell-links -- --check` for drift detection. On Windows it intentionally skips `~/.bashrc` and links each `.cmd` wrapper with its sibling Bash implementation; Git Bash popup launchers should not recreate that file.
+
+It refuses to run from a native-session checkout, and writes the durable host home into `gpg.program` rather than `$HOME`. Both guard the same failure: a session-scoped path is durable enough to write into global config and gone by the time anything resolves it (agentic-os#1137).
 
 Wire the helper into Git once:
 
@@ -37,12 +39,13 @@ git config --global credential.https://forgejo.coilysiren.me.helper \
 
 ## Wire gpg-ssm into git
 
-After the gpg-ssm symlink lands:
+Run from the canonical checkout, never a native session:
 
 ```bash
-git config --global gpg.program "$HOME/.local/bin/gpg-ssm"      # Mac, Linux
-git config --global gpg.program "$HOME/.local/bin/gpg-ssm.cmd"  # Windows
+just apply-shell-links
 ```
+
+That links the wrapper and sets `gpg.program` to it in one step, on every OS. Verify with `git log -1 --format=%G?` on a signed commit, which returns `G`.
 
 ## Features: shell and secret handling
 
@@ -93,7 +96,7 @@ credentials, tokens, keys, JWTs, and phone numbers.
 
 ## GPG signing without disk-cached passphrases
 
-`gpg-ssm` is a wrapper around `gpg` that pulls the signing passphrase from AWS SSM at sign time instead of caching it on disk. When the configured signing key is missing locally, it bootstraps `/coilysiren/gpg-secret-key` in memory before signing. Mac/Linux + Windows (`.cmd` shim for Git for Windows). Wire it in once with `git config --global gpg.program`.
+`gpg-ssm` is a wrapper around `gpg` that pulls the signing passphrase from AWS SSM at sign time instead of caching it on disk. When the configured signing key is missing locally, it bootstraps `/coilysiren/gpg-secret-key` in memory before signing. Mac/Linux + Windows (`.cmd` shim for Git for Windows). Wire it in once with `just apply-shell-links`.
 
 ## Install surface
 

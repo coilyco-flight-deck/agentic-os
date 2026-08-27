@@ -15,10 +15,12 @@ GPG wrapper script that fetches signing material from AWS SSM at sign time, inst
 ## Wire-up
 
 ```bash
-git config --global gpg.program "$HOME/.local/bin/gpg-ssm"
+just apply-shell-links
 ```
 
-Windows: same idea, point at `gpg-ssm.cmd`.
+Run it from the canonical checkout. It links the wrapper and sets `gpg.program` to it on every OS, picking the `.cmd` shim on Windows.
+
+Never hand-write `gpg.program` from inside a native session. `$HOME` there is a session home that gets purged, while `~/.gitconfig` links to the durable one, so the setting outlives the path it names and signing dies silently (agentic-os#1137). `just apply-shell-links -- --check` reports that drift.
 
 ## Deeper context
 

@@ -115,3 +115,93 @@ def test_windows_skips_bashrc(monkeypatch, tmp_path: Path) -> None:
         "git-credential-forgejo-ssm-bash",
         "docker-credential-forgejo-ssm-bash",
     ]
+
+
+def _session_home(tmp_path: Path) -> tuple[Path, Path]:
+    """A native session home mirroring a real one, as aos-cli stages it."""
+    real = tmp_path / "Users" / "kai"
+    (real / ".local" / "bin").mkdir(parents=True)
+    (real / ".gitconfig").write_text("", encoding="utf-8")
+    session = tmp_path / "aos" / "native" / "pp94" / "home"
+    session.mkdir(parents=True)
+    for name in (".gitconfig", ".local"):
+        (session / name).symlink_to(real / name)
+    return real, session
+
+
+def test_native_session_root_detects_session_paths(tmp_path: Path) -> None:
+    script = _load_script()
+    session = tmp_path / "aos" / "native" / "20260806t051414z" / "home" / ".local"
+
+    assert script.native_session_root(session) == tmp_path / "aos" / "native"
+    assert script.native_session_root(tmp_path / "Users" / "kai") is None
+
+
+def test_canonical_home_resolves_a_session_home(tmp_path: Path) -> None:
+    script = _load_script()
+    real, session = _session_home(tmp_path)
+
+    assert script.canonical_home(session) == real
+    assert script.canonical_home(real) == real
+
+
+def test_config_spec_names_the_durable_home(tmp_path: Path) -> None:
+    script = _load_script()
+    repo = tmp_path / "repo"
+    _make_repo(repo)
+    real, session = _session_home(tmp_path)
+
+    (spec,) = script.config_specs(session, repo)
+
+    assert spec.key == "gpg.program"
+    assert spec.value == str(real / ".local" / "bin" / "gpg-ssm")
+    assert spec.config_path == session / ".gitconfig"
+
+
+def test_config_repoints_a_purged_session_signer(tmp_path: Path) -> None:
+    script = _load_script()
+    repo = tmp_path / "repo"
+    _make_repo(repo)
+    real, session = _session_home(tmp_path)
+    signer = real / ".local" / "bin" / "gpg-ssm"
+    signer.symlink_to(repo / "scripts" / "gpg-ssm")
+    purged = tmp_path / "aos" / "native" / "20260806t051414z" / "home" / ".local" / "bin" / "gpg-ssm"
+    (session / ".gitconfig").write_text(
+        f"[gpg]\n\tprogram = {purged}\n", encoding="utf-8"
+    )
+    (spec,) = script.config_specs(session, repo)
+
+    assert script.apply_config(spec, dry_run=True) == (
+        "would-repoint",
+        f"purged session path {purged} -> {signer}",
+    )
+    action, _ = script.apply_config(spec, dry_run=False)
+
+    assert action == "repointed"
+    assert script._git_config_get(spec) == str(signer)
+    assert script.apply_config(spec, dry_run=False)[0] == "ok"
+
+
+def test_config_fails_when_the_signer_is_absent(tmp_path: Path) -> None:
+    script = _load_script()
+    repo = tmp_path / "repo"
+    _make_repo(repo)
+    _, session = _session_home(tmp_path)
+
+    (spec,) = script.config_specs(session, repo)
+    action, detail = script.apply_config(spec, dry_run=True)
+
+    assert action == "failed"
+    assert "link it first" in detail
+
+
+def test_main_refuses_a_session_checkout(tmp_path: Path, capsys) -> None:
+    script = _load_script()
+    repo = tmp_path / "aos" / "native" / "pp94" / "projects" / "repo"
+    _make_repo(repo)
+    _, session = _session_home(tmp_path)
+
+    code = script.main(["--check", "--home", str(session), "--repo-root", str(repo)])
+
+    assert code == 1
+    assert "Refusing to apply" in capsys.readouterr().err
