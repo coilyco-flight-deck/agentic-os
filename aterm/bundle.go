@@ -29,7 +29,6 @@ type bundleSpec struct {
 	Role             string
 	DisplayName      string
 	Person           string
-	SeatLabel        string
 	Version          string
 	BakedPath        string
 	Icon             bool
@@ -43,7 +42,7 @@ type bundleSpec struct {
 // name is the on-disk basename. macOS renders a POSIX colon as a slash, so
 // the house ` // ` separator has to be stored as ` :: `. See docs/aterm.md.
 func (s bundleSpec) name() string {
-	parts := []string{strings.TrimSpace(s.SeatLabel), strings.TrimSpace(s.Person), strings.TrimSpace(s.DisplayName)}
+	parts := []string{strings.TrimSpace(s.Person), strings.TrimSpace(s.DisplayName)}
 	kept := make([]string, 0, len(parts))
 	for _, part := range parts {
 		if part != "" {
@@ -254,7 +253,6 @@ func buildBundlePlan(ctx context.Context, deps commandDeps, cmd *cli.Command) (b
 			Role:             role.Slug,
 			DisplayName:      role.DisplayName,
 			Person:           role.Identity.Name,
-			SeatLabel:        strings.ToUpper(seat[:1]) + seat[1:],
 			Version:          version,
 			BakedPath:        bakedPath,
 			Icon:             icon != "",

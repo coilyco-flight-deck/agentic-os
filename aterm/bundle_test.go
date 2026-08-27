@@ -13,7 +13,6 @@ func testSpec() bundleSpec {
 		Role:             "platform",
 		DisplayName:      "Agentic Platform Engineer",
 		Person:           "Angie",
-		SeatLabel:        "Claude",
 		Version:          "1.2.3",
 		BakedPath:        "/opt/homebrew/bin:/usr/bin:/bin",
 		WorkingDirectory: "/Users/kai/projects",
@@ -133,8 +132,8 @@ func writeFixtureBundle(t *testing.T, root, name, body string) string {
 // fires once someone clicks it. Naming it at generation is the earlier warning.
 func TestStaleBundlesNamesWhatThisRunNoLongerWritesAndSkipsAForeignApp(t *testing.T) {
 	root := t.TempDir()
-	retired := writeFixtureBundle(t, root, "Claude :: Rex :: Retired Role", "#!/bin/sh\n"+bundleMarker+"\n")
-	kept := writeFixtureBundle(t, root, "Claude :: Angie :: Agentic Platform Engineer",
+	retired := writeFixtureBundle(t, root, "Rex :: Retired Role", "#!/bin/sh\n"+bundleMarker+"\n")
+	kept := writeFixtureBundle(t, root, "Angie :: Agentic Platform Engineer",
 		"#!/bin/sh\n"+bundleMarker+"\n")
 	writeFixtureBundle(t, root, "Some Other App", "#!/bin/sh\nexit 0\n")
 	stale := staleBundles(root, map[string]bool{kept: true})
@@ -156,9 +155,9 @@ func TestStaleBundlesFindsABundleWrittenUnderTheOldNamingScheme(t *testing.T) {
 
 func TestReplaceableGuardsAnAppThisCommandDidNotWrite(t *testing.T) {
 	root := t.TempDir()
-	mine := writeFixtureBundle(t, root, "Claude :: Angie :: Agentic Platform Engineer",
+	mine := writeFixtureBundle(t, root, "Angie :: Agentic Platform Engineer",
 		"#!/bin/sh\n"+bundleMarker+"\n")
-	theirs := writeFixtureBundle(t, root, "Claude :: Vera :: Systems Administrator",
+	theirs := writeFixtureBundle(t, root, "Vera :: Systems Administrator",
 		"#!/bin/sh\nexit 0\n")
 	if err := replaceable(mine); err != nil {
 		t.Fatalf("regenerating our own bundle should be allowed: %v", err)
@@ -166,7 +165,7 @@ func TestReplaceableGuardsAnAppThisCommandDidNotWrite(t *testing.T) {
 	if err := replaceable(theirs); err == nil {
 		t.Fatal("an app this command did not write should stay untouched")
 	}
-	if err := replaceable(filepath.Join(root, "Claude :: Nobody.app")); err != nil {
+	if err := replaceable(filepath.Join(root, "Nobody.app")); err != nil {
 		t.Fatalf("a missing bundle is not a conflict: %v", err)
 	}
 }
@@ -208,10 +207,10 @@ func TestRenderBundlePlanNamesEveryBundleAndItsStaleLeftovers(t *testing.T) {
 		Items: []bundleItem{{
 			Role:   "platform",
 			Person: "Angie",
-			Name:   "Claude // Angie // Agentic Platform Engineer",
-			Path:   "/Users/kai/Applications/Claude :: Angie :: Agentic Platform Engineer.app",
+			Name:   "Angie // Agentic Platform Engineer",
+			Path:   "/Users/kai/Applications/Angie :: Agentic Platform Engineer.app",
 		}},
-		Stale: []string{"/Users/kai/Applications/Claude :: Rex :: Retired.app"},
+		Stale: []string{"/Users/kai/Applications/Rex :: Retired.app"},
 	}
 	rendered := &strings.Builder{}
 	if err := renderBundlePlan(rendered, plan); err != nil {
@@ -219,7 +218,7 @@ func TestRenderBundlePlanNamesEveryBundleAndItsStaleLeftovers(t *testing.T) {
 	}
 	// The rendered name is the one the Dock draws, not the one on disk.
 	for _, want := range []string{"/Users/kai/Applications", "platform",
-		"Claude // Angie // Agentic Platform Engineer", "Retired"} {
+		"Angie // Agentic Platform Engineer", "Retired"} {
 		if !strings.Contains(rendered.String(), want) {
 			t.Fatalf("the rendered plan should name %q:\n%s", want, rendered)
 		}
@@ -239,14 +238,14 @@ func TestRenderBundlePlanSaysWhenThereIsNoIcon(t *testing.T) {
 	}
 }
 
-// Kai asked for "Claude // Angie // ...", and a POSIX filename cannot hold a
-// slash. macOS renders a stored colon as one, so the name round-trips.
+// Kai asked for "Angie // Agentic Platform Engineer", and a POSIX filename
+// cannot hold a slash. macOS renders a stored colon as one, so it round-trips.
 func TestBundleNameStoresTheHouseSeparatorAsMacOSRendersIt(t *testing.T) {
 	spec := testSpec()
-	if got := spec.name(); got != "Claude :: Angie :: Agentic Platform Engineer" {
+	if got := spec.name(); got != "Angie :: Agentic Platform Engineer" {
 		t.Fatalf("on-disk name is %q", got)
 	}
-	if got := spec.displayName(); got != "Claude // Angie // Agentic Platform Engineer" {
+	if got := spec.displayName(); got != "Angie // Agentic Platform Engineer" {
 		t.Fatalf("displayed name is %q", got)
 	}
 	if strings.Contains(spec.name(), "/") {
@@ -266,7 +265,7 @@ func TestBundleNameNeutralizesASlashComingFromTheRoster(t *testing.T) {
 
 func TestBundleInfoPlistCarriesTheDisplayNameAndAPlainExecutable(t *testing.T) {
 	plist := bundleInfoPlist(testSpec())
-	if !strings.Contains(plist, "Claude // Angie // Agentic Platform Engineer") {
+	if !strings.Contains(plist, "Angie // Agentic Platform Engineer") {
 		t.Fatalf("the plist should carry the rendered name:\n%s", plist)
 	}
 	if !strings.Contains(plist, "<string>aterm-platform</string>") {
@@ -298,7 +297,7 @@ func TestBundlePlanWarnsWhenTheBundlesCallADifferentBuild(t *testing.T) {
 		Launcher:      "/opt/homebrew/bin/aterm",
 		LauncherBuild: "aos-v0.231.0",
 		Build:         "aos-v0.242.0",
-		Items:         []bundleItem{{Role: "platform", Name: "Claude // Angie // X"}},
+		Items:         []bundleItem{{Role: "platform", Name: "Angie // X"}},
 	}
 	if !plan.staleLauncher() {
 		t.Fatal("a bundle calling an older aterm carries only what that one does")
