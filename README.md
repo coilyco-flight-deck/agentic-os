@@ -117,7 +117,9 @@ ssm-get /eco/server-api-token
 
 `ssm-get` prints the decrypted value to stdout without writing it to disk. The
 AWS profile defaults to `default`; pass a profile and region as the second and
-third arguments. The bulk shell-environment exporter and the legacy
+third arguments. The implementation is `scripts/ssm-get` on `PATH`, which the
+shell function of the same name delegates to, so scripts and non-interactive
+shells reach it too. The bulk shell-environment exporter and the legacy
 cleartext-on-disk dump (`~/.cache/ssm-env.sh`) are removed.
 
 ## agent-compose

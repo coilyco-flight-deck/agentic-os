@@ -27,8 +27,9 @@ Available in any interactive zsh:
 - `rg` - wrapper with `--hidden --glob '!.git' --glob '!*.svg' --glob '!.vscode'`
 - `git-default-branch`, `git-pr-title`, `git-merge-default-branch`, `git-checkpoint`, `git-squash`, `gt-conflicts`
 - `docker-bash <container-name>`, `rg-code <pattern>`, `pull-all-repos`, `count-lines`
-- `ssm-get <name> [profile] [region]`
+- `ssm-get <name> [profile] [region]` - delegates to `scripts/ssm-get`, so scripts and agent tool calls reach the same implementation via `~/.local/bin`
 - `github-token-load` - lazy. Call when something needs `$GITHUB_PERSONAL_ACCESS_TOKEN`; not eager on every shell start.
+
 
 ## Prompt
 

@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# ssm-get - fetch one decrypted SSM parameter to stdout without persisting it.
+#
+# Usage:
+#   ssm-get <name> [profile] [region]
+#
+# On PATH rather than a shell function so scripts, non-interactive shells, and
+# agent tool calls reach the same implementation the interactive shell does
+# (agentic-os#1308).
+set -euo pipefail
+
+# Git Bash mangles leading-slash args into Windows paths; opt out so SSM names
+# like /coilysiren/gpg-passphrase survive intact.
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*) export MSYS_NO_PATHCONV=1 ;;
+esac
+
+if [ "$#" -lt 1 ] || [ "$#" -gt 3 ]; then
+  echo "usage: ssm-get <name> [profile] [region]" >&2
+  exit 64
+fi
+
+AWS_PROFILE="${2:-default}" AWS_REGION="${3:-us-east-1}" \
+  exec aws ssm get-parameter --name "$1" --with-decryption \
+    --query 'Parameter.Value' --output text

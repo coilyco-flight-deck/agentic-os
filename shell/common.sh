@@ -512,14 +512,15 @@ github-token-load() {
   export HOMEBREW_GITHUB_PACKAGES_TOKEN="$GITHUB_PERSONAL_ACCESS_TOKEN"
 }
 
-# Fetch one SSM value on demand without persisting it.
+# Delegates to scripts/ssm-get so the shell and every script share one
+# implementation. See docs/install.md.
 ssm-get() {
-  local name="$1"
-  local profile="${2:-default}"
-  local region="${3:-us-east-1}"
-  AWS_PROFILE="$profile" AWS_REGION="$region" \
-    aws ssm get-parameter --name "$name" --with-decryption \
-    --query 'Parameter.Value' --output text
+  local script
+  for script in "$HOME/.local/bin/ssm-get" "$(_siren_aos_repo_root)/scripts/ssm-get"; do
+    [ -x "$script" ] && { "$script" "$@"; return; }
+  done
+  echo "ssm-get: scripts/ssm-get not found; run 'just apply-shell-links'" >&2
+  return 1
 }
 
 # Auto-cd a first shell from $HOME or an AOS native session root. Alacritty's

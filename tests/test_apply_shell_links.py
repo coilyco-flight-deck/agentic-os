@@ -23,6 +23,7 @@ def _make_repo(root: Path) -> None:
     (root / "shell" / "bashrc").write_text("bash\n", encoding="utf-8")
     (root / "scripts" / "gpg-ssm").write_text("gpg\n", encoding="utf-8")
     (root / "scripts" / "gpg-ssm.cmd").write_text("gpg\n", encoding="utf-8")
+    (root / "scripts" / "ssm-get").write_text("ssm\n", encoding="utf-8")
     (root / "scripts" / "git-credential-forgejo-ssm.sh").write_text("git\n", encoding="utf-8")
     (root / "scripts" / "git-credential-forgejo-ssm.cmd").write_text("git\n", encoding="utf-8")
     (root / "scripts" / "docker-credential-forgejo-ssm").write_text(
@@ -109,6 +110,7 @@ def test_windows_skips_bashrc(monkeypatch, tmp_path: Path) -> None:
     assert names == [
         "zshrc",
         "gpg-ssm",
+        "ssm-get",
         "git-credential-forgejo-ssm",
         "docker-credential-forgejo-ssm",
         "gpg-ssm-bash",

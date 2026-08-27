@@ -94,6 +94,11 @@ def link_specs(home: Path, repo_root: Path = REPO_ROOT) -> list[LinkSpec]:
             home / ".local" / "bin" / _target_for_gpg_ssm(repo_root).name,
         ),
         LinkSpec(
+            "ssm-get",
+            repo_root / "scripts" / "ssm-get",
+            home / ".local" / "bin" / "ssm-get",
+        ),
+        LinkSpec(
             "git-credential-forgejo-ssm",
             _target_for_git_credential(repo_root),
             home / ".local" / "bin" / _target_for_git_credential(repo_root).name,

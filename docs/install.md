@@ -73,6 +73,14 @@ predecessors. Explicit role launches use the same workspace without a container.
 without writing it to disk. The shell exposes no bulk parameter-tree loader and
 does not populate secret environment variables at startup.
 
+The implementation is `scripts/ssm-get`, reaching `PATH` through the same
+`~/.local/bin` link as the other wrappers. The shell function of the same name
+delegates to it rather than carrying its own copy: a function alone is
+invisible to scripts and agent tool calls, which then restate the raw
+`aws ssm get-parameter` call (agentic-os#1308). The function prefers the
+converged link and falls back to the checkout, so a host that has not run
+`just apply-shell-links` yet still resolves it.
+
 The integrated `aos --warded` launch uses the same on-demand posture for its
 deployment-owned Forgejo broker credential. AOS resolves the value through the
 host AWS session only when `FORGEJO_TOKEN` is absent, passes it to Ward's
