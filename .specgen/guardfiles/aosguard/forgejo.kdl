@@ -470,6 +470,77 @@ wrap aosguard ops forgejo {
             }
         }
     }
+    // create issue: shadow the leaf so no issue is filed without a priority and an
+    // autonomy label (#1105). Names not ids; globs enumerate (unknown name = 200).
+    action create issue {
+        describe "File an issue, refusing one that carries no priority label or no autonomy label (#1105). Shadows the generated `issue create` leaf. --labels takes label NAMES (priority/P2, autonomy/headless) rather than the numeric ids the POST /issues body declares: the names are identical across every org and repo the coily* gate reaches and the ids are not, so validating a name needs no per-org id table and no lookup, and the caller stops running `org-label list` before every filing. The labels are applied by a second call to the labels sub-collection, whose body schema declares the id-or-name union that carries a name at all. The refusal is not part of that second call: it happens while the inputs bind, before the create fires, so a call that violates the rule creates nothing. Since inbox and website migrated onto priority/* and autonomy/* (coilysiren/inbox#392) one rule covers every repo this surface writes, and no per-repo exemption is carried. The globs enumerate the vocabulary rather than wildcarding it, because the labels endpoint drops an unknown name silently with a 200, so a loose priority/* would accept priority/p2, let the write through and apply nothing. The leaf`s optional fields are carried through: an omitted one is left out of the request rather than failing the call (umbra#326). Only the deprecated single --assignee and --closed are dropped, the first because --assignees supersedes it and the second because an issue filed already-closed is not a thing this surface should make easy."
+        input owner {
+            positional
+            required
+            help "repo owner"
+        }
+        input repo {
+            positional
+            required
+            help "repo name"
+        }
+        input title {
+            flag
+            required
+            help "issue title"
+        }
+        input body {
+            flag
+            help "issue body"
+        }
+        input milestone {
+            flag
+            help "milestone id"
+        }
+        input assignees {
+            flag
+            array
+            help "assignee login, repeatable"
+        }
+        input due_date {
+            flag
+            help "due date (RFC 3339)"
+        }
+        input ref {
+            flag
+            help "git ref to associate"
+        }
+        input labels {
+            flag
+            required
+            array
+            help "label NAME, repeatable; needs one priority/* and one autonomy/*"
+            matches "priority/P[0-4]" message="no priority label: add --labels priority/P2 (P0 highest, P4 lowest)"
+            matches "autonomy/headless" "autonomy/live-collab" "autonomy/async-consult" "autonomy/epic" message="no autonomy label: add --labels autonomy/headless (or autonomy/live-collab, autonomy/async-consult, autonomy/epic)"
+        }
+        call create issue {
+            args {
+                owner $owner
+                repo $repo
+                title $title
+                body $body
+                milestone $milestone
+                assignees $assignees
+                due_date $due_date
+                ref $ref
+            }
+            as issue
+        }
+        call add issue-label {
+            args {
+                owner $owner
+                repo $repo
+                index $issue.number
+                labels $labels
+            }
+            as labels
+        }
+    }
     // move-issue: copy title/body to a target repo, back-link, then CLOSE the
     // source (never delete). Carrying labels/milestone is deferred (array flow).
     action move-issue {
