@@ -146,6 +146,37 @@ func TestAPersistentMismatchStopsAfterOneRegeneration(t *testing.T) {
 	assertNoNativeSessionWorktree(t, testRuntime)
 }
 
+// The reload has to be a full one: a plan regenerated from moved policy can
+// select a repository the stale plan never named, and the launch must link it.
+func TestARegeneratedPlanLinksANewlySelectedRepository(t *testing.T) {
+	root := t.TempDir()
+	createNativeTestRepository(t, root, "owner", "one")
+	createNativeTestRepository(t, root, "owner", "two")
+	testRuntime := nativeTestRuntime(t, root)
+	writeNativeTestPlan(t, testRuntime.PlanFile, "one")
+	writeNativeTestList(t, testRuntime.FleetFile, "owner")
+	writeTestPolicy(t, testRuntime.ProjectsRoot, "owner/policy", "role \"platform\" { two }\n")
+	stubPlanRegeneration(t, func(runtime nativeRuntime) error {
+		writeNativeTestPlan(t, runtime.PlanFile, "one", "two")
+		writeTestPolicy(t, runtime.ProjectsRoot, "owner/policy", "role \"platform\" { two }\n")
+		resealTestPlan(t, runtime, "owner/policy")
+		return nil
+	})
+
+	if _, err := prepareNativeLaunch(testRuntime, "claude"); err != nil {
+		t.Fatal(err)
+	}
+
+	_, lease := onlyNativeLease(t, testRuntime)
+	linked := make([]string, 0, len(lease.Artifacts))
+	for _, artifact := range lease.Artifacts {
+		linked = append(linked, filepath.Base(artifact.Repository))
+	}
+	if len(linked) != 2 {
+		t.Fatalf("a regenerated launch linked %v, want both repositories", linked)
+	}
+}
+
 func TestAMissingPolicySourceIsAMismatch(t *testing.T) {
 	root := t.TempDir()
 	testRuntime := nativeTestRuntime(t, root)
