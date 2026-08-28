@@ -7,8 +7,10 @@
 // estate owns. agentic-os#1349 closed a wrap that documented a fixed target
 // while accepting any, and a new surface is where that class comes back.
 //
-// Only `add-alias` writes, and it is read-modify-write: the API replaces
-// `domain_aliases` wholesale, so sending one alias would delete the rest.
+// Only the alias leaf writes, and it is read-modify-write: the API replaces
+// `domain_aliases` wholesale, so sending one alias would delete the rest. It
+// adds and removes in one call, because a rename split across two writes is
+// two certificate events on a live site.
 // See ../../../docs/aosguard.md.
 wrap aosguard ops netlify {
     provider ssm {
@@ -39,6 +41,6 @@ wrap aosguard ops netlify {
         argv "-I"
         embed "netlify_domain_alias.py"
         when arg0 matches add
-        describe "pass `add --site <name> --alias <domain>`; preserves existing aliases, and batch them because each write re-issues the certificate covering the primary domain"
+        describe "pass `add --site <name> --alias <domain>` and/or `--remove <domain>`; preserves the aliases you did not name, and a rename belongs in one call because each write re-issues the certificate covering the primary domain"
     }
 }

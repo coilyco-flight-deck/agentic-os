@@ -53,6 +53,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("action", choices=("show", "add"))
     parser.add_argument("--site", required=True)
     parser.add_argument("--alias", action="append", default=[])
+    parser.add_argument("--remove", action="append", default=[])
     args = parser.parse_args(argv)
 
     token = _token()
@@ -61,8 +62,11 @@ def main(argv: list[str] | None = None) -> int:
         _render(site)
         return 0
 
-    if not args.alias:
-        raise SystemExit("netlify: add needs at least one --alias (fail-closed)")
+    if not args.alias and not args.remove:
+        raise SystemExit("netlify: add needs at least one --alias or --remove (fail-closed)")
+    both = set(args.alias) & set(args.remove)
+    if both:
+        raise SystemExit(f"netlify: {sorted(both)[0]} is both added and removed (fail-closed)")
 
     current = list(site.get("domain_aliases") or [])
     primary = {site.get("custom_domain"), site.get("name")}
@@ -72,14 +76,22 @@ def main(argv: list[str] | None = None) -> int:
             raise SystemExit(f"netlify: {alias} is the site's primary domain (fail-closed)")
         if alias not in merged:
             merged.append(alias)
+    for alias in args.remove:
+        if alias in primary:
+            raise SystemExit(f"netlify: {alias} is the site's primary domain (fail-closed)")
+        if alias not in merged:
+            # A silent success here would hide a mistyped domain, which is the
+            # error most likely to go unnoticed on this surface.
+            raise SystemExit(f"netlify: {alias} is not an alias of this site (fail-closed)")
+        merged.remove(alias)
     if merged == current:
-        print("no change; every alias is already present")
+        print("no change; every alias is already as asked")
         _render(site)
         return 0
 
-    # One update for every alias: each write re-issues the certificate covering
-    # the primary domain too, so batching is a safety property, not tidiness.
-    print(f"adding {len(merged) - len(current)} alias(es) to {len(current)} existing")
+    # One update for every change: each write re-issues the certificate covering
+    # the primary domain too, so a rename is one call rather than two.
+    print(f"{len(current)} alias(es) -> {len(merged)}")
     updated = _request("PATCH", f"/sites/{args.site}", token, {"domain_aliases": merged})
     _render(updated)
     return 0

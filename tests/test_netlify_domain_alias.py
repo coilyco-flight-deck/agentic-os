@@ -95,3 +95,61 @@ def test_missing_token_fails_closed(netlify, monkeypatch):
     monkeypatch.setenv("NETLIFY_AUTH_TOKEN", "")
     with pytest.raises(SystemExit):
         netlify.main(["show", "--site", "s"])
+
+
+# A rename is a removal and an addition of the same thing. Two calls would be
+# two certificate events on a live site, so it has to be one write.
+def test_rename_is_one_write(netlify, monkeypatch):
+    site = {
+        "name": "s",
+        "custom_domain": "www.example.com",
+        "domain_aliases": ["keep.example.com", "old.example.com"],
+    }
+    sent: list[dict] = []
+    _stub(netlify, monkeypatch, site, sent)
+
+    netlify.main(["add", "--site", "s", "--alias", "new.example.com", "--remove", "old.example.com"])
+
+    assert len(sent) == 1
+    assert sent[0]["domain_aliases"] == ["keep.example.com", "new.example.com"]
+
+
+def test_remove_refuses_an_alias_the_site_does_not_have(netlify, monkeypatch):
+    site = {"name": "s", "custom_domain": "w", "domain_aliases": ["a.example.com"]}
+    sent: list[dict] = []
+    _stub(netlify, monkeypatch, site, sent)
+
+    with pytest.raises(SystemExit):
+        netlify.main(["add", "--site", "s", "--remove", "typo.example.com"])
+    assert sent == []
+
+
+def test_remove_refuses_the_primary_domain(netlify, monkeypatch):
+    site = {"name": "s", "custom_domain": "www.example.com", "domain_aliases": []}
+    sent: list[dict] = []
+    _stub(netlify, monkeypatch, site, sent)
+
+    with pytest.raises(SystemExit):
+        netlify.main(["add", "--site", "s", "--remove", "www.example.com"])
+    assert sent == []
+
+
+def test_the_same_name_cannot_be_added_and_removed(netlify, monkeypatch):
+    site = {"name": "s", "custom_domain": "w", "domain_aliases": []}
+    sent: list[dict] = []
+    _stub(netlify, monkeypatch, site, sent)
+
+    with pytest.raises(SystemExit):
+        netlify.main(["add", "--site", "s", "--alias", "x.example.com", "--remove", "x.example.com"])
+    assert sent == []
+
+
+# Shedding every alias is allowed: the surface would otherwise be one-way.
+def test_removing_every_alias_is_permitted(netlify, monkeypatch):
+    site = {"name": "s", "custom_domain": "w", "domain_aliases": ["a.example.com"]}
+    sent: list[dict] = []
+    _stub(netlify, monkeypatch, site, sent)
+
+    netlify.main(["add", "--site", "s", "--remove", "a.example.com"])
+
+    assert sent == [{"domain_aliases": []}]
