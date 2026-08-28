@@ -18,6 +18,8 @@ mis = "mis"
 opencode = "opencode"
 qwen = "qwen"
 requets = "requets"
+# The ser8 host: typos splits the alpha run, so `ser8` as a key never matches.
+ser = "ser"
 SOM = "SOM"
 Iz = "Iz"
 signoz = "signoz"

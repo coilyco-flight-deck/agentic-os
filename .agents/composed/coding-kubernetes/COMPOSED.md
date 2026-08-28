@@ -13,8 +13,8 @@ kubernetes, k8s, k3s, kubectl, helm, manifest, deployment, statefulset, daemonse
 
 ## Defaults
 
-- **Cluster**: K3s on `kai-server` (homelab). Single-node by design. Tailscale-fronted.
-- **kubectl**: route guarded operator work through `aosguard ops kubectl`. Enumerate the live surface with `aosguard ops kubectl describe` or `--help`.
+- **Cluster**: two K3s clusters, `kai-server` (homelab) and `ser8` (most Actions runners). Each single-node, Tailscale-fronted.
+- **kubectl**: route guarded operator work through `aosguard ops kubectl`, which requires `--context kai-server` or `--context ser8` on every call and fails closed without one. Enumerate the live surface with `aosguard ops kubectl describe` or `--help`.
 - **Packaging**: Helm for upstream apps with charts. Plain YAML manifests for Kai's own services. Kustomize is fine when it earns its complexity, not by default.
 - **Secrets**: ExternalSecrets operator + AWS SSM. No raw `Secret` resources committed to git, ever.
 - **Ingress**: Traefik (k3s default).
