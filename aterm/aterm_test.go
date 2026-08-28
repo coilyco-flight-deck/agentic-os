@@ -530,6 +530,29 @@ func TestWindowOptionsReachKittyAndRefuseNonsense(t *testing.T) {
 	}
 }
 
+// A kitty outliving its last window leaves the bundle registered, so a reopen
+// activates an empty app instead of a session. See docs/aterm.md.
+func TestClosingTheWindowQuitsTheTerminalSoAReopenRelaunches(t *testing.T) {
+	var spawns []recordedSpawn
+	out, err := runAterm(t, stubDeps(t, &spawns, true), "--dry-run", "--json", "platform", "claude")
+	if err != nil {
+		t.Fatalf("dry run: %v", err)
+	}
+	var plan launchPlan
+	if err := json.Unmarshal([]byte(out), &plan); err != nil {
+		t.Fatalf("decode plan: %v", err)
+	}
+	want := "macos_quit_when_last_window_closed=yes"
+	if !strings.Contains(strings.Join(plan.Arguments, " "), want) {
+		t.Fatalf("terminal arguments are missing %q: %v", want, plan.Arguments)
+	}
+	// The option only binds ahead of the child, since kitty reads the tail as
+	// the program to run.
+	if indexOf(plan.Arguments, want) > indexOf(plan.Arguments, sessionCommand) {
+		t.Fatalf("the quit option must precede the session stage: %v", plan.Arguments)
+	}
+}
+
 // The roster solves the background across the whole set, which a launcher
 // holding one overlay cannot. agentic-os#1245, agent-compose#358
 func TestTheRosterSolvedBackgroundWinsOverTheLocalTint(t *testing.T) {

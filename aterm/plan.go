@@ -99,6 +99,8 @@ func buildLaunchPlan(
 		"--start-as", request.StartAs,
 		"-o", fmt.Sprintf("font_size=%s", request.FontSize),
 		"-o", "background_opacity=1.0",
+		// A kitty outliving its last window blanks a bundle reopen. See docs/aterm.md.
+		"-o", "macos_quit_when_last_window_closed=yes",
 		"-o", fmt.Sprintf("background=%s", brand.Background),
 		"-o", fmt.Sprintf("cursor=%s", brand.Accent),
 		"-o", fmt.Sprintf("selection_background=%s", brand.Accent),
