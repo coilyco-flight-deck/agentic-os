@@ -39,6 +39,10 @@ itself. A repo that declares no lane renders the `pull-request` variant, the
 one lane that neither pushes `main` nor merges, rather than guessing at an
 authority the repo never granted.
 
+`--print-lane` exists because `scripts/pr-guard-pre-push.sh` is bash and
+needs the same answer this module already owns, rather than a second
+frontmatter parser of its own (agentic-os#1321).
+
 Schema and rollout: see docs/features-agents.md.
 """
 
@@ -227,19 +231,34 @@ def main(argv: list[str] | None = None) -> int:
         default="AGENTS.md",
         help="AGENTS.md to read the lane from (default: ./AGENTS.md).",
     )
+    parser.add_argument(
+        "--print-lane",
+        action="store_true",
+        help="Print the resolved lane slug instead of the block, and print "
+        "nothing at all when the repo declares none.",
+    )
     args = parser.parse_args(argv)
 
     lane = args.lane
     if lane is None:
         path = Path(args.agents_md)
-        if not path.is_file():
+        if path.is_file():
+            lane = detect_lane(path.read_text(encoding="utf-8", errors="replace"))
+        elif not args.print_lane:
             print(
                 f"generate-git-workflow: no {args.agents_md} to read a lane "
                 "from; rendering the undeclared variant.",
                 file=sys.stderr,
             )
-        else:
-            lane = detect_lane(path.read_text(encoding="utf-8", errors="replace"))
+
+    # Absence prints as absence: a fallback slug would hand pr-guard an
+    # authority the repo never granted. See this module's docstring.
+    if args.print_lane:
+        resolved = normalize_lane(lane)
+        if resolved is not None:
+            print(resolved)
+        return 0
+
     print(render_block(lane))
     return 0
 

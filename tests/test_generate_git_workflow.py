@@ -11,6 +11,7 @@ from agentic_os.generators.generate_git_workflow import (
     apply_to_text,
     check_drift,
     detect_lane,
+    main,
     normalize_lane,
     render_block,
     render_body,
@@ -207,3 +208,38 @@ def test_this_repo_carries_a_current_block():
 
     root = Path(__file__).resolve().parent.parent
     assert check_drift((root / "AGENTS.md").read_text(encoding="utf-8")) == []
+
+
+def _print_lane(tmp_path, capsys, body: str | None) -> str:
+    """Run `--print-lane` against an AGENTS.md, or against none at all."""
+    agents = tmp_path / "AGENTS.md"
+    if body is not None:
+        agents.write_text(body, encoding="utf-8")
+    assert main(["--print-lane", "--agents-md", str(agents)]) == 0
+    return capsys.readouterr().out
+
+
+@pytest.mark.parametrize("lane", LANES)
+def test_print_lane_echoes_every_declared_lane(tmp_path, capsys, lane):
+    assert _print_lane(tmp_path, capsys, AGENTS.format(lane=lane)) == f"{lane}\n"
+
+
+def test_print_lane_prints_nothing_for_an_undeclared_repo(tmp_path, capsys):
+    # pr-guard reads an empty answer as undeclared and keeps guarding, so a
+    # fallback slug here would hand it an authority the repo never granted.
+    assert _print_lane(tmp_path, capsys, AGENTS.format(lane="not-a-lane")) == ""
+
+
+def test_print_lane_prints_nothing_and_warns_nothing_without_an_agents_md(
+    tmp_path, capsys
+):
+    agents = tmp_path / "AGENTS.md"
+    assert main(["--print-lane", "--agents-md", str(agents)]) == 0
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert captured.err == ""
+
+
+def test_print_lane_never_prints_the_block(tmp_path, capsys):
+    out = _print_lane(tmp_path, capsys, AGENTS.format(lane=MERGE_MAIN))
+    assert BEGIN not in out and END not in out

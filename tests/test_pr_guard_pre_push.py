@@ -11,8 +11,11 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
 import subprocess
 from pathlib import Path
+
+import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
 GUARD = ROOT / "scripts" / "pr-guard-pre-push.sh"
@@ -21,10 +24,29 @@ BRANCH = "aos/feature"
 REMOTE_URL = "https://forgejo.example.invalid/coilyco-flight-deck/agentic-os.git"
 
 
-def _run(tmp_path: Path, *, open_prs: list, closed_prs: list, branch_http: str = "200"):
-    """Run the guard against a curl stub serving fixed PR listings."""
+def _run(
+    tmp_path: Path,
+    *,
+    open_prs: list,
+    closed_prs: list,
+    branch_http: str = "200",
+    branch: str = BRANCH,
+    lane: str | None = None,
+):
+    """Run the guard against a curl stub serving fixed PR listings.
+
+    `lane` installs a `generate-git-workflow` stub on PATH answering
+    `--print-lane` with that slug, which is the resolution path a consumer
+    takes. `None` installs no stub, so the guard finds no reader.
+    """
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
+    if lane is not None:
+        reader = bin_dir / "generate-git-workflow"
+        reader.write_text(
+            f"#!/usr/bin/env bash\nprintf '{lane}\\n'\n", encoding="utf-8"
+        )
+        reader.chmod(0o755)
     (bin_dir / "open.json").write_text(json.dumps(open_prs), encoding="utf-8")
     (bin_dir / "closed.json").write_text(json.dumps(closed_prs), encoding="utf-8")
 
@@ -59,7 +81,7 @@ esac
             "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
             "PRE_COMMIT_REMOTE_NAME": "origin",
             "PRE_COMMIT_REMOTE_URL": REMOTE_URL,
-            "PRE_COMMIT_REMOTE_BRANCH": f"refs/heads/{BRANCH}",
+            "PRE_COMMIT_REMOTE_BRANCH": f"refs/heads/{branch}",
             "FORGEJO_TOKEN": "t",
         },
     )
@@ -199,3 +221,91 @@ def test_the_open_lookup_never_asks_for_state_all() -> None:
     # Only the two named states are ever requested, prose about state=all aside.
     calls = re.findall(r"prs_on_branch (\w+)", text)
     assert set(calls) == {"open", "closed"}, calls
+
+
+
+# The lane half: a guard that refuses a `merge-remote-main` push contradicts
+# the AGENTS.md block another hook renders from the same declaration (#1321).
+
+
+def test_the_merge_remote_main_lane_stands_the_guard_down(tmp_path: Path) -> None:
+    got = _run(
+        tmp_path, open_prs=[], closed_prs=[], branch="main", lane="merge-remote-main"
+    )
+
+    assert got.returncode == 0, got.stderr
+    assert "refusing to push directly" not in got.stderr
+
+
+def test_the_stand_down_exits_rather_than_falling_into_the_pr_half(
+    tmp_path: Path,
+) -> None:
+    # Falling through would ask the forge for an open PR whose head is `main`,
+    # find none, and refuse after all.
+    got = _run(
+        tmp_path,
+        open_prs=[],
+        closed_prs=[_pr(1030, merged=True, state="closed")],
+        branch="main",
+        lane="merge-remote-main",
+    )
+
+    assert got.returncode == 0, got.stderr
+    assert got.stderr == "" or "no open PR" not in got.stderr
+
+
+@pytest.mark.parametrize(
+    "lane", ["pull-request", "pull-request-and-merge", "remote-branch-only", ""]
+)
+def test_every_other_lane_keeps_the_default_branch_guarded(
+    tmp_path: Path, lane: str
+) -> None:
+    got = _run(tmp_path, open_prs=[], closed_prs=[], branch="main", lane=lane)
+
+    assert got.returncode == 1
+    assert "refusing to push directly to 'main'" in got.stderr
+
+
+def test_an_undeclared_repo_is_told_which_lane_it_declares(tmp_path: Path) -> None:
+    got = _run(tmp_path, open_prs=[], closed_prs=[], branch="main", lane="")
+
+    assert "this repo declares no lane" in got.stderr
+
+
+def test_an_unresolvable_reader_guards_and_says_so(tmp_path: Path) -> None:
+    # Undeclared stays guarded, and so does unreadable.
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    subprocess.run(["git", "init", "-q", "-b", "main"], cwd=repo, check=True)
+    empty = tmp_path / "empty-bin"
+    empty.mkdir()
+    # Bash absolute, PATH empty: no reader to find, and no git or sed either.
+    got = subprocess.run(
+        [shutil.which("bash") or "/bin/bash", str(GUARD)],
+        cwd=repo,
+        check=False,
+        capture_output=True,
+        text=True,
+        env={
+            "PATH": str(empty),
+            "PRE_COMMIT_REMOTE_NAME": "origin",
+            "PRE_COMMIT_REMOTE_URL": REMOTE_URL,
+            "PRE_COMMIT_REMOTE_BRANCH": "refs/heads/main",
+        },
+    )
+
+    assert got.returncode == 1
+    assert "no lane reader found" in got.stderr
+
+
+def test_the_pr_half_is_untouched_on_a_merge_remote_main_repo(tmp_path: Path) -> None:
+    # Standing down covers the default branch only.
+    got = _run(
+        tmp_path,
+        open_prs=[],
+        closed_prs=[_pr(1030, merged=True, state="closed")],
+        lane="merge-remote-main",
+    )
+
+    assert got.returncode == 1
+    assert "already merged as PR #1030" in got.stderr
