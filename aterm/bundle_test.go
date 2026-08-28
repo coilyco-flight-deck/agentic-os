@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 	"testing"
@@ -393,5 +395,93 @@ func TestBundlePlanStaysQuietWhenTheBuildsMatchOrAreUnknown(t *testing.T) {
 	unknown := bundlePlan{LauncherBuild: "", Build: "aos-v0.242.0"}
 	if unknown.staleLauncher() {
 		t.Fatal("a version that could not be read is not evidence of a mismatch")
+	}
+}
+
+// roles.kdl rather than a hand-written list, which agreed with the icons
+// whatever either said, and rather than the roster, which lags a release.
+func TestEveryDeclaredRoleHasArtAndNoArtIsOrphaned(t *testing.T) {
+	raw, err := os.ReadFile(filepath.Join("..", ".agents", "roles.kdl"))
+	if err != nil {
+		t.Fatalf("read the declared roles: %v", err)
+	}
+	declared := map[string]bool{}
+	for _, match := range regexp.MustCompile(`(?m)^\s*role ([a-z-]+) \{`).
+		FindAllStringSubmatch(string(raw), -1) {
+		declared[match[1]] = true
+	}
+	if len(declared) == 0 {
+		t.Fatal("no roles parsed out of roles.kdl, so this test proves nothing")
+	}
+
+	shipped := map[string]bool{}
+	entries, err := roleIcons.ReadDir("icons")
+	if err != nil {
+		t.Fatalf("read the embedded icons: %v", err)
+	}
+	for _, entry := range entries {
+		shipped[strings.TrimSuffix(entry.Name(), ".icns")] = true
+	}
+
+	for role := range declared {
+		if !shipped[role] {
+			t.Errorf("role %q is declared and has no icon, so it falls back to the system one", role)
+		}
+	}
+	for role := range shipped {
+		if !declared[role] {
+			t.Errorf("icon %q.icns names no declared role, so nothing will ever read it", role)
+		}
+	}
+	if roleIcon("retired-seat") != nil {
+		t.Fatal("a role with no art must resolve to nil, not a broken reference")
+	}
+}
+
+func TestWriteBundleUsesRoleArtAndPrefersTheSharedIcon(t *testing.T) {
+	root := t.TempDir()
+	item := bundleItem{
+		Role:       "gamedev",
+		Path:       filepath.Join(root, "Gale.app"),
+		Executable: "gale",
+		Launcher:   "#!/bin/sh\n",
+		Plist:      "<plist></plist>",
+	}
+	if err := writeBundle(item, ""); err != nil {
+		t.Fatalf("write with role art: %v", err)
+	}
+	written, err := os.ReadFile(
+		filepath.Join(item.Path, "Contents", "Resources", bundleIconName+".icns"))
+	if err != nil {
+		t.Fatalf("role art should have been written: %v", err)
+	}
+	if !bytes.Equal(written, roleIcon("gamedev")) {
+		t.Fatal("the bundle should carry that role's own art")
+	}
+
+	shared := filepath.Join(root, "shared.icns")
+	if err := os.WriteFile(shared, []byte("shared-icon"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := writeBundle(item, shared); err != nil {
+		t.Fatalf("write with the shared override: %v", err)
+	}
+	written, err = os.ReadFile(
+		filepath.Join(item.Path, "Contents", "Resources", bundleIconName+".icns"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(written) != "shared-icon" {
+		t.Fatal("--icon should still win over a role's own art")
+	}
+
+	item.Role = "retired-seat"
+	item.Path = filepath.Join(root, "Nobody.app")
+	if err := writeBundle(item, ""); err != nil {
+		t.Fatalf("a role with no art must still generate: %v", err)
+	}
+	if _, err := os.Stat(
+		filepath.Join(item.Path, "Contents", "Resources")); !os.IsNotExist(err) {
+		t.Fatal("no art means no Resources directory, not an empty icns")
 	}
 }

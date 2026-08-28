@@ -7,9 +7,9 @@ Major shipped capabilities, not files.
 - [Shell and secrets](install.md) - shared shells, Warp, SSM, and GPG.
 - [Branded agent terminal](aterm.md) - `aterm` opens one composed agent session in its own Sombra kitty
   window, completing and refusing roles against the live roster, and writes a macOS `.app` launcher per
-  role. The window opens on an identity card drawn from the overlay's own `geometry` and sounded from
-  its `sound_mark`. Mac and Linux only, since kitty has no Windows
-  build.
+  role, each carrying its own embedded icon. The window opens on an identity card drawn from the
+  overlay's own `geometry` and sounded from its `sound_mark`. Mac and Linux only, since kitty has no
+  Windows build.
 - [Speech helper](aos-roles-and-voice.md) - `aos-say` client plus relay for status speech.
 - **Karabiner key bindings** - external keyboard and Remote Desktop mappings.
 - [Agents and sessions](features-agents.md) - self-name, composition

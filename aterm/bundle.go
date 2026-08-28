@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"embed"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -25,6 +26,21 @@ const (
 	bundleFileMode         = 0o644
 	bundleExecMode         = 0o755
 )
+
+// Committed like aterm/sounds, so a bundle write needs no renderer on the host.
+
+//go:embed icons/*.icns
+var roleIcons embed.FS
+
+// roleIcon is the committed art for a role, or nil when the role has none. A
+// role without art keeps the system icon rather than a broken reference.
+func roleIcon(role string) []byte {
+	raw, err := roleIcons.ReadFile("icons/" + role + ".icns")
+	if err != nil {
+		return nil
+	}
+	return raw
+}
 
 type bundleSpec struct {
 	Role             string
@@ -261,7 +277,7 @@ func buildBundlePlan(ctx context.Context, deps commandDeps, cmd *cli.Command) (b
 			Person:           role.Identity.Name,
 			Version:          version,
 			BakedPath:        bakedPath,
-			Icon:             icon != "",
+			Icon:             icon != "" || roleIcon(role.Slug) != nil,
 			WorkingDirectory: cwd,
 			ATermBin:         launcher,
 			AOSBin:           aos,
@@ -455,10 +471,14 @@ func writeBundle(item bundleItem, icon string) error {
 			return fmt.Errorf("link the terminal into %q: %w", terminal, err)
 		}
 	}
-	if icon == "" {
-		return nil
+	destination := filepath.Join(contents, "Resources", bundleIconName+".icns")
+	if icon != "" {
+		return copyIcon(icon, destination)
 	}
-	return copyIcon(icon, filepath.Join(contents, "Resources", bundleIconName+".icns"))
+	if art := roleIcon(item.Role); art != nil {
+		return writeIconBytes(art, destination)
+	}
+	return nil
 }
 
 // replaceable refuses to overwrite anything this command did not write, so a
@@ -474,12 +494,16 @@ func replaceable(root string) error {
 }
 
 func copyIcon(source, destination string) error {
-	if err := os.MkdirAll(filepath.Dir(destination), bundleDirMode); err != nil {
-		return fmt.Errorf("create %q: %w", filepath.Dir(destination), err)
-	}
 	raw, err := os.ReadFile(source)
 	if err != nil {
 		return fmt.Errorf("read the icon %q: %w", source, err)
+	}
+	return writeIconBytes(raw, destination)
+}
+
+func writeIconBytes(raw []byte, destination string) error {
+	if err := os.MkdirAll(filepath.Dir(destination), bundleDirMode); err != nil {
+		return fmt.Errorf("create %q: %w", filepath.Dir(destination), err)
 	}
 	if err := os.WriteFile(destination, raw, bundleFileMode); err != nil {
 		return fmt.Errorf("write %q: %w", destination, err)
