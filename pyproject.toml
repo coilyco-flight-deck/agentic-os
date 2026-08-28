@@ -99,8 +99,19 @@ band = "large"
 # raise into the one-section margin the paragraph above asks for. Raise either
 # only for a rule that binds every session and every role, where no role source
 # can hold it, and say so here.
+#
+# Raised 32500 to 33600 on 2026-08-28 for three rules out of the correction
+# cluster in #1333, each meeting the bar above. A derived claim not inheriting
+# its anchor's provenance, a pointer whose target is absent not being a source,
+# and the duty to notify consumers sitting on whoever lands a correction. All
+# three bind every session and every role: any seat can write an elapsed
+# duration, hold a pointer to a checkout that is not on the host, or land a
+# correction. No role source can hold them, and the third was already proven
+# unreachable where it lived, in the private lore repo, by a seat that did not
+# mount it and shipped the superseded claim into outward copy. The line cap is
+# untouched and the file sits 2 lines under it.
 agents_md_max_lines = 245
-agents_md_max_chars = 32500
+agents_md_max_chars = 33600
 # Subsystem dirs carry idiomatic co-located READMEs and config docs that the
 # root/docs/skills location rule does not model. Excluded per the root layout
 # hatch: warp (Go module).
