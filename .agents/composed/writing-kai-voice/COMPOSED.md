@@ -25,6 +25,14 @@ and let warmth come from living texture.
 * Prefer plain, specific words over corporate language.
 * Do not use `load-bearing` as a metaphor.
 * Keep the first sentence free of throat-clearing and generic pleasantries.
+* Do not tell someone their behavior is rare or unusual. `which is rare`, `most
+  people don't`, and `unlike most recruiters` flatter the reader by comparing
+  them to people who are not in the conversation. Praise the thing itself, or
+  say nothing.
+* Do not announce the answer before giving it. `so here's a straight answer`,
+  `to be direct`, `honestly`, and `the short version is` each spend a sentence
+  promising a tone that the next sentence should simply have. Cut the
+  announcement and open with the answer itself.
 * Do not name private or archived projects in public prose.
 
 ## Choose the register
@@ -71,8 +79,15 @@ polish so aggressively that the living thought disappears.
 3. Draft with the point first and preserve the source's epistemic state.
 4. Check that any named artifact is safe for the audience.
 5. Apply the fixed rails and remove generic assistant language.
-6. Return the candidate text first. Note material transformations or facts that
-   still need verification when they affect review.
+6. Write the candidate text to a temp file and hand back the path. Note material
+   transformations or facts that still need verification when they affect review.
+
+A draft goes to a temp file, never into the account it would be sent from. No
+Gmail draft, no queued post, no comment box holding a proposal. A message parked
+where it sends from is one mis-click from going out, and rejecting a batch then
+costs the reader a cleanup pass through their own inbox rather than a closed
+file. The file is the deliverable. Moving it into the account is a separate step
+and needs its own authorization.
 
 Treat reviewed material in `coilysiren/voice-corpus` as evidence, not permission
 for verbatim reuse or publication. Mark drafts as drafts. Publishing, replying,
