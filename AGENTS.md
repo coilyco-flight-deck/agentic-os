@@ -32,7 +32,7 @@ Route every dev command through the [`justfile`](justfile). Agents invoke `just 
 
 This repo ships and dogfoods the catalog pre-commit suite (catalog-trifecta, documentation-layout, code-comments, check-skills, check-composed-skills, dead-cross-links, repo-pointer-skills, trufflehog). Run `pre-commit run --all-files` before committing. Per-repo opt-outs (excludes, cap overrides) live under `[tool.agentic-os.*]` in `pyproject.toml`.
 
-**Tests never encode or reinterpret configuration.** A tunable lives in one owning source, so no test program restates a guardfile, KDL file, manifest, workflow, or other configuration. The owning loader tests its behavior against fixtures, and real configuration is validated through its schema, lint, render, or doctor surface (`ward doctor` gates `.ward` in ci and promote). Consumer repos invoke that surface instead of building a second parser or contract test, and CI derives inventories from the owning loader or a wildcard rather than a duplicate list.
+**Tests never encode or reinterpret configuration.** A tunable lives in one owning source, so no test program restates a guardfile, KDL file, manifest, workflow, or other configuration. The owning loader tests its behavior against fixtures, and real configuration is validated through its schema, lint, render, or doctor surface owned by whatever consumes it. Consumer repos invoke that surface instead of building a second parser or contract test, and CI derives inventories from the owning loader or a wildcard rather than a duplicate list.
 
 ## Safety
 

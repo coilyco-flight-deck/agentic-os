@@ -35,9 +35,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install validated ward for repo gate
-        run: scripts/install-workflow-ward.sh
-
 
       - name: Repo test gate
         run: bash "$GITHUB_WORKSPACE/scripts/ci/mirror-to-github.sh" test

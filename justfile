@@ -307,7 +307,3 @@ warp *ARGS:
 # Run the Warp config Go test suite.
 warp-test *ARGS:
     @go test -C warp ./... "$@"
-
-# Build the Ward version used by Actions from the generated tag at the production release branch. Pass an explicit ref and temporary output path as trailing arguments to override.
-workflow-ward-install-check *ARGS:
-    @bash scripts/install-workflow-ward.sh "$@"

@@ -27,13 +27,13 @@ def test_guard_uses_the_tag_on_release_not_a_newer_staging_tag() -> None:
     assert resolve_release_ref("specgen", fetch_json=fetch) == "v0.129.0"
 
 
-def test_ward_uses_the_generated_tag_on_release() -> None:
+def test_guard_uses_the_generated_tag_on_release() -> None:
     fetch = _fetcher(
         "promoted",
         [{"name": "v0.860.0", "commit": {"sha": "promoted"}}],
     )
 
-    assert resolve_release_ref("ward", fetch_json=fetch) == "v0.860.0"
+    assert resolve_release_ref("guard", fetch_json=fetch) == "v0.860.0"
 
 
 def test_aos_uses_its_independent_generated_tag() -> None:
@@ -54,7 +54,7 @@ def test_literal_release_is_the_fallback_when_no_tag_is_available() -> None:
         [{"name": "v0.860.0", "commit": {"sha": "other"}}],
     )
 
-    assert resolve_release_ref("ward", fetch_json=fetch) == "release"
+    assert resolve_release_ref("guard", fetch_json=fetch) == "release"
 
 
 def test_literal_release_is_the_fallback_when_forgejo_is_unavailable() -> None:

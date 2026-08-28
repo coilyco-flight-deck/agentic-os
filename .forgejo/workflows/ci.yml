@@ -61,24 +61,6 @@ jobs:
       - name: Test the shared eval grading package
         run: just aos-eval-test
 
-  ward-doctor:
-    runs-on: docker
-    timeout-minutes: 20
-    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release
-    steps:
-      - uses: actions/checkout@v6
-      - name: Install validated Ward
-        run: scripts/install-workflow-ward.sh
-      - name: Validate the supported Ward YAML contract
-        run: CLIGUARD_NO_SANDBOX=1 ward doctor
-
-      - name: Alert Telegram on main failure
-        if: ${{ failure() && github.ref == 'refs/heads/main' }}
-        continue-on-error: true
-        uses: ./actions/telegram-alert
-        with:
-          bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
   gate:
     runs-on: docker
     timeout-minutes: 30
@@ -87,9 +69,6 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-
-      - name: Install validated ward for repo gate
-        run: scripts/install-workflow-ward.sh
 
       - name: Cache uv downloads
         uses: actions/cache@v4

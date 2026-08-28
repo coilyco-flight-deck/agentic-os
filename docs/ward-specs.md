@@ -4,9 +4,9 @@ Ward owns fixed workflow commands, container isolation, lifecycle, repository
 workflow mechanics, and its fixed broker. AOS does not ship a Ward role bundle.
 
 The only Ward-consumed AOS file was [`.ward/ward.yaml`](../.ward/ward.yaml),
-validated by `ward doctor` through Ward's loader. That runtime is being cut
+validated by `ward doctor` through Ward's loader. That runtime is out of AOS CI
 under agentic-os#1299 and the file outlives it, so its surviving contract is
-written out below rather than left in a repository that is going read-only.
+written out below rather than left in an archived repository.
 
 ## Ownership
 
@@ -58,7 +58,14 @@ Ward's own schema page goes read-only when that repository is archived, so the s
 
 AOS releases do not attach a Ward-spec archive. The dev-base image carries the
 released `ward`, `aos`, `aoscompose`, `aosward`, and `aosguard` binaries without a
-checkout-derived Ward configuration reference. The declared Go and Python
+checkout-derived Ward configuration reference.
+
+**No AOS workflow installs `ward` any more.** Five steps across four workflows
+pulled a release binary from a now-archived repository on every run, and three
+of them never invoked it. The two that did ran `ward doctor` against a file the
+same page records as read by nothing, so the gate validated a contract with no
+consumer while adding a network dependency that could fail a job on its own.
+The dev-base image still carries the binary, because a warded run needs it. The declared Go and Python
 suites cover the always-composed, always-guarded standalone path and the Ward
 context-bundle path.
 

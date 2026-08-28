@@ -35,7 +35,7 @@ def test_promote_workflow_uses_the_same_repo_gate_as_ci() -> None:
     assert "scripts/ci/repo-test-gate.sh" in workflow
     assert "uv run pytest" in gate
     assert "pre-commit run --all-files" in gate
-    assert "Install validated ward for repo gate" in workflow
+    assert "install-workflow-ward.sh" not in workflow
     assert "Load the .ward bundle with the updated ward" not in workflow
     assert "ward exec test" not in workflow
     assert "Install ward from source with workflow bundle support" not in workflow

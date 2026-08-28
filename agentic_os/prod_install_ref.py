@@ -24,10 +24,6 @@ _GUARD = Product(
     repository="umbra",
     tag_pattern=re.compile(r"^v(\d+\.\d+\.\d+)$"),
 )
-_WARD = Product(
-    repository="ward",
-    tag_pattern=re.compile(r"^v(\d+\.\d+\.\d+)$"),
-)
 _AOS = Product(
     repository="agentic-os",
     tag_pattern=re.compile(r"^aos-v(\d+\.\d+\.\d+)$"),
@@ -37,7 +33,6 @@ PRODUCTS = {
     "umbra": _GUARD,
     "cli-guard": _GUARD,  # retained alias
     "specgen": _GUARD,
-    "ward": _WARD,
     "aos": _AOS,
     "agentic-os": _AOS,
 }
