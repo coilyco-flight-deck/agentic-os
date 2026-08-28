@@ -62,7 +62,7 @@ def _caps() -> list[tuple[str, str, str, str]]:
             "documentation-layout",
             "markdown lines (small band)",
             str(dl.BAND_CAPS["small"][0]),
-            'non-blank lines where `band = "small"` is declared',
+            'lines, blank ones included, where `band = "small"` is declared',
         ),
         (
             "documentation-layout",
@@ -80,7 +80,7 @@ def _caps() -> list[tuple[str, str, str, str]]:
             "documentation-layout",
             "markdown lines (large band)",
             str(dl.BAND_CAPS["large"][0]),
-            'non-blank lines where `band = "large"` is declared',
+            'lines, blank ones included, where `band = "large"` is declared',
         ),
         (
             "documentation-layout",
@@ -98,7 +98,7 @@ def _caps() -> list[tuple[str, str, str, str]]:
             "documentation-layout",
             "README overview lines",
             str(dl.TRIFECTA_MAX_LINES),
-            "non-blank lines for the root README.md",
+            "lines, blank ones included, for the root README.md",
         ),
         (
             "documentation-layout",

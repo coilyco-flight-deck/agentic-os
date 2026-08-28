@@ -16,6 +16,7 @@ from agentic_os.pre_commit.check_documentation_layout import (
     TRIFECTA_MAX_CHARS,
     TRIFECTA_MAX_LINES,
     caps_for,
+    check_markdown_sizes,
     check_skill_flatness,
     is_harness_override,
     validate_module_readme,
@@ -522,3 +523,18 @@ def test_size_excludes_matches_a_nested_doc() -> None:
 
     assert is_excluded(Path("services/a/docs/b.md"), ["services/**"]) is True
     assert is_excluded(Path("docs/b.md"), ["services/**"]) is False
+
+
+def test_the_line_cap_counts_blank_lines_too(tmp_path: Path, monkeypatch) -> None:
+    # The caps reference called these "non-blank lines" while the validator
+    # measured every line: 73 against an actual 122 on one real file.
+    _point_repo_root_at(tmp_path, monkeypatch)
+    write(tmp_path / "pyproject.toml", '[tool.agentic-os.documentation-layout]\nband = "small"\n')
+    body = "# Title\n" + "\n" * 60 + "one sentence.\n"
+    write(tmp_path / "docs" / "airy.md", body)
+
+    assert len([ln for ln in body.splitlines() if ln.strip()]) == 2
+    problems = [v for v in check_markdown_sizes() if "airy.md" in v and "lines" in v]
+
+    assert problems, "a 62-line file passed a 40-line cap, so blanks went uncounted"
+    assert "62 lines exceeds the 40-line cap" in problems[0]
