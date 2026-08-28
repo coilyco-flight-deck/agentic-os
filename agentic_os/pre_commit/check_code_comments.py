@@ -107,6 +107,10 @@ LINE_COMMENT_PREFIXES = {
     ".zsh": ("#",),
 }
 
+# Languages whose backtick strings span lines and hold arbitrary text. A glob
+# like `audit/*.jsonl` inside one would otherwise open a phantom block comment.
+RAW_STRING_EXTS = {".go", ".js", ".jsx", ".mjs", ".ts", ".tsx"}
+
 BLOCK_COMMENT_EXTS = {
     ".c",
     ".cc",
@@ -176,21 +180,35 @@ def is_shebang_or_encoding(line: str, line_no: int) -> bool:
     return False
 
 
-def block_state_after(line: str, suffix: str, in_block: bool) -> bool:
-    """Return whether a `/* ... */` block is still open after this line.
+def block_state_after(
+    line: str, suffix: str, in_block: bool, in_raw: bool = False
+) -> tuple[bool, bool]:
+    """Return `/* ... */` and raw-string openness after this line.
 
     A leading `*` is also the dereference operator, so continuation lines are
     only recognizable from real open/close state rather than per-line shape.
+    Raw strings are tracked for the same reason in reverse: they run across
+    lines and hold arbitrary text, so a `/*` inside one opens nothing.
     """
     prefixes = LINE_COMMENT_PREFIXES.get(suffix, ())
+    raw_delim = "`" if suffix in RAW_STRING_EXTS else None
     index = 0
     end = len(line)
     while index < end:
+        if in_raw:
+            if raw_delim and line.startswith(raw_delim, index):
+                in_raw = False
+            index += 1
+            continue
         if in_block:
             if line.startswith("*/", index):
                 in_block = False
                 index += 2
                 continue
+            index += 1
+            continue
+        if raw_delim and line.startswith(raw_delim, index):
+            in_raw = True
             index += 1
             continue
         if line.startswith("/*", index):
@@ -199,12 +217,12 @@ def block_state_after(line: str, suffix: str, in_block: bool) -> bool:
             continue
         if any(line.startswith(prefix, index) for prefix in prefixes):
             # Rest of the line is a line comment, so no block can open in it.
-            return False
+            return False, in_raw
         if line[index] == '"':
             index = skip_string(line, index)
             continue
         index += 1
-    return in_block
+    return in_block, in_raw
 
 
 def skip_string(line: str, index: int) -> int:
@@ -375,11 +393,17 @@ def scan_lines(
     seen_content = False
     tracks_blocks = suffix in BLOCK_COMMENT_EXTS
     in_block = False
+    in_raw = False
     for line_no, line in enumerate(lines, start=1):
         opened_in_block = in_block
+        opened_in_raw = in_raw
         if tracks_blocks:
-            in_block = block_state_after(line, suffix, opened_in_block)
-        if not is_comment_line(line, suffix, line_no, opened_in_block):
+            in_block, in_raw = block_state_after(
+                line, suffix, opened_in_block, opened_in_raw
+            )
+        if opened_in_raw or not is_comment_line(
+            line, suffix, line_no, opened_in_block
+        ):
             if line.strip() != "" and not is_shebang_or_encoding(line, line_no):
                 seen_content = True
             streak_start = None

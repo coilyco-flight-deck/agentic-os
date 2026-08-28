@@ -400,3 +400,42 @@ def test_a_closed_region_is_still_silent(tmp_path: Path) -> None:
     lines = ["repos:", "  - repo: local", BEGIN, *GENERATED, END]
 
     assert scan_lines(Path("v.yaml"), ".yaml", lines) == []
+
+
+def test_a_glob_in_a_go_raw_string_opens_no_block_comment() -> None:
+    # `audit/*.jsonl` inside a backtick string is not a `/*`. umbra had 313
+    # violations in one file from this, against 12 real comment lines.
+    lines = [
+        "package main",
+        "var help = `usage:",
+        "    rows land in ~/.ward/audit/*.jsonl with argv and exit code.",
+        "    line two of prose that is not a comment at all.",
+        "    line three, still prose.`",
+        "func main() {}",
+    ]
+    assert scan_lines(Path("f.go"), ".go", lines) == []
+
+
+def test_a_real_go_block_comment_still_counts() -> None:
+    # The raw-string skip must not blind the tracker to genuine blocks.
+    lines = [
+        "package main",
+        "/* one",
+        "two",
+        "three */",
+        "func main() {}",
+    ]
+    violations = scan_lines(Path("f.go"), ".go", lines)
+    assert violations, "a three-line block comment after content must still fail"
+
+
+def test_a_slash_star_after_a_closed_raw_string_still_opens() -> None:
+    lines = [
+        "package main",
+        "var s = `closed`",
+        "/* one",
+        "two",
+        "three */",
+        "func main() {}",
+    ]
+    assert scan_lines(Path("f.go"), ".go", lines)
