@@ -513,6 +513,24 @@ func TestBrandReachesTheTerminalArguments(t *testing.T) {
 	}
 }
 
+// Nothing else pins the opening state, so a default edit could revert it and
+// still pass. Kai asked for fullscreen. See docs/aterm.md.
+func TestTheWindowOpensFullscreenByDefault(t *testing.T) {
+	var spawns []recordedSpawn
+	out, err := runAterm(t, stubDeps(t, &spawns, true), "--dry-run", "--json", "platform", "claude")
+	if err != nil {
+		t.Fatalf("dry run: %v", err)
+	}
+	var plan launchPlan
+	if err := json.Unmarshal([]byte(out), &plan); err != nil {
+		t.Fatalf("decode plan: %v", err)
+	}
+	state := indexOf(plan.Arguments, "--start-as")
+	if state < 0 || plan.Arguments[state+1] != "fullscreen" {
+		t.Fatalf("the window should open fullscreen: %v", plan.Arguments)
+	}
+}
+
 // A session window that opens small enough to need resizing before the first
 // prompt is the thing Kai reported. See docs/aterm.md.
 func TestWindowOptionsReachKittyAndRefuseNonsense(t *testing.T) {

@@ -27,7 +27,7 @@ const (
 	defaultATermBin    = "aterm"
 	// An agent session is the window's whole job, so it opens at the size that
 	// job needs. kitty's own default font is 11.0. See docs/aterm.md.
-	defaultStartAs       = "maximized"
+	defaultStartAs       = "fullscreen"
 	defaultFontSize      = "14.5"
 	defaultWorkingEnvVar = "PROJECTS_ROOT"
 )
