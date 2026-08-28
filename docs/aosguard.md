@@ -10,13 +10,15 @@ lock, and Homebrew and Scoop install it beside `aos`.
 
 ## Authority boundary
 
-The snapshot carries Forgejo, AWS, kubectl, Tailscale, Actions, SigNoz, and
-runner-token leaves, and excludes Ward role policy. AWS SSM permits single
-reads, file-backed writes, and named deletions. Actions lives at `aosguard ops
-actions` so its exec transport does not shadow `aosguard ops forgejo`. The
-sibling [`forgejo-storage measure` bridge](forgejo-ops.md) uses fixed `kubectl
-exec` operations from an embedded script invoked by absolute path. `aosguard
-ops signoz` reads only the converged SigNoz MCP server.
+The snapshot carries Forgejo, AWS, kubectl, Tailscale, Actions, SigNoz, Netlify, and runner-token leaves, and excludes Ward role policy. AWS SSM permits single reads, file-backed writes, and named deletions. Actions lives at `aosguard ops actions` so its exec transport does not shadow `aosguard ops forgejo`. The sibling [`forgejo-storage measure` bridge](forgejo-ops.md) uses fixed `kubectl exec` operations from an embedded script invoked by absolute path. `aosguard ops signoz` reads only the converged SigNoz MCP server.
+
+## Netlify domain aliases
+
+`aosguard ops netlify` is the domain-alias surface for the one site this estate owns. Its token resolves from SSM at exec time the way `aosguard ops actions` resolves the Forgejo one, so it never sits in a caller's environment. Two leaves mount, `site` for the read and `alias` for the write, and both run the same packaged module, so nothing else in the Netlify API is reachable.
+
+**Every write sends the whole alias list, and every alias goes in one call.** The API replaces `domain_aliases` rather than merging into it, so a call carrying one alias would delete the rest. The module reads the current list, adds to it, and sends the union, which is correct whichever way the API behaves and stops the caller having to know. It refuses an alias equal to the site's primary domain, and refuses a call with no alias. Batching is a safety property rather than tidiness: adding a domain re-issues the certificate covering every name on the site, the primary domain included, so three calls are three certificate events on a live site. This is the only step in adding a vanity domain that can affect the primary name.
+
+**`--site` is required and allowlisted**, because a wrap that documents a fixed target while accepting any is the defect agentic-os#1349 closed on the kubectl surface, and a new surface is where that class returns. The site is named in full, since the API's other accepted form is an opaque uuid that has no business in a tracked file.
 
 Forgejo pin actions are fixed to a single tracker where coilyco-ops holds
 admin. Both wrappers read their credential from SSM through the same `provider
@@ -63,13 +65,7 @@ implementation in [agentic-os#755](https://forgejo.coilysiren.me/coilyco-flight-
 
 ## The Forgejo admin wrapper
 
-`forgejo-admin` holds repo settings and cosmetics, org labels, repo topics, and
-branch protection. Forgejo refuses every one of them to `coilyco-ops`, an org
-member holding push rather than an owner holding repo-admin, so the credential
-is already a sufficient gate. Narrowing each action to its safest field on top
-of that cost more than it bought, so `repo edit` exposes the whole
-`EditRepoOption`, the same field set
-`infrastructure/scripts/forgejo-repo-settings.py` converges.
+`forgejo-admin` holds repo settings and cosmetics, org labels, repo topics, and branch protection. Forgejo refuses every one of them to `coilyco-ops`, an org member holding push rather than an owner holding repo-admin, so the credential is already a sufficient gate. Narrowing each action to its safest field on top of that cost more than it bought, so `repo edit` exposes the whole `EditRepoOption`, the same field set `infrastructure/scripts/forgejo-repo-settings.py` converges.
 
 `private` and `archived` ride along rather than being blocked, because anyone
 who can reach this wrapper can already flip either in the UI in fewer steps.
