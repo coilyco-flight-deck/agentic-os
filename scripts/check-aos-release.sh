@@ -150,20 +150,20 @@ if [ -n "$native_aos" ]; then
     printf '%s\n' "$aoscompose_plan" | grep -F -- "--guarded" >/dev/null
     aosward_plan=$("$native_aosward" \
         --agent codex \
-        --role tpm \
+        --role director \
         --image agentic-os:test \
         --dry-run \
         -- \
         "aos release smoke")
     printf '%s\n' "$aosward_plan" | grep -F -- "--composed" >/dev/null
     printf '%s\n' "$aosward_plan" | grep -F -- "--guarded" >/dev/null
-    printf '%s\n' "$aosward_plan" | grep -F "ward agent run --role tpm" >/dev/null
+    printf '%s\n' "$aosward_plan" | grep -F "ward agent run --role director" >/dev/null
     smoke_dir=$(mktemp -d)
     trap 'rm -rf "$smoke_dir"' EXIT HUP INT TERM
     # The launch profiles own which agent a role defaults to, so read the
     # expected agent from them rather than restating it here.
     platform_agent=$(role_default_agent platform)
-    tpm_agent=$(role_default_agent tpm)
+    director_agent=$(role_default_agent director)
     (
         cd "$smoke_dir"
         aoscompose_default_plan=$("$native_aoscompose" \
@@ -174,14 +174,14 @@ if [ -n "$native_aos" ]; then
         printf '%s\n' "$aoscompose_default_plan" | grep -F -- "--role platform" >/dev/null
         printf '%s\n' "$aoscompose_default_plan" | grep -F -- "--layout $platform_agent" >/dev/null
         printf '%s\n' "$aoscompose_default_plan" | grep -F -- "-- $platform_agent" >/dev/null
-        aoscompose_tpm_plan=$("$native_aoscompose" \
+        aoscompose_director_plan=$("$native_aoscompose" \
             --image agentic-os:test \
             --auth=false \
             --dry-run \
-            tpm)
-        printf '%s\n' "$aoscompose_tpm_plan" | grep -F -- "--role tpm" >/dev/null
-        printf '%s\n' "$aoscompose_tpm_plan" | grep -F -- "--layout $tpm_agent" >/dev/null
-        printf '%s\n' "$aoscompose_tpm_plan" | grep -F -- "-- $tpm_agent" >/dev/null
+            director)
+        printf '%s\n' "$aoscompose_director_plan" | grep -F -- "--role director" >/dev/null
+        printf '%s\n' "$aoscompose_director_plan" | grep -F -- "--layout $director_agent" >/dev/null
+        printf '%s\n' "$aoscompose_director_plan" | grep -F -- "-- $director_agent" >/dev/null
         "$native_aosguard" --help >/dev/null
         "$native_aosguard" --version | grep -Fx "aosguard version $version" >/dev/null
         "$native_aosguard" ops aws --help >/dev/null
@@ -193,12 +193,12 @@ if [ -n "$native_aos" ]; then
         cp "$repo_root/aterm/testdata/agent-compose" .
         cp "$repo_root/aterm/testdata/aos" .
         cp "$repo_root/aterm/testdata/roster.json" .
-        cp "$repo_root/aterm/testdata/tpm-codex-overlay.json" .
+        cp "$repo_root/aterm/testdata/director-codex-overlay.json" .
         chmod 0755 agent-compose aos
         # The roster is a live read, so a released aterm that cannot parse it
         # refuses every launch. Listing it exercises that path without a window.
         AGENT_COMPOSE_BIN="$smoke_dir/agent-compose" \
-            "$native_aterm" --list | grep -F "tpm" >/dev/null
+            "$native_aterm" --list | grep -F "director" >/dev/null
         "$native_aterm" \
             --expression acting \
             --task-title agentic-os-release-smoke \
@@ -206,7 +206,7 @@ if [ -n "$native_aos" ]; then
             --agent-compose-bin "$smoke_dir/agent-compose" \
             --aos-bin "$smoke_dir/aos" \
             --dry-run --json \
-            tpm codex -- --resume > launch.json
+            director codex -- --resume > launch.json
         # A role that left the roster must be refused, and the refusal has to
         # name the roster rather than fail for some unrelated reason.
         stale_status=0
@@ -223,11 +223,11 @@ if [ -n "$native_aos" ]; then
         AGENT_COMPOSE_BIN="$smoke_dir/agent-compose" \
             "$native_aterm" --working-directory "$smoke_dir" \
             --aos-bin "$smoke_dir/aos" \
-            --dry-run tpm codex | grep -F "expression" >/dev/null
+            --dry-run director codex | grep -F "expression" >/dev/null
         missing_status=0
         "$native_aterm" --working-directory "$smoke_dir" \
             --agent-compose-bin "$smoke_dir/definitely-not-here" \
-            --dry-run tpm codex >/dev/null 2>&1 || missing_status=$?
+            --dry-run director codex >/dev/null 2>&1 || missing_status=$?
         if [ "$missing_status" -ne 4 ]; then
             echo "a missing dependency should exit 4, got $missing_status" >&2
             exit 1
@@ -241,11 +241,11 @@ plan = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
 assert plan["format"] == "aterm.launch.v1", plan["format"]
 assert plan["working_directory"] == sys.argv[2]
 assert plan["executable"] == "kitty"
-assert plan["identity"]["role"] == "tpm"
+assert plan["identity"]["role"] == "director"
 assert plan["identity"]["seat"] == "codex"
 # The stub AOS reports no shadow, so the window runs Agent Compose directly.
 assert plan["shadowed"] is False
-assert plan["child"][-4:] == ["launch", "tpm", "codex", "--resume"], plan["child"]
+assert plan["child"][-4:] == ["launch", "director", "codex", "--resume"], plan["child"]
 # The terminal runs the session stage, which keeps a failing launch on screen.
 # kitty takes the program as trailing arguments, so the stage is the tail.
 stage = plan["arguments"].index(sys.argv[3])

@@ -56,8 +56,8 @@ def test_a_challenge_with_no_context_is_refused() -> None:
 
 def test_a_context_no_challenge_uses_is_refused() -> None:
     raw = board()
-    raw["contexts"]["devrel"] = "you write things"
-    with pytest.raises(BoardError, match="context with no challenge: devrel"):
+    raw["contexts"]["advocate"] = "you write things"
+    with pytest.raises(BoardError, match="context with no challenge: advocate"):
         load_board(raw, SOLO)
 
 

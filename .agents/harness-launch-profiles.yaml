@@ -3,13 +3,13 @@ roles:
     agent: claude
   sysadmin:
     agent: claude
-  eval:
+  science:
     agent: claude
   frontend:
     agent: claude
   gamedev:
     agent: claude
-  tpm:
+  director:
     agent: claude
-  devrel:
+  advocate:
     agent: claude

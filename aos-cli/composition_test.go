@@ -20,9 +20,9 @@ func useStandaloneWorkspaceFixture(t *testing.T) (nativeRuntime, string) {
 	if err := os.WriteFile(profiles, []byte(`roles:
   platform:
     agent: codex
-  tpm:
+  director:
     agent: claude
-  eval:
+  science:
     agent: codex
   ops:
     agent: claude
@@ -109,7 +109,7 @@ func TestValidateIntegratedLaunchMatrix(t *testing.T) {
 			Delivery: "native-skills", Guarded: true,
 		},
 		{
-			Image: "aos:test", Role: "tpm", Agent: "goose",
+			Image: "aos:test", Role: "director", Agent: "goose",
 			Delivery: "compiled", Warded: true,
 			Arguments: []string{"supervise the queue"},
 		},
@@ -119,7 +119,7 @@ func TestValidateIntegratedLaunchMatrix(t *testing.T) {
 			AgentID: "platform-one", Arguments: []string{"owner/repo#1"},
 		},
 		{
-			Image: "aos:test", Role: "eval", Agent: "opencode",
+			Image: "aos:test", Role: "science", Agent: "opencode",
 			Delivery: "compiled", Warded: true, Composed: true,
 			Arguments: []string{"owner/repo#123"},
 		},
@@ -171,7 +171,7 @@ func TestValidateIntegratedLaunchMatrix(t *testing.T) {
 		{
 			name: "authority translation override",
 			opts: integratedLaunchOptions{
-				Image: "aos:test", Role: "eval", Agent: "codex", Warded: true,
+				Image: "aos:test", Role: "science", Agent: "codex", Warded: true,
 				Arguments: []string{"owner/repo#1", "--context-bundle", "other"},
 			},
 			want: "conflicts with AOS-owned Ward translation",
@@ -187,7 +187,7 @@ func TestValidateIntegratedLaunchMatrix(t *testing.T) {
 		{
 			name: "warded kubeconfig",
 			opts: integratedLaunchOptions{
-				Image: "aos:test", Role: "tpm", Agent: "codex",
+				Image: "aos:test", Role: "director", Agent: "codex",
 				Warded: true, Kubeconfig: "/host/config",
 			},
 			want: "only for standalone launches",
@@ -269,7 +269,7 @@ func TestIntegratedWardedDirectorCodexDryRunUsesOpaqueCompositionMetadata(t *tes
 	err := command.Run(context.Background(), []string{
 		"aos",
 		"--agent", "codex",
-		"--role", "tpm",
+		"--role", "director",
 		"--image", "aos:test",
 		"--warded",
 		"--composed",
@@ -282,7 +282,7 @@ func TestIntegratedWardedDirectorCodexDryRunUsesOpaqueCompositionMetadata(t *tes
 		t.Fatal(err)
 	}
 	rendered := output.String()
-	for _, want := range []string{"ward agent run --role tpm", "--agent codex", "--context-bundle '<AOS_CONTEXT_BUNDLE>'"} {
+	for _, want := range []string{"ward agent run --role director", "--agent codex", "--context-bundle '<AOS_CONTEXT_BUNDLE>'"} {
 		if !strings.Contains(rendered, want) {
 			t.Errorf("dry run missing %q:\n%s", want, rendered)
 		}
@@ -686,7 +686,7 @@ func TestAOSWardInvocationAlwaysUsesWardAndBothContexts(t *testing.T) {
 	err := command.Run(context.Background(), []string{
 		"aosward",
 		"--agent", "codex",
-		"--role", "tpm",
+		"--role", "director",
 		"--image", "aos:test",
 		"--warded=false",
 		"--composed=false",
@@ -703,7 +703,7 @@ func TestAOSWardInvocationAlwaysUsesWardAndBothContexts(t *testing.T) {
 		"_container-context-bundle",
 		"--composed",
 		"--guarded",
-		"ward agent run --role tpm",
+		"ward agent run --role director",
 		"--context-bundle '<AOS_CONTEXT_BUNDLE>'",
 	} {
 		if !strings.Contains(rendered, want) {

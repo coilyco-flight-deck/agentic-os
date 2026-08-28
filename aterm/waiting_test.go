@@ -9,7 +9,7 @@ import (
 
 func TestAFastCallNeverAnnouncesItself(t *testing.T) {
 	notice := &bytes.Buffer{}
-	got := whileWaiting(notice, []string{"aos", "_launch-agent", "devrel"}, func() string {
+	got := whileWaiting(notice, []string{"aos", "_launch-agent", "advocate"}, func() string {
 		return "claude"
 	})
 	if got != "claude" {
@@ -22,7 +22,7 @@ func TestAFastCallNeverAnnouncesItself(t *testing.T) {
 
 func TestASlowCallNamesTheCommandItIsWaitingOn(t *testing.T) {
 	notice := &bytes.Buffer{}
-	command := []string{"aos", "_launch-agent", "devrel"}
+	command := []string{"aos", "_launch-agent", "advocate"}
 	value, err := whileWaiting2(notice, command, func() (string, error) {
 		time.Sleep(slowCallNotice + 200*time.Millisecond)
 		return "claude", nil
@@ -30,7 +30,7 @@ func TestASlowCallNamesTheCommandItIsWaitingOn(t *testing.T) {
 	if err != nil || value != "claude" {
 		t.Fatalf("the notice changed the answer: %q %v", value, err)
 	}
-	want := "aterm: waiting on `aos _launch-agent devrel`"
+	want := "aterm: waiting on `aos _launch-agent advocate`"
 	if !strings.Contains(notice.String(), want) {
 		t.Fatalf("notice = %q, want %q", notice.String(), want)
 	}

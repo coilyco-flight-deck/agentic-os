@@ -181,7 +181,7 @@ func TestValidateContextBundleOutputBindsRoleAndAgent(t *testing.T) {
 	if err := validateContextBundleOutput(root, expected); err != nil {
 		t.Fatal(err)
 	}
-	expected.Role = "eval"
+	expected.Role = "science"
 	if err := validateContextBundleOutput(root, expected); err == nil {
 		t.Fatal("role-mismatched context bundle passed")
 	}

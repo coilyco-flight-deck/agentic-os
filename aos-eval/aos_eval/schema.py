@@ -1,4 +1,4 @@
-"""The shared contract between an eval runner and the humans who grade it.
+"""The shared contract between an science runner and the humans who grade it.
 
 Vocabulary follows the references where they have a word for something. Challenge,
 dataset, and target are Inspect's. Test type is CheckList's. Annotation, label,

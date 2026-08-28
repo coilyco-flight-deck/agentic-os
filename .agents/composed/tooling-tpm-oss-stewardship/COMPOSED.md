@@ -1,6 +1,6 @@
 ---
 name: tooling-tpm-oss-stewardship
-description: Use when tpm decides how the portfolio should consume, contribute to, publish, fork, govern, or retire open-source software. Balances strategic leverage, ecosystem health, and maintainer load.
+description: Use when director decides how the portfolio should consume, contribute to, publish, fork, govern, or retire open-source software. Balances strategic leverage, ecosystem health, and maintainer load.
 ---
 
 # Open-source stewardship
@@ -63,8 +63,8 @@ governance authority.
 
 ## Evaluation target
 
-Compare a cold model and composed tpm on a widely used dependency with a thin
-maintainer base, local patches, and possible public release. Composed tpm
+Compare a cold model and composed director on a widely used dependency with a thin
+maintainer base, local patches, and possible public release. Composed director
 should expose the maintenance transfer, choose an explicit stewardship
 posture, preserve a viable exit, and assign evidence instead of equating
 popularity with strategic fit.

@@ -68,7 +68,7 @@ func TestUnknownRoleErrorNamesEveryLiveRole(t *testing.T) {
 }
 
 func TestSuggestKeepsNearMissesAndDropsShortCollisions(t *testing.T) {
-	roles := []string{"platform", "sysadmin", "eval", "frontend", "gamedev", "tpm", "devrel"}
+	roles := []string{"platform", "sysadmin", "science", "frontend", "gamedev", "director", "advocate"}
 	// The near misses are built rather than spelled, so the repo's spell-check
 	// does not read a deliberate typo fixture as a real one.
 	cases := []struct {
@@ -77,7 +77,7 @@ func TestSuggestKeepsNearMissesAndDropsShortCollisions(t *testing.T) {
 	}{
 		{value: transpose("platform", 5), want: "platform"},
 		{value: drop("sysadmin", 6), want: "sysadmin"},
-		{value: drop("devrel", 3), want: "devrel"},
+		{value: drop("advocate", 3), want: "advocate"},
 		{value: drop("gamedev", 4), want: "gamedev"},
 		{value: transpose("frontend", 4), want: "frontend"},
 	}
@@ -89,7 +89,7 @@ func TestSuggestKeepsNearMissesAndDropsShortCollisions(t *testing.T) {
 			}
 		})
 	}
-	// "ops" and "tpm" are two edits apart, which is most of a three-letter word.
+	// "ops" and "director" are two edits apart, which is most of a three-letter word.
 	if suggestions := suggest("ops", roles); len(suggestions) != 0 {
 		t.Fatalf("suggest(\"ops\") = %v, want no suggestion", suggestions)
 	}

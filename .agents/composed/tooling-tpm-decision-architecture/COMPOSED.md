@@ -1,17 +1,17 @@
 ---
 name: tooling-tpm-decision-architecture
-description: Use when tpm turns explored options into a consequential decision and handoff. Captures stakes, evidence, reversibility, dissent, ownership, and revisit triggers.
+description: Use when director turns explored options into a consequential decision and handoff. Captures stakes, evidence, reversibility, dissent, ownership, and revisit triggers.
 ---
 
 # Decision architecture
 
-Use this skill when tpm must convert explored options into a commitment
+Use this skill when director must convert explored options into a commitment
 that another role can execute without reconstructing the debate.
 
 ## Activation boundary
 
 TPM activates this workflow after the problem and credible options exist.
-For open-ended exploration, tpm uses `tooling-tpm-product-brainstorming`
+For open-ended exploration, director uses `tooling-tpm-product-brainstorming`
 first. Routine execution and low-cost implementation choices stay with the
 owning role.
 
@@ -48,7 +48,7 @@ authority.
 
 ## Evaluation target
 
-Compare a cold model and composed tpm after the same strategy
-brainstorm. The composed tpm should make one traceable commitment,
+Compare a cold model and composed director after the same strategy
+brainstorm. The composed director should make one traceable commitment,
 preserve the strongest dissent, define a revisit trigger, and produce an
 executable handoff instead of another options list.

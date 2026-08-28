@@ -36,10 +36,10 @@ func TestEmbeddedSamplesAreUsableWAVs(t *testing.T) {
 // The fixtures are real overlay captures, so a timbre they ship with no sample
 // means `just aterm-sounds` was not run after the vocabulary moved.
 func TestTheFixtureTimbresAllHaveASample(t *testing.T) {
-	for _, name := range []string{"platform-claude-overlay.json", "tpm-codex-overlay.json"} {
+	for _, name := range []string{"platform-claude-overlay.json", "director-codex-overlay.json"} {
 		role, seat := "platform", "claude"
-		if strings.HasPrefix(name, "tpm") {
-			role, seat = "tpm", "codex"
+		if strings.HasPrefix(name, "director") {
+			role, seat = "director", "codex"
 		}
 		document, err := parseOverlay(fixture(t, name), role, seat, "acting")
 		if err != nil {

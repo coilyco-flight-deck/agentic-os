@@ -1,6 +1,6 @@
 ---
 name: tooling-tpm-developer-tool-adoption
-description: Use when tpm shapes adoption strategy for developer tools, CLIs, agents, or infrastructure products. Converts attention into repeat workflow use through a wedge, trust, integration, and proof.
+description: Use when director shapes adoption strategy for developer tools, CLIs, agents, or infrastructure products. Converts attention into repeat workflow use through a wedge, trust, integration, and proof.
 ---
 
 # Developer-tool adoption
@@ -54,8 +54,8 @@ plugins, templates, compatibility, provenance, security posture, support, and
 community all reduce a different adoption cost. TPM prioritizes the constraint
 that blocks the next transition instead of expanding every channel.
 
-For open-source tools, tpm distinguishes contributor health from user growth
-and public goodwill from product retention. For internal tools, tpm
+For open-source tools, director distinguishes contributor health from user growth
+and public goodwill from product retention. For internal tools, director
 distinguishes voluntary pull from adoption produced only by mandate.
 
 ## Output contract
@@ -70,8 +70,8 @@ operational authority.
 
 ## Evaluation target
 
-Compare a cold model and composed tpm on a technically strong CLI with high
-launch attention and weak repeated use. Composed tpm should locate the broken
+Compare a cold model and composed director on a technically strong CLI with high
+launch attention and weak repeated use. Composed director should locate the broken
 adoption transition, separate exposure from habit, address trust and switching
 cost, and fund one discriminating experiment instead of prescribing more
 features or promotion.

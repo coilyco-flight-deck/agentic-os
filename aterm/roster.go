@@ -258,7 +258,7 @@ func suggest(value string, candidates []string) []string {
 }
 
 // suggestionLimit scales with length because a fixed distance turns every short
-// slug into a neighbour of every other one. "ops" is not a near miss for "tpm".
+// slug into a neighbour of every other one. "ops" is not a near miss for "director".
 func suggestionLimit(length int) int {
 	switch {
 	case length <= 4:

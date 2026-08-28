@@ -1,6 +1,6 @@
 ---
 name: tooling-eval-visual-verification
-description: Use when eval verifies visual behavior or investigates screenshot diffs. Stabilizes capture, separates pixel change from product defect, and governs baseline evidence.
+description: Use when science verifies visual behavior or investigates screenshot diffs. Stabilizes capture, separates pixel change from product defect, and governs baseline evidence.
 ---
 
 # Visual verification
@@ -10,34 +10,34 @@ part of the product contract and a screenshot can provide relevant evidence.
 
 ## Activation boundary
 
-Eval activates this workflow for visual regressions and state or viewport
+Science activates this workflow for visual regressions and state or viewport
 comparisons. Functional behavior, accessibility conformance, and design
 judgment remain separate evidence lanes.
 
 ## Stabilize the observation
 
-Eval records the browser and version, viewport, device scale, theme, locale,
+Science records the browser and version, viewport, device scale, theme, locale,
 fonts, data state, clock, animation state, and capture boundary. She fixes or
 masks nondeterministic regions only with a stated reason.
 
-A stable screenshot of the wrong state is not a useful baseline. Eval reaches
+A stable screenshot of the wrong state is not a useful baseline. Science reaches
 the state through observable product behavior and records the setup.
 
 ## Inspect the evidence triad
 
-Eval preserves the reference, current render, and diff. She uses:
+Science preserves the reference, current render, and diff. She uses:
 
 * Playwright or the available browser surface to reproduce and capture state.
 * `tooling-image-zoom` to inspect ambiguous regions without losing context.
 * `tooling-imagemagick` for metadata, montage, and pixel comparison.
 
-Eval reads the complete images before crops or metrics. A nonzero pixel diff is
+Science reads the complete images before crops or metrics. A nonzero pixel diff is
 a change signal, not automatically a defect. A low diff can still hide a
 critical missing control or clipped label.
 
 ## Test the visual contract
 
-Eval checks the smallest matrix that covers the risk:
+Science checks the smallest matrix that covers the risk:
 
 * Critical states including loading, empty, error, success, and destructive
   confirmation where applicable.
@@ -52,7 +52,7 @@ and recoverability, not changed-pixel count.
 
 ## Govern baselines
 
-Eval never updates a baseline merely to make a check green. An authorized review
+Science never updates a baseline merely to make a check green. An authorized review
 must identify the intended change and approve the new reference. Broad churn
 triggers root-cause analysis before mass acceptance.
 
@@ -69,7 +69,7 @@ Capture and baseline mechanics align with Playwright's
 
 ## Evaluation target
 
-Compare cold and composed eval on a responsive page with font drift, a clipped
-primary action, and an intentional color change. Composed eval should stabilize
+Compare cold and composed science on a responsive page with font drift, a clipped
+primary action, and an intentional color change. Composed science should stabilize
 capture, distinguish all three causes, use crops and metrics as evidence, and
 refuse an unreviewed baseline update.

@@ -109,7 +109,7 @@ func TestIssuePinHydratorCacheFreshnessStaleFallbackAndFailClosed(t *testing.T) 
 	}))
 	defer server.Close()
 	config := resolvedIssuePinConfig{
-		Role: "tpm", BaseURL: server.URL, Owner: "owner", Repo: "inbox",
+		Role: "director", BaseURL: server.URL, Owner: "owner", Repo: "inbox",
 		MaxBytes: 4096, Freshness: time.Hour,
 	}
 	hydrator := issuePinHydrator{
@@ -149,7 +149,7 @@ func TestIssuePinHydratorCacheFreshnessStaleFallbackAndFailClosed(t *testing.T) 
 
 func TestIssuePinHydratorClipsBodiesAndSkipsRoleMismatch(t *testing.T) {
 	snapshot := issuePinSnapshot{
-		Format: issuePinSnapshotFormat, Role: "tpm", BaseURL: "https://forgejo.example.test",
+		Format: issuePinSnapshotFormat, Role: "director", BaseURL: "https://forgejo.example.test",
 		Owner: "owner", Repo: "inbox", HydratedAt: time.Date(2026, 8, 6, 1, 0, 0, 0, time.UTC),
 		Issues: []issuePinIssue{{
 			Number: 302, Title: "Campaign", HTMLURL: serverIssueURL("302"),

@@ -18,7 +18,7 @@ func TestLoadHarnessLaunchProfilesUsesRoleAgents(t *testing.T) {
 roles:
   platform:
     agent: codex
-  tpm:
+  director:
     agent: claude
 `))
 	if err != nil {
@@ -27,7 +27,7 @@ roles:
 	if document.Roles["platform"].Agent != "codex" {
 		t.Fatalf("platform role was not decoded: %+v", document.Roles["platform"])
 	}
-	if document.DefaultAgents["tpm"] != "claude" {
+	if document.DefaultAgents["director"] != "claude" {
 		t.Fatalf("default agent was not decoded: %+v", document.DefaultAgents)
 	}
 }

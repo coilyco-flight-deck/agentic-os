@@ -446,7 +446,7 @@ func TestBuildLaunchPlanMountsIssuePinContext(t *testing.T) {
 	digest := strings.Repeat("a", 64)
 	plan, err := buildLaunchPlan(launchOptions{
 		Image:    "agentic-os:test",
-		Role:     "tpm",
+		Role:     "director",
 		Layout:   "codex",
 		Delivery: "native-skills",
 		Composed: true,
@@ -554,7 +554,7 @@ func TestBuildLaunchPlanPullsMovingReleaseImage(t *testing.T) {
 	t.Parallel()
 	plan, err := buildLaunchPlan(launchOptions{
 		Image:    defaultImage,
-		Role:     "tpm",
+		Role:     "director",
 		Layout:   "codex",
 		Delivery: "native-skills",
 		Composed: true,
@@ -576,7 +576,7 @@ func TestBuildLaunchPlanCanSkipSubstrate(t *testing.T) {
 	t.Parallel()
 	plan, err := buildLaunchPlan(launchOptions{
 		Image:       "agentic-os:test",
-		Role:        "tpm",
+		Role:        "director",
 		Layout:      "claude",
 		Delivery:    "compiled",
 		Composed:    true,
@@ -682,7 +682,7 @@ func TestBuildLaunchPlanRejectsInvalidKubeconfig(t *testing.T) {
 	t.Run("missing", func(t *testing.T) {
 		t.Parallel()
 		_, err := buildLaunchPlan(launchOptions{
-			Image: "agentic-os:test", Role: "tpm", Layout: "codex",
+			Image: "agentic-os:test", Role: "director", Layout: "codex",
 			Delivery: "native-skills", Composed: true, CWD: t.TempDir(),
 			Command: []string{"codex"}, UID: 1000, GID: 1000,
 			Kubeconfig: filepath.Join(t.TempDir(), "missing.yaml"),
@@ -741,7 +741,7 @@ func TestBuildLaunchPlanRejectsInvalidKubeconfig(t *testing.T) {
 
 func TestBuildLaunchPlanMountsKubeconfigForEveryRole(t *testing.T) {
 	t.Parallel()
-	for _, role := range []string{"tpm", "ops", "platform", "eval", "frontend"} {
+	for _, role := range []string{"director", "ops", "platform", "science", "frontend"} {
 		role := role
 		t.Run(role, func(t *testing.T) {
 			t.Parallel()

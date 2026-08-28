@@ -38,7 +38,7 @@ HELP = """aos-eval - shared eval grading for agent-compose and sirens-echo
 
 WHAT IT IS
   The schema, pairing rule, human grading loop, failure taxonomy, and display
-  export that two eval runners were each implementing separately. The runners
+  export that two science runners were each implementing separately. The runners
   stay in their own repos: agent-compose calls a composed prompt through Agent
   Proxy, sirens-echo drives a live harness against a real tool roster. Both
   emit this shape and both grade through this command.

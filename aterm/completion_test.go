@@ -28,7 +28,7 @@ func TestCompletionOffersEveryLiveRoleFirst(t *testing.T) {
 		}
 		slugs = append(slugs, slug)
 	}
-	for _, want := range []string{"platform", "sysadmin", "eval", "frontend", "gamedev", "tpm", "devrel"} {
+	for _, want := range []string{"platform", "sysadmin", "science", "frontend", "gamedev", "director", "advocate"} {
 		if !contains(slugs, want) {
 			t.Fatalf("completion should offer %q: %v", want, slugs)
 		}

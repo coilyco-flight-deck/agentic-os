@@ -27,14 +27,14 @@ harness, the generic run joins its peer-message group automatically.
 
 The distinction is authority, not identity:
 
-* Every safe role uses Ward's read-only one-shot lifecycle, `tpm`, `eval`,
+* Every safe role uses Ward's read-only one-shot lifecycle, `director`, `science`,
   and `platform` included.
 * A role slug selects composed context only. It cannot grant credentials,
   mounts, network access, or landing authority.
 
 Within a Ward broker group, generic agents may launch other generic peers and
 use Ward's authenticated message channel. Their derived peer capability cannot
-select platform or eval or invoke privileged broker operations.
+select platform or science or invoke privileged broker operations.
 
 ## `aos-say`
 

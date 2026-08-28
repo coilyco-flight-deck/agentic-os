@@ -1,6 +1,6 @@
 ---
 name: tooling-tpm-platform-strategy
-description: Use when tpm decides whether a shared capability should become, remain, or leave a platform. Frames platform customers, contracts, leverage, adoption, and exit criteria.
+description: Use when director decides whether a shared capability should become, remain, or leave a platform. Frames platform customers, contracts, leverage, adoption, and exit criteria.
 ---
 
 # Platform strategy
@@ -70,8 +70,8 @@ authority.
 
 ## Evaluation target
 
-Compare a cold model and composed tpm on three projects with duplicated
-infrastructure and partially different needs. Composed tpm should identify the
+Compare a cold model and composed director on three projects with duplicated
+infrastructure and partially different needs. Composed director should identify the
 shared contract, reject false convergence, distinguish internal leverage from
 an external product, and define adoption and exit evidence before approving a
 platform.

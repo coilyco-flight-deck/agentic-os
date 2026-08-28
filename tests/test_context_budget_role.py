@@ -217,8 +217,8 @@ def test_validate_role_requires_generated_role(
         "commodity",
     )
 
-    with pytest.raises(RuntimeError, match="role eval is absent"):
-        context.validate_role(person_snapshot, "eval")
+    with pytest.raises(RuntimeError, match="role science is absent"):
+        context.validate_role(person_snapshot, "science")
     with pytest.raises(RuntimeError, match="role must be a lowercase slug"):
         context.validate_role(person_snapshot, "QA")
 
@@ -581,7 +581,7 @@ def test_snapshot_round_trip_and_delta(tmp_path: Path) -> None:
 def test_delta_rejects_different_role(tmp_path: Path) -> None:
     before = build_fixture_snapshot(tmp_path / "before")
     after = build_fixture_snapshot(tmp_path / "after")
-    after["subject"] = {"role": "eval"}
+    after["subject"] = {"role": "science"}
     after["repository"] = before["repository"]
     after["cwd"] = before["cwd"]
 

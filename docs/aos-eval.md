@@ -101,7 +101,7 @@ never forces a hook-suite bump across the fleet.
 
 Below anything graded sits the cheapest question: does this agent and model pairing do what it claims.
 Probes answer that and **produce evidence rather than a verdict**, so a green probe never reads as a
-passed eval. No pair structure, no human grader, no record a second run compares against.
+passed science. No pair structure, no human grader, no record a second run compares against.
 
 * **`aos-role-question`** proves a projected role can answer through a real model rather than only that
   its files exist, failing unless the output carries `ROLE-CONFIRMED: <role>`. **The prompt never
@@ -114,7 +114,7 @@ Findings are point-in-time, so date the model and version each was taken against
 
 * [agent-compose evaluation](https://forgejo.coilysiren.me/coilyco-flight-deck/agent-compose/src/branch/main/docs/evaluation.md) -
   a composed prompt through Agent Proxy, cases derived from the role roster.
-* [sirens-echo evaluation](https://forgejo.coilysiren.me/coilyco-gaming/sirens-echo/src/branch/main/docs/sirens-echo-eval.md) -
+* [sirens-echo evaluation](https://forgejo.coilysiren.me/coilyco-gaming/sirens-echo/src/branch/main/docs/sirens-echo-science.md) -
   a live harness against a real tool roster, cases authored against prompt clauses.
 * [Deleting the Mechanical Scorer](https://coilysiren.me/posts/deleting-the-mechanical-scorer/) - why both
   are hand-graded, and why a rule written twice is what got extracted here.

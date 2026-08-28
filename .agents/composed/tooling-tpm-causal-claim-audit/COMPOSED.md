@@ -1,6 +1,6 @@
 ---
 name: tooling-tpm-causal-claim-audit
-description: Use when tpm evaluates whether evidence supports a causal claim. Forces an estimand, causal graph, identification assumptions, refutation, and calibrated causal language.
+description: Use when director evaluates whether evidence supports a causal claim. Forces an estimand, causal graph, identification assumptions, refutation, and calibrated causal language.
 ---
 
 # Causal claim audit
@@ -40,7 +40,7 @@ or absence of manipulation near a cutoff. TPM uses only assumptions the
 design actually needs.
 
 If credible alternative graphs produce different effects from the same
-observations, tpm reports that the causal effect is not identified. A
+observations, director reports that the causal effect is not identified. A
 precise estimate and a small p-value do not repair an unidentified design.
 
 ## Try to refute the result
@@ -73,7 +73,7 @@ The separation of model, identification, estimation, and refutation follows the 
 
 ## Evaluation target
 
-Compare a cold model and composed tpm on an observational study with one
+Compare a cold model and composed director on an observational study with one
 hidden common cause, one collider, and an impressive estimate. The composed
 TPM should define the estimand, expose the invalid adjustment, withhold the
 causal claim, and propose a decisive refutation or design improvement.

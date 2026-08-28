@@ -93,7 +93,7 @@ func stubDeps(t *testing.T, spawns *[]recordedSpawn, shadowed bool) commandDeps 
 		},
 		self: func() (string, error) { return "/stub/aterm", nil },
 		pick: func(rosterDocument) (string, string, error) {
-			return "tpm", "codex", nil
+			return "director", "codex", nil
 		},
 		tty: func() bool { return true },
 	}
@@ -215,7 +215,7 @@ func TestBareInvocationAsksInsteadOfFailing(t *testing.T) {
 	if err := json.Unmarshal([]byte(out), &plan); err != nil {
 		t.Fatalf("decode plan: %v", err)
 	}
-	if plan.Identity.Role != "tpm" || plan.Identity.Seat != "codex" {
+	if plan.Identity.Role != "director" || plan.Identity.Seat != "codex" {
 		t.Fatalf("the picked role and seat should drive the launch: %+v", plan.Identity)
 	}
 }
@@ -240,7 +240,7 @@ func TestListPrintsEveryLiveRole(t *testing.T) {
 	if err != nil {
 		t.Fatalf("list: %v", err)
 	}
-	for _, slug := range []string{"platform", "sysadmin", "eval", "frontend", "gamedev", "tpm", "devrel"} {
+	for _, slug := range []string{"platform", "sysadmin", "science", "frontend", "gamedev", "director", "advocate"} {
 		if !strings.Contains(out, slug) {
 			t.Fatalf("listing should name %q: %s", slug, out)
 		}
@@ -346,7 +346,7 @@ func TestDefaultSeatFallsBackWhenAosCannotAnswer(t *testing.T) {
 func TestParseOverlayRejectsContractAndSelectionDrift(t *testing.T) {
 	raw := fixture(t, "platform-claude-overlay.json")
 	cases := map[string][3]string{
-		"role drift":       {"tpm", "claude", "acting"},
+		"role drift":       {"director", "claude", "acting"},
 		"seat drift":       {"platform", "codex", "acting"},
 		"expression drift": {"platform", "claude", "reviewing"},
 	}

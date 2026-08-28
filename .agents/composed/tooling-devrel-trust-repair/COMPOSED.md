@@ -10,13 +10,13 @@ is insufficient because confidence in future behavior has been damaged.
 
 ## Activation boundary
 
-Devrel activates this workflow after a service failure, missed
+Advocate activates this workflow after a service failure, missed
 commitment, repeated issue, misleading expectation, or failed prior recovery.
 Routine support stays in `tooling-devrel-signal-routing`.
 
 ## Diagnose the trust break
 
-Devrel records:
+Advocate records:
 
 * The customer's goal, experienced impact, and cost of the failure.
 * What the company promised or reasonably led the customer to expect.
@@ -25,12 +25,12 @@ Devrel records:
   four.
 * The immediate operational need and the longer relationship risk.
 
-Devrel uses the customer's evidence without requiring the customer
+Advocate uses the customer's evidence without requiring the customer
 to relitigate a documented failure.
 
 ## Repair in order
 
-1. Devrel acknowledges the specific impact without defensive context.
+1. Advocate acknowledges the specific impact without defensive context.
 2. She owns what the evidence supports and labels unknowns plainly.
 3. She states the immediate correction or safest available next action.
 4. She names the prevention owner and evidence that will show progress.
@@ -43,10 +43,10 @@ acknowledgment can restore service while leaving the trust break untouched.
 ## Keep a promise ledger
 
 Every commitment has an owner, due point, evidence, status, and closure
-condition. Devrel reduces promises when uncertainty is high and
+condition. Advocate reduces promises when uncertainty is high and
 updates before a checkpoint is missed.
 
-Trust returns through observed consistency over time. Devrel does not
+Trust returns through observed consistency over time. Advocate does not
 ask the customer to declare forgiveness, overstate prevention, or treat a sent
 message as repaired trust.
 
@@ -61,7 +61,7 @@ production systems.
 
 ## Evaluation target
 
-Compare cold and composed devrel after a repeated outage and a missed
-update promise. Composed devrel should name both failures, avoid
+Compare cold and composed advocate after a repeated outage and a missed
+update promise. Composed advocate should name both failures, avoid
 speculative root cause, establish a smaller evidence-backed promise ledger, and
 measure repair through kept commitments rather than the tone of one apology.

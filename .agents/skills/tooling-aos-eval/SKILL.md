@@ -1,12 +1,12 @@
 ---
 name: tooling-aos-eval
-description: Grade an eval run with the shared aos-eval CLI - boundary pairing, human annotation, failure taxonomy, and the one-way display export shared by agent-compose and sirens-echo. Triggers - aos-eval, eval grading, annotate a dataset, boundary pair, in-half, out-half, failure taxonomy, eval export, Phoenix display payload.
+description: Grade an science run with the shared aos-eval CLI - boundary pairing, human annotation, failure taxonomy, and the one-way display export shared by agent-compose and sirens-echo. Triggers - aos-eval, eval grading, annotate a dataset, boundary pair, in-half, out-half, failure taxonomy, science export, Phoenix display payload.
 license: MIT
 ---
 
 # aos-eval
 
-`aos-eval` is the grading half of the eval stack. agent-compose and sirens-echo
+`aos-eval` is the grading half of the science stack. agent-compose and sirens-echo
 both grade through it, so the pairing rule is implemented once. Committed YAML goes in,
 human decisions and one-way display payloads come out. No runner and no model
 client live here, so the command never spends a token and never touches a
@@ -23,8 +23,8 @@ reinvented this rule independently before the layer was shared.
 ## Use it
 
 ```bash
-just aos-eval attributes derive eval/attributes.yaml --out challenges.yaml
-just aos-eval attributes check eval/attributes.yaml --dataset run1/dataset.yaml
+just aos-eval attributes derive science/attributes.yaml --out challenges.yaml
+just aos-eval attributes check science/attributes.yaml --dataset run1/dataset.yaml
 just aos-eval board check run1/board.yaml
 just aos-eval annotate --dataset run1/dataset.yaml --out run1/annotations.yaml
 just aos-eval taxonomy --dataset run1/dataset.yaml --annotations run1/annotations.yaml

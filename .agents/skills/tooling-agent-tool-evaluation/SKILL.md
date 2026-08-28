@@ -1,6 +1,6 @@
 ---
 name: tooling-agent-tool-evaluation
-description: Evaluate whether an agent tool is understandable and useful across harnesses by running representative tasks and comparing definitions. Triggers - tool evaluation, MCP tool usability, function-calling eval, tool schema review, tool redesign.
+description: Evaluate whether an agent tool is understandable and useful across harnesses by running representative tasks and comparing definitions. Triggers - tool evaluation, MCP tool usability, function-calling science, tool schema review, tool redesign.
 license: MIT
 metadata:
   source-url: https://github.com/openai/openai-cookbook/blob/main/examples/evaluation/use-cases/tools-evaluation.ipynb

@@ -3,11 +3,11 @@
   "items": [
     {
       "slug": "platform",
-      "display_name": "Agentic Platform Engineer",
+      "display_name": "Platform Engineer",
       "purpose": "Build and land the foundational software the rest of the estate is built on.",
       "skill": "role-platform",
       "skill_source": "roster:core:role:platform",
-      "skill_digest": "sha256:1694d96aec523aac6723d0719bb78485614ade5410f6b11504bd93598a0f13a3",
+      "skill_digest": "sha256:bc5a4d1926bab9df9cc174a388d5a785370680e690541faf830ccee051509a01",
       "identity": {
         "name": "Angie",
         "pronouns": "she"
@@ -47,7 +47,7 @@
       "purpose": "Operate the real hosted systems and release surfaces.",
       "skill": "role-sysadmin",
       "skill_source": "roster:core:role:sysadmin",
-      "skill_digest": "sha256:aab25ed8d29d3aec4ac7290cfccc42e6048d8828939538a48208718ec82891ad",
+      "skill_digest": "sha256:fabf74698aa8824898006284b5ec5a3cce31087340f260724b5a1dabf48814ff",
       "identity": {
         "name": "Vera",
         "pronouns": "she"
@@ -88,12 +88,12 @@
       "background": "#00242e"
     },
     {
-      "slug": "eval",
-      "display_name": "Evaluation Engineer",
+      "slug": "science",
+      "display_name": "Applied Scientist",
       "purpose": "Measure how agents, models, and inference actually behave on real hardware.",
-      "skill": "role-eval",
-      "skill_source": "roster:core:role:eval",
-      "skill_digest": "sha256:48d5c75d1f61f90998636d78a2077efc4377d76ea730e7cbe6bafc3a67d2352b",
+      "skill": "role-science",
+      "skill_source": "roster:core:role:science",
+      "skill_digest": "sha256:042a2844236b19e1d6c17c56f69c5ffd88ab7ec1b908f9f3237b8547f72c017a",
       "identity": {
         "name": "Evie",
         "pronouns": "she"
@@ -129,11 +129,11 @@
     },
     {
       "slug": "frontend",
-      "display_name": "Design Engineer",
+      "display_name": "Frontend Engineer",
       "purpose": "Shape and build the surfaces a person navigates.",
       "skill": "role-frontend",
       "skill_source": "roster:core:role:frontend",
-      "skill_digest": "sha256:33eb1c7af897e15265b8443cfa437a42f045372c4ca7362ff7a40afd27a9df69",
+      "skill_digest": "sha256:5bf48cfbf24dd2ad4d7a1936f05f1e0548bccece5c0fca54e6a3e7585515fa7d",
       "identity": {
         "name": "Delphi",
         "pronouns": "she"
@@ -173,30 +173,30 @@
       "purpose": "Ship playable games: the code, the assets, and the build that carries both.",
       "skill": "role-gamedev",
       "skill_source": "roster:core:role:gamedev",
-      "skill_digest": "sha256:d44856e91423311b8ac17cf86d49e29c7f7857230cde9035e46a129ced0f484d",
+      "skill_digest": "sha256:e8515f6c1a989023a08f4d74975727680d527af558eb32e6720e2d3cc19324d1",
       "identity": {
-        "name": "Gale",
+        "name": "Sprite",
         "pronouns": "they"
       },
       "seats": [
         {
           "key": "claude",
           "harness": "claude",
-          "name": "Gale",
+          "name": "Sprite",
           "pronouns": "they",
           "tier": "frontier"
         },
         {
           "key": "codex",
           "harness": "codex",
-          "name": "Gale",
+          "name": "Sprite",
           "pronouns": "they",
           "tier": "frontier"
         },
         {
           "key": "openhands",
           "harness": "openhands",
-          "name": "Gale",
+          "name": "Sprite",
           "pronouns": "they"
         }
       ],
@@ -208,12 +208,12 @@
       "background": "#111d38"
     },
     {
-      "slug": "tpm",
+      "slug": "director",
       "display_name": "Portfolio Director",
       "purpose": "Decide what the portfolio does next, and carry each decision to its gate.",
-      "skill": "role-tpm",
-      "skill_source": "roster:core:role:tpm",
-      "skill_digest": "sha256:50515d328eb967213e3b3f2eb5a02bf18e33504efb52a9704f1d5c12f51b51d4",
+      "skill": "role-director",
+      "skill_source": "roster:core:role:director",
+      "skill_digest": "sha256:d25cd3606e29beadb6b12c8f29d7eb187533fbd19ed367ce97d8bdeae486911a",
       "identity": {
         "name": "Portia",
         "pronouns": "they"
@@ -254,12 +254,12 @@
       "background": "#331119"
     },
     {
-      "slug": "devrel",
+      "slug": "advocate",
       "display_name": "Developer Advocate",
       "purpose": "Turn real portfolio work and audience evidence into accurate content, respectful conversations, and informed commitments.",
-      "skill": "role-devrel",
-      "skill_source": "roster:core:role:devrel",
-      "skill_digest": "sha256:992aa1859ce4f13adf4f6fb16ea4f20fe29ac928250c76121cb2b2e2add97d3c",
+      "skill": "role-advocate",
+      "skill_source": "roster:core:role:advocate",
+      "skill_digest": "sha256:040576c0fdca43cf704a7673d552a4c1122254459148cdf0343616e5e5cc7184",
       "identity": {
         "name": "Gem",
         "pronouns": "they"

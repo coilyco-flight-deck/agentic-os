@@ -11,7 +11,7 @@ roles {
         composed-skill "coding-*"
     }
 
-    role eval {
+    role science {
         composed-skill design-system
         composed-skill "tooling-eval-*"
         composed-skill "coding-*"
@@ -41,7 +41,7 @@ roles {
         composed-skill "personal-preferences"
     }
 
-    role tpm {
+    role director {
         composed-skill tooling-code-review
         composed-skill tooling-skill-authoring
         composed-skill writing-system-improvement-vocab
@@ -53,7 +53,7 @@ roles {
         composed-skill "coding-core-*"
     }
 
-    role devrel {
+    role advocate {
         composed-skill tooling-discord-community-host
         composed-skill "writing-*"
         composed-skill "tooling-devrel-*"

@@ -1,11 +1,11 @@
 ---
 name: tooling-tpm-program-decomposition
-description: Use when tpm turns a broad outcome into an epic and sequenced Forgejo issues. Preserves parent links, evidence lanes, dependency order, and closure boundaries.
+description: Use when director turns a broad outcome into an epic and sequenced Forgejo issues. Preserves parent links, evidence lanes, dependency order, and closure boundaries.
 ---
 
 # Program decomposition
 
-Use this skill when tpm must turn a broad outcome into work that several agents
+Use this skill when director must turn a broad outcome into work that several agents
 can execute without losing the original question.
 
 ## Start with the outcome
@@ -45,12 +45,12 @@ Each issue names the actor, bounded outcome, inputs, acceptance evidence, and
 explicit non-goals. TPM includes discovered context in the issue instead of
 requiring the next agent to reconstruct the conversation.
 
-If tpm lacks authority to create or edit issues, she returns the complete issue
+If director lacks authority to create or edit issues, she returns the complete issue
 graph and bodies for the authorized actor. This skill grants no tracker
 permissions.
 
 ## Evaluation target
 
-Compare a cold model and a composed tpm on a broad taxonomy request. The
-composed tpm should produce linked study, implementation, and evidence lanes,
+Compare a cold model and a composed director on a broad taxonomy request. The
+composed director should produce linked study, implementation, and evidence lanes,
 keep dependencies sparse, and avoid false parent closure.
