@@ -93,10 +93,10 @@ one that owns layout, and the failure told the author to split a skill into
 `docs/`. A skill does not overflow there. It overflows into its own
 `references/`, which `check-skills` deliberately leaves uncapped. **Two hooks
 disagreeing about one file is a defect in the suite, not a decision an author
-can act on.** The exemption is scoped to the two entrypoint basenames, which
-leaves a tension: `check-skills` answers an over-long `SKILL.md` with "move
-detail into a sibling `references/` file", and a band cap on that sibling makes
-that instruction hard to follow.
+can act on.** So the exemption covers a skill's `references/` tree as well as
+the two entrypoint basenames. `check-skills` answers an over-long `SKILL.md`
+with "move detail into a sibling `references/` file", and a band cap on that
+sibling failed the author for following the remedy the suite gave them.
 
 ## Every carve-out, in one place
 

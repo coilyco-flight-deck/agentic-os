@@ -138,8 +138,8 @@ AGENTS_DEFAULT_MAX_CHARS = TRIFECTA_MAX_CHARS * 2
 README_DEFAULT_MAX_LINES = TRIFECTA_MAX_LINES
 README_DEFAULT_MAX_CHARS = TRIFECTA_MAX_CHARS
 
-# Exempt from the size cap, by basename. CODE_OF_CONDUCT.md is verbatim upstream.
-# The skill entrypoints belong to check-skills. See docs/documentation-bands.md.
+# Exempt by basename. CODE_OF_CONDUCT.md is verbatim upstream, and the skill
+# entrypoints belong to check-skills, as does `references/` below.
 SIZE_CAP_EXEMPT_BASENAMES = {
     "CODE_OF_CONDUCT.md",
     "SKILL.md",
@@ -223,6 +223,19 @@ def is_under_skill_path(rel: Path) -> bool:
         if len(parts) >= n and parts[:n] == skill_parts:
             return True
     return False
+
+
+def is_skill_reference(rel: Path) -> bool:
+    """A file under a skill's `references/` takes no size cap.
+
+    check-skills caps SKILL.md and answers an over-long one with "move detail
+    into a sibling references/ file", capping nothing there itself, and
+    docs/skill-discipline.md states outright that reference files are not
+    capped. A band cap on that sibling fails the author for following the
+    remedy the suite handed them, which is the same two-hooks-disagree defect
+    agentic-os#1110 fixed for the entrypoints and did not carry to references.
+    """
+    return is_under_skill_path(rel) and "references" in rel.parts[:-1]
 
 
 def markdown_files(apply_excludes: bool = True) -> list[Path]:
@@ -547,6 +560,7 @@ def check_markdown_sizes() -> list[str]:
     for rel in markdown_files(apply_excludes=False):
         if (
             rel.name in SIZE_CAP_EXEMPT_BASENAMES
+            or is_skill_reference(rel)
             or rel == ORG_PROFILE_README
             or is_vendored(rel, vendored)
             or is_excluded(rel, size_excludes)

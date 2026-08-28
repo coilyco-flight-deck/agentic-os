@@ -17,6 +17,7 @@ from agentic_os.pre_commit.check_documentation_layout import (
     TRIFECTA_MAX_LINES,
     caps_for,
     check_markdown_sizes,
+    is_skill_reference,
     check_skill_flatness,
     is_harness_override,
     validate_module_readme,
@@ -538,3 +539,33 @@ def test_the_line_cap_counts_blank_lines_too(tmp_path: Path, monkeypatch) -> Non
 
     assert problems, "a 62-line file passed a 40-line cap, so blanks went uncounted"
     assert "62 lines exceeds the 40-line cap" in problems[0]
+
+
+def test_a_skill_reference_file_takes_no_size_cap(tmp_path: Path, monkeypatch) -> None:
+    # check-skills answers an over-long SKILL.md with "move detail into a
+    # sibling references/ file" and caps nothing there. See #1110.
+    _point_repo_root_at(tmp_path, monkeypatch)
+    write(tmp_path / "pyproject.toml", '[tool.agentic-os.documentation-layout]\nband = "small"\n')
+    ref = tmp_path / ".agents" / "skills" / "my-skill" / "references" / "deep.md"
+    write(ref, "# Deep\n" + ("detail. " * 900))
+
+    assert not [v for v in check_markdown_sizes() if "deep.md" in v]
+
+
+def test_a_skill_page_outside_references_still_takes_the_cap(
+    tmp_path: Path, monkeypatch
+) -> None:
+    # The exemption is the remedy check-skills names, not the whole skill tree.
+    _point_repo_root_at(tmp_path, monkeypatch)
+    write(tmp_path / "pyproject.toml", '[tool.agentic-os.documentation-layout]\nband = "small"\n')
+    write(tmp_path / ".agents" / "skills" / "my-skill" / "notes.md", "# Notes\n" + ("x " * 3000))
+
+    assert [v for v in check_markdown_sizes() if "notes.md" in v]
+
+
+def test_references_outside_a_skill_tree_are_not_exempt() -> None:
+    assert is_skill_reference(Path(".agents/skills/s/references/a.md"))
+    assert is_skill_reference(Path(".claude/skills/s/references/a.md"))
+    assert not is_skill_reference(Path("docs/references/a.md"))
+    # The directory, never a file that merely happens to be named references.md.
+    assert not is_skill_reference(Path(".agents/skills/s/references.md"))
