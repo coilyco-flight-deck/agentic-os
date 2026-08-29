@@ -1,6 +1,6 @@
-// Application-aware Forgejo storage measurement. The generic kubectl surface
-// keeps exec denied. This sealed bridge fixes every target and command in the
-// packaged module, so callers cannot turn measurement into a remote shell.
+// Application-aware Forgejo storage measurement.
+// Rationale: tooling-aosguard references/guardfile-headers.md.
+
 wrap aosguard ops forgejo-storage {
     exec python3
 

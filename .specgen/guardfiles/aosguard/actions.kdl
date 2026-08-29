@@ -1,6 +1,6 @@
 // AOSguard's repository-local Forgejo Actions resolvers and rerun bridges.
-// These narrow Python modules share one command group and the coilyco-ops bot
-// token.
+// Rationale: tooling-aosguard references/guardfile-headers.md.
+
 wrap aosguard ops actions {
     // The ssm value provider: umbra ships no store SDK, so a store-backed
     // source is an exec contract, declared here rather than linked in.

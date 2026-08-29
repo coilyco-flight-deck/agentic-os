@@ -1,24 +1,6 @@
-// aosguard ops redis - the Redis read surface as an allowlist (umbra execverb,
-// exec dialect). Wraps redis-cli from redis-tools in the dev-base image.
-//
-// The store this exists for is the shared mcp-beaver rate-limit bucket in
-// coilyco-bridge/deploy services/mcp-ratelimit. Its whole content is a few
-// small keys with TTLs, which is why `keys` is exposed at all: on a store this
-// size the O(N) objection does not apply, and `scan` is here for the habit.
-//
-// AUTH COMES FROM THE ENVIRONMENT, NEVER FROM ARGV. redis-cli reads
-// REDISCLI_AUTH, and the two flags that would take a password on the command
-// line - `-a` and `-u` - are absent from every allowlist below, so the guard
-// rejects them. That is enforcement rather than convention: a flag not named in
-// an `allow-flag` list is refused before the process runs.
-//
-// WRITES ARE NOT HERE, AND THE REASON IS MONEY. A bucket key holds a spend
-// budget, so `set` fabricates budget and `flushall` resets every budget at
-// once. Neither is an agent verb. `del` is the one exception and is exposed
-// deliberately: unsticking a single wedged bucket is ordinary operations, and
-// it is bounded to one key at a time. `config set` stays denied because
-// maxmemory-policy is load-bearing - moving it off noeviction turns an eviction
-// into a silent budget reset, which is the failure the store exists to prevent.
+// aosguard ops redis - the Redis read surface as an allowlist.
+// Rationale: tooling-aosguard references/guardfile-headers.md.
+
 wrap aosguard ops redis {
     exec redis-cli
 

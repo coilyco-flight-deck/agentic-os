@@ -1,12 +1,6 @@
-// aosguard ops tailscale - the tailnet live-observe surface as an allowlist
-// (umbra execverb, exec dialect). Wraps the image-baked
-// `/usr/local/bin/tailscale` client so a live-observe surface can
-// answer "is the tailnet up, is the peer reachable" itself instead of handing
-// a human a runbook (agentic-os#447, the infrastructure#538 gap). Read-only by
-// design: status/ping/netcheck and friends mount, while the state-changing
-// verbs (up/down/login/logout/set/serve/funnel/ssh/file) stay denied - joining
-// or reshaping the tailnet is ward's container bring-up axis, never an agent
-// verb. AOSguard stays independent from Ward's fixed broker surface.
+// aosguard ops tailscale - the tailnet live-observe surface.
+// Rationale: tooling-aosguard references/guardfile-headers.md.
+
 wrap aosguard ops tailscale {
     exec "/usr/local/bin/tailscale"
     can run status {

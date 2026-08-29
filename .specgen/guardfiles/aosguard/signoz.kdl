@@ -1,7 +1,6 @@
-// Every leaf fixes one exact tool on the pre-authenticated SigNoz MCP server
-// selected by AOS convergence. Callers pass native MCP key=value arguments.
-// They cannot replace the server, tool, config, or
-// transport. Forgejo, kubectl, and server evidence stay in their own groups.
+// Every leaf fixes one exact tool on the pre-authenticated SigNoz MCP.
+// Rationale: tooling-aosguard references/guardfile-headers.md.
+
 wrap aosguard ops signoz {
     exec mcporter
 
