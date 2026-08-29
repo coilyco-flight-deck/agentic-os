@@ -313,8 +313,8 @@ wrap aosguard ops forgejo {
     can add issue-label
     can set issue-label
     can remove issue-label
-    // Raw pin operations are shadowed below by fixed-target inbox actions.
-    // Forgejo reserves them for repo admins; coilyco-ops holds that role in the inbox.
+    // Forgejo reserves pin management for repository admins. coilyco-ops held
+    // that only in the inbox until 2026-08-29, so these were shadowed (#1375).
     can list issue-pin {
         op repoListPinnedIssues
     }
@@ -408,69 +408,6 @@ wrap aosguard ops forgejo {
     can dispatch workflow {
         op DispatchWorkflow
         describe "Dispatch a workflow file (POST /repos/{owner}/{repo}/actions/workflows/{workflowfilename}/dispatches). Allows a guarded manual trigger instead of a raw API call. The API body requires ref and may carry inputs."
-    }
-    // Fixed-target shadows keep later admin grants elsewhere from silently
-    // expanding the four generated pin leaves.
-    action list issue-pin {
-        describe "List visibly pinned issues in coilysiren/inbox. The target is fixed because Forgejo reserves pin management for repository admins and coilyco-ops holds that role only for the issue-only inbox (agentic-os#803)."
-        call list issue-pin {
-            args {
-                owner "coilysiren"
-                repo "inbox"
-            }
-            as pins
-        }
-    }
-    action pin issue {
-        describe "Pin one coilysiren/inbox issue. The target repository is fixed; pass only the issue number."
-        input index {
-            positional
-            required
-            help "inbox issue number"
-        }
-        call pin issue {
-            args {
-                owner "coilysiren"
-                repo "inbox"
-                index $index
-            }
-        }
-    }
-    action edit issue-pin {
-        describe "Move one coilysiren/inbox issue pin to a visible position. The target repository is fixed."
-        input index {
-            positional
-            required
-            help "inbox issue number"
-        }
-        input position {
-            positional
-            required
-            help "new pin position"
-        }
-        call edit issue-pin {
-            args {
-                owner "coilysiren"
-                repo "inbox"
-                index $index
-                position $position
-            }
-        }
-    }
-    action remove issue-pin {
-        describe "Unpin one coilysiren/inbox issue without closing or deleting it. The target repository is fixed."
-        input index {
-            positional
-            required
-            help "inbox issue number"
-        }
-        call remove issue-pin {
-            args {
-                owner "coilysiren"
-                repo "inbox"
-                index $index
-            }
-        }
     }
     // create issue: shadow the leaf so no issue is filed without a priority and an
     // autonomy label (#1105). Names not ids; globs enumerate (unknown name = 200).
