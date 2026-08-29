@@ -25,6 +25,9 @@ const (
 	bundleDirMode          = 0o755
 	bundleFileMode         = 0o644
 	bundleExecMode         = 0o755
+	// The shell verb that opens the same sessions, so the word already means
+	// "the role apps" before anyone types it into Spotlight.
+	defaultBundleTag = "acompose"
 )
 
 // Committed like aterm/sounds, so a bundle write needs no renderer on the host.
@@ -97,6 +100,7 @@ type bundlePlan struct {
 	Format        string       `json:"format"`
 	Output        string       `json:"output"`
 	Icon          string       `json:"icon"`
+	Tag           string       `json:"tag"`
 	Launcher      string       `json:"launcher"`
 	LauncherBuild string       `json:"launcher_build"`
 	Build         string       `json:"build"`
@@ -145,6 +149,11 @@ func newBundlesCommand(deps commandDeps) *cli.Command {
 // so `aterm bundles --aos-bin ...` parses without depending on flag persistence.
 func bundleBinaryFlags() []cli.Flag {
 	return []cli.Flag{
+		&cli.StringFlag{
+			Name:  "tag",
+			Value: defaultBundleTag,
+			Usage: "Finder tag on every bundle, so one Spotlight word finds the set; empty writes none",
+		},
 		&cli.StringFlag{
 			Name:    "aterm-bin",
 			Value:   defaultATermBin,
@@ -213,7 +222,7 @@ func runBundles(ctx context.Context, deps commandDeps, cmd *cli.Command) error {
 		}
 	}
 	for _, item := range plan.Items {
-		if err := writeBundle(item, plan.Icon); err != nil {
+		if err := writeBundle(item, plan.Icon, plan.Tag); err != nil {
 			return err
 		}
 	}
@@ -262,6 +271,7 @@ func buildBundlePlan(ctx context.Context, deps commandDeps, cmd *cli.Command) (b
 		Format:        bundlesFormat,
 		Output:        output,
 		Icon:          icon,
+		Tag:           strings.TrimSpace(cmd.String("tag")),
 		Launcher:      launcher,
 		LauncherBuild: launcherBuild(ctx, deps, launcher),
 		Build:         version,
@@ -445,7 +455,7 @@ func plistString(document, key string) string {
 	return rest[:close]
 }
 
-func writeBundle(item bundleItem, icon string) error {
+func writeBundle(item bundleItem, icon, tag string) error {
 	if err := os.RemoveAll(item.Path); err != nil {
 		return fmt.Errorf("clear %q: %w", item.Path, err)
 	}
@@ -472,13 +482,18 @@ func writeBundle(item bundleItem, icon string) error {
 		}
 	}
 	destination := filepath.Join(contents, "Resources", bundleIconName+".icns")
-	if icon != "" {
-		return copyIcon(icon, destination)
+	switch art := roleIcon(item.Role); {
+	case icon != "":
+		if err := copyIcon(icon, destination); err != nil {
+			return err
+		}
+	case art != nil:
+		if err := writeIconBytes(art, destination); err != nil {
+			return err
+		}
 	}
-	if art := roleIcon(item.Role); art != nil {
-		return writeIconBytes(art, destination)
-	}
-	return nil
+	// Last: the bundle is complete without it, so a tag is never half a write.
+	return tagBundle(item.Path, tag)
 }
 
 // replaceable refuses to overwrite anything this command did not write, so a

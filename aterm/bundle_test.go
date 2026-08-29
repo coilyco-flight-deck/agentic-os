@@ -116,7 +116,7 @@ func TestWriteBundleLinksTheTerminalBesideTheLauncher(t *testing.T) {
 		Launcher:   "#!/bin/sh\n" + bundleMarker + "\n",
 		Plist:      bundleInfoPlist(testSpec()),
 	}
-	if err := writeBundle(item, ""); err != nil {
+	if err := writeBundle(item, "", ""); err != nil {
 		t.Fatalf("write the bundle: %v", err)
 	}
 	link := filepath.Join(item.Path, "Contents", "MacOS", bundleTerminalName)
@@ -251,7 +251,7 @@ func TestWriteBundleProducesAnExecutableLauncherAndAValidLayout(t *testing.T) {
 		Launcher:   bundleLauncher(spec),
 		Plist:      bundleInfoPlist(spec),
 	}
-	if err := writeBundle(item, ""); err != nil {
+	if err := writeBundle(item, "", ""); err != nil {
 		t.Fatalf("write the bundle: %v", err)
 	}
 	info, err := os.Stat(filepath.Join(item.Path, "Contents", "MacOS", item.Executable))
@@ -447,7 +447,7 @@ func TestWriteBundleUsesRoleArtAndPrefersTheSharedIcon(t *testing.T) {
 		Launcher:   "#!/bin/sh\n",
 		Plist:      "<plist></plist>",
 	}
-	if err := writeBundle(item, ""); err != nil {
+	if err := writeBundle(item, "", ""); err != nil {
 		t.Fatalf("write with role art: %v", err)
 	}
 	written, err := os.ReadFile(
@@ -463,7 +463,7 @@ func TestWriteBundleUsesRoleArtAndPrefersTheSharedIcon(t *testing.T) {
 	if err := os.WriteFile(shared, []byte("shared-icon"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := writeBundle(item, shared); err != nil {
+	if err := writeBundle(item, shared, ""); err != nil {
 		t.Fatalf("write with the shared override: %v", err)
 	}
 	written, err = os.ReadFile(
@@ -477,7 +477,7 @@ func TestWriteBundleUsesRoleArtAndPrefersTheSharedIcon(t *testing.T) {
 
 	item.Role = "retired-seat"
 	item.Path = filepath.Join(root, "Nobody.app")
-	if err := writeBundle(item, ""); err != nil {
+	if err := writeBundle(item, "", ""); err != nil {
 		t.Fatalf("a role with no art must still generate: %v", err)
 	}
 	if _, err := os.Stat(
