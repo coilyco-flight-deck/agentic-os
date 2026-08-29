@@ -20,12 +20,12 @@ const (
 	creatureRecipe = "aterm.creature.v1"
 	noCreatureEnv  = "ATERM_NO_CREATURE"
 	// The creature's share of the window width, and how far its own box sits
-	// from the edge it is anchored to. Both are fractions of the plate.
-	creatureWidthShare = 0.26
+	// from the top right it is anchored to. Both are fractions of the plate.
+	creatureWidthShare = 0.60
 	creatureInset      = 0.08
 	// How much of the art survives the tint, chosen against the identity card
 	// rather than in the abstract. See docs/aterm.md.
-	creaturePresence = 0.09
+	creaturePresence = 0.20
 	// cscaled covers the window, so the plate carries the aspect a full-screen
 	// window most often has and loses a band top and bottom on anything wider.
 	creaturePlateAspect = 10.0 / 16.0
@@ -156,9 +156,11 @@ func composeCreaturePlate(source image.Image) image.Image {
 		X: int(float64(width) * creatureInset),
 		Y: int(float64(height) * creatureInset),
 	}
+	// At this share the art is nearly as tall as the plate, so the top inset
+	// takes whatever vertical room is left. See docs/aterm.md.
 	origin := image.Point{
 		X: max(0, width-art.Dx()-inset.X),
-		Y: max(0, height-art.Dy()-inset.Y),
+		Y: min(inset.Y, max(0, height-art.Dy())),
 	}
 	plate := image.NewNRGBA(image.Rect(0, 0, width, height))
 	draw.Draw(

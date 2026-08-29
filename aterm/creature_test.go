@@ -103,16 +103,19 @@ func TestPlateHoldsTheArtAtItsOwnShare(t *testing.T) {
 	if got, want := plate.Bounds().Dy(), int(float64(width)*creaturePlateAspect); got != want {
 		t.Fatalf("plate is %dpx tall, want %d", got, want)
 	}
-	// The art is anchored bottom right, so the opposite corner stays empty and
-	// the window keeps its flat background wherever the session's text sits.
-	if _, _, _, alpha := plate.At(0, 0).RGBA(); alpha != 0 {
-		t.Fatalf("the top left of the plate should be transparent, got alpha %d", alpha)
+	// The art is anchored top right, so the left of the plate stays empty and
+	// the window keeps its flat background where the session's text begins.
+	if _, _, _, alpha := plate.At(0, plate.Bounds().Dy()/2).RGBA(); alpha != 0 {
+		t.Fatalf("the left of the plate should be transparent, got alpha %d", alpha)
 	}
 	inset := image.Point{
 		X: int(float64(width) * creatureInset),
 		Y: int(float64(plate.Bounds().Dy()) * creatureInset),
 	}
-	corner := image.Point{X: width - 512 - inset.X, Y: plate.Bounds().Dy() - 512 - inset.Y}
+	corner := image.Point{
+		X: width - 512 - inset.X,
+		Y: min(inset.Y, plate.Bounds().Dy()-512),
+	}
 	if _, _, _, alpha := plate.At(corner.X, corner.Y).RGBA(); alpha == 0 {
 		t.Fatalf("the art should start at %v, found nothing there", corner)
 	}
@@ -158,7 +161,7 @@ func TestCreatureReachesTheTerminalArguments(t *testing.T) {
 	if plate.Path == "" {
 		t.Fatal("frontend ships committed art, so it should bake a plate")
 	}
-	if plate.Tint != "0.91" {
+	if plate.Tint != "0.80" {
 		t.Fatalf("tint is %q, want the inverse of the presence", plate.Tint)
 	}
 	document := frontendOverlay(t)
@@ -174,7 +177,7 @@ func TestCreatureReachesTheTerminalArguments(t *testing.T) {
 	for _, want := range []string{
 		"background_image=" + plate.Path,
 		"background_image_layout=cscaled",
-		"background_tint=0.91",
+		"background_tint=0.80",
 	} {
 		if !strings.Contains(joined, want) {
 			t.Fatalf("terminal arguments are missing %q: %v", want, plan.Arguments)
