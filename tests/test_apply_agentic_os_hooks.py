@@ -408,3 +408,34 @@ def test_the_source_repo_dry_run_says_hooks_only(tmp_path: Path) -> None:
 
     assert status == "dryrun"
     assert "install hooks only" in detail
+
+
+def _own_config() -> dict:
+    return yaml.safe_load((REPO_ROOT / ".pre-commit-config.yaml").read_text())
+
+
+def _own_third_party() -> dict[str, dict]:
+    return {r["repo"]: r for r in _own_config()["repos"] if r.get("repo") != "local"}
+
+
+def test_the_source_repo_pins_every_shared_hook_repo_like_its_consumers() -> None:
+    # #1199: agentic-os generates a consumer's config and hand-maintains its
+    # own, so the two drifted twice (#1186, #1181) with nothing to notice.
+    script = _load_script()
+    mine = _own_third_party()
+    expected = {
+        script.PRECOMMIT_HOOKS_REPO_URL: script.PRECOMMIT_HOOKS_REV,
+        script.ACTIONLINT_REPO_URL: script.ACTIONLINT_REV,
+        script.FORGEJO_RUNNER_REPO_URL: script.FORGEJO_RUNNER_REV,
+        script.SHELLCHECK_REPO_URL: script.SHELLCHECK_REV,
+        script.TYPOS_REPO_URL: script.TYPOS_REV,
+    }
+    for url, rev in expected.items():
+        assert url in mine, (
+            f"the generated block ships {url} to every consumer and this repo's "
+            f"own config does not carry it."
+        )
+        assert mine[url]["rev"] == rev, (
+            f"{url}: this repo pins {mine[url]['rev']}, the generator sends "
+            f"consumers {rev}. Bump both or neither."
+        )
