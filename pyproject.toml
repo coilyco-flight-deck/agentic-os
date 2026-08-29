@@ -110,8 +110,19 @@ band = "large"
 # unreachable where it lived, in the private lore repo, by a seat that did not
 # mount it and shipped the superseded claim into outward copy. The line cap is
 # untouched and the file sits 2 lines under it.
-agents_md_max_lines = 245
-agents_md_max_chars = 33600
+#
+# Raised 245 to 247 lines and 33600 to 34600 chars on 2026-08-28 for one rule,
+# naming a file to a human with an absolute path. It binds every session and
+# every role: any seat on any host can hand Kai a path, and a shadow, a linked
+# worktree, and a container all resolve a relative one against a directory she
+# was never in. No role source can hold it, because the failure is a property of
+# where the agent runs rather than of what it was asked to do. It landed as one
+# normalized paragraph, and the two-line raise is the heading and its blank line
+# rather than prose. Recorded because the previous attempt at this rule opened a
+# pull request against a branch carrying no commit, so the rule read as shipped
+# for a day while the file never changed (coilysiren/inbox#480).
+agents_md_max_lines = 247
+agents_md_max_chars = 34600
 # Subsystem dirs carry idiomatic co-located READMEs and config docs that the
 # root/docs/skills location rule does not model. Excluded per the root layout
 # hatch: warp (Go module).
