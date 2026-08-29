@@ -11,7 +11,7 @@ For each repo checked out under ~/projects/<org>/<name> across every org dir
   1. Read or create `.pre-commit-config.yaml`.
   2. Strip legacy stamped `repo: local` blocks for the hooks now centralized
      here (catalog-doc-size, catalog-trifecta,
-     documentation-layout, code-comments, check-skills, dead-cross-links,
+     documentation-placement, documentation-size, code-comments, check-skills, dead-cross-links,
      skill-discipline).
   3. Insert/refresh the managed block: the agentic-os hook set plus the
      standard hygiene hooks, actionlint, Forgejo Runner validation, shellcheck,
@@ -197,10 +197,12 @@ LEGACY_STAMPED_SCRIPTS = [
     "scripts/check-skills.py",
 ]
 
-# Default hook IDs per repo (hand-editable).
+# Default hook IDs per repo (hand-editable). DEFAULT_REV tracks the newest tag
+# on its own, so REMOVING an id here must land with the release that drops it.
 DEFAULT_HOOK_IDS = [
     "catalog-trifecta",
-    "documentation-layout",
+    "documentation-placement",
+    "documentation-size",
     "context-load-points",
     "code-comments",
     "actions-run-one-line",
