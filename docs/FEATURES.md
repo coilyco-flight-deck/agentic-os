@@ -47,6 +47,7 @@ Major shipped capabilities, not files.
 - [Cross-repo tooling and release](release.md) - aos-precommit and release operations.
 - [Telegram CI failure alerts](../.agents/skills/tooling-aosguard/references/signoz.md) - one sealed verb, no alert program in any repo.
 - [dev-base image](dev-base-image.md) - parallel cached language payloads feeding one automatically released full development surface.
+- [Pinned WASM toolchain](dev-base-wasm-toolchain.md) - wasm-pack, wasm-opt, and the wasm-bindgen CLI baked so no build downloads them.
 - [CI parity in dev-base](ci-in-dev-base.md) - CI runs inside the moving :release dev-base image.
 - [Pull-request CI gate](ci-in-dev-base.md) - fast tests and Docker-only image validation.
 - [AGENTS pointer](features-agents.md) - generated sibling-repo workspace pointer.

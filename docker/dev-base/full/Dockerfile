@@ -181,6 +181,7 @@ ARG RUST_PINNED_VERSIONS
 # guard matters: an unplumbed arg would make the loop below a silent pass.
 RUN node --version && go version && dotnet --list-sdks && cargo --version && \
     trunk --version && wasm-pack --version && wasm-opt --version && \
+    wasm-bindgen --version && \
     python --version && pipenv --version && aosguard --version && \
     test -n "${RUST_PINNED_VERSIONS}" && \
     for pin in ${RUST_PINNED_VERSIONS}; do \
