@@ -112,7 +112,6 @@ AGENT_COMPOSE = Profile(
         TestTypeSpec("boundary", "binary", 50, ("attribute", "half", "pair_id")),
         TestTypeSpec("role-fit", "binary", 50, ("attribute",)),
         TestTypeSpec("personality", "fit", 100, ("attribute",)),
-        TestTypeSpec("voice", "fit", 100, ("attribute",)),
     ),
     attribute_order=(
         "build-foundational-software",
