@@ -39,6 +39,7 @@ Major shipped capabilities, not files.
 - [Forgejo Actions list bridge](../.agents/skills/tooling-aosguard/references/forgejo-actions-runs.md) - safe run/task listing.
 - [Forgejo runner tokens](../.agents/skills/tooling-aosguard/references/forgejo-ops.md) - guarded registration-token minting.
 - [Issue-label guard](forgejo-issue-labels.md) - no issue files without a priority and an autonomy label.
+- [Forgejo policy vendoring](vendor-forgejo-policy.md) - the operator policy pushes down to deploy, never fetched up.
 - [Forgejo Actions reruns](../.agents/skills/tooling-aosguard/references/forgejo-actions-runs.md) - guarded reruns and dispatch fallback.
 - [Ward integration boundary](ward-specs.md) - one generic runner for every
   [composed role](aos-roles-and-voice.md), and no role-derived authority.
