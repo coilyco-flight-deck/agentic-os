@@ -381,3 +381,30 @@ def test_this_repos_own_typos_entry_matches_the_block_it_ships() -> None:
     assert "args: [--force-exclude]" in generated
     typos_entry = own.split("- id: typos", 1)[1].split("- repo:", 1)[0]
     assert "--force-exclude" in typos_entry, typos_entry
+
+
+def test_the_source_repo_keeps_its_config_and_still_gets_hooks(tmp_path: Path) -> None:
+    # The self-skip protected the hand-maintained config and skipped the hook
+    # install too, leaving pr-guard's author the one repo not running it. #1192.
+    script = _load_script()
+    repo = tmp_path / "coilyco-flight-deck" / "agentic-os"
+    _make_repo(repo)
+    before = (repo / ".pre-commit-config.yaml").read_text()
+
+    status, detail = script.apply_to_repo(repo, "v1.0.0", dry_run=False)
+
+    assert status == "applied"
+    assert "config untouched" in detail
+    assert (repo / ".pre-commit-config.yaml").read_text() == before
+    assert not (repo / ".gitattributes").exists()
+
+
+def test_the_source_repo_dry_run_says_hooks_only(tmp_path: Path) -> None:
+    script = _load_script()
+    repo = tmp_path / "coilyco-flight-deck" / "agentic-os"
+    _make_repo(repo)
+
+    status, detail = script.apply_to_repo(repo, "v1.0.0", dry_run=True)
+
+    assert status == "dryrun"
+    assert "install hooks only" in detail

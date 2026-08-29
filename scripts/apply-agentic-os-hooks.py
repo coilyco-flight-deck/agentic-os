@@ -571,15 +571,19 @@ def apply_to_repo(repo_dir: Path, rev: str, dry_run: bool) -> tuple[str, str]:
     repo = repo_dir.name
     if repo_dir.parent.name in VENDOR_ORGS:
         return ("skipped", f"vendor org ({repo_dir.parent.name})")
-    if repo == "agentic-os":
-        # Source repo dogfoods via repo: local; upstream-ref would duplicate IDs.
-        return ("skipped", "self (source repo)")
     if not repo_dir.is_dir():
         return ("skipped", "not checked out locally")
     if not (repo_dir / ".git").exists():
         return ("skipped", "not a git working tree")
     if (repo_dir / IGNORE_MARKER).exists():
         return ("skipped", f"opted out ({IGNORE_MARKER})")
+    # The source repo dogfoods through `repo: local`, so writing the managed
+    # block would duplicate every hook id. Its git hooks still install (#1192).
+    if repo == "agentic-os":
+        if dry_run:
+            return ("dryrun", "install hooks only, config is hand-maintained")
+        status = install_pre_commit_hooks(repo_dir)
+        return ("applied", f"config untouched (source repo), {status}")
 
     config_path = repo_dir / ".pre-commit-config.yaml"
     hook_ids = hook_ids_for(repo)
