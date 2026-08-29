@@ -10,7 +10,7 @@
 // exec, attach, cp, port-forward) are intentionally left unexposed - they fall
 // to the host lockdown's bare-kubectl deny. Every grant audit-logs through the
 // generated binary's own umbra audit path, which needs no other tool present.
-// See ../../../docs/aosguard.md.
+// See the tooling-aosguard skill.
 wrap aosguard ops kubectl {
     exec kubectl
     // Wrap-level so a later grant cannot forget it, and an absent selector fails

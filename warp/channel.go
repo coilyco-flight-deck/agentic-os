@@ -7,7 +7,7 @@ import (
 )
 
 // warpChannel is one macOS Warp release channel: config dir and SQLite bundle as
-// a matched pair, never mixed. See docs/warp.md, docs/warp-host-setup.md.
+// a matched pair, never mixed. See the tooling-warp skill.
 type warpChannel struct {
 	Name      string // "preview" or "stable"
 	ConfigRel string // config dir, relative to the home dir

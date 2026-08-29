@@ -3,7 +3,7 @@ package main
 import "os"
 
 // defaultShellStorageKey is the generic_string_objects key for Warp's Windows
-// default shell. It is inferred and unverified - see docs/warp.md.
+// default shell. It is inferred and unverified - see the tooling-warp skill.
 const defaultShellStorageKey = "DefaultShell"
 
 // windowsPwshCandidates lists the standard, public-safe PowerShell 7 install

@@ -49,4 +49,4 @@ is exactly what a generated skill will never contain.
 
 * Verbs per area - the generated `aosguard-<area>` skills.
 * Policy and vendored specs - `.specgen/guardfiles/aosguard/`.
-* Build contract and ownership - [docs/aosguard.md](../../../docs/aosguard.md).
+* Build contract and ownership - [`references/aosguard.md`](references/aosguard.md).

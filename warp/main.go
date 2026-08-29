@@ -67,7 +67,7 @@ type renderedFile struct {
 }
 
 // volatileSettingsKeys are settings.toml keys Warp rewrites from live UI or
-// cloud-account state, so doctor skips their values. See docs/warp.md.
+// cloud-account state, so doctor skips their values. See the tooling-warp skill.
 var volatileSettingsKeys = []string{
 	"zoom_level",
 	"cloud_conversation_storage_enabled",
@@ -177,7 +177,7 @@ func applySQLite(h *HostPaths) error {
 }
 
 // applyShellPref reconciles the Windows-only default-shell pref into warp.sqlite.
-// See shell.go and docs/warp.md.
+// See shell.go.
 func applyShellPref(db *warpDB, h *HostPaths) error {
 	if h.OS != "windows" {
 		return nil
@@ -292,7 +292,7 @@ func doctorSQLite(r *report, h *HostPaths) {
 }
 
 // doctorShellPref reports drift on the Windows-only default-shell preference.
-// See docs/warp.md.
+// See the tooling-warp skill.
 func doctorShellPref(r *report, db *warpDB, h *HostPaths) {
 	if h.OS != "windows" {
 		return

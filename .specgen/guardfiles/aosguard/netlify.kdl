@@ -11,7 +11,7 @@
 // `domain_aliases` wholesale, so sending one alias would delete the rest. It
 // adds and removes in one call, because a rename split across two writes is
 // two certificate events on a live site.
-// See ../../../docs/aosguard.md.
+// See the tooling-aosguard skill.
 wrap aosguard ops netlify {
     provider ssm {
         exec aws ssm get-parameter --with-decryption --output text --query "Parameter.Value" --name

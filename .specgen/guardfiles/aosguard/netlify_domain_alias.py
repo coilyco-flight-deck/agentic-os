@@ -2,7 +2,7 @@
 
 The API replaces `domain_aliases` wholesale on update, and the caller knows
 only what it wants to add, so every write here is a read-modify-write of the
-full list. See ../../../docs/aosguard.md.
+full list. See the tooling-aosguard skill.
 """
 
 from __future__ import annotations

@@ -64,7 +64,7 @@ Only the scalar value is exempt. The key line itself must still be present and i
 
 ## Adding a key
 
-Add the TOML key name to `volatileSettingsKeys` in `warp/main.go`. Only do this for keys Warp genuinely owns and rewrites from live state - everything else should stay an enforced byte-for-byte match. See docs/warp.md for the original motivation.
+Add the TOML key name to `volatileSettingsKeys` in `warp/main.go`. Only do this for keys Warp genuinely owns and rewrites from live state - everything else should stay an enforced byte-for-byte match. See this page for the original motivation.
 
 ## Warp default-shell layer
 
@@ -84,4 +84,4 @@ The desired shell is the path to the first PowerShell 7 binary found among the s
 
 Warp does not document the `generic_string_objects` `storage_key` for this preference, and it can only be confirmed against a live Windows `warp.sqlite`. The key is set from a single constant (`defaultShellStorageKey`) in `warp/shell.go`. A wrong key is harmless - Warp ignores unknown rows - but it makes the layer a silent no-op rather than truly converging the UI setting. If a host ever shows the shell drifting in the Warp UI despite a green `apply`, dump the DB's `generic_string_objects` keys and reconcile the constant (and the value shape, if Warp stores more than a bare path).
 
-See docs/warp.md for the original request.
+See this page for the original request.

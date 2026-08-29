@@ -30,7 +30,7 @@ Major shipped capabilities, not files.
   [convergence](aos-convergence.md), [connectivity](aos-context-bundle.md),
   [kubeconfig](aos-cluster-access.md), [issue pins](aos-issue-flow.md), and
   [check-ins](aos-issue-flow.md).
-- [aosguard](aosguard.md) - guarded CLI with fixed
+- [aosguard](../.agents/skills/tooling-aosguard/references/aosguard.md) - guarded CLI with fixed
   [SigNoz MCP reads](signoz.md), issue pins, PR merge, and sealed
   [Forgejo storage measurement](forgejo-ops.md).
 - [Code review skill](../.agents/composed/tooling-code-review/COMPOSED.md) - Portfolio Director gate-decision review stance.

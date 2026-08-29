@@ -29,9 +29,9 @@ docs own platform layout, settings, and failure details.
 
 ## Read next
 
-* [`docs/warp.md`](../../../docs/warp.md) - state layers, commands, paths, and
+* [`references/warp.md`](references/warp.md) - state layers, commands, paths, and
   sharp edges.
-* [`docs/warp-host-setup.md`](../../../docs/warp-host-setup.md) - channel
+* [`references/warp-host-setup.md`](references/warp-host-setup.md) - channel
   installation and host setup.
-* [`docs/warp-host-setup.md`](../../../docs/warp-host-setup.md) -
+* [`references/warp-host-setup.md`](references/warp-host-setup.md) -
   recovery from a stuck mouse-tracking flood.

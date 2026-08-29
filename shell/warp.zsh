@@ -1,5 +1,5 @@
 # Warp dispatcher (zsh-only: zsh arrays, parameter expansion flags, compdef).
-# Sourced by shell/zshrc for interactive zsh. See docs/warp.md.
+# Sourced by shell/zshrc for interactive zsh. See the tooling-warp skill.
 
 warp() {
   local dir="$HOME/.warp/launch_configurations"

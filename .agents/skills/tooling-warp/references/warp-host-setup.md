@@ -71,11 +71,11 @@ it never fires for the pipe-backed children that matter.
 window. Agent-compose supplies canonical identity and the roster, agentic-os
 renders the terminal brand, and the native session shadow runs the harness. The
 launcher, its refusals, and its flags are in
-[the native agent terminal](aterm.md).
+[the native agent terminal](../../../../docs/aterm.md).
 
 ## Base configuration
 
-[`kitty/kitty.conf`](../kitty/kitty.conf) carries the portable Sombra palette,
+[`kitty/kitty.conf`](../../../../kitty/kitty.conf) carries the portable Sombra palette,
 opaque window treatment, padding, font size, and copy-only clipboard policy,
 leaving shell selection, startup directory, and scrollback to the host, and
 defining no tabs, panes, or multiplexer. A host-local root config includes this
@@ -85,7 +85,7 @@ kitty has its own tab surface, so hiding the bar is not enough on its own. The
 shortcuts still exist and would silently split an agent session's window, so
 each one is unmapped rather than left to a hidden bar.
 
-[`alacritty/alacritty.toml`](../alacritty/alacritty.toml) carries the same
+[`alacritty/alacritty.toml`](../../../../alacritty/alacritty.toml) carries the same
 baseline for Alacritty and is retained as the Windows terminal baseline, where
 kitty does not ship. `aterm` is not one of its consumers: rather than grow a
 second flag dialect it is Mac and Linux only and is no longer built or packaged

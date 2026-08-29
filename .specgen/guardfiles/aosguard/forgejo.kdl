@@ -8,7 +8,7 @@
 // CRUD moves to org-labels, a cross-repo issue search and a move-issue action
 // land, and every path-{owner} leaf is scoped to coily* owners. Repo-level label
 // create/edit are additionally policy-disabled per ward#107 (dup P0-P4 prevention).
-// Auto-resolution per umbra#147. See ../../../docs/aosguard.md.
+// Auto-resolution per umbra#147. See the tooling-aosguard skill.
 wrap aosguard ops forgejo {
     // The ssm value provider: umbra ships no store SDK, so a store-backed
     // source is an exec contract, declared here rather than linked in.
@@ -83,7 +83,7 @@ wrap aosguard ops forgejo {
         describe "topic finder (GET /topics/search)"
     }
     // org-labels (/orgs/{org}/labels): reads work as the bot, writes need org
-    // ownership it lacks, so they name the admin verb. See docs/aosguard.md.
+    // ownership it lacks, so they name the admin verb. See the tooling-aosguard skill.
     can get org-label
     can list org-label
     never create org-label {

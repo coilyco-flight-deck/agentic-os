@@ -292,7 +292,7 @@ test *ARGS:
 update-flight-deck-scoop *ARGS:
     @pwsh -NoProfile -File scripts/update-flight-deck-scoop.ps1 "$@"
 
-# Establish and verify Kai's Warp config across hosts. `just warp apply` renders all three state layers (repo template, config-dir TOML, SQLite); `just warp doctor` reports drift. See project-a-ward-exec-warp.md.
+# Establish and verify Kai's Warp config across hosts. `just warp apply` renders all three state layers (repo template, config-dir TOML, SQLite); `just warp doctor` reports drift. See the tooling-warp skill.
 warp *ARGS:
     @go run -C warp . "$@"
 

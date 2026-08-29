@@ -1,7 +1,7 @@
 // Forgejo operations Forgejo refuses to the coilyco-ops bot, which is an org
 // member holding push rather than an owner holding repo-admin. The separate
 // wrapper keeps ordinary reads and writes on the bot token. Rationale:
-// ../../../docs/aosguard.md.
+// the tooling-aosguard skill.
 wrap aosguard ops forgejo-admin {
     // Same store and shape as the ordinary wrapper, pointed at the admin PAT.
     provider ssm {

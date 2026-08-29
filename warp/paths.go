@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-// HostPaths is the resolved per-OS layout. See docs/warp.md.
+// HostPaths is the resolved per-OS layout. See the tooling-warp skill.
 type HostPaths struct {
 	OS              string
 	Channel         string // Warp channel ("preview"/"stable"); empty on linux
@@ -33,7 +33,7 @@ type HostPaths struct {
 const themeFileName = "coilysiren-sombra-wallpaper.yaml"
 
 // resolveHostPaths builds the layout for the current OS. On darwin and windows,
-// channel selects the Warp channel ("" auto-detects); ignored on linux. See docs/warp.md.
+// channel selects the Warp channel ("" auto-detects); ignored on linux.
 func resolveHostPaths(channel string) (*HostPaths, error) {
 	repoRoot, err := findRepoRoot()
 	if err != nil {
@@ -58,7 +58,7 @@ func resolveHostPaths(channel string) (*HostPaths, error) {
 			return nil, fmt.Errorf("LOCALAPPDATA is unset")
 		}
 		// Two Warp channels coexist, same as darwin: Preview under warp\WarpPreview,
-		// Stable under warp\Warp. Config and DB are a matched pair. See docs/warp.md.
+		// Stable under warp\Warp. Config and DB are a matched pair.
 		ch, cerr := resolveWindowsChannel(channel, local)
 		if cerr != nil {
 			return nil, cerr
@@ -73,11 +73,11 @@ func resolveHostPaths(channel string) (*HostPaths, error) {
 		}
 		h.ThemeDir = filepath.Join(roaming, "warp", ch.DirName, "data", "themes")
 		// Default-shell pref lives only in warp.sqlite, resolved from disk.
-		// See shell.go and docs/warp.md.
+		// See shell.go.
 		h.DefaultShell = resolveWindowsDefaultShell()
 	case "darwin":
 		// Two Warp channels coexist; pick config dir and DB as a matched pair.
-		// Preview (default) at ~/.warp-preview, Stable at ~/.warp. See docs/warp.md.
+		// Preview (default) at ~/.warp-preview, Stable at ~/.warp.
 		ch, cerr := resolveDarwinChannel(channel)
 		if cerr != nil {
 			return nil, cerr
@@ -95,7 +95,7 @@ func resolveHostPaths(channel string) (*HostPaths, error) {
 
 	h.SettingsPath = filepath.Join(h.ConfigDir, "settings.toml")
 	// Warp reads custom keybindings from keybindings.yaml, a sibling of
-	// settings.toml in the config dir. See docs/warp.md.
+	// settings.toml in the config dir.
 	h.KeybindingsPath = filepath.Join(h.ConfigDir, "keybindings.yaml")
 	if h.ThemeDir == "" {
 		h.ThemeDir = filepath.Join(h.ConfigDir, "themes")
