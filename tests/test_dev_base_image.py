@@ -102,10 +102,12 @@ def test_common_verification_covers_the_composed_runtime_surface() -> None:
         "agent-compose roster",
         "person.json",
         "python3 -m agentic_os.forgejo_actions_list --help",
-        "ward --version",
-        "WARD_DOCTOR_ALLOW_PLACEHOLDERS=1 ward doctor",
     ):
         assert command in text
+    # Ward is frozen as a contract (#1299): the image still installs it, and
+    # verifying an unmaintained binary made its install a build-breaker.
+    for gone in ("ward --version", "ward doctor"):
+        assert gone not in text
     # aos#771: the isolated-import proof is the only thing standing between a
     # pinned hook rev and the image copy, so it may not quietly disappear.
     assert 'printf \'SENTINEL = "isolated"\\n\'' in text
