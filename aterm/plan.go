@@ -24,6 +24,7 @@ type launchRequest struct {
 	Silent           bool
 	Extra            []string
 	Hold             bool
+	Creature         creaturePlate
 }
 
 type launchIdentity struct {
@@ -45,6 +46,7 @@ type launchPlan struct {
 	WorkingDirectory string         `json:"working_directory"`
 	Workspace        string         `json:"workspace"`
 	Card             sessionCard    `json:"card"`
+	Creature         creaturePlate  `json:"creature"`
 	Shadowed         bool           `json:"shadowed"`
 	Child            []string       `json:"child"`
 	Executable       string         `json:"executable"`
@@ -106,6 +108,16 @@ func buildLaunchPlan(
 		"-o", fmt.Sprintf("selection_background=%s", brand.Accent),
 		"-o", fmt.Sprintf("selection_foreground=%s", brand.SelectionText),
 	}
+	// kitty draws the window background back over the image at this fraction,
+	// which is what holds the creature under the text. See docs/aterm.md.
+	if request.Creature.Path != "" {
+		arguments = append(arguments,
+			"-o", fmt.Sprintf("background_image=%s", request.Creature.Path),
+			"-o", "background_image_layout=cscaled",
+			"-o", "background_image_linear=yes",
+			"-o", fmt.Sprintf("background_tint=%s", request.Creature.Tint),
+		)
+	}
 	plan := launchPlan{
 		Format: launchFormat,
 		Identity: launchIdentity{
@@ -122,6 +134,7 @@ func buildLaunchPlan(
 		Brand:            brand,
 		WorkingDirectory: cwd,
 		Workspace:        request.Workspace,
+		Creature:         request.Creature,
 		Shadowed:         shadowed,
 		Child:            child,
 		Executable:       strings.TrimSpace(request.TerminalBin),

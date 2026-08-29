@@ -150,6 +150,10 @@ func newCommand(deps commandDeps) *cli.Command {
 				Usage: "skip the launch sound mark",
 			},
 			&cli.BoolFlag{
+				Name:  "no-creature",
+				Usage: "leave the window background flat, without the role's creature behind the session",
+			},
+			&cli.BoolFlag{
 				Name:  "json",
 				Usage: "machine-readable output, with --list or --dry-run",
 			},
@@ -242,6 +246,9 @@ func runLaunch(ctx context.Context, deps commandDeps, cmd *cli.Command) error {
 		Silent:           cmd.Bool("silent"),
 		Extra:            extra,
 		Hold:             cmd.Bool("hold"),
+	}
+	if creatureWanted(cmd.Bool("no-creature")) {
+		request.Creature = bakeCreaturePlate(role, creaturePresence)
 	}
 	aos, err := requireBinary(deps.lookPath, request.AOSBin)
 	if err != nil {
