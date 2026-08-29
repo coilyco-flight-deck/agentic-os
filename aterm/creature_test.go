@@ -212,3 +212,53 @@ func TestCreatureWantedReadsTheEnvironment(t *testing.T) {
 		t.Fatalf("%s should turn the creature off", noCreatureEnv)
 	}
 }
+
+// The linework is what makes a creature read at a glance, so the rolloff has
+// to leave it whole while taking the fills that compete with text.
+func TestGlareRolloffSparesTheLinework(t *testing.T) {
+	for name, sample := range map[string][3]uint8{
+		"black outline": {0x11, 0x0c, 0x14},
+		"mid body":      {0x8c, 0x3f, 0x5e},
+	} {
+		if fade := glareFade(sample); fade != 0 {
+			t.Fatalf("%s should keep all its alpha, lost %.3f", name, fade)
+		}
+	}
+	white := glareFade([3]uint8{0xff, 0xff, 0xff})
+	if white < creatureGlareDepth-0.001 || white > creatureGlareDepth {
+		t.Fatalf("white should lose the full depth %.2f, lost %.3f", creatureGlareDepth, white)
+	}
+	// Monotonic, or a gradient inside one fill would band rather than roll off.
+	previous := 0.0
+	for level := 0; level <= 0xff; level++ {
+		fade := glareFade([3]uint8{uint8(level), uint8(level), uint8(level)})
+		if fade < previous {
+			t.Fatalf("fade fell from %.4f to %.4f at level %d", previous, fade, level)
+		}
+		previous = fade
+	}
+}
+
+func TestPlateFadesTheBrightFillsOnly(t *testing.T) {
+	art := image.NewNRGBA(image.Rect(0, 0, 4, 4))
+	art.Set(0, 0, color.NRGBA{R: 0x11, G: 0x0c, B: 0x14, A: 0xff})
+	art.Set(1, 0, color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xff})
+	plate := composeCreaturePlate(art).(*image.NRGBA)
+	origin := image.Point{
+		X: plate.Bounds().Dx() - 4 - int(float64(plate.Bounds().Dx())*creatureInset),
+		Y: min(int(float64(plate.Bounds().Dy())*creatureInset), plate.Bounds().Dy()-4),
+	}
+	_, _, _, dark := plate.At(origin.X, origin.Y).RGBA()
+	if dark != 0xffff {
+		t.Fatalf("the outline pixel should keep full alpha, got %d", dark)
+	}
+	red, green, blue, bright := plate.At(origin.X+1, origin.Y).RGBA()
+	if bright >= dark {
+		t.Fatalf("the white fill should lose alpha, got %d against %d", bright, dark)
+	}
+	// Only alpha moves. Repainting the fill would change art nobody asked to
+	// change, and the roster owns those colors.
+	if red != bright || green != bright || blue != bright {
+		t.Fatalf("the fill should stay white, got %d %d %d at alpha %d", red, green, blue, bright)
+	}
+}

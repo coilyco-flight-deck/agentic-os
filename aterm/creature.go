@@ -7,8 +7,9 @@ import (
 	"encoding/hex"
 	"fmt"
 	"image"
-	"image/draw"
+	"image/color"
 	"image/png"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -17,19 +18,23 @@ import (
 const (
 	// Bump when the plate recipe changes, so a cached plate from the old one
 	// stops being reused rather than outliving it.
-	creatureRecipe = "aterm.creature.v1"
+	creatureRecipe = "aterm.creature.v2"
 	noCreatureEnv  = "ATERM_NO_CREATURE"
 	// The creature's share of the window width, and how far its own box sits
 	// from the top right it is anchored to. Both are fractions of the plate.
 	creatureWidthShare = 0.60
 	creatureInset      = 0.08
 	// How much of the art survives the tint, chosen against the identity card
-	// rather than in the abstract. See docs/aterm.md.
+	// rather than in the abstract. See docs/aterm-creature.md.
 	creaturePresence = 0.20
 	// cscaled covers the window, so the plate carries the aspect a full-screen
 	// window most often has and loses a band top and bottom on anything wider.
 	creaturePlateAspect = 10.0 / 16.0
-	// A path kitty reads as a glob is a path it may not open. See docs/aterm.md.
+	// Where a fill starts losing alpha, and how much of it goes. The dark
+	// linework stays whole at any depth. See docs/aterm-creature.md.
+	creatureGlareKnee  = 0.46
+	creatureGlareDepth = 0.58
+	// A path kitty reads as a glob is a path it may not open. See docs/aterm-creature.md.
 	globMetacharacters = "*?[]{}"
 )
 
@@ -63,7 +68,7 @@ func bakeCreaturePlate(role string, presence float64) creaturePlate {
 }
 
 // creatureArt reads the largest PNG out of an icns container, which is the one
-// committed copy of this art. See docs/aterm.md.
+// committed copy of this art. See docs/aterm-creature.md.
 func creatureArt(icns []byte) []byte {
 	const header = 8
 	if len(icns) < header || string(icns[:4]) != "icns" {
@@ -109,8 +114,9 @@ func creaturePlatePath(role string, art []byte) (string, error) {
 	// A plate re-cut to a new share is the same bytes in, so the geometry is
 	// hashed beside the art or the name cannot tell the two apart.
 	recipe := fmt.Sprintf(
-		"%s\x00%g\x00%g\x00%g\x00",
+		"%s\x00%g\x00%g\x00%g\x00%g\x00%g\x00",
 		creatureRecipe, creatureWidthShare, creatureInset, creaturePlateAspect,
+		creatureGlareKnee, creatureGlareDepth,
 	)
 	sum := sha256.Sum256(append([]byte(recipe), art...))
 	name := fmt.Sprintf("%s-%s.png", role, hex.EncodeToString(sum[:6]))
@@ -144,7 +150,7 @@ func writeCreaturePlate(path string, art []byte) error {
 }
 
 // composeCreaturePlate places the art once and never resamples it: the canvas
-// sets the size and kitty does the scaling. See docs/aterm.md.
+// sets the size and kitty does the scaling. See docs/aterm-creature.md.
 func composeCreaturePlate(source image.Image) image.Image {
 	art := source.Bounds()
 	width := int(float64(art.Dx()) / creatureWidthShare)
@@ -157,20 +163,53 @@ func composeCreaturePlate(source image.Image) image.Image {
 		Y: int(float64(height) * creatureInset),
 	}
 	// At this share the art is nearly as tall as the plate, so the top inset
-	// takes whatever vertical room is left. See docs/aterm.md.
+	// takes whatever vertical room is left. See docs/aterm-creature.md.
 	origin := image.Point{
 		X: max(0, width-art.Dx()-inset.X),
 		Y: min(inset.Y, max(0, height-art.Dy())),
 	}
 	plate := image.NewNRGBA(image.Rect(0, 0, width, height))
-	draw.Draw(
-		plate,
-		image.Rectangle{Min: origin, Max: origin.Add(image.Point{X: art.Dx(), Y: art.Dy()})},
-		source,
-		art.Min,
-		draw.Src,
-	)
+	drawTamed(plate, source, origin)
 	return plate
+}
+
+// drawTamed copies the art with its brightest fills faded, keeping the linework
+// that makes the creature read. See docs/aterm-creature.md.
+func drawTamed(plate *image.NRGBA, source image.Image, origin image.Point) {
+	art := source.Bounds()
+	for y := art.Min.Y; y < art.Max.Y; y++ {
+		for x := art.Min.X; x < art.Max.X; x++ {
+			red, green, blue, alpha := source.At(x, y).RGBA()
+			if alpha == 0 {
+				continue
+			}
+			// At() is premultiplied and the plate is not, so every channel is
+			// divided back out before anything reads it as a color.
+			straight := [3]uint8{
+				uint8(red * 255 / alpha),
+				uint8(green * 255 / alpha),
+				uint8(blue * 255 / alpha),
+			}
+			faded := float64(alpha) / 0xffff * (1 - glareFade(straight))
+			plate.SetNRGBA(origin.X+x-art.Min.X, origin.Y+y-art.Min.Y, color.NRGBA{
+				R: straight[0], G: straight[1], B: straight[2],
+				A: uint8(math.Round(faded * 255)),
+			})
+		}
+	}
+}
+
+// glareFade is the share of a pixel's alpha the rolloff takes, smooth so a fill
+// never gains an edge the artist did not draw.
+func glareFade(straight [3]uint8) float64 {
+	// The square root approximates perceived lightness, which is what decides
+	// whether a fill competes with text rather than its physical luminance.
+	level := math.Sqrt(relativeLuminance(straight))
+	if level <= creatureGlareKnee {
+		return 0
+	}
+	step := (level - creatureGlareKnee) / (1 - creatureGlareKnee)
+	return creatureGlareDepth * step * step * (3 - 2*step)
 }
 
 // creatureWanted is off wherever the window is being recorded or read by
