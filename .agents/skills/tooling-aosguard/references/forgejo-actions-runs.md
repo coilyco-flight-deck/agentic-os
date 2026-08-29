@@ -27,7 +27,7 @@ falls back to dispatching that run's workflow file for the same ref when Forgejo
 exposes no usable rerun control.
 
 The companion fetch overlay in
-[AOSguard's Forgejo spec](../.specgen/guardfiles/aosguard/forgejo.kdl) pins the
+[AOSguard's Forgejo spec](../../../../.specgen/guardfiles/aosguard/forgejo.kdl) pins the
 dead API rerun routes from agentic-os#473, so the dead shape stays documented
 rather than becoming another hand-coded HTTP call.
 

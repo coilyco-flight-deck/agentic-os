@@ -7,7 +7,7 @@ Major shipped capabilities, not files.
 - [Shell and secrets](install.md) - shared shells, Warp, SSM, and GPG.
 - [Branded agent terminal](aterm.md) - `aterm` opens one composed agent session in its own Sombra kitty
   window, completing and refusing roles against the live roster, and writes a macOS `.app` launcher per
-  role, each carrying its own embedded icon. The window opens on an identity card drawn from the
+  [role bundle](aterm-bundles.md), each carrying its own embedded icon. The window opens on an identity card drawn from the
   overlay's own `geometry` and sounded from its `sound_mark`. Mac and Linux only, since kitty has no
   Windows build.
 - [Speech helper](aos-roles-and-voice.md) - `aos-say` client plus relay for status speech.
@@ -31,18 +31,19 @@ Major shipped capabilities, not files.
   [kubeconfig](aos-cluster-access.md), [issue pins](aos-issue-flow.md), and
   [check-ins](aos-issue-flow.md).
 - [aosguard](../.agents/skills/tooling-aosguard/references/aosguard.md) - guarded CLI with fixed
-  [SigNoz MCP reads](signoz.md), issue pins, PR merge, and sealed
-  [Forgejo storage measurement](forgejo-ops.md).
+  [SigNoz MCP reads](../.agents/skills/tooling-aosguard/references/signoz.md), issue pins, PR merge, and sealed
+  [Forgejo storage measurement](../.agents/skills/tooling-aosguard/references/forgejo-ops.md).
 - [Code review skill](../.agents/composed/tooling-code-review/COMPOSED.md) - Portfolio Director gate-decision review stance.
 - [Code review contract](../CODE-REVIEW.md) - review invariants.
-- [Forgejo Actions logs](forgejo-actions-runs.md) - job logs and run ZIPs.
-- [Forgejo Actions list bridge](forgejo-actions-runs.md) - safe run/task listing.
-- [Forgejo runner tokens](forgejo-ops.md) - guarded registration-token minting.
-- [Forgejo Actions reruns](forgejo-actions-runs.md) - guarded reruns and dispatch fallback.
+- [Forgejo Actions logs](../.agents/skills/tooling-aosguard/references/forgejo-actions-runs.md) - job logs and run ZIPs.
+- [Forgejo Actions list bridge](../.agents/skills/tooling-aosguard/references/forgejo-actions-runs.md) - safe run/task listing.
+- [Forgejo runner tokens](../.agents/skills/tooling-aosguard/references/forgejo-ops.md) - guarded registration-token minting.
+- [Issue-label guard](forgejo-issue-labels.md) - no issue files without a priority and an autonomy label.
+- [Forgejo Actions reruns](../.agents/skills/tooling-aosguard/references/forgejo-actions-runs.md) - guarded reruns and dispatch fallback.
 - [Ward integration boundary](ward-specs.md) - one generic runner for every
   [composed role](aos-roles-and-voice.md), and no role-derived authority.
 - [Cross-repo tooling and release](release.md) - aos-precommit and release operations.
-- [Telegram CI failure alerts](signoz.md) - one sealed verb, no alert program in any repo.
+- [Telegram CI failure alerts](../.agents/skills/tooling-aosguard/references/signoz.md) - one sealed verb, no alert program in any repo.
 - [dev-base image](dev-base-image.md) - parallel cached language payloads feeding one automatically released full development surface.
 - [CI parity in dev-base](ci-in-dev-base.md) - CI runs inside the moving :release dev-base image.
 - [Pull-request CI gate](ci-in-dev-base.md) - fast tests and Docker-only image validation.

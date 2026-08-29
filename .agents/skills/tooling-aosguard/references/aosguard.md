@@ -10,7 +10,7 @@ lock, and Homebrew and Scoop install it beside `aos`.
 
 ## Authority boundary
 
-The snapshot carries Forgejo, AWS, kubectl, Tailscale, Actions, SigNoz, Netlify, and runner-token leaves, and excludes Ward role policy. AWS SSM permits single reads, file-backed writes, and named deletions. Actions lives at `aosguard ops actions` so its exec transport does not shadow `aosguard ops forgejo`. The sibling [`forgejo-storage measure` bridge](../../../../docs/forgejo-ops.md) uses fixed `kubectl exec` operations from an embedded script invoked by absolute path. `aosguard ops signoz` reads only the converged SigNoz MCP server.
+The snapshot carries Forgejo, AWS, kubectl, Tailscale, Actions, SigNoz, Netlify, and runner-token leaves, and excludes Ward role policy. AWS SSM permits single reads, file-backed writes, and named deletions. Actions lives at `aosguard ops actions` so its exec transport does not shadow `aosguard ops forgejo`. The sibling [`forgejo-storage measure` bridge](forgejo-ops.md) uses fixed `kubectl exec` operations from an embedded script invoked by absolute path. `aosguard ops signoz` reads only the converged SigNoz MCP server.
 
 ## Netlify domain aliases
 
