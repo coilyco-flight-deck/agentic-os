@@ -481,7 +481,7 @@ wrap aosguard ops forgejo {
         }
     }
     // move-issue: copy title/body to a target repo, back-link, then CLOSE the
-    // source (never delete). Carrying labels/milestone is deferred (array flow).
+    // source (never delete). Labels carry and are required, like create (#1317).
     action move-issue {
         describe "Move an issue to another repo (copy title/body, back-link, close source). Never deletes."
         input source {
@@ -499,6 +499,14 @@ wrap aosguard ops forgejo {
             required
             help "target owner/name"
         }
+        input labels {
+            flag
+            required
+            array
+            help "label NAME for the moved issue, repeatable; needs one priority/* and one autonomy/*"
+            matches "priority/P[0-4]" message="no priority label: add --labels priority/P2 (P0 highest, P4 lowest)"
+            matches "autonomy/headless" "autonomy/live-collab" "autonomy/async-consult" "autonomy/epic" message="no autonomy label: add --labels autonomy/headless (or autonomy/live-collab, autonomy/async-consult, autonomy/epic)"
+        }
         call view issue {
             args {
                 owner-repo $source
@@ -513,6 +521,14 @@ wrap aosguard ops forgejo {
                 body $src.body
             }
             as dst
+        }
+        call add issue-label {
+            args {
+                owner-repo $target
+                index $dst.number
+                labels $labels
+            }
+            as moved-labels
         }
         call comment issue {
             args {
