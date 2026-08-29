@@ -76,6 +76,10 @@ keeps the label id and every association. Org-label writes on the ordinary
 wrapper are `never` leaves naming the admin verb, rather than the bare
 `403 Must be an organization owner` they used to answer.
 
+`create label` is here rather than on the ordinary wrapper because Forgejo mints labels per organization and `coilysiren` is a user account, so its six repos have no org to hang one on. The ward#107 deny stays exactly where it was: a repo label duplicating an org label silently shadows it, so on an org-owned repo `create org-label` is still the verb.
+
+This wrapper carries **no vendored `.swagger.v1.json.gz`**, unlike `forgejo.kdl`. A vendored snapshot is pruned to the operations declared when it was written, so it cannot grow a new one: `issueCreateLabel` is in live Forgejo and was absent from the committed 88-operation copy. Dropping it means `specgen lock` fetches live for this guardfile, which costs hermetic locking and is why the other guardfile keeps its snapshot. Kai's call, 2026-08-29 (#1377).
+
 ## What it covers
 
 Repo settings and cosmetics, org labels, topics, branch protection, Actions

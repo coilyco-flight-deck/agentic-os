@@ -41,6 +41,13 @@ wrap aosguard ops forgejo-admin {
         describe "irreversible: removes the label from every issue that carries it. Prefer `edit org-label` for a rename, which preserves those associations"
     }
 
+    // Repo labels: Forgejo mints labels per organization, and coilysiren is a
+    // user account, so its six repos have no org to hang one on (#1377).
+    can create label {
+        op issueCreateLabel
+        describe "mint a repository label (POST /repos/{owner}/{repo}/labels), for a user-owned repository with no organization to carry one. On an org-owned repo prefer `create org-label`: a repo label duplicating an org label silently shadows it, which is the ward#107 path, and it stays denied on the ordinary wrapper"
+    }
+
     // Branch protection: converged whenever the repo set changes, most often
     // right after creating a repo, so it is routine rather than exceptional.
     can list branch-protection {
