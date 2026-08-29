@@ -33,7 +33,7 @@ since an advancing counter still deletes on the fourth scan (agentic-os#903).
 
 Agent Compose seals each policy source's identity, revision, and policy SHA-256 into the plan. AOS decoded those and decided nothing
 from them, so a plan compiled from policy that had since moved read exactly like one compiled a minute ago. Startup now fetches each
-source, verifies the seal, and stops before any worktree exists when one regeneration cannot fix a mismatch (agentic-os#1215).
+source and verifies the seal, and a stale digest is a refresh trigger rather than a wall (agentic-os#1215).
 
 The digest triggers and the revision only reports. A repository holding policy also takes ordinary commits, and on a measured day
 its revision moved eight times while the policy never moved. A gate that fires on every commit gets routed around.
@@ -42,9 +42,11 @@ Two commits are checked because two are read. The seal is of the working-tree fi
 `origin/main`, so that is where a session's own policy comes from. Checking the base keeps session policy no newer than the
 repository selection, without stranding sessions on the sealed commit's code.
 
-The retry budget is exactly one. A mismatch runs `agent-compose compose`, reloads, and re-validates strictly; regeneration that is
-unavailable, fails, or still mismatches stops the launch. It takes `HOME` from the plan it read, since a shadow composing into its
-own `HOME` leaves the canonical plan stale. The fetch is best-effort, so a host off the network still launches.
+The retry budget is exactly one, and it runs in silence: the converge report is captured for the error rather than forwarded. A
+regeneration that is unavailable, fails, or still mismatches leaves the loaded plan in place and launches anyway, and only a refresh
+that could not run says so, in one line. Stopping was the wrong half of this gate, and it owned the only automatic refresh, so
+deleting it outright would trade a wedge for a plan that silently goes stale. It takes `HOME` from the plan it read, since a shadow
+composing into its own `HOME` leaves the canonical plan stale. The fetch is best-effort, so a host off the network still launches.
 
 `repository-plan.json` seals nothing to verify: it warns until 2026-10-01 and then goes. An unverified plan is never authoritative,
 so cleanup stays off for it as for an absent plan.

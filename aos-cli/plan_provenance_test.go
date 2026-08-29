@@ -86,48 +86,57 @@ func TestChangedPolicyContentRegeneratesExactlyOnce(t *testing.T) {
 	}
 }
 
-func TestUnavailableRegenerationStopsBeforeAnyWorktree(t *testing.T) {
+// No Agent Compose on PATH cannot refresh, and must still not be a wall.
+func TestUnavailableRegenerationStillLaunches(t *testing.T) {
 	root := t.TempDir()
 	createNativeTestRepository(t, root, "owner", "one")
 	testRuntime := nativeTestRuntime(t, root)
+	var log strings.Builder
+	testRuntime.Stderr = &log
 	writeNativeTestPlan(t, testRuntime.PlanFile, "one")
 	writeTestPolicy(t, testRuntime.ProjectsRoot, "owner/policy", "role \"platform\" { moved }\n")
 	previous := hostLookPath
 	hostLookPath = func(string) (string, error) { return "", exec.ErrNotFound }
 	t.Cleanup(func() { hostLookPath = previous })
 
-	_, err := prepareNativeLaunch(testRuntime, "claude")
-
-	if err == nil || !strings.Contains(err.Error(), "Agent Compose") {
-		t.Fatalf("an unavailable regeneration error = %v", err)
+	if _, err := prepareNativeLaunch(testRuntime, "claude"); err != nil {
+		t.Fatalf("an unavailable refresh must not fail the launch: %v", err)
 	}
-	assertNoNativeSessionWorktree(t, testRuntime)
+
+	if !strings.Contains(log.String(), "could not refresh") {
+		t.Fatalf("an unavailable refresh said %q, want one line naming it", log.String())
+	}
 }
 
-func TestFailedRegenerationStopsBeforeAnyWorktree(t *testing.T) {
+// A refresh that errors names itself and gets out of the way, because a stale
+// plan is a worse launch rather than an impossible one.
+func TestFailedRegenerationStillLaunches(t *testing.T) {
 	root := t.TempDir()
 	createNativeTestRepository(t, root, "owner", "one")
 	testRuntime := nativeTestRuntime(t, root)
+	var log strings.Builder
+	testRuntime.Stderr = &log
 	writeNativeTestPlan(t, testRuntime.PlanFile, "one")
 	writeTestPolicy(t, testRuntime.ProjectsRoot, "owner/policy", "role \"platform\" { moved }\n")
 	calls := stubPlanRegeneration(t, func(nativeRuntime) error {
 		return errors.New("compose exited 1")
 	})
 
-	_, err := prepareNativeLaunch(testRuntime, "claude")
+	if _, err := prepareNativeLaunch(testRuntime, "claude"); err != nil {
+		t.Fatalf("a failed refresh must not fail the launch: %v", err)
+	}
 
-	if err == nil || !strings.Contains(err.Error(), "compose exited 1") {
-		t.Fatalf("a failed regeneration error = %v", err)
-	}
 	if *calls != 1 {
-		t.Fatalf("a failed regeneration ran %d times, want exactly 1", *calls)
+		t.Fatalf("a failed refresh ran %d times, want exactly 1", *calls)
 	}
-	assertNoNativeSessionWorktree(t, testRuntime)
+	if !strings.Contains(log.String(), "compose exited 1") {
+		t.Fatalf("a failed refresh said %q, want the cause", log.String())
+	}
 }
 
-// A regeneration that cannot converge must not be retried: spending the launch
-// discovering that is the slow failure the single-attempt budget exists to stop.
-func TestAPersistentMismatchStopsAfterOneRegeneration(t *testing.T) {
+// A stale digest is a refresh trigger, never a wall, and one that cannot
+// converge is attempted once rather than looped.
+func TestAPersistentMismatchStillLaunches(t *testing.T) {
 	root := t.TempDir()
 	createNativeTestRepository(t, root, "owner", "one")
 	testRuntime := nativeTestRuntime(t, root)
@@ -135,15 +144,37 @@ func TestAPersistentMismatchStopsAfterOneRegeneration(t *testing.T) {
 	writeTestPolicy(t, testRuntime.ProjectsRoot, "owner/policy", "role \"platform\" { moved }\n")
 	calls := stubPlanRegeneration(t, func(nativeRuntime) error { return nil })
 
-	_, err := prepareNativeLaunch(testRuntime, "claude")
-
-	if err == nil || !strings.Contains(err.Error(), "still disagrees") {
-		t.Fatalf("a persistent mismatch error = %v", err)
+	if _, err := prepareNativeLaunch(testRuntime, "claude"); err != nil {
+		t.Fatalf("a persistent mismatch must not fail the launch: %v", err)
 	}
+
 	if *calls != 1 {
 		t.Fatalf("a persistent mismatch regenerated %d times, want exactly 1", *calls)
 	}
-	assertNoNativeSessionWorktree(t, testRuntime)
+}
+
+// The refresh is plumbing, so a working launch says nothing about it at all.
+func TestARefreshedPlanPrintsNothing(t *testing.T) {
+	root := t.TempDir()
+	createNativeTestRepository(t, root, "owner", "one")
+	testRuntime := nativeTestRuntime(t, root)
+	var log strings.Builder
+	testRuntime.Stderr = &log
+	writeNativeTestPlan(t, testRuntime.PlanFile, "one")
+	writeTestPolicy(t, testRuntime.ProjectsRoot, "owner/policy", "role \"platform\" { moved }\n")
+	stubPlanRegeneration(t, func(runtime nativeRuntime) error {
+		writeNativeTestPlan(t, runtime.PlanFile, "one")
+		resealTestPlan(t, runtime, "owner/policy")
+		return nil
+	})
+
+	if _, err := prepareNativeLaunch(testRuntime, "claude"); err != nil {
+		t.Fatal(err)
+	}
+
+	if noise := log.String(); noise != "" {
+		t.Fatalf("a refreshed launch printed %q, want silence", noise)
+	}
 }
 
 // The reload has to be a full one: a plan regenerated from moved policy can

@@ -52,71 +52,28 @@ func verifiedRepositoryPlan(runtime nativeRuntime) (aosRepositoryPlan, error) {
 		plan.Unverified = true
 		return plan, nil
 	}
-	step := runtime.Progress.Step("verify sealed plan provenance")
-	mismatches := verifyPlanProvenance(runtime, plan)
-	if len(mismatches) == 0 {
-		step.Done("%d policy sources", len(plan.Inputs))
+	if len(verifyPlanProvenance(runtime, plan)) == 0 {
 		return plan, nil
 	}
-	step.Done("%d stale, regenerating", len(mismatches))
-	regenerated, err := regeneratedRepositoryPlan(runtime, mismatches)
-	if err != nil {
-		return aosRepositoryPlan{}, err
-	}
-	return regenerated, nil
+	return refreshedRepositoryPlan(runtime, plan), nil
 }
 
-// regeneratedRepositoryPlan is the whole retry budget: one attempt, one reload,
-// one re-verification, then a stop.
-func regeneratedRepositoryPlan(
-	runtime nativeRuntime,
-	mismatches []planProvenanceMismatch,
-) (aosRepositoryPlan, error) {
-	fmt.Fprintf(runtime.Stderr,
-		"aos: the repository plan no longer matches its policy sources (%s)\n",
-		joinProvenanceMismatches(mismatches))
-	step := runtime.Progress.Step("regenerate repository plan")
+// refreshedRepositoryPlan keeps the plan current without ever being a wall.
+// See docs/native-session-start.md.
+func refreshedRepositoryPlan(runtime nativeRuntime, loaded aosRepositoryPlan) aosRepositoryPlan {
 	if err := runPlanRegeneration(runtime); err != nil {
-		step.Fail(err)
-		return aosRepositoryPlan{}, fmt.Errorf(
-			"repository plan %s is stale (%s) and regeneration failed, so no worktree was created: %w",
-			runtime.PlanFile, joinProvenanceMismatches(mismatches), err)
+		// Silent on the happy path, but a refresh that cannot run leaves the
+		// plan stale for every later launch, which is worth one line.
+		fmt.Fprintf(runtime.Stderr, "aos: could not refresh the repository plan: %v\n", err)
+		return loaded
 	}
 	plan, err := loadAOSRepositoryPlan(runtime.PlanFile)
-	if err != nil {
-		step.Fail(err)
-		return aosRepositoryPlan{}, fmt.Errorf(
-			"regenerated repository plan %s does not load, so no worktree was created: %w",
-			runtime.PlanFile, err)
+	if err != nil || plan.Legacy || len(plan.Inputs) == 0 {
+		return loaded
 	}
-	if plan.Legacy || len(plan.Inputs) == 0 {
-		err := fmt.Errorf(
-			"regenerated repository plan %s seals no provenance, so no worktree was created",
-			runtime.PlanFile)
-		step.Fail(err)
-		return aosRepositoryPlan{}, err
-	}
-	if remaining := verifyPlanProvenance(runtime, plan); len(remaining) > 0 {
-		err := fmt.Errorf(
-			"repository plan %s still disagrees with its policy sources after regeneration (%s), so no worktree was created",
-			runtime.PlanFile, joinProvenanceMismatches(remaining))
-		step.Fail(err)
-		return aosRepositoryPlan{}, err
-	}
-	step.Done("%d policy sources", len(plan.Inputs))
-	return plan, nil
+	return plan
 }
 
-func joinProvenanceMismatches(mismatches []planProvenanceMismatch) string {
-	reasons := make([]string, 0, len(mismatches))
-	for _, mismatch := range mismatches {
-		reasons = append(reasons, mismatch.String())
-	}
-	return strings.Join(reasons, "; ")
-}
-
-// The digest gates and the revision only reports: policy moves far less often
-// than the repository holding it. docs/native-session-start.md
 func verifyPlanProvenance(
 	runtime nativeRuntime,
 	plan aosRepositoryPlan,
@@ -254,10 +211,14 @@ func regenerateRepositoryPlan(runtime nativeRuntime) error {
 	command := exec.Command(binary, "compose", "--reapply")
 	command.Env = append(os.Environ(),
 		"HOME="+repositoryPlanHome(runtime.PlanFile, runtime.Home))
-	command.Stdout = runtime.Stderr
-	command.Stderr = runtime.Stderr
+	// The converge report is agent-compose talking to itself on a good run, so
+	// it is captured for the error rather than forwarded to the operator.
+	var report strings.Builder
+	command.Stdout = &report
+	command.Stderr = &report
 	if err := command.Run(); err != nil {
-		return fmt.Errorf("agent-compose compose: %w", err)
+		return fmt.Errorf("agent-compose compose: %w: %s", err,
+			strings.TrimSpace(report.String()))
 	}
 	return nil
 }
