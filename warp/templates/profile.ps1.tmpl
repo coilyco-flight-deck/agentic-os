@@ -31,7 +31,8 @@ if (Test-Path -LiteralPath $_commonShellPath) {
             continue
         }
         if ($_line -eq '# shared-environment-clear: end') {
-            break
+            $_insideSharedClear = $false
+            continue
         }
         if ($_insideSharedClear -and $_line -match '^unset ([A-Za-z_][A-Za-z0-9_]*)$') {
             [System.Environment]::SetEnvironmentVariable($Matches[1], $null, 'Process')

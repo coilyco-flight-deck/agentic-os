@@ -266,7 +266,7 @@ remint-registry-read-token *ARGS:
 
 # Run the exact repository CI gate, bootstrapping the pinned specgen release before pytest and the full pre-commit suite.
 repo-test-gate *ARGS:
-    @bash scripts/ci/repo-test-gate.sh "$@"
+    @bash scripts/ci-command.sh bash scripts/ci/repo-test-gate.sh "$@"
 
 # Validate SSM parameter paths against the /<org>/<repo>/<tier>/<tail> schema. `just ssm-path /coilysiren/backend/write/ts-authkey [more...]`, or `--stdin` for one path per line. A CLI validator (paths arrive as args, not repo files), so it is ward-fenced rather than a commit-path hook. See docs/release.md.
 ssm-path *ARGS:

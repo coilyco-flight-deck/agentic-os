@@ -112,3 +112,37 @@ func TestRenderedProfileClearsWhatCommonShellUnsets(t *testing.T) {
 		}
 	}
 }
+
+// A `break` here made block order decide which block is read, and the losing
+// one vanished with no error and no empty value (agentic-os#1208).
+func TestProfileLoaderReadsBothBlocksInEitherOrder(t *testing.T) {
+	rendered, err := render("profile.ps1.tmpl", templateData{RepoRoot: "X:/repo"})
+	if err != nil {
+		t.Fatalf("render(profile.ps1.tmpl): %v", err)
+	}
+	loop := string(rendered)
+	start := strings.Index(loop, "foreach ($_line in")
+	if start < 0 {
+		t.Fatal("profile should read common.sh line by line")
+	}
+	body := loop[start:]
+	if end := strings.Index(body, "\n    }\n"); end > 0 {
+		body = body[:end]
+	}
+	if strings.Contains(body, "break") {
+		t.Fatalf("the marker loop must not break, or block order decides "+
+			"which block is read:\n%s", body)
+	}
+	for _, marker := range []string{
+		"# shared-environment: end",
+		"# shared-environment-clear: end",
+	} {
+		i := strings.Index(body, marker)
+		if i < 0 {
+			t.Fatalf("profile should handle %q", marker)
+		}
+		if !strings.Contains(body[i:min(i+160, len(body))], "$false") {
+			t.Fatalf("%q should clear its flag rather than stop the read", marker)
+		}
+	}
+}
