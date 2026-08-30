@@ -95,7 +95,7 @@ func TestPlateHoldsTheArtAtItsOwnShare(t *testing.T) {
 	if err != nil {
 		t.Fatalf("decode the fixture art: %v", err)
 	}
-	plate := composeCreaturePlate(source).(*image.NRGBA)
+	plate := composeCreaturePlate(source, creatureWholeWindow).(*image.NRGBA)
 	width := plate.Bounds().Dx()
 	if share := 512 / float64(width); share < creatureWidthShare-0.01 || share > creatureWidthShare+0.01 {
 		t.Fatalf("art covers %.3f of the plate, want %.2f", share, creatureWidthShare)
@@ -124,21 +124,21 @@ func TestPlateHoldsTheArtAtItsOwnShare(t *testing.T) {
 func TestPlateIsCachedAndNamedForItsRecipe(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
 	art := pngOfSize(t, 64)
-	first, err := creaturePlatePath("frontend", art)
+	first, err := creaturePlatePath("frontend", art, creatureWholeWindow)
 	if err != nil {
 		t.Fatalf("resolve the plate path: %v", err)
 	}
 	if !strings.HasPrefix(filepath.Base(first), "frontend-") {
 		t.Fatalf("the plate should be named for its role, got %q", filepath.Base(first))
 	}
-	other, err := creaturePlatePath("frontend", pngOfSize(t, 65))
+	other, err := creaturePlatePath("frontend", pngOfSize(t, 65), creatureWholeWindow)
 	if err != nil {
 		t.Fatalf("resolve the second plate path: %v", err)
 	}
 	if first == other {
 		t.Fatalf("re-drawn art should land on a new plate, both are %q", first)
 	}
-	if err := writeCreaturePlate(first, art); err != nil {
+	if err := writeCreaturePlate(first, art, creatureWholeWindow); err != nil {
 		t.Fatalf("write the plate: %v", err)
 	}
 	if _, err := os.Stat(first); err != nil {
@@ -157,7 +157,7 @@ func TestPlateIsCachedAndNamedForItsRecipe(t *testing.T) {
 
 func TestCreatureReachesTheTerminalArguments(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
-	plate := bakeCreaturePlate("frontend", creaturePresence)
+	plate := bakeCreaturePlate("frontend", creaturePresence, creatureWholeWindow)
 	if plate.Path == "" {
 		t.Fatal("frontend ships committed art, so it should bake a plate")
 	}
@@ -243,7 +243,7 @@ func TestPlateFadesTheBrightFillsOnly(t *testing.T) {
 	art := image.NewNRGBA(image.Rect(0, 0, 4, 4))
 	art.Set(0, 0, color.NRGBA{R: 0x11, G: 0x0c, B: 0x14, A: 0xff})
 	art.Set(1, 0, color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xff})
-	plate := composeCreaturePlate(art).(*image.NRGBA)
+	plate := composeCreaturePlate(art, creatureWholeWindow).(*image.NRGBA)
 	origin := image.Point{
 		X: plate.Bounds().Dx() - 4 - int(float64(plate.Bounds().Dx())*creatureInset),
 		Y: min(int(float64(plate.Bounds().Dy())*creatureInset), plate.Bounds().Dy()-4),
@@ -261,4 +261,15 @@ func TestPlateFadesTheBrightFillsOnly(t *testing.T) {
 	if red != bright || green != bright || blue != bright {
 		t.Fatalf("the fill should stay white, got %d %d %d at alpha %d", red, green, blue, bright)
 	}
+}
+
+// decodePlateArt is the plate tests' one decoder, so a geometry assertion reads
+// as geometry rather than as PNG plumbing.
+func decodePlateArt(t *testing.T, art []byte) image.Image {
+	t.Helper()
+	source, err := png.Decode(bytes.NewReader(art))
+	if err != nil {
+		t.Fatalf("decode the creature art: %v", err)
+	}
+	return source
 }

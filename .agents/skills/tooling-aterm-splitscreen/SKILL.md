@@ -9,6 +9,17 @@ Use this to put something beside a running session: an image, a preview, a
 second program. The window is kitty, launched by [aterm](../../../docs/aterm.md),
 and the agent drives it over remote control rather than by printing escapes.
 
+## Reach for the verb first
+
+`aterm pane on -- <command>` and `aterm pane off` do the whole split-and-restore
+cycle, creature included, and `off` works after the agent that split the window
+has died. Use them rather than the calls below whenever the window came from
+aterm: [docs/aterm-pane.md](../../../docs/aterm-pane.md).
+
+The rest of this skill is what the verbs do, and it is what you still need for a
+kitty aterm did not open, for a pane layout the verbs do not cover, and for
+drawing into the pane once it exists, which stays hand-rolled.
+
 ## Transport
 
 * An agent inside an aterm session has **no controlling terminal**. `tty`
@@ -57,7 +68,7 @@ alongside `--place`, and there is no crop option at all. Filling a pane edge
 to edge therefore means measuring the pane and cropping before the draw:
 [pane-image.md](references/pane-image.md).
 
-## The creature moves with the split
+## The creature moves with the split (`aterm pane` does this for you)
 
 The plate places the role creature at 60% of the window width, top right,
 which is exactly where a `tall` right-hand pane lands, so splitting hides it.

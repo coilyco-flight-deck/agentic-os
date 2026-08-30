@@ -36,6 +36,9 @@ const (
 	creatureGlareDepth = 0.30
 	// A path kitty reads as a glob is a path it may not open. See docs/aterm-creature.md.
 	globMetacharacters = "*?[]{}"
+	// The creature has the whole window to itself until a pane takes part of
+	// it. See docs/aterm-pane.md.
+	creatureWholeWindow = 1.0
 )
 
 // creaturePlate is the background image one window draws behind its session,
@@ -47,12 +50,13 @@ type creaturePlate struct {
 
 // bakeCreaturePlate returns the plate, or a zero value on anything that would
 // stop one. The background is decoration, so a window opens either way.
-func bakeCreaturePlate(role string, presence float64) creaturePlate {
+func bakeCreaturePlate(role string, presence, occupancy float64) creaturePlate {
 	art := creatureArt(roleIcon(role))
 	if art == nil {
 		return creaturePlate{}
 	}
-	path, err := creaturePlatePath(role, art)
+	occupancy = clampOccupancy(occupancy)
+	path, err := creaturePlatePath(role, art, occupancy)
 	if err != nil {
 		return creaturePlate{}
 	}
@@ -60,7 +64,7 @@ func bakeCreaturePlate(role string, presence float64) creaturePlate {
 		return creaturePlate{}
 	}
 	if _, err := os.Stat(path); err != nil {
-		if err := writeCreaturePlate(path, art); err != nil {
+		if err := writeCreaturePlate(path, art, occupancy); err != nil {
 			return creaturePlate{}
 		}
 	}
@@ -106,7 +110,7 @@ func pngWidth(entry []byte) (uint32, bool) {
 
 // creaturePlatePath names the plate after what produced it, so re-drawn art or
 // a new recipe lands on a new file rather than a stale hit.
-func creaturePlatePath(role string, art []byte) (string, error) {
+func creaturePlatePath(role string, art []byte, occupancy float64) (string, error) {
 	root, err := os.UserCacheDir()
 	if err != nil {
 		return "", fmt.Errorf("resolve the cache directory: %w", err)
@@ -114,21 +118,21 @@ func creaturePlatePath(role string, art []byte) (string, error) {
 	// A plate re-cut to a new share is the same bytes in, so the geometry is
 	// hashed beside the art or the name cannot tell the two apart.
 	recipe := fmt.Sprintf(
-		"%s\x00%g\x00%g\x00%g\x00%g\x00%g\x00",
+		"%s\x00%g\x00%g\x00%g\x00%g\x00%g\x00%g\x00",
 		creatureRecipe, creatureWidthShare, creatureInset, creaturePlateAspect,
-		creatureGlareKnee, creatureGlareDepth,
+		creatureGlareKnee, creatureGlareDepth, clampOccupancy(occupancy),
 	)
 	sum := sha256.Sum256(append([]byte(recipe), art...))
 	name := fmt.Sprintf("%s-%s.png", role, hex.EncodeToString(sum[:6]))
 	return filepath.Join(root, "aterm", "creature", name), nil
 }
 
-func writeCreaturePlate(path string, art []byte) error {
+func writeCreaturePlate(path string, art []byte, occupancy float64) error {
 	source, err := png.Decode(bytes.NewReader(art))
 	if err != nil {
 		return fmt.Errorf("decode the creature art: %w", err)
 	}
-	plate := composeCreaturePlate(source)
+	plate := composeCreaturePlate(source, occupancy)
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return fmt.Errorf("make the plate directory: %w", err)
 	}
@@ -149,23 +153,27 @@ func writeCreaturePlate(path string, art []byte) error {
 	return os.Rename(staged.Name(), path)
 }
 
-// composeCreaturePlate places the art once and never resamples it: the canvas
-// sets the size and kitty does the scaling. See docs/aterm-creature.md.
-func composeCreaturePlate(source image.Image) image.Image {
+// composeCreaturePlate places the art once and never resamples it, at occupancy
+// of the window's width. See docs/aterm-creature.md and docs/aterm-pane.md.
+func composeCreaturePlate(source image.Image, occupancy float64) image.Image {
 	art := source.Bounds()
-	width := int(float64(art.Dx()) / creatureWidthShare)
+	occupancy = clampOccupancy(occupancy)
+	// region is the part of the canvas the creature is anchored to the right
+	// of. At full occupancy it is the whole canvas, which is the launch plate.
+	region := float64(art.Dx()) / creatureWidthShare
+	width := int(region / occupancy)
 	height := int(float64(width) * creaturePlateAspect)
 	if height < art.Dy() {
 		height = art.Dy()
 	}
 	inset := image.Point{
-		X: int(float64(width) * creatureInset),
+		X: int(region * creatureInset),
 		Y: int(float64(height) * creatureInset),
 	}
 	// At this share the art is nearly as tall as the plate, so the top inset
 	// takes whatever vertical room is left. See docs/aterm-creature.md.
 	origin := image.Point{
-		X: max(0, width-art.Dx()-inset.X),
+		X: max(0, int(region)-art.Dx()-inset.X),
 		Y: min(inset.Y, max(0, height-art.Dy())),
 	}
 	plate := image.NewNRGBA(image.Rect(0, 0, width, height))
@@ -210,6 +218,15 @@ func glareFade(straight [3]uint8) float64 {
 	}
 	step := (level - creatureGlareKnee) / (1 - creatureGlareKnee)
 	return creatureGlareDepth * step * step * (3 - 2*step)
+}
+
+// clampOccupancy refuses a share the geometry is undefined for: zero divides,
+// and above one would push the creature off the canvas it anchors to.
+func clampOccupancy(occupancy float64) float64 {
+	if occupancy <= 0 || occupancy > creatureWholeWindow {
+		return creatureWholeWindow
+	}
+	return occupancy
 }
 
 // creatureWanted is off wherever the window is being recorded or read by

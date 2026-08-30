@@ -10,6 +10,8 @@ Major shipped capabilities, not files.
   [role bundle](aterm-bundles.md), each carrying its own embedded icon. The window opens on an identity card drawn from the
   overlay's own `geometry`, standing over that role's own
   [creature background](aterm-creature.md), and sounded from its `sound_mark` when `--sound` asks.
+  `aterm pane on` and `off` [split that window](aterm-pane.md) beside a command and put it back,
+  re-deriving the creature rather than depending on anything the split recorded.
   Mac and Linux only, since kitty has no Windows build.
 - [Speech helper](aos-roles-and-voice.md) - `aos-say` client plus relay for status speech.
 - **Karabiner key bindings** - external keyboard and Remote Desktop mappings.

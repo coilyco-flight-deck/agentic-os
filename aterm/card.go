@@ -32,8 +32,11 @@ type cardFigure struct {
 }
 
 type sessionCard struct {
-	Format     string       `json:"format"`
-	Annotation string       `json:"annotation"`
+	Format     string `json:"format"`
+	Annotation string `json:"annotation"`
+	// Role is the slug, not the display name, because it is what re-derives
+	// the creature plate after the launch. See docs/aterm-pane.md.
+	Role       string       `json:"role"`
 	Seat       string       `json:"seat"`
 	Tier       string       `json:"tier"`
 	Expression string       `json:"expression"`
@@ -48,6 +51,7 @@ func buildSessionCard(document overlayDocument, plan launchPlan) sessionCard {
 	card := sessionCard{
 		Format:     cardFormat,
 		Annotation: plan.Identity.Annotation,
+		Role:       plan.Identity.Role,
 		Seat:       plan.Identity.Seat,
 		Tier:       document.Seat.Tier,
 		Expression: plan.Identity.Expression,

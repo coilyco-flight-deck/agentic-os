@@ -7,6 +7,11 @@ Recomposing the plate moves it into the surviving pane.
 
 ## Read the current one
 
+`aterm pane off` does not read it at all: it re-derives the plate from the role
+in the window's own session card, which is why it still restores after the
+process that changed the background is gone. Everything below is the fallback
+for a window aterm did not open.
+
 There is no getter. The remote-control API has `set-background-image` and no
 matching read, `ls` reports only `background_opacity`, and `get-colors` returns
 palette entries. The launch arguments are the read path, because aterm passes

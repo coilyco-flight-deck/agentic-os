@@ -191,6 +191,7 @@ func newCommand(deps commandDeps) *cli.Command {
 				},
 			},
 			newBundlesCommand(deps),
+			newPaneCommand(deps),
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			return runLaunch(ctx, deps, cmd)
@@ -248,7 +249,7 @@ func runLaunch(ctx context.Context, deps commandDeps, cmd *cli.Command) error {
 		Hold:             cmd.Bool("hold"),
 	}
 	if creatureWanted(cmd.Bool("no-creature")) {
-		request.Creature = bakeCreaturePlate(role, creaturePresence)
+		request.Creature = bakeCreaturePlate(role, creaturePresence, creatureWholeWindow)
 	}
 	aos, err := requireBinary(deps.lookPath, request.AOSBin)
 	if err != nil {
