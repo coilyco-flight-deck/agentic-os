@@ -124,12 +124,7 @@ band = "large"
 # for a day while the file never changed (coilysiren/inbox#480).
 agents_md_max_lines = 240
 agents_md_max_chars = 33339
-# Subsystem dirs carry idiomatic co-located READMEs and config docs that the
-# root/docs/skills location rule does not model. Excluded per the root layout
-# hatch: warp (Go module).
 excludes = [
-    "warp/launch_configurations/**",
-    "warp/tab_configs/**",
     # Root SSM.md is a focused pointer to the SSM params aos code consumes,
     # mirroring the canonical SSM.md placement. See SSM.md.
     "SSM.md",
@@ -140,7 +135,7 @@ excludes = [
 # then relaxed to allow a contiguous comment block above the first content
 # line (the whole header stays put under a sort).
 # These pre-existing files carry rich teaching/config comment blocks
-# (skill-discipline examples, the skills registry, warp configs) and are
+# (skill-discipline examples, the skills registry) and are
 # grandfathered so the rule enforces net-new YAML.
 # Cleanup tracked in the code-comments docs. Bash comments inside `run: |`
 # block scalars are no longer over-read, so actions/** needs no exclude.
@@ -159,7 +154,6 @@ excludes = [
     "docs/skill-discipline-example-categories.yaml",
     "docs/skill-discipline-example-pre-commit-config.yaml",
     "docs/ci-in-dev-base-example.yml",
-    "warp/launch_configurations/**",
 ]
 
 # Composed sources no role in .agents/roles.kdl selects. Each entry is a

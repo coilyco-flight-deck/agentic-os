@@ -12,17 +12,16 @@ readable rather than because it is meant to be adopted whole. The one piece
 built to travel is the hook suite below, which every repo in the fleet consumes
 by upstream ref.
 
-Zsh runs on Mac and Linux, with Bash through Git for Windows. Alacritty is the
-default direct terminal, and the Warp configuration remains as a transitional
-path.
+Zsh runs on Mac and Linux, with Bash through Git for Windows. kitty hosts the
+`aterm` windows on Mac and Linux, and Alacritty is the direct terminal on
+Windows.
 
 ## Layout
 
-- `shell/` - shared `common.sh` plus thin `zshrc` + `bashrc`, so bash and zsh match. `warp.zsh` is the zsh-only Warp dispatcher.
+- `shell/` - shared `common.sh` plus thin `zshrc` + `bashrc`, so bash and zsh match.
 - `kitty/` - portable Sombra appearance and terminal security defaults for `aterm` windows, with host preferences left to the local wrapper.
 - `alacritty/` - the same baseline for Alacritty, retained for Windows, where kitty does not ship.
 - `aterm/` - `aterm`, the branded launcher for one composed agent session, and the macOS `.app` bundle it generates per role.
-- `warp/` - transitional Warp config (`settings.toml`, `tab_configs/`) plus the `just warp` Go module.
 - `aos-cli/` - the Go composition root for standalone and Ward-governed agent launches.
 - `aos-say/` - the `just aos-say` Go module for the speech helper client and relay.
 - `karabiner/` - Karabiner-Elements complex modification assets (`brew install --cask karabiner-elements`), symlinked into the local Karabiner config tree.
@@ -68,7 +67,6 @@ ln -sf "$PWD/shell/bashrc" ~/.bashrc
 ln -sf "$PWD/scripts/gpg-ssm" ~/.local/bin/gpg-ssm
 mkdir -p ~/.config/kitty
 ln -sf "$PWD/kitty/kitty.conf" ~/.config/kitty/kitty.conf
-just warp apply                     # warp config
 ```
 
 On Windows, `just apply-shell-links` manages `~/.zshrc` and the `gpg-ssm.cmd`

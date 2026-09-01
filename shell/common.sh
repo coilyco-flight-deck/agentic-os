@@ -538,7 +538,7 @@ ssm-get() {
 # new-window action otherwise copies the foreground agent's transient cwd.
 case $- in
   *i*)
-    _siren_startup_dir="${WARP_STARTUP_DIR:-$PROJECTS_ROOT}"
+    _siren_startup_dir="${AOS_STARTUP_DIR:-$PROJECTS_ROOT}"
     _siren_startup_from_native=0
     if [ "$_siren_fresh_terminal_tree" = 1 ]; then
       _siren_native_sessions_dir="${AOS_NATIVE_SESSIONS_DIR:-${TMPDIR:-/tmp}/aos/native}"

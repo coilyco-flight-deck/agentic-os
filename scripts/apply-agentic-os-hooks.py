@@ -160,7 +160,7 @@ FORGEJO_RUNNER_REV = "v12.10.1"
 
 SHELLCHECK_REPO_URL = "https://github.com/shellcheck-py/shellcheck-py"
 SHELLCHECK_REV = "v0.11.0.1"
-SHELLCHECK_EXCLUDE = r"^shell/(zshrc|warp\.zsh)$"
+SHELLCHECK_EXCLUDE = r"^shell/zshrc$"
 
 TYPOS_REPO_URL = "https://github.com/crate-ci/typos"
 TYPOS_REV = "v1.48.0"

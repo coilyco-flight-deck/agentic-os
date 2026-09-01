@@ -154,20 +154,6 @@ repos:
         always_run: true
         pass_filenames: false
         stages: [pre-commit]
-      - id: warp-go-vet
-        name: vet the warp module
-        entry: bash -c 'cd warp && go vet -p 1 ./...'
-        language: system
-        files: ^warp/.*\.go$
-        pass_filenames: false
-        stages: [pre-commit]
-      - id: warp-gofmt
-        name: gofmt the warp module
-        entry: bash -c 'cd warp && gofmt -w .'
-        language: system
-        files: ^warp/.*\.go$
-        pass_filenames: false
-        stages: [pre-commit]
       - id: aos-say-go-vet
         name: vet the aos-say module
         entry: bash -c 'cd aos-say && go vet -p 1 ./...'
@@ -230,7 +216,7 @@ repos:
     rev: v0.11.0.1
     hooks:
       - id: shellcheck
-        exclude: ^shell/(zshrc|warp\.zsh)$
+        exclude: ^shell/zshrc$
         args: [--severity=error]
   - repo: https://github.com/scop/pre-commit-shfmt
     rev: v3.13.1-1

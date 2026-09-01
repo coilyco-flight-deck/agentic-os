@@ -12,7 +12,7 @@ This is the public-safe operating base, read on every session on public and work
 
 ## Project shape
 
-Kai calls this repo **aos** for short (chat and issue refs). `aos` and `agentic-os` refer to the same thing - the GitHub slug stays `agentic-os`. The repo ships the cross-repo pre-commit hooks (the catalog suite), the public-safe skills under `.agents/skills/`, and supporting subsystems (`warp/` Go module).
+Kai calls this repo **aos** for short (chat and issue refs). `aos` and `agentic-os` refer to the same thing - the GitHub slug stays `agentic-os`. The repo ships the cross-repo pre-commit hooks (the catalog suite), the public-safe skills under `.agents/skills/`, and the Go subsystems beside them (`aos-cli/`, `aterm/`, `aos-say/`).
 
 ## Repo boundaries
 

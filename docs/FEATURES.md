@@ -4,7 +4,7 @@ Major shipped capabilities, not files.
 
 ## Inventory
 
-- [Shell and secrets](install.md) - shared shells, Warp, SSM, and GPG.
+- [Shell and secrets](install.md) - shared shells, SSM, and GPG.
 - [Branded agent terminal](aterm.md) - `aterm` opens one composed agent session in its own Sombra kitty
   window, completing and refusing roles against the live roster, and writes a macOS `.app` launcher per
   [role bundle](aterm-bundles.md), each carrying its own embedded icon. The window opens on an identity card drawn from the

@@ -295,11 +295,3 @@ test *ARGS:
 # On Windows, update every installed app from the Flight Deck Scoop bucket. Ward self-updates through its audited path; pass -- -WhatIf to preview.
 update-flight-deck-scoop *ARGS:
     @pwsh -NoProfile -File scripts/update-flight-deck-scoop.ps1 "$@"
-
-# Establish and verify Kai's Warp config across hosts. `just warp apply` renders all three state layers (repo template, config-dir TOML, SQLite); `just warp doctor` reports drift. See the tooling-warp skill.
-warp *ARGS:
-    @go run -C warp . "$@"
-
-# Run the Warp config Go test suite.
-warp-test *ARGS:
-    @go test -C warp ./... "$@"
