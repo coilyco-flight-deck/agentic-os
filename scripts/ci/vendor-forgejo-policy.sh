@@ -3,7 +3,7 @@
 set -euo pipefail
 
 repo_root=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)
-src_dir="$repo_root/.specgen/guardfiles/aosguard"
+src_dir="$repo_root/.umbra/guardfiles/aosguard"
 target_repo="${TARGET_REPO:-coilyco-bridge/deploy}"
 target_dir="services/forgejo-mcp/vendor/aosguard"
 host="forgejo.coilysiren.me"

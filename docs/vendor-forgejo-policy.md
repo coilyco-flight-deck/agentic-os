@@ -19,8 +19,8 @@ force everywhere else. Authored here, rolled out by a push.
 `.forgejo/workflows/vendor-forgejo-policy.yml` fires on a `release` push that
 touches either file, and runs `scripts/ci/vendor-forgejo-policy.sh`:
 
-- `.specgen/guardfiles/aosguard/forgejo.kdl` - the operator policy
-- `.specgen/guardfiles/aosguard/forgejo.swagger.v1.json.gz` - the pruned spec
+- `.umbra/guardfiles/aosguard/forgejo.kdl` - the operator policy
+- `.umbra/guardfiles/aosguard/forgejo.swagger.v1.json.gz` - the pruned spec
 
 Both land in `services/forgejo-mcp/vendor/aosguard/` beside a `SOURCE` file
 naming the commit they came from. The pin is what makes the copy auditable:

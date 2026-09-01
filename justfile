@@ -107,12 +107,12 @@ aos-test *ARGS:
 aos-tidy *ARGS:
     @go mod tidy -C aos-cli "$@"
 
-# Materialize the standalone aosguard operator CLI and native generated skill from the independent .specgen snapshot.
+# Materialize the standalone aosguard operator CLI and native generated skill from the independent .umbra snapshot.
 aosguard-build *ARGS:
-    @specgen --project-root .specgen/guardfiles --skills-out dist/skills build --out dist/aosguard "$@"
+    @umbra --project-root .umbra/guardfiles --skills-out dist/skills build --out dist/aosguard "$@"
     @uv run python -m agentic_os.generators.generate_aosguard_skills --skills-root dist/skills
 
-# Refresh aosguard's vendored API snapshot and frozen umbra dependency graph with the packaged specgen driver. Pass specgen lock flags as trailing arguments.
+# Refresh aosguard's vendored API snapshot and frozen umbra dependency graph with the packaged umbra driver. Pass umbra lock flags as trailing arguments.
 aosguard-lock *ARGS:
     @sh scripts/aosguard-lock.sh "$@"
 
@@ -120,9 +120,9 @@ aosguard-lock *ARGS:
 aosguard-release-fmt *ARGS:
     @gofmt -w aosguard-release "$@"
 
-# Materialize and run aosguard from the independent .specgen snapshot, passing arguments through.
+# Materialize and run aosguard from the independent .umbra snapshot, passing arguments through.
 aosguard-run *ARGS:
-    @specgen --project-root .specgen/guardfiles run -- "$@"
+    @umbra --project-root .umbra/guardfiles run -- "$@"
 
 # Launch one composed agent session in its own branded kitty window. Bare invocation picks a role; pass role and seat positionally, and harness arguments after `--`. `--list` prints the live roster, `--dry-run` inspects without opening a window. See docs/aterm.md.
 aterm *ARGS:
@@ -268,7 +268,7 @@ remint-ci-release-token *ARGS:
 remint-registry-read-token *ARGS:
     @uv run --with boto3 python scripts/remint-registry-read-token.py "$@"
 
-# Run the exact repository CI gate, bootstrapping the pinned specgen release before pytest and the full pre-commit suite.
+# Run the exact repository CI gate, bootstrapping the pinned umbra release before pytest and the full pre-commit suite.
 repo-test-gate *ARGS:
     @bash scripts/ci-command.sh bash scripts/ci/repo-test-gate.sh "$@"
 

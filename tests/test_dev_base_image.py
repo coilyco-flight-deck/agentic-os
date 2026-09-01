@@ -53,7 +53,7 @@ def test_language_targets_are_payload_only_and_share_architecture_mapping() -> N
         "ward-shell-entrypoint.sh",
         "AGENT_COMPOSE_VERSION",
         "WARD_VERSION",
-        "SPECGEN_VERSION",
+        "UMBRA_VERSION",
         "AOS_VERSION",
     ):
         assert forbidden not in text
@@ -69,7 +69,7 @@ def test_full_image_owns_the_common_and_internal_tool_surface() -> None:
     assert "COPY --from=aosguard-spec" in text
     assert "COPY --from=aosguard-python" in text
     assert "--skills-out /opt/agentic-os/aosguard-skill" in text
-    for name in ("AGENT_COMPOSE_VERSION", "WARD_VERSION", "SPECGEN_VERSION", "AOS_VERSION"):
+    for name in ("AGENT_COMPOSE_VERSION", "WARD_VERSION", "UMBRA_VERSION", "AOS_VERSION"):
         assert f"ARG {name}=" in text
 
 

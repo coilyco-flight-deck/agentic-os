@@ -107,7 +107,7 @@ dev-base-build` as the first check. `ward agent` is the runtime entry point.
 
 **Forgejo ops surface discovery** - what Forgejo surface exists here now. Run
 `aosguard ops forgejo describe` first, then `--help` and `rg -n "aosguard ops
-forgejo" docs .specgen`. Prefer runtime help over guessing a verb, and update
+forgejo" docs .umbra`. Prefer runtime help over guessing a verb, and update
 [aosguard](../.agents/skills/tooling-aosguard/references/aosguard.md) when the surface
 changes.
 

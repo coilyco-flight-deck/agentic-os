@@ -11,8 +11,8 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = REPO_ROOT / "scripts" / "ci" / "vendor-forgejo-policy.sh"
 WORKFLOW = REPO_ROOT / ".forgejo" / "workflows" / "vendor-forgejo-policy.yml"
-POLICY = REPO_ROOT / ".specgen" / "guardfiles" / "aosguard" / "forgejo.kdl"
-SPEC = REPO_ROOT / ".specgen" / "guardfiles" / "aosguard" / "forgejo.swagger.v1.json.gz"
+POLICY = REPO_ROOT / ".umbra" / "guardfiles" / "aosguard" / "forgejo.kdl"
+SPEC = REPO_ROOT / ".umbra" / "guardfiles" / "aosguard" / "forgejo.swagger.v1.json.gz"
 
 
 def test_an_absent_token_skips_rather_than_fails() -> None:
@@ -46,8 +46,8 @@ def test_the_workflow_watches_exactly_the_files_it_ships() -> None:
     text = WORKFLOW.read_text(encoding="utf-8")
 
     for path in (
-        ".specgen/guardfiles/aosguard/forgejo.kdl",
-        ".specgen/guardfiles/aosguard/forgejo.swagger.v1.json.gz",
+        ".umbra/guardfiles/aosguard/forgejo.kdl",
+        ".umbra/guardfiles/aosguard/forgejo.swagger.v1.json.gz",
     ):
         assert path in text, f"{path} ships but does not trigger the push"
     assert "ci-command.sh" in text, "the push crosses the runner's egress proxy"

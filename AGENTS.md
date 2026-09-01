@@ -54,7 +54,7 @@ The **trigger** for a rollout is a push, not a hand-run publish, which keeps it 
 
 **Deployment boundary (aos#778).** AOS owns agent-compose inputs, harness selection, deployment identity, and standalone AOSguard policy, and Ward owns fixed workflows and its broker. AOS ships no Ward role-policy or KDL bundle: only the supported YAML in [`.ward/ward.yaml`](.ward/ward.yaml) remains, carrying catalog metadata since inbox#366 moved dev verbs. Full reasoning: [docs/ward-specs.md](docs/ward-specs.md).
 
-The layer gradient, lowest first: umbra and specgen, then Ward, then aos, then infra.
+The layer gradient, lowest first: umbra, then Ward, then aos, then infra.
 
 Config splits on three axes, each a distinct owner: **permission/surface** (AOSguard specs and Ward's fixed broker), **deployment tuning** (identity, model, endpoint, attribution, roster defaults - AOS and agent-compose launch inputs), and **operator-local preference** (per-host, hand-edited, not embedded, parsed from a local source). One parser may serve two sources, and the axes stay distinct owners regardless.
 

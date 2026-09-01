@@ -629,7 +629,7 @@ wrap aosguard ops forgejo {
         when first input matches coily*
     }
 
-    // Keep runner-token minting here so specgen locks one vendored Forgejo
+    // Keep runner-token minting here so umbra locks one vendored Forgejo
     // contract rather than a second fetch-only Swagger member.
     restrict org matches coily*
     fetch "generate-runner-token global" {

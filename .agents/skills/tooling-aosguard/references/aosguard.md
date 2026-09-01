@@ -1,9 +1,9 @@
 # aosguard
 
-`aosguard` is AOS's guarded operator CLI. umbra and specgen remain generic,
+`aosguard` is AOS's guarded operator CLI. umbra remains generic,
 while AOS owns this concrete policy snapshot, release name, and integration.
 
-Packaged `specgen` discovers the [guardfile project](../../../../.specgen/README.md),
+Packaged `umbra` discovers the [guardfile project](../../../../.umbra/README.md),
 materializes generated Go out of band, and emits `aosguard` without committed
 Go build glue. Dev-base and native AOS releases build from the same source and
 lock, and Homebrew and Scoop install it beside `aos`.
@@ -40,13 +40,13 @@ image's PATH so it cannot shadow an image tool. The skill grants no permission:
 
 ## Source ownership
 
-`.specgen/guardfiles/aosguard/` owns the operator policy, vendored Swagger
+`.umbra/guardfiles/aosguard/` owns the operator policy, vendored Swagger
 inputs, and generated API locks. Ward owns its broker internally, neither
 product reads policy from the other, and no drift check forces them to match.
 
 The Forgejo source is vendored from the pruned deployment contract, so
 `aosguard-lock` refreshes the dependency graph without reaching a live Forgejo
-edge. Swagger and its lock use deterministic gzip and specgen decodes each
+edge. Swagger and its lock use deterministic gzip and umbra decodes each
 before use, and the resulting `specverb.lock` pins umbra for reproducible
 builds. `aosguard-lock` refreshes the native skills under ignored
 `dist/skills/`, while maintained documentation stays under `docs/`.
@@ -54,11 +54,11 @@ builds. `aosguard-lock` refreshes the native skills under ignored
 ## Development
 
 `just aosguard-build` materializes `dist/aosguard` and refreshes the generated
-skills: specgen writes the `aosguard` index, then `generate_aosguard_skills`
+skills: umbra writes the `aosguard` index, then `generate_aosguard_skills`
 splits it into one `aosguard-<area>` skill per wrapped entity. Hand-written
 `tooling-aosguard` carries what no spec can (agentic-os#1028). `just aosguard-run --` passes subsequent arguments to the
 generated command. `just aosguard-lock` is the only lock-writing step and
-uses the packaged `specgen` executable.
+uses the packaged `umbra` executable.
 
 Cross-repository composition is tracked on the intake tracker, with AOS
 implementation in [agentic-os#755](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/issues/755).
@@ -78,7 +78,7 @@ wrapper are `never` leaves naming the admin verb, rather than the bare
 
 `create label` is here rather than on the ordinary wrapper because Forgejo mints labels per organization and `coilysiren` is a user account, so its six repos have no org to hang one on. The ward#107 deny stays exactly where it was: a repo label duplicating an org label silently shadows it, so on an org-owned repo `create org-label` is still the verb.
 
-This wrapper carries **no vendored `.swagger.v1.json.gz`**, unlike `forgejo.kdl`. A vendored snapshot is pruned to the operations declared when it was written, so it cannot grow a new one: `issueCreateLabel` is in live Forgejo and was absent from the committed 88-operation copy. Dropping it means `specgen lock` fetches live for this guardfile, which costs hermetic locking and is why the other guardfile keeps its snapshot. Kai's call, 2026-08-29 (#1377).
+This wrapper carries **no vendored `.swagger.v1.json.gz`**, unlike `forgejo.kdl`. A vendored snapshot is pruned to the operations declared when it was written, so it cannot grow a new one: `issueCreateLabel` is in live Forgejo and was absent from the committed 88-operation copy. Dropping it means `umbra lock` fetches live for this guardfile, which costs hermetic locking and is why the other guardfile keeps its snapshot. Kai's call, 2026-08-29 (#1377).
 
 ## What it covers
 

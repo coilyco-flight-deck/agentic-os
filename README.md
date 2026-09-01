@@ -29,7 +29,7 @@ path.
 - `scripts/` - portable utilities (gpg-ssm wrapper, session-name hooks, aws-config lint).
 - `.agents/skills/` - ordinary `SKILL.md` sources that every composed role can discover.
 - `.agents/composed/` - role-scoped `COMPOSED.md` sources that agent-compose promotes only for allowlisted roles.
-- `.specgen/guardfiles/` - recursive specgen project for AOSguard policy and
+- `.umbra/guardfiles/` - recursive umbra project for AOSguard policy and
   reproducible build locks.
 - `agentic_os/` - the `aos-precommit` package, generators, shared config/data, and hygiene guardrails behind the independently released hook suite.
 
@@ -96,8 +96,8 @@ survives as a compatibility spelling. `aosward` adds `--warded`. Bare
 while an `aos` prefix is the container boundary.
 
 Role names never union authority across layers. Ward owns fixed workflows and
-container lifecycle, agent-compose produces context, and umbra and specgen
-generate the guarded tools. AOS applies its own bounded standalone gates on top.
+container lifecycle, agent-compose produces context, and umbra generates the
+guarded tools. AOS applies its own bounded standalone gates on top.
 
 Homebrew and Scoop install `aos`, `aoscompose`, `aoscomposed`, `aosward`,
 `aosguard`, and `aterm`. The launch and handoff contract,

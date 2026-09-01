@@ -7,8 +7,8 @@ on:
   push:
     branches: [release]
     paths:
-      - ".specgen/guardfiles/aosguard/forgejo.kdl"
-      - ".specgen/guardfiles/aosguard/forgejo.swagger.v1.json.gz"
+      - ".umbra/guardfiles/aosguard/forgejo.kdl"
+      - ".umbra/guardfiles/aosguard/forgejo.swagger.v1.json.gz"
   workflow_dispatch:
 
 jobs:
