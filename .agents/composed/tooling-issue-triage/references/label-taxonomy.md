@@ -99,7 +99,7 @@ The whole change is at
 ## This page describes, it does not define
 
 The taxonomy is declared in
-[`config/forgejo-label-taxonomy.yaml`](https://forgejo.coilysiren.me/coilyco-flight-deck/infrastructure/src/branch/main/config/forgejo-label-taxonomy.yaml)
+[`config/forgejo-label-taxonomy.yaml`](https://forgejo.coilysiren.me/coilyco-bridge/infrastructure/src/branch/main/config/forgejo-label-taxonomy.yaml)
 in infrastructure, and converged from there.
 
 That split is new, and it is the fix for what produced the drift above. The
