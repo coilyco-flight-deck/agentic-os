@@ -110,4 +110,4 @@ The verb replaces four hand-rolled implementations of this alert across the
 fleet. Consumers migrate only after it ships in a released image, so the
 sequencing is: land the verb, let the image republish, then move call sites.
 The rollout, and the list of what is left to move, lives in
-`coilyco-flight-deck/infrastructure`.
+`coilyco-bridge/infrastructure`.

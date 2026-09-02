@@ -89,6 +89,6 @@ costs the reader a cleanup pass through their own inbox instead of a closed
 file. The file is the deliverable. Moving it into the account is a separate step
 and needs its own authorization.
 
-Treat reviewed material in `coilysiren/voice-corpus` as evidence, not permission
+Treat reviewed material in `coilyco-bridge/voice-corpus` as evidence, not permission
 for verbatim reuse or publication. Mark drafts as drafts. Publishing, replying,
 and changing an account require separate authorization.

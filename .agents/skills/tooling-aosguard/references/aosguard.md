@@ -108,7 +108,7 @@ other restriction on the wrapper decorative. Kai's call, 2026-08-16.
 
 The two bootstrap scripts that need those operations -
 `provision-coilyco-ops-bot.sh` and `grant-coilyco-ops-org-repo-create.sh` in
-`coilyco-flight-deck/infrastructure` - keep reading `/forgejo/admin-token` from
+`coilyco-bridge/infrastructure` - keep reading `/forgejo/admin-token` from
 SSM directly. They run approximately once, so the standing capability a verb
 would create costs more than the direct read.
 
