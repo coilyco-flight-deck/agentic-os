@@ -22,7 +22,7 @@ wrap aosguard ops aws {
         allow-flag --name
         describe "delete one explicitly named SSM parameter"
     }
-    can run s3 ls 
+    can run s3 ls
     can run s3 cp
     can run s3 sync
 }

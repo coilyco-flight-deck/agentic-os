@@ -378,7 +378,7 @@ def test_aws_put_parameter_creates_and_overwrites_without_value_disclosure(
         "--value",
         value_uri,
         "--type",
-        "String",
+        "SecureString",
     )
     overwritten = _run_aosguard_aws(
         aosguard_binary,
@@ -403,19 +403,25 @@ def test_aws_put_parameter_creates_and_overwrites_without_value_disclosure(
 @pytest.mark.parametrize(
     "args",
     [
-        ("put-parameter", "--value", "file:///tmp/value", "--type", "String"),
         (
             "put-parameter",
             "--name",
             "/fixture/example",
             "--value",
-            "inline-value",
+            "file:///tmp/value",
             "--type",
             "String",
         ),
+        (
+            "put-parameter",
+            "--name",
+            "/fixture/example",
+            "--value",
+            "file:///tmp/value",
+        ),
     ],
 )
-def test_aws_put_parameter_requires_a_name_and_file_value_source(
+def test_aws_put_parameter_requires_securestring(
     aosguard_binary: Path,
     tmp_path: Path,
     args: tuple[str, ...],
@@ -425,7 +431,9 @@ def test_aws_put_parameter_requires_a_name_and_file_value_source(
     assert proc.returncode != 0
     assert "denied:" in proc.stderr
     assert "fail-closed" in proc.stderr
-    assert "inline-value" not in proc.stderr
+    # Name the rule, because both cases were denied by the name and file-source
+    # rules until those left the guardfile, and stayed green on this one.
+    assert "type" in proc.stderr
     assert not (tmp_path / "aws-argv").exists()
 
 
