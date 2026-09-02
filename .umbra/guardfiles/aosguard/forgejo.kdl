@@ -275,7 +275,7 @@ wrap aosguard ops forgejo {
     }
     can create pr {
         op repoCreatePullRequest
-        describe "open a pull request (POST /repos/{owner}/{repo}/pulls): --title plus --head and --base branch names. The authoring end of the lifecycle (agentic-os#488)."
+        describe "open a pull request (POST /repos/{owner}/{repo}/pulls): --title plus --head and --base branch names. The authoring end of the lifecycle (agentic-os#488). Pass --body as --body \"$(cat FILE)\" rather than inline: a PR body is dense with backticked paths and code, and a backtick inside a double-quoted shell argument is command substitution the shell runs before this verb sees it. The failure is silent in the wrong direction - the substituted output becomes the body, or the embedded command simply runs and no pull request is created."
     }
     can edit pr {
         op repoEditPullRequest
