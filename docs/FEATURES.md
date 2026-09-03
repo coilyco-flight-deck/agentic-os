@@ -54,7 +54,7 @@ Major shipped capabilities, not files.
 - [CI parity in dev-base](ci-in-dev-base.md) - CI runs inside the moving :release dev-base image.
 - [Pull-request CI gate](ci-in-dev-base.md) - fast tests and Docker-only image validation.
 - [AGENTS pointer](features-agents.md) - generated sibling-repo workspace pointer.
-- [AGENTS git-workflow block](features-agents.md) - generated per-lane standing authorization to commit, branch, push, and open a PR.
+- [AGENTS git-workflow block](git-workflow-lanes.md) - generated per-lane standing authorization to commit, branch, push, and open a PR. One fleet lane, `pull-request-and-merge`.
 - [Encoded leak guard](pre-commit-hygiene.md) - hex-encoded leak-term detector.
 - [Outbound link hygiene](pre-commit-hygiene.md) - offline validator for links
   leaving the repo, driven by a retired-name and retired-path table, plus a
