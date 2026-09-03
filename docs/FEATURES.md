@@ -33,6 +33,9 @@ Major shipped capabilities, not files.
   [convergence](aos-convergence.md), [connectivity](aos-context-bundle.md),
   [kubeconfig](aos-cluster-access.md), [issue pins](aos-issue-flow.md), and
   [check-ins](aos-issue-flow.md).
+- [aos run](aos-cli.md) - `aos run <verb>` resolves a just verb to the resident repository
+  declaring it, reports how far that checkout trails its upstream, and `--handoff` prints the
+  absolute-path line to run outside a session shadow.
 - [aosguard](../.agents/skills/tooling-aosguard/references/aosguard.md) - guarded CLI with PR
   merge and sealed
   [Forgejo storage measurement](../.agents/skills/tooling-aosguard/references/forgejo-ops.md).
