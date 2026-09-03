@@ -1,6 +1,6 @@
 ---
 name: coding-core-git-workflow
-description: Git workflow for Kai's repositories. Covers Forgejo, tracker choice, commits, pushes, PR lanes, issues, TODOs, and recovery.
+description: Git workflow for Kai's repositories. Covers Forgejo for git, the Teable tracker, commits, pushes, PR lanes, issues, TODOs, and recovery.
 ---
 
 # Git workflow
@@ -19,9 +19,9 @@ Default across `~/projects/coilyco-*/*` and `~/projects/coilysiren/*`:
 - Run tests, linters, builds without asking. Fix failures.
 - Never `--no-verify`.
 - Readonly git/shell auto-allowed.
-- Every commit closes a same-repo issue. File first, then commit with `closes #N` / `fixes #N` / `resolves #N`.
+- File the tracker record first, then reference it in the commit body as `teable:<owner>/<repo>#<n>`. No trailer closes a record for you, so closing it is a separate deliberate step.
 - `agentic-os-kai` only: one commit per discrete additive change.
-- `git commit --amend` is fine pre-push, preferred over a "fix lint" follow-on for hook fixes. If the amend changes substance relative to the closing-issue description, post a comment on that issue so the audit trail survives. Force-push off-limits. Overrides the default Claude Code rule.
+- `git commit --amend` is fine pre-push, preferred over a "fix lint" follow-on for hook fixes. If the amend changes substance relative to the record's description, add a row in the `comments` table linked to that record so the audit trail survives. Force-push off-limits. Overrides the default Claude Code rule.
 
 Never run destructive git commands unless the human explicitly asks. Never revert changes you didn't make.
 
@@ -65,4 +65,4 @@ Every repo has `.pre-commit-config.yaml` with offline trufflehog:
 
 - [GitHub issues as work tracker](references/github-issue-tracker.md) - precedence, close-via-commit, tracker issues stay open, bot-attribution signature.
 - [Guarded operator work](references/guarded-operator-work.md) - AOSguard discovery, approved bare reads, and the GitHub GraphQL wall.
-- [Default TODO destination and flake discipline](references/default-todo-and-flake.md) - Forgejo as default tracker, never-ask-just-file, flaky-test rule.
+- [Default TODO destination and flake discipline](references/default-todo-and-flake.md) - Teable as default tracker, never-ask-just-file, flaky-test rule.
