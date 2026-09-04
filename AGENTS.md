@@ -209,7 +209,7 @@ Acquisition is bounded. It reaches only sources that would change a specific pen
 Commands for a human must cross the current execution boundary truthfully.
 
 * **Container / surface session** - a `warded` container or read-only director surface has no writable host mount. Hand one-off commands back inline. For anything reusable or worth tracking, commit to a **pushable** repo and push, then hand back the committed path. A local container file does not cross this boundary.
-* **Host harness** - hand one-off commands back inline. A temporary file is optional when it materially improves review or safety, not a terminal-specific paste requirement.
+* **Host harness** - hand one-off commands back inline. A temporary file is optional when it materially improves review or safety, not a terminal-specific paste requirement. Resolve a repository command with `aos run --handoff <verb>` rather than a bare `just` line, which works only from the owning repo: no justfile sits at the projects root.
 
 In either model a **reusable script** - anything the human might run more than once, or worth tracking - is committed to a repo and handed back as a path. This covers **any** command offered for the human to run, optional and alternative ones included, not just the primary next step. The trigger is the recipient, not the framing: commands the agent runs itself through its shell execution tool never touch a human paste path and stay out of scope.
 
