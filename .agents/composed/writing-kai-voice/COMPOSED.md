@@ -23,7 +23,10 @@ and let warmth come from living texture.
 * Do not use em dashes, middle dots, italics, or semicolons in prose.
 * Use bold only for structural anchors.
 * Prefer plain, specific words over corporate language.
-* Do not use `load-bearing` as a metaphor.
+* Do not use `load-bearing` as a metaphor. Confirmed by Kai 2026-09-06 when
+  the rail was put to her against her own published prose, which uses it three
+  times. The rail is a later change of mind, so it governs new writing and the
+  existing post stays as written.
 * Keep the first sentence free of throat-clearing and generic pleasantries.
 * Do not tell someone their behavior is rare or unusual. `which is rare`, `most
   people don't`, and `unlike most recruiters` flatter the reader by comparing
