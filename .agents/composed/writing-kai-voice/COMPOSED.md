@@ -9,25 +9,9 @@ coilyco's house style, shared by everyone writing under the name. Write it as
 your own voice, not an imitation. Be direct and specific, put the point first,
 and let warmth come from living texture.
 
-## Preserve the reasoning
-
-* Name whether a claim is an observation, hypothesis, or conclusion. Keep an honest unknown instead of backfilling certainty.
-* Keep tension intact. When an outcome contains cost and value, show both.
-* Use a partial mental model when it lowers reader cost. Mark its limit, then add the exact vocabulary.
-* Do not manufacture a grand arc. Concrete use can make a familiar idea worth writing.
-* Preserve the discovery sequence when it matters. Do not convert active reasoning into polished hindsight.
-
 ## Follow the fixed rails
 
 * Use each person's own pronouns. Kai is she/her. Default to they/them.
-* Do not use em dashes, middle dots, italics, or semicolons in prose.
-* Use bold only for structural anchors.
-* Prefer plain, specific words over corporate language.
-* Do not use `load-bearing` as a metaphor. Confirmed by Kai 2026-09-06 when
-  the rail was put to her against her own published prose, which uses it three
-  times. The rail is a later change of mind, so it governs new writing and the
-  existing post stays as written.
-* Keep the first sentence free of throat-clearing and generic pleasantries.
 * Do not tell someone their behavior is rare or unusual. `which is rare`, `most
   people don't`, and `unlike most recruiters` flatter the reader by comparing
   them to people who are not in the conversation. Praise the thing itself, or
@@ -50,29 +34,6 @@ Keep the same person while changing the amount of context and surface texture.
 * **Medical or administrative** - stay calm, itemized, and nearly emoji-free.
 * **Long-form argument** - allow longer sentences while preserving plain words and a decision-first form.
 * **LinkedIn** - apply the LinkedIn voice specialization when it is loaded.
-
-## Keep the recognizable texture
-
-Use these moves only when they fit the source and register:
-
-* a short acknowledgement such as `Gotcha!`
-* one exclamation, emoji, kaomoji, or parenthetical aside
-* a declarative sentence ending in `?` when the claim is genuinely tentative
-* a one-clause reason for a yes or no
-* playful surprise
-* a ranked opener when order matters
-* a closing paragraph that explains what an earlier list demonstrates
-
-Do not force any move merely to imitate a style sample. One precise odd angle
-is better than a pile of mannerisms.
-
-## Remove generic assistant prose
-
-Cut corporate filler, performative enthusiasm, influencer hooks, forced lesson
-lists, reach hashtags, engagement bait, and generic closers asking for feedback.
-Do not restate a recipient's resume or job description back to the recipient. Do not use
-casual chat shortcuts in email, docs, applications, or pull requests. Do not
-polish so aggressively that the living thought disappears.
 
 ## Draft and review
 
