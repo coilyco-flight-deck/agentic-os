@@ -325,6 +325,25 @@ func clearDeprecatedModelSelectors() error {
 	return nil
 }
 
+// nativeRuntimeRoots picks the host home and projects root. Inside a session
+// HOME is the shadow, and every consumer of these two wants the host.
+func nativeRuntimeRoots(home string, env func(string) string) (string, string) {
+	// A launch exports these with os.Setenv, so a marker outlives the launch
+	// that set it. Only a home actually under the session root is a shadow.
+	sessionRoot := strings.TrimSpace(env(nativeSessionRootEnv))
+	canonicalHome := strings.TrimSpace(env(nativeCanonicalHomeEnv))
+	canonicalProjects := strings.TrimSpace(env(nativeCanonicalProjectsEnv))
+	_, homeInShadow := relativeWithin(sessionRoot, home)
+	if sessionRoot != "" && canonicalHome != "" && canonicalProjects != "" && homeInShadow {
+		return canonicalHome, canonicalProjects
+	}
+	projects := strings.TrimSpace(env("PROJECTS_ROOT"))
+	if projects == "" {
+		projects = filepath.Join(home, "projects")
+	}
+	return home, projects
+}
+
 func resolveNativeRuntime() (nativeRuntime, error) {
 	cwd, err := filepath.Abs(".")
 	if err != nil {
@@ -334,10 +353,7 @@ func resolveNativeRuntime() (nativeRuntime, error) {
 	if err != nil {
 		return nativeRuntime{}, fmt.Errorf("resolve native home: %w", err)
 	}
-	projects := strings.TrimSpace(os.Getenv("PROJECTS_ROOT"))
-	if projects == "" {
-		projects = filepath.Join(home, "projects")
-	}
+	home, projects := nativeRuntimeRoots(home, os.Getenv)
 	projects, err = filepath.Abs(projects)
 	if err != nil {
 		return nativeRuntime{}, fmt.Errorf("resolve projects root: %w", err)
