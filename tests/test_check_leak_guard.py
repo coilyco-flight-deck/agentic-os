@@ -140,3 +140,25 @@ def test_tailnet_suffix_rule_passes_on_env_placeholder(monkeypatch, tmp_path) ->
     (repo / "openclaw.json").write_text('{"baseUrl": "${OLLAMA_BASE_URL}"}\n')
     _git(repo, "add", "-A")
     assert _run(monkeypatch, repo, [rule]) == 0
+
+
+def test_umbra_ward_cycle_fires_on_the_module_edge(monkeypatch, tmp_path, capsys) -> None:
+    # The cycle this rule exists to stop: a require line naming the upper layer.
+    rule = _shipped("umbra-ward-cycle")
+    term = bytes.fromhex(rule["term_hex"]).decode("utf-8")
+    repo = _repo(tmp_path, remote="umbra")
+    (repo / "go.mod").write_text(f"module umbra\n\nrequire forgejo/{term} v1.0.0\n")
+    _git(repo, "add", "-A")
+    assert _run(monkeypatch, repo, [rule]) == 1
+    assert "go.mod" in capsys.readouterr().err
+
+
+def test_umbra_ward_cycle_ignores_prose_naming_the_consumer(monkeypatch, tmp_path) -> None:
+    # umbra names ".ward" as the example consumer in the very files that document
+    # hardcoding none; unscoped this rule flagged 375 such lines and blocked the repo.
+    rule = _shipped("umbra-ward-cycle")
+    term = bytes.fromhex(rule["term_hex"]).decode("utf-8")
+    repo = _repo(tmp_path, remote="umbra")
+    (repo / "appdir.go").write_text(f'// The consumer dir, e.g. ".{term}".\npackage config\n')
+    _git(repo, "add", "-A")
+    assert _run(monkeypatch, repo, [rule]) == 0

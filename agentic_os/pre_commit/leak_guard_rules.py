@@ -88,12 +88,13 @@ RULES: list[dict] = [
         ),
     },
     # Dependency cycle: ban the umbra -> ward direction (umbra is the lower
-    # layer). Both slugs listed so an old checkout still matches.
+    # layer). Manifest-scoped, because prose names the consumer legitimately.
     {
         "id": "umbra-ward-cycle",
         "term_hex": "77617264",
         "repos": ["umbra", "cli-guard"],
         "allow_globs": [],
+        "only_globs": ["go.mod", "go.sum"],
         "message": (
             "umbra references ward, closing a dependency cycle (ward already "
             "depends on umbra). Drop the back-reference so the edge stays "
