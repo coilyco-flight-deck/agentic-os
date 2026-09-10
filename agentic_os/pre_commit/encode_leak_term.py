@@ -1,17 +1,9 @@
 #!/usr/bin/env python3
-"""Encode a term to hex for the leak-guard ruleset (and round-trip back).
+"""Encode a term to hex for the leak-guard ruleset, and round-trip it back.
 
-The leak-guard ruleset never stores plaintext: every banned term lives as
-lowercase hex, so a plain `rg <term>` over the ruleset - or anywhere else -
-finds nothing. That is the whole point of the guard, so its own config must
-honor it too. This helper turns a term into that hex (and back) without the
-plaintext landing in shell history: with no `--term` it reads one line from
-stdin, so a sensitive term can be typed or piped, never typed as an argv token.
-
-Usage:
-    leak-guard-encode                 # read one line from stdin, print hex
-    leak-guard-encode --term agentic  # encode argv token (lands in history)
-    leak-guard-encode --decode 6b6170 # round-trip a hex term back to text
+The ruleset never stores plaintext, so a plain `rg <term>` over it finds nothing,
+and its own config has to honour that. With no `--term` this reads one line from
+stdin, so a sensitive term never lands in shell history as an argv token.
 """
 from __future__ import annotations
 

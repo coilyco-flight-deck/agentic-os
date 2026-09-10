@@ -1,22 +1,11 @@
 #!/usr/bin/env python3
 """Wire the composed status line and session name into Claude Code.
 
-Installs two surfaces:
-  - statusLine: the provider composer, including composition rows.
-  - SessionStart: the composed name injected into the agent's context.
-
-Merge rules, idempotent and conservative:
-  - statusLine is set only if absent or already managed by this installer.
-    A status line the operator set to something else is left untouched.
-  - The SessionStart hook is added once, and a host still wired to the retired
-    agent-name.sh is REPOINTED rather than skipped. Leaving it would keep a
-    deleted script registered on every already-converged host.
-
-Stdlib only. Run by the claude-hooks ansible role on every host.
-
-Usage:
-    scripts/install-session-name.py            # write the merged settings
-    scripts/install-session-name.py --dry-run  # print the result, do not write
+Installs statusLine and a SessionStart hook. Merge rules are conservative:
+statusLine is set only if absent or already managed here, so one the operator set
+is left alone, and a host still wired to the retired agent-name.sh is REPOINTED
+rather than skipped, since leaving it keeps a deleted script registered on every
+converged host.
 """
 from __future__ import annotations
 

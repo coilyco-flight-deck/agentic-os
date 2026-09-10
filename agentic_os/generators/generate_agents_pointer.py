@@ -1,35 +1,12 @@
 #!/usr/bin/env python3
 """Generate and check the managed workspace-pointer block in a repo's AGENTS.md.
 
-Every per-repo `AGENTS.md` opens with a one-line pointer at the workspace base.
-Hand-written, it drifted into three styles and several dangled: `See ../AGENTS.md`
-resolves to a non-existent `coilyco-bridge/AGENTS.md`, because the repos live in
-different org dirs and are not checked out in a guaranteed sibling layout. The
-canonical content already loads globally via `~/.claude/CLAUDE.md`, so the
-pointer's real job is to orient a reader WITHOUT that load point (a foreign
-agent, a single-repo clone, CI) - for whom only an absolute URL is true.
-
-This module is the single source of truth for that pointer, rendered as a
-marker-delimited managed block. It mirrors `generate_repo_pointer_skill`: a pure,
-deterministic renderer plus a `check_drift` the validator (`check_agents_pointer`)
-uses to regenerate offline and fail on any drift. The applier
-(`scripts/apply-agents-pointer.py`) injects or refreshes the block in place.
-
-Each org points at its own base, on the host appropriate to its trust tier:
-  - coilyco-flight-deck/* -> the public base on GitHub (the public face).
-  - coilyco-bridge/*      -> the public base on GitHub with the private
-    agentic-os-kai overlay (Forgejo) layered on top, expressing that aos-pub is
-    the foundation and aos-kai layers Kai-specific context over it.
-The canonical base repos themselves (agentic-os, agentic-os-kai) are exempt:
-a base does not point at itself. coilysiren/* stays deliberately unmanaged: it
-is Kai's public personal org, outside the coilyco-* fleet, and its handful of
-repos are `.agentic-os-ignore`-exempt and hand-authored (the profile repo
-coilysiren/coilysiren carries a bespoke bootstrap, not a one-line pointer). So
-those repos are hand-maintained per-repo rather than templated - extending
-generator management over a public org would fire the drift hook across it for
-    little gain.
-
-Schema and rollout: see docs/features-agents.md.
+Hand-written, this pointer drifted into three styles and several dangled, since
+the repos live in different org dirs with no guaranteed sibling layout. The
+canonical content already loads globally, so the pointer's real job is to orient
+a reader without that load point, for whom only an absolute URL is true. Each org
+points at its own base; the base repos themselves are exempt from pointing at
+themselves. Schema and rollout: see docs/features-agents.md.
 """
 
 from __future__ import annotations

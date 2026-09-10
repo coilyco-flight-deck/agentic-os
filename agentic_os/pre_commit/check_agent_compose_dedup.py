@@ -1,22 +1,11 @@
 #!/usr/bin/env python3
 """Reject content duplicated across AGENTS.COMPOSE.md sources or with AGENTS.md.
 
-agent-compose pulls AGENTS.COMPOSE.md doctrine into global
-composed context, shared across harnesses by default. Two failure modes waste a
-session's context budget:
-
-    1. The same doctrine stated in two AGENTS.COMPOSE.md sources, so it composes
-       twice.
-    2. Doctrine in an AGENTS.COMPOSE.md that is also in the repo's own AGENTS.md,
-       which a harness already loads through its normal cascade - so it loads
-       once from the cascade and again from the composed file.
-
-This hook flags significant lines (long enough to be real doctrine, not markdown
-scaffolding) that appear in more than one source, or in a source and AGENTS.md.
-
-Tunables under [tool.agentic-os.agent-compose-dedup]:
-    min_line_chars - shortest line considered significant (default 24)
-Opt out with `enabled = false` under the same section.
+Two ways a session's context budget is wasted: the same doctrine in two sources
+so it composes twice, or doctrine in a source that is also in AGENTS.md, which a
+harness already loads through its normal cascade. Flags significant lines, long
+enough to be doctrine rather than markdown scaffolding. Tunables under
+[tool.agentic-os.agent-compose-dedup]: min_line_chars (24).
 """
 
 from __future__ import annotations

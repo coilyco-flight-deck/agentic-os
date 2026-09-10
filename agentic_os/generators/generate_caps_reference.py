@@ -1,20 +1,11 @@
 #!/usr/bin/env python3
 """Generate the catalog caps reference from the validator constants.
 
-`code-comments` and `documentation-layout` are meant to be the single source
-of truth for their numeric caps, but docs and skills kept restating those
-numbers by hand and the copies drifted. This generator reads
-the constants straight off the two validator modules and renders a tiny,
-committed Markdown reference. Docs and skills point at that render instead of
-restating a number, so the caps can never drift between code and prose.
-
-Mirrors the seed-skills pattern: `generate-caps-reference` writes the render
-and `check-caps-reference-drift` fails commit when it goes stale. Like the
-generated operator-command dumps, the render is the
-off-disk, greppable answer so a cold agent reads the real cap without running
-the validator.
-
-The render is deterministic and timestamp-free, so the drift check is pure.
+Docs and skills kept restating cap numbers by hand and the copies drifted. This
+reads the constants off the validator modules and renders a committed Markdown
+reference, so prose points at the render instead of restating a number. Mirrors
+the seed-skills pattern: this writes it, check-caps-reference-drift fails commit
+when it goes stale. The render is deterministic and timestamp-free.
 """
 from __future__ import annotations
 
@@ -57,6 +48,13 @@ def _caps() -> list[tuple[str, str, str, str]]:
             str(cc.MAX_CONTIGUOUS_COMMENT_LINES),
             "max consecutive comment lines. A top-of-file header block is "
             "exempt unless `header_cap` is set",
+        ),
+        (
+            "code-comments",
+            "module docstring lines",
+            str(cc.MAX_DOCSTRING_LINES),
+            "max lines in a module docstring. It holds what the file is and "
+            "where the rest lives, and per-line chars take the comment-line cap",
         ),
         (
             "documentation-layout",

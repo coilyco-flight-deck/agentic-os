@@ -2,14 +2,10 @@
 """Split umbra's one aosguard skill into one skill per wrapped area.
 
 A single `aosguard` skill only loads once an agent already suspects it needs
-aosguard, which is the retrieval failure agentic-os#1028 records: an agent read
-that operator verbs live here, found no `reopen` on the MCP surface, and wrote
-"denied" into three tickets. `aosguard-forgejo` matches the entity the agent is
-demonstrably working with instead.
-
-Generated from umbra's own index, so a new wrapped area produces its skill
-with no hand edit. The concept skill that says what aosguard is, and is not,
-is hand-written at .agents/skills/tooling-aosguard.
+aosguard, which is the retrieval failure in agentic-os#1028. `aosguard-forgejo`
+matches the entity the agent is demonstrably working with instead. Generated
+from umbra's own index. The concept skill that says what aosguard is, and is
+not, is hand-written at .agents/skills/tooling-aosguard.
 """
 
 from __future__ import annotations

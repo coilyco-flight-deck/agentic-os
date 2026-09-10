@@ -1,26 +1,10 @@
 #!/usr/bin/env python3
-"""Generate a repo-pointer skill (`repo-<name>`) from a repo's GitHub metadata.
+"""Generate a repo-pointer skill (`repo-<name>`) from a repo's Forgejo metadata.
 
-A repo-pointer skill is a thin, fully-generated SKILL.md that points an agent at
-a repo's foundational trifecta (README.md / AGENTS.md / docs/FEATURES.md). It is
-deliberately not hand-authored: the directory name carries the repo name, the
-description is the literal GitHub description (emoji stripped, dashes normalized)
-plus a `Triggers -` line built from the repo's GitHub topics, and the body is a
-fixed three-bullet pointer block. The matching validator (check_repo_pointer_skills)
-regenerates the file and fails on any drift, so the generator is the single source
-of truth for the shape.
-
-Keeping this module pure (it never calls the network itself) lets the caller
-supply repo metadata however it likes. The canonical source is Forgejo, whose
-`repo get` returns both the description and the topics array in one
-payload. The CLI reads that JSON from stdin:
-
-    aosguard ops forgejo repo get <owner> <name> \
-        | python -m agentic_os.generators.generate_repo_pointer_skill <name> --from-json - --repo-root <repo>
-
-`--from-json` also accepts the GitHub `gh repo view --json
-description,repositoryTopics` shape, so non-Forgejo callers still work.
-
+A thin, fully-generated SKILL.md pointing at a repo's trifecta. Never
+hand-authored: check_repo_pointer_skills regenerates it and fails on drift, so
+this module is the single source of truth for the shape. Kept pure, never calling
+the network. `--from-json` also accepts the GitHub `gh repo view` shape.
 Schema and rollout: see docs/features-agents.md.
 """
 

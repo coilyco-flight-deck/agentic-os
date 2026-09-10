@@ -1,33 +1,11 @@
 #!/usr/bin/env python3
 """Require a same-repo Forgejo *URL* closing reference in commit messages.
 
-Wired into each active coilysiren/* repo as a `commit-msg` pre-commit hook
-via `scripts/apply-agentic-os-hooks.py`. Canonical copy lives here in
-agentic-os; consumers reference this repo at a pinned `rev:` in their
-`.pre-commit-config.yaml` and pre-commit pip-installs the package.
-
-Why URL-only: a bare `closes #N` (or the short `owner/repo#N`) is a GitHub
-closing keyword too. Repos that mirror to GitHub
-have those refs re-interpreted on the GitHub side at push time, silently
-closing whatever GitHub issue happens to hold number N - a different tracker
-than the canonical Forgejo one. The full Forgejo URL is the only form GitHub
-does not auto-close from, so it is the only accepted form.
-
-Accepted (case-insensitive), the issue must live in THIS repo:
-    closes  https://forgejo.coilysiren.me/<this-owner>/<this-repo>/issues/N
-    fixes   https://forgejo.coilysiren.me/<this-owner>/<this-repo>/issues/N
-    resolves https://forgejo.coilysiren.me/<this-owner>/<this-repo>/issues/N
-    (close/closed/fix/fixed/resolve/resolved all accepted)
-
-Rejected:
-    - bare `closes #N` and short `closes owner/repo#N` (GitHub-auto-close risk)
-    - a Forgejo URL pointing at a different owner/repo
-    - no closing reference at all
-
-Exempt: Merge / Revert / fixup! / squash! commits.
-
-Exits 0 on accept, 1 on reject (with a dictation-friendly error that names
-the fix to apply from a phone).
+Why URL-only: a bare `closes #N`, and the short `owner/repo#N`, are GitHub
+closing keywords too, so a repo that mirrors to GitHub has them re-interpreted
+at push time and silently closes whatever GitHub issue holds number N. The full
+Forgejo URL is the only form GitHub does not auto-close from. Merge, Revert,
+fixup! and squash! commits are exempt.
 """
 
 from __future__ import annotations

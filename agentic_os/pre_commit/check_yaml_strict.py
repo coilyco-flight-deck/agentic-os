@@ -1,36 +1,11 @@
 #!/usr/bin/env python3
-"""Canonicalize YAML to a maximum-strictness, deterministic form and autofix.
+"""Canonicalize YAML to a maximum-strictness, deterministic form, and autofix.
 
-The strict canonical subset:
-
-    * every mapping's keys are alpha-sorted, recursively
-    * every sequence is sorted by the canonical serialization of its items,
-      recursively (a sequence of mappings sorts by each item's normalized
-      YAML text - a deterministic key that needs no per-list config)
-    * no duplicate mapping keys (PyYAML silently keeps the last; we reject)
-    * no anchors (&a), aliases (*a), or non-standard tags (!foo) - they make
-      a file's meaning non-local and defeat line-wise diffing
-    * no comments at all - a comment carries zero data, so stripping it is a
-      safe autofix (the parser sees the same tree) and it retires the only
-      case where canonicalization could relocate text. Dial off with
-      no_comments = false to keep them.
-    * canonical formatting: 2-space block indent, explicit `---` start, a
-      single trailing newline, no tabs, no trailing whitespace
-
-The hook autofixes in place (sorts, strips comments, reformats) and exits
-non-zero when it changed anything, like ruff / black / end-of-file-fixer:
-re-stage and commit.
-
-Two conditions are reported but NOT auto-fixed, because a safe rewrite is
-ambiguous: duplicate keys (which value wins?) and anchors/aliases/tags (inline
-or keep the reference?). Those fail the hook for a human to resolve.
-
-Usage:
-    check-yaml-strict path/to/file.yaml [more...]   # pre-commit passes these
-    check-yaml-strict                                # no args: walk the repo
-
-Per-repo opt-outs live under [tool.agentic-os.yaml-strict] excludes = [...].
-Origin: maximum-strictness YAML canonicalizer (Kai request).
+Keys alpha-sorted recursively, sequences sorted by canonical serialization, no
+duplicate keys, no anchors or aliases or non-standard tags, no comments, and
+canonical formatting. It autofixes in place and exits non-zero when it changed
+anything. Duplicate keys and anchors are reported but never auto-fixed, because
+a safe rewrite is ambiguous. Opt paths out under [tool.agentic-os.yaml-strict].
 """
 
 from __future__ import annotations

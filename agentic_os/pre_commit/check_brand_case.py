@@ -1,16 +1,10 @@
 #!/usr/bin/env python3
 """Keep the brand name lowercase in prose.
 
-`coilyco` is set lowercase everywhere it is read as a name, including at the
-start of a sentence, the way `adidas` and `ebay` are. Capitalising it is the
-single most common way the name drifts, because ordinary sentence-casing does
-it automatically and nobody notices.
-
-Code spans, fenced blocks, URLs, and paths are left alone: a slug, a hostname
-and an identifier are not prose, and the name is already lowercase there. Some
-capitalised strings are literal external identifiers rather than the brand - a
-certificate subject, an MCP connector's display name - and those take an
-allowlist rather than an edit. See docs/brand-case.md.
+`coilyco` is lowercase everywhere it reads as a name, sentence-initial included,
+the way `adidas` is. Code spans, fenced blocks, URLs and paths are exempt, and a
+literal external identifier takes an allowlist entry rather than an edit.
+See docs/brand-case.md.
 """
 
 from __future__ import annotations

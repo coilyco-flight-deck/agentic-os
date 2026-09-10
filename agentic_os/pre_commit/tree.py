@@ -1,16 +1,10 @@
 """One tree walk for the hooks that each carried their own.
 
-Thirteen hooks kept a private `SKIP_DIR_NAMES` and a private `rglob`, and the
-copies had already drifted into five different sets. That is how a gitignored
-bake stayed visible to eleven hooks after the two it actually broke were fixed
-(agentic-os#1062). The skip set lives here now, and `is_repo_content` is the
-single gate a walking hook asks.
-
-Why the gate is two questions rather than one: `SKIP_DIR_NAMES` covers caches
-and vendored trees that git may well carry, and `is_build_output` covers
-everything git does not carry at all. Neither subsumes the other. Fail-open
-behaviour comes from `is_build_output` unchanged, so a tarball or a machine
-without git is walked exactly as before. See docs/build-output-is-not-content.md.
+Thirteen hooks kept a private SKIP_DIR_NAMES and rglob, and the copies had
+drifted into five different sets (agentic-os#1062). The gate is two questions
+rather than one: SKIP_DIR_NAMES covers caches and vendored trees git may carry,
+is_build_output covers what git does not carry at all, and neither subsumes the
+other. See docs/build-output-is-not-content.md.
 """
 
 from __future__ import annotations

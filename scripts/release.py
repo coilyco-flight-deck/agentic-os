@@ -1,26 +1,12 @@
 #!/usr/bin/env python3
 """Local release helper: bump version, sign tag, push.
 
-Bumps the latest semver tag (minor by default), rewrites `pyproject.toml`
-version and the `FALLBACK_REV` floor in
-`scripts/apply-agentic-os-hooks.py`, commits the bump, creates a signed
-annotated tag, and pushes both.
-
-This is the HAND-CUT path for the `aos-precommit-v*` train. The automatic
-release workflow normally cuts that train only when installed hook inputs
-change. The
-version-bump commit here carries a `[skip ci]` marker so it does not start
-the main-push workflows. The consumer pin resolves from package tags at read
-time, with no per-push pin commit. This path additionally
-reconciles pyproject `version` + `uv.lock` and refreshes the `FALLBACK_REV`
-floor, so run it for a hand-driven package major or whenever those drift.
-
-Usage:
-    python3 scripts/release.py [--bump {major|minor|patch}] [--dry-run]
-
-Bump policy: every release is a minor bump unless --bump says otherwise.
-Major is hand-driven only (--bump major) - commit messages are never
-parsed to decide the bump.
+The HAND-CUT path for the `aos-precommit-v*` train, which CI normally cuts only
+when installed hook inputs change. The bump commit carries `[skip ci]` so it
+starts no main-push workflow, and this path also reconciles pyproject version,
+uv.lock and the FALLBACK_REV floor, so run it when those drift.
+Every release is a minor bump unless --bump says otherwise, and major is
+hand-driven only: commit messages are never parsed to decide it.
 """
 from __future__ import annotations
 

@@ -1,19 +1,9 @@
 #!/usr/bin/env python3
 """Run the check-only pre-commit hook set across every workspace git repo.
 
-For each sibling coilysiren/* repo with a .pre-commit-config.yaml, write a
-temporary copy of the config with the auto-applying (file-mutating) hooks
-stripped out, run `pre-commit run --all-files --config <tmp>` against it, then
-delete the temp file. Pointing pre-commit at a stripped config means no hook
-ever rewrites a tracked file, so the sweep stays read-only without any
-run-then-revert dance. Per-hook exclude: regexes still apply (no flag disables
-them); --all-files is the "rerun over everything" lever.
-
-Reports a per-repo Passed/Failed summary plus the failing hook ids.
-
-Spans every git working tree under ~/projects/<org>/* via
-agentic_os.config.iter_workspace_repos, not just the org dir the running
-agentic-os checkout sits in. Override the root with $PROJECTS_ROOT.
+Writes a temporary config with the file-mutating hooks stripped and runs against
+that, so the sweep stays read-only with no run-then-revert dance. Spans every git
+working tree under ~/projects/<org>/*; override the root with $PROJECTS_ROOT.
 See docs/release.md.
 """
 from __future__ import annotations

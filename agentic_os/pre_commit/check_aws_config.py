@@ -1,19 +1,9 @@
 #!/usr/bin/env python3
 """Lint ~/.aws/config for the [profile default] trap.
 
-Background: AWS SDK default-profile resolution reads `[default]`, never
-`[profile default]`. The `[profile X]` form is reserved for non-default
-profiles. So `region = ...` placed under `[profile default]` is unreachable
-and SDK calls fall back to "NoRegion: You must specify a region".
-
-STS-only preflights (sts get-caller-identity) hide the bug because STS is a
-global endpoint and doesn't need a region. SSM, S3, and friends will fail.
-
-This check parses ~/.aws/config (or $AWS_CONFIG_FILE) and exits non-zero if
-it finds a `[profile default]` section, printing the remediation.
-
-Run via `make check-aws-config` or `just check-aws-config`.
-
+SDK default-profile resolution reads `[default]`, never `[profile default]`, so a
+region set under the latter is unreachable and calls fail with NoRegion. STS-only
+preflights hide it, because STS is global and needs no region.
 Origin: see docs/release.md.
 """
 

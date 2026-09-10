@@ -1,28 +1,11 @@
 #!/usr/bin/env python3
 """Reject plaintext occurrences of awkward-leak terms held only in hex.
 
-Three leak/coupling classes reduce to one primitive: a string S that must not
-appear in scope T, where the rule itself is stored encoded so grepping the rule
-reveals neither S nor the coupling. leak-guard is that primitive:
-
-  * sensitive data - an employer/partner/personal name that should never be
-    grep-bait (`rg <name>` then mail-merge the hits is the threat model);
-  * private -> public leaks - a bridge (private) identifier referenced from a
-    flight-deck (public) repo, the wrong direction for data lockdown;
-  * dependency cycles - one direction of a repo<->repo reference banned to break
-    the cycle.
-
-Each rule lives in `leak_guard_rules.py` with its term as lowercase hex, decoded
-only in memory here, never written to disk and never printed. A violation
-reports the rule id, path, line, and remediation - never the term itself, so the
-guard's own output is not a leak. Terms match on word boundaries by default, so
-`ward` does not fire on `forward`/`awkward`.
-
-File discovery mirrors the rest of the suite: staged index blobs when a commit
-is in flight, every tracked file on `pre-commit run --all-files`. Per-repo opt
-paths out via `[tool.agentic-os.leak-guard] excludes = [...]`; per-rule
-allowlists (`allow_globs`) live with the rule. Rule scope is matched against the
-current repo resolved from `origin`, so a rule fires only where it should.
+Three classes reduce to one primitive: a string S that must not appear in scope
+T, with the rule stored encoded so grepping it reveals neither S nor the
+coupling. Sensitive data, private-to-public references, and dependency cycles.
+A violation reports the rule id, path, line and remediation, never the term, so
+the guard's own output is not a leak. Rules live in leak_guard_rules.py.
 See docs/pre-commit-hygiene.md.
 """
 from __future__ import annotations

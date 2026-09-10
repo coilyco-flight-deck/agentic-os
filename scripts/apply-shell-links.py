@@ -1,13 +1,8 @@
 #!/usr/bin/env python3
 """Apply this repo's host shell entry-point symlinks and git wire-up.
 
-This is a local repair path for the shell half of the ansible shell role. It
-does not replace fleet convergence, but it fixes one host when links drift.
-
-Usage:
-    python3 scripts/apply-shell-links.py
-    python3 scripts/apply-shell-links.py --dry-run
-    python3 scripts/apply-shell-links.py --check
+A local repair path for the shell half of the ansible shell role. It does not
+replace fleet convergence, it fixes one host when links drift.
 """
 from __future__ import annotations
 

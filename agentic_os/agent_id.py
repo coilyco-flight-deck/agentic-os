@@ -1,18 +1,10 @@
 """Canonical short agent-id generator over the dictatable alphabet.
 
-A short id for naming agents (o2r channels, container tags, dozzle rows): two
-lowercase letters then two digits (`ab81`, `cd92`). The alphabet drops the
-visually and phonetically ambiguous characters - the same set documented in
-`docs/build-output-is-not-content.md` and first used by the archived o2r channel
-protocol (`coilyco-flight-deck/otel-a2a-relay`). This module is the canonical
-home the ward naming rewrite and the umbra Go port build
-against, so the alphabet, shape, and the seeded variant here are a cross-language
-contract, mirrored byte-for-byte in `agent_id_vectors.json`.
-
-The lowercase decision (o2r stored uppercase; aos canonicalizes to lowercase)
-is the one intentional divergence from the o2r source. Everything else - which
-characters live and die, the two-letters-then-two-digits shape - is lifted, not
-reinvented.
+Two lowercase letters then two digits (`ab81`), over an alphabet that drops the
+visually and phonetically ambiguous characters. The ward naming rewrite and the
+umbra Go port build against this module, so the alphabet, the shape and the
+seeded variant are a cross-language contract, mirrored byte for byte in
+agent_id_vectors.json. Lowercase is the one divergence from the archived source.
 """
 
 from __future__ import annotations

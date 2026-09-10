@@ -1,28 +1,11 @@
 #!/usr/bin/env python3
 """Inject or refresh the managed git-workflow block in each repo's AGENTS.md.
 
-Authored side of the AGENTS.md git-workflow convention. The pure renderer and
-the drift check live in `agentic_os.generators.generate_git_workflow`; this
-script is the applier that writes the block into a repo's `AGENTS.md` in place.
-Idempotent: re-runs replace the prior managed block and strip the legacy
-one-line `**Git workflow** -` stamp, so running it twice is a no-op.
-
-Lane-aware and org-agnostic. Each repo's block is rendered from the lane that
-repo declares as `ward.workflow` in its own AGENTS.md frontmatter, so the
-applier needs no per-repo argument and no remote lookup. A repo that declares
-no lane gets the undeclared variant, which holds the agent to the
-branch-and-pull-request shape rather than guessing at a direct push to `main`.
-
-This is the AUTHORED tool. The fleet rollout that lands the block on each repo's
-canonical `main` belongs in infrastructure alongside the pointer migration, per
-the authoring-vs-rollout split, not this script run by hand across the fleet.
-
-Usage:
-    python3 scripts/apply-git-workflow.py --dry-run   # show the plan
-    python3 scripts/apply-git-workflow.py             # apply to every repo
-    python3 scripts/apply-git-workflow.py --repo ward # one repo by name
-
-See docs/features-agents.md.
+The authored applier; the renderer and drift check live in
+agentic_os.generators.generate_git_workflow. Idempotent, and each block renders
+from the lane that repo declares as `ward.workflow`, so there is no per-repo
+argument and no remote lookup. The fleet rollout belongs in infrastructure per
+the authoring-versus-rollout split. See docs/features-agents.md.
 """
 
 from __future__ import annotations

@@ -1,33 +1,11 @@
 #!/usr/bin/env python3
-"""
-Find dead cross-links anywhere in the repo.
+"""Find dead cross-links anywhere in the repo.
 
-Scans every Markdown file in the repo (root README/AGENTS, docs/, co-located
-module READMEs, the skill tree, etc.), extracts inline markdown links
-(`[text](target)` and `[text](target#anchor)`), and reports any local-relative
-target that doesn't resolve to a real file or directory. A link that resolves
-**outside the repo root** is a hard violation, not a skip - an internal `../`
-link is validated for existence like any other, while one that escapes the repo
-fails.
-
-Out of scope:
-- External URLs (anything with a scheme, e.g. http://, mailto:).
-- Bare anchors (`#section`) - no anchor index is maintained.
-- Reference-style links (`[text][ref]` definitions).
-- Image links (`![alt](src)`).
-- Bare skill-name mentions in prose.
-
-Directory skipping mirrors documentation-layout (`SKIP_DIR_NAMES`: `.git`,
-`node_modules`, build outputs, caches), plus per-repo `excludes` from
-`[tool.agentic-os.dead-cross-links]`.
-
-Usage (when run directly):
-    python3 scripts/check-dead-links.py            # scan the whole repo
-    python3 scripts/check-dead-links.py path ...   # scan only the given files
-
-Canonical copy lives in coilyco-flight-deck/agentic-os/scripts/. Each consumer repo
-gets a stamped copy via agentic-os-kai's apply-skill-discipline-hooks
-rollout. Exits 0 on clean, 1 with per-violation report on stderr.
+Extracts inline markdown links from every Markdown file and reports any
+local-relative target that does not resolve. A link resolving outside the repo
+root is a hard violation rather than a skip. Out of scope: external URLs, bare
+anchors, reference-style definitions, image links, and bare skill-name mentions.
+Excludes come from [tool.agentic-os.dead-cross-links].
 """
 
 from __future__ import annotations

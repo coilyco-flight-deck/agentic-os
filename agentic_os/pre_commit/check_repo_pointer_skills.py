@@ -1,18 +1,10 @@
 #!/usr/bin/env python3
-"""pre-commit hook: assert every `repo-<name>` pointer skill is auto-generated.
+"""Assert every `repo-<name>` pointer skill is auto-generated, never hand-edited.
 
-Repo-pointer skills (`.agents/skills/repo-<name>/SKILL.md`) are fully generated
-by `agentic_os.generators.generate_repo_pointer_skill` from a repo's GitHub description and
-topics. They must never be hand-edited. This hook scans the current repo for any
-`repo-*` skill and regenerates it offline from its own frontmatter, failing on
-any drift in the pointer body or frontmatter and on a description that skipped
-the cleaning step (emoji, em/en dash, missing `Triggers -` line).
-
-Prefix-driven and categories.yaml-independent, so it fires in every consumer
-repo, not just the ones that ship a skill categories spec. No-ops when the repo
-has no skills surface.
-
-Schema and rollout: see docs/features-agents.md.
+Regenerates each one offline from its own frontmatter and fails on drift in the
+body or frontmatter, and on a description that skipped the cleaning step.
+Prefix-driven and categories.yaml-independent, so it fires in every consumer repo
+and no-ops where there is no skills surface. See docs/features-agents.md.
 """
 
 from __future__ import annotations

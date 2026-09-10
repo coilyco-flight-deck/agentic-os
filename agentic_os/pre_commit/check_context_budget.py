@@ -1,59 +1,11 @@
 #!/usr/bin/env python3
 """Report the eager startup context each harness loads, on demand.
 
-This measures everything a harness ingests at session start across three axes
-that each have a different growth lever:
-
-  * doc    - the installed AGENTS.md/CLAUDE.md load point. Measures that file
-             directly, so the bytes match what the harness receives. Lever:
-             edit the inputs owned by Agent Compose.
-  * skills - every mounted skill's SKILL.md *frontmatter* (name + description) is
-             eager so the model knows the skill exists; bodies load lazily on
-             invoke. With a large skill surface this is routinely the BIGGEST
-             axis, larger than the composed doc. Lever: prune the skill set.
-  * mcp    - native MCP tool schemas. One mcporter inventory is projected into
-             each native harness registry, where schema discovery is deferred.
-             `mcporter call` remains the CLI fallback. The eager figure is near
-             zero and is reported as a server-count note, not a token sum.
-
-The three axes above are the *proactive* tier - eager prompt bytes, per harness.
-Two further tiers are cheap-to-provide context a driver can reach one tool call
-away, measured per working-dir/reference clone rather than per harness:
-
-  * immediate  - a working-dir clone (`/workspace/<name>`): a grep surface, not
-                 in the prompt. `immediate_walk` reports tracked-file count,
-                 bytes, and the chars/4 token proxy over `git ls-files` (tracked
-                 only, so build/vendor/untracked trees do not inflate it).
-  * peripheral - the reference repos (`/substrate/<name>`): the same walker
-                 applied per-repo across a set, plus a total. `peripheral_walk`
-                 takes the repo set from its caller and stays role-agnostic.
-
-`immediate_walk` / `peripheral_walk` are reusable primitives behind the same
-`count_tokens` proxy, for ward's role-aware three-tier probe (ward#373) to call
-for tiers 2/3 while reusing the doc/skill accounting above for tier 1. This
-layer measures; it does not model ward roles, containers, or substrate sets -
-those stay in ward, which owns them and passes the repo paths in.
-
-Skill scope is cwd-dependent: `~/.claude/skills` is emptied by mount-skills.sh
-and skills are symlinked into each repo's `.claude/skills`, so the eager set is
-the global plugin skills plus the scoped skills discoverable from the cwd. The
-tool dedups by resolved path, so the one canonical skill set mounted into many
-repos counts once.
-
-Token counting (v1): a deterministic chars/4 proxy. tiktoken has no qwen encoding
-and the qwen BPE needs its vocab assets, so v1 ships a hermetic proxy behind
-`count_tokens`; swapping in a real tokenizer is a one-function change. ~10% off
-absolute but consistent across harnesses.
-
-Skill roots are global (host-wide, not repo-scoped): module defaults, the modern
-`skill_load_points:` projection, and the legacy `skill_roots:` override determine
-them.
-
-Usage:
-    check-context-budget                  # report installed harness context
-    check-context-budget --role sysadmin --snapshot context-budget-ops-before.yaml
-    check-context-budget --role sysadmin --compare context-budget-ops-before.yaml \
-        --snapshot context-budget-ops-after.yaml
+Three proactive axes, each with a different growth lever: the installed load
+point, every mounted skill's frontmatter, which is routinely the biggest axis,
+and native MCP tool schemas, which are near zero since discovery is deferred. Two
+further tiers measure cheap context a driver can reach one tool call away, per
+working-dir clone rather than per harness. See docs/context-budget.md.
 """
 from __future__ import annotations
 

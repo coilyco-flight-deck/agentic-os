@@ -1,19 +1,11 @@
 #!/usr/bin/env python3
 """Remint the two-stage promote PAT (CI_RELEASE_TOKEN) on the coilyco-ops bot.
 
-The promote push (promote.yml stage 1) must land as a real user whose token
-carries read:user alongside write:repository: without read:user Forgejo cannot
-attribute the push and silently enqueues no release.yml run for it (ward#1117,
-ward runs 1831/1833 - `release` moved, stage 2 never fired). Token endpoints
-accept basic auth only, and only the coilyco-ops bot's password lives in SSM,
-so the PAT is minted on the bot - attribution lands on coilyco-ops, which is
-what CI pushes should say anyway.
-
-Flow: read the bot password from SSM, replace any prior token of the same
-name, mint with write:repository + read:user, prove attribution works via
-GET /user, then overwrite SSM /forgejo/coilyco-ops/ci-release-token. Values stay
-in-process (boto3, urllib) - never disk, argv, or stdout. Follow with
-`just sync-actions-secrets` to fan the new value out to the repos.
+The promote push needs read:user alongside write:repository: without it Forgejo
+cannot attribute the push and silently enqueues no release run (ward#1117). Token
+endpoints accept basic auth only and only the bot's password is in SSM, so the
+PAT is minted on the bot. Values stay in-process, never disk or argv. Follow with
+`just sync-actions-secrets`.
 """
 from __future__ import annotations
 

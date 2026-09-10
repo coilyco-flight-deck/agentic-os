@@ -1,29 +1,11 @@
 #!/usr/bin/env python3
 """Enforce the catalog-trifecta cross-link convention.
 
-Every catalog repo carries three audience-distinct entry-point markdown
-files at the root. Each cross-links to the other two, so the entry point
-is reachable from any one of them with a single click.
-
-The three files:
-    README.md           - pitch + quick start for human readers
-    AGENTS.md           - per-repo agent operating rules
-    docs/FEATURES.md    - flat inventory of what ships today
-
-A fourth member, `.ward/ward.yaml`, was required here until ward was
-retired fleet-wide. See coilysiren/inbox#385.
-
-This validator checks, per markdown file:
-    1. The file exists.
-    2. The file contains a "## See also" section header.
-    3. The file contains markdown links resolving to each of the other
-       two canonical paths.
-    4. AGENTS.md contains the standard repo-local agent heading set.
-
-Usage (when run directly):
-    python3 scripts/check-catalog-trifecta.py
-
-Exits 0 on clean, 1 on any violation with a per-file report on stderr.
+Every catalog repo carries three audience-distinct entry points at the root:
+README.md for humans, AGENTS.md for agents, docs/FEATURES.md for the inventory,
+each cross-linking the other two. Per file this checks that it exists, carries a
+"## See also" header, and links both siblings, plus that AGENTS.md carries the
+standard repo-local heading set.
 """
 from __future__ import annotations
 

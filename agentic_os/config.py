@@ -1,31 +1,11 @@
 """Consumer-side exclude loading for tree-walking hooks.
 
-Hooks in this package use `always_run: true` + `pass_filenames: false` and
-do their own filesystem walks, which means pre-commit's framework-level
-`exclude:` directive is bypassed. This module reads a per-repo config so
-consumers can opt specific paths out of specific hooks.
-
-Config search order:
-    1. pyproject.toml at REPO_ROOT, key path [tool.agentic-os.<hook_id>]
-    2. .agentic-os.toml at REPO_ROOT, key path [<hook_id>]
-
-Schema per hook:
-    excludes = ["src/pages/", "src/pages/**", "*.guardfile.md"]
-
-Path semantics (gitignore-style globs over repo-relative POSIX paths):
-    "dir/"        directory prefix - excludes everything under dir/
-    "dir/**"      same, spelled as a recursive glob
-    "*"           any run of characters except "/"
-    "**"          any run of characters including "/" (crosses dirs)
-    "?"           a single character except "/"
-A pattern containing a "/" is anchored to the repo root ("docs/*.md"
-matches docs/x.md but not docs/sub/x.md). A pattern with no "/" matches
-the file's basename at any depth, so one wildcard covers a generated file
-wherever it lands. Patterns and paths use forward slashes on every platform.
-
-`is_build_output` covers the case no per-repo exclude should have to: a path
-git already ignores is not repository content, so a tree-walking hook skips it
-without being told. See docs/build-output-is-not-content.md.
+These hooks use always_run with pass_filenames false and walk the tree
+themselves, so pre-commit's own `exclude:` is bypassed. Config comes from
+[tool.agentic-os.<hook_id>] in pyproject.toml, or [<hook_id>] in .agentic-os.toml.
+Patterns are gitignore-style globs over repo-relative POSIX paths, and
+`is_build_output` covers what no exclude should have to name. Full grammar:
+docs/build-output-is-not-content.md.
 """
 from __future__ import annotations
 

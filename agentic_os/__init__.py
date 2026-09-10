@@ -1,27 +1,10 @@
 """Cross-repo pre-commit hooks and operating utilities for coilysiren/* repos.
 
-See pyproject.toml [project.scripts] for the entry-point names. Hook
-declarations live in .pre-commit-hooks.yaml at the repo root.
-
-This module also carries the TLS trust-store fallback, because it is the one
-file the aosguard guardfile bundle always ships. A bundled module runs with no
-package around it, so a helper in any sibling would be unreachable there, and
-scripts/guardfile-python-modules.sh derives the bundle from what guardfiles
-exec rather than from imports. Living here is what lets one copy serve bundled
-modules, ordinary package code and scripts/ alike.
-
-A python.org framework build carries no CA bundle until its bundled
-`Install Certificates.command` is run, and a uv venv built on top of one
-inherits the emptiness, so `ssl.create_default_context()` verifies against
-nothing and every HTTPS call fails closed with CERTIFICATE_VERIFY_FAILED. The
-text names a certificate, so it reads as a wrong endpoint or an expired
-credential while the cause is entirely local.
-
-Measured on kais-macbook-pro 2026-09-07: `/usr/local/bin/python3` and this
-repo's own `.venv` both report `cafile=None` and load 0 CA certificates, while
-`/etc/ssl/cert.pem` sits readable beside them carrying 128. Survey, and the two
-properties to preserve when editing this:
-.agents/skills/tooling-aosguard/references/tls-trust-store.md
+Entry points are in pyproject.toml [project.scripts], hook declarations in
+.pre-commit-hooks.yaml. The TLS trust-store fallback lives here because this is
+the one file the aosguard guardfile bundle always ships, and a bundled module
+runs with no package around it. Survey and the two properties to preserve when
+editing it: .agents/skills/tooling-aosguard/references/tls-trust-store.md
 """
 from __future__ import annotations
 

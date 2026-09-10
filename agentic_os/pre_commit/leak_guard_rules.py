@@ -1,28 +1,12 @@
 #!/usr/bin/env python3
 """leak-guard ruleset: terms held as hex, decoded only in memory by the check.
 
-Each rule bans a term in a scope. The term is lowercase hex (see
-`leak-guard-encode`) so a plain `rg <term>` over this file finds nothing - the
-ruleset honors the guard it drives. Add a sensitive term without it touching
-shell history:
-
-    leak-guard-encode            # type or pipe the term, copy the hex
-
-Rule fields:
-    id            - stable slug, shown in violations and used to opt out.
-    term_hex      - the banned term, lowercase hex (never plaintext).
-    repos         - list of repo slugs (origin basename) the rule fires in;
-                    omit or None to fire everywhere.
-    allow_globs   - repo-relative path globs where the term is permitted.
-    only_globs    - if set, the rule fires *only* in these paths (the dual of
-                    allow_globs; e.g. enforce on the front-page README alone).
-    word_boundary - match on \\b...\\b (default True; `ward` skips `forward`).
-    case_sensitive- default False.
-    message       - remediation, printed on a hit. Never name the term here.
-
-The rules below cover the three leak/coupling classes (sensitive data,
-private->public reference, dependency cycle); the dependency-cycle class carries
-more than one edge. See docs/pre-commit-hygiene.md.
+Each rule bans a term in a scope. The term is lowercase hex, so a plain
+`rg <term>` over this file finds nothing and the ruleset honours the guard it
+drives. Add one without it touching shell history with `leak-guard-encode`.
+Fields: id, term_hex, repos, allow_globs, only_globs, word_boundary,
+case_sensitive, message. Never name the term in a message.
+See docs/pre-commit-hygiene.md.
 """
 from __future__ import annotations
 

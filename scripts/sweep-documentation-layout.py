@@ -1,14 +1,9 @@
 #!/usr/bin/env python3
 """Run the documentation-layout check across every git repo in the workspace.
 
-Read-only sweep: reports which workspace repos pass, fail, or have the hook
-disabled, plus per-repo violation detail. Honours each repo's own
-[tool.agentic-os.documentation-layout] config (enabled flag + excludes).
-
-Spans every git working tree under ~/projects/<org>/* via
-agentic_os.config.iter_workspace_repos, not just the org dir the running
-agentic-os checkout sits in. Override the root with $PROJECTS_ROOT.
-See scripts/sweep-precommit.py.
+Read-only. Honours each repo's own [tool.agentic-os.documentation-layout]
+config, and spans every git working tree under ~/projects/<org>/* rather than
+the org dir this checkout sits in. Override the root with $PROJECTS_ROOT.
 """
 from __future__ import annotations
 

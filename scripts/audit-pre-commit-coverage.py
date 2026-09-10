@@ -1,27 +1,11 @@
 #!/usr/bin/env python3
-"""Assert every catalog repo's .pre-commit-config.yaml references the
-expected coilysiren/agentic-os hook IDs.
+"""Assert every catalog repo's .pre-commit-config.yaml carries the expected hook ids.
 
-Walks every git working tree under ~/projects/<org>/* via
-agentic_os.config.iter_workspace_repos (or `--source github` to query the
-contents API), reads each repo's `.pre-commit-config.yaml`, and reports
-which expected hook IDs are missing. Override the local root with
-$PROJECTS_ROOT. See scripts/sweep-precommit.py.
-
-The expected set is the hook IDs declared in this repo's
-`.pre-commit-hooks.yaml`, excluding hooks that are manual-only opt-ins. Run
-this after a `apply-agentic-os-hooks.py` sweep to verify every consumer landed
-the managed block.
-
-Usage:
-    python3 scripts/audit-pre-commit-coverage.py            # local fleet
-    python3 scripts/audit-pre-commit-coverage.py --source github
-    python3 scripts/audit-pre-commit-coverage.py --skip X Y
-
-Stdlib + PyYAML. Shells out to `gh` for the repo list (and contents in
-github mode).
-
-Exit code: 0 if every checked-out repo has full coverage, 1 otherwise.
+The expected set is the ids declared in this repo's `.pre-commit-hooks.yaml`,
+minus manual-only opt-ins. Walks every git working tree under ~/projects/<org>/*,
+or `--source github` to query the contents API. Override the root with
+$PROJECTS_ROOT. Run it after an apply-agentic-os-hooks.py sweep to verify every
+consumer landed the managed block.
 """
 from __future__ import annotations
 

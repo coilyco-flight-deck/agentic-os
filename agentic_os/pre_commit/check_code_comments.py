@@ -1,49 +1,17 @@
 #!/usr/bin/env python3
 """Keep code comments short, durable, and non-contiguous.
 
-Inline code documentation is allowed, but it must stay local and durable:
-up to two consecutive comment lines, each at most 90 characters. Longer
-explanations belong in docs/*.md and should be linked or referenced from
-code by a short pointer.
-
-A contiguous comment block at the very top of the file - the header above
-the first content line - is exempt from the two-line limit, so license and
-teaching headers are fine. The cap only governs comments after content
-begins. Shebang and encoding lines are part of the preamble, not content,
-so a header block may follow them.
-
-YAML is stricter: a key-sorter rearranges YAML lines, so a comment anywhere
-but the very top would drift away from whatever it described. YAML therefore
-allows comments only as that top header block - everything above the first
-content line. Once a content line appears, any later comment is a violation.
-
-Comment lines between ``# BEGIN managed by ...`` and ``# END managed by ...``
-are exempt in YAML. A generator owns every byte in that region, so a comment
-there cannot move to a top header without breaking the delimiters the rollout
-parses, and an in-repo edit is overwritten on the next rollout. Enforcement
-resumes at the END marker, which is what a whole-file exclude gave up.
-
-Two per-repo dials under ``[tool.agentic-os.code-comments]`` change the two
-paragraphs above, both defaulting off so no repo moves until it opts in:
-
-``header_cap = false``
-    Exempts the top-of-file header from the two-line cap again, for YAML and
-    KDL. On by default since #1119: the exemption let a header grow without
-    bound, which is where explanation accumulates once every other position
-    is capped, and for YAML the top block is also the only legal position.
-
-``yaml_comments_below_content = true``
-    Drops the YAML-only top-block restriction, so YAML takes the same capped
-    comments every other language does. The restriction exists solely because
-    ``yaml-strict`` sorts keys and would drift a comment off its target. A repo
-    that does not run that hook has no sorter, so the restriction only pushes
-    per-key rationale into one unbounded block at the top. Setting this while
-    ``yaml-strict`` is configured is refused rather than silently obeyed: that
-    combination sorts the keys and then strips the comments.
+Standalone comment lines take a char cap and a contiguous-block cap, and a module
+docstring takes its own line cap, because explanation belongs on a docs page
+where it is read rather than in a file where it is not. Python is classified by
+tokenize, so a hash inside a string is not a comment. YAML is stricter: a
+key-sorter drifts any comment below the header away from its target.
+Caps: docs/catalog-caps-reference.md.
 """
 
 from __future__ import annotations
 
+import ast
 import io
 import re
 import subprocess
@@ -63,6 +31,7 @@ REPO_ROOT = Path.cwd()
 HOOK_ID = "code-comments"
 MAX_COMMENT_LINE_CHARS = 90
 MAX_CONTIGUOUS_COMMENT_LINES = 2
+MAX_DOCSTRING_LINES = 8
 
 YAML_EXTS = {".yaml", ".yml"}
 
@@ -242,6 +211,38 @@ def skip_string(line: str, index: int) -> int:
     return index
 
 
+def docstring_violations(rel: Path, lines: list[str]) -> list[str]:
+    """Refuse a module docstring that is longer than a pointer.
+
+    A module docstring is where an agent puts an essay when the page it belongs
+    on does not exist yet, and nothing capped it until aosx grew a 458-line one.
+    Eight lines holds what the file is and where the rest lives. Per-line chars
+    take the comment-line cap, since both are the same kind of writing.
+    """
+    try:
+        tree = ast.parse("\n".join(lines))
+    except (SyntaxError, ValueError):
+        return []
+    text = ast.get_docstring(tree)
+    if not text:
+        return []
+    found: list[str] = []
+    body = text.splitlines()
+    if len(body) > MAX_DOCSTRING_LINES:
+        found.append(
+            f"{rel.as_posix()}:1: the module docstring is {len(body)} lines, "
+            f"over the {MAX_DOCSTRING_LINES}-line cap. Move the durable half to "
+            f"docs/ or guides/ and leave a pointer."
+        )
+    for offset, line in enumerate(body, start=1):
+        if len(line) > MAX_COMMENT_LINE_CHARS:
+            found.append(
+                f"{rel.as_posix()}:{offset}: docstring line is {len(line)} "
+                f"chars, over the {MAX_COMMENT_LINE_CHARS}-char cap."
+            )
+    return found
+
+
 def python_comment_lines(lines: list[str]) -> set[int] | None:
     """Line numbers holding a real COMMENT token, or None if the source will not parse.
 
@@ -413,6 +414,8 @@ def scan_lines(
     seen_content = False
     tracks_blocks = suffix in BLOCK_COMMENT_EXTS
     tokenized = python_comment_lines(lines) if suffix == ".py" else None
+    if suffix == ".py":
+        violations.extend(docstring_violations(rel, lines))
     in_block = False
     in_raw = False
     for line_no, line in enumerate(lines, start=1):

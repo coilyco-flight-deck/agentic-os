@@ -11,6 +11,7 @@ from pathlib import Path
 
 from agentic_os.pre_commit.check_code_comments import (
     MAX_COMMENT_LINE_CHARS,
+    MAX_DOCSTRING_LINES,
     scan_lines,
     sorts_yaml_keys,
 )
@@ -457,7 +458,8 @@ def test_markdown_headings_in_a_docstring_are_not_comments() -> None:
 
 def test_a_long_line_inside_a_docstring_is_not_capped() -> None:
     lines = ['"""Title.', "", "x" * (MAX_COMMENT_LINE_CHARS + 20), '"""', "", "z = 1"]
-    assert scan_lines(Path("m.py"), ".py", lines) == []
+    found = scan_lines(Path("m.py"), ".py", lines)
+    assert not any("comment line is" in v for v in found)
 
 
 def test_a_hash_line_inside_a_triple_quoted_string_is_not_a_comment() -> None:
@@ -473,3 +475,26 @@ def test_a_real_python_comment_block_still_counts() -> None:
 def test_unparsable_python_falls_back_to_the_prefix_scan() -> None:
     lines = ["def broken(", "x = 1", "# one", "# two", "# three", "y = 2"]
     assert len(scan_lines(Path("m.py"), ".py", lines)) == 1
+
+
+def test_a_docstring_past_the_line_cap_is_refused() -> None:
+    lines = ['"""Title.', ""] + ["prose"] * (MAX_DOCSTRING_LINES + 1) + ['"""', "z = 1"]
+    found = scan_lines(Path("m.py"), ".py", lines)
+    assert any("line cap" in v for v in found)
+
+
+def test_a_docstring_line_past_the_char_cap_is_refused() -> None:
+    lines = ['"""Title.', "", "x" * (MAX_COMMENT_LINE_CHARS + 1), '"""', "z = 1"]
+    found = scan_lines(Path("m.py"), ".py", lines)
+    assert any("docstring line is" in v for v in found)
+
+
+def test_a_function_docstring_is_not_capped() -> None:
+    body = ["    prose"] * (MAX_DOCSTRING_LINES + 4)
+    lines = ["def f():", '    """Title.', ""] + body + ['    """', "    return 1"]
+    assert scan_lines(Path("m.py"), ".py", lines) == []
+
+
+def test_an_ordinary_docstring_passes() -> None:
+    lines = ['"""Title.', "", "One paragraph of contract.", '"""', "z = 1"]
+    assert scan_lines(Path("m.py"), ".py", lines) == []

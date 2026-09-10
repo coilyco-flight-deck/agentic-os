@@ -1,32 +1,11 @@
 #!/usr/bin/env python3
 """Enforce the agent context-loading load-point framework, per-repo.
 
-The three harnesses (Claude Code, Codex CLI, OpenCode) each load context from
-the AGENTS.md / USER.md / CLAUDE.md tree. The framework says: one load point per
-harness, share by symlink never fork, and let Claude bridge to AGENTS.md
-through a one-line CLAUDE.md pointer. This hook enforces the
-slice of that framework that is visible inside a single repository:
-
-    1. Pure-pointer CLAUDE.md. A real (non-symlink) CLAUDE.md may contain only
-       `@import` lines and blank lines - no forked doctrine. CLAUDE.md is the
-       Claude->AGENTS bridge, not a place to restate operating context.
-
-    2. No forked intermediate rungs. AGENTS.md and CLAUDE.md may live at the
-       repo root only. A copy buried in a subdirectory is a forked rung that no
-       harness loads cleanly. The exceptions are sharing and illustration: a
-       symlink (the cross-harness sharing mechanism, e.g. an OpenCode workspace
-       symlinking AGENTS.md to canonical) is fine, and load-point filenames that
-       appear inside skill folders or examples/ trees are documentation, not
-       loaded rungs.
-
-    3. Require the canonical bridge. If the repo root has an AGENTS.md, it must
-       also have a CLAUDE.md whose sole import is `@AGENTS.md`, so Claude Code
-       always bridges from its load point into the shared doctrine.
-
-Opt out per-repo via config: set `enabled = false` under the
-[tool.agentic-os.context-load-points] section (e.g. a non-repository notes directory whose
-CLAUDE.md is deliberately a memory file, not a pointer). See
-docs/features-agents.md for the load-point overview.
+One load point per harness, share by symlink never fork, and let Claude bridge to
+AGENTS.md through a one-line CLAUDE.md pointer. Three rules bind inside a repo: a
+real CLAUDE.md holds only @import lines, AGENTS.md and CLAUDE.md live at the root
+only, and a root AGENTS.md requires a CLAUDE.md importing it. Opt out with
+`enabled = false` under [tool.agentic-os.context-load-points].
 """
 from __future__ import annotations
 

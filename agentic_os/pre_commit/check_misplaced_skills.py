@@ -1,28 +1,11 @@
 #!/usr/bin/env python3
-"""pre-commit hook: assert a repo does not host skills owned by another repo.
+"""Assert a repo does not host skills owned by another repo.
 
-Repo-specific skills - a ``coding-<repo>`` coding-context skill, a
-``repo-<name>`` pointer - belong inside the repo they describe, not in a shared
-operating-context repo like agentic-os-kai. This hook fails when a skill folder
-whose name matches a configured ``deny`` glob (minus ``allow`` exceptions) is
-present in the repo's skills surface.
-
-Opt-in and generalizable: it ships in the suite and fires in every consumer
-repo, but no-ops unless the repo declares ``[tool.agentic-os.misplaced-skills]``
-in ``pyproject.toml`` (or ``.agentic-os.toml``). A repo that legitimately hosts
-``coding-<lang>`` skills (e.g. agentic-os itself) simply omits the config.
-
-Config (pyproject.toml):
-
-    [tool.agentic-os.misplaced-skills]
-    deny = ["coding-*", "repo-*"]    # skill-name globs that may not live here
-    allow = ["repo-agentic-os-kai"]  # exceptions kept on purpose
-
-A skill is flagged when its folder name matches a ``deny`` glob and no ``allow``
-glob. Symlinked skill folders are skipped - a symlink is sourced from another
-repo, not hosted here.
-
-Schema and rollout: see docs/skill-discipline-authoring.md.
+A `coding-<repo>` or `repo-<name>` skill belongs inside the repo it describes,
+not in a shared operating-context repo. Opt-in: it ships in the suite and no-ops
+unless the repo declares [tool.agentic-os.misplaced-skills] with `deny` globs and
+optional `allow` exceptions. Symlinked folders are skipped, since a symlink is
+sourced elsewhere. Schema and rollout: docs/skill-discipline-authoring.md.
 """
 from __future__ import annotations
 

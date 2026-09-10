@@ -1,20 +1,8 @@
 #!/usr/bin/env python3
-"""
-Validator for a repo's skill directory surface.
+"""Validator for a repo's skill directory surface.
 
-Enforces structural rules driven by the skill directory's categories.yaml.
-The consumer-facing handbook is shipped alongside this script in
-agentic-os/docs/skill-discipline-handbook.md.
-
-Usage (when run directly):
-    check-skills              # validate every skill
-    check-skills <name> ...   # validate only the named skills
-    check-skills --report-only  # exit 0 even on failures
-
-Canonical copy lives in coilyco-flight-deck/agentic-os/scripts/. Each consumer
-repo gets a stamped copy via agentic-os-kai's apply-skill-discipline-hooks
-rollout. Exits 0 on success, 1 on any failure with a per-violation report
-on stderr.
+Enforces the structural rules driven by the skill directory's categories.yaml.
+The consumer-facing handbook is docs/skill-discipline-handbook.md.
 """
 
 from __future__ import annotations

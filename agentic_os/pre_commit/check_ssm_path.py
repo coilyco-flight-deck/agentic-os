@@ -1,26 +1,10 @@
 #!/usr/bin/env python3
 """Validate SSM parameter paths against the /<org>/<repo>/<tier>/<tail> schema.
 
-Schema (coilysiren fleet):
-
-    /<org>/<repo>/<tier>/<tail>
-
-    org   controlled vocabulary; currently the literal "coilysiren"
-    repo  lowercase repo slug, [a-z0-9-]+
-    tier  access tier: admin | write | read
-    tail  freeform leaf, [a-z0-9-]+ (single segment, no further slashes)
-
-Exactly four segments, leading slash, every segment lowercase. The tier
-segment is load-bearing: IAM gates on parameter/*/*/<tier>/* and the per-tier
-KMS keys wrap by the same position, so a malformed path silently falls outside
-every tier policy instead of failing loudly. Validating the shape up front is
-the cheap guard against that.
-
-Usage:
-    check-ssm-path /coilysiren/backend/write/ts-authkey [more paths...]
-    check-ssm-path --stdin    # one path per line on stdin
-
-Origin: SSM path-tier convention (coilysiren fleet).
+Exactly four lowercase segments with a leading slash. The tier segment is
+load-bearing: IAM gates on parameter/*/*/<tier>/* and the per-tier KMS keys wrap
+by the same position, so a malformed path falls silently outside every tier
+policy instead of failing loudly.
 """
 
 from __future__ import annotations

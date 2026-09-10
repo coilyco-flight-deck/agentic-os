@@ -1,17 +1,10 @@
 #!/usr/bin/env python3
 """Sync Forgejo Actions secrets from their SSM sources of truth.
 
-Repo Actions secrets (Telegram alert credentials, promote/release PAT,
-package-repository writers, housecast's PyPI upload token, and deploy's
-pin-reconciler pair) are write-only in Forgejo, so drift shows up as
-silently-dead alert, publication, or auto-deploy steps. This makes the mapping explicit and re-applying it one verb:
-`just sync-actions-secrets` (add `-- --dry-run` to preview).
-
-Entries are keyed `owner/repo`, so the mapping spans orgs.
-
-Values never touch disk or argv: read from SSM with the AWS CLI, PUT straight
-to the Forgejo secrets API, authenticated by the attended
-``FORGEJO_ADMIN_TOKEN`` value.
+Actions secrets are write-only in Forgejo, so drift shows up as a silently dead
+alert, publication, or auto-deploy step. Entries are keyed `owner/repo`, so the
+mapping spans orgs. Values never touch disk or argv: read from SSM with the AWS
+CLI, PUT straight to the secrets API.
 """
 from __future__ import annotations
 

@@ -1,50 +1,12 @@
 #!/usr/bin/env python3
-"""Roll out the coilyco-flight-deck/agentic-os pre-commit hook suite to every catalog repo.
+"""Roll out the agentic-os pre-commit hook suite to every catalog repo.
 
-Inserts (or refreshes) a single managed `repo: <forgejo>/coilyco-flight-deck/agentic-os`
-block in each consumer's `.pre-commit-config.yaml`. Block is delimited by marker
-comments so re-runs are idempotent. Replaces the older per-hook stamping
-rollouts that lived in coilyco-bridge/agentic-os-kai/scripts/.
-
-For each repo checked out under ~/projects/<org>/<name> across every org dir
-(coilysiren, coilyco-bridge, coilyco-flight-deck, post org-migration):
-  1. Read or create `.pre-commit-config.yaml`.
-  2. Strip legacy stamped `repo: local` blocks for the hooks now centralized
-     here (catalog-doc-size, catalog-trifecta,
-     documentation-placement, documentation-size, code-comments, check-skills, dead-cross-links,
-     skill-discipline).
-  3. Insert/refresh the managed block: the agentic-os hook set plus the
-     standard hygiene hooks, actionlint, Forgejo Runner validation, shellcheck,
-     and typos. The actionlint hook takes `-config-file` only where the
-     consumer ships `.github/actionlint.yaml` (see `actionlint_args`).
-  4. Insert/refresh the managed `.gitattributes` block pinning the working
-     tree to LF. See docs/pre-commit-hygiene.md.
-  5. Run `pre-commit install` for pre-commit, commit-msg, prepare-commit-msg,
-     and pre-push. pre-push carries pr-guard, and omitting it left that hook
-     with nowhere to run on every consumer (agentic-os#1382).
-
-Pin a package tag with `--rev`. Default tracks the latest aos-precommit release.
-
-Usage:
-    python3 scripts/apply-agentic-os-hooks.py             # apply to all
-    python3 scripts/apply-agentic-os-hooks.py --dry-run   # show plan
-    python3 scripts/apply-agentic-os-hooks.py --repo X    # one repo
-    python3 scripts/apply-agentic-os-hooks.py --skip X Y  # exclude
-    python3 scripts/apply-agentic-os-hooks.py --rev aos-precommit-v0.2.0
-
-A repo carrying a .agentic-os-ignore file at its root is skipped entirely
-(declarative, repo-owned opt-out). Use --skip for one-off exclusions, the
-marker for durable ones. Honored fail-closed: presence skips, no override.
-An org dir listed in VENDOR_ORGS is skipped whole: those are upstream
-checkouts nobody here owns.
-
-Drives off the on-disk checkout set via agentic_os.config.iter_workspace_repos
-(every git working tree under ~/projects/<org>/*), so it is owner-agnostic:
-the org migration of active repos to coilyco-bridge / coilyco-flight-deck no
-longer strands them the way a single hardcoded root did. Override the root
-with $PROJECTS_ROOT (e.g. PROJECTS_ROOT=X:/projects on Windows, where the
-workspace lives off the home drive). See the workspace-root rollout notes and
-the convention design in docs/release.md.
+Inserts or refreshes one managed block in each consumer's
+`.pre-commit-config.yaml`, delimited by marker comments so re-runs are
+idempotent, plus the managed `.gitattributes` block pinning the tree to LF. It
+drives off the on-disk checkout set, so it is owner-agnostic; override the root
+with $PROJECTS_ROOT. A repo carrying `.agentic-os-ignore` is skipped fail-closed.
+See docs/pre-commit-hygiene.md.
 """
 from __future__ import annotations
 

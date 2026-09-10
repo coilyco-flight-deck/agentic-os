@@ -1,55 +1,12 @@
 #!/usr/bin/env python3
 """Generate and check the managed git-workflow block in a repo's AGENTS.md.
 
-Every repo's landing lane is declared once, as `ward.workflow` in the AGENTS.md
-frontmatter, and was then restated by hand in a one-line `**Git workflow** -`
-stamp under `## Agent rules`. Hand-stamped, it said what the lane was without
-ever saying that the lane is a standing authorization, so an agent reading it
-still treated a commit, a branch, a push, or a pull request as an action worth
-stopping to ask about. A turn that stops there ends with the work stranded in a
-dirty worktree, which is the loss vector agentic-os#1150 records.
-
-This module is the single source of truth for that stamp, rendered as a
-marker-delimited managed block. It mirrors `generate_agents_pointer`: a pure,
-deterministic renderer plus a `check_drift` the validator (`check_git_workflow`)
-uses to regenerate offline and fail on any drift. The applier
-(`scripts/apply-git-workflow.py`) injects or refreshes the block in place.
-
-The block names the one lane the fleet runs, `pull-request-and-merge`, says which
-lane this repo declares, and states the pre-authorization in MUST / ALWAYS / NEVER
-terms, so an agent that has read it never needs to ask whether committing or
-pushing is allowed here. The two genuine walls, `--no-verify` and force-push, stay
-closed in the same breath, so the block reads as a boundary rather than a blanket.
-
-`merge-remote-main` was retired here. It was the lane that let an agent push the
-default branch directly, and pushing straight to `main` ended fleet-wide. Removing
-the slug from `LANES` is what makes it unrenderable: a repo declaring it now reads
-as undeclared and gets the guarded `pull-request` shape rather than a direct push.
-One repo still declares it and keeps it deliberately, `coilysiren/coilysiren`. That
-one is GitHub-canonical, carries `.agentic-os-ignore`, wires no catalog hooks, and
-holds no managed block, so nothing here renders or validates its frontmatter.
-
-Every slug names what the AGENT does, and the block says so outright because
-the first two drafts of this generator got it backwards. `pull-request-and-merge`
-carries the merge because the agent that authored the code merges its own pull
-request, which makes it the fully autonomous lane rather than the gated one.
-`pull-request` drops `-and-merge` because the author stops at the pull request
-and the director merge lane takes over. Ward's `agent_director_merge` currently
-gates director merges on the opposite slug, so its behavior contradicts this
-until someone reconciles it.
-
-Every repo with a root AGENTS.md gets the block, org-agnostic and with no base
-repo exempt. A lane binds the agent in the canonical base exactly as it binds
-one in a consumer, unlike the workspace pointer, which a base does not owe
-itself. A repo that declares no lane renders the `pull-request` variant, the
-one lane that neither pushes `main` nor merges, rather than guessing at an
-authority the repo never granted.
-
-`--print-lane` exists because `scripts/pr-guard-pre-push.sh` is bash and
-needs the same answer this module already owns, rather than a second
-frontmatter parser of its own (agentic-os#1321).
-
-Schema and rollout: see docs/features-agents.md.
+A lane declared once as `ward.workflow` was then hand-stamped in one line that
+said what the lane was without saying it is a standing authorization, so an agent
+still treated a commit or a push as worth stopping to ask about, and the turn
+ended with work stranded in a dirty worktree (agentic-os#1150). The block states
+the pre-authorization in MUST and NEVER terms, with `--no-verify` and force-push
+closed in the same breath. See docs/git-workflow-lanes.md.
 """
 
 from __future__ import annotations

@@ -1,20 +1,10 @@
 #!/usr/bin/env python3
 """Cap the size of AGENTS.COMPOSE.md sources, per file and per repo.
 
-AGENTS.COMPOSE.md sources are composed into always-loaded global context,
-shared across harnesses by default and sliced
-when frontmatter requires it. Their size matters in a way ordinary docs do not.
-The general documentation-layout hook already caps each Markdown file. The
-value this hook adds is the per-repo AGGREGATE budget: the sum of all
-AGENTS.COMPOSE.md a repo contributes to composed context, which no per-file cap
-bounds.
-
-Caps (override per-repo under [tool.agentic-os.agent-compose-size]):
-    max_source_chars  - per AGENTS.COMPOSE.md file (default 4000)
-    max_total_chars   - sum across the repo's AGENTS.COMPOSE.md (default 12000)
-
-Opt out with `enabled = false` under the same section. Frontmatter is counted:
-it is small and bounding the raw file keeps the check simple and conservative.
+documentation-layout already caps each Markdown file. What this adds is the
+per-repo AGGREGATE budget, which no per-file cap bounds, since these compose into
+always-loaded global context. Tunables under [tool.agentic-os.agent-compose-size]:
+max_source_chars (4000), max_total_chars (12000), and `enabled = false`.
 """
 from __future__ import annotations
 

@@ -1,30 +1,11 @@
 #!/usr/bin/env python3
-"""
-Outbound link hygiene, offline.
+"""Outbound link hygiene, offline.
 
-`dead-cross-links` validates repo-relative targets and returns early on
-anything carrying a scheme, so every outbound link in the estate was unchecked.
-This hook takes the other half: links that leave the repository. It stays
-offline because pre-commit must not depend on the network, so it does static
-analysis only and never fetches. Liveness is `agentic_os/link_liveness.py`,
-a scheduled job rather than a commit hook.
-
-Four checks, all driven by `agentic_os/outbound_link_rules.json`:
-
-1. Retired names and paths. A rename edits the table, not this file.
-2. Canonical host per link class, when the repo declares one.
-3. Link text that names one project while the target names another.
-4. Placeholder and local URLs.
-
-Use versus mention. Fenced code and inline code are stripped before the name
-scan, so a doc narrating a rename writes the retired name in backticks and a
-doc still *using* it does not. That is the whole exemption mechanism for
-checks 1 and 4, and it is why paths that legitimately keep a pre-rename spelling
-(SSM parameters, IAM ARNs) pass without an allowlist.
-
-Scope: Markdown and HTML. Per-repo `excludes` and `canonical_repo_host` live
-under `[tool.agentic-os.outbound-link-hygiene]`. Exits 0 clean, 1 with a
-per-violation report on stderr.
+`dead-cross-links` returns early on anything carrying a scheme, so every outbound
+link was unchecked. This takes the other half, statically and without fetching,
+with liveness left to link_liveness.py. Four checks driven by
+outbound_link_rules.json: retired names and paths, canonical host, link text
+naming a different project than its target, and placeholder URLs.
 """
 
 from __future__ import annotations

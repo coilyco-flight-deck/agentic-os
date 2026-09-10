@@ -1,22 +1,11 @@
 #!/usr/bin/env python3
 """Apply public-safe base preference keys into ~/.claude/settings.json.
 
-Holds the fleet-wide, public-safe Claude Code settings keys that every host
-gets regardless of whether the private bridge overlay is present. Auto-memory
-is off because point-in-time memory drifts. The TUI is fullscreen because that
-is the fleet default, with CLAUDE_CODE_NO_FLICKER=0 as the per-host opt-out. Claude in Chrome is denied because
-browser computer-use should be an explicit session opt-in. The permission deny
-list keeps live-infrastructure CLIs and the memory directory out of an agent's
-raw shell.
-
-Additive and key-scoped: it sets only the keys it owns and preserves every
-other key verbatim, so the harness, ward, and the bridge merge can all keep
-touching the same file. Idempotent, stdlib only, atomic write. Run by the
-claude-hooks ansible role on every host.
-
-Usage:
-    scripts/apply-base-claude-settings.py            # write the merged settings
-    scripts/apply-base-claude-settings.py --dry-run  # print the result, do not write
+The fleet-wide keys every host gets whether or not the private overlay is
+present. Auto-memory is off because point-in-time memory drifts, and Claude in
+Chrome is denied because browser computer-use should be a session opt-in.
+Additive and key-scoped: it sets only the keys it owns and preserves the rest
+verbatim, so the harness, ward and the bridge merge can share the file.
 """
 from __future__ import annotations
 

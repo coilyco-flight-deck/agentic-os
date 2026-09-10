@@ -1,32 +1,11 @@
 #!/usr/bin/env python3
 """Seed-skill definitions: which skills propagate into target repos.
 
-qwen-opencode's per-repo context management wants a small amount of language
-context living inside each target repo. A composed coding source opts into
-that propagation with a ``seed:`` block in its COMPOSED.md frontmatter:
-
-    seed:
-      kind: always                    # seed into every target repo (baseline)
-
-    seed:
-      kind: language
-      language: python
-      extensions: [".py", ".pyi"]     # seed into repos containing these files
-
-agentic-os is the source of truth. The role-gated ``coding-<lang>`` sources
-carry the frontmatter. The ``seed-skills`` hook runs in consumer repos without
-this source tree, so ``generate-seed-skills`` writes the table into
-``seed_skills_data.py`` for the package. ``check-seed-skills-drift`` fails when
-that generated file is stale and is dogfooded in agentic-os only.
-
-Downstream repos reference a seeded skill by its canonical path,
-``.agents/skills/coding-python/SKILL.md`` (as a relative ref or under the full
-``forgejo.coilysiren.me/coilyco-flight-deck/agentic-os`` URL). The presence
-check also accepts the canonical composed source path. ``canonical_ref`` builds
-the delivered path tail, ``source_ref`` builds the source path tail, and
-``suggested_url`` builds the full Forgejo URL shown in guidance.
-
-Schema and rollout: see docs/skill-discipline-authoring.md.
+A composed coding source opts in with a `seed:` block in its COMPOSED.md
+frontmatter, either `kind: always` for a baseline or `kind: language` with a
+language and extensions. The seed-skills hook runs in consumer repos without this
+source tree, so generate-seed-skills writes the table into seed_skills_data.py
+and check-seed-skills-drift fails when it goes stale.
 """
 from __future__ import annotations
 

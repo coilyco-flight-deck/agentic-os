@@ -1,31 +1,11 @@
 #!/usr/bin/env python3
 """Inject or refresh the managed workspace-pointer block in each repo's AGENTS.md.
 
-Authored side of the AGENTS.md pointer convention. The pure renderer and the
-drift check live in `agentic_os.generators.generate_agents_pointer`; this script is the
-applier that writes the block into a repo's `AGENTS.md` in place. Idempotent:
-re-runs replace the prior managed block and strip known legacy intro lines, so
-running it twice is a no-op.
-
-Org-aware (each org points at its own base, on the host fitting its trust tier):
-  coilyco-flight-deck/* -> public base on GitHub.
-  coilyco-bridge/*      -> public base on GitHub + private agentic-os-kai overlay
-                           on Forgejo, layered.
-Unmanaged orgs (coilysiren/*, non-coilyco remotes) and the canonical base repos
-themselves (agentic-os, agentic-os-kai) are skipped.
-
-This is the AUTHORED tool. The fleet rollout that lands the block on each
-managed repo's canonical `main` is `scripts/agents-pointer-migrate.py` in
-infrastructure (`just agents-pointer-migrate`), per the authoring-vs-rollout
-split - not this script run by hand across the fleet. (The earlier report-only
-ansible `agents-pointer` role was retired in infrastructure#362.)
-
-Usage:
-    python3 scripts/apply-agents-pointer.py --dry-run   # show the plan
-    python3 scripts/apply-agents-pointer.py             # apply to all managed repos
-    python3 scripts/apply-agents-pointer.py --repo luca # one repo by name
-
-See docs/features-agents.md.
+The authored applier; the renderer and drift check live in
+agentic_os.generators.generate_agents_pointer. Idempotent and org-aware: each org
+points at its own base on the host fitting its trust tier, and unmanaged orgs
+plus the canonical base repos are skipped. The fleet rollout is
+agents-pointer-migrate.py in infrastructure. See docs/features-agents.md.
 """
 
 from __future__ import annotations

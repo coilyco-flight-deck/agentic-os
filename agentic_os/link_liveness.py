@@ -1,22 +1,11 @@
 #!/usr/bin/env python3
-"""
-Outbound link liveness. Network-dependent, so never a commit hook.
+"""Outbound link liveness. Network-dependent, so never a commit hook.
 
-`outbound-link-hygiene` is the offline half and runs at commit time. Actually
-fetching every outbound URL is slow, flaky, and needs the network, so this half
-ships as a CLI for a scheduled job to invoke and is deliberately absent from
-`.pre-commit-hooks.yaml`, alongside the other authored-but-not-hooked
-validators listed there.
-
-Three rules the job depends on:
-
-* report only non-2xx and non-3xx, so a redirect is a pass rather than a diff
-* tolerate rate limiting, so 429 and a transport error are noted and not failed
-* report, never edit. A link checker that opens pull requests against prose is
-  worse than one that files a report.
-
-Reuses the offline extractor, so both halves see the same set of links.
-Exits 0 when nothing is dead, 1 with a report on stderr otherwise.
+`outbound-link-hygiene` is the offline half that runs at commit time. This half
+ships as a CLI for a scheduled job. Three rules the job depends on: report only
+non-2xx and non-3xx so a redirect passes, tolerate rate limiting so 429 and a
+transport error are noted rather than failed, and report never edit. Reuses the
+offline extractor, so both halves see the same links.
 """
 
 from __future__ import annotations
