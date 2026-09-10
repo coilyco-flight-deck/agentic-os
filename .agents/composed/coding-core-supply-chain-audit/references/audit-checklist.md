@@ -12,7 +12,7 @@ Use `gh api orgs/<name>` for orgs, `gh api users/<name>` for individuals. Verify
 - Public-facing identity matches stated identity. Cross-check `blog`, `homepage`, `email`, `twitter_username`, `bio`. Look for the org's website actually existing.
 - Org type makes sense (Organization vs User account; "Organization" alone doesn't mean verified).
 - Public_repos count is non-zero and the repos look real, not all-empty.
-- For *named individuals* mentioned in the bio: search for them. AWS Heroes, IETF authors, OSS maintainers of well-known projects, conference speakers all leave fingerprints. If the bio claims a named credential ("AWS ML Hero", "IETF chair", "Apache committer"), spot-check at least one.
+- For **named individuals** mentioned in the bio: search for them. AWS Heroes, IETF authors, OSS maintainers of well-known projects, conference speakers all leave fingerprints. If the bio claims a named credential ("AWS ML Hero", "IETF chair", "Apache committer"), spot-check at least one.
 
 ### 2. Maintainer activity
 

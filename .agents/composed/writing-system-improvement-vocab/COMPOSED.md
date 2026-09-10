@@ -25,7 +25,7 @@ Reach for it when: the search space is too large or fast-moving for human tuning
 
 ### Continuous comprehension - "stay current with the system you actually have"
 
-**Human practice (system-supported).** Maintain an ongoing, accurate mental model of a system that is changing faster than periodic review can keep up with. Weekly architecture retros, ensemble programming, AI-assisted code-comprehension tools. Output is updated *understanding*, not updated code. (Thoughtworks term, Feb 2026 retreat.)
+**Human practice (system-supported).** Maintain an ongoing, accurate mental model of a system that is changing faster than periodic review can keep up with. Weekly architecture retros, ensemble programming, AI-assisted code-comprehension tools. Output is updated **understanding**, not updated code. (Thoughtworks term, Feb 2026 retreat.)
 
 Reach for it when: code review is no longer a viable learning channel because change rate is too high. Post-AI-codegen environments. New team members in fast-moving codebases.
 
