@@ -215,6 +215,11 @@ DEFAULT_HOOK_IDS = [
     "agent-compose-dedup",
     "trufflehog",
     "pr-guard",
+    # Three that enforce rules the global AGENTS.md already binds everywhere,
+    # wired here since #937 and rolled out only now. Consumers see new failures.
+    "brand-case",
+    "leak-guard",
+    "unresolved-placeholder-guard",
     # Added last: aos wired this one locally and consumers never got it, so the
     # block drifted everywhere while the authoring repo stayed current (#937).
     "git-workflow",
