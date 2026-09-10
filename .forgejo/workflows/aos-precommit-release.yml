@@ -1,5 +1,5 @@
-# Release aos-precommit only when its installed hook surface changes. The
-# promoted release branch is already repository-gated, matching dev-base.
+# Release aos-precommit only when its installed hook surface changes, which
+# includes the package-data contracts a hook reads from the installed package.
 
 name: aos-precommit-release
 
@@ -10,6 +10,8 @@ on:
       - ".pre-commit-hooks.yaml"
       - "agentic_os/__init__.py"
       - "agentic_os/config.py"
+      - "agentic_os/*.json"
+      - "agentic_os/*.yaml"
       - "agentic_os/generators/**"
       - "agentic_os/pre_commit/**"
       - "agentic_os/seed_skills_data.py"
