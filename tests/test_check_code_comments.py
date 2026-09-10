@@ -448,3 +448,28 @@ def test_a_slash_star_after_a_closed_raw_string_still_opens() -> None:
         "func main() {}",
     ]
     assert scan_lines(Path("f.go"), ".go", lines)
+
+
+def test_markdown_headings_in_a_docstring_are_not_comments() -> None:
+    lines = ['"""Title.', "", "## One", "## Two", "## Three", '"""', "", "z = 1"]
+    assert scan_lines(Path("m.py"), ".py", lines) == []
+
+
+def test_a_long_line_inside_a_docstring_is_not_capped() -> None:
+    lines = ['"""Title.', "", "x" * (MAX_COMMENT_LINE_CHARS + 20), '"""', "", "z = 1"]
+    assert scan_lines(Path("m.py"), ".py", lines) == []
+
+
+def test_a_hash_line_inside_a_triple_quoted_string_is_not_a_comment() -> None:
+    lines = ["SQL = '''", "# one", "# two", "# three", "'''", "z = 1"]
+    assert scan_lines(Path("m.py"), ".py", lines) == []
+
+
+def test_a_real_python_comment_block_still_counts() -> None:
+    lines = ["x = 1", "# one", "# two", "# three", "y = 2"]
+    assert len(scan_lines(Path("m.py"), ".py", lines)) == 1
+
+
+def test_unparsable_python_falls_back_to_the_prefix_scan() -> None:
+    lines = ["def broken(", "x = 1", "# one", "# two", "# three", "y = 2"]
+    assert len(scan_lines(Path("m.py"), ".py", lines)) == 1

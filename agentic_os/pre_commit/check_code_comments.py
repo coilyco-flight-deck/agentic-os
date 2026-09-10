@@ -41,11 +41,14 @@ paragraphs above, both defaulting off so no repo moves until it opts in:
     ``yaml-strict`` is configured is refused rather than silently obeyed: that
     combination sorts the keys and then strips the comments.
 """
+
 from __future__ import annotations
 
+import io
 import re
 import subprocess
 import sys
+import tokenize
 from pathlib import Path
 
 from agentic_os.config import (
@@ -72,13 +75,12 @@ YAML_SORTER_HOOK = "yaml-strict"
 
 # Header of a `|`/`>` block scalar (`run: |`, `- |`). Lines indented under it
 # are string content, so a leading `#` there is bash, not a YAML comment.
-_BLOCK_SCALAR_HEADER = re.compile(
-    r"(?::|^\s*-)\s*[|>][0-9+-]*\s*(?:#.*)?$"
-)
+_BLOCK_SCALAR_HEADER = re.compile(r"(?::|^\s*-)\s*[|>][0-9+-]*\s*(?:#.*)?$")
 
 
 def starts_block_scalar(line: str) -> bool:
     return bool(_BLOCK_SCALAR_HEADER.search(line))
+
 
 LINE_COMMENT_PREFIXES = {
     ".bash": ("#",),
@@ -240,6 +242,25 @@ def skip_string(line: str, index: int) -> int:
     return index
 
 
+def python_comment_lines(lines: list[str]) -> set[int] | None:
+    """Line numbers holding a real COMMENT token, or None if the source will not parse.
+
+    A `#` inside a string is not a comment and a line-prefix scan cannot tell the
+    difference, so Python is classified by its own tokenizer rather than by shape.
+    Returns None rather than a guess when tokenizing fails, so the caller falls
+    back to the prefix scan on a file it could not read.
+    """
+    try:
+        stream = io.StringIO("\n".join(lines)).readline
+        return {
+            token.start[0]
+            for token in tokenize.generate_tokens(stream)
+            if token.type == tokenize.COMMENT
+        }
+    except (tokenize.TokenError, IndentationError, SyntaxError, ValueError):
+        return None
+
+
 def is_comment_line(
     line: str,
     suffix: str,
@@ -322,9 +343,7 @@ def scan_yaml(
                 # would otherwise reset the streak and uncap the whole block.
                 header_lines += 1
                 if header_cap and header_lines == MAX_CONTIGUOUS_COMMENT_LINES + 1:
-                    violations.append(
-                        header_cap_violation(rel, line_no, header_lines)
-                    )
+                    violations.append(header_cap_violation(rel, line_no, header_lines))
             elif not comments_below_content:
                 violations.append(
                     f"{rel.as_posix()}:{line_no}: YAML comment below the top header "
@@ -393,6 +412,7 @@ def scan_lines(
     streak_len = 0
     seen_content = False
     tracks_blocks = suffix in BLOCK_COMMENT_EXTS
+    tokenized = python_comment_lines(lines) if suffix == ".py" else None
     in_block = False
     in_raw = False
     for line_no, line in enumerate(lines, start=1):
@@ -402,9 +422,19 @@ def scan_lines(
             in_block, in_raw = block_state_after(
                 line, suffix, opened_in_block, opened_in_raw
             )
-        if opened_in_raw or not is_comment_line(
-            line, suffix, line_no, opened_in_block
-        ):
+        if tokenized is not None:
+            # A trailing comment shares its line with code, and every cap here
+            # is written for a standalone one. Both signals have to agree.
+            commented = (
+                line_no in tokenized
+                and line.lstrip().startswith("#")
+                and not is_shebang_or_encoding(line, line_no)
+            )
+        else:
+            commented = not opened_in_raw and is_comment_line(
+                line, suffix, line_no, opened_in_block
+            )
+        if not commented:
             if line.strip() != "" and not is_shebang_or_encoding(line, line_no):
                 seen_content = True
             streak_start = None
