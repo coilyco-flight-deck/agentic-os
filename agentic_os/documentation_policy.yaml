@@ -17,7 +17,7 @@ repos:
     excludes:
     - SSM.md
   agentic-os-hardware:
-    band: small
+    band: micro # its info lives primarily in skills
   agentic-os-kai:
     band: large
     excludes:
@@ -63,13 +63,13 @@ repos:
     - eco-server/
     - eco-server/**
   lore:
-    band: micro # the actual content lives inside skills
+    band: micro # its info lives primarily in skills
   sirens-echo:
     band: large
   steam-ops:
     band: small
   voice-corpus:
-    band: micro # the actual content lives inside skills
+    band: micro # its info lives primarily in skills
   website:
     band: large
     excludes:
