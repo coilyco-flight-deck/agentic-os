@@ -31,7 +31,7 @@ Reach for it when: code review is no longer a viable learning channel because ch
 
 ### Meta-improvement - "fix the opaqueness first, then the bug"
 
-**Human practice (priority heuristic).** When an object-level problem surfaces, ask whether the system that produced it can be improved so the same class of problem becomes cheaper to handle next time. Output is changes to tools, wrappers, docs, skills, AGENTS.md, error messages, structured fields. Agency is the engineer's; the artifact is the surrounding workflow, not the running system.
+**Human practice (priority heuristic).** When an object-level problem surfaces, ask whether the system that produced it can be improved so the same class of problem becomes cheaper to handle next time. Output is changes to tools, wrappers, docs, skills, AGENTS.md, error messages, structured fields. Agency is the engineer's. The artifact is the surrounding workflow, not the running system.
 
 Reach for it when: a recurring or recurring-shaped class of friction is showing up. Low priority -> meta first. Medium -> alongside. High -> object-level fix now, meta as immediate follow-up. See AGENTS.md "Meta-improvement bias."
 
