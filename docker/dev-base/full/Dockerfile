@@ -10,7 +10,7 @@ FROM ${LANG_DOTNET_IMAGE} AS dev-base-lang-dotnet-graft
 FROM ${LANG_PYTHON_IMAGE} AS dev-base-lang-python-graft
 
 FROM ubuntu:24.04 AS dev-base-tool-builder
-ARG UMBRA_VERSION=0.192.0
+ARG UMBRA_VERSION=0.218.0
 ARG AOS_VERSION=0.213.0
 ARG TARGETARCH
 ARG DEBIAN_FRONTEND=noninteractive
@@ -47,6 +47,7 @@ COPY --from=aosguard-spec . /tmp/aosguard-spec
 COPY --from=aosguard-python . /tmp/aosguard-python/agentic_os
 RUN set -eux; \
     umbra --project-root /tmp/aosguard-spec/guardfiles \
+      --guardfile /tmp/aosguard-spec/guardfiles/aosguard/forgejo.kdl \
       --skills-out /opt/agentic-os/aosguard-skill build \
       --set-version "dev-base" --out /usr/local/bin/aosguard; \
     chmod 0755 /usr/local/bin/aosguard; \
