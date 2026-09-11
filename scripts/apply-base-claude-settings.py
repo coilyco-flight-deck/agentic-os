@@ -31,8 +31,8 @@ BASE_SETTINGS: dict = {
 }
 BASE_DENIED_MCP_SERVERS = [{"serverName": "claude-in-chrome"}]
 
-# Fleet-wide permission denies: live-infrastructure CLIs, the GitHub pull-request
-# write surface, and the memory dir. See docs/native-claude-credentials.md.
+# Fleet-wide permission denies: live-infrastructure CLIs that belong to a
+# guarded verb, plus the memory dir. See docs/native-claude-credentials.md.
 BASE_DENIED_PERMISSIONS = [
     "Bash(gcloud *)",
     "Bash(kubectl *)",
@@ -41,16 +41,6 @@ BASE_DENIED_PERMISSIONS = [
     "Bash(gsutil *)",
     "Bash(mongosh *)",
     "Bash(mongo *)",
-    # Fail-closed backstop under github-pr-guard.sh, which owns the refusal
-    # text. `:*` rather than ` *` so the bare interactive spelling matches too.
-    "Bash(gh pr create:*)",
-    "Bash(gh pr merge:*)",
-    "Bash(gh pr edit:*)",
-    "Bash(gh pr close:*)",
-    "Bash(gh pr reopen:*)",
-    "Bash(gh pr ready:*)",
-    "Bash(gh pr review:*)",
-    "Bash(gh pr comment:*)",
     "Edit(**/.claude/projects/**/memory/**)",
 ]
 
@@ -59,6 +49,16 @@ BASE_DENIED_PERMISSIONS = [
 RETIRED_DENIED_PERMISSIONS = [
     # Edit(path) rules cover every file-editing tool. Write(path) matches nothing.
     "Write(**/.claude/projects/**/memory/**)",
+    # The GitHub pull-request guard moved to umbra: the guarded binary refuses
+    # and states why, so the harness needs no opinion about `gh`.
+    "Bash(gh pr create:*)",
+    "Bash(gh pr merge:*)",
+    "Bash(gh pr edit:*)",
+    "Bash(gh pr close:*)",
+    "Bash(gh pr reopen:*)",
+    "Bash(gh pr ready:*)",
+    "Bash(gh pr review:*)",
+    "Bash(gh pr comment:*)",
 ]
 
 # No fleet allow rule. Prompt suppression is defaultMode's job, not an allow
