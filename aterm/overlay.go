@@ -43,6 +43,7 @@ type overlaySoundMark struct {
 type overlayPersonality struct {
 	Name      string           `json:"name"`
 	Species   string           `json:"species,omitempty"`
+	ColorWord string           `json:"color_word,omitempty"`
 	Color     string           `json:"color"`
 	Motif     string           `json:"motif"`
 	Geometry  string           `json:"geometry"`
