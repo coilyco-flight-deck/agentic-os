@@ -148,8 +148,24 @@ band = "large"
 # search because the shorthand was coined at ask-time and never appeared in the
 # turn that described the option (teable:coilyco-flight-deck/agentic-os#7244).
 # Headroom stays at 15 chars, because the back-pressure above is the point.
-agents_md_max_lines = 242
-agents_md_max_chars = 34790
+#
+# Raised 242 to 244 lines and 34790 to 35832 chars on 2026-09-11 for one rule,
+# every line being a state a reader can act on. It binds every session and every
+# role: any seat writes a status, a relay, a handoff or a finding, and all four
+# fail the same way, as prose whose one actionable fact sits mid-paragraph where
+# a scanning reader never reaches it. No role source can hold it, because it
+# fires on the message that ends a turn rather than on the kind of work the turn
+# did. Recorded from a measured pair Kai supplied the same day: a relay ran 384
+# words carrying 54 words of state (14%), its largest single paragraph being the
+# agent assessing its own failure modes, and the grouped reply she asked for
+# after it carried the same state in 114 words and was the first message she
+# read in full that day. The existing action-first bullets did not catch it,
+# because that relay satisfied every one of them, which is why the new text
+# names the excluded content rather than adding more shape advice. It landed as
+# one normalized paragraph, and the two-line raise is that paragraph and its
+# blank line. Headroom stays at 14 chars.
+agents_md_max_lines = 244
+agents_md_max_chars = 35832
 excludes = [
     # Root SSM.md is a focused pointer to the SSM params aos code consumes,
     # mirroring the canonical SSM.md placement. See SSM.md.
