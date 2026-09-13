@@ -32,6 +32,7 @@ roles {
 
     role gamedev {
         composed-skill design-system
+        composed-skill tooling-discord-emoji-assets
         composed-skill coding-csharp
         composed-skill coding-rust
         composed-skill coding-python
@@ -56,6 +57,7 @@ roles {
 
     role advocate {
         composed-skill tooling-discord-community-host
+        composed-skill tooling-discord-emoji-assets
         // Was "writing-*". The social register skills moved to voice-corpus,
         // beside the evidence base and the sibling this repo never held.
         composed-skill writing-system-improvement-vocab
