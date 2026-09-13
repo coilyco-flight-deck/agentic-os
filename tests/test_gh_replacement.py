@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -10,8 +11,9 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-PROJECT = ROOT / ".umbra" / "guardfiles"
+PROJECT = ROOT / ".umbra" / "shims"
 MEMBER = PROJECT / "gh" / "gh.kdl"
+LOCK = ROOT / ".umbra" / "guardfiles" / "specverb.lock"
 
 # The writes that must never reach the mirror. `create` is the one Kai asked
 # for; the rest decide the same pull request on the same copy.
@@ -22,13 +24,14 @@ WITHHELD = ("create", "merge", "edit", "close", "reopen", "ready", "review", "co
 def shim(tmp_path_factory: pytest.TempPathFactory) -> Path:
     suffix = ".exe" if os.name == "nt" else ""
     binary = tmp_path_factory.mktemp("gh-shim") / f"gh{suffix}"
+    # umbra reads the lock from the project root and rejects a symlink out of
+    # it, so this stages the copy `just gh-shim-build` stages.
+    shutil.copyfile(LOCK, PROJECT / "specverb.lock")
     subprocess.run(
         [
             "umbra",
             "--project-root",
             str(PROJECT),
-            "--guardfile",
-            str(MEMBER),
             "build",
             "--out",
             str(binary),

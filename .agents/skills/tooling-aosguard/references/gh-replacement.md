@@ -1,6 +1,6 @@
 # The guarded `gh`
 
-`gh` on an agent session's PATH is not GitHub's `gh`. It is a generated umbra replacement built from [`.umbra/guardfiles/gh/gh.kdl`](../../../../.umbra/guardfiles/gh/gh.kdl), and it refuses every pull-request write with the reason Forgejo owns them. The real binary is still there, one absolute path away, and every other verb reaches it untouched.
+`gh` on an agent session's PATH is not GitHub's `gh`. It is a generated umbra replacement built from [`.umbra/shims/gh/gh.kdl`](../../../../.umbra/shims/gh/gh.kdl), and it refuses every pull-request write with the reason Forgejo owns them. The real binary is still there, one absolute path away, and every other verb reaches it untouched.
 
 ## Why the guard is the binary rather than a harness rule
 
@@ -29,8 +29,12 @@ umbra's own doc is blunt about the limit, and it is worth restating here: **a PA
 
 ## Building and installing it
 
-`just gh-shim-build` writes `dist/shims/gh`. The project root holds two wrap binaries, `aosguard` and `gh`, so every umbra verb against it names a member with `--guardfile`; that path is resolved against the caller's working directory rather than the project root, so the build verbs pass an absolute one.
+`just gh-shim-build` writes `dist/shims/gh`.
 
-Both members share one `specverb.lock`. `withhold` landed in umbra v0.202.0, `replace` in v0.212.0, and `default-allow` in the release this lock now pins. The dev-base `ARG UMBRA_VERSION` moves with it, enforced by `test_umbra_pin_is_owned_by_the_dependency_lock`.
+**`gh` has its own project root, `.umbra/shims`, and that is load-bearing.** `--project-root` is a recursive discovery root and umbra refuses to guess between members, so while `gh` sat beside `aosguard` under `.umbra/guardfiles` every verb against that root had to name one with `--guardfile`. A call site that missed the sweep failed with `2 binaries in .../guardfiles (aosguard, gh); pass --guardfile to pick one`, and the one that missed it was the release build, which is why aos published no assets between `aos-v0.322.0` and `aos-v0.329.0`. One binary per root means no call site has to name anything.
+
+Both roots build against one committed `specverb.lock`, the copy under `guardfiles/`. It holds no per-member content at all, only `go`, `cliGuard`, `goMod` and `goSum`, so a second committed copy would be one pin in two places waiting to drift. umbra reads the lock from the project root and rejects a symlink that escapes it, so `just gh-shim-build` stages a copy into `.umbra/shims` and `.gitignore` keeps it out of the tree. `just aosguard-lock` writes the original and nothing else.
+
+`withhold` landed in umbra v0.202.0, `replace` in v0.212.0, and `default-allow` in the release this lock now pins. The dev-base `ARG UMBRA_VERSION` moves with it, enforced by `test_umbra_pin_is_owned_by_the_dependency_lock`.
 
 Rollout is the `agentic-os-config` ansible role in `coilyco-bridge/infrastructure`, which runs `umbra install` into the shim directory and reports changed on a sha256 either side of it.
