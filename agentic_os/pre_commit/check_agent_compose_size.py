@@ -13,6 +13,7 @@ from pathlib import Path
 
 from agentic_os.config import get_int_option, is_enabled, is_excluded, load_excludes
 from agentic_os.pre_commit.tree import is_repo_content
+from agentic_os.pre_commit.caps import CAP_IS_DELIBERATE
 
 REPO_ROOT = Path.cwd()
 HOOK_ID = "agent-compose-size"
@@ -45,12 +46,14 @@ def find_violations(root: Path) -> list[str]:
         if n_chars > max_source:
             violations.append(
                 f"{rel.as_posix()}: {n_chars} chars exceeds the {max_source}-char per-source "
-                f"cap. Trim it or split doctrine across scopes."
+                f"cap. Trim it or split doctrine across scopes. "
+                f"{CAP_IS_DELIBERATE}"
             )
     if total > max_total:
         violations.append(
             f"repo AGENTS.COMPOSE.md total {total} chars exceeds the {max_total}-char "
-            f"budget. Composed context loads every session; keep it lean."
+            f"budget. Composed context loads every session; keep it lean. "
+            f"{CAP_IS_DELIBERATE}"
         )
     return violations
 

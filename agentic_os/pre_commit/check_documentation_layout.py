@@ -28,6 +28,7 @@ from agentic_os.config import (
     shipped_policy_path,
 )
 from agentic_os.pre_commit.tree import should_skip
+from agentic_os.pre_commit.caps import CAP_IS_DELIBERATE
 
 REPO_ROOT = Path.cwd()
 HOOK_ID = "documentation-layout"
@@ -585,7 +586,8 @@ def check_docs_count() -> list[str]:
     return [
         f"docs/: {present} docs exceeds the {cap}-doc cap for the "
         f"{band()} band. Merge related pages; splitting one doc into two to "
-        f"clear the size cap trades one violation for another."
+        f"clear the size cap trades one violation for another. "
+        f"{CAP_IS_DELIBERATE}"
     ]
 
 
@@ -671,7 +673,7 @@ def check_markdown_sizes() -> list[str]:
         n_lines = len(text.splitlines())
         n_chars = len(text)
         max_lines, max_chars = caps_for(rel)
-        remedy = _oversize_remedy(rel)
+        remedy = f"{_oversize_remedy(rel)} {CAP_IS_DELIBERATE}"
         if n_lines > max_lines:
             violations.append(
                 f"{rel.as_posix()}: {n_lines} lines exceeds the {max_lines}-line "

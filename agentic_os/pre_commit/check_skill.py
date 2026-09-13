@@ -22,6 +22,7 @@ except ModuleNotFoundError:
     sys.exit(2)
 
 from agentic_os.config import is_enabled
+from agentic_os.pre_commit.caps import CAP_IS_DELIBERATE
 
 HOOK_ID = "check-skills"
 
@@ -473,14 +474,14 @@ def check_size_caps(
         report.fail(
             f"{md_path.relative_to(REPO_ROOT)}: {n_lines} lines exceeds the "
             f"{max_lines}-line cap{cap_note}. Move detail into a sibling "
-            f"references/ file."
+            f"references/ file. {CAP_IS_DELIBERATE}"
         )
     n_bytes = md_path.stat().st_size
     if n_bytes > max_bytes:
         report.fail(
             f"{md_path.relative_to(REPO_ROOT)}: {n_bytes} bytes exceeds the "
             f"{max_bytes}-byte cap{cap_note}. Move detail into a sibling "
-            f"references/ file."
+            f"references/ file. {CAP_IS_DELIBERATE}"
         )
 
 

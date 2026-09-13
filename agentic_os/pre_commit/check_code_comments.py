@@ -26,6 +26,7 @@ from agentic_os.config import (
     load_excludes,
 )
 from agentic_os.pre_commit.tree import is_repo_content
+from agentic_os.pre_commit.caps import CAP_IS_DELIBERATE
 
 REPO_ROOT = Path.cwd()
 HOOK_ID = "code-comments"
@@ -232,13 +233,14 @@ def docstring_violations(rel: Path, lines: list[str]) -> list[str]:
         found.append(
             f"{rel.as_posix()}:1: the module docstring is {len(body)} lines, "
             f"over the {MAX_DOCSTRING_LINES}-line cap. Move the durable half to "
-            f"docs/ or guides/ and leave a pointer."
+            f"docs/ or guides/ and leave a pointer. {CAP_IS_DELIBERATE}"
         )
     for offset, line in enumerate(body, start=1):
         if len(line) > MAX_COMMENT_LINE_CHARS:
             found.append(
                 f"{rel.as_posix()}:{offset}: docstring line is {len(line)} "
-                f"chars, over the {MAX_COMMENT_LINE_CHARS}-char cap."
+                f"chars, over the {MAX_COMMENT_LINE_CHARS}-char cap. "
+                f"{CAP_IS_DELIBERATE}"
             )
     return found
 
@@ -285,7 +287,7 @@ def char_cap_violation(rel: Path, line_no: int, line: str) -> str:
     return (
         f"{rel.as_posix()}:{line_no}: comment line is {len(line)} chars, over "
         f"the {MAX_COMMENT_LINE_CHARS}-char cap. Move durable detail "
-        f"to docs/."
+        f"to docs/. {CAP_IS_DELIBERATE}"
     )
 
 
@@ -293,7 +295,7 @@ def header_cap_violation(rel: Path, line_no: int, count: int) -> str:
     return (
         f"{rel.as_posix()}:{line_no}: top-of-file comment header is {count} lines, "
         f"over the {MAX_CONTIGUOUS_COMMENT_LINES}-line cap. Move durable "
-        f"detail to docs/ and leave a short pointer."
+        f"detail to docs/ and leave a short pointer. {CAP_IS_DELIBERATE}"
     )
 
 
