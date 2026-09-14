@@ -11,6 +11,10 @@ on:
       - ".umbra/guardfiles/aosguard/forgejo.swagger.v1.json.gz"
   workflow_dispatch:
 
+concurrency:
+  group: vendor-forgejo-policy
+  cancel-in-progress: false
+
 jobs:
   vendor:
     runs-on: docker
