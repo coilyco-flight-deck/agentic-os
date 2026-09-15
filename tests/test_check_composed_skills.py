@@ -260,3 +260,100 @@ def test_the_shell_check_is_what_git_status_cannot_show(tmp_path: Path) -> None:
 
     assert shown == ""
     assert layout_problems(tmp_path) != []
+
+
+# The role graph parser closed a role on the first `}` and anchored selectors
+# to end of line, so a nested block or a trailing note dropped them. #7704
+
+
+def _graph(tmp_path: Path, kdl: str) -> dict[str, list[str]]:
+    write(tmp_path / ".agents" / "roles.kdl", kdl)
+    selectors = role_selectors(tmp_path)
+    assert selectors is not None
+    return selectors
+
+
+def test_selectors_after_a_nested_block_belong_to_the_role(tmp_path: Path) -> None:
+    # Four roles read as composing nothing because every selector they declare
+    # sits after a `use-repository x { ... }` block. agentic-os-kai#7704
+    kdl = (
+        'roles {\n'
+        '    role "frontend" {\n'
+        '        use-repository voice {\n'
+        '            skill "writing-coilyco-voice"\n'
+        '        }\n'
+        '        use-repository hardware\n'
+        '        composed-skill "tooling-collaboration"\n'
+        '        composed-skill "checkin"\n'
+        '    }\n'
+        '}\n'
+    )
+
+    assert _graph(tmp_path, kdl) == {
+        "frontend": ["tooling-collaboration", "checkin"]
+    }
+
+
+def test_a_selector_with_a_trailing_comment_is_read(tmp_path: Path) -> None:
+    kdl = (
+        'roles {\n'
+        '    role "analyst" {\n'
+        '        composed-skill "checkin-analyst" // why is this a thing?\n'
+        '    }\n'
+        '}\n'
+    )
+
+    assert _graph(tmp_path, kdl) == {"analyst": ["checkin-analyst"]}
+
+
+def test_a_comment_only_line_is_not_a_selector_or_a_brace(tmp_path: Path) -> None:
+    kdl = (
+        'roles {\n'
+        '    role "platform" {\n'
+        '        // partial repositories, then composed skills {like this}\n'
+        '        composed-skill "checkin"\n'
+        '    }\n'
+        '}\n'
+    )
+
+    assert _graph(tmp_path, kdl) == {"platform": ["checkin"]}
+
+
+def test_a_role_still_ends_at_its_own_brace(tmp_path: Path) -> None:
+    # The mirror of the fix: depth counting must not run two roles together.
+    kdl = (
+        'roles {\n'
+        '    role "platform" {\n'
+        '        use-repository hardware {\n'
+        '            skill "compute-stack"\n'
+        '        }\n'
+        '        composed-skill "checkin"\n'
+        '    }\n'
+        '    role "science" {\n'
+        '        composed-skill "coilyco-evaluation-stack"\n'
+        '    }\n'
+        '}\n'
+    )
+
+    assert _graph(tmp_path, kdl) == {
+        "platform": ["checkin"],
+        "science": ["coilyco-evaluation-stack"],
+    }
+
+
+def test_a_role_that_genuinely_composes_nothing_still_reads_empty(
+    tmp_path: Path,
+) -> None:
+    # The negative control. #1073 exists because an empty role shipped for
+    # eleven days, and this fix must not hide that by over-reading.
+    kdl = (
+        'roles {\n'
+        '    role "exec" {\n'
+        '        use-repository hardware {\n'
+        '            skill "compute-stack"\n'
+        '        }\n'
+        '    }\n'
+        '}\n'
+    )
+
+    assert _graph(tmp_path, kdl) == {"exec": []}

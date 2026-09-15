@@ -27,23 +27,38 @@ SELECTOR_RE = re.compile(r'^composed-skill\s+"?([^"\s]+)"?\s*$')
 
 
 def role_selectors(repo_root: Path) -> dict[str, list[str]] | None:
-    """Each role's composed-skill selectors, or None when there is no graph."""
+    """Each role's composed-skill selectors, or None when there is no graph.
+
+    Depth-counted rather than closed on the first `}`. A role that opens a
+    nested `use-repository x { ... }` block closes that block before its
+    selectors, and reading its `}` as the end of the role drops every selector
+    after it. See agentic-os#7704.
+
+    Comments are cut first, because SELECTOR_RE anchors to end of line and a
+    trailing `//` note on a selector silently dropped it. No KDL value in a
+    role graph carries a literal `//`, which is what makes the cut safe.
+    """
     path = repo_root / ROLE_GRAPH
     if not path.is_file():
         return None
     roles: dict[str, list[str]] = {}
     current: str | None = None
+    depth = 0
     for line in path.read_text(encoding="utf-8").splitlines():
-        stripped = line.strip()
-        if opened := ROLE_OPEN_RE.match(stripped):
-            current = opened.group(1)
-            roles.setdefault(current, [])
+        stripped = line.split("//", 1)[0].strip()
+        if not stripped:
             continue
-        if stripped == "}":
-            current = None
+        if current is None:
+            if opened := ROLE_OPEN_RE.match(stripped):
+                current = opened.group(1)
+                roles.setdefault(current, [])
+                depth = 1
             continue
-        if current and (selector := SELECTOR_RE.match(stripped)):
+        if selector := SELECTOR_RE.match(stripped):
             roles[current].append(selector.group(1))
+        depth += stripped.count("{") - stripped.count("}")
+        if depth <= 0:
+            current = None
     return roles
 
 
