@@ -16,6 +16,7 @@ from agentic_os.generators.generate_git_workflow import (
     main,
     normalize_body,
     normalize_lane,
+    unknown_lane,
     render_block,
     render_body,
     resolve_body,
@@ -140,7 +141,43 @@ def test_apply_gives_a_repo_on_the_retired_lane_the_guarded_shape():
     # Never a direct push on a slug the generator no longer honors.
     out = apply_to_text(AGENTS.format(lane=MERGE_MAIN))
     assert "**This repo declares no `ward.workflow` lane.**" in out
-    assert check_drift(out) == []
+
+
+def test_a_retired_declaration_is_refused_rather_than_read_as_undeclared():
+    # This assertion used to be `check_drift(out) == []`, which is the silent
+    # pass itself: the block rendered guarded and nobody was told why. #7532
+    out = apply_to_text(AGENTS.format(lane=MERGE_MAIN))
+
+    problems = check_drift(out)
+
+    assert len(problems) == 1
+    assert "merge-remote-main" in problems[0]
+    assert "is retired" in problems[0]
+
+
+def test_an_invented_lane_is_refused_too():
+    out = apply_to_text(AGENTS.format(lane="push-whatever"))
+
+    problems = check_drift(out)
+
+    assert len(problems) == 1
+    assert "push-whatever" in problems[0]
+    assert "is retired" not in problems[0]
+
+
+def test_a_declared_lane_and_an_absent_one_both_stay_clean():
+    # The negative controls. A real lane and no declaration at all must not
+    # pick up the new problem, or every repo in the fleet goes red.
+    assert check_drift(apply_to_text(AGENTS.format(lane=PR_AND_MERGE))) == []
+    assert check_drift(apply_to_text(NO_FRONTMATTER)) == []
+
+
+def test_unknown_lane_separates_absent_from_declared_and_wrong():
+    assert unknown_lane(AGENTS.format(lane=MERGE_MAIN)) == MERGE_MAIN
+    assert unknown_lane(AGENTS.format(lane="invented")) == "invented"
+    assert unknown_lane(AGENTS.format(lane=PULL_REQUEST)) is None
+    assert unknown_lane(NO_FRONTMATTER) is None
+    assert unknown_lane("---\nward: not-a-mapping\n---\n# x\n") is None
 
 
 def test_apply_is_idempotent():

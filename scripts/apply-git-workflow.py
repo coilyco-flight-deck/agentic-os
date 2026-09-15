@@ -21,6 +21,7 @@ from agentic_os.generators.generate_git_workflow import (  # noqa: E402
     BODY_FULL,
     apply_to_text,
     detect_lane,
+    unknown_lane,
     resolve_body,
 )
 
@@ -35,6 +36,9 @@ def apply_to_repo(repo_dir: Path, dry_run: bool) -> tuple[str, str]:
 
     before = agents.read_text(encoding="utf-8", errors="replace")
     lane = detect_lane(before) or "undeclared"
+    # Report the bogus value rather than the fallback it silently became.
+    if (bogus := unknown_lane(before)) is not None:
+        lane = f"undeclared (ward.workflow {bogus!r} is not a lane)"
     # Read the mode from the repo being written, never from the applier's cwd.
     body = resolve_body(repo_dir)
     detail = lane if body == BODY_FULL else f"{lane}, {body} body"

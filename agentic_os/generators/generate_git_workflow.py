@@ -116,13 +116,31 @@ def normalize_lane(lane: object) -> str | None:
     return None
 
 
-def detect_lane(text: str) -> str | None:
-    """Read `ward.workflow` out of an AGENTS.md's YAML frontmatter."""
+def declared_workflow(text: str) -> object:
+    """The raw `ward.workflow` value, known or not, or None when absent.
+
+    `detect_lane` cannot answer this: it maps a retired slug and a typo to the
+    same None as an absent key, so the undeclared block renders and the
+    declaration reaches nothing. See agentic-os#7532.
+    """
     metadata, _ = split_frontmatter(text)
     ward = metadata.get("ward")
     if not isinstance(ward, dict):
         return None
-    return normalize_lane(ward.get("workflow"))
+    return ward.get("workflow")
+
+
+def unknown_lane(text: str) -> object:
+    """The declared `ward.workflow` when it is not a lane, else None."""
+    declared = declared_workflow(text)
+    if declared is None or normalize_lane(declared) is not None:
+        return None
+    return declared
+
+
+def detect_lane(text: str) -> str | None:
+    """Read `ward.workflow` out of an AGENTS.md's YAML frontmatter."""
+    return normalize_lane(declared_workflow(text))
 
 
 def render_body(lane: str | None, body: str = BODY_FULL) -> str:
@@ -172,14 +190,23 @@ def check_drift(text: str, body: str = BODY_FULL) -> list[str]:
     lane the same file declares. A surviving legacy stamp beside the block is
     also flagged, so an apply that half-migrated does not pass.
     """
+    problems: list[str] = []
+    if (declared := unknown_lane(text)) is not None:
+        retired = " That lane is retired." if declared == MERGE_MAIN else ""
+        problems.append(
+            f"AGENTS.md: ward.workflow declares {declared!r}, which is not a "
+            f"lane.{retired} The undeclared block renders instead, so the "
+            f"declaration binds nothing and the repo reads as having no lane. "
+            f"Declare one of: {', '.join(LANES)}."
+        )
     block = render_block(detect_lane(text), body)
     found = BLOCK_RE.search(text)
     if not found:
-        return [
+        problems.append(
             "AGENTS.md: missing the managed git-workflow block. "
             "Generate it with scripts/apply-git-workflow.py."
-        ]
-    problems: list[str] = []
+        )
+        return problems
     if found.group(0) != block:
         problems.append(
             "AGENTS.md: managed git-workflow block drifted from generator "
