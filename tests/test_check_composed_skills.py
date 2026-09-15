@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+import subprocess
 from pathlib import Path
 
+import pytest
+
+from agentic_os import config
 from agentic_os.pre_commit.check_composed_skills import (
     catalogue_problems,
     layout_problems,
@@ -165,3 +169,94 @@ def test_a_glob_selector_matching_one_source_passes(tmp_path: Path) -> None:
     composed = _catalogue(tmp_path, kdl, ["tooling-x"])
 
     assert catalogue_problems(tmp_path, composed) == []
+
+
+# These need a real checkout. The layout tests above pass under tmp_path only
+# because git cannot answer there, which is why the shell went unseen. #7702
+
+
+def _git(root: Path, *args: str) -> None:
+    subprocess.run(
+        ["git", *args],
+        cwd=root,
+        check=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+
+def _composed_checkout(root: Path, ignore: str | None = None) -> None:
+    """A committed catalogue with one populated source, as the fleet ships it."""
+    _git(root, "init", "-q")
+    write(root / "README.md", "# Repo\n")
+    write(root / ".agents" / "skills" / "categories.yaml")
+    write(root / ".agents" / "composed" / "tooling-kept" / "COMPOSED.md")
+    if ignore is not None:
+        write(root / ".gitignore", f"{ignore}\n")
+    _git(root, "add", "-A")
+    _git(root, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "seed")
+
+
+@pytest.fixture(autouse=True)
+def _fresh_cache() -> None:
+    config.reset_build_output_cache()
+
+
+def test_a_populated_source_passes_on_a_real_checkout(tmp_path: Path) -> None:
+    # The negative control. A hook of this kind that passes everything is the
+    # defect being fixed, so the pass has to be asserted beside the failure.
+    _composed_checkout(tmp_path)
+
+    assert layout_problems(tmp_path) == []
+
+
+def test_an_empty_shell_directory_fails(tmp_path: Path) -> None:
+    _composed_checkout(tmp_path)
+    (tmp_path / ".agents" / "composed" / "tooling-moved-away").mkdir()
+
+    problems = layout_problems(tmp_path)
+
+    assert len(problems) == 1
+    assert ".agents/composed/tooling-moved-away" in problems[0]
+    assert "empty directory" in problems[0]
+    assert "git mv" in problems[0]
+
+
+def test_a_shell_holding_only_an_empty_subdirectory_fails(tmp_path: Path) -> None:
+    # The originally reported shape: `git mv` emptied references/ and `git rm`
+    # took COMPOSED.md, leaving two nested directories and no file.
+    _composed_checkout(tmp_path)
+    (tmp_path / ".agents" / "composed" / "tooling-folded" / "references").mkdir(
+        parents=True
+    )
+
+    problems = layout_problems(tmp_path)
+
+    assert len(problems) == 1
+    assert ".agents/composed/tooling-folded" in problems[0]
+
+
+def test_a_gitignored_bake_is_still_skipped(tmp_path: Path) -> None:
+    # The other negative control. A baked tree git does not carry still has to
+    # pass, or this fix re-opens sirens-echo#800 from the other side.
+    _composed_checkout(tmp_path, ignore=".agents/composed/baked/")
+    write(tmp_path / ".agents" / "composed" / "baked" / "notes.md", "# Baked\n")
+
+    assert layout_problems(tmp_path) == []
+
+
+def test_the_shell_check_is_what_git_status_cannot_show(tmp_path: Path) -> None:
+    # The whole reason the hook has to carry this: git reports a clean tree.
+    _composed_checkout(tmp_path)
+    (tmp_path / ".agents" / "composed" / "tooling-moved-away").mkdir()
+
+    shown = subprocess.run(
+        ["git", "status", "--porcelain"],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout
+
+    assert shown == ""
+    assert layout_problems(tmp_path) != []

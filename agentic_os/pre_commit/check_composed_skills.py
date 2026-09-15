@@ -108,6 +108,17 @@ def catalogue_problems(repo_root: Path, composed: Path) -> list[str]:
     return problems
 
 
+def holds_no_file(entry: Path) -> bool:
+    """Whether everything under `entry` is a directory, so git carries none of it.
+
+    `carries_content` answers False for a shell and for a bake alike, because
+    git lists neither. They want opposite treatment, and this is the only thing
+    that separates them: a bake holds files, a shell holds nothing but more
+    empty directories. See agentic-os#7702.
+    """
+    return not any(path.is_file() or path.is_symlink() for path in entry.rglob("*"))
+
+
 def layout_problems(repo_root: Path) -> list[str]:
     composed = repo_root / ".agents" / "composed"
     if not composed.is_dir():
@@ -138,6 +149,15 @@ def layout_problems(repo_root: Path) -> list[str]:
             continue
         rel = entry.relative_to(repo_root)
         if not carries_content(rel, repo_root):
+            if entry.is_dir() and not entry.is_symlink() and holds_no_file(entry):
+                problems.append(
+                    f"{rel}: empty directory, no COMPOSED.md. `git mv` left it, "
+                    f"because git mv never prunes the source directory and git "
+                    f"carries no empty directory, so no diff and no git status "
+                    f"shows it. agent-compose stats COMPOSED.md here and refuses "
+                    f"every role bundle in this repository until it is gone. "
+                    f"Delete the directory."
+                )
             continue
         if entry.is_symlink() or not entry.is_dir():
             problems.append(f"{rel}: composed entries must be real directories")
