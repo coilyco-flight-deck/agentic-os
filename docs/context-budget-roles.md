@@ -44,9 +44,15 @@ The snapshot separates:
 
 The YAML artifact groups non-skill components and one top-level breakdown by
 **eager** or **lazy** delivery and kind. Each skill appears once under `skills`
-with its class, eager tokens, lazy tokens, and resource count. Stable ordering,
-no timestamps, and no absolute source locators make identical inputs produce the
-same payload hash.
+with its class, eager tokens, lazy tokens, the `body` and `resource` halves that
+sum to those lazy tokens, and its resource count. The halves are what separate a
+fat SKILL.md from a thin one carrying heavy `references/`, which the merged lazy
+figure reads identically. Stable ordering, no timestamps, and no absolute source
+locators make identical inputs produce the same payload hash.
+
+`body` and `resource` are additive within `agentic-os.role-context.v1`. A
+snapshot captured before them stays valid and loads unchanged, and when they are
+present they are checked against `lazy` rather than trusted.
 
 Still outside the boundary: the sections Agent Compose generates into the host
 global rather than reading from a provider, which are the seat dispatch table

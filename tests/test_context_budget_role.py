@@ -343,10 +343,11 @@ def test_build_snapshot_separates_eager_and_lazy_components(tmp_path: Path) -> N
         ]
     )
     alpha = skills["aos/alpha"]
-    assert set(alpha) == {"class", "eager", "lazy", "resources"}
+    assert set(alpha) == {"class", "eager", "lazy", "body", "resource", "resources"}
     assert alpha["class"] == "ordinary"
     assert alpha["eager"] > 0
     assert alpha["lazy"] > 0
+    assert alpha["body"] + alpha["resource"] == alpha["lazy"]
     assert alpha["resources"] == 1
     assert skills["aos/tooling-sysadmin-live-remediation"]["class"] == "role-composed"
     assert skills["roster:core/role-sysadmin"]["class"] == "role"
@@ -742,3 +743,60 @@ def test_operating_base_does_not_double_count_the_active_repository(
     kinds = [item["kind"] for item in component_rows(snapshot)]
     assert "agents-cascade" in kinds
     assert "operating-base" not in kinds
+
+
+# A skills: row merged body and resource tokens into one lazy figure, so a fat
+# SKILL.md and eight heavy references read identically. See agentic-os#7716.
+
+
+def _skill_row(**overrides: object) -> dict[str, object]:
+    row = {"class": "ordinary", "eager": 50, "lazy": 300, "resources": 1}
+    row.update(overrides)
+    return {"skills": {"aos/alpha": row}}
+
+
+def test_skill_rows_split_body_from_resource_tokens(tmp_path: Path) -> None:
+    snapshot = build_fixture_snapshot(tmp_path)
+
+    rows = snapshot["skills"]
+    assert rows
+    for name, row in rows.items():
+        assert row["body"] + row["resource"] == row["lazy"], name
+        assert (row["resource"] > 0) == (row["resources"] > 0), name
+
+
+def test_the_split_distinguishes_two_rows_lazy_alone_cannot(tmp_path: Path) -> None:
+    # aos/alpha carries references/detail.md and the rest carry none. Under the
+    # merged figure alone the difference is unreadable, which is the defect.
+    rows = build_fixture_snapshot(tmp_path)["skills"]
+
+    with_resources = {n: r for n, r in rows.items() if r["resources"] > 0}
+    without = {n: r for n, r in rows.items() if r["resources"] == 0}
+
+    assert with_resources and without
+    assert all(r["resource"] > 0 and r["body"] > 0 for r in with_resources.values())
+    assert all(r["resource"] == 0 and r["body"] == r["lazy"] for r in without.values())
+
+
+def test_a_snapshot_captured_before_the_split_still_loads() -> None:
+    # The deliberate tolerance. Every committed snapshot predates the split and
+    # stays valid until the fleet is recaptured, so absence is not a failure.
+    records = context._snapshot_skill_records(_skill_row())
+
+    assert set(records["aos/alpha"]) == {"class", "eager", "lazy", "resources"}
+
+
+def test_a_partial_layer_split_is_rejected() -> None:
+    with pytest.raises(RuntimeError, match="partial layer split"):
+        context._snapshot_skill_records(_skill_row(body=300))
+
+
+def test_a_layer_split_that_does_not_sum_to_lazy_is_rejected() -> None:
+    with pytest.raises(RuntimeError, match="does not sum to lazy"):
+        context._snapshot_skill_records(_skill_row(body=200, resource=50))
+
+
+def test_a_layer_split_that_sums_is_accepted() -> None:
+    records = context._snapshot_skill_records(_skill_row(body=200, resource=100))
+
+    assert records["aos/alpha"]["body"] == 200

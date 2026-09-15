@@ -591,6 +591,8 @@ def _skill_records_from_rows(
                 "class": skill_class,
                 "eager": int(frontmatter.get("tokens", 0)),
                 "lazy": sum(int(raw.get("tokens", 0)) for raw in lazy),
+                "body": int(body[0].get("tokens", 0)),
+                "resource": sum(int(raw.get("tokens", 0)) for raw in resources),
                 "resources": len(resources),
             }
         )
@@ -1024,6 +1026,20 @@ def _snapshot_skill_records(
             or not isinstance(raw.get("resources"), int)
         ):
             raise RuntimeError(f"snapshot skill {skill_key!r} is malformed")
+        # Absent on every snapshot captured before the split, which stay valid
+        # and readable. Present means checked: half a split is a malformed row.
+        split = [key for key in ("body", "resource") if key in raw]
+        if split:
+            if len(split) != 2 or not all(isinstance(raw[key], int) for key in split):
+                raise RuntimeError(
+                    f"snapshot skill {skill_key!r} carries a partial layer split"
+                )
+            if raw["body"] + raw["resource"] != raw["lazy"]:
+                raise RuntimeError(
+                    f"snapshot skill {skill_key!r} layer split "
+                    f"{raw['body']} + {raw['resource']} does not sum to lazy "
+                    f"{raw['lazy']}"
+                )
         records[skill_key] = raw
     return records
 
