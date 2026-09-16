@@ -105,7 +105,8 @@ with `ANTHROPIC_API_KEY`. It resolves an alias to the newest id in its family,
 fails an absent id or an unsupported effort, and warns when a pinned id has a
 newer sibling. It refuses a Bedrock, Vertex, or Foundry session, where aliases
 resolve to different models. `--offline` runs the loader alone. The API returns
-no retirement dates, so a daily scheduled run is what catches a retirement.
+no retirement dates, so only a scheduled run would catch a retirement. The
+schedule is off until an API key exists (`teable:coilyco-flight-deck/agentic-os#7838`).
 
 ## Scope
 

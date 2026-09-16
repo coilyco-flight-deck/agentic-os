@@ -1,11 +1,9 @@
-# Daily live check of per-role model profiles against the provider model list.
+# Live check of per-role model profiles against the provider model list.
 # Rationale: docs/build-file-headers.md.
 
 name: models-check
 
 on:
-  schedule:
-    - cron: "17 13 * * *"
   workflow_dispatch:
 
 permissions:

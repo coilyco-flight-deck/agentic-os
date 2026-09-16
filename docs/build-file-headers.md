@@ -19,7 +19,7 @@ The push is fast-forward-only, never --force: GitHub main carries a "cannot forc
 
 ## `.forgejo/workflows/models-check.yml`
 
-Daily live check of per-role model profiles against the Anthropic model list, so a retired model or unsupported effort turns red before a seat launch hits it. A missing `ANTHROPIC_MODELS_API_KEY` secret fails the job rather than skipping, the same rule the mirror PAT follows. Contract: [native harness configuration](native-harness-config.md).
+Live check of per-role model profiles against the Anthropic model list, so a retired model or unsupported effort turns red before a seat launch hits it. It runs on dispatch only: the daily cron is off until an API key exists, which Kai deferred on 2026-09-16 (`teable:coilyco-flight-deck/agentic-os#7838`). A missing `ANTHROPIC_MODELS_API_KEY` secret fails a dispatched run rather than skipping, the same rule the mirror PAT follows. Contract: [native harness configuration](native-harness-config.md).
 
 ## `.forgejo/workflows/promote.yml`
 
