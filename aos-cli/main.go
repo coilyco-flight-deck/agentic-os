@@ -121,7 +121,7 @@ func rootFlagTakesValue(name string) bool {
 
 func isRootSubcommand(value string) bool {
 	switch value {
-	case "repositories", "version", "converge", "acompose", "acompose-checkin",
+	case "repositories", "version", "converge", "models", "acompose", "acompose-checkin",
 		"_native-shadow", "_launch-agent", "_container-acompose",
 		"_container-socks-forward", "_container-context-bundle":
 		return true
@@ -238,6 +238,20 @@ func newCommandWithDefaults(name string, defaults launchDefaults) *cli.Command {
 					&cli.BoolFlag{Name: "handoff", Usage: "print the absolute-path command to run outside the agent session, and run nothing"},
 				},
 				Action: runRun,
+			},
+			{
+				Name:  "models",
+				Usage: "validate per-role harness model profiles",
+				Commands: []*cli.Command{
+					{
+						Name:   "check",
+						Usage:  "resolve every configured claude model and effort against the provider's live model list",
+						Flags: []cli.Flag{
+							&cli.BoolFlag{Name: "offline", Usage: "validate the profiles statically and skip the provider"},
+						},
+						Action: runModelsCheck,
+					},
+				},
 			},
 			{
 				Name:  "version",

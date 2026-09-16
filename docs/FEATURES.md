@@ -14,7 +14,7 @@ Major shipped capabilities, not files.
 - [Speech helper](aos-roles-and-voice.md) - `aos-say` client plus relay for status speech.
 - **Karabiner key bindings** - external keyboard and Remote Desktop mappings.
 - [Agents and sessions](features-agents.md) - self-name, composition
-  status, harness policy, and
+  status, harness [and model](native-harness-config.md) policy, and
   [settings guardrails](native-claude-credentials.md).
 - [Native agent workspaces](native-agent-workspaces.md) - role-scoped worktrees,
   leases, cleanup, the `aos` temp namespace, and standalone launches.
@@ -26,7 +26,7 @@ Major shipped capabilities, not files.
 - [Toolchain update gate](native-session-start.md) - startup blocks daily on a
   stale `aos`, refuses off-TTY, fails open. `AOS_SKIP_UPDATE_GATE=1` bypasses.
 - [Agent-compose provider](context-budget.md) - scoped skills,
-  personality, and the deployed roles of the Agent Compose v3 roster.
+  personality, and deployed roles of the Agent Compose v3 roster, via the AOS provider contract.
 - [Agent tool evaluation](../.agents/skills/tooling-agent-tool-evaluation/SKILL.md) - cross-harness tool evals.
 - [Role-composed skills](role-composed-skills.md) - v2 Core Roster method slices.
 - [AOS launcher](aos-cli.md) - role context with
@@ -90,7 +90,6 @@ Major shipped capabilities, not files.
   hash-ref in a reply, read off the payload key rather than the unflushed transcript. Warn first,
   and never a Forgejo issue URL.
 - [Canonical agent-id generator](build-output-is-not-content.md) - short lowercase agent IDs.
-- [Agent-compose provider](context-budget.md) - the AOS capability provider contract.
 - Artifact scaffolder and skill mounts - `aos artifact new`, `aos skills mount`.
 
 ## See also

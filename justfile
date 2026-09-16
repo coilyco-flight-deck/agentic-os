@@ -98,6 +98,10 @@ aos-say-test *ARGS:
 aos-standalone-composition-smoke *ARGS:
     @./aos-cli/aos --agent codex --role platform --image agentic-os:aos-local --auth=false -- --version "$@"
 
+# Check per-role model profiles against the live provider model list (needs ANTHROPIC_API_KEY, or pass --offline).
+aos-models-check *ARGS:
+    @go run -C aos-cli . models check "$@"
+
 # Run the standalone Go `aos` launcher test suite.
 aos-test *ARGS:
     @go test -C aos-cli -timeout 30m ./... "$@"

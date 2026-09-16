@@ -19,13 +19,16 @@ const harnessLaunchProfilesRelativePath = ".agents/harness-launch-profiles.yaml"
 
 var compiledHarnessLaunchProfilesBase64 string
 
+var errHarnessLaunchProfilesMissing = errors.New("harness launch profiles missing")
+
 type harnessLaunchProfileDocument struct {
 	Roles         map[string]harnessLaunchRole `yaml:"roles"`
 	DefaultAgents map[string]string            `yaml:"-"`
 }
 
 type harnessLaunchRole struct {
-	Agent string `yaml:"agent"`
+	Agent     string                         `yaml:"agent"`
+	Harnesses map[string]harnessModelProfile `yaml:"harnesses"`
 }
 
 func loadHarnessLaunchProfiles(data []byte) (harnessLaunchProfileDocument, error) {
@@ -52,7 +55,15 @@ func loadHarnessLaunchProfiles(data []byte) (harnessLaunchProfileDocument, error
 				profile.Agent,
 			)
 		}
-		document.Roles[role] = harnessLaunchRole{Agent: agent}
+		harnesses := make(map[string]harnessModelProfile, len(profile.Harnesses))
+		for harness, model := range profile.Harnesses {
+			validated, err := validateHarnessModelProfile(role, harness, model)
+			if err != nil {
+				return harnessLaunchProfileDocument{}, err
+			}
+			harnesses[harness] = validated
+		}
+		document.Roles[role] = harnessLaunchRole{Agent: agent, Harnesses: harnesses}
 		document.DefaultAgents[role] = agent
 	}
 	return document, nil
@@ -100,7 +111,8 @@ func resolveHarnessLaunchProfilesSource() (harnessLaunchProfilesSource, error) {
 		return harnessLaunchProfilesSource{label: "compiled harness launch profiles", data: data}, nil
 	}
 	return harnessLaunchProfilesSource{}, fmt.Errorf(
-		"AOS could not find %s from the working directory or executable path",
+		"%w: AOS could not find %s from the working directory or executable path",
+		errHarnessLaunchProfilesMissing,
 		harnessLaunchProfilesRelativePath,
 	)
 }

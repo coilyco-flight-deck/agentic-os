@@ -248,6 +248,11 @@ func runNativeShadow(ctx context.Context, cmd *cli.Command) error {
 			fmt.Fprintf(runtime.Stderr, "aos: warning: project native Codex terminal title: %v\n", err)
 		}
 	}
+	if cmd.Bool("assigned-role") {
+		if command, err = applyRoleModelProfile(command, role, harness); err != nil {
+			return err
+		}
+	}
 	runtime.Progress.Ready()
 	runtime.Progress.Exec(command)
 	return execNative(command)

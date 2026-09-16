@@ -247,7 +247,10 @@ func runStandaloneIntegratedLaunch(
 	cmd *cli.Command,
 	opts integratedLaunchOptions,
 ) (returnErr error) {
-	command := append([]string{opts.Agent}, opts.Arguments...)
+	command, err := applyRoleModelProfile(append([]string{opts.Agent}, opts.Arguments...), opts.Role, opts.Agent)
+	if err != nil {
+		return err
+	}
 	uid, gid := hostIdentity()
 	auth, err := authForLaunch(ctx, opts.Auth, opts.Agent)
 	if err != nil {

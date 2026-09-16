@@ -1,0 +1,35 @@
+# Daily live check of per-role model profiles against the provider model list.
+# Rationale: docs/build-file-headers.md.
+
+name: models-check
+
+on:
+  schedule:
+    - cron: "17 13 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: models-check
+  cancel-in-progress: true
+
+jobs:
+  models:
+    runs-on: docker
+    timeout-minutes: 15
+    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release
+    steps:
+      - uses: actions/checkout@v6
+      - name: Check role model profiles against the provider
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_MODELS_API_KEY }}
+        run: just aos-models-check
+      - name: Alert Telegram on failure
+        if: ${{ failure() }}
+        continue-on-error: true
+        uses: ./actions/telegram-alert
+        with:
+          bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          chat-id: ${{ secrets.TELEGRAM_RED_CHAT_ID }}

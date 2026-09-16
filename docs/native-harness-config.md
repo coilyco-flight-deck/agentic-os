@@ -82,6 +82,31 @@ produce a launch warning and preserve Codex's normal interactive review path.
 AOS never uses `--dangerously-bypass-hook-trust` or edits Codex's private state
 directly.
 
+## Role model profiles
+
+A role can pin the model and effort its Claude seat runs at, in
+[`harness-launch-profiles.yaml`](../.agents/harness-launch-profiles.yaml) under
+`roles.<role>.harnesses.claude` with `model` and `effort`. A role without the
+block keeps the harness default. Model is deployment tuning, so it sits beside
+the role's default agent, the one registry AOS already owns
+(`teable:coilyco-flight-deck/agentic-os#7835`).
+
+An assigned-role launch, native or containerized, inserts `--model` and
+`--effort` directly after the harness. A flag the human typed wins, and so do
+`ANTHROPIC_MODEL` and `CLAUDE_CODE_EFFORT_LEVEL`, because Claude Code ranks the
+effort variable above the flag. A profile the loader rejects refuses the launch
+and names the role, so a seat never quietly falls back to a different model.
+
+Validation has two layers. The loader checks the shape: claude is the only
+harness, effort is `low` to `max`, and the model is an alias the live check can
+resolve (`sonnet`, `opus`, `haiku`, `fable`, plus `[1m]`) or a `claude-*` id.
+`aos models check` (`just aos-models-check`) then lists the Anthropic API models
+with `ANTHROPIC_API_KEY`. It resolves an alias to the newest id in its family,
+fails an absent id or an unsupported effort, and warns when a pinned id has a
+newer sibling. It refuses a Bedrock, Vertex, or Foundry session, where aliases
+resolve to different models. `--offline` runs the loader alone. The API returns
+no retirement dates, so a daily scheduled run is what catches a retirement.
+
 ## Scope
 
 This behavior runs only for caller-assigned Codex launches through `acompose`.

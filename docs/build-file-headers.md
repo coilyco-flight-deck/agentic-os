@@ -17,6 +17,10 @@ Fast-forward Forgejo main+tags onto the read-only GitHub mirror. It no-ops witho
 
 The push is fast-forward-only, never --force: GitHub main carries a "cannot force-push" branch-protection rule (the PR gate), so a --force push is rejected outright (GH013) and the mirror silently stalls (agentic-os#309). Forgejo main is append-only, so a fast-forward always suffices in steady state. A rejected FF push means the two mains have diverged and need a one-time human reconcile -- see [`forgejo-ops.md`](../.agents/skills/tooling-aosguard/references/forgejo-ops.md). A front test job now gates the mirror push so GitHub never advances on a tree that failed the repo-authoritative test/pre-commit checks.
 
+## `.forgejo/workflows/models-check.yml`
+
+Daily live check of per-role model profiles against the Anthropic model list, so a retired model or unsupported effort turns red before a seat launch hits it. A missing `ANTHROPIC_MODELS_API_KEY` secret fails the job rather than skipping, the same rule the mirror PAT follows. Contract: [native harness configuration](native-harness-config.md).
+
 ## `.forgejo/workflows/promote.yml`
 
 Promote main to release after the same suite ci.yml runs. ci.yml never re-gates release precisely because this gate already vouched for the exact sha, so the two must stay in step: a gate narrower than ci.yml promotes a red main. test_pull_request_ci_workflow.py holds them in step. Draft dev-base image publishing runs in a separate workflow keyed by the promoted SHA, so a transient registry or build failure cannot stall the release branch.
