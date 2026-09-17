@@ -202,7 +202,6 @@ func newCommandWithDefaults(name string, defaults launchDefaults) *cli.Command {
 			},
 		},
 		Commands: []*cli.Command{
-			artifactCommand(),
 			skillsCommand(),
 			{
 				Name:  "repositories",
@@ -244,8 +243,8 @@ func newCommandWithDefaults(name string, defaults launchDefaults) *cli.Command {
 				Usage: "validate per-role harness model profiles",
 				Commands: []*cli.Command{
 					{
-						Name:   "check",
-						Usage:  "resolve every configured claude model and effort against the provider's live model list",
+						Name:  "check",
+						Usage: "resolve every configured claude model and effort against the provider's live model list",
 						Flags: []cli.Flag{
 							&cli.BoolFlag{Name: "offline", Usage: "validate the profiles statically and skip the provider"},
 						},

@@ -90,7 +90,7 @@ Major shipped capabilities, not files.
   hash-ref in a reply, read off the payload key rather than the unflushed transcript. Warn first,
   and never a Forgejo issue URL.
 - [Canonical agent-id generator](build-output-is-not-content.md) - short lowercase agent IDs.
-- Artifact scaffolder and skill mounts - `aos artifact new`, `aos skills mount`.
+- Skill mounts - `aos skills mount`.
 
 ## See also
 
