@@ -21,6 +21,10 @@ roles:
         effort: high
   gamedev:
     agent: claude
+    harnesses:
+      claude:
+        model: sonnet
+        effort: high
   director:
     agent: claude
   advocate:
