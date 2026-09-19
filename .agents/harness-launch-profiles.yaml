@@ -9,6 +9,10 @@ roles:
     agent: claude
   junior-sysadmin:
     agent: claude
+    harnesses:
+      claude:
+        model: sonnet
+        effort: high
   science:
     agent: claude
     harnesses:
