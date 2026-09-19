@@ -9,7 +9,7 @@ variable "PLATFORM" {
 # Space-separated rustup toolchains baked in addition to stable, so a repo
 # pinning one in rust-toolchain.toml never fetches a channel at build time.
 variable "RUST_PINNED_VERSIONS" {
-  default = "1.90.0"
+  default = "1.98.1"
 }
 
 group "default" {

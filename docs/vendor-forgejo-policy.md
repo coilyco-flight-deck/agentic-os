@@ -73,10 +73,13 @@ the CLI it finds against the `wasm-bindgen` **crate** version a consumer locks,
 and downloads the matching CLI when the two differ. A stale pin therefore does
 not fail - it silently restores the stall this bake removes.
 
-So this pin tracks consumers rather than leading them. Bump it when a consumer's
-locked crate moves. A caret dependency such as galaxy-gen's
+So this pin tracks consumers rather than leading them, and the fleet's Rust
+repos align on one value rather than the image carrying one per repo: a repo
+whose lock has drifted bumps to match the image, not the other way around.
+Bump the pin when the aligned version moves. A caret dependency such as
 `wasm-bindgen = "^0.2"` moves on any `cargo update` with no deliberate edit, so
-the drift can arrive without anyone choosing it.
+a repo can drift off the aligned version without anyone choosing it, and that
+drift is the thing to catch, not to accommodate.
 
 A consumer that would rather have drift fail loudly than silently re-download
 can build with `wasm-pack build --mode no-install`, which makes wasm-pack use

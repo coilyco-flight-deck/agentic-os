@@ -9,11 +9,11 @@ ARG DOTNET_VERSION=10.0.302
 ARG TRUNK_VERSION=0.21.14
 ARG NODE_VERSION=22.23.2
 ARG WASM_PACK_VERSION=0.15.0
-ARG WASM_BINDGEN_VERSION=0.2.118
+ARG WASM_BINDGEN_VERSION=0.2.128
 ARG BINARYEN_VERSION=119
 # Toolchains consumers pin in rust-toolchain.toml, baked so a pinned repo
 # never fetches a channel at build time. See docs/dev-base-image.md.
-ARG RUST_PINNED_VERSIONS="1.90.0"
+ARG RUST_PINNED_VERSIONS="1.98.1"
 
 FROM ubuntu:24.04 AS dev-base-lang-node
 ARG NODE_VERSION
