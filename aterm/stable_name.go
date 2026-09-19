@@ -2,9 +2,14 @@ package main
 
 import "strings"
 
-// The one name every aterm session carries, and the one a launch clears.
-// See docs/aterm-bundles.md.
-const stableSessionName = "aterm"
+// The name carries the role so a launch clears only its own role's sessions, and
+// "" (no role) clears nothing. See docs/aterm-bundles.md.
+func stableSessionName(role string) string {
+	if role == "" {
+		return ""
+	}
+	return "aterm-" + role
+}
 
 func hasNameFlag(arguments []string) bool {
 	for _, argument := range arguments {

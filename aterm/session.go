@@ -33,19 +33,20 @@ func runSession(options sessionOptions, stdin io.Reader, stdout, stderr io.Write
 		playCard(stdout, options.Card, options.Motion)
 	}
 	// After the card, so the browser sees the harness and not the animation.
-	argv, wrapped := wrapChild(argv, options.VibeTunnel, exec.LookPath, stderr)
+	name := stableSessionName(options.Card.Role)
+	argv, wrapped := wrapChild(argv, name, options.VibeTunnel, exec.LookPath, stderr)
 	// Both run before this session exists, so it can never be its own target.
 	reaper := systemReaper(stderr)
 	if wrapped {
-		if cleared := reaper.clear(stableSessionName); cleared > 0 {
+		if cleared := reaper.clear(name); cleared > 0 {
 			fmt.Fprintf(stderr, "aterm: cleared %d earlier VibeTunnel session(s) named %s\n",
-				cleared, stableSessionName)
+				cleared, name)
 		}
 	}
 	if options.StableName {
-		if stopped := reaper.clearClaude(stableSessionName); stopped > 0 {
+		if stopped := reaper.clearClaude(name); stopped > 0 {
 			fmt.Fprintf(stderr, "aterm: stopped %d earlier Claude session(s) named %s\n",
-				stopped, stableSessionName)
+				stopped, name)
 		}
 	}
 	command := exec.Command(argv[0], argv[1:]...)

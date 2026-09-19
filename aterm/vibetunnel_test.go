@@ -17,8 +17,8 @@ func stubLookPath(name string) (string, error) { return "/stub/" + name, nil }
 
 func TestWrapChildPutsTheHarnessBehindVt(t *testing.T) {
 	child := []string{"aos", "_native-shadow", "--harness", "claude", "--", "agent-compose", "launch"}
-	got, wrapped := wrapChild(child, true, stubLookPath, &bytes.Buffer{})
-	trampoline := []string{"/stub/vt", "-S", "/bin/sh", "-c", renameThenRun, "sh", stableSessionName, "/stub/vt"}
+	got, wrapped := wrapChild(child, stableSessionName("platform"), true, stubLookPath, &bytes.Buffer{})
+	trampoline := []string{"/stub/vt", "-S", "/bin/sh", "-c", renameThenRun, "sh", stableSessionName("platform"), "/stub/vt"}
 	want := append(trampoline, child...)
 	// The shadow child carries its own `--`, and vt has to hand it on untouched.
 	if !wrapped || !slices.Equal(got, want) {
@@ -28,7 +28,7 @@ func TestWrapChildPutsTheHarnessBehindVt(t *testing.T) {
 
 func TestWrapChildLeavesTheArgvAloneWhenOptedOut(t *testing.T) {
 	notice := &bytes.Buffer{}
-	got, wrapped := wrapChild([]string{"agent-compose", "launch"}, false, stubLookPath, notice)
+	got, wrapped := wrapChild([]string{"agent-compose", "launch"}, "", false, stubLookPath, notice)
 	if wrapped || !slices.Equal(got, []string{"agent-compose", "launch"}) || notice.Len() != 0 {
 		t.Fatalf("an opt-out should be silent and unchanged: %v %q", got, notice.String())
 	}
@@ -37,7 +37,7 @@ func TestWrapChildLeavesTheArgvAloneWhenOptedOut(t *testing.T) {
 func TestWrapChildFallsOpenWhenVtIsMissing(t *testing.T) {
 	notice := &bytes.Buffer{}
 	missing := func(string) (string, error) { return "", fmt.Errorf("not found") }
-	got, wrapped := wrapChild([]string{"agent-compose", "launch"}, true, missing, notice)
+	got, wrapped := wrapChild([]string{"agent-compose", "launch"}, "", true, missing, notice)
 	// A sidecar the operator may not have installed must not cost the session.
 	if wrapped || !slices.Equal(got, []string{"agent-compose", "launch"}) {
 		t.Fatalf("a missing vt should still launch the harness: %v", got)
@@ -108,7 +108,11 @@ func TestRunSessionRunsTheChildThroughVtNamedAndKeepsItsExitCode(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
 	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
 	code := runSession(
-		sessionOptions{VibeTunnel: true, Argv: []string{"/bin/sh", "-c", "exit 7"}},
+		sessionOptions{
+			VibeTunnel: true,
+			Card:       sessionCard{Role: "platform"},
+			Argv:       []string{"/bin/sh", "-c", "exit 7"},
+		},
 		strings.NewReader(""), &bytes.Buffer{}, &bytes.Buffer{},
 	)
 	if code != 7 {
@@ -118,12 +122,36 @@ func TestRunSessionRunsTheChildThroughVtNamedAndKeepsItsExitCode(t *testing.T) {
 	if err != nil {
 		t.Fatalf("the session never reached vt: %v", err)
 	}
-	if got := strings.TrimSpace(string(raw)); !strings.HasSuffix(got, "sh aterm "+filepath.Join(dir, "vt")+" /bin/sh -c exit 7") {
+	if got := strings.TrimSpace(string(raw)); !strings.HasSuffix(got, "sh aterm-platform "+filepath.Join(dir, "vt")+" /bin/sh -c exit 7") {
 		t.Fatalf("vt argv = %q", got)
 	}
 	// The name is set from inside the session, before the harness starts.
-	if got, _ := os.ReadFile(titles); strings.TrimSpace(string(got)) != "title aterm" {
+	if got, _ := os.ReadFile(titles); strings.TrimSpace(string(got)) != "title aterm-platform" {
 		t.Fatalf("the session was not named: %q", got)
+	}
+}
+
+func TestRunSessionWithNoRoleRunsThroughVtUnnamed(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("the fixture is a POSIX script")
+	}
+	dir := t.TempDir()
+	titles := filepath.Join(dir, "vt-titles")
+	script := "#!/bin/sh\nif [ \"$1\" = title ]; then echo \"$*\" >> " + titles + "; exit 0; fi\nshift\nexec \"$@\"\n"
+	if err := os.WriteFile(filepath.Join(dir, "vt"), []byte(script), 0o700); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+	t.Setenv("HOME", t.TempDir())
+	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
+	code := runSession(
+		sessionOptions{VibeTunnel: true, Argv: []string{"/bin/sh", "-c", "exit 3"}},
+		strings.NewReader(""), &bytes.Buffer{}, &bytes.Buffer{},
+	)
+	if code != 3 {
+		t.Fatalf("exit code = %d, want 3", code)
+	}
+	if got, err := os.ReadFile(titles); err == nil {
+		t.Fatalf("a session with no role must not be titled, got %q", got)
 	}
 }
 

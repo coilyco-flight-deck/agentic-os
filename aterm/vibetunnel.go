@@ -12,14 +12,14 @@ const (
 	// See docs/aterm-bundles.md.
 	vibeTunnelSessionEnv = "VIBETUNNEL_SESSION_ID"
 	// Names the session from inside it, where vt knows its id, then becomes the
-	// harness. A failed rename never costs the session.
-	renameThenRun = `"$2" title "$1" >/dev/null 2>&1; shift 2; exec "$@"`
+	// harness. A failed rename never costs the session, and an empty name skips it.
+	renameThenRun = `[ -n "$1" ] && "$2" title "$1" >/dev/null 2>&1; shift 2; exec "$@"`
 )
 
 // -S skips vt's re-run through an interactive shell, and vt reads no `--`.
 // See docs/aterm-bundles.md.
-func vibeTunnelArgv(vt string, child []string) []string {
-	trampoline := []string{vt, "-S", "/bin/sh", "-c", renameThenRun, "sh", stableSessionName, vt}
+func vibeTunnelArgv(vt, name string, child []string) []string {
+	trampoline := []string{vt, "-S", "/bin/sh", "-c", renameThenRun, "sh", name, vt}
 	return append(trampoline, child...)
 }
 
@@ -27,6 +27,7 @@ func vibeTunnelArgv(vt string, child []string) []string {
 // view, never the session.
 func wrapChild(
 	argv []string,
+	name string,
 	wanted bool,
 	lookPath func(string) (string, error),
 	notice io.Writer,
@@ -39,7 +40,7 @@ func wrapChild(
 		fmt.Fprintf(notice, "aterm: %s is not on PATH, so this session is not in VibeTunnel\n", vibeTunnelBin)
 		return argv, false
 	}
-	return vibeTunnelArgv(vt, argv), true
+	return vibeTunnelArgv(vt, name, argv), true
 }
 
 func withoutVibeTunnelSession(environ []string) []string {

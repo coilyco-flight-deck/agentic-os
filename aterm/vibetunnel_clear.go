@@ -96,7 +96,7 @@ func processStart(pid int) (time.Time, error) {
 // and returns how many records it removed. A record it cannot settle stays.
 func (reaper sessionReaper) clear(name string) int {
 	entries, err := os.ReadDir(reaper.control)
-	if err != nil {
+	if name == "" || err != nil {
 		return 0
 	}
 	cleared := 0
@@ -165,7 +165,8 @@ func (reaper sessionReaper) stop(pid int) bool {
 // transcripts, and never this process or a host of it. See docs/aterm-bundles.md.
 func (reaper sessionReaper) clearClaude(name string) int {
 	entries, err := reaper.processes()
-	if err != nil {
+	// claudeSessionName is "" for an unnamed claude, so "" would match all of them.
+	if name == "" || err != nil {
 		return 0
 	}
 	parents := map[int]int{}

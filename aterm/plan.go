@@ -96,9 +96,10 @@ func buildLaunchPlan(
 		return launchPlan{}, err
 	}
 	// Only claude takes --name, and a caller's own name is left as theirs.
-	named := request.StableName && request.Seat == "claude" && !hasNameFlag(request.Extra)
+	name := stableSessionName(request.Role)
+	named := request.StableName && request.Seat == "claude" && name != "" && !hasNameFlag(request.Extra)
 	if named {
-		request.Extra = append([]string{"--name", stableSessionName}, request.Extra...)
+		request.Extra = append([]string{"--name", name}, request.Extra...)
 	}
 	child := composeChild(request, agentCompose, aos, shadowed)
 	// kitty's --title permanently fixes the OS window title against the child,
