@@ -67,6 +67,8 @@ repos:
     band: large
   steam-ops:
     band: small
+  tally:
+    band: small
   umbra:
     band: large
     guides: true
