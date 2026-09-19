@@ -34,9 +34,12 @@ type sessionCard struct {
 	Annotation string `json:"annotation"`
 	// Role is the slug, not the display name, because it is what re-derives
 	// the creature plate after the launch. See docs/aterm-pane.md.
-	Role       string       `json:"role"`
-	Seat       string       `json:"seat"`
-	Tier       string       `json:"tier"`
+	Role string `json:"role"`
+	Seat string `json:"seat"`
+	Tier string `json:"tier"`
+	// Name is the identity's own name, carried so a session started from
+	// inside this one (_session) can still re-derive its stable name.
+	Name       string       `json:"name"`
 	Expression string       `json:"expression"`
 	Workspace  string       `json:"workspace"`
 	Directory  string       `json:"directory"`
@@ -52,6 +55,7 @@ func buildSessionCard(document overlayDocument, plan launchPlan) sessionCard {
 		Role:       plan.Identity.Role,
 		Seat:       plan.Identity.Seat,
 		Tier:       document.Seat.Tier,
+		Name:       plan.Identity.Name,
 		Expression: plan.Identity.Expression,
 		Workspace:  plan.Workspace,
 		Directory:  plan.WorkingDirectory,

@@ -17,8 +17,8 @@ func stubLookPath(name string) (string, error) { return "/stub/" + name, nil }
 
 func TestWrapChildPutsTheHarnessBehindVt(t *testing.T) {
 	child := []string{"aos", "_native-shadow", "--harness", "claude", "--", "agent-compose", "launch"}
-	got, wrapped := wrapChild(child, stableSessionName("platform"), true, stubLookPath, &bytes.Buffer{})
-	trampoline := []string{"/stub/vt", "-S", "/bin/sh", "-c", renameThenRun, "sh", stableSessionName("platform"), "/stub/vt"}
+	got, wrapped := wrapChild(child, stableSessionName("Angie", "platform"), true, stubLookPath, &bytes.Buffer{})
+	trampoline := []string{"/stub/vt", "-S", "/bin/sh", "-c", renameThenRun, "sh", stableSessionName("Angie", "platform"), "/stub/vt"}
 	want := append(trampoline, child...)
 	// The shadow child carries its own `--`, and vt has to hand it on untouched.
 	if !wrapped || !slices.Equal(got, want) {
@@ -110,7 +110,7 @@ func TestRunSessionRunsTheChildThroughVtNamedAndKeepsItsExitCode(t *testing.T) {
 	code := runSession(
 		sessionOptions{
 			VibeTunnel: true,
-			Card:       sessionCard{Role: "platform"},
+			Card:       sessionCard{Role: "platform", Name: "Angie"},
 			Argv:       []string{"/bin/sh", "-c", "exit 7"},
 		},
 		strings.NewReader(""), &bytes.Buffer{}, &bytes.Buffer{},
@@ -122,11 +122,11 @@ func TestRunSessionRunsTheChildThroughVtNamedAndKeepsItsExitCode(t *testing.T) {
 	if err != nil {
 		t.Fatalf("the session never reached vt: %v", err)
 	}
-	if got := strings.TrimSpace(string(raw)); !strings.HasSuffix(got, "sh aterm-platform "+filepath.Join(dir, "vt")+" /bin/sh -c exit 7") {
+	if got := strings.TrimSpace(string(raw)); !strings.HasSuffix(got, "sh angie-platform "+filepath.Join(dir, "vt")+" /bin/sh -c exit 7") {
 		t.Fatalf("vt argv = %q", got)
 	}
 	// The name is set from inside the session, before the harness starts.
-	if got, _ := os.ReadFile(titles); strings.TrimSpace(string(got)) != "title aterm-platform" {
+	if got, _ := os.ReadFile(titles); strings.TrimSpace(string(got)) != "title angie-platform" {
 		t.Fatalf("the session was not named: %q", got)
 	}
 }

@@ -2,13 +2,32 @@ package main
 
 import "strings"
 
-// The name carries the role so a launch clears only its own role's sessions, and
-// "" (no role) clears nothing. See docs/aterm-bundles.md.
-func stableSessionName(role string) string {
+// stableSessionName names a session for who answers, not the harness: the
+// identity's slugified name joined to the role slug. See docs/aterm-bundles.md.
+func stableSessionName(name, role string) string {
 	if role == "" {
 		return ""
 	}
-	return "aterm-" + role
+	return slugify(name) + "-" + role
+}
+
+// slugify lowercases a value and collapses any run of non-alphanumeric
+// characters to a single hyphen, trimming a leading or trailing one.
+func slugify(value string) string {
+	var builder strings.Builder
+	dashed := true // suppresses a leading hyphen
+	for _, r := range strings.ToLower(value) {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			builder.WriteRune(r)
+			dashed = false
+			continue
+		}
+		if !dashed {
+			builder.WriteByte('-')
+			dashed = true
+		}
+	}
+	return strings.TrimRight(builder.String(), "-")
 }
 
 func hasNameFlag(arguments []string) bool {

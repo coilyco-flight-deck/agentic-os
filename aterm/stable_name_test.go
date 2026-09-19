@@ -77,7 +77,7 @@ func TestLaunchPlanNamesOnlyClaudeSessionsTheCallerLeftUnnamed(t *testing.T) {
 			}
 			// agent-compose drops its own name when it is handed one, so the flag
 			// has to reach it ahead of the caller's own arguments.
-			carriesName := slices.Contains(plan.Child, stableSessionName("platform"))
+			carriesName := slices.Contains(plan.Child, stableSessionName("Angie", "platform"))
 			if carriesName != testCase.named {
 				t.Fatalf("the child should carry the name only when named: %v", plan.Child)
 			}
@@ -107,13 +107,13 @@ func fakeProcesses(self int, entries []processEntry) (sessionReaper, *[]int, *by
 
 func TestClearClaudeStopsOnlyRunningSessionsOfThatName(t *testing.T) {
 	reaper, stopped, _ := fakeProcesses(900, []processEntry{
-		{PID: 10, PPID: 1, Command: "claude --name aterm-platform --settings s.json"},
+		{PID: 10, PPID: 1, Command: "claude --name angie-platform --settings s.json"},
 		{PID: 11, PPID: 1, Command: "claude --name Sprite [they] (Game Developer) ea64 --model sonnet"},
-		{PID: 12, PPID: 1, Command: "vim --name aterm-platform"},
+		{PID: 12, PPID: 1, Command: "vim --name angie-platform"},
 		{PID: 13, PPID: 1, Command: "claude --model sonnet"},
 		{PID: 900, PPID: 899, Command: "aterm _session --stable-name -- claude"},
 	})
-	if got := reaper.clearClaude(stableSessionName("platform")); got != 1 {
+	if got := reaper.clearClaude(stableSessionName("Angie", "platform")); got != 1 {
 		t.Fatalf("stopped = %d, want 1", got)
 	}
 	if !slices.Equal(*stopped, []int{10}) {
@@ -122,24 +122,41 @@ func TestClearClaudeStopsOnlyRunningSessionsOfThatName(t *testing.T) {
 }
 
 func TestStableSessionNameIsPerRole(t *testing.T) {
-	if stableSessionName("platform") == stableSessionName("science") {
+	if stableSessionName("Angie", "platform") == stableSessionName("Evie", "science") {
 		t.Fatal("two roles must not share a name, or a launch of one ends the other")
 	}
-	if stableSessionName("platform") != stableSessionName("platform") {
+	if stableSessionName("Angie", "platform") != stableSessionName("Angie", "platform") {
 		t.Fatal("a role must get the same name every launch, or nothing is cleared")
 	}
-	if stableSessionName("") != "" {
-		t.Fatalf("no role should mean no name, got %q", stableSessionName(""))
+	if stableSessionName("", "") != "" {
+		t.Fatalf("no role should mean no name, got %q", stableSessionName("", ""))
+	}
+}
+
+func TestStableSessionNameIsForWhoAnswers(t *testing.T) {
+	for _, testCase := range []struct {
+		name string
+		role string
+		want string
+	}{
+		{"Vera", "senior-sysadmin", "vera-senior-sysadmin"},
+		{"Angie", "platform", "angie-platform"},
+		{"Valerie", "junior-sysadmin", "valerie-junior-sysadmin"},
+		{"Vera", "", ""},
+	} {
+		if got := stableSessionName(testCase.name, testCase.role); got != testCase.want {
+			t.Fatalf("stableSessionName(%q, %q) = %q, want %q", testCase.name, testCase.role, got, testCase.want)
+		}
 	}
 }
 
 func TestClearClaudeLeavesAnotherRolesSessionRunning(t *testing.T) {
 	reaper, stopped, _ := fakeProcesses(900, []processEntry{
-		{PID: 10, PPID: 1, Command: "claude --name aterm-platform"},
-		{PID: 11, PPID: 1, Command: "claude --name aterm-science"},
-		{PID: 12, PPID: 1, Command: "claude --name aterm-senior-sysadmin"},
+		{PID: 10, PPID: 1, Command: "claude --name angie-platform"},
+		{PID: 11, PPID: 1, Command: "claude --name evie-science"},
+		{PID: 12, PPID: 1, Command: "claude --name vera-senior-sysadmin"},
 	})
-	if got := reaper.clearClaude(stableSessionName("platform")); got != 1 {
+	if got := reaper.clearClaude(stableSessionName("Angie", "platform")); got != 1 {
 		t.Fatalf("stopped = %d, want 1", got)
 	}
 	if !slices.Equal(*stopped, []int{10}) {
@@ -151,9 +168,9 @@ func TestClearClaudeWithNoNameStopsNothing(t *testing.T) {
 	// claudeSessionName is "" for an unnamed claude, so an empty name would match it.
 	reaper, stopped, _ := fakeProcesses(900, []processEntry{
 		{PID: 10, PPID: 1, Command: "claude --model sonnet"},
-		{PID: 11, PPID: 1, Command: "claude --name aterm-science"},
+		{PID: 11, PPID: 1, Command: "claude --name evie-science"},
 	})
-	if got := reaper.clearClaude(stableSessionName("")); got != 0 || len(*stopped) != 0 {
+	if got := reaper.clearClaude(stableSessionName("", "")); got != 0 || len(*stopped) != 0 {
 		t.Fatalf("stopped = %d pids %v, want none", got, *stopped)
 	}
 }
@@ -162,12 +179,12 @@ func TestClearClaudeNeverStopsTheProcessThatHostsTheSession(t *testing.T) {
 	// A launch run from inside a claude named aterm must not end that claude,
 	// because it is an ancestor of the process asking.
 	reaper, stopped, _ := fakeProcesses(900, []processEntry{
-		{PID: 50, PPID: 1, Command: "claude --name aterm-platform"},
+		{PID: 50, PPID: 1, Command: "claude --name angie-platform"},
 		{PID: 60, PPID: 50, Command: "zsh"},
 		{PID: 900, PPID: 60, Command: "aterm _session --stable-name -- claude"},
-		{PID: 70, PPID: 1, Command: "claude --name aterm-platform"},
+		{PID: 70, PPID: 1, Command: "claude --name angie-platform"},
 	})
-	if got := reaper.clearClaude(stableSessionName("platform")); got != 1 {
+	if got := reaper.clearClaude(stableSessionName("Angie", "platform")); got != 1 {
 		t.Fatalf("stopped = %d, want 1", got)
 	}
 	if !slices.Equal(*stopped, []int{70}) {
@@ -176,9 +193,9 @@ func TestClearClaudeNeverStopsTheProcessThatHostsTheSession(t *testing.T) {
 }
 
 func TestClearClaudeNamesASurvivor(t *testing.T) {
-	reaper, _, notice := fakeProcesses(900, []processEntry{{PID: 10, PPID: 1, Command: "claude --name aterm-platform"}})
+	reaper, _, notice := fakeProcesses(900, []processEntry{{PID: 10, PPID: 1, Command: "claude --name angie-platform"}})
 	reaper.alive = func(int) bool { return true }
-	if got := reaper.clearClaude(stableSessionName("platform")); got != 0 {
+	if got := reaper.clearClaude(stableSessionName("Angie", "platform")); got != 0 {
 		t.Fatalf("stopped = %d, want 0", got)
 	}
 	if !strings.Contains(notice.String(), "would not end") {

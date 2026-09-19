@@ -33,7 +33,7 @@ func runSession(options sessionOptions, stdin io.Reader, stdout, stderr io.Write
 		playCard(stdout, options.Card, options.Motion)
 	}
 	// After the card, so the browser sees the harness and not the animation.
-	name := stableSessionName(options.Card.Role)
+	name := stableSessionName(options.Card.Name, options.Card.Role)
 	argv, wrapped := wrapChild(argv, name, options.VibeTunnel, exec.LookPath, stderr)
 	// Both run before this session exists, so it can never be its own target.
 	reaper := systemReaper(stderr)

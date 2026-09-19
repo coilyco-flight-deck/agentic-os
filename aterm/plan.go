@@ -96,7 +96,7 @@ func buildLaunchPlan(
 		return launchPlan{}, err
 	}
 	// Only claude takes --name, and a caller's own name is left as theirs.
-	name := stableSessionName(request.Role)
+	name := stableSessionName(document.Seat.Name, request.Role)
 	named := request.StableName && request.Seat == "claude" && name != "" && !hasNameFlag(request.Extra)
 	if named {
 		request.Extra = append([]string{"--name", name}, request.Extra...)
