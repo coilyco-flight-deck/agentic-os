@@ -13,6 +13,7 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -46,6 +47,8 @@ type nativeProgress struct {
 	live      *nativeProgressLive
 	workspace string
 	worktrees int
+	// lineMutex keeps a parallel phase's narration lines whole.
+	lineMutex sync.Mutex
 }
 
 type nativeSpan struct {
@@ -61,6 +64,9 @@ type nativeStep struct {
 	begun    time.Time
 	slowest  nativeSpan
 	items    int
+	// mutex guards items and slowest, which a parallel phase updates from
+	// several goroutines.
+	mutex sync.Mutex
 }
 
 func newNativeProgress(out io.Writer, now func() time.Time) *nativeProgress {
@@ -112,6 +118,8 @@ func (progress *nativeProgress) line(verb, format string, args ...any) {
 		return
 	}
 	message := strings.TrimSpace(fmt.Sprintf(format, args...))
+	progress.lineMutex.Lock()
+	defer progress.lineMutex.Unlock()
 	if progress.live != nil {
 		_ = progress.live.Passthrough(func() error {
 			_, err := fmt.Fprintf(progress.out, "aos: %-8s %s\n", verb, message)
@@ -279,6 +287,8 @@ func (step *nativeStep) Track(label string, elapsed time.Duration) {
 	if step == nil {
 		return
 	}
+	step.mutex.Lock()
+	defer step.mutex.Unlock()
 	step.items++
 	if elapsed > step.slowest.elapsed {
 		step.slowest = nativeSpan{label: label, elapsed: elapsed}

@@ -1068,13 +1068,20 @@ func runNativeWorkspaceSweep(
 	state nativeSweepState,
 ) error {
 	pass := runtime.Progress.Step("fleet pass over %d repositories", len(repositories))
-	for index, repository := range repositories {
+	// Fetches overlap because each repository has its own object store.
+	// Normalizing moves checkouts, so it stays serial and runs after the pool.
+	fetchErrors := make([]error, len(repositories))
+	runParallel(len(repositories), nativeParallelLimit(), func(index int) {
+		repository := repositories[index]
 		identity := repository.Owner + "/" + repository.Name
 		runtime.Progress.Item("fetch", index+1, len(repositories), "%s", identity)
 		began := time.Now()
-		_, err := nativeGit(repository.Path, "fetch", "--prune", "origin")
+		_, fetchErrors[index] = nativeGit(repository.Path, "fetch", "--prune", "origin")
 		pass.Track(identity, time.Since(began))
-		if err != nil {
+	})
+	for index, repository := range repositories {
+		identity := repository.Owner + "/" + repository.Name
+		if err := fetchErrors[index]; err != nil {
 			fmt.Fprintf(runtime.Stderr, "aos: fetch skipped for %s: %v\n", identity, err)
 			continue
 		}
@@ -1662,28 +1669,37 @@ func createNativeSession(
 	artifacts := make([]nativeArtifact, 0, len(repositories))
 	created := map[string]string{}
 	link := runtime.Progress.Step("link %d session worktrees", len(repositories))
+	targets := make([]string, len(repositories))
 	for index, repository := range repositories {
-		identity := repository.Owner + "/" + repository.Name
-		target := filepath.Join(sessionProjects, repository.Owner, repository.Name)
-		if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+		targets[index] = filepath.Join(sessionProjects, repository.Owner, repository.Name)
+		if err := os.MkdirAll(filepath.Dir(targets[index]), 0o755); err != nil {
 			link.Fail(err)
 			return nativeLaunchWorkspace{}, err
 		}
-		runtime.Progress.Item("worktree", index+1, len(repositories), "%s", identity)
+	}
+	// One worktree per repository and every repository has its own .git, so
+	// the adds overlap. Results are read back in repository order.
+	addErrors := make([]error, len(repositories))
+	runParallel(len(repositories), nativeParallelLimit(), func(index int) {
+		repository := repositories[index]
+		runtime.Progress.Item("worktree", index+1, len(repositories), "%s/%s", repository.Owner, repository.Name)
 		began := time.Now()
-		_, err := nativeGit(repository.Path,
-			"worktree", "add", "--quiet", "-b", branch, target, nativeWorktreeBase)
-		link.Track(identity, time.Since(began))
-		if err != nil {
-			fmt.Fprintf(runtime.Stderr, "aos: worktree skipped for %s: %v\n", identity, err)
+		_, addErrors[index] = nativeGit(repository.Path,
+			"worktree", "add", "--quiet", "-b", branch, targets[index], nativeWorktreeBase)
+		link.Track(repository.Owner+"/"+repository.Name, time.Since(began))
+	})
+	for index, repository := range repositories {
+		if err := addErrors[index]; err != nil {
+			fmt.Fprintf(runtime.Stderr, "aos: worktree skipped for %s/%s: %v\n",
+				repository.Owner, repository.Name, err)
 			continue
 		}
 		artifacts = append(artifacts, nativeArtifact{
 			Repository: repository.Path,
-			Worktree:   target,
+			Worktree:   targets[index],
 			Branch:     branch,
 		})
-		created[filepath.Join(repository.Owner, repository.Name)] = target
+		created[filepath.Join(repository.Owner, repository.Name)] = targets[index]
 	}
 	link.Done("%d linked", len(artifacts))
 	if len(artifacts) == 0 {

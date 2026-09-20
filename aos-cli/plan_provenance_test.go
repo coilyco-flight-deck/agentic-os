@@ -351,3 +351,33 @@ func assertNoNativeSessionWorktree(t *testing.T, runtime nativeRuntime) {
 		t.Fatalf("a stopped launch left %d session roots behind", len(entries))
 	}
 }
+
+// The fetches overlap, but a launch's warnings read in plan order every time.
+func TestPolicySourceFetchWarningsKeepPlanOrder(t *testing.T) {
+	root := t.TempDir()
+	testRuntime := nativeTestRuntime(t, root)
+	var stderr strings.Builder
+	testRuntime.Stderr = &stderr
+	names := []string{"delta", "alpha", "charlie", "bravo"}
+	plan := aosRepositoryPlan{}
+	for _, name := range names {
+		repository, _ := createNativeTestRepository(t, root, "owner", name)
+		testGit(t, repository, "remote", "set-url", "origin", filepath.Join(root, "missing", name))
+		plan.Inputs = append(plan.Inputs, aosRepositoryPlanInput{
+			Identity: "owner/" + name,
+			Policy:   aosRepositoryPolicyInput{Path: ".agents/roles.kdl"},
+		})
+	}
+	t.Setenv(nativeParallelEnv, "4")
+
+	fetchPolicySources(testRuntime, plan)
+
+	last := -1
+	for _, name := range names {
+		at := strings.Index(stderr.String(), "policy source owner/"+name+" not fetched")
+		if at < 0 || at < last {
+			t.Fatalf("warning for %s missing or out of plan order:\n%s", name, stderr.String())
+		}
+		last = at
+	}
+}

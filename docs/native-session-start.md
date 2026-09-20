@@ -92,9 +92,8 @@ aos: fetch    1/19 coilyco-flight-deck/agentic-os
 aos: done     fleet pass over 19 repositories 14.8s (slowest infrastructure 2.10s)
 ```
 
-Either way the run closes on one `ready` line carrying the total, the session, and the phases that took at least a tenth of a
-second. A terminal erases the row first, and a warning written straight to stderr erases it too, landing on its own clean line with
-the row restored underneath.
+Either way the run closes on one `ready` line carrying the total, the session, and each phase over 0.1s. A warning written to
+stderr erases the row first and lands on its own line.
 
 ```text
 aos: ready    native startup 16.2s // 19 worktrees // /tmp/aos/native/ab85/projects // slowest fleet pass 14.8s
@@ -105,7 +104,7 @@ Compose or the harness.
 
 `AOS_NATIVE_PROGRESS` selects the volume: `steps` is the default above, `summary` keeps the `ready` total alone, `debug` adds the
 launch command and internal notes and never collapses to one row, and `off` restores silence. Warnings and errors print at every
-level.
+level. Fetches and worktree creation overlap on at most eight Git jobs, and `AOS_NATIVE_PARALLEL=1` restores the serial order.
 
 ## Waiting on the startup lock
 

@@ -79,6 +79,7 @@ func verifyPlanProvenance(
 	plan aosRepositoryPlan,
 ) []planProvenanceMismatch {
 	mismatches := make([]planProvenanceMismatch, 0)
+	fetchPolicySources(runtime, plan)
 	for _, input := range plan.Inputs {
 		owner, name, ok := strings.Cut(input.Identity, "/")
 		if !ok || !safePathSegment(owner) || !safePathSegment(name) {
@@ -96,7 +97,6 @@ func verifyPlanProvenance(
 			})
 			continue
 		}
-		fetchPolicySource(runtime, input.Identity, checkout)
 		digest, err := fileDigest(policy)
 		if err != nil {
 			mismatches = append(mismatches, planProvenanceMismatch{
@@ -154,16 +154,35 @@ func policySourcePath(checkout, relative string) (string, bool) {
 	return filepath.Join(checkout, cleaned), true
 }
 
-// A laptop off the network still launches: the fetch warns and the digest
-// comparison stays the gate.
-func fetchPolicySource(runtime nativeRuntime, identity, checkout string) {
-	if _, err := os.Stat(filepath.Join(checkout, ".git")); err != nil {
-		return
+// fetchPolicySources refreshes every sealed source at once, then warns in plan
+// order. A laptop off the network still launches: the digest stays the gate.
+func fetchPolicySources(runtime nativeRuntime, plan aosRepositoryPlan) {
+	type source struct{ identity, checkout string }
+	sources := make([]source, 0, len(plan.Inputs))
+	for _, input := range plan.Inputs {
+		owner, name, ok := strings.Cut(input.Identity, "/")
+		if !ok || !safePathSegment(owner) || !safePathSegment(name) {
+			continue
+		}
+		checkout := filepath.Join(runtime.ProjectsRoot, owner, name)
+		if _, ok := policySourcePath(checkout, input.Policy.Path); !ok {
+			continue
+		}
+		if _, err := os.Stat(filepath.Join(checkout, ".git")); err != nil {
+			continue
+		}
+		sources = append(sources, source{input.Identity, checkout})
 	}
-	if _, err := nativeGit(checkout, "fetch", "--quiet", "origin"); err != nil {
-		fmt.Fprintf(runtime.Stderr,
-			"aos: policy source %s not fetched, verifying against the local checkout: %v\n",
-			identity, err)
+	failures := make([]error, len(sources))
+	runParallel(len(sources), nativeParallelLimit(), func(index int) {
+		_, failures[index] = nativeGit(sources[index].checkout, "fetch", "--quiet", "origin")
+	})
+	for index, err := range failures {
+		if err != nil {
+			fmt.Fprintf(runtime.Stderr,
+				"aos: policy source %s not fetched, verifying against the local checkout: %v\n",
+				sources[index].identity, err)
+		}
 	}
 }
 
