@@ -79,13 +79,12 @@ unless a concrete consumer needs one. GitHub Releases are optional, and a repo
 that needs one derives it from the Forgejo tag so Forgejo stays the single
 source of truth.
 
-`.forgejo/workflows/mirror-to-github.yml` keeps `coilysiren/agentic-os` in step
-with canonical Forgejo `main`, no-ops without the `GITHUB_MIRROR_PAT` secret,
-and runs behind a same-workflow test and pre-commit gate so the push only
-happens when the repo's own checks passed. GitHub consumers import the mirrored
-action library from `coilysiren/agentic-os/actions/*@main`, while Forgejo
-consumers use fully qualified canonical URLs and do not depend on mirror
-freshness.
+A timer in the infrastructure repo keeps `coilysiren/agentic-os` in step with
+canonical Forgejo `main` using a GitHub App installation token, and skips this
+repo's tags on purpose. No workflow here mirrors. GitHub consumers import the
+mirrored action library from `coilysiren/agentic-os/actions/*@main`, while
+Forgejo consumers use fully qualified canonical URLs and do not depend on
+mirror freshness.
 
 ## Fast-forward-only, never `--force`
 
@@ -116,5 +115,5 @@ admin repairs it once:
 
 Every subsequent push then fast-forwards cleanly. This is a one-time repair
 rather than a routine release step, and no separate workflow template is needed:
-the reusable part is the contract, implemented per repo by `promote.yml`,
-`release.yml`, and `mirror-to-github.yml`.
+the reusable part is the contract, implemented per repo by `promote.yml` and
+`release.yml`, with the mirror push run by the infrastructure timer.
