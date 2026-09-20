@@ -196,6 +196,10 @@ dev-base-build *ARGS:
 dev-base-check *ARGS:
     @bash scripts/dev-base-check.sh "$@"
 
+# Fail when the agent-compose roles baked into agentic-os:release differ from the latest agent-compose release's. Run it inside that image.
+agent-compose-roster-watch *ARGS:
+    @uv run python -m agentic_os.agent_compose_roster_watch "$@"
+
 # Fetch exact Forgejo 16 Actions log bytes: `just forgejo-actions-logs <owner> <repo> <run> [job] [attempt] [--max-bytes N]`. Omit job for a whole-run ZIP. Visible run/job indexes, explicit `id:<n>`, and exact job names are supported. Needs FORGEJO_TOKEN.
 forgejo-actions-logs *ARGS:
     @uv run python -m agentic_os.forgejo_actions_logs "$@"

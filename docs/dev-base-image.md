@@ -53,9 +53,9 @@ registry credential, publishing nothing. See
 Every managed version has one default `ARG` across the two Dockerfiles: a
 language pin in its payload target, and shared agents, internal tools, operator
 CLIs, and full-only gates in the full Dockerfile, so changing them reuses cached
-payloads rather than rebuilding toolchains. Every pin is manual, and nothing
-resolves them against upstream or fails when one falls behind, so a pin is only
-as current as the last person who checked it. The image owns this deployment's
+payloads rather than rebuilding toolchains. Every pin is manual, and only the
+agent-compose pin is [watched](build-file-headers.md) against upstream.
+Each other pin is only as current as the last person who checked it. The image owns this deployment's
 Git identity and maps it onto Ward's `WARD_GIT_*` contract, without redefining
 Ward policy, AOSguard policy, or agent-compose source data.
 ## dev-base build cache

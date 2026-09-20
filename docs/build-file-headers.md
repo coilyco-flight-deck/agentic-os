@@ -15,6 +15,14 @@ uv builds the local packages through PEP 517, which resolves setuptools from PyP
 
 Live check of per-role model profiles against the Anthropic model list, so a retired model or unsupported effort turns red before a seat launch hits it. It runs on dispatch only: the daily cron is off until an API key exists, which Kai deferred on 2026-09-16 (`teable:coilyco-flight-deck/agentic-os#7838`). A missing `ANTHROPIC_MODELS_API_KEY` secret fails a dispatched run rather than skipping. Contract: [native harness configuration](native-harness-config.md).
 
+## `.forgejo/workflows/agent-compose-roster-watch.yml`
+
+Scheduled read-only watch that the roles baked into `agentic-os:release` match the latest agent-compose release. Downstream images clone the catalogue fresh per build but inherit this roster frozen, so a rebuild moves skills and not roles, and a stale `AGENT_COMPOSE_VERSION` pin failed nothing. The pin was set to 2.141.0 on Sep 15, the role set changed at 2.149.0 (`sysadmin` split, Sep 17) and 2.152.0 (`admin-assist`, Sep 19), and the pin held until Sep 20. The first signal was a deploy reading the bundle baked into a rebuilt sirens-echo image, while its CI stayed green because `every role composes` validates the roster the image has (`teable:coilyco-flight-deck/agentic-os#8017`).
+
+It runs every six hours, since nothing else touches the pin between `docker/` changes, and inside the published image so it reads what shipped rather than what the Dockerfile says. It asks agent-compose itself for the role set of the baked roster and of the latest release, checked against that release's `SHA256SUMS`, and fails naming the roles the image lacks and any it still bakes that upstream dropped. It compares membership only, because from 2.141.0 to 2.156.0 the roster data changed in 8 of 15 releases and the role set in 2. A run that cannot read either side exits 69 and never passes.
+
+It does not advance the pin, since that publishes a new `release` image and stays a reviewed push. A red scheduled run alerts Telegram. Fix it by advancing `AGENT_COMPOSE_VERSION` in `docker/dev-base/full/Dockerfile` together with the role count in `docker/dev-base/verify-common.sh`, which moves with the pin and so cannot notice one that lags. The pull-request trigger covers only the workflow's own two files and does not alert.
+
 ## `.forgejo/workflows/promote.yml`
 
 Promote main to release after the same suite ci.yml runs. ci.yml never re-gates release precisely because this gate already vouched for the exact sha, so the two must stay in step: a gate narrower than ci.yml promotes a red main. test_pull_request_ci_workflow.py holds them in step. Draft dev-base image publishing runs in a separate workflow keyed by the promoted SHA, so a transient registry or build failure cannot stall the release branch.
