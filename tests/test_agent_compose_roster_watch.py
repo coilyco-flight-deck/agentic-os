@@ -18,8 +18,8 @@ REPO = watch.DEFAULT_REPOSITORY
 ASSET = "agent-compose-linux-amd64"
 
 # Stands in for agent-compose: it reads roles.txt from the roster root it is pointed at
-# and writes the person.json the real verb writes, so no real binary is needed.
-FAKE_BINARY = f"""#!{sys.executable}
+# and writes the person.json the real verb writes. A leading ! marks an archived slug.
+FAKE_SOURCE = """#!@PY@
 import json, pathlib, sys
 argv = sys.argv[1:]
 src = pathlib.Path(argv[argv.index("--person-source") + 1])
@@ -27,9 +27,12 @@ out = pathlib.Path(argv[argv.index("--out") + 1])
 if (src / "fail").exists():
     print("boom", file=sys.stderr)
     sys.exit(3)
-roles = (src / "roles.txt").read_text().split()
-(out / "person.json").write_text(json.dumps({{"role_order": roles}}))
+tokens = (src / "roles.txt").read_text().split()
+order = [t.lstrip("!") for t in tokens]
+meta = {t.lstrip("!"): ({"archived": True} if t.startswith("!") else {}) for t in tokens}
+(out / "person.json").write_text(json.dumps({"role_order": order, "roles": meta}))
 """
+FAKE_BINARY = FAKE_SOURCE.replace("@PY@", sys.executable)
 
 OLD_ROLES = ["platform", "sysadmin", "science", "advocate"]
 NEW_ROLES = ["platform", "senior-sysadmin", "science", "advocate", "junior-sysadmin", "admin-assist"]
@@ -82,24 +85,36 @@ def test_compare_reports_both_directions_and_ignores_order() -> None:
     assert watch.compare_roles(NEW_ROLES, list(reversed(NEW_ROLES))).in_sync
 
 
-def test_role_order_reads_the_roster_through_the_binary(tmp_path: Path) -> None:
+def fake_binary(tmp_path: Path) -> Path:
     binary = tmp_path / "agent-compose"
     binary.write_text(FAKE_BINARY)
     binary.chmod(0o755)
-    assert watch.role_order(binary, shipped_root(tmp_path, OLD_ROLES)) == OLD_ROLES
+    return binary
 
 
-def test_role_order_refuses_an_empty_list_and_a_failing_binary(tmp_path: Path) -> None:
-    binary = tmp_path / "agent-compose"
-    binary.write_text(FAKE_BINARY)
-    binary.chmod(0o755)
+def test_live_roles_reads_the_roster_through_the_binary_and_skips_archived(
+    tmp_path: Path,
+) -> None:
+    roster = shipped_root(tmp_path, [*OLD_ROLES, "!analyst"])
+    assert watch.live_roles(fake_binary(tmp_path), roster) == OLD_ROLES
+
+
+def test_live_roles_refuses_an_empty_roster_an_all_archived_one_and_a_failing_binary(
+    tmp_path: Path,
+) -> None:
+    binary = fake_binary(tmp_path)
     with pytest.raises(watch.WatchError, match="no usable role_order"):
-        watch.role_order(binary, shipped_root(tmp_path, []))
+        watch.live_roles(binary, shipped_root(tmp_path, []))
+    all_archived = tmp_path / "all-archived"
+    all_archived.mkdir()
+    (all_archived / "roles.txt").write_text("!platform !science")
+    with pytest.raises(watch.WatchError, match="no live role"):
+        watch.live_roles(binary, all_archived)
     failing = tmp_path / "failing"
     failing.mkdir()
     (failing / "fail").write_text("")
     with pytest.raises(watch.WatchError, match="boom"):
-        watch.role_order(binary, failing)
+        watch.live_roles(binary, failing)
 
 
 def test_main_names_the_roles_the_image_lacks_and_the_one_it_kept(
@@ -110,8 +125,28 @@ def test_main_names_the_roles_the_image_lacks_and_the_one_it_kept(
     err = capsys.readouterr().err
     assert status == watch.EXIT_DRIFT
     assert "missing from the image: admin-assist, junior-sysadmin, senior-sysadmin" in err
-    assert "baked but dropped upstream: sysadmin" in err
+    assert "baked but dropped or archived upstream: sysadmin" in err
     assert "AGENT_COMPOSE_VERSION to 2.157.0" in err
+
+
+def test_an_archive_flip_upstream_is_drift_although_role_order_is_unchanged(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    serve_release(monkeypatch, "v2.157.0", ["platform", "!science", "advocate"])
+    shipped = shipped_root(tmp_path, ["platform", "science", "advocate"])
+    assert watch.main(["--shipped-roster", str(shipped)]) == watch.EXIT_DRIFT
+    err = capsys.readouterr().err
+    assert "baked but dropped or archived upstream: science" in err
+    assert "missing from the image" not in err
+
+
+def test_a_role_archived_on_both_sides_is_not_drift(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    serve_release(monkeypatch, "v2.157.0", ["platform", "!analyst"])
+    shipped = shipped_root(tmp_path, ["!analyst", "platform"])
+    assert watch.main(["--shipped-roster", str(shipped)]) == 0
+    assert "(1 live roles)" in capsys.readouterr().out
 
 
 def test_main_passes_when_the_role_sets_match_in_any_order(
@@ -120,7 +155,7 @@ def test_main_passes_when_the_role_sets_match_in_any_order(
     serve_release(monkeypatch, "v2.157.0", NEW_ROLES)
     shipped = shipped_root(tmp_path, list(reversed(NEW_ROLES)))
     assert watch.main(["--shipped-roster", str(shipped)]) == 0
-    assert "matches agent-compose v2.157.0 (6 roles)" in capsys.readouterr().out
+    assert "matches agent-compose v2.157.0 (6 live roles)" in capsys.readouterr().out
 
 
 def test_a_checksum_mismatch_is_not_agreement(
