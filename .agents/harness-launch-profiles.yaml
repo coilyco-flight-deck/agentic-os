@@ -36,4 +36,4 @@ roles:
     harnesses:
       goose:
         provider: openai
-        model: evaluation/deepseek-v4-pro
+        model: chat/default
