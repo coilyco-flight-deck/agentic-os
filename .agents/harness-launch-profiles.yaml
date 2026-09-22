@@ -2,25 +2,25 @@ roles:
   platform:
     agent: claude
     harnesses:
-	      claude:
-	        effort: medium
+      claude:
+        effort: medium
   senior-sysadmin:
     agent: claude
   junior-sysadmin:
     agent: claude
     harnesses:
-	      claude:
-	        effort: medium
+      claude:
+        effort: medium
   science:
     agent: claude
     harnesses:
-	      claude:
-	        effort: medium
+      claude:
+        effort: medium
   frontend:
     agent: claude
     harnesses:
-	      claude:
-	        effort: medium
+      claude:
+        effort: medium
   gamedev:
     agent: claude
   director:

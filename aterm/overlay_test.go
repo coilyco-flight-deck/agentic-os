@@ -90,13 +90,13 @@ func TestOverlayPersonalitiesCarryTheFullSensoryVocabulary(t *testing.T) {
 	}
 	for _, personality := range document.Personalities {
 		fields := map[string]string{
-			"name":               personality.Name,
-			"color":              personality.Color,
-			"motif":              personality.Motif,
-			"emblem.emoji":       personality.Emblem.Emoji,
-			"geometry":           personality.Geometry,
-			"body.archetype":     personality.Body.Archetype,
-			"body.attachment":    personality.Body.Attachment,
+			"name":            personality.Name,
+			"color":           personality.Color,
+			"motif":           personality.Motif,
+			"emblem.emoji":    personality.Emblem.Emoji,
+			"geometry":        personality.Geometry,
+			"body.archetype":  personality.Body.Archetype,
+			"body.attachment": personality.Body.Attachment,
 		}
 		for field, value := range fields {
 			if value == "" {

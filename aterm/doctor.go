@@ -169,11 +169,11 @@ func checkSensoryVocabulary(report *doctorReport, document overlayDocument) {
 	missing := []string{}
 	for _, personality := range document.Personalities {
 		for name, value := range map[string]string{
-			"color":      personality.Color,
-			"motif":      personality.Motif,
-			"emblem":     personality.Emblem.Emoji,
-			"geometry":   personality.Geometry,
-			"body":       personality.Body.Archetype,
+			"color":    personality.Color,
+			"motif":    personality.Motif,
+			"emblem":   personality.Emblem.Emoji,
+			"geometry": personality.Geometry,
+			"body":     personality.Body.Archetype,
 		} {
 			if strings.TrimSpace(value) == "" {
 				missing = append(missing, personality.Name+"."+name)

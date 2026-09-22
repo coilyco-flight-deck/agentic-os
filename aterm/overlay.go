@@ -35,14 +35,14 @@ type overlayBody struct {
 }
 
 type overlayPersonality struct {
-	Name      string           `json:"name"`
-	Species   string           `json:"species,omitempty"`
-	ColorWord string           `json:"color_word,omitempty"`
-	Color     string           `json:"color"`
-	Motif     string           `json:"motif"`
-	Geometry  string           `json:"geometry"`
-	Emblem    overlayEmblem    `json:"emblem"`
-	Body      overlayBody      `json:"body"`
+	Name      string        `json:"name"`
+	Species   string        `json:"species,omitempty"`
+	ColorWord string        `json:"color_word,omitempty"`
+	Color     string        `json:"color"`
+	Motif     string        `json:"motif"`
+	Geometry  string        `json:"geometry"`
+	Emblem    overlayEmblem `json:"emblem"`
+	Body      overlayBody   `json:"body"`
 }
 
 // What a session says as it closes, so a hold banner is not invented.
