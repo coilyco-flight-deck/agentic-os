@@ -16,6 +16,7 @@ Default across `~/projects/coilyco-*/*` and `~/projects/coilysiren/*`:
 - `remote-branch-only` - push a branch and stop. No PR and no merge.
 - `merge-remote-main` - **retired.** It was the lane that let you push `main` directly, and pushing straight to `main` ended fleet-wide. The generator no longer renders it, so a repo declaring it reads as undeclared and gets the guarded `pull-request` shape. One repo still declares it and keeps it deliberately: `coilysiren/coilysiren`, which is GitHub-canonical, carries `.agentic-os-ignore`, and wires none of the catalog hooks.
 - A pushed branch always gets a PR. Only `remote-branch-only` stops at the branch, and only when the caller resolved that lane. Unassigned work defaults to `pull-request`. A branch with no PR is litter nobody reviews.
+- Spike or unfinished work opens its PR as Forgejo work in progress: prefix the title `WIP:` (or `[WIP]`, case-insensitive, the instance defaults). Forgejo refuses to merge a WIP PR, which is what stops a green spike from merging on `pull-request-and-merge`. Drop the prefix only once the work meets its acceptance condition, and never merge around it.
 - `pr-guard` refuses any push whose destination is the default branch, with no lane exempting a repo any more. It runs at pre-push, so a repo whose other pre-push hooks are already failing cannot push at all until those are fixed. Never `--no-verify` around it.
 - Run tests, linters, builds without asking. Fix failures.
 - Never `--no-verify`.

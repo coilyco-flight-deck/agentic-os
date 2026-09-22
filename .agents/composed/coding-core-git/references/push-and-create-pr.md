@@ -47,3 +47,5 @@ curl -s -X POST \
 The response JSON includes the PR `number` - save it for later commands.
 
 To create as a draft, add `"draft": true` to the JSON body.
+
+On Forgejo, the canonical host, there is no draft flag. A PR is work in progress when its title starts with `WIP:` or `[WIP]` (case-insensitive), and Forgejo refuses to merge it until the prefix is removed. Every spike opens this way.
