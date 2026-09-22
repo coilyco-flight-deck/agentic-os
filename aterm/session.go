@@ -49,6 +49,12 @@ func runSession(options sessionOptions, stdin io.Reader, stdout, stderr io.Write
 				stopped, name)
 		}
 	}
+	// Best-effort ahead of the harness. See docs/aterm.md.
+	if options.Card.Seat == "claude" {
+		updateClaude(exec.LookPath, func(name string, args ...string) ([]byte, error) {
+			return exec.Command(name, args...).CombinedOutput()
+		}, stderr)
+	}
 	command := exec.Command(argv[0], argv[1:]...)
 	// The card is already resolved here, so the session carries it rather than
 	// re-resolving it later. `aterm card` re-renders from this.
@@ -80,6 +86,24 @@ func runSession(options sessionOptions, stdin io.Reader, stdout, stderr io.Write
 		fmt.Sprintf("Session failed (exit %d). Press Enter to close.", code),
 	))
 	return code
+}
+
+// updateClaude runs `claude update`, silent on success. See docs/aterm.md.
+func updateClaude(
+	lookPath func(string) (string, error),
+	combinedOutput func(string, ...string) ([]byte, error),
+	stderr io.Writer,
+) {
+	if _, err := lookPath("claude"); err != nil {
+		return
+	}
+	if output, err := combinedOutput("claude", "update"); err != nil {
+		detail := strings.TrimSpace(string(output))
+		if detail == "" {
+			detail = err.Error()
+		}
+		fmt.Fprintln(stderr, sessionNoticeStyle.Render("aterm: claude update: "+detail))
+	}
 }
 
 // holdWindow keeps the pane readable after the child is gone. A non-interactive

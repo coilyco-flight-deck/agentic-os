@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"runtime"
 	"strings"
 	"testing"
@@ -96,5 +97,55 @@ func TestRunSessionReportsAChildThatCannotStart(t *testing.T) {
 func TestRunSessionRejectsAnEmptyCommand(t *testing.T) {
 	if code := runSession(sessionOptions{}, strings.NewReader(""), &bytes.Buffer{}, &bytes.Buffer{}); code != 2 {
 		t.Fatalf("exit code = %d, want 2", code)
+	}
+}
+
+func TestUpdateClaudeSkipsWhenClaudeIsNotOnPath(t *testing.T) {
+	called := false
+	stderr := &bytes.Buffer{}
+	updateClaude(
+		func(string) (string, error) { return "", errors.New("not found") },
+		func(string, ...string) ([]byte, error) { called = true; return nil, nil },
+		stderr,
+	)
+	if called {
+		t.Fatal("update should not run when claude is not on PATH")
+	}
+	if stderr.String() != "" {
+		t.Fatalf("a missing claude is not a failure to report: %q", stderr.String())
+	}
+}
+
+func TestUpdateClaudeStaysQuietOnSuccess(t *testing.T) {
+	var gotName string
+	var gotArgs []string
+	stderr := &bytes.Buffer{}
+	updateClaude(
+		func(string) (string, error) { return "/usr/local/bin/claude", nil },
+		func(name string, args ...string) ([]byte, error) {
+			gotName, gotArgs = name, args
+			return []byte("Already on the latest version.\n"), nil
+		},
+		stderr,
+	)
+	if gotName != "claude" || strings.Join(gotArgs, " ") != "update" {
+		t.Fatalf("command = %s %v, want claude update", gotName, gotArgs)
+	}
+	if stderr.String() != "" {
+		t.Fatalf("a clean update should print nothing: %q", stderr.String())
+	}
+}
+
+func TestUpdateClaudeReportsAFailureWithoutPanicking(t *testing.T) {
+	stderr := &bytes.Buffer{}
+	updateClaude(
+		func(string) (string, error) { return "/usr/local/bin/claude", nil },
+		func(string, ...string) ([]byte, error) {
+			return []byte("network unreachable\n"), errors.New("exit status 1")
+		},
+		stderr,
+	)
+	if !strings.Contains(stderr.String(), "claude update") || !strings.Contains(stderr.String(), "network unreachable") {
+		t.Fatalf("failure should name the command and its detail: %q", stderr.String())
 	}
 }
