@@ -27,7 +27,7 @@ roles:
     agent: claude
   advocate:
     agent: claude
-  admin-assist:
+  manager:
     agent: goose
     harnesses:
       goose:
