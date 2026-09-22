@@ -1,30 +1,14 @@
 roles:
   platform:
     agent: claude
-    harnesses:
-      claude:
-        model: sonnet
-        effort: high
   senior-sysadmin:
     agent: claude
   junior-sysadmin:
     agent: claude
-    harnesses:
-      claude:
-        model: sonnet
-        effort: high
   science:
     agent: claude
-    harnesses:
-      claude:
-        model: sonnet
-        effort: high
   frontend:
     agent: claude
-    harnesses:
-      claude:
-        model: sonnet
-        effort: high
   gamedev:
     agent: claude
   director:
