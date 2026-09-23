@@ -202,7 +202,7 @@ if [ -n "$native_aos" ]; then
         # The roster is a live read, so a released aterm that cannot parse it
         # refuses every launch. Listing it exercises that path without a window.
         AGENT_COMPOSE_BIN="$smoke_dir/agent-compose" \
-            "$native_aterm" --list | grep -F "director" >/dev/null
+            "$native_aterm" --list | grep -F "prod-director" >/dev/null
         "$native_aterm" \
             --expression acting \
             --task-title agentic-os-release-smoke \
@@ -210,7 +210,7 @@ if [ -n "$native_aos" ]; then
             --agent-compose-bin "$smoke_dir/agent-compose" \
             --aos-bin "$smoke_dir/aos" \
             --dry-run --json \
-            director codex -- --resume > launch.json
+            prod-director codex -- --resume > launch.json
         # A role that left the roster must be refused, and the refusal has to
         # name the roster rather than fail for some unrelated reason.
         stale_status=0
@@ -227,11 +227,11 @@ if [ -n "$native_aos" ]; then
         AGENT_COMPOSE_BIN="$smoke_dir/agent-compose" \
             "$native_aterm" --working-directory "$smoke_dir" \
             --aos-bin "$smoke_dir/aos" \
-            --dry-run director codex | grep -F "expression" >/dev/null
+            --dry-run prod-director codex | grep -F "expression" >/dev/null
         missing_status=0
         "$native_aterm" --working-directory "$smoke_dir" \
             --agent-compose-bin "$smoke_dir/definitely-not-here" \
-            --dry-run director codex >/dev/null 2>&1 || missing_status=$?
+            --dry-run prod-director codex >/dev/null 2>&1 || missing_status=$?
         if [ "$missing_status" -ne 4 ]; then
             echo "a missing dependency should exit 4, got $missing_status" >&2
             exit 1
@@ -245,11 +245,11 @@ plan = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
 assert plan["format"] == "aterm.launch.v1", plan["format"]
 assert plan["working_directory"] == sys.argv[2]
 assert plan["executable"] == "kitty"
-assert plan["identity"]["role"] == "director"
+assert plan["identity"]["role"] == "prod-director"
 assert plan["identity"]["seat"] == "codex"
 # The stub AOS reports no shadow, so the window runs Agent Compose directly.
 assert plan["shadowed"] is False
-assert plan["child"][-4:] == ["launch", "director", "codex", "--resume"], plan["child"]
+assert plan["child"][-4:] == ["launch", "prod-director", "codex", "--resume"], plan["child"]
 # The terminal runs the session stage, which keeps a failing launch on screen.
 # kitty takes the program as trailing arguments, so the stage is the tail.
 stage = plan["arguments"].index(sys.argv[3])
