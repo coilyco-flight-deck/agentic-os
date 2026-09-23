@@ -56,5 +56,5 @@ Sessions run through `vt`. See [the bundles page](aterm-bundles.md#running-throu
 
 ## macOS app bundles
 
-`aterm bundles` writes one `.app` per live role into `~/Applications`. See
+`aterm bundles` writes one `.app` per live role into `~/Desktop`. See
 [aterm macOS app bundles](aterm-bundles.md).

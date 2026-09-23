@@ -71,7 +71,7 @@ func TestResolveTerminalTargetRefusesAScriptItCannotFollow(t *testing.T) {
 func TestBundleTerminalPrefersTheRolesInstalledApp(t *testing.T) {
 	root := t.TempDir()
 	t.Setenv("HOME", root)
-	apps := filepath.Join(root, "Applications")
+	apps := filepath.Join(root, "Desktop")
 	bundle := filepath.Join(apps, "Angie :: Agentic Platform Engineer.app", "Contents", "MacOS")
 	if err := os.MkdirAll(bundle, 0o755); err != nil {
 		t.Fatalf("stage the bundle: %v", err)

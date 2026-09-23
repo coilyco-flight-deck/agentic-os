@@ -188,7 +188,7 @@ func defaultBundleDir() string {
 	if err != nil {
 		return "."
 	}
-	return filepath.Join(home, "Applications")
+	return filepath.Join(home, "Desktop")
 }
 
 func runBundles(ctx context.Context, deps commandDeps, cmd *cli.Command) error {

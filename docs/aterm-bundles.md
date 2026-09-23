@@ -3,7 +3,7 @@
 Opening a role from Spotlight, the Dock, or Finder. The window each bundle
 opens is [the native agent terminal](aterm.md).
 
-`aterm bundles` writes one `.app` per live role into `~/Applications`, so a role opens from Spotlight, the Dock, or Finder with no terminal to type in. Each wraps `aterm <role>`, so it opens the window above.
+`aterm bundles` writes one `.app` per live role into `~/Desktop`, so a role opens from Spotlight, the Dock, or Finder with no terminal to type in. Each wraps `aterm <role>`, so it opens the window above.
 
 ```text
 just aterm-bundles                   # write them
