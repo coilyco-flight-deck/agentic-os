@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 
-_siren_zshrc_source="$(readlink "${(%):-%N}" 2>/dev/null || printf '%s' "${(%):-%N}")"
+# :A follows every hop, since a session shadow home links to the canonical link.
+_siren_zshrc_source="${${(%):-%N}:A}"
 _siren_aos_root="$(cd "$(dirname "$_siren_zshrc_source")/.." && pwd -P)"
 export AOS_REPO_ROOT="$_siren_aos_root"
 source "$_siren_aos_root/shell/common.sh"

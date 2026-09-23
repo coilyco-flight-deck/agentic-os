@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 
-_siren_bashrc_source="$(readlink "${BASH_SOURCE[0]}" 2>/dev/null || printf '%s' "${BASH_SOURCE[0]}")"
+# Follow every hop, since a session shadow home links to the canonical link.
+_siren_bashrc_source="${BASH_SOURCE[0]}"
+while [ -L "$_siren_bashrc_source" ]; do
+  _siren_link="$(readlink "$_siren_bashrc_source")"
+  case "$_siren_link" in
+    /*) _siren_bashrc_source="$_siren_link" ;;
+    *) _siren_bashrc_source="$(dirname "$_siren_bashrc_source")/$_siren_link" ;;
+  esac
+done
+unset _siren_link
 _siren_aos_root="$(cd "$(dirname "$_siren_bashrc_source")/.." && pwd -P)"
 export AOS_REPO_ROOT="$_siren_aos_root"
 source "$_siren_aos_root/shell/common.sh"
