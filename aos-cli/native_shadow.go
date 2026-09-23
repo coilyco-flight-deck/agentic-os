@@ -256,9 +256,34 @@ func runNativeShadow(ctx context.Context, cmd *cli.Command) error {
 			return err
 		}
 	}
+	if err := prependNativeShimPath(workspace.SessionHome); err != nil {
+		return err
+	}
 	runtime.Progress.Ready()
 	runtime.Progress.Exec(command)
 	return execNative(command)
+}
+
+// prependNativeShimPath fronts the guarded replacements for the harness process
+// itself: Claude Code takes its Bash tool's PATH from here, never from the rc.
+func prependNativeShimPath(sessionHome string) error {
+	if strings.TrimSpace(sessionHome) == "" {
+		return nil
+	}
+	shims := filepath.Join(sessionHome, ".local", "umbra", "shims")
+	if info, err := os.Stat(shims); err != nil || !info.IsDir() {
+		return nil
+	}
+	path := os.Getenv("PATH")
+	for _, entry := range filepath.SplitList(path) {
+		if entry == shims {
+			return nil
+		}
+	}
+	if path != "" {
+		shims += string(os.PathListSeparator) + path
+	}
+	return os.Setenv("PATH", shims)
 }
 
 func convergeNativeEnvironment(ctx context.Context, runtime nativeRuntime) error {
