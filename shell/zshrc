@@ -5,8 +5,20 @@ _siren_zshrc_source="${${(%):-%N}:A}"
 _siren_aos_root="$(cd "$(dirname "$_siren_zshrc_source")/.." && pwd -P)"
 export AOS_REPO_ROOT="$_siren_aos_root"
 source "$_siren_aos_root/shell/common.sh"
-# compinit before aterm: it registers a completion via compdef.
-autoload -Uz compinit && compinit
+# The following lines have been added by Docker Desktop to enable Docker CLI completions.
+fpath=(/Users/kai/.docker/completions $fpath)
+# End of Docker CLI completions
+# One compinit, after every fpath change: a second one with a different fpath
+# rebuilds the dump each start, which ran past Claude Code's shell snapshot.
+_siren_zcompdump="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/zcompdump"
+mkdir -p "${_siren_zcompdump:h}"
+# compinit before aterm: it registers a completion via compdef. -C skips the
+# directory audit while the dump is under a day old.
+autoload -Uz compinit
+() {
+  setopt local_options extended_glob
+  if [[ -n $1(#qN.mh-24) ]]; then compinit -C -d "$1"; else compinit -d "$1"; fi
+} "$_siren_zcompdump"
 _siren_aterm_completion zsh
 command -v direnv >/dev/null && eval "$(direnv hook zsh)"
 
@@ -15,8 +27,3 @@ command -v direnv >/dev/null && eval "$(direnv hook zsh)"
 
 # ripgrep: load config (enables --hidden so rg searches dotfiles by default)
 export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/ripgreprc"
-# The following lines have been added by Docker Desktop to enable Docker CLI completions.
-fpath=(/Users/kai/.docker/completions $fpath)
-autoload -Uz compinit
-compinit
-# End of Docker CLI completions
