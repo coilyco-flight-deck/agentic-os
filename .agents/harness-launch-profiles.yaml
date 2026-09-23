@@ -1,36 +1,26 @@
 roles:
   platform-eng:
     agent: claude
-    harnesses:
-      claude:
-        effort: medium
   sysadmin-senior:
     agent: claude
+    harnesses:
+      claude:
+        effort: high
   sysadmin-junior:
     agent: claude
-    harnesses:
-      claude:
-        effort: medium
   sysadmin-access:
     agent: codex
-    harnesses:
-      goose:
-        provider: openai
-        model: chat/default
   scientist:
     agent: claude
-    harnesses:
-      claude:
-        effort: medium
   frontend-eng:
     agent: claude
-    harnesses:
-      claude:
-        effort: medium
   game-dev:
     agent: claude
   prod-director:
     agent: claude
+    harnesses:
+      claude:
+        effort: high
   dev-advocate:
     agent: claude
   prod-manager:
