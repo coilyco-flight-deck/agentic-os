@@ -2,11 +2,11 @@
   "format": "agent-compose.catalog.v1",
   "items": [
     {
-      "slug": "platform",
+      "slug": "platform-eng",
       "display_name": "Platform Engineer",
       "purpose": "Build and land the foundational software the rest of the estate is built on.",
-      "skill": "role-platform",
-      "skill_source": "roster:core:role:platform",
+      "skill": "role-platform-eng",
+      "skill_source": "roster:core:role:platform-eng",
       "skill_digest": "sha256:a6aee8698eb162f3f4c178aa66c37d41d1061d6072f4dc0dbcb51f8021007d88",
       "identity": {
         "name": "Angie",
@@ -45,11 +45,11 @@
       "background": "#1f2000"
     },
     {
-      "slug": "senior-sysadmin",
+      "slug": "sysadmin-senior",
       "display_name": "Senior Sysadmin",
       "purpose": "Operate the real hosted systems and release surfaces.",
-      "skill": "role-senior-sysadmin",
-      "skill_source": "roster:core:role:senior-sysadmin",
+      "skill": "role-sysadmin-senior",
+      "skill_source": "roster:core:role:sysadmin-senior",
       "skill_digest": "sha256:7570ac98e2cbff754a752b2295bb3b1c879113157148c76c0f7cd9ebb1851f05",
       "identity": {
         "name": "Vera",
@@ -95,11 +95,11 @@
       "background": "#002529"
     },
     {
-      "slug": "science",
+      "slug": "scientist",
       "display_name": "Applied Scientist",
       "purpose": "Measure how agents, models, and inference actually behave on real hardware.",
-      "skill": "role-science",
-      "skill_source": "roster:core:role:science",
+      "skill": "role-scientist",
+      "skill_source": "roster:core:role:scientist",
       "skill_digest": "sha256:9a8ff19b6c329cc8550f54e7274c7213fa963521d2a1c560baa337b8a8d5c06e",
       "identity": {
         "name": "Evie",
@@ -138,11 +138,11 @@
       "background": "#012513"
     },
     {
-      "slug": "frontend",
+      "slug": "frontend-eng",
       "display_name": "Frontend Engineer",
       "purpose": "Shape and build the surfaces a person navigates.",
-      "skill": "role-frontend",
-      "skill_source": "roster:core:role:frontend",
+      "skill": "role-frontend-eng",
+      "skill_source": "roster:core:role:frontend-eng",
       "skill_digest": "sha256:8f8e7b553d797cc9ce16468b721589fa12bd0bff82accab397d1c3f050fe9968",
       "identity": {
         "name": "Delphi",
@@ -181,11 +181,11 @@
       "background": "#2e1328"
     },
     {
-      "slug": "gamedev",
+      "slug": "game-dev",
       "display_name": "Game Developer",
       "purpose": "Ship playable games: the code, the assets, and the build that carries both.",
-      "skill": "role-gamedev",
-      "skill_source": "roster:core:role:gamedev",
+      "skill": "role-game-dev",
+      "skill_source": "roster:core:role:game-dev",
       "skill_digest": "sha256:edf9327124b0b50888f5cbc532eba7869884a41378b8fef7923798cbe390a443",
       "identity": {
         "name": "Sprite",
@@ -224,11 +224,11 @@
       "background": "#032036"
     },
     {
-      "slug": "director",
+      "slug": "prod-director",
       "display_name": "Portfolio Director",
       "purpose": "Decide what the portfolio does next, and carry each decision to its gate.",
-      "skill": "role-director",
-      "skill_source": "roster:core:role:director",
+      "skill": "role-prod-director",
+      "skill_source": "roster:core:role:prod-director",
       "skill_digest": "sha256:6cd53277b155f0d6afb5a748906e398dd423deaf01706318a0e9bf159bc4a58e",
       "identity": {
         "name": "Portia",
@@ -274,11 +274,11 @@
       "background": "#341212"
     },
     {
-      "slug": "advocate",
+      "slug": "dev-advocate",
       "display_name": "Developer Advocate",
       "purpose": "Turn real portfolio work and audience evidence into accurate content, respectful conversations, and informed commitments.",
-      "skill": "role-advocate",
-      "skill_source": "roster:core:role:advocate",
+      "skill": "role-dev-advocate",
+      "skill_source": "roster:core:role:dev-advocate",
       "skill_digest": "sha256:6c33f239921c488b5fcb45eddfb739514a960660df962892aa6fb3e915ac7fbd",
       "identity": {
         "name": "Gem",

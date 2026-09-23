@@ -12,7 +12,7 @@ import (
 
 func testSpec() bundleSpec {
 	return bundleSpec{
-		Role:             "platform",
+		Role:             "platform-eng",
 		DisplayName:      "Agentic Platform Engineer",
 		Person:           "Angie",
 		Version:          "1.2.3",
@@ -61,7 +61,7 @@ func TestBundleLauncherBakesInEveryResolvedBinary(t *testing.T) {
 func TestBundleLauncherPutsTheWorkingDirectoryBeforeTheRole(t *testing.T) {
 	launcher := bundleLauncher(testSpec())
 	directory := strings.Index(launcher, "--working-directory")
-	role := strings.Index(launcher, "'platform'")
+	role := strings.Index(launcher, "'platform-eng'")
 	if directory < 0 || role < 0 {
 		t.Fatalf("the launcher should carry both the flag and the role:\n%s", launcher)
 	}
@@ -129,7 +129,7 @@ func TestWriteBundleLinksTheTerminalBesideTheLauncher(t *testing.T) {
 	}
 	// The stale scan reads what is beside the launcher, and reading a linked
 	// application binary to look for a marker is a hundred megabytes wasted.
-	if role, ours := generatedRole(item.Path); !ours || role != "platform" {
+	if role, ours := generatedRole(item.Path); !ours || role != "platform-eng" {
 		t.Fatalf("generatedRole = %q, %v", role, ours)
 	}
 }
@@ -272,7 +272,7 @@ func TestRenderBundlePlanNamesEveryBundleAndItsStaleLeftovers(t *testing.T) {
 	plan := bundlePlan{
 		Output: "/Users/kai/Applications",
 		Items: []bundleItem{{
-			Role:   "platform",
+			Role:   "platform-eng",
 			Person: "Angie",
 			Name:   "Angie // Agentic Platform Engineer",
 			Path:   "/Users/kai/Applications/Angie :: Agentic Platform Engineer.app",
@@ -284,7 +284,7 @@ func TestRenderBundlePlanNamesEveryBundleAndItsStaleLeftovers(t *testing.T) {
 		t.Fatalf("render: %v", err)
 	}
 	// The rendered name is the one the Dock draws, not the one on disk.
-	for _, want := range []string{"/Users/kai/Applications", "platform",
+	for _, want := range []string{"/Users/kai/Applications", "platform-eng",
 		"Angie // Agentic Platform Engineer", "Retired"} {
 		if !strings.Contains(rendered.String(), want) {
 			t.Fatalf("the rendered plan should name %q:\n%s", want, rendered)
@@ -335,7 +335,7 @@ func TestBundleInfoPlistCarriesTheDisplayNameAndAPlainExecutable(t *testing.T) {
 	if !strings.Contains(plist, "Angie // Agentic Platform Engineer") {
 		t.Fatalf("the plist should carry the rendered name:\n%s", plist)
 	}
-	if !strings.Contains(plist, "<string>aterm-platform</string>") {
+	if !strings.Contains(plist, "<string>aterm-platform-eng</string>") {
 		t.Fatalf("the executable should stay a plain slug:\n%s", plist)
 	}
 }
@@ -364,7 +364,7 @@ func TestBundlePlanWarnsWhenTheBundlesCallADifferentBuild(t *testing.T) {
 		Launcher:      "/opt/homebrew/bin/aterm",
 		LauncherBuild: "aos-v0.231.0",
 		Build:         "aos-v0.242.0",
-		Items:         []bundleItem{{Role: "platform", Name: "Angie // X"}},
+		Items:         []bundleItem{{Role: "platform-eng", Name: "Angie // X"}},
 	}
 	if !plan.staleLauncher() {
 		t.Fatal("a bundle calling an older aterm carries only what that one does")
@@ -441,7 +441,7 @@ func TestEveryDeclaredRoleHasArtAndNoArtIsOrphaned(t *testing.T) {
 func TestWriteBundleUsesRoleArtAndPrefersTheSharedIcon(t *testing.T) {
 	root := t.TempDir()
 	item := bundleItem{
-		Role:       "gamedev",
+		Role:       "game-dev",
 		Path:       filepath.Join(root, "Gale.app"),
 		Executable: "gale",
 		Launcher:   "#!/bin/sh\n",
@@ -455,7 +455,7 @@ func TestWriteBundleUsesRoleArtAndPrefersTheSharedIcon(t *testing.T) {
 	if err != nil {
 		t.Fatalf("role art should have been written: %v", err)
 	}
-	if !bytes.Equal(written, roleIcon("gamedev")) {
+	if !bytes.Equal(written, roleIcon("game-dev")) {
 		t.Fatal("the bundle should carry that role's own art")
 	}
 
@@ -546,7 +546,7 @@ func TestBakedPathKeepsACellarWithNoOptEquivalent(t *testing.T) {
 func TestGeneratedLauncherCarriesNoVersionPinnedPath(t *testing.T) {
 	_, cellar, _ := brewTree(t, "go", "1.26.5", filepath.Join("libexec", "bin"))
 	spec := bundleSpec{
-		Role: "platform", DisplayName: "Platform Engineer", Person: "Angie",
+		Role: "platform-eng", DisplayName: "Platform Engineer", Person: "Angie",
 		BakedPath:       livePathEntries(cellar),
 		ATermBin:        "/opt/homebrew/bin/aterm",
 		AOSBin:          "/opt/homebrew/bin/aos",

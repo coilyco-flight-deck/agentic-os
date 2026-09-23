@@ -134,7 +134,7 @@ if [ -n "$native_aos" ]; then
     fi
     aos_plan=$("$native_aos" \
         --agent codex \
-        --role platform \
+        --role platform-eng \
         --image agentic-os:test \
         --auth=false \
         --dry-run \
@@ -144,7 +144,7 @@ if [ -n "$native_aos" ]; then
     printf '%s\n' "$aos_plan" | grep -F -- "--guarded" >/dev/null
     aoscompose_plan=$("$native_aoscompose" \
         --agent codex \
-        --role platform \
+        --role platform-eng \
         --image agentic-os:test \
         --auth=false \
         --dry-run \
@@ -154,36 +154,36 @@ if [ -n "$native_aos" ]; then
     printf '%s\n' "$aoscompose_plan" | grep -F -- "--guarded" >/dev/null
     aosward_plan=$("$native_aosward" \
         --agent codex \
-        --role director \
+        --role prod-director \
         --image agentic-os:test \
         --dry-run \
         -- \
         "aos release smoke")
     printf '%s\n' "$aosward_plan" | grep -F -- "--composed" >/dev/null
     printf '%s\n' "$aosward_plan" | grep -F -- "--guarded" >/dev/null
-    printf '%s\n' "$aosward_plan" | grep -F "ward agent run --role director" >/dev/null
+    printf '%s\n' "$aosward_plan" | grep -F "ward agent run --role prod-director" >/dev/null
     smoke_dir=$(mktemp -d)
     trap 'rm -rf "$smoke_dir"' EXIT HUP INT TERM
     # The launch profiles own which agent a role defaults to, so read the
     # expected agent from them rather than restating it here.
-    platform_agent=$(role_default_agent platform)
-    director_agent=$(role_default_agent director)
+    platform_agent=$(role_default_agent platform-eng)
+    director_agent=$(role_default_agent prod-director)
     (
         cd "$smoke_dir"
         aoscompose_default_plan=$("$native_aoscompose" \
             --image agentic-os:test \
             --auth=false \
             --dry-run \
-            platform)
-        printf '%s\n' "$aoscompose_default_plan" | grep -F -- "--role platform" >/dev/null
+            platform-eng)
+        printf '%s\n' "$aoscompose_default_plan" | grep -F -- "--role platform-eng" >/dev/null
         printf '%s\n' "$aoscompose_default_plan" | grep -F -- "--layout $platform_agent" >/dev/null
         printf '%s\n' "$aoscompose_default_plan" | grep -F -- "-- $platform_agent" >/dev/null
         aoscompose_director_plan=$("$native_aoscompose" \
             --image agentic-os:test \
             --auth=false \
             --dry-run \
-            director)
-        printf '%s\n' "$aoscompose_director_plan" | grep -F -- "--role director" >/dev/null
+            prod-director)
+        printf '%s\n' "$aoscompose_director_plan" | grep -F -- "--role prod-director" >/dev/null
         printf '%s\n' "$aoscompose_director_plan" | grep -F -- "--layout $director_agent" >/dev/null
         printf '%s\n' "$aoscompose_director_plan" | grep -F -- "-- $director_agent" >/dev/null
         "$native_aosguard" --help >/dev/null
@@ -197,7 +197,7 @@ if [ -n "$native_aos" ]; then
         cp "$repo_root/aterm/testdata/agent-compose" .
         cp "$repo_root/aterm/testdata/aos" .
         cp "$repo_root/aterm/testdata/roster.json" .
-        cp "$repo_root/aterm/testdata/director-codex-overlay.json" .
+        cp "$repo_root/aterm/testdata/prod-director-codex-overlay.json" .
         chmod 0755 agent-compose aos
         # The roster is a live read, so a released aterm that cannot parse it
         # refuses every launch. Listing it exercises that path without a window.

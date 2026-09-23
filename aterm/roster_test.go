@@ -22,7 +22,7 @@ func loadRosterFixture(t *testing.T) rosterDocument {
 
 func TestParseRosterRejectsDriftedContracts(t *testing.T) {
 	cases := map[string]string{
-		"wrong format": `{"format":"agent-compose.catalog.v2","items":[{"slug":"platform"}]}`,
+		"wrong format": `{"format":"agent-compose.catalog.v2","items":[{"slug":"platform-eng"}]}`,
 		"no items":     `{"format":"agent-compose.catalog.v1","items":[]}`,
 		"unsafe slug":  `{"format":"agent-compose.catalog.v1","items":[{"slug":"../etc"}]}`,
 		"not json":     `{`,
@@ -40,14 +40,14 @@ func TestParseRosterRejectsDriftedContracts(t *testing.T) {
 // seats, so nothing downstream can tell it apart once the flag is dropped.
 func TestParseRosterDropsArchivedRoles(t *testing.T) {
 	raw := `{"format":"agent-compose.catalog.v1","items":[
-		{"slug":"platform","seats":[{"harness":"claude"}]},
+		{"slug":"platform-eng","seats":[{"harness":"claude"}]},
 		{"slug":"analyst","archived":true,"seats":[{"harness":"claude"},{"harness":"codex"}]}
 	]}`
 	document, err := parseRoster([]byte(raw))
 	if err != nil {
 		t.Fatalf("parse: %v", err)
 	}
-	if got := document.slugs(); len(got) != 1 || got[0] != "platform" {
+	if got := document.slugs(); len(got) != 1 || got[0] != "platform-eng" {
 		t.Fatalf("slugs = %v, want only the live role", got)
 	}
 	if _, ok := document.role("analyst"); ok {
@@ -75,7 +75,7 @@ func TestParseRosterSeparatesAllArchivedFromEmpty(t *testing.T) {
 
 func TestNativeSeatsDropsSeatsWithNoNativeHarness(t *testing.T) {
 	document := loadRosterFixture(t)
-	frontend, ok := document.role("frontend")
+	frontend, ok := document.role("frontend-eng")
 	if !ok {
 		t.Fatal("fixture is missing the frontend role")
 	}
@@ -105,18 +105,18 @@ func TestUnknownRoleErrorNamesEveryLiveRole(t *testing.T) {
 }
 
 func TestSuggestKeepsNearMissesAndDropsShortCollisions(t *testing.T) {
-	roles := []string{"platform", "sysadmin", "science", "frontend", "gamedev", "director", "advocate", "analyst"}
+	roles := []string{"platform-eng", "sysadmin", "scientist", "frontend-eng", "game-dev", "prod-director", "dev-advocate", "analyst"}
 	// The near misses are built rather than spelled, so the repo's spell-check
 	// does not read a deliberate typo fixture as a real one.
 	cases := []struct {
 		value string
 		want  string
 	}{
-		{value: transpose("platform", 5), want: "platform"},
+		{value: transpose("platform-eng", 5), want: "platform-eng"},
 		{value: drop("sysadmin", 6), want: "sysadmin"},
-		{value: drop("advocate", 3), want: "advocate"},
-		{value: drop("gamedev", 4), want: "gamedev"},
-		{value: transpose("frontend", 4), want: "frontend"},
+		{value: drop("dev-advocate", 3), want: "dev-advocate"},
+		{value: drop("game-dev", 4), want: "game-dev"},
+		{value: transpose("frontend-eng", 4), want: "frontend-eng"},
 	}
 	for _, testCase := range cases {
 		t.Run(testCase.value, func(t *testing.T) {
@@ -126,7 +126,7 @@ func TestSuggestKeepsNearMissesAndDropsShortCollisions(t *testing.T) {
 			}
 		})
 	}
-	// "ops" and "director" are two edits apart, which is most of a three-letter word.
+	// "ops" and "prod-director" are two edits apart, which is most of a three-letter word.
 	if suggestions := suggest("ops", roles); len(suggestions) != 0 {
 		t.Fatalf("suggest(\"ops\") = %v, want no suggestion", suggestions)
 	}
@@ -140,13 +140,13 @@ func TestSuggestionLimitScalesWithLength(t *testing.T) {
 
 func TestUnknownSeatErrorSeparatesUnknownFromUnlaunchable(t *testing.T) {
 	document := loadRosterFixture(t)
-	frontend, _ := document.role("frontend")
+	frontend, _ := document.role("frontend-eng")
 	unlaunchable := unknownSeatError("penpot", frontend).Error()
 	if !strings.Contains(unlaunchable, "no native harness") {
 		t.Fatalf("a real seat with no harness should say so: %s", unlaunchable)
 	}
 	unknown := unknownSeatError("nonsense", frontend).Error()
-	if !strings.Contains(unknown, "is not a frontend seat") {
+	if !strings.Contains(unknown, "is not a frontend-eng seat") {
 		t.Fatalf("an unknown seat should say so: %s", unknown)
 	}
 	for _, message := range []string{unlaunchable, unknown} {
@@ -171,7 +171,7 @@ func TestHumanList(t *testing.T) {
 }
 
 func TestSafeRoleSlug(t *testing.T) {
-	for _, value := range []string{"platform", "gamedev", "a", "role-2"} {
+	for _, value := range []string{"platform-eng", "game-dev", "a", "role-2"} {
 		if !safeRoleSlug(value) {
 			t.Fatalf("%q should be a safe slug", value)
 		}

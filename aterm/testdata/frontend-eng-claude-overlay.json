@@ -2,7 +2,7 @@
   "format": "agent-compose.overlay.v1",
   "schema_version": 1,
   "person": "core",
-  "role": "frontend",
+  "role": "frontend-eng",
   "role_display_name": "Frontend Engineer",
   "purpose": "Shape and build the surfaces a person navigates.",
   "stance": "standing on two short legs, leaning in mid-daub, head tilted at its own work, delighted",

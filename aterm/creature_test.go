@@ -14,7 +14,7 @@ import (
 
 func frontendOverlay(t *testing.T) overlayDocument {
 	t.Helper()
-	document, err := parseOverlay(fixture(t, "frontend-claude-overlay.json"), "frontend", "claude", "acting")
+	document, err := parseOverlay(fixture(t, "frontend-eng-claude-overlay.json"), "frontend-eng", "claude", "acting")
 	if err != nil {
 		t.Fatalf("parse the frontend overlay fixture: %v", err)
 	}
@@ -124,14 +124,14 @@ func TestPlateHoldsTheArtAtItsOwnShare(t *testing.T) {
 func TestPlateIsCachedAndNamedForItsRecipe(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
 	art := pngOfSize(t, 64)
-	first, err := creaturePlatePath("frontend", art, creatureWholeWindow)
+	first, err := creaturePlatePath("frontend-eng", art, creatureWholeWindow)
 	if err != nil {
 		t.Fatalf("resolve the plate path: %v", err)
 	}
 	if !strings.HasPrefix(filepath.Base(first), "frontend-") {
 		t.Fatalf("the plate should be named for its role, got %q", filepath.Base(first))
 	}
-	other, err := creaturePlatePath("frontend", pngOfSize(t, 65), creatureWholeWindow)
+	other, err := creaturePlatePath("frontend-eng", pngOfSize(t, 65), creatureWholeWindow)
 	if err != nil {
 		t.Fatalf("resolve the second plate path: %v", err)
 	}
@@ -157,7 +157,7 @@ func TestPlateIsCachedAndNamedForItsRecipe(t *testing.T) {
 
 func TestCreatureReachesTheTerminalArguments(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
-	plate := bakeCreaturePlate("frontend", creaturePresence, creatureWholeWindow)
+	plate := bakeCreaturePlate("frontend-eng", creaturePresence, creatureWholeWindow)
 	if plate.Path == "" {
 		t.Fatal("frontend ships committed art, so it should bake a plate")
 	}
@@ -166,7 +166,7 @@ func TestCreatureReachesTheTerminalArguments(t *testing.T) {
 	}
 	document := frontendOverlay(t)
 	request := launchRequest{
-		Role: "frontend", Seat: "claude", StartAs: "fullscreen", FontSize: "14.5",
+		Role: "frontend-eng", Seat: "claude", StartAs: "fullscreen", FontSize: "14.5",
 		Creature: plate,
 	}
 	plan, err := buildLaunchPlan(document, request, t.TempDir(), "/stub/aterm", "/stub/compose", "/stub/aos", false)
@@ -189,7 +189,7 @@ func TestCreatureReachesTheTerminalArguments(t *testing.T) {
 // kitty reads as a glob matching nothing and refuses.
 func TestNoCreatureLeavesTheBackgroundFlat(t *testing.T) {
 	document := frontendOverlay(t)
-	request := launchRequest{Role: "frontend", Seat: "claude", StartAs: "fullscreen", FontSize: "14.5"}
+	request := launchRequest{Role: "frontend-eng", Seat: "claude", StartAs: "fullscreen", FontSize: "14.5"}
 	plan, err := buildLaunchPlan(document, request, t.TempDir(), "/stub/aterm", "/stub/compose", "/stub/aos", false)
 	if err != nil {
 		t.Fatalf("build the launch plan: %v", err)

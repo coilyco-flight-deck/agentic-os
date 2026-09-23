@@ -3,12 +3,12 @@ package main
 import "strings"
 
 // stableSessionName names a session for who answers, not the harness: the
-// identity's slugified name joined to the role slug. See docs/aterm-bundles.md.
+// role slug joined to the identity's slugified name. See docs/aterm-bundles.md.
 func stableSessionName(name, role string) string {
 	if role == "" {
 		return ""
 	}
-	return slugify(name) + "-" + role
+	return role + "-" + slugify(name)
 }
 
 // slugify lowercases a value and collapses any run of non-alphanumeric

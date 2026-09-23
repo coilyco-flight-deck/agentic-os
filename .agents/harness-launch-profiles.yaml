@@ -1,39 +1,39 @@
 roles:
-  platform:
+  platform-eng:
     agent: claude
     harnesses:
       claude:
         effort: medium
-  senior-sysadmin:
+  sysadmin-senior:
     agent: claude
-  junior-sysadmin:
+  sysadmin-junior:
     agent: claude
     harnesses:
       claude:
         effort: medium
-  access-sysadmin:
+  sysadmin-access:
     agent: codex
     harnesses:
       goose:
         provider: openai
         model: chat/default
-  science:
+  scientist:
     agent: claude
     harnesses:
       claude:
         effort: medium
-  frontend:
+  frontend-eng:
     agent: claude
     harnesses:
       claude:
         effort: medium
-  gamedev:
+  game-dev:
     agent: claude
-  director:
+  prod-director:
     agent: claude
-  advocate:
+  dev-advocate:
     agent: claude
-  manager:
+  prod-manager:
     agent: goose
     harnesses:
       goose:

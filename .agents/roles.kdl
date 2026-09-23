@@ -1,35 +1,35 @@
 roles {
-    role platform {
+    role platform-eng {
         composed-skill writing-system-improvement-vocab
         composed-skill design-system
         composed-skill "coding-*"
     }
 
-    role senior-sysadmin {
+    role sysadmin-senior {
         composed-skill writing-system-improvement-vocab
         composed-skill "tooling-sysadmin-*"
         composed-skill "coding-*"
     }
 
-    role junior-sysadmin {
+    role sysadmin-junior {
         composed-skill writing-system-improvement-vocab
         composed-skill "tooling-sysadmin-*"
         composed-skill "coding-*"
     }
 
-    role access-sysadmin {
+    role sysadmin-access {
         composed-skill writing-system-improvement-vocab
         composed-skill "tooling-sysadmin-*"
         composed-skill "coding-*"
     }
 
-    role science {
+    role scientist {
         composed-skill design-system
         composed-skill "tooling-eval-*"
         composed-skill "coding-*"
     }
 
-    role frontend {
+    role frontend-eng {
         composed-skill design-system
         composed-skill tooling-tpm-product-brainstorming
         composed-skill tooling-tpm-product-signal-triangulation
@@ -42,7 +42,7 @@ roles {
         composed-skill "personal-preferences"
     }
 
-    role gamedev {
+    role game-dev {
         composed-skill design-system
         composed-skill tooling-discord-emoji-assets
         composed-skill coding-csharp
@@ -55,7 +55,7 @@ roles {
         composed-skill "personal-preferences"
     }
 
-    role director {
+    role prod-director {
         composed-skill tooling-code-review
         composed-skill tooling-skill-authoring
         composed-skill writing-system-improvement-vocab
@@ -67,7 +67,7 @@ roles {
         composed-skill "coding-core-*"
     }
 
-    role advocate {
+    role dev-advocate {
         // The rubric, not the build: website and aosx stay with frontend.
         composed-skill design-system
         composed-skill tooling-discord-community-host

@@ -43,11 +43,11 @@ func leaves(t *testing.T, raw []byte) map[string]any {
 // survive the round trip with the value it went in with.
 func TestOverlayDecodesEveryShippedField(t *testing.T) {
 	cases := map[string][2]string{
-		"platform-claude-overlay.json": {"platform", "claude"},
-		"platform-codex-overlay.json":  {"platform", "codex"},
-		"director-codex-overlay.json":  {"director", "codex"},
+		"platform-eng-claude-overlay.json": {"platform-eng", "claude"},
+		"platform-eng-codex-overlay.json":  {"platform-eng", "codex"},
+		"prod-director-codex-overlay.json":  {"prod-director", "codex"},
 		// frontend is the only seat on the scattered arrangement.
-		"frontend-claude-overlay.json": {"frontend", "claude"},
+		"frontend-eng-claude-overlay.json": {"frontend-eng", "claude"},
 	}
 	for name, selection := range cases {
 		t.Run(name, func(t *testing.T) {

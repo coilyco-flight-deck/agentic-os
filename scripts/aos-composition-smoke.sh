@@ -9,7 +9,7 @@ fi
 
 exec ./aos-cli/aos \
   --agent codex \
-  --role platform \
+  --role platform-eng \
   --warded \
   --composed \
   --guarded \

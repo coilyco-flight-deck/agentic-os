@@ -28,7 +28,7 @@ func TestCompletionOffersEveryLiveRoleFirst(t *testing.T) {
 		}
 		slugs = append(slugs, slug)
 	}
-	for _, want := range []string{"platform", "senior-sysadmin", "science", "frontend", "gamedev", "director", "advocate"} {
+	for _, want := range []string{"platform-eng", "sysadmin-senior", "scientist", "frontend-eng", "game-dev", "prod-director", "dev-advocate"} {
 		if !contains(slugs, want) {
 			t.Fatalf("completion should offer %q: %v", want, slugs)
 		}
@@ -41,7 +41,7 @@ func TestCompletionOffersEveryLiveRoleFirst(t *testing.T) {
 }
 
 func TestCompletionOffersOnlyTheChosenRoleSeats(t *testing.T) {
-	lines := completionLines(t, "senior-sysadmin")
+	lines := completionLines(t, "sysadmin-senior")
 	seats := make([]string, 0, len(lines))
 	for _, line := range lines {
 		seat, _, _ := strings.Cut(line, ":")
@@ -51,7 +51,7 @@ func TestCompletionOffersOnlyTheChosenRoleSeats(t *testing.T) {
 		t.Fatalf("senior-sysadmin should offer its goose seat: %v", seats)
 	}
 	// goose belongs to senior-sysadmin alone, so it must not leak into another role.
-	platform := completionLines(t, "platform")
+	platform := completionLines(t, "platform-eng")
 	for _, line := range platform {
 		if strings.HasPrefix(line, "goose:") {
 			t.Fatalf("goose is not a platform seat: %v", platform)
@@ -62,7 +62,7 @@ func TestCompletionOffersOnlyTheChosenRoleSeats(t *testing.T) {
 // A catalogue seat with no native harness cannot be launched, so completing it
 // would offer a candidate the launcher then refuses.
 func TestCompletionNeverOffersAnUnlaunchableSeat(t *testing.T) {
-	for _, line := range completionLines(t, "frontend") {
+	for _, line := range completionLines(t, "frontend-eng") {
 		if strings.HasPrefix(line, "penpot:") {
 			t.Fatal("penpot has no native harness and must not be completable")
 		}
@@ -70,7 +70,7 @@ func TestCompletionNeverOffersAnUnlaunchableSeat(t *testing.T) {
 }
 
 func TestCompletionIsSilentPastTheSeat(t *testing.T) {
-	if lines := completionLines(t, "platform", "claude"); lines != nil {
+	if lines := completionLines(t, "platform-eng", "claude"); lines != nil {
 		t.Fatalf("harness arguments are not ours to complete: %v", lines)
 	}
 }
@@ -145,11 +145,11 @@ func TestCompletionStaysSilentWhenTheRosterIsUnreachable(t *testing.T) {
 // the first positional the launcher reads as a role.
 func TestCompletionSubcommandDoesNotShadowTheRolePositional(t *testing.T) {
 	var spawns []recordedSpawn
-	out, err := runAterm(t, stubDeps(t, &spawns, true), "--dry-run", "--json", "platform", "claude")
+	out, err := runAterm(t, stubDeps(t, &spawns, true), "--dry-run", "--json", "platform-eng", "claude")
 	if err != nil {
 		t.Fatalf("a role positional should still launch: %v", err)
 	}
-	if !strings.Contains(out, `"role": "platform"`) {
+	if !strings.Contains(out, `"role": "platform-eng"`) {
 		t.Fatalf("the role positional was lost: %s", out)
 	}
 }
