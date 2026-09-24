@@ -17,8 +17,8 @@ DEFAULT_SUBSTRATE_MANIFEST = (
     REPO_ROOT / "aos-cli" / "repositories" / "substrate-repos.txt"
 )
 DEFAULT_PROJECTS_ROOT = Path.home() / "projects"
-DEFAULT_AOSH_REPO = "coilyco-bridge/agentic-os-hardware"
-GLOBAL_BASE_REPO = "coilyco-flight-deck/agentic-os"
+DEFAULT_AOSH_REPO = "coilyco/agentic-os-hardware"
+GLOBAL_BASE_REPO = "coilyco/agentic-os"
 FORMAT = "agentic-os.agents-context-inventory.v1"
 TOKENIZER = "chars/4 proxy"
 VISIBILITIES = {"public", "private", "unknown"}

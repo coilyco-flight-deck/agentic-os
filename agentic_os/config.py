@@ -32,8 +32,8 @@ HUMAN_WORKDIR_SUFFIX = "-workdir"
 def projects_root(root: Path | None = None) -> Path:
     """Root holding the per-org checkout dirs. Override with $PROJECTS_ROOT.
 
-    ~/projects now holds per-org checkout dirs (coilysiren/, coilyco-bridge/,
-    coilyco-flight-deck/), each a plain dir of git working trees rather than a
+    ~/projects now holds per-org checkout dirs (coilyco/ and coilysiren/), each
+    a plain dir of git working trees rather than a
     repo itself, mirroring the GitHub org migration. This defaults to that
     ~/projects (also the global default cwd). An explicit `root` argument wins
     over the env var (used by tests).
@@ -70,8 +70,8 @@ def iter_workspace_repos(root: Path | None = None) -> list[Path]:
       * a child that is itself a git working tree (carries .git) is yielded
         directly - this is the single-org-root layout (root already points at
         an org dir like ~/projects/coilysiren).
-      * otherwise the child is a dir-of-checkouts (an org dir like coilysiren/,
-        coilyco-bridge/, coilyco-flight-deck/) and its own git-working-tree
+      * otherwise the child is a dir-of-checkouts (an org dir like coilyco/ or
+        coilysiren/) and its own git-working-tree
         children are yielded.
 
     Handling both shapes means the default ~/projects root covers every org

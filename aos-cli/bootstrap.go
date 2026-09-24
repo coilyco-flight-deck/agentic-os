@@ -19,7 +19,7 @@ const (
 	defaultSubstrateSeed     = "/opt/substrate-seed"
 	defaultSubstrateRoot     = "/substrate"
 	defaultAgentHome         = "/home/aos"
-	aosProviderRef           = "coilyco-flight-deck/agentic-os"
+	aosProviderRef           = "coilyco/agentic-os"
 	defaultAOSGuardBinary    = "/usr/local/bin/aosguard"
 	defaultAOSGuardSkill     = "/opt/agentic-os/aosguard-skill/aosguard"
 )

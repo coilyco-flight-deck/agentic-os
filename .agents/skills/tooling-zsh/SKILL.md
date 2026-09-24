@@ -9,7 +9,7 @@ zsh and bash share one core, so drafted commands work in both.
 
 ## Config location
 
-Canonical files live at `~/projects/coilyco-flight-deck/agentic-os/shell/`, symlinked per host (`~/.zshrc -> shell/zshrc`, `~/.bashrc -> shell/bashrc`) by the ansible `shell` role. Windows runs both under Git Bash (zsh via MSYS `pacman -S zsh`).
+Canonical files live at `~/projects/coilyco/agentic-os/shell/`, symlinked per host (`~/.zshrc -> shell/zshrc`, `~/.bashrc -> shell/bashrc`) by the ansible `shell` role. Windows runs both under Git Bash (zsh via MSYS `pacman -S zsh`).
 
 Files:
 
@@ -47,7 +47,7 @@ Built on `vcs_info` + `PROMPT_SUBST`. No starship dependency.
 
 ## Editing
 
-- Edit the files in `~/projects/coilyco-flight-deck/agentic-os/shell/` (the symlinks resolve there).
+- Edit the files in `~/projects/coilyco/agentic-os/shell/` (the symlinks resolve there).
 - Reload with `exec zsh` / `exec bash`, or open a new terminal tab.
 - Errors at startup surface immediately. `zsh -x` / `bash -x` traces line-by-line if a function silently misbehaves.
 

@@ -306,7 +306,7 @@ pre-commit-aos-version-used() {
 
 pre-commit-hooks-used() {
   yq -r '.repos[] | select(.repo | test("agentic-os$")) | .hooks[].id' \
-    "${HOME}/projects/coilyco-${1}/.pre-commit-config.yaml"
+    "${HOME}/projects/coilyco/${1}/.pre-commit-config.yaml"
 }
 
 pre-commit-hooks-defined() {

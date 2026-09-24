@@ -94,8 +94,8 @@ func TestLoadSubstrateRepos(t *testing.T) {
 	manifest := filepath.Join(t.TempDir(), "repos.txt")
 	if err := os.WriteFile(manifest, []byte(`
 # public references
-coilyco-flight-deck/agentic-os
-coilyco-flight-deck/ward
+coilyco/agentic-os
+coilyco/ward
 `), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -103,7 +103,7 @@ coilyco-flight-deck/ward
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(repos) != 2 || repos[0].MirrorName() != "coilyco-flight-deck__agentic-os.git" {
+	if len(repos) != 2 || repos[0].MirrorName() != "coilyco__agentic-os.git" {
 		t.Fatalf("unexpected substrate repos: %+v", repos)
 	}
 }
@@ -112,7 +112,7 @@ func TestLoadSubstrateReposRejectsTraversalAndDuplicates(t *testing.T) {
 	t.Parallel()
 	for _, body := range []string{
 		"../agentic-os\n",
-		"coilyco-flight-deck/agentic-os\ncoilyco-flight-deck/agentic-os\n",
+		"coilyco/agentic-os\ncoilyco/agentic-os\n",
 		"owner/name cache\n",
 	} {
 		manifest := filepath.Join(t.TempDir(), "repos.txt")
@@ -140,8 +140,8 @@ func TestPrepareContainerHydratesSubstrateAndProjectsHome(t *testing.T) {
 		})
 	})
 	for _, ref := range []string{
-		"coilyco-flight-deck/agentic-os",
-		"coilyco-flight-deck/ward",
+		"coilyco/agentic-os",
+		"coilyco/ward",
 	} {
 		parts := strings.Split(ref, "/")
 		mirror := filepath.Join(seed, parts[0]+"__"+parts[1]+".git")
@@ -151,7 +151,7 @@ func TestPrepareContainerHydratesSubstrateAndProjectsHome(t *testing.T) {
 	}
 	if err := os.WriteFile(
 		manifest,
-		[]byte("coilyco-flight-deck/agentic-os\ncoilyco-flight-deck/ward\n"),
+		[]byte("coilyco/agentic-os\ncoilyco/ward\n"),
 		0o644,
 	); err != nil {
 		t.Fatal(err)
@@ -208,8 +208,8 @@ func TestPrepareContainerHydratesSubstrateAndProjectsHome(t *testing.T) {
 		}
 	}
 	for _, path := range []string{
-		filepath.Join(substrate, "coilyco-flight-deck", "agentic-os"),
-		filepath.Join(substrate, "coilyco-flight-deck", "ward"),
+		filepath.Join(substrate, "coilyco", "agentic-os"),
+		filepath.Join(substrate, "coilyco", "ward"),
 	} {
 		info, err := os.Stat(path)
 		if err != nil {
@@ -219,7 +219,7 @@ func TestPrepareContainerHydratesSubstrateAndProjectsHome(t *testing.T) {
 			t.Fatalf("substrate path remained writable: %s %o", path, info.Mode().Perm())
 		}
 	}
-	provider := filepath.Join(substrate, "coilyco-flight-deck", "agentic-os")
+	provider := filepath.Join(substrate, "coilyco", "agentic-os")
 	for _, want := range []string{
 		`role "platform"`,
 		`delivery "native-skills"`,
@@ -315,7 +315,7 @@ func TestPrepareContainerWithoutSubstrateStillMaterializesProvider(t *testing.T)
 	seed := filepath.Join(root, "seed")
 	for _, name := range []string{"agentic-os", "ward"} {
 		if err := os.MkdirAll(
-			filepath.Join(seed, "coilyco-flight-deck__"+name+".git"),
+			filepath.Join(seed, "coilyco__"+name+".git"),
 			0o755,
 		); err != nil {
 			t.Fatal(err)
@@ -323,7 +323,7 @@ func TestPrepareContainerWithoutSubstrateStillMaterializesProvider(t *testing.T)
 	}
 	if err := os.WriteFile(
 		manifest,
-		[]byte("coilyco-flight-deck/agentic-os\ncoilyco-flight-deck/ward\n"),
+		[]byte("coilyco/agentic-os\ncoilyco/ward\n"),
 		0o644,
 	); err != nil {
 		t.Fatal(err)
@@ -350,10 +350,10 @@ func TestPrepareContainerWithoutSubstrateStillMaterializesProvider(t *testing.T)
 		t.Fatal(err)
 	}
 	joined := strings.Join(runner.commands, "\n")
-	if strings.Contains(joined, "coilyco-flight-deck__ward.git") {
+	if strings.Contains(joined, "coilyco__ward.git") {
 		t.Fatalf("--no-substrate materialized Ward:\n%s", joined)
 	}
-	if !strings.Contains(joined, "coilyco-flight-deck__agentic-os.git") {
+	if !strings.Contains(joined, "coilyco__agentic-os.git") {
 		t.Fatalf("--no-substrate omitted the required provider:\n%s", joined)
 	}
 }

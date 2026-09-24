@@ -47,8 +47,8 @@ def test_render_skill_default_org_is_the_fleet_home_org():
     """The default is the guess for a repo that sets no org. Every repo with the
     hook enabled overrides it, so this locks the fallback rather than a live path."""
     text = render_skill("newrepo", "A new repo. Triggers - newrepo")
-    assert "Repository `coilyco-bridge/newrepo`." in text
-    assert "`~/projects/coilyco-bridge/newrepo/` when resident." in text
+    assert "Repository `coilyco/newrepo`." in text
+    assert "`~/projects/coilyco/newrepo/` when resident." in text
     assert check_drift("repo-newrepo", text) == []
 
 

@@ -15,7 +15,7 @@ Legacy JSON remains a rollout fallback. No embedded roster exists. Exact
 
 The plan carries a per-role selection beside residency, and an assigned-role
 launch links only its own role's selection. `aterm gamedev` and `acompose
-gamedev claude` link the `coilyco-gaming` checkouts, a `platform` launch does
+gamedev claude` link the game checkouts, a `platform` launch does
 not, and neither pays for worktrees it will never open. AOS grows no second
 opinion about which repository serves which charter: the plan decided, and
 `--role` is how the launch hands AOS that answer.

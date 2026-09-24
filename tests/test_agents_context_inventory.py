@@ -21,8 +21,8 @@ def context_fleet(tmp_path: Path) -> dict[str, Path]:
         substrate,
         "\n".join(
             (
-                "coilyco-flight-deck/agentic-os",
-                "coilyco-flight-deck/substrate-helper",
+                "coilyco/agentic-os",
+                "coilyco/substrate-helper",
             )
         )
         + "\n",
@@ -31,41 +31,41 @@ def context_fleet(tmp_path: Path) -> dict[str, Path]:
         fleet,
         "\n".join(
             (
-                "coilyco-flight-deck/agentic-os public",
-                "coilyco-bridge/agentic-os-hardware public",
-                "coilyco-bridge/product private",
-                "coilyco-bridge/missing private",
+                "coilyco/agentic-os public",
+                "coilyco/agentic-os-hardware public",
+                "coilyco/product private",
+                "coilyco/missing private",
             )
         )
         + "\n",
     )
     shared = "Every action sentence names the actor.\n"
     _write(
-        projects / "coilyco-flight-deck" / "agentic-os" / "AGENTS.md",
+        projects / "coilyco" / "agentic-os" / "AGENTS.md",
         f"# Global\n\n{shared}\n## Commands\n\nUse ward.\n",
     )
     _write(
-        projects / "coilyco-flight-deck" / "agentic-os" / "AGENTS.codex.md",
+        projects / "coilyco" / "agentic-os" / "AGENTS.codex.md",
         "# Reading files\n\nRead a focused slice.\n",
     )
     _write(
-        projects / "coilyco-flight-deck" / "substrate-helper" / "AGENTS.md",
+        projects / "coilyco" / "substrate-helper" / "AGENTS.md",
         "# Helper\n\nKeep helper-specific rules.\n",
     )
     _write(
-        projects / "coilyco-bridge" / "agentic-os-hardware" / "AGENTS.md",
+        projects / "coilyco" / "agentic-os-hardware" / "AGENTS.md",
         "# Hardware\n\nInspect hardware facts at runtime.\n",
     )
     _write(
-        projects / "coilyco-bridge" / "product" / "AGENTS.md",
+        projects / "coilyco" / "product" / "AGENTS.md",
         f"# Product\n\n{shared}\n## Release\n\nRun the product release workflow.\n",
     )
     _write(
-        projects / "coilyco-bridge" / "product" / "CLAUDE.md",
+        projects / "coilyco" / "product" / "CLAUDE.md",
         "@AGENTS.md\n",
     )
     _write(
-        projects / "coilyco-bridge" / "product" / "service" / "AGENTS.md",
+        projects / "coilyco" / "product" / "service" / "AGENTS.md",
         "# Service\n\nKeep service-specific rules.\n",
     )
     return {
@@ -89,13 +89,13 @@ def test_repository_sets_include_missing_roots_and_separate_aosh(
     report = _report(context_fleet)
     repos = {repo["full_name"]: repo for repo in report["repositories"]}
 
-    assert repos["coilyco-flight-deck/agentic-os"]["kind"] == "substrate"
-    assert repos["coilyco-bridge/product"]["kind"] == "product"
-    assert repos["coilyco-bridge/product"]["visibility"] == "private"
-    assert repos["coilyco-bridge/missing"]["present"] is False
-    assert repos["coilyco-bridge/missing"]["root_agents"] == "missing"
-    assert repos["coilyco-bridge/agentic-os-hardware"]["kind"] == "aosh"
-    assert repos["coilyco-bridge/agentic-os-hardware"]["global_load"] is False
+    assert repos["coilyco/agentic-os"]["kind"] == "substrate"
+    assert repos["coilyco/product"]["kind"] == "product"
+    assert repos["coilyco/product"]["visibility"] == "private"
+    assert repos["coilyco/missing"]["present"] is False
+    assert repos["coilyco/missing"]["root_agents"] == "missing"
+    assert repos["coilyco/agentic-os-hardware"]["kind"] == "aosh"
+    assert repos["coilyco/agentic-os-hardware"]["global_load"] is False
     assert report["aosh"]["global_load"] is False
 
 
@@ -110,7 +110,7 @@ def test_active_cascade_orders_global_override_bridge_root_and_nested(
     codex = inventory.active_cascade(
         repositories,
         inventory.ContextSelection(role="engineer", harness="codex"),
-        current_repo="coilyco-bridge/product",
+        current_repo="coilyco/product",
         cwd="service",
     )
     assert [source["delivery_path"] for source in codex["sources"]] == [
@@ -120,14 +120,14 @@ def test_active_cascade_orders_global_override_bridge_root_and_nested(
         "repo-cascade",
     ]
     assert [source["source"] for source in codex["sources"]][-2:] == [
-        "coilyco-bridge/product:AGENTS.md",
-        "coilyco-bridge/product:service/AGENTS.md",
+        "coilyco/product:AGENTS.md",
+        "coilyco/product:service/AGENTS.md",
     ]
 
     claude = inventory.active_cascade(
         repositories,
         inventory.ContextSelection(role="exec", harness="claude"),
-        current_repo="coilyco-bridge/product",
+        current_repo="coilyco/product",
         cwd="service",
     )
     assert [source["delivery_path"] for source in claude["sources"]] == [
@@ -149,9 +149,9 @@ def test_duplicate_product_paragraph_points_to_global_owner_without_text(
         if candidate["classification"] == "duplicate"
     )
 
-    assert duplicate["paragraph"].startswith("coilyco-bridge/product:AGENTS.md#")
+    assert duplicate["paragraph"].startswith("coilyco/product:AGENTS.md#")
     assert duplicate["duplicate_of"].startswith(
-        "coilyco-flight-deck/agentic-os:AGENTS.md#"
+        "coilyco/agentic-os:AGENTS.md#"
     )
     rendered = inventory.render_json(report)
     assert "Every action sentence names the actor." not in rendered
@@ -172,7 +172,7 @@ def test_classification_recommends_narrower_destination(
     product = next(
         repo
         for repo in report["repositories"]
-        if repo["full_name"] == "coilyco-bridge/product"
+        if repo["full_name"] == "coilyco/product"
     )
     bridge = next(
         document
@@ -193,7 +193,7 @@ def test_report_is_stable_and_markdown_uses_flat_prose(
     markdown = inventory.render_markdown(first)
     assert "## Product clipping candidates" in markdown
     assert "| --- |" not in markdown
-    assert "coilyco-bridge/missing" in markdown
+    assert "coilyco/missing" in markdown
 
 
 def test_bare_manifest_entry_resolves_only_a_named_repo(tmp_path: Path) -> None:
@@ -259,7 +259,7 @@ def test_cli_check_reports_incomplete_inventory(
     assert rc == 1
     captured = capsys.readouterr()
     assert '"format": "agentic-os.agents-context-inventory.v1"' in captured.out
-    assert "incomplete: coilyco-bridge/missing" in captured.err
+    assert "incomplete: coilyco/missing" in captured.err
 def test_manifest_rejects_conflicting_visibility(tmp_path: Path) -> None:
     manifest = tmp_path / "repos.txt"
     _write(manifest, "org/repo public\norg/repo private\n")

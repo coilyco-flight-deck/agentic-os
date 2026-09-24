@@ -138,9 +138,8 @@ unselected = [
 ]
 
 [tool.agentic-os.repo-pointer-skills]
-# This repo migrated from the coilysiren org to coilyco-flight-deck, so its
-# repo-pointer skills point at ~/projects/coilyco-flight-deck/.
-org = "coilyco-flight-deck"
+# Every fleet repo lives under the coilyco org and ~/projects/coilyco/.
+org = "coilyco"
 
 [tool.agentic-os.issue-reference-guard]
 enabled = true

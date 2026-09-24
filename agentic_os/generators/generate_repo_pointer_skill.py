@@ -76,7 +76,7 @@ def build_description(raw_description: str, name: str, topics: list[str]) -> str
     return f"{desc}. {trigger_line}" if desc else trigger_line
 
 
-DEFAULT_ORG = "coilyco-bridge"
+DEFAULT_ORG = "coilyco"
 
 
 def repo_skill_name(name: str, org: str = DEFAULT_ORG) -> str:
@@ -110,7 +110,7 @@ def render_skill(
     applied here for the directory/frontmatter name and the H1.
 
     `org` is the workspace org dir the repo lives under (`~/projects/<org>/`).
-    Defaults to `coilyco-bridge`, the fleet's home org; a repo living elsewhere
+    Defaults to `coilyco`, the fleet's one org; a repo living elsewhere
     sets `[tool.agentic-os.repo-pointer-skills] org` so the pointer path tracks
     the real checkout. Every repo enabling the hook sets it today, so the
     default is the guess for a new repo rather than a live path. See
