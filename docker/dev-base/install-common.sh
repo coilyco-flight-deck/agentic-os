@@ -108,7 +108,7 @@ rm /tmp/goose.tar.gz
 goose --version
 
 agent_compose_asset="agent-compose-linux-${GO_ARCH}"
-agent_compose_base="https://forgejo.coilysiren.me/coilyco-flight-deck/agent-compose/releases/download/v${AGENT_COMPOSE_VERSION:?}"
+agent_compose_base="https://forgejo.coilysiren.me/coilyco/agent-compose/releases/download/v${AGENT_COMPOSE_VERSION:?}"
 curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
   "${agent_compose_base}/${agent_compose_asset}" \
   -o "/tmp/${agent_compose_asset}"

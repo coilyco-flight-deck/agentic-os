@@ -50,7 +50,7 @@ if [ "$installed" != "$umbra_version" ]; then
     umbra_path="$tmpdir/umbra"
   fi
 
-  base="https://forgejo.coilysiren.me/coilyco-flight-deck/umbra/releases/download/v${umbra_version}"
+  base="https://forgejo.coilysiren.me/coilyco/umbra/releases/download/v${umbra_version}"
   curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
     "${base}/${asset}" -o "$tmpdir/$asset"
   curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \

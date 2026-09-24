@@ -28,7 +28,7 @@ from agentic_os import shared_ssl_context
 
 
 DEFAULT_BASE_URL = "https://forgejo.coilysiren.me"
-DEFAULT_REPOSITORY = "coilyco-flight-deck/agent-compose"
+DEFAULT_REPOSITORY = "coilyco/agent-compose"
 DEFAULT_SHIPPED_ROSTER = Path("/usr/local/share/agent-compose/roster")
 ROSTER_ASSET = "agent-compose-roster.tar.gz"
 SUMS_ASSET = "SHA256SUMS"

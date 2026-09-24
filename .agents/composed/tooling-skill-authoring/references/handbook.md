@@ -8,7 +8,7 @@ templates, pre-commit wiring, cross-link rules, and category process.
 This handbook is paired with
 [`categories.yaml`](../../../skills/categories.yaml) (at
 `.agents/skills/categories.yaml`), the machine-readable spec consumed by the
-`coilyco-flight-deck/agentic-os` skill-discipline validator. When the two
+`coilyco/agentic-os` skill-discipline validator. When the two
 disagree, the YAML is authoritative for the validator and these files should
 be updated to match.
 

@@ -85,7 +85,7 @@ GITATTRIBUTES_RULES = [
 
 # Canonical source for the hook suite. Forgejo, not the GitHub mirror: it is
 # the source of truth and lands release tags first.
-AGENTIC_OS_REPO_URL = "https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os"
+AGENTIC_OS_REPO_URL = "https://forgejo.coilysiren.me/coilyco/agentic-os"
 
 # Upstream check-merge-conflict, displaced from the agentic-os catalog
 # ; --assume-in-merge keeps the old always-scan behavior.
@@ -307,7 +307,7 @@ def list_local_repo_dirs() -> list[Path]:
     the authoritative candidate list and the only set it can act on. Driving
     off disk via config.iter_workspace_repos() instead of `gh repo list
     <single-owner>` (or a single hardcoded org dir) means the org migration
-    (coilyco-bridge / coilyco-flight-deck) can't silently strand repos.
+    (into coilyco, and before it coilyco-bridge / coilyco-flight-deck) can't silently strand repos.
     apply_to_repo() still filters the source repo, the opt-out marker, and
     non-git dirs; --skip handles one-off exclusions.
     """

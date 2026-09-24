@@ -23,7 +23,7 @@ RUN set -eux; \
     rm -rf /var/lib/apt/lists/*
 RUN set -eux; \
     aos_asset="aos-linux-${TARGETARCH}"; \
-    aos_base="https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/releases/download/aos-v${AOS_VERSION}"; \
+    aos_base="https://forgejo.coilysiren.me/coilyco/agentic-os/releases/download/aos-v${AOS_VERSION}"; \
     curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
       "${aos_base}/${aos_asset}" -o "/tmp/${aos_asset}"; \
     curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
@@ -34,7 +34,7 @@ RUN set -eux; \
     rm "/tmp/${aos_asset}" /tmp/aos-SHA256SUMS; aos --version
 RUN set -eux; \
     umbra_asset="umbra-linux-${TARGETARCH}"; \
-    umbra_base="https://forgejo.coilysiren.me/coilyco-flight-deck/umbra/releases/download/v${UMBRA_VERSION}"; \
+    umbra_base="https://forgejo.coilysiren.me/coilyco/umbra/releases/download/v${UMBRA_VERSION}"; \
     curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
       "${umbra_base}/${umbra_asset}" -o "/tmp/${umbra_asset}"; \
     curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
@@ -83,7 +83,7 @@ ENV PATH=/usr/local/go/bin:/usr/local/dotnet:/usr/local/node/bin:/usr/local/carg
     DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 \
     PRE_COMMIT_HOME=/opt/pre-commit \
     AOS_GIT_NAME=coilyco-ops AOS_GIT_EMAIL=coilyco-ops@coilysiren.me
-LABEL org.opencontainers.image.source="https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os" \
+LABEL org.opencontainers.image.source="https://forgejo.coilysiren.me/coilyco/agentic-os" \
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.title="agentic-os full"
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]

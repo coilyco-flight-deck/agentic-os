@@ -56,7 +56,7 @@ download_umbra() {
         asset="${asset}${host_suffix}"
     fi
     umbra="$release_build/umbra${host_suffix}"
-    base="https://forgejo.coilysiren.me/coilyco-flight-deck/umbra/releases/download/v${umbra_version}"
+    base="https://forgejo.coilysiren.me/coilyco/umbra/releases/download/v${umbra_version}"
     if [ -z "$umbra_version" ]; then
         echo "$umbra_lock does not pin cliGuard" >&2
         exit 1

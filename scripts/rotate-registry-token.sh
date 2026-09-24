@@ -21,7 +21,7 @@ set -euo pipefail
 
 HOST="forgejo.coilysiren.me"
 BOT_USER="coilyco-ops"
-REPO="coilyco-flight-deck/agentic-os"
+REPO="coilyco/agentic-os"
 SECRET_NAME="REGISTRY_TOKEN"
 SSM_PATH="/forgejo/coilyco-ops/registry-token"
 # Token names are unique per user; stamp the name so re-runs never collide.

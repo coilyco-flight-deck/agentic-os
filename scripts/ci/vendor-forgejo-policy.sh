@@ -4,7 +4,7 @@ set -euo pipefail
 
 repo_root=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)
 src_dir="$repo_root/.umbra/guardfiles/aosguard"
-target_repo="${TARGET_REPO:-coilyco-bridge/deploy}"
+target_repo="${TARGET_REPO:-coilyco/deploy}"
 target_dir="services/forgejo-mcp/vendor/aosguard"
 host="forgejo.coilysiren.me"
 sha=$(git -C "$repo_root" rev-parse HEAD)
@@ -25,7 +25,7 @@ cp "$src_dir/forgejo.kdl" "$src_dir/forgejo.swagger.v1.json.gz" "$target_dir/"
 
 # The pin is what makes the copy auditable: it names the commit the bytes came
 # from, so deploy answers "which policy is this" without guessing.
-printf 'repo: coilyco-flight-deck/agentic-os\ncommit: %s\nfiles: forgejo.kdl forgejo.swagger.v1.json.gz\n' \
+printf 'repo: coilyco/agentic-os\ncommit: %s\nfiles: forgejo.kdl forgejo.swagger.v1.json.gz\n' \
   "$sha" >"$target_dir/SOURCE"
 
 git add "$target_dir"
@@ -41,7 +41,7 @@ git push "https://coilyco-ops:${DEPLOY_WRITE_TOKEN}@${host}/${target_repo}.git" 
   "HEAD:${branch}"
 
 # A pushed branch owes its pull request, or nothing points at the vendored copy.
-body=$(printf 'Pushed by coilyco-flight-deck/agentic-os. Source commit: %s.\n\nAuthored there, rolled out here: deploy never fetches this upward at build or run time (agentic-os#1376).' "$sha")
+body=$(printf 'Pushed by coilyco/agentic-os. Source commit: %s.\n\nAuthored there, rolled out here: deploy never fetches this upward at build or run time (agentic-os#1376).' "$sha")
 python3 - "$branch" "${sha:0:12}" "$body" >"$work/pr.json" <<'PY'
 import json
 import sys

@@ -2171,6 +2171,10 @@ func (expected nativeExpected) matches(owner, name string) bool {
 // nativeSerializedIdentities invert workspace isolation instead of receiving
 // it: one editor lock, one world, one writer. docs/native-agent-workspaces.md
 var nativeSerializedIdentities = map[string]bool{
+	"coilyco/eco-app":  true,
+	"coilyco/eco-mods": true,
+	"coilyco/eco-ops":  true,
+	// Legacy owner dir, until the tower's checkouts move under coilyco/.
 	"coilyco-gaming/eco-app":  true,
 	"coilyco-gaming/eco-mods": true,
 	"coilyco-gaming/eco-ops":  true,

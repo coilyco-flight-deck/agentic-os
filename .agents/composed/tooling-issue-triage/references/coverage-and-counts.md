@@ -19,12 +19,12 @@ BASE=https://forgejo.coilysiren.me/api/v1
 gettotal() { curl -sD - -o /dev/null -H "Authorization: token $TOKEN" "$1" | awk 'tolower($1)=="x-total-count:"{print $2}' | tr -d '\r'; }
 
 # authoritative per-repo open-issue count
-gettotal "$BASE/repos/coilyco-bridge/agentic-os-kai/issues?type=issues&state=open&limit=1"
+gettotal "$BASE/repos/coilyco/agentic-os-kai/issues?type=issues&state=open&limit=1"
 
 # sum across an org
 sum=0
-for r in $(curl -s -H "Authorization: token $TOKEN" "$BASE/orgs/coilyco-bridge/repos?limit=100" | jq -r '.[].name'); do
-  sum=$((sum + $(gettotal "$BASE/repos/coilyco-bridge/$r/issues?type=issues&state=open&limit=1")))
+for r in $(curl -s -H "Authorization: token $TOKEN" "$BASE/orgs/coilyco/repos?limit=100" | jq -r '.[].name'); do
+  sum=$((sum + $(gettotal "$BASE/repos/coilyco/$r/issues?type=issues&state=open&limit=1")))
 done
 echo "$sum"
 ```

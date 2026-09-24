@@ -23,7 +23,7 @@ jobs:
   watch:
     runs-on: docker
     timeout-minutes: 10
-    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release
+    container: forgejo.coilysiren.me/coilyco/agentic-os:release
     steps:
       - uses: actions/checkout@v6
       - name: Compare the shipped roster against the latest agent-compose release

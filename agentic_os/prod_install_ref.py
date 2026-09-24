@@ -64,7 +64,7 @@ def resolve_release_ref(
     """Return the version tag at `release`, or the branch name as a safe fallback."""
     product = PRODUCTS[product_name]
     fetch = fetch_json or _get_json
-    base = f"{FORGEJO_API}/repos/coilyco-flight-deck/{product.repository}"
+    base = f"{FORGEJO_API}/repos/coilyco/{product.repository}"
     try:
         branch = fetch(f"{base}/branches/release")
         release_sha = branch["commit"]["id"]  # type: ignore[index]

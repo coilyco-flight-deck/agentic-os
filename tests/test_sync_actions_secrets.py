@@ -43,16 +43,9 @@ def test_mapping_keys_are_owner_qualified() -> None:
         assert sep and owner and repo and "/" not in repo, key
 
 
-def test_mapping_spans_more_than_one_owner() -> None:
-    """Guards the cross-org shape against a regression back to a single OWNER."""
-    mod = _load_script()
-    owners = {key.split("/", 1)[0] for key in mod.MAPPING}
-    assert {"coilyco-flight-deck", "coilyco-bridge"} <= owners
-
-
 def test_deploy_pin_reconciler_secrets_are_mapped() -> None:
     mod = _load_script()
-    deploy = mod.MAPPING[mod.slug("deploy", "coilyco-bridge")]
+    deploy = mod.MAPPING[mod.slug("deploy")]
     assert deploy["DEPLOY_PUSH_TOKEN"] == "/forgejo/coilyco-ops/ci-release-token"
     assert (
         deploy["REGISTRY_READ_TOKEN"] == "/forgejo/coilyco-ops/registry-read-token"

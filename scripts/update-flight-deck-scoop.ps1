@@ -2,7 +2,7 @@
 
 [CmdletBinding(SupportsShouldProcess, ConfirmImpact = "Low")]
 param(
-    [string] $Repository = "https://forgejo.coilysiren.me/coilyco-flight-deck/scoop-bucket"
+    [string] $Repository = "https://forgejo.coilysiren.me/coilyco/scoop-bucket"
 )
 
 $ErrorActionPreference = "Stop"

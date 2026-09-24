@@ -79,7 +79,8 @@ def iter_workspace_repos(root: Path | None = None) -> list[Path]:
     mirrors the old single-root behaviour). Hidden dirs (.dispatch-worktrees
     and other scaffolding) are skipped at both levels, except the org-profile
     repo literally named ``.github``: every org owns one, and the plain dotfile
-    skip made all three invisible to every fleet rollout. Human-only
+    skip made all three invisible to every fleet rollout. A symlinked org dir
+    is an alias, not a second owner, and is skipped. Human-only
     ``*-workdir`` checkouts are skipped wherever they appear. Returns repo
     directory Paths sorted by (org dir, repo name).
 
@@ -119,7 +120,9 @@ def iter_workspace_repos(root: Path | None = None) -> list[Path]:
         if is_checkout(child):
             repos.append(child)
             continue
-        if child.name.startswith("."):
+        # A symlinked org dir is a compatibility alias for another org dir,
+        # so walking it would yield every repo twice.
+        if child.name.startswith(".") or child.is_symlink():
             continue
         for grandchild in sorted(child.iterdir()):
             if is_checkout(grandchild):

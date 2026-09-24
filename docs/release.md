@@ -114,7 +114,7 @@ Composite Forgejo Actions for the brew release pipeline, each a forgejo-API-only
 - `actions/bump-formula` - rewrite a Homebrew Formula's `url ".."` line to pin the new tag + revision and PUT via forgejo Contents API with bounded lookup and write calls.
 
 Forgejo imports use a fully qualified canonical URL:
-`uses: https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/actions/<name>@main`.
+`uses: https://forgejo.coilysiren.me/coilyco/agentic-os/actions/<name>@main`.
 GitHub uses the mirror.
 
 agentic-os dogfoods local `uses:` refs.

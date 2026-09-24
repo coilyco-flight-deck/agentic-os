@@ -70,7 +70,7 @@ update_homebrew() {
     exit 0
   fi
   git clone --depth 1 \
-    https://forgejo.coilysiren.me/coilyco-flight-deck/homebrew-tap.git tap
+    https://forgejo.coilysiren.me/coilyco/homebrew-tap.git tap
   cp dist/aos.rb tap/Formula/aos.rb
   cd tap
   git add Formula/aos.rb
@@ -81,7 +81,7 @@ update_homebrew() {
   git config user.email "coilyco-ops@coilysiren.me"
   git commit -m "chore(aos): bump formula to ${TAG} [skip ci]"
   git push \
-    "https://coilyco-ops:${TAP_WRITE_TOKEN}@forgejo.coilysiren.me/coilyco-flight-deck/homebrew-tap.git" \
+    "https://coilyco-ops:${TAP_WRITE_TOKEN}@forgejo.coilysiren.me/coilyco/homebrew-tap.git" \
     HEAD:main
 }
 
@@ -91,7 +91,7 @@ update_scoop() {
     exit 0
   fi
   git clone --depth 1 \
-    https://forgejo.coilysiren.me/coilyco-flight-deck/scoop-bucket.git bucket
+    https://forgejo.coilysiren.me/coilyco/scoop-bucket.git bucket
   cp dist/aos.json bucket/bucket/aos.json
   cd bucket
   git add bucket/aos.json
@@ -102,7 +102,7 @@ update_scoop() {
   git config user.email "coilyco-ops@coilysiren.me"
   git commit -m "chore(aos): bump manifest to ${TAG} [skip ci]"
   git push \
-    "https://coilyco-ops:${SCOOP_WRITE_TOKEN}@forgejo.coilysiren.me/coilyco-flight-deck/scoop-bucket.git" \
+    "https://coilyco-ops:${SCOOP_WRITE_TOKEN}@forgejo.coilysiren.me/coilyco/scoop-bucket.git" \
     HEAD:main
 }
 

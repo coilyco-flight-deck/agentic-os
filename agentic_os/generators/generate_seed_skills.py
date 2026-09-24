@@ -24,7 +24,7 @@ DATA_PATH = Path(__file__).resolve().parents[1] / "seed_skills_data.py"
 
 DELIVERED_SKILLS_PREFIX = ".agents/skills"
 SOURCE_SKILLS_PREFIX = ".agents/composed"
-CANONICAL_REPO = "forgejo.coilysiren.me/coilyco-flight-deck/agentic-os"
+CANONICAL_REPO = "forgejo.coilysiren.me/coilyco/agentic-os"
 
 
 def canonical_ref(skill: str) -> str:

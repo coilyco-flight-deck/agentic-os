@@ -6,7 +6,7 @@ Pre-commit hooks and authoring docs for documentation and skill repositories.
 
 The validators ship in the `aos-precommit` distribution, preserve the
 `agentic_os` Python namespace, and install through the managed
-`coilyco-flight-deck/agentic-os` pre-commit block.
+`coilyco/agentic-os` pre-commit block.
 
 - `check-skills` - validates `.agents/skills/` against a spec at `.agents/skills/categories.yaml`. Checks frontmatter, prefix taxonomy, status lines, required sections, size caps, stale skill-name references.
 - `check-composed-skills` - validates role-scoped `.agents/composed/` sources, requires `COMPOSED.md`, and rejects discoverable entrypoints or ordinary-name collisions.

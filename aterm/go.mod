@@ -1,4 +1,4 @@
-module forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/aterm
+module forgejo.coilysiren.me/coilyco/agentic-os/aterm
 
 go 1.25.0
 

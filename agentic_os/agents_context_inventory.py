@@ -224,7 +224,7 @@ def _resolve_entry(entry: ManifestEntry, projects_root: Path) -> tuple[str, Path
     matches = sorted(
         path
         for path in projects_root.glob(f"*/{entry.ref}")
-        if path.is_dir() or path.is_symlink()
+        if (path.is_dir() or path.is_symlink()) and not path.parent.is_symlink()
     )
     if len(matches) > 1:
         owners = ", ".join(path.parent.name for path in matches)

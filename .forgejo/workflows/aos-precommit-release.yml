@@ -42,7 +42,7 @@ jobs:
   release:
     runs-on: docker
     timeout-minutes: 20
-    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release
+    container: forgejo.coilysiren.me/coilyco/agentic-os:release
     steps:
       - uses: actions/checkout@v6
         with:

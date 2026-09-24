@@ -14,7 +14,7 @@ not scan the projects directory to invent a fleet. Infrastructure supplies:
 
 ```text
 # owner/name visibility
-coilyco-flight-deck/agentic-os public
+coilyco/agentic-os public
 example/product private
 ```
 

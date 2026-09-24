@@ -24,16 +24,22 @@ END = "<!-- END managed by agentic-os/scripts/apply-agents-pointer.py -->"
 
 # Public base on its GitHub mirror (unauthenticated, the public face) and the
 # private Kai overlay on canonical Forgejo. Default branch is `main` on both.
-PUBLIC_BASE_URL = "https://github.com/coilyco-flight-deck/agentic-os/blob/main/AGENTS.md"
+PUBLIC_BASE_URL = "https://github.com/coilyco/agentic-os/blob/main/AGENTS.md"
 KAI_OVERLAY_URL = (
-    "https://forgejo.coilysiren.me/coilyco-bridge/agentic-os-kai/src/branch/main/AGENTS.md"
+    "https://forgejo.coilysiren.me/coilyco/agentic-os-kai/src/branch/main/AGENTS.md"
 )
 
+# The merged org cannot carry the old public/private split, so it takes the
+# public body every reader can open. docs/features-agents.md
+COILYCO = "coilyco"
+# Retired orgs, kept while a checkout's remote still names one.
 FLIGHT_DECK = "coilyco-flight-deck"
 BRIDGE = "coilyco-bridge"
 
 # A base repo never points at itself. Keyed by (org, repo).
 EXEMPT: set[tuple[str, str]] = {
+    (COILYCO, "agentic-os"),
+    (COILYCO, "agentic-os-kai"),
     (FLIGHT_DECK, "agentic-os"),
     (BRIDGE, "agentic-os-kai"),
 }
@@ -59,10 +65,10 @@ _LEGACY_INTRO_RE = re.compile(
 
 def render_body(org: str) -> str | None:
     """Return the pointer prose for an org, or None if the org is unmanaged."""
-    if org == FLIGHT_DECK:
+    if org in (COILYCO, FLIGHT_DECK):
         return (
             f"{_PREFIX}The canonical base is "
-            f"**[coilyco-flight-deck/agentic-os/AGENTS.md]({PUBLIC_BASE_URL})**."
+            f"**[coilyco/agentic-os/AGENTS.md]({PUBLIC_BASE_URL})**."
             f"{_SUFFIX}"
         )
     if org == BRIDGE:
@@ -184,7 +190,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--org",
-        help="Org slug (coilyco-flight-deck / coilyco-bridge). Default: detect from cwd's remotes.",
+        help="Org slug (coilyco, or a retired coilyco-flight-deck / coilyco-bridge). Default: detect from cwd's remotes.",
     )
     parser.add_argument(
         "--repo-root",

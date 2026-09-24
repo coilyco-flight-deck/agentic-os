@@ -40,7 +40,7 @@ jobs:
     runs-on: docker
     timeout-minutes: 30
     container:
-      image: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release
+      image: forgejo.coilysiren.me/coilyco/agentic-os:release
     outputs:
       tag: ${{ steps.tag.outputs.new_tag }}
     steps:

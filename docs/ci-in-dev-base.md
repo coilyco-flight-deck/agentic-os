@@ -22,7 +22,7 @@ environment regressions fail **loudly, on a PR**, before any container dispatche
 Each app CI job runs in the dev-base container and invokes the app's own gate
 verbs instead of hand-rolled `uv run` steps:
 
-- `container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release`
+- `container: forgejo.coilysiren.me/coilyco/agentic-os:release`
 - `just test` / `just lint` / `just smoke` - the same verbs a
   dispatched agent runs. Each app defines these in its own `justfile`.
 

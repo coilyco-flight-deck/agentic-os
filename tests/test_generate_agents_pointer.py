@@ -30,6 +30,15 @@ def test_bridge_body_layers_overlay_over_public_base():
     assert "layered on top" in body
 
 
+def test_merged_org_takes_the_public_body_and_exempts_both_bases():
+    body = render_body("coilyco")
+    assert body == render_body(FLIGHT_DECK)
+    assert KAI_OVERLAY_URL not in body  # one org holds public repos too
+    assert is_managed("coilyco", "deploy") is True
+    assert is_managed("coilyco", "agentic-os") is False
+    assert is_managed("coilyco", "agentic-os-kai") is False
+
+
 def test_unmanaged_org_renders_nothing():
     assert render_body("coilysiren") is None
     assert render_block("coilysiren") is None

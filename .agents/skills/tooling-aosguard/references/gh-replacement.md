@@ -37,4 +37,4 @@ Both roots build against one committed `specverb.lock`, the copy under `guardfil
 
 `withhold` landed in umbra v0.202.0, `replace` in v0.212.0, and `default-allow` in the release this lock now pins. The dev-base `ARG UMBRA_VERSION` moves with it, enforced by `test_umbra_pin_is_owned_by_the_dependency_lock`.
 
-Rollout is the `agentic-os-config` ansible role in `coilyco-bridge/infrastructure`, which runs `umbra install` into the shim directory and reports changed on a sha256 either side of it.
+Rollout is the `agentic-os-config` ansible role in `coilyco/infrastructure`, which runs `umbra install` into the shim directory and reports changed on a sha256 either side of it.

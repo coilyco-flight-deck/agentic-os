@@ -21,7 +21,7 @@ jobs:
   gate:
     runs-on: docker
     timeout-minutes: 30
-    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release
+    container: forgejo.coilysiren.me/coilyco/agentic-os:release
     steps:
       - uses: actions/checkout@v6
         with:
@@ -53,7 +53,7 @@ jobs:
   promote-release:
     needs: [gate]
     runs-on: docker
-    container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release
+    container: forgejo.coilysiren.me/coilyco/agentic-os:release
     steps:
       - uses: actions/checkout@v6
         with:

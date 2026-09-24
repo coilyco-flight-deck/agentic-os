@@ -17,7 +17,7 @@ consuming repository and neither is its content.
 
 The gitignore did not help: these hooks run `always_run: true` with
 `pass_filenames: false` and walk the tree themselves, bypassing both pre-commit's
-file list and its `exclude:`. See coilyco-gaming/sirens-echo#800.
+file list and its `exclude:`. See coilyco/sirens-echo#800.
 
 ## What decides it now
 

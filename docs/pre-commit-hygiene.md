@@ -19,7 +19,7 @@ text hygiene that are too disruptive to flip on everywhere at once.
 
 The one-line half alone is satisfiable by escaping a whole program into a
 single string, cheaper than creating a file, so agents reach for it: 24
-workflows in `coilyco-bridge/deploy` and 12 steps here landed one ~50-line
+workflows in `coilyco/deploy` and 12 steps here landed one ~50-line
 Python program as `python3 -c 'exec("import os\n...")'`, unreadable by `ruff`,
 `shellcheck`, review, and `git diff`. Unshareable too, so one copy had drifted.
 
@@ -53,7 +53,7 @@ spelling, such as SSM parameters, pass with no allowlist. Liveness is
 `check-link-liveness`, a report-only CLI rather than a hook, and its scheduled
 job is not built yet. Page-shape validation is deferred until the format has
 more than one instance: its only draft is
-[coilysiren/inbox#417](https://forgejo.coilysiren.me/coilyco-bridge/inbox/issues/417).
+[coilysiren/inbox#417](https://forgejo.coilysiren.me/coilyco/inbox/issues/417).
 
 ## Manual opt-ins
 

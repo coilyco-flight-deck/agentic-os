@@ -90,16 +90,16 @@ role/human         unchanged, never a seat
 Each rename was an edit in place, so all 770 issues kept the label they already
 carried and none was touched. `role/gamedev` starts empty, and the game and mod
 work that predates the seat sits on `role/platform` until the sweep at
-[agent-compose#345](https://forgejo.coilysiren.me/coilyco-flight-deck/agent-compose/issues/345)
+[agent-compose#345](https://forgejo.coilysiren.me/coilyco/agent-compose/issues/345)
 finds it.
 
 The whole change is at
-[agent-compose#342](https://forgejo.coilysiren.me/coilyco-flight-deck/agent-compose/issues/342).
+[agent-compose#342](https://forgejo.coilysiren.me/coilyco/agent-compose/issues/342).
 
 ## This page describes, it does not define
 
 The taxonomy is declared in
-[`config/forgejo-label-taxonomy.yaml`](https://forgejo.coilysiren.me/coilyco-bridge/infrastructure/src/branch/main/config/forgejo-label-taxonomy.yaml)
+[`config/forgejo-label-taxonomy.yaml`](https://forgejo.coilysiren.me/coilyco/infrastructure/src/branch/main/config/forgejo-label-taxonomy.yaml)
 in infrastructure, and converged from there.
 
 That split is new, and it is the fix for what produced the drift above. The

@@ -1,4 +1,4 @@
-module forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/aos
+module forgejo.coilysiren.me/coilyco/agentic-os/aos
 
 go 1.26.5
 

@@ -23,14 +23,14 @@ FORGEJO = "https://forgejo.coilysiren.me"
 TOKEN_PARAM = "/forgejo/coilyco-ops/api-token"
 
 # Repos whose org is already known. Anything else is probed against each org.
-ORGS = ("coilyco-flight-deck", "coilyco-bridge", "coilyco-gaming", "coilysiren")
+ORGS = ("coilyco", "coilysiren")
 KNOWN = {
-    "agentic-os": "coilyco-flight-deck", "agent-proxy": "coilyco-flight-deck",
-    "umbra": "coilyco-flight-deck", "agent-compose": "coilyco-flight-deck",
-    "housecast": "coilyco-flight-deck", "mcp-beaver": "coilyco-flight-deck",
-    "deploy": "coilyco-bridge", "infrastructure": "coilyco-bridge",
-    "agentic-os-kai": "coilyco-bridge", "lore": "coilyco-bridge",
-    "sirens-echo": "coilyco-gaming", "tally": "coilyco-gaming",
+    name: "coilyco"
+    for name in (
+        "agentic-os", "agent-proxy", "umbra", "agent-compose", "housecast",
+        "mcp-beaver", "deploy", "infrastructure", "agentic-os-kai", "lore",
+        "sirens-echo", "tally",
+    )
 }
 
 REF = re.compile(r"(?:([a-z0-9-]+)/)?([a-z0-9][a-z0-9-]*)!(\d+)")

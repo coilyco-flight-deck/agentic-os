@@ -92,8 +92,8 @@ qualifying startups span at least twenty minutes.
 ## Serialized repositories
 
 The serialized set is three checkouts on a native Windows host:
-`coilyco-gaming/eco-app`, `coilyco-gaming/eco-mods`, and
-`coilyco-gaming/eco-ops`. Projection links no worktree for them, the fleet pass
+`coilyco/eco-app`, `coilyco/eco-mods`, and
+`coilyco/eco-ops`. Projection links no worktree for them, the fleet pass
 neither switches nor deletes their branches, and unexpected-clone detection
 never counts them, so a direct checkout under `$PROJECTS_ROOT` survives every
 qualifying pass whether or not compiled residency names it.

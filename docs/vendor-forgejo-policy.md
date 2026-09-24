@@ -1,7 +1,7 @@
 # Pinned and vendored build inputs
 
 Two cases of the same rule: the input is carried, never fetched mid-build.
-How `coilyco-bridge/deploy` gets a copy of this repo's Forgejo operator policy
+How `coilyco/deploy` gets a copy of this repo's Forgejo operator policy
 and why it arrives as a push, then why the WASM toolchain is baked into the
 dev-base image.
 
@@ -34,7 +34,7 @@ reviews and lands its own vendored copy, so nothing here writes deploy's `main`.
 ## The credential, and what happens without it
 
 The push needs `DEPLOY_WRITE_TOKEN`, an Actions secret carrying write to
-`coilyco-bridge/deploy`. Minting and placing it is an operator step on a hosted
+`coilyco/deploy`. Minting and placing it is an operator step on a hosted
 surface, so it is not part of this change.
 
 Until it exists the workflow is **inert rather than broken**: the script warns

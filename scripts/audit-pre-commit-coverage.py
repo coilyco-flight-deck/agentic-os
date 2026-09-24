@@ -94,7 +94,7 @@ def _is_agentic_os_repo(repo_url: str) -> bool:
     """Match the agentic-os upstream-ref entry regardless of host or owner.
 
     The managed block points at the Forgejo mirror
-    (forgejo.coilysiren.me/coilyco-flight-deck/agentic-os) while the GitHub
+    (forgejo.coilysiren.me/coilyco/agentic-os) while the GitHub
     mirror uses github.com/coilysiren/agentic-os. Match on the trailing
     `/agentic-os` path component so either lands.
     """

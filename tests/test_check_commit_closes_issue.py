@@ -14,7 +14,7 @@ def test_commit_message_accepts_same_repo_url():
     # This should pass - using a real forgejo URL for the same repo
     commit_msg = (
         "fix: resolve issue with commit validation\n\ncloses "
-        "https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/issues/123"
+        "https://forgejo.coilysiren.me/coilyco/agentic-os/issues/123"
     )
     assert main(['-'], commit_msg) == 0
 

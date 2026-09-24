@@ -19,7 +19,7 @@ export HISTSIZE=100000
 export SAVEHIST=100000
 # Dev-base image for `ward agent` dispatch: point host shells at the moving
 # release alias.
-export WARD_AGENT_IMAGE="forgejo.coilysiren.me/coilyco-flight-deck/agentic-os"
+export WARD_AGENT_IMAGE="forgejo.coilysiren.me/coilyco/agentic-os"
 export WARD_AGENT_TAG="release"
 # shared-environment: end
 
@@ -36,10 +36,14 @@ _siren_aos_repo_root() {
   for repo in "${AOS_REPO_ROOT:-}" \
     "${FORGEJO_WORKSPACE:-}" \
     "${GITHUB_WORKSPACE:-}" \
+    /workspace/coilyco/agentic-os \
     /workspace/coilyco-flight-deck/agentic-os \
     "${BASH_SOURCE[0]:-}" \
     "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)" \
     /workspace/agentic-os \
+    X:/projects/coilyco/agentic-os \
+    /x/projects/coilyco/agentic-os \
+    "$HOME/projects/coilyco/agentic-os" \
     X:/projects/coilyco-flight-deck/agentic-os \
     /x/projects/coilyco-flight-deck/agentic-os \
     "$HOME/projects/coilyco-flight-deck/agentic-os"; do
@@ -297,7 +301,7 @@ pre-commit-aos-version-defined() {
 
 pre-commit-aos-version-used() {
   yq -r '.repos[] | select(.repo | test("agentic-os$")) | .rev' \
-    "${HOME}/projects/coilyco-flight-deck/agentic-os/.pre-commit-hooks.yaml"
+    "$(_siren_aos_repo_root)/.pre-commit-hooks.yaml"
 }
 
 pre-commit-hooks-used() {
@@ -307,7 +311,7 @@ pre-commit-hooks-used() {
 
 pre-commit-hooks-defined() {
   yq -r '.[].id' \
-    "${HOME}/projects/coilyco-flight-deck/agentic-os/.pre-commit-hooks.yaml"
+    "$(_siren_aos_repo_root)/.pre-commit-hooks.yaml"
 }
 
 pre-commit-hooks-missing() {

@@ -225,6 +225,20 @@ def test_ambiguous_bare_manifest_entry_fails_closed(tmp_path: Path) -> None:
         inventory.discover_repositories(substrate, fleet, projects)
 
 
+def test_bare_manifest_entry_ignores_a_symlinked_org_alias(tmp_path: Path) -> None:
+    projects = tmp_path / "projects"
+    (projects / "coilyco" / "same").mkdir(parents=True)
+    (projects / "coilyco-bridge").symlink_to("coilyco")
+    substrate = tmp_path / "substrate.txt"
+    fleet = tmp_path / "fleet.txt"
+    _write(substrate, "org/aos\n")
+    _write(fleet, "same private\n")
+
+    repos = inventory.discover_repositories(substrate, fleet, projects)
+
+    assert "coilyco/same" in {repo.full_name for repo in repos}
+
+
 def test_cli_check_reports_incomplete_inventory(
     context_fleet: dict[str, Path], capsys: pytest.CaptureFixture[str]
 ) -> None:

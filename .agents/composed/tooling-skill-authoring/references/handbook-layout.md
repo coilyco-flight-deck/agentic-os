@@ -30,7 +30,7 @@
 │       └── COMPOSED.md                         # promoted only for selected roles
 ├── .agents/roles.kdl                           # composed-skill allowlists
 ├── scripts/
-└── .pre-commit-config.yaml                     # subscribes to coilyco-flight-deck/agentic-os hooks + local hooks
+└── .pre-commit-config.yaml                     # subscribes to coilyco/agentic-os hooks + local hooks
 ```
 
 Ordinary sources live only under `.agents/skills/`. Role-scoped sources live

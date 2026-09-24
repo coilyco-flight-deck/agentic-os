@@ -66,7 +66,7 @@ inputs:
   image-base:
     description: "Registry image base."
     required: false
-    default: "forgejo.coilysiren.me/coilyco-flight-deck/agentic-os"
+    default: "forgejo.coilysiren.me/coilyco/agentic-os"
   platforms:
     description: "Platforms for the buildx publish."
     required: false

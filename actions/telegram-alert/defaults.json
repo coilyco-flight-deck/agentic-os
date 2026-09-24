@@ -1,6 +1,6 @@
 {
   "schema-version": 1,
-  "uses": "https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/actions/telegram-alert@main",
+  "uses": "https://forgejo.coilysiren.me/coilyco/agentic-os/actions/telegram-alert@main",
   "workflow": {
     "ref": "refs/heads/main",
     "continue-on-error": true

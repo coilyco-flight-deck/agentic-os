@@ -37,9 +37,9 @@ aosguard ops actions logs <owner> <repo> <run> [job] [attempt] [--max-bytes N]
 ```
 
 ```bash
-aosguard ops actions logs coilyco-flight-deck agentic-os 2766 > run-2766.zip
-aosguard ops actions logs coilyco-flight-deck agentic-os 2766 0
-aosguard ops actions logs coilyco-flight-deck agentic-os 2766 0 2
+aosguard ops actions logs coilyco agentic-os 2766 > run-2766.zip
+aosguard ops actions logs coilyco agentic-os 2766 0
+aosguard ops actions logs coilyco agentic-os 2766 0 2
 ```
 
 The examples select a whole run, visible job index 0, and its attempt 2.

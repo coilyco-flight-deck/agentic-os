@@ -14,7 +14,7 @@ import (
 var version = "dev"
 
 const (
-	defaultImage    = "forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release"
+	defaultImage    = "forgejo.coilysiren.me/coilyco/agentic-os:release"
 	defaultDelivery = "native-skills"
 )
 

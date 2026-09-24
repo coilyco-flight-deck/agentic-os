@@ -20,7 +20,7 @@ from pathlib import Path
 from agentic_os import shared_ssl_context
 
 FORGEJO_BASE = "https://forgejo.coilysiren.me/api/v1"
-OWNER = "coilyco-flight-deck"
+OWNER = "coilyco"
 TELEGRAM_DEFAULTS_PATH = (
     Path(__file__).resolve().parent.parent
     / "actions"
@@ -81,7 +81,7 @@ MAPPING: dict[str, dict[str, str]] = {
     },
     # deploy's scheduled pin reconciler. Telegram is deliberately absent: the
     # repo already sets those two, and their live values are unreadable here.
-    slug("deploy", "coilyco-bridge"): {
+    slug("deploy"): {
         "DEPLOY_PUSH_TOKEN": "/forgejo/coilyco-ops/ci-release-token",
         "REGISTRY_READ_TOKEN": "/forgejo/coilyco-ops/registry-read-token",
     },

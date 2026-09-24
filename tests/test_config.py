@@ -230,6 +230,13 @@ def test_iter_workspace_repos_spans_org_dirs(tmp_path: Path) -> None:
     assert (tmp_path / "coilyco-bridge" / "repo-b") in repos
 
 
+def test_iter_workspace_repos_skips_symlinked_org_alias(tmp_path: Path) -> None:
+    # A retired org dir left as a symlink to the merged one is an alias.
+    _make_repo(tmp_path / "coilyco" / "repo-a")
+    (tmp_path / "coilyco-bridge").symlink_to("coilyco")
+    assert iter_workspace_repos(tmp_path) == [tmp_path / "coilyco" / "repo-a"]
+
+
 def test_iter_workspace_repos_single_org_root(tmp_path: Path) -> None:
     # $PROJECTS_ROOT pointed straight at one org dir: children carry .git.
     _make_repo(tmp_path / "repo-a")

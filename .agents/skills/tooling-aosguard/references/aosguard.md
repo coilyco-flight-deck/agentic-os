@@ -63,7 +63,7 @@ generated command. `just aosguard-lock` is the only lock-writing step and
 uses the packaged `umbra` executable. `just guard-controls` runs `umbra controls` over both roots in the repo gate: every `never` and `withhold` must refuse by its own text, and removing it must change the outcome.
 
 Cross-repository composition is tracked on the intake tracker, with AOS
-implementation in [agentic-os#755](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/issues/755).
+implementation in [agentic-os#755](https://forgejo.coilysiren.me/coilyco/agentic-os/issues/755).
 
 ## The Forgejo admin wrapper
 
@@ -110,7 +110,7 @@ other restriction on the wrapper decorative. Kai's call, 2026-08-16.
 
 The two bootstrap scripts that need those operations -
 `provision-coilyco-ops-bot.sh` and `grant-coilyco-ops-org-repo-create.sh` in
-`coilyco-bridge/infrastructure` - keep reading `/forgejo/admin-token` from
+`coilyco/infrastructure` - keep reading `/forgejo/admin-token` from
 SSM directly. They run approximately once, so the standing capability a verb
 would create costs more than the direct read.
 

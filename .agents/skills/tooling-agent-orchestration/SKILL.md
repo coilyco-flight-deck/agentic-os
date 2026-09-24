@@ -8,7 +8,7 @@ description: Multi-agent orchestration patterns Ward and o2r formalized, kept pa
 Two subsystems in this estate formalized how autonomous agents coordinate, and both are leaving service.
 
 * **o2r** (`otel-a2a-relay`) is archived. It carried the wire: sessions, handoff, liveness, and agent activity as OTel spans.
-* **Ward** is being archived. [agentic-os#1299](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/issues/1299) cuts its runtime from AOS CI and the dev-base image, and Kai superseded that issue's freeze-rather-than-archive posture on 2026-08-27. It governed unattended runs: dispatch, reservation, lifecycle, recovery, and landing evidence.
+* **Ward** is being archived. [agentic-os#1299](https://forgejo.coilysiren.me/coilyco/agentic-os/issues/1299) cuts its runtime from AOS CI and the dev-base image, and Kai superseded that issue's freeze-rather-than-archive posture on 2026-08-27. It governed unattended runs: dispatch, reservation, lifecycle, recovery, and landing evidence.
 
 What they learned does not leave with them. This skill is the inventory.
 
@@ -32,7 +32,7 @@ What they learned does not leave with them. This skill is the inventory.
 
 ## Provenance
 
-Read from `coilyco-flight-deck/ward` at `040f159` and `coilyco-flight-deck/otel-a2a-relay` at `8b96ed1`, both public. Where a pattern below disagrees with one of those repositories, the repo was right and this file has drifted.
+Read from `coilyco/ward` at `040f159` and `coilyco/otel-a2a-relay` at `8b96ed1`, both public. Where a pattern below disagrees with one of those repositories, the repo was right and this file has drifted.
 
 **What survives Ward's archival.** The `ward:` AGENTS.md frontmatter key, which still selects a landing lane in every repo that declares one. It is read by composition rather than by any Ward process, so archiving the repo does not reach it. `.ward/ward.yaml` did survive for a while carrying catalog metadata, and is now deleted fleet-wide because nothing read a key in it. What ends is the runtime, and with it the enforcement behind every pattern here.
 
