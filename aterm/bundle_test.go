@@ -3,8 +3,8 @@ package main
 import (
 	"bytes"
 	"os"
+	"os/exec"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"strings"
 	"testing"
@@ -398,20 +398,32 @@ func TestBundlePlanStaysQuietWhenTheBuildsMatchOrAreUnknown(t *testing.T) {
 	}
 }
 
-// roles.kdl rather than a hand-written list, which agreed with the icons
-// whatever either said, and rather than the roster, which lags a release.
-func TestEveryDeclaredRoleHasArtAndNoArtIsOrphaned(t *testing.T) {
-	raw, err := os.ReadFile(filepath.Join("..", ".agents", "roles.kdl"))
+// The roster `bundles` itself reads, filtered the way buildBundlePlan filters.
+// roles.kdl is a composed-skill map and missed prod-manager (agentic-os#8160).
+func TestEveryLaunchableRoleHasArtAndNoArtIsOrphaned(t *testing.T) {
+	bin, err := exec.LookPath("agent-compose")
 	if err != nil {
-		t.Fatalf("read the declared roles: %v", err)
+		if os.Getenv("CI") != "" {
+			t.Fatal("agent-compose is not on PATH, so the roster this guard reads is missing")
+		}
+		t.Skip("agent-compose is not on PATH; CI runs this guard against the pinned one")
+	}
+	raw, err := exec.Command(bin, "catalog", "roles", "--json").Output()
+	if err != nil {
+		t.Fatalf("read the roster: %v", err)
+	}
+	roster, err := parseRoster(raw)
+	if err != nil {
+		t.Fatalf("parse the roster: %v", err)
 	}
 	declared := map[string]bool{}
-	for _, match := range regexp.MustCompile(`(?m)^\s*role ([a-z-]+) \{`).
-		FindAllStringSubmatch(string(raw), -1) {
-		declared[match[1]] = true
+	for _, role := range roster.Items {
+		if len(role.nativeSeats()) > 0 {
+			declared[role.Slug] = true
+		}
 	}
 	if len(declared) == 0 {
-		t.Fatal("no roles parsed out of roles.kdl, so this test proves nothing")
+		t.Fatal("no launchable roles in the roster, so this test proves nothing")
 	}
 
 	shipped := map[string]bool{}
@@ -425,12 +437,12 @@ func TestEveryDeclaredRoleHasArtAndNoArtIsOrphaned(t *testing.T) {
 
 	for role := range declared {
 		if !shipped[role] {
-			t.Errorf("role %q is declared and has no icon, so it falls back to the system one", role)
+			t.Errorf("role %q is launchable and has no icon, so its bundle falls back to the system one", role)
 		}
 	}
 	for role := range shipped {
 		if !declared[role] {
-			t.Errorf("icon %q.icns names no declared role, so nothing will ever read it", role)
+			t.Errorf("icon %q.icns names no launchable role, so nothing will ever read it", role)
 		}
 	}
 	if roleIcon("retired-seat") != nil {

@@ -82,6 +82,12 @@ func checkBundles(writer io.Writer, plan bundlePlan) error {
 	for _, path := range plan.Stale {
 		fmt.Fprintf(writer, "stale, this run does not write it: %s\n", path)
 	}
+	// Not drift, since a write would match it, but the bundle gets the system icon.
+	for _, item := range plan.Items {
+		if plan.Icon == "" && roleIcon(item.Role) == nil {
+			fmt.Fprintf(writer, "no art, role %s has no committed icon: %s\n", item.Role, item.Path)
+		}
+	}
 	if err := warnStaleLauncher(writer, plan); err != nil {
 		return err
 	}
