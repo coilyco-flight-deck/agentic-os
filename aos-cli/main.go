@@ -121,7 +121,7 @@ func rootFlagTakesValue(name string) bool {
 
 func isRootSubcommand(value string) bool {
 	switch value {
-	case "repositories", "version", "converge", "models", "acompose", "acompose-checkin",
+	case "repositories", "version", "converge", "models", "claude-ui", "acompose", "acompose-checkin",
 		"_native-shadow", "_launch-agent", "_container-acompose",
 		"_container-socks-forward", "_container-context-bundle":
 		return true
@@ -251,6 +251,16 @@ func newCommandWithDefaults(name string, defaults launchDefaults) *cli.Command {
 						Action: runModelsCheck,
 					},
 				},
+			},
+			{
+				Name:  "claude-ui",
+				Usage: "emit each role's Claude Code theme and settings fragment from the agent-compose person snapshot",
+				Flags: []cli.Flag{
+					&cli.StringFlag{Name: "role", Usage: "emit one role instead of the whole catalogue"},
+					&cli.StringFlag{Name: "out", Usage: "write themes/<slug>.json and settings.<role>.json under this directory instead of stdout"},
+					&cli.StringFlag{Name: "spinner-mode", Usage: "replace the harness spinner verbs or append to them", Value: "replace"},
+				},
+				Action: runClaudeUI,
 			},
 			{
 				Name:  "version",

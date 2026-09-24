@@ -1,0 +1,756 @@
+[
+  {
+    "role": "platform-eng",
+    "slug": "aos-platform-eng",
+    "theme": {
+      "name": "Platform Engineer (Beetle-Ox)",
+      "base": "dark",
+      "overrides": {
+        "autoAccept": "#8f8c47",
+        "autoAcceptShimmer": "#aeab65",
+        "bashBorder": "#5fa87a",
+        "briefLabelClaude": "#709b62",
+        "claude": "#709b62",
+        "claudeShimmer": "#8eba80",
+        "clawd_body": "#709b62",
+        "green_FOR_SUBAGENTS_ONLY": "#709b62",
+        "permission": "#5fa87a",
+        "permissionShimmer": "#7ec898",
+        "promptBorder": "#709b62",
+        "promptBorderShimmer": "#8eba80",
+        "remember": "#5fa87a",
+        "skill": "#8f8c47",
+        "suggestion": "#5fa87a"
+      }
+    },
+    "settings": {
+      "theme": "custom:aos-platform-eng",
+      "spinnerVerbs": {
+        "mode": "replace",
+        "verbs": [
+          "Holding",
+          "Hauling",
+          "Persisting",
+          "Tracing",
+          "Finishing",
+          "Anchoring",
+          "Checking",
+          "Grounding",
+          "Naming",
+          "Steadying",
+          "Stacking",
+          "Leveling"
+        ]
+      },
+      "spinnerTipsEnabled": true,
+      "spinnerTipsOverride": {
+        "excludeDefault": false,
+        "tips": [
+          "Build and land the foundational software the rest of the estate is built on.",
+          "Beetle-Ox holds the Platform Engineer charter. A caller-assigned role cannot switch: a different role needs a new bundle.",
+          "Boundary: tenacious, grounded."
+        ]
+      },
+      "subagentStatusLine": {
+        "type": "command",
+        "command": "acompose statusline --subagent --color"
+      }
+    }
+  },
+  {
+    "role": "sysadmin-senior",
+    "slug": "aos-sysadmin-senior",
+    "theme": {
+      "name": "Senior Sysadmin (Turtle-Ox)",
+      "base": "dark",
+      "overrides": {
+        "autoAccept": "#009a85",
+        "autoAcceptShimmer": "#3ebaa3",
+        "bashBorder": "#5fa87a",
+        "briefLabelClaude": "#0d9c92",
+        "claude": "#0d9c92",
+        "claudeShimmer": "#42bcb1",
+        "clawd_body": "#0d9c92",
+        "cyan_FOR_SUBAGENTS_ONLY": "#0d9c92",
+        "permission": "#5fa87a",
+        "permissionShimmer": "#7ec898",
+        "promptBorder": "#0d9c92",
+        "promptBorderShimmer": "#42bcb1",
+        "remember": "#5fa87a",
+        "skill": "#009a85",
+        "suggestion": "#5fa87a"
+      }
+    },
+    "settings": {
+      "theme": "custom:aos-sysadmin-senior",
+      "spinnerVerbs": {
+        "mode": "replace",
+        "verbs": [
+          "Shielding",
+          "Guarding",
+          "Sheltering",
+          "Warding",
+          "Reinforcing",
+          "Covering",
+          "Checking",
+          "Grounding",
+          "Naming",
+          "Steadying",
+          "Stacking",
+          "Leveling"
+        ]
+      },
+      "spinnerTipsEnabled": true,
+      "spinnerTipsOverride": {
+        "excludeDefault": false,
+        "tips": [
+          "Operate the real hosted systems and release surfaces.",
+          "Turtle-Ox holds the Senior Sysadmin charter. A caller-assigned role cannot switch: a different role needs a new bundle.",
+          "Boundary: protective, grounded."
+        ]
+      },
+      "subagentStatusLine": {
+        "type": "command",
+        "command": "acompose statusline --subagent --color"
+      }
+    }
+  },
+  {
+    "role": "scientist",
+    "slug": "aos-scientist",
+    "theme": {
+      "name": "Applied Scientist (Frog-Ox)",
+      "base": "dark",
+      "overrides": {
+        "autoAccept": "#2ed1aa",
+        "autoAcceptShimmer": "#5cf2ca",
+        "bashBorder": "#5fa87a",
+        "briefLabelClaude": "#14d5b8",
+        "claude": "#14d5b8",
+        "claudeShimmer": "#51f6d8",
+        "clawd_body": "#14d5b8",
+        "green_FOR_SUBAGENTS_ONLY": "#14d5b8",
+        "permission": "#5fa87a",
+        "permissionShimmer": "#7ec898",
+        "promptBorder": "#14d5b8",
+        "promptBorderShimmer": "#51f6d8",
+        "remember": "#5fa87a",
+        "skill": "#2ed1aa",
+        "suggestion": "#5fa87a"
+      }
+    },
+    "settings": {
+      "theme": "custom:aos-scientist",
+      "spinnerVerbs": {
+        "mode": "replace",
+        "verbs": [
+          "Measuring",
+          "Isolating",
+          "Replicating",
+          "Calibrating",
+          "Recording",
+          "Controlling",
+          "Checking",
+          "Grounding",
+          "Naming",
+          "Steadying",
+          "Stacking",
+          "Leveling"
+        ]
+      },
+      "spinnerTipsEnabled": true,
+      "spinnerTipsOverride": {
+        "excludeDefault": false,
+        "tips": [
+          "Measure how agents, models, and inference actually behave on real hardware.",
+          "Frog-Ox holds the Applied Scientist charter. A caller-assigned role cannot switch: a different role needs a new bundle.",
+          "Boundary: empirical, grounded."
+        ]
+      },
+      "subagentStatusLine": {
+        "type": "command",
+        "command": "acompose statusline --subagent --color"
+      }
+    }
+  },
+  {
+    "role": "frontend-eng",
+    "slug": "aos-frontend-eng",
+    "theme": {
+      "name": "Frontend Engineer (Imp-Dragonfly)",
+      "base": "dark",
+      "overrides": {
+        "autoAccept": "#e882e1",
+        "autoAcceptShimmer": "#ffa2ff",
+        "bashBorder": "#b682ed",
+        "briefLabelClaude": "#ee7eea",
+        "claude": "#ee7eea",
+        "claudeShimmer": "#ff9eff",
+        "clawd_body": "#ee7eea",
+        "permission": "#b682ed",
+        "permissionShimmer": "#d6a2ff",
+        "pink_FOR_SUBAGENTS_ONLY": "#ee7eea",
+        "promptBorder": "#ee7eea",
+        "promptBorderShimmer": "#ff9eff",
+        "remember": "#b682ed",
+        "skill": "#e882e1",
+        "suggestion": "#b682ed"
+      }
+    },
+    "settings": {
+      "theme": "custom:aos-frontend-eng",
+      "spinnerVerbs": {
+        "mode": "replace",
+        "verbs": [
+          "Inverting",
+          "Provoking",
+          "Daubing",
+          "Larking",
+          "Spoofing",
+          "Upending",
+          "Refracting",
+          "Transposing",
+          "Reframing",
+          "Recombining",
+          "Riffing",
+          "Diverging"
+        ]
+      },
+      "spinnerTipsEnabled": true,
+      "spinnerTipsOverride": {
+        "excludeDefault": false,
+        "tips": [
+          "Shape and build the surfaces a person navigates.",
+          "Imp-Dragonfly holds the Frontend Engineer charter. A caller-assigned role cannot switch: a different role needs a new bundle.",
+          "Boundary: playful, imaginative."
+        ]
+      },
+      "subagentStatusLine": {
+        "type": "command",
+        "command": "acompose statusline --subagent --color"
+      }
+    }
+  },
+  {
+    "role": "game-dev",
+    "slug": "aos-game-dev",
+    "theme": {
+      "name": "Game Developer (Whale-Dragonfly)",
+      "base": "dark",
+      "overrides": {
+        "autoAccept": "#0084fd",
+        "autoAcceptShimmer": "#39a5ff",
+        "bashBorder": "#b682ed",
+        "blue_FOR_SUBAGENTS_ONLY": "#3b82ff",
+        "briefLabelClaude": "#3b82ff",
+        "claude": "#3b82ff",
+        "claudeShimmer": "#5aa3ff",
+        "clawd_body": "#3b82ff",
+        "permission": "#b682ed",
+        "permissionShimmer": "#d6a2ff",
+        "promptBorder": "#3b82ff",
+        "promptBorderShimmer": "#5aa3ff",
+        "remember": "#b682ed",
+        "skill": "#0084fd",
+        "suggestion": "#b682ed"
+      }
+    },
+    "settings": {
+      "theme": "custom:aos-game-dev",
+      "spinnerVerbs": {
+        "mode": "replace",
+        "verbs": [
+          "Inhabiting",
+          "Entering",
+          "Submerging",
+          "Dwelling",
+          "Occupying",
+          "Sounding",
+          "Refracting",
+          "Transposing",
+          "Reframing",
+          "Recombining",
+          "Riffing",
+          "Diverging"
+        ]
+      },
+      "spinnerTipsEnabled": true,
+      "spinnerTipsOverride": {
+        "excludeDefault": false,
+        "tips": [
+          "Ship playable games: the code, the assets, and the build that carries both.",
+          "Whale-Dragonfly holds the Game Developer charter. A caller-assigned role cannot switch: a different role needs a new bundle.",
+          "Boundary: immersed, imaginative."
+        ]
+      },
+      "subagentStatusLine": {
+        "type": "command",
+        "command": "acompose statusline --subagent --color"
+      }
+    }
+  },
+  {
+    "role": "prod-director",
+    "slug": "aos-prod-director",
+    "theme": {
+      "name": "Portfolio Director (Griffin-Goose)",
+      "base": "dark",
+      "overrides": {
+        "autoAccept": "#da6c74",
+        "autoAcceptShimmer": "#fd8b92",
+        "bashBorder": "#b3be49",
+        "briefLabelClaude": "#da656f",
+        "claude": "#da656f",
+        "claudeShimmer": "#fd848d",
+        "clawd_body": "#da656f",
+        "permission": "#b3be49",
+        "permissionShimmer": "#d3df6b",
+        "pink_FOR_SUBAGENTS_ONLY": "#da656f",
+        "promptBorder": "#da656f",
+        "promptBorderShimmer": "#fd848d",
+        "remember": "#b3be49",
+        "skill": "#da6c74",
+        "suggestion": "#b3be49"
+      }
+    },
+    "settings": {
+      "theme": "custom:aos-prod-director",
+      "spinnerVerbs": {
+        "mode": "replace",
+        "verbs": [
+          "Closing",
+          "Committing",
+          "Choosing",
+          "Severing",
+          "Resolving",
+          "Shearing",
+          "Comparing",
+          "Benchmarking",
+          "Scouting",
+          "Sighting",
+          "Contrasting",
+          "Ranging"
+        ]
+      },
+      "spinnerTipsEnabled": true,
+      "spinnerTipsOverride": {
+        "excludeDefault": false,
+        "tips": [
+          "Decide what the portfolio does next, and carry each decision to its gate.",
+          "Griffin-Goose holds the Portfolio Director charter. A caller-assigned role cannot switch: a different role needs a new bundle.",
+          "Boundary: decisive, outward."
+        ]
+      },
+      "subagentStatusLine": {
+        "type": "command",
+        "command": "acompose statusline --subagent --color"
+      }
+    }
+  },
+  {
+    "role": "dev-advocate",
+    "slug": "aos-dev-advocate",
+    "theme": {
+      "name": "Developer Advocate (Panda-Goose)",
+      "base": "dark",
+      "overrides": {
+        "autoAccept": "#f09372",
+        "autoAcceptShimmer": "#ffb391",
+        "bashBorder": "#b3be49",
+        "briefLabelClaude": "#f7a060",
+        "claude": "#f7a060",
+        "claudeShimmer": "#ffc080",
+        "clawd_body": "#f7a060",
+        "orange_FOR_SUBAGENTS_ONLY": "#f7a060",
+        "permission": "#b3be49",
+        "permissionShimmer": "#d3df6b",
+        "promptBorder": "#f7a060",
+        "promptBorderShimmer": "#ffc080",
+        "remember": "#b3be49",
+        "skill": "#f09372",
+        "suggestion": "#b3be49"
+      }
+    },
+    "settings": {
+      "theme": "custom:aos-dev-advocate",
+      "spinnerVerbs": {
+        "mode": "replace",
+        "verbs": [
+          "Welcoming",
+          "Warming",
+          "Attending",
+          "Noticing",
+          "Comforting",
+          "Accompanying",
+          "Comparing",
+          "Benchmarking",
+          "Scouting",
+          "Sighting",
+          "Contrasting",
+          "Ranging"
+        ]
+      },
+      "spinnerTipsEnabled": true,
+      "spinnerTipsOverride": {
+        "excludeDefault": false,
+        "tips": [
+          "Turn real portfolio work and audience evidence into accurate content, respectful conversations, and informed commitments.",
+          "Panda-Goose holds the Developer Advocate charter. A caller-assigned role cannot switch: a different role needs a new bundle.",
+          "Boundary: warm, outward."
+        ]
+      },
+      "subagentStatusLine": {
+        "type": "command",
+        "command": "acompose statusline --subagent --color"
+      }
+    }
+  },
+  {
+    "role": "analyst",
+    "slug": "aos-analyst",
+    "theme": {
+      "name": "AI Risk Analyst (Snake-Beetle)",
+      "base": "dark",
+      "overrides": {
+        "autoAccept": "#7f8fd6",
+        "autoAcceptShimmer": "#9daef8",
+        "bashBorder": "#8f8c47",
+        "briefLabelClaude": "#9190c1",
+        "claude": "#9190c1",
+        "claudeShimmer": "#b0afe2",
+        "clawd_body": "#9190c1",
+        "permission": "#8f8c47",
+        "permissionShimmer": "#aeab65",
+        "promptBorder": "#9190c1",
+        "promptBorderShimmer": "#b0afe2",
+        "purple_FOR_SUBAGENTS_ONLY": "#9190c1",
+        "remember": "#8f8c47",
+        "skill": "#7f8fd6",
+        "suggestion": "#8f8c47"
+      }
+    },
+    "settings": {
+      "theme": "custom:aos-analyst",
+      "spinnerVerbs": {
+        "mode": "replace",
+        "verbs": [
+          "Probing",
+          "Casing",
+          "Circling",
+          "Prying",
+          "Reaching",
+          "Retracing",
+          "Holding",
+          "Hauling",
+          "Persisting",
+          "Tracing",
+          "Finishing",
+          "Anchoring"
+        ]
+      },
+      "spinnerTipsEnabled": true,
+      "spinnerTipsOverride": {
+        "excludeDefault": false,
+        "tips": [
+          "Assure that declared controls actually fire on live behavior, remediate the ones that do not, and leave the record that says which.",
+          "Snake-Beetle holds the AI Risk Analyst charter. A caller-assigned role cannot switch: a different role needs a new bundle.",
+          "Boundary: suspicious, tenacious."
+        ]
+      },
+      "subagentStatusLine": {
+        "type": "command",
+        "command": "acompose statusline --subagent --color"
+      }
+    }
+  },
+  {
+    "role": "psych",
+    "slug": "aos-psych",
+    "theme": {
+      "name": "Behavioral Psychologist (Panda-Turtle)",
+      "base": "dark",
+      "overrides": {
+        "autoAccept": "#f09372",
+        "autoAcceptShimmer": "#ffb391",
+        "bashBorder": "#009a85",
+        "briefLabelClaude": "#ab9137",
+        "claude": "#ab9137",
+        "claudeShimmer": "#cbb058",
+        "clawd_body": "#ab9137",
+        "permission": "#009a85",
+        "permissionShimmer": "#3ebaa3",
+        "promptBorder": "#ab9137",
+        "promptBorderShimmer": "#cbb058",
+        "remember": "#009a85",
+        "skill": "#f09372",
+        "suggestion": "#009a85",
+        "yellow_FOR_SUBAGENTS_ONLY": "#ab9137"
+      }
+    },
+    "settings": {
+      "theme": "custom:aos-psych",
+      "spinnerVerbs": {
+        "mode": "replace",
+        "verbs": [
+          "Welcoming",
+          "Warming",
+          "Attending",
+          "Noticing",
+          "Comforting",
+          "Accompanying",
+          "Shielding",
+          "Guarding",
+          "Sheltering",
+          "Warding",
+          "Reinforcing",
+          "Covering"
+        ]
+      },
+      "spinnerTipsEnabled": true,
+      "spinnerTipsOverride": {
+        "excludeDefault": false,
+        "tips": [
+          "Stay with what a person actually brought, and name the thing they are steering around before offering relief.",
+          "Panda-Turtle holds the Behavioral Psychologist charter. A caller-assigned role cannot switch: a different role needs a new bundle.",
+          "Boundary: warm, protective."
+        ]
+      },
+      "subagentStatusLine": {
+        "type": "command",
+        "command": "acompose statusline --subagent --color"
+      }
+    }
+  },
+  {
+    "role": "reporter",
+    "slug": "aos-reporter",
+    "theme": {
+      "name": "Investigative Reporter (Beetle-Goose)",
+      "base": "dark",
+      "overrides": {
+        "autoAccept": "#8f8c47",
+        "autoAcceptShimmer": "#aeab65",
+        "bashBorder": "#b3be49",
+        "briefLabelClaude": "#99b052",
+        "claude": "#99b052",
+        "claudeShimmer": "#b8d072",
+        "clawd_body": "#99b052",
+        "green_FOR_SUBAGENTS_ONLY": "#99b052",
+        "permission": "#b3be49",
+        "permissionShimmer": "#d3df6b",
+        "promptBorder": "#99b052",
+        "promptBorderShimmer": "#b8d072",
+        "remember": "#b3be49",
+        "skill": "#8f8c47",
+        "suggestion": "#b3be49"
+      }
+    },
+    "settings": {
+      "theme": "custom:aos-reporter",
+      "spinnerVerbs": {
+        "mode": "replace",
+        "verbs": [
+          "Holding",
+          "Hauling",
+          "Persisting",
+          "Tracing",
+          "Finishing",
+          "Anchoring",
+          "Comparing",
+          "Benchmarking",
+          "Scouting",
+          "Sighting",
+          "Contrasting",
+          "Ranging"
+        ]
+      },
+      "spinnerTipsEnabled": true,
+      "spinnerTipsOverride": {
+        "excludeDefault": false,
+        "tips": [
+          "Work out who an unmet party actually is from what they published, and say whether to approach them at all, before anyone does.",
+          "Beetle-Goose holds the Investigative Reporter charter. A caller-assigned role cannot switch: a different role needs a new bundle.",
+          "Boundary: tenacious, outward."
+        ]
+      },
+      "subagentStatusLine": {
+        "type": "command",
+        "command": "acompose statusline --subagent --color"
+      }
+    }
+  },
+  {
+    "role": "sysadmin-junior",
+    "slug": "aos-sysadmin-junior",
+    "theme": {
+      "name": "Junior Sysadmin (Turtle-Ox)",
+      "base": "dark",
+      "overrides": {
+        "autoAccept": "#009a85",
+        "autoAcceptShimmer": "#3ebaa3",
+        "bashBorder": "#5fa87a",
+        "briefLabelClaude": "#0d9c92",
+        "claude": "#0d9c92",
+        "claudeShimmer": "#42bcb1",
+        "clawd_body": "#0d9c92",
+        "cyan_FOR_SUBAGENTS_ONLY": "#0d9c92",
+        "permission": "#5fa87a",
+        "permissionShimmer": "#7ec898",
+        "promptBorder": "#0d9c92",
+        "promptBorderShimmer": "#42bcb1",
+        "remember": "#5fa87a",
+        "skill": "#009a85",
+        "suggestion": "#5fa87a"
+      }
+    },
+    "settings": {
+      "theme": "custom:aos-sysadmin-junior",
+      "spinnerVerbs": {
+        "mode": "replace",
+        "verbs": [
+          "Shielding",
+          "Guarding",
+          "Sheltering",
+          "Warding",
+          "Reinforcing",
+          "Covering",
+          "Checking",
+          "Grounding",
+          "Naming",
+          "Steadying",
+          "Stacking",
+          "Leveling"
+        ]
+      },
+      "spinnerTipsEnabled": true,
+      "spinnerTipsOverride": {
+        "excludeDefault": false,
+        "tips": [
+          "Diagnose the real hosted systems and release surfaces, and prepare exact changes for the human's own hands to run.",
+          "Turtle-Ox holds the Junior Sysadmin charter. A caller-assigned role cannot switch: a different role needs a new bundle.",
+          "Boundary: protective, grounded."
+        ]
+      },
+      "subagentStatusLine": {
+        "type": "command",
+        "command": "acompose statusline --subagent --color"
+      }
+    }
+  },
+  {
+    "role": "prod-manager",
+    "slug": "aos-prod-manager",
+    "theme": {
+      "name": "Project Manager (Griffin-Goose)",
+      "base": "dark",
+      "overrides": {
+        "autoAccept": "#da6c74",
+        "autoAcceptShimmer": "#fd8b92",
+        "bashBorder": "#b3be49",
+        "briefLabelClaude": "#da656f",
+        "claude": "#da656f",
+        "claudeShimmer": "#fd848d",
+        "clawd_body": "#da656f",
+        "permission": "#b3be49",
+        "permissionShimmer": "#d3df6b",
+        "pink_FOR_SUBAGENTS_ONLY": "#da656f",
+        "promptBorder": "#da656f",
+        "promptBorderShimmer": "#fd848d",
+        "remember": "#b3be49",
+        "skill": "#da6c74",
+        "suggestion": "#b3be49"
+      }
+    },
+    "settings": {
+      "theme": "custom:aos-prod-manager",
+      "spinnerVerbs": {
+        "mode": "replace",
+        "verbs": [
+          "Closing",
+          "Committing",
+          "Choosing",
+          "Severing",
+          "Resolving",
+          "Shearing",
+          "Comparing",
+          "Benchmarking",
+          "Scouting",
+          "Sighting",
+          "Contrasting",
+          "Ranging"
+        ]
+      },
+      "spinnerTipsEnabled": true,
+      "spinnerTipsOverride": {
+        "excludeDefault": false,
+        "tips": [
+          "Keep intake and the tracker true, and carry each decision to the Portfolio Director and each outward action to the human's own hands.",
+          "Griffin-Goose holds the Project Manager charter. A caller-assigned role cannot switch: a different role needs a new bundle.",
+          "Boundary: decisive, outward."
+        ]
+      },
+      "subagentStatusLine": {
+        "type": "command",
+        "command": "acompose statusline --subagent --color"
+      }
+    }
+  },
+  {
+    "role": "sysadmin-access",
+    "slug": "aos-sysadmin-access",
+    "theme": {
+      "name": "Access Sysadmin (Turtle-Ox)",
+      "base": "dark",
+      "overrides": {
+        "autoAccept": "#009a85",
+        "autoAcceptShimmer": "#3ebaa3",
+        "bashBorder": "#5fa87a",
+        "briefLabelClaude": "#0d9c92",
+        "claude": "#0d9c92",
+        "claudeShimmer": "#42bcb1",
+        "clawd_body": "#0d9c92",
+        "cyan_FOR_SUBAGENTS_ONLY": "#0d9c92",
+        "permission": "#5fa87a",
+        "permissionShimmer": "#7ec898",
+        "promptBorder": "#0d9c92",
+        "promptBorderShimmer": "#42bcb1",
+        "remember": "#5fa87a",
+        "skill": "#009a85",
+        "suggestion": "#5fa87a"
+      }
+    },
+    "settings": {
+      "theme": "custom:aos-sysadmin-access",
+      "spinnerVerbs": {
+        "mode": "replace",
+        "verbs": [
+          "Shielding",
+          "Guarding",
+          "Sheltering",
+          "Warding",
+          "Reinforcing",
+          "Covering",
+          "Checking",
+          "Grounding",
+          "Naming",
+          "Steadying",
+          "Stacking",
+          "Leveling"
+        ]
+      },
+      "spinnerTipsEnabled": true,
+      "spinnerTipsOverride": {
+        "excludeDefault": false,
+        "tips": [
+          "Own agent permission and harness configuration values across the operating estate.",
+          "Turtle-Ox holds the Access Sysadmin charter. A caller-assigned role cannot switch: a different role needs a new bundle.",
+          "Boundary: protective, grounded."
+        ]
+      },
+      "subagentStatusLine": {
+        "type": "command",
+        "command": "acompose statusline --subagent --color"
+      }
+    }
+  }
+]
