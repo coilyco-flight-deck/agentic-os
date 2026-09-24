@@ -34,10 +34,21 @@ const (
 //go:embed icons/*.icns
 var roleIcons embed.FS
 
+// retiredRoleIcons maps a slug an older agent-compose still reports to the
+// icon its renamed role ships under. Drop an entry once no roster reports it.
+var retiredRoleIcons = map[string]string{"platform-eng": "eng-platform"}
+
+func roleIconName(role string) string {
+	if current, ok := retiredRoleIcons[role]; ok {
+		return current
+	}
+	return role
+}
+
 // roleIcon is the committed art for a role, or nil when the role has none. A
 // role without art keeps the system icon rather than a broken reference.
 func roleIcon(role string) []byte {
-	raw, err := roleIcons.ReadFile("icons/" + role + ".icns")
+	raw, err := roleIcons.ReadFile("icons/" + roleIconName(role) + ".icns")
 	if err != nil {
 		return nil
 	}

@@ -424,7 +424,7 @@ func TestEveryLaunchableRoleHasArtAndNoArtIsOrphaned(t *testing.T) {
 	declared := map[string]bool{}
 	for _, role := range roster.Items {
 		if len(role.nativeSeats()) > 0 {
-			declared[role.Slug] = true
+			declared[roleIconName(role.Slug)] = true
 		}
 	}
 	if len(declared) == 0 {
@@ -449,6 +449,9 @@ func TestEveryLaunchableRoleHasArtAndNoArtIsOrphaned(t *testing.T) {
 		if !declared[role] {
 			t.Errorf("icon %q.icns names no launchable role, so nothing will ever read it", role)
 		}
+	}
+	if roleIcon("platform-eng") == nil || string(roleIcon("platform-eng")) != string(roleIcon("eng-platform")) {
+		t.Fatal("a retired slug must resolve to its renamed role's icon")
 	}
 	if roleIcon("retired-seat") != nil {
 		t.Fatal("a role with no art must resolve to nil, not a broken reference")
