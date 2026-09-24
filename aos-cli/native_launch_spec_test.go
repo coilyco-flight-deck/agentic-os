@@ -33,11 +33,14 @@ func fakeSpecComposer(t *testing.T, spec nativeLaunchSpec) {
 	script := "#!/bin/sh\n" +
 		"if [ \"$1\" = launch ] && [ \"$2\" = --spec-out ]; then cp '" + filepath.Join(bin, "spec.json") + "' \"$3\"; exit 0; fi\n" +
 		"if [ \"$1\" = catalog ] && [ \"$2\" = snapshot ]; then cat '" + snapshot + "'; exit 0; fi\n" +
+		"if [ \"$1\" = catalog ] && [ \"$2\" = roles ]; then echo '{\"items\":[{\"slug\":\"platform-eng\"},{\"slug\":\"scientist\"}]}'; exit 0; fi\n" +
 		"exit 9\n"
 	if err := os.WriteFile(filepath.Join(bin, "agent-compose"), []byte(script), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
+	// No inventory unless a test writes one, so the host's own is never read.
+	t.Setenv(nativeCanonicalHomeEnv, t.TempDir())
 	for _, name := range []string{"HOME", "USERPROFILE", "CODEX_HOME", "XDG_CONFIG_HOME", "CLAUDE_CONFIG_DIR",
 		"AGENT_COMPOSE_LAUNCH", "AGENT_COMPOSE_SESSION_BUNDLE", "AGENT_COMPOSE_MODEL_TIER"} {
 		t.Setenv(name, os.Getenv(name))
@@ -133,5 +136,87 @@ func TestSpecLaunchRefusesWhatIsNotAnAgentComposeLaunch(t *testing.T) {
 	if _, err := resolveSpecLaunch(context.Background(),
 		[]string{"agent-compose", "launch", "platform", "claude"}); err == nil {
 		t.Error("a spec for another harness must be refused")
+	}
+}
+
+func writeMCPInventory(t *testing.T, body string) string {
+	t.Helper()
+	home := os.Getenv(nativeCanonicalHomeEnv)
+	if err := os.MkdirAll(filepath.Join(home, ".mcporter"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(home, ".mcporter", "mcporter.json"), []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	return home
+}
+
+const scopedInventory = `{"mcpServers":{
+ "shared":{"command":"${HOME}/bin/shared"},
+ "mine":{"url":"https://x.invalid/${HOME}","x-aos":{"roles":["platform-eng"]}},
+ "theirs":{"command":"t","x-aos":{"roles":["scientist"]}}}}`
+
+func TestSpecLaunchScopesClaudeMCPToTheRole(t *testing.T) {
+	spec := specFixture(t, "claude")
+	fakeSpecComposer(t, spec)
+	home := writeMCPInventory(t, scopedInventory)
+	got, err := resolveSpecLaunch(context.Background(), []string{"agent-compose", "launch", "platform", "claude"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) < 4 || got[1] != "--strict-mcp-config" || got[2] != "--mcp-config" {
+		t.Fatalf("claude argv must lead with the scoped MCP config, got %q", got)
+	}
+	raw, err := os.ReadFile(got[3])
+	if err != nil {
+		t.Fatal(err)
+	}
+	var config struct {
+		Servers map[string]map[string]any `json:"mcpServers"`
+	}
+	if err := json.Unmarshal(raw, &config); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := config.Servers["theirs"]; ok || len(config.Servers) != 2 {
+		t.Errorf("want shared and mine only, got %v", config.Servers)
+	}
+	if cmd := config.Servers["shared"]["command"]; cmd != filepath.Join(home, "bin", "shared") {
+		t.Errorf("${HOME} must expand against the inventory home, got %v", cmd)
+	}
+}
+
+func TestSpecLaunchDisablesOtherRolesServersForCodex(t *testing.T) {
+	spec := specFixture(t, "codex")
+	fakeSpecComposer(t, spec)
+	writeMCPInventory(t, scopedInventory)
+	got, err := resolveSpecLaunch(context.Background(), []string{"agent-compose", "launch", "platform", "codex"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := []string{"codex", "-c", "mcp_servers.theirs.enabled=false"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("argv %q, want %q", got, want)
+	}
+}
+
+func TestSpecLaunchRefusesAnUnknownRoleTag(t *testing.T) {
+	spec := specFixture(t, "codex")
+	fakeSpecComposer(t, spec)
+	writeMCPInventory(t, `{"mcpServers":{"x":{"command":"x","x-aos":{"roles":["ghost"]}}}}`)
+	if _, err := resolveSpecLaunch(context.Background(), []string{"agent-compose", "launch", "platform", "codex"}); err == nil {
+		t.Fatal("a tag naming no roster role must refuse the launch")
+	}
+}
+
+func TestSpecLaunchLeavesACallerMCPConfigAlone(t *testing.T) {
+	spec := specFixture(t, "claude")
+	fakeSpecComposer(t, spec)
+	writeMCPInventory(t, scopedInventory)
+	got, err := resolveSpecLaunch(context.Background(),
+		[]string{"agent-compose", "launch", "platform", "claude", "--mcp-config", "/mine.json"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(strings.Join(got, " "), "--strict-mcp-config") {
+		t.Fatalf("a caller --mcp-config must suppress scoping, got %q", got)
 	}
 }

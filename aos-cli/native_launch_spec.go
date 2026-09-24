@@ -73,10 +73,17 @@ func resolveSpecLaunch(ctx context.Context, command []string) ([]string, error) 
 	if spec.Harness != harness {
 		return nil, fmt.Errorf("launch spec is for harness %q, not %q", spec.Harness, harness)
 	}
+	// The spec env rewrites HOME, and the MCP inventory lives in the host's.
+	inventoryHome := strings.TrimSpace(os.Getenv(nativeCanonicalHomeEnv))
+	if inventoryHome == "" {
+		if inventoryHome, err = os.UserHomeDir(); err != nil {
+			return nil, err
+		}
+	}
 	if err := applyNativeLaunchSpecEnvironment(spec); err != nil {
 		return nil, err
 	}
-	identity, err := nativeSpecIdentityArgs(ctx, spec, args)
+	identity, err := nativeSpecIdentityArgs(ctx, spec, inventoryHome, args)
 	if err != nil {
 		return nil, err
 	}
@@ -146,24 +153,39 @@ func applyNativeLaunchSpecEnvironment(spec nativeLaunchSpec) error {
 	return nil
 }
 
-// nativeSpecIdentityArgs is agent-compose's nativeIdentityArgs minus MCP scope,
-// which has not moved yet. A flag the caller already passed wins.
-func nativeSpecIdentityArgs(ctx context.Context, spec nativeLaunchSpec, args []string) ([]string, error) {
-	if spec.Harness != "claude" {
+// nativeSpecIdentityArgs is agent-compose's nativeIdentityArgs, in its order:
+// MCP scope, then --name, then --settings. A flag the caller already passed wins.
+func nativeSpecIdentityArgs(ctx context.Context, spec nativeLaunchSpec, inventoryHome string, args []string) ([]string, error) {
+	if spec.Harness != "claude" && spec.Harness != "codex" {
 		return nil, nil
 	}
-	var flags []string
+	role, err := nativeBundleRole(spec.BundleDir)
+	if err != nil {
+		return nil, err
+	}
+	flags, err := nativeSpecMCPArgs(ctx, spec, role, inventoryHome, nativeSpecStateDir(spec), args)
+	if err != nil || spec.Harness != "claude" {
+		return flags, err
+	}
 	if spec.SeatName != "" && !nativeSpecArgsCarry(args, "--name") {
 		flags = append(flags, "--name", spec.SeatName)
 	}
 	if !nativeSpecArgsCarry(args, "--settings") {
-		settings, err := writeNativeClaudeSettings(ctx, spec)
+		settings, err := writeNativeClaudeSettings(ctx, spec, role)
 		if err != nil {
 			return nil, err
 		}
 		flags = append(flags, "--settings", settings)
 	}
 	return flags, nil
+}
+
+// nativeSpecStateDir holds what aos renders for one launch.
+func nativeSpecStateDir(spec nativeLaunchSpec) string {
+	if strings.TrimSpace(spec.RuntimeHome) != "" {
+		return filepath.Join(spec.RuntimeHome, ".aos")
+	}
+	return spec.BundleDir
 }
 
 func nativeSpecArgsCarry(args []string, flag string) bool {
@@ -180,11 +202,7 @@ func nativeSpecArgsCarry(args []string, flag string) bool {
 
 // writeNativeClaudeSettings renders the role's settings fragment and installs
 // its theme where CLAUDE_CONFIG_DIR points, so `custom:aos-<role>` resolves.
-func writeNativeClaudeSettings(ctx context.Context, spec nativeLaunchSpec) (string, error) {
-	role, err := nativeBundleRole(spec.BundleDir)
-	if err != nil {
-		return "", err
-	}
+func writeNativeClaudeSettings(ctx context.Context, spec nativeLaunchSpec, role string) (string, error) {
 	snapshot, err := loadClaudeUISnapshot(ctx)
 	if err != nil {
 		return "", err
