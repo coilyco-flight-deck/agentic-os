@@ -34,9 +34,9 @@ const (
 //go:embed icons/*.icns
 var roleIcons embed.FS
 
-// retiredRoleIcons maps a slug an older agent-compose still reports to the
-// icon its renamed role ships under. Drop an entry once no roster reports it.
-var retiredRoleIcons = map[string]string{"platform-eng": "eng-platform"}
+// retiredRoleIcons maps a retired slug, or a derived role sharing its parent's
+// creature, to the icon it ships under.
+var retiredRoleIcons = map[string]string{"platform-eng": "eng-platform", "eng-junior": "eng-platform"}
 
 func roleIconName(role string) string {
 	if current, ok := retiredRoleIcons[role]; ok {

@@ -5,6 +5,12 @@ roles {
         composed-skill "coding-*"
     }
 
+    role eng-junior {
+        composed-skill writing-system-improvement-vocab
+        composed-skill design-system
+        composed-skill "coding-*"
+    }
+
     role sysadmin-senior {
         composed-skill writing-system-improvement-vocab
         composed-skill "tooling-sysadmin-*"
