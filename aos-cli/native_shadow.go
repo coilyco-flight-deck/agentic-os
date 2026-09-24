@@ -256,6 +256,11 @@ func runNativeShadow(ctx context.Context, cmd *cli.Command) error {
 			return err
 		}
 	}
+	if nativeLaunchSpecEnabled() {
+		if command, err = resolveSpecLaunch(ctx, command); err != nil {
+			return err
+		}
+	}
 	if err := prependNativeShimPath(workspace.SessionHome); err != nil {
 		return err
 	}
