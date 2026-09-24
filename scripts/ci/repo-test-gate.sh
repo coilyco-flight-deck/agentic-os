@@ -4,21 +4,23 @@ set -euo pipefail
 
 repo_root=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)
 umbra_bin=${UMBRA_BIN:-umbra}
-if ! command -v "$umbra_bin" >/dev/null 2>&1; then
+umbra_version=$(
+  sed -n 's/^ARG UMBRA_VERSION=//p' \
+    "$repo_root/docker/dev-base/full/Dockerfile" | tr -d '\r'
+)
+if [ -z "$umbra_version" ]; then
+  echo "Dockerfile does not pin umbra" >&2
+  exit 1
+fi
+# The CI image carries the umbra it was built with, which lags a pin bump
+# until the image republishes, so a mismatch bootstraps the pin too.
+installed=$("$umbra_bin" --version 2>/dev/null | sed -n 's/^umbra version v\([^ ]*\).*/\1/p' || true)
+if [ "$installed" != "$umbra_version" ]; then
   tmpdir=$(mktemp -d)
   cleanup() {
     rm -rf "$tmpdir"
   }
   trap cleanup EXIT HUP INT TERM
-
-  umbra_version=$(
-    sed -n 's/^ARG UMBRA_VERSION=//p' \
-      "$repo_root/docker/dev-base/full/Dockerfile" | tr -d '\r'
-  )
-  if [ -z "$umbra_version" ]; then
-    echo "Dockerfile does not pin umbra" >&2
-    exit 1
-  fi
 
   host_os=$(uname -s | tr '[:upper:]' '[:lower:]')
   case "$host_os" in
@@ -64,5 +66,6 @@ if ! command -v "$umbra_bin" >/dev/null 2>&1; then
   umbra_bin="$umbra_path"
 fi
 
+just guard-controls
 uv run pytest
 pre-commit run --all-files

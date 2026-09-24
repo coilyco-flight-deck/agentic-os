@@ -112,6 +112,11 @@ gh-shim-build *ARGS:
     @cp .umbra/guardfiles/specverb.lock .umbra/shims/specverb.lock
     @umbra --project-root .umbra/shims build --out dist/shims/gh "$@"
 
+# Negative controls: every never and withhold in both .umbra roots must refuse by its own text and be load-bearing (umbra docs/negative-controls.md).
+guard-controls *ARGS:
+    @umbra --project-root .umbra/guardfiles controls "$@"
+    @umbra --project-root .umbra/shims controls "$@"
+
 # Refresh aosguard's vendored API snapshot and frozen umbra dependency graph with the packaged umbra driver. Pass umbra lock flags as trailing arguments.
 aosguard-lock *ARGS:
     @sh scripts/aosguard-lock.sh "$@"

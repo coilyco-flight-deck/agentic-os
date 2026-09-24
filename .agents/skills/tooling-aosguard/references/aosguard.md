@@ -60,7 +60,7 @@ skills: umbra writes the `aosguard` index, then `generate_aosguard_skills`
 splits it into one `aosguard-<area>` skill per wrapped entity. Hand-written
 `tooling-aosguard` carries what no spec can (agentic-os#1028). `just aosguard-run --` passes subsequent arguments to the
 generated command. `just aosguard-lock` is the only lock-writing step and
-uses the packaged `umbra` executable.
+uses the packaged `umbra` executable. `just guard-controls` runs `umbra controls` over both roots in the repo gate: every `never` and `withhold` must refuse by its own text, and removing it must change the outcome.
 
 Cross-repository composition is tracked on the intake tracker, with AOS
 implementation in [agentic-os#755](https://forgejo.coilysiren.me/coilyco-flight-deck/agentic-os/issues/755).
