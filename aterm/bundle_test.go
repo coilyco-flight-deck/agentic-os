@@ -305,18 +305,23 @@ func TestRenderBundlePlanSaysWhenThereIsNoIcon(t *testing.T) {
 	}
 }
 
-// Kai asked for "Angie // Agentic Platform Engineer", and a POSIX filename
-// cannot hold a slash. macOS renders a stored colon as one, so it round-trips.
-func TestBundleNameStoresTheHouseSeparatorAsMacOSRendersIt(t *testing.T) {
+// agentic-os#8164: Kai asked for the role alone, from the roster's display
+// name. The person moves to Get Info rather than disappearing.
+func TestBundleNameIsTheRoleAloneAndGetInfoKeepsTheSeat(t *testing.T) {
 	spec := testSpec()
-	if got := spec.name(); got != "Angie :: Agentic Platform Engineer" {
+	if got := spec.name(); got != "Agentic Platform Engineer" {
 		t.Fatalf("on-disk name is %q", got)
 	}
-	if got := spec.displayName(); got != "Angie // Agentic Platform Engineer" {
+	if got := spec.displayName(); got != "Agentic Platform Engineer" {
 		t.Fatalf("displayed name is %q", got)
 	}
-	if strings.Contains(spec.name(), "/") {
-		t.Fatal("a slash in the basename would read as a path separator")
+	plist := bundleInfoPlist(spec)
+	if !strings.Contains(plist, "<key>CFBundleGetInfoString</key>\n\t<string>Angie // Agentic Platform Engineer</string>") {
+		t.Fatalf("Get Info should keep the person and role:\n%s", plist)
+	}
+	spec.DisplayName = ""
+	if got := spec.name(); got != "platform-eng" {
+		t.Fatalf("a role with no display name falls back to its slug, got %q", got)
 	}
 }
 
@@ -332,7 +337,7 @@ func TestBundleNameNeutralizesASlashComingFromTheRoster(t *testing.T) {
 
 func TestBundleInfoPlistCarriesTheDisplayNameAndAPlainExecutable(t *testing.T) {
 	plist := bundleInfoPlist(testSpec())
-	if !strings.Contains(plist, "Angie // Agentic Platform Engineer") {
+	if !strings.Contains(plist, "<key>CFBundleDisplayName</key>\n\t<string>Agentic Platform Engineer</string>") {
 		t.Fatalf("the plist should carry the rendered name:\n%s", plist)
 	}
 	if !strings.Contains(plist, "<string>aterm-platform-eng</string>") {
@@ -654,5 +659,29 @@ func TestBakedPathDropsTheDeclaredSessionRoot(t *testing.T) {
 	got := livePathEntries(strings.Join([]string{shadow, durable}, string(filepath.ListSeparator)))
 	if got != durable {
 		t.Fatalf("baked %q, want only the durable %q", got, durable)
+	}
+}
+
+// --prune removes what this command wrote and this run does not, and refuses
+// anything without the generated marker, even when it was listed.
+func TestRemoveStaleTakesOnlyMarkedBundles(t *testing.T) {
+	root := t.TempDir()
+	stale := writeFixtureBundle(t, root, "Angie :: Agentic Platform Engineer", "#!/bin/sh\n"+bundleMarker+"\n")
+	theirs := writeFixtureBundle(t, root, "Some Other App", "#!/bin/sh\nexit 0\n")
+	out := &strings.Builder{}
+	if err := removeStale(out, []string{stale}); err != nil {
+		t.Fatalf("remove a marked stale bundle: %v", err)
+	}
+	if _, err := os.Stat(stale); !os.IsNotExist(err) {
+		t.Fatalf("the stale bundle should be gone, stat = %v", err)
+	}
+	if !strings.Contains(out.String(), "removed stale: "+stale) {
+		t.Fatalf("the removal should be announced:\n%s", out)
+	}
+	if err := removeStale(out, []string{theirs}); err == nil {
+		t.Fatal("an app this command did not write must be refused")
+	}
+	if _, err := os.Stat(theirs); err != nil {
+		t.Fatalf("the foreign app must survive, stat = %v", err)
 	}
 }

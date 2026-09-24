@@ -35,7 +35,7 @@ func bundleInfoPlist(spec bundleSpec) string {
 	}
 	write("CFBundleDevelopmentRegion", "en")
 	write("CFBundleExecutable", spec.executable())
-	write("CFBundleGetInfoString", spec.displayName())
+	write("CFBundleGetInfoString", spec.seatLine())
 	write("CFBundleIdentifier", spec.identifier())
 	write("CFBundleInfoDictionaryVersion", "6.0")
 	write("CFBundleName", spec.displayName())
