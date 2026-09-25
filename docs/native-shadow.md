@@ -31,11 +31,11 @@ A dead lease waits out a 24-hour grace, because a crash and a clean exit look id
 
 ## Why a landed branch used to be unreapable
 
-A session branch goes once its commits exist somewhere else, which `git rev-list <branch> --not --remotes=origin` answered until the forge started squash-merging and deleting the remote branch. After that the branch's commits are on no remote ref, so the test said "unpushed" forever.
+A session branch goes once its commits exist somewhere else, which `git rev-list <branch> --not --remotes=origin` answered until the forge started squash-merging and deleting remote branches, leaving it "unpushed" forever.
 
-Patch identity cannot see it either, since a two-commit squash shows both as unmerged under `git cherry`. Content can, two ways. Reaping needs an empty `git diff origin/main <branch> -- <paths it touched>` and a pruned upstream, so a never-pushed branch survives, and so does one main moved past. The warnings only silence a line, so they ask wider: `merge-tree --write-tree -X ours origin/main <branch>` returning main's own tree means merging changes nothing, and `-X ours` drops only the hunks main resolved itself, so a branch-only hunk still warns. Needs git 2.43 (agentic-os#7687).
+Patch identity cannot see it either, since a two-commit squash shows both as unmerged under `git cherry`. Content can, two ways. Reaping needs a merge into origin/main that changes nothing, or an empty `git diff origin/main <branch> -- <paths it touched>` and a pruned upstream. A branch main holds whole is released even if never pushed, and one main moved past stays held and says so (agentic-os#8277). The warnings only silence a line, so they ask wider: `merge-tree --write-tree -X ours origin/main <branch>` returning main's own tree means merging changes nothing, and `-X ours` drops only the hunks main resolved itself, so a branch-only hunk still warns. Needs git 2.43 (agentic-os#7687).
 
-Session branches are also the ID ledger `reserveNativeSession` reads, so one is reaped only when no lease and no worktree still names it. Recycling the ID of a session nothing references is correct, recycling a live one is the hazard, and the lease is what tells them apart.
+Session branches are also the ID ledger `reserveNativeSession` reads, so one is reaped only when no lease and no worktree still names it. Recycling a live session's ID is the hazard, and the lease tells them apart.
 
 ## Hand-made worktrees
 

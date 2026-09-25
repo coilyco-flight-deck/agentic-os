@@ -166,6 +166,11 @@ func inspectNativeArtifact(artifact nativeArtifact) nativeShadowArtifact {
 	reading.Unpushed = nativeUnpushedCommits(artifact)
 	if reading.Unpushed > 0 && !nativeBranchLanded(artifact.Repository, artifact.Branch) {
 		reading.Held = fmt.Sprintf("%d commit(s) exist on no remote", reading.Unpushed)
+		// Landed-only is the release rule, so a branch whose hunks main
+		// rewrote waits for a person, who is told that much. #8277
+		if nativeBranchSubsumed(artifact.Repository, artifact.Branch) {
+			reading.Held += "; main has them except hunks it rewrote, so a person decides whether to delete the branch"
+		}
 		return reading
 	}
 	reading.Releasable = true

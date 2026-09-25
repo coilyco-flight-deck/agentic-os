@@ -94,3 +94,65 @@ func TestBranchesWorthKeepingSurviveTheLandedTest(t *testing.T) {
 		t.Fatal("a path main has since changed should err toward keeping")
 	}
 }
+
+// squashFromUnpushed lands a branch as a seat does when it pushes work under
+// another name: main takes the content, the session branch never had an upstream.
+func squashFromUnpushed(t *testing.T, repository, branch string) {
+	t.Helper()
+	testGit(t, repository, "switch", "main")
+	testGit(t, repository, "merge", "--squash", branch)
+	testGit(t, repository, "commit", "-m", "squashed "+branch)
+	testGit(t, repository, "push", "origin", "main")
+	testGit(t, repository, "fetch", "origin")
+}
+
+// A never-pushed branch whose content main already holds loses nothing when
+// reaped, so the sweep releases it rather than holding it forever. #8277
+func TestANeverPushedBranchMainHoldsIsReleased(t *testing.T) {
+	root := t.TempDir()
+	repository, _ := createNativeTestRepository(t, root, "owner", "one")
+	testGit(t, repository, "switch", "-c", "aos/claude/hh22")
+	commitFile(t, repository, "one.txt", "first")
+	squashFromUnpushed(t, repository, "aos/claude/hh22")
+
+	if nativeBranchWasPushedAndPruned(repository, "aos/claude/hh22") {
+		t.Fatal("the fixture pushed the branch, so it is not the never-pushed shape")
+	}
+	reading := inspectNativeArtifact(nativeArtifact{Repository: repository, Branch: "aos/claude/hh22"})
+	if !reading.Releasable || reading.Held != "" {
+		t.Fatalf("reading = %+v, want releasable", reading)
+	}
+}
+
+// Main rewrote a line the branch touched. Landed-only holds it, and says why,
+// so the person deciding can see main has everything else. #8277
+func TestANeverPushedBranchMainRewroteIsHeldAndNamed(t *testing.T) {
+	root := t.TempDir()
+	repository, _ := createNativeTestRepository(t, root, "owner", "one")
+	commitFile(t, repository, "f.txt", eightLines)
+	testGit(t, repository, "push", "origin", "main")
+	testGit(t, repository, "switch", "-c", "aos/claude/jj33")
+	commitFile(t, repository, "f.txt", strings.Replace(eightLines, "line4", "line4-branch", 1))
+	squashFromUnpushed(t, repository, "aos/claude/jj33")
+	commitFile(t, repository, "f.txt", strings.Replace(eightLines, "line4", "line4-tuned", 1))
+	testGit(t, repository, "push", "origin", "main")
+	testGit(t, repository, "fetch", "origin")
+
+	reading := inspectNativeArtifact(nativeArtifact{Repository: repository, Branch: "aos/claude/jj33"})
+	if reading.Releasable || !strings.Contains(reading.Held, "hunks it rewrote") {
+		t.Fatalf("reading = %+v, want held and named superseded", reading)
+	}
+}
+
+func TestANeverPushedBranchWithItsOwnContentStaysHeld(t *testing.T) {
+	root := t.TempDir()
+	repository, _ := createNativeTestRepository(t, root, "owner", "one")
+	testGit(t, repository, "switch", "-c", "aos/claude/kk44")
+	commitFile(t, repository, "kept.txt", "kept")
+	testGit(t, repository, "switch", "main")
+
+	reading := inspectNativeArtifact(nativeArtifact{Repository: repository, Branch: "aos/claude/kk44"})
+	if reading.Releasable || strings.Contains(reading.Held, "hunks it rewrote") {
+		t.Fatalf("reading = %+v, want held as branch-only work", reading)
+	}
+}

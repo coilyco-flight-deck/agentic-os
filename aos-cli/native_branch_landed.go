@@ -7,6 +7,11 @@ import (
 // nativeBranchLanded answers the case `rev-list --not --remotes=origin` cannot:
 // a branch pushed, squash-merged, and then pruned upstream. See docs/native-shadow.md.
 func nativeBranchLanded(repository, branch string) bool {
+	// Merging it changes nothing, so main holds every line and a reap loses
+	// nothing, pushed or not. A squash never pushed stayed held forever. #8277
+	if nativeMergeLeavesBase(repository, branch, false) {
+		return true
+	}
 	if !nativeBranchWasPushedAndPruned(repository, branch) {
 		return false
 	}
@@ -74,6 +79,12 @@ func nativeDefaultRemoteRef(repository string) string {
 // Wider than nativeBranchLanded, which deletes a ref rather than silencing a
 // warning. Needs git 2.43 for `-X`. docs/native-shadow.md
 func nativeBranchSubsumed(repository, branch string) bool {
+	return nativeMergeLeavesBase(repository, branch, true)
+}
+
+// nativeMergeLeavesBase reports whether merging branch into the remote default
+// yields the default's own tree, taking main's side of each conflict when ours.
+func nativeMergeLeavesBase(repository, branch string, ours bool) bool {
 	base := nativeDefaultRemoteRef(repository)
 	if base == "" {
 		return false
@@ -82,8 +93,11 @@ func nativeBranchSubsumed(repository, branch string) bool {
 	if err != nil || landed == "" {
 		return false
 	}
-	merged, err := nativeGit(repository, "merge-tree", "--write-tree",
-		"-X", "ours", base, "refs/heads/"+branch)
+	arguments := []string{"merge-tree", "--write-tree"}
+	if ours {
+		arguments = append(arguments, "-X", "ours")
+	}
+	merged, err := nativeGit(repository, append(arguments, base, "refs/heads/"+branch)...)
 	if err != nil {
 		return false
 	}
