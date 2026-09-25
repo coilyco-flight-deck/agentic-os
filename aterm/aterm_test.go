@@ -57,10 +57,10 @@ func stubDeps(t *testing.T, spawns *[]recordedSpawn, shadowed bool) commandDeps 
 			switch {
 			case len(args) > 0 && args[0] == "catalog":
 				return fixture(t, "roster.json"), nil
-			case len(args) > 1 && args[0] == "_native-shadow" && args[1] == "--new-id":
+			case len(args) > 0 && args[0] == "_session-id":
 				// An aos with no shadow verb has no minting verb either.
 				if !shadowed {
-					return nil, fmt.Errorf("flag provided but not defined: -new-id")
+					return nil, fmt.Errorf("No help topic for '_session-id'")
 				}
 				return []byte(stubInstance + "\n"), nil
 			case len(args) > 1 && args[0] == "_native-shadow" && args[1] == "--credential":

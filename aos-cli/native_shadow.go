@@ -160,16 +160,6 @@ func runNativeShadow(ctx context.Context, cmd *cli.Command) error {
 	if cmd.Bool("probe") {
 		return nil
 	}
-	// aterm names a session before this verb reserves its code, so it asks for
-	// one here and hands it back as --session-id. docs/native-shadow.md
-	if cmd.Bool("new-id") {
-		id, err := nativeSessionID(nativeRuntime{})
-		if err != nil {
-			return err
-		}
-		fmt.Println(id)
-		return nil
-	}
 	requestedID := strings.TrimSpace(cmd.String("session-id"))
 	if requestedID != "" && !nativeValidSessionID(requestedID) {
 		return fmt.Errorf("_native-shadow has malformed session id %q", requestedID)
@@ -2289,6 +2279,17 @@ func nativeSessionID(runtime nativeRuntime) (string, error) {
 		id[index] = character
 	}
 	return string(id), nil
+}
+
+// runSessionID mints aterm's session code. Its own verb, because the host wrapper
+// converges on _native-shadow. docs/native-shadow.md
+func runSessionID(context.Context, *cli.Command) error {
+	id, err := nativeSessionID(nativeRuntime{})
+	if err != nil {
+		return err
+	}
+	fmt.Println(id)
+	return nil
 }
 
 func nativeValidSessionID(id string) bool {

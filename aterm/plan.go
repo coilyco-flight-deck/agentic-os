@@ -82,7 +82,7 @@ func composeChild(request launchRequest, agentCompose, aos string, shadowed bool
 // mintInstance asks aos for the code, which keeps the contract to one Go
 // generator. An aos too old to mint leaves the session unsuffixed.
 func mintInstance(ctx context.Context, deps commandDeps, aos string) string {
-	raw, err := deps.output(ctx, aos, "_native-shadow", "--new-id")
+	raw, err := deps.output(ctx, aos, "_session-id")
 	if err != nil {
 		return ""
 	}

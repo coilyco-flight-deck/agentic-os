@@ -125,3 +125,11 @@ func TestNativeValidSessionIDFollowsTheContract(t *testing.T) {
 		}
 	}
 }
+
+// The host wrapper converges on `_native-shadow` calls, so minting must stay a
+// root verb of its own or a launcher's metadata read waits on Ansible.
+func TestSessionIDIsItsOwnRootVerb(t *testing.T) {
+	if !isRootSubcommand("_session-id") {
+		t.Fatal("_session-id should dispatch as a root subcommand")
+	}
+}

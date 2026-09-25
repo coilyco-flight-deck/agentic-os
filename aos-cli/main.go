@@ -122,7 +122,7 @@ func rootFlagTakesValue(name string) bool {
 func isRootSubcommand(value string) bool {
 	switch value {
 	case "repositories", "version", "converge", "models", "claude-ui", "acompose", "acompose-checkin",
-		"_native-shadow", "_launch-agent", "_container-acompose",
+		"_native-shadow", "_session-id", "_launch-agent", "_container-acompose",
 		"_container-socks-forward", "_container-context-bundle":
 		return true
 	default:
@@ -301,6 +301,11 @@ func newCommandWithDefaults(name string, defaults launchDefaults) *cli.Command {
 				Action: runAcomposeCheckin,
 			},
 			{
+				Name:   "_session-id",
+				Hidden: true,
+				Action: runSessionID,
+			},
+			{
 				Name:      "_launch-agent",
 				Hidden:    true,
 				ArgsUsage: "<role>",
@@ -313,7 +318,6 @@ func newCommandWithDefaults(name string, defaults launchDefaults) *cli.Command {
 					&cli.StringFlag{Name: "harness"},
 					&cli.StringFlag{Name: "role"},
 					&cli.BoolFlag{Name: "probe"},
-					&cli.BoolFlag{Name: "new-id"},
 					&cli.StringFlag{Name: "session-id"},
 					&cli.BoolFlag{Name: "assigned-role"},
 					&cli.BoolFlag{Name: "list"},
