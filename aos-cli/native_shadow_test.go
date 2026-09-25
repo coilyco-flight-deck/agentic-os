@@ -420,6 +420,40 @@ func TestStageNativeRoleHomeReservesProjectedLoadPoints(t *testing.T) {
 	}
 }
 
+func TestStageNativeRoleHomeKeepsAgentComposeRecordsPerSession(t *testing.T) {
+	source := filepath.Join(t.TempDir(), "source")
+	target := filepath.Join(t.TempDir(), "target")
+	state := filepath.Join(source, ".agent-compose")
+	if err := os.MkdirAll(filepath.Join(state, "bundles"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"projection.json", "skill-mounts.json", "agent-compose.yaml"} {
+		if err := os.WriteFile(filepath.Join(state, name), []byte("{}\n"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := stageNativeRoleHome(source, target, ""); err != nil {
+		t.Fatal(err)
+	}
+
+	staged := filepath.Join(target, ".agent-compose")
+	if info, err := os.Lstat(staged); err != nil || !info.IsDir() {
+		t.Fatalf("the session should own .agent-compose as a directory: %v %v", info, err)
+	}
+	for _, name := range []string{"projection.json", "skill-mounts.json"} {
+		if _, err := os.Lstat(filepath.Join(staged, name)); !errors.Is(err, fs.ErrNotExist) {
+			t.Fatalf("%s should start absent so this home records its own projection: %v", name, err)
+		}
+	}
+	for _, name := range []string{"bundles", "agent-compose.yaml"} {
+		info, err := os.Lstat(filepath.Join(staged, name))
+		if err != nil || info.Mode()&os.ModeSymlink == 0 {
+			t.Fatalf("%s should stay a link to the shared host state: %v %v", name, info, err)
+		}
+	}
+}
+
 func TestStageNativeRoleHomeLeavesProjectsRootAbsent(t *testing.T) {
 	source := filepath.Join(t.TempDir(), "source")
 	target := filepath.Join(t.TempDir(), "target")

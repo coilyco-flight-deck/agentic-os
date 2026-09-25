@@ -2114,6 +2114,7 @@ func copyStandaloneHomeDirectory(source, target string, blocked map[string]bool)
 // nativeStagedConfigPaths are the home-relative directories the session owns
 // outright, so projection cannot write through. See docs/native-shadow.md.
 var nativeStagedConfigPaths = map[string]bool{
+	".agent-compose":   true,
 	".agents":          true,
 	".claude":          true,
 	".codex":           true,
@@ -2133,6 +2134,13 @@ var nativeProjectedLoadPoints = map[string]bool{
 	".config/opencode/AGENTS.md": true,
 }
 
+// nativeSessionRecords are agent-compose records about this home's own
+// projection. A shared one lets one seat refuse or prune another's. #8259
+var nativeSessionRecords = map[string]bool{
+	".agent-compose/projection.json":   true,
+	".agent-compose/skill-mounts.json": true,
+}
+
 func stageNativeRoleConfigDirectory(source, target, relative string) error {
 	if err := os.MkdirAll(target, 0o700); err != nil {
 		return fmt.Errorf("create filtered native config %s: %w", target, err)
@@ -2147,7 +2155,7 @@ func stageNativeRoleConfigDirectory(source, target, relative string) error {
 	for _, entry := range entries {
 		name := entry.Name()
 		child := relative + "/" + name
-		if nativeProjectedLoadPoints[child] {
+		if nativeProjectedLoadPoints[child] || nativeSessionRecords[child] {
 			continue
 		}
 		if nativeStagedConfigPaths[child] {
