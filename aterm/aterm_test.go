@@ -463,6 +463,7 @@ func TestSeatAnnotationFallsBackForAnOlderAgentCompose(t *testing.T) {
 }
 
 func TestDefaultWorkingDirectoryPrefersTheProjectsRoot(t *testing.T) {
+	clearShadowEnv(t)
 	t.Setenv(defaultWorkingEnvVar, "/tmp/projects-root")
 	if got := defaultWorkingDirectory(); got != "/tmp/projects-root" {
 		t.Fatalf("working directory = %q", got)

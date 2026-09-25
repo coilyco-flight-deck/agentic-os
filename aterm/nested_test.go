@@ -11,6 +11,7 @@ import (
 
 func TestLaunchRefusesFromInsideANativeSessionShadow(t *testing.T) {
 	var spawns []recordedSpawn
+	clearShadowEnv(t)
 	t.Setenv(nativeSessionEnv, "ds74")
 	out, err := runAtermRaw(t, stubDeps(t, &spawns, true), "eng-platform", "claude")
 	if err == nil {
@@ -31,6 +32,7 @@ func TestLaunchRefusesFromInsideANativeSessionShadow(t *testing.T) {
 // how the identity card is inspected from inside a session. agentic-os#1456
 func TestDryRunStillWorksFromInsideANativeSessionShadow(t *testing.T) {
 	var spawns []recordedSpawn
+	clearShadowEnv(t)
 	t.Setenv(nativeSessionEnv, "ds74")
 	if _, err := runAtermRaw(t, stubDeps(t, &spawns, true), "--dry-run", "eng-platform", "claude"); err != nil {
 		t.Fatalf("dry run inside a shadow: %v", err)
@@ -56,6 +58,7 @@ func TestLaunchProceedsWithoutANativeSessionShadow(t *testing.T) {
 
 func TestDoctorFailsInsideANativeSessionShadow(t *testing.T) {
 	var spawns []recordedSpawn
+	clearShadowEnv(t)
 	t.Setenv(nativeSessionEnv, "ds74")
 	out, err := runAtermRaw(t, stubDeps(t, &spawns, true), "doctor", "--json")
 	if err == nil {
@@ -88,6 +91,7 @@ func TestRefusalUnwrapsToItsExitCode(t *testing.T) {
 	// A modern shadow publishes the canonical trio, and inheriting it makes the
 	// launch complete, so the refusal under test never fires. #1460
 	clearShadowEnv(t)
+	clearShadowEnv(t)
 	t.Setenv(nativeSessionEnv, "ds74")
 	err := refuseNestedLaunch()
 	if err == nil {
@@ -103,6 +107,7 @@ func TestRefusalUnwrapsToItsExitCode(t *testing.T) {
 // root cause reported as its symptom. agentic-os#1460
 func TestRefusalOutrunsTheWorkingDirectoryCheck(t *testing.T) {
 	var spawns []recordedSpawn
+	clearShadowEnv(t)
 	clearShadowEnv(t)
 	t.Setenv(nativeSessionEnv, "ds74")
 	t.Setenv(defaultWorkingEnvVar, "")
@@ -213,6 +218,7 @@ func TestCanonicalEnvironStaysOutOfTheWayWhenItCannotHelp(t *testing.T) {
 	if environ := canonicalEnviron([]string{"HOME=/Users/kai"}, readCanonicalLaunch()); environ != nil {
 		t.Fatalf("a top-level launch should inherit unchanged, got %v", environ)
 	}
+	clearShadowEnv(t)
 	t.Setenv(nativeSessionEnv, "ds74")
 	if environ := canonicalEnviron([]string{"HOME=/x"}, readCanonicalLaunch()); environ != nil {
 		t.Fatalf("an incomplete shadow has nothing to build from, got %v", environ)
