@@ -60,6 +60,7 @@ func TestTrackDraftFollowsWhatKaiHasNotSent(t *testing.T) {
 		{"a DCS reply", []string{"\x1bP>|kitty(0.39)\x1b\\"}, 0},
 		{"an X10 mouse report", []string{"\x1b[M !!"}, 0},
 		{"one key per frame after a reply, then Enter", []string{"\x1b]11;rgb:0/0/0\x07", "l", "s", "\r"}, 0},
+		{"xterm.js device attributes and a cursor report", []string{"\x1b[?1;2c", "\x1b[12;1R"}, 0},
 		{"typing after a reply still counts", []string{"\x1b]11;rgb:0/0/0\x07", "l", "s"}, 2},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {

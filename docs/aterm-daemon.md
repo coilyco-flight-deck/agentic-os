@@ -21,6 +21,8 @@ aterm mcp                             # list_agents and send_message over MCP st
 
 **A session is named `<role>-<identity>` from its card, and a spawn under a name in use ends the session holding it**: SIGTERM to its process group, 3 seconds, then SIGKILL. The daemon owns the process, so no pid start-time check is needed. For the claude seat aterm also passes `--name <role>-<identity>` ahead of the caller's arguments and stops running `claude` processes of that name the daemon did not start. A caller's own `--name` is kept, and `--no-stable-name` (or `ATERM_NO_STABLE_NAME`) stops nothing.
 
+**The harness starts without agent-compose's Enter gate.** The window drew its own card, and a daemon launch has nobody at it, so `_session` sets `AGENT_COMPOSE_NO_PAUSE=1`, which an older agent-compose ignores. It also flushes unread terminal input before attaching, since a reply to the card's color query arrives there and would read as Kai typing.
+
 **A session outlives its window.** Closing the window detaches that client, and the harness keeps running until it exits or the next launch of the role replaces it. `aterm attach` reattaches from any terminal with the last megabyte of output replayed.
 
 **A missing daemon costs messaging, never the session.** `_session` starts the daemon when none answers. If it still cannot connect, it prints one line and runs the harness directly. `aterm doctor` reports a `daemon` row, which is a warning only when the socket directory would be refused.
@@ -43,13 +45,12 @@ aterm mcp                             # list_agents and send_message over MCP st
 
 ## Per-harness delivery
 
-Observed on 2026-09-25 with claude and codex seats launched through `agent-compose` under the daemon.
+Observed on 2026-09-25 in real aterm windows: a claude seat sent to a codex seat, and codex answered back, each `delivered` within seconds.
 
-* **claude** - turns bracketed paste on at its prompt. `aterm send` from a claude seat reported `delivered` in about 6 seconds. Mid-turn queuing is recorded on teable:coilyco/agentic-os#8219 and was not re-observed.
-* **codex v0.156.1** - turns bracketed paste on at its prompt, took the stamped message as one paste, submitted it on the delayed Enter, and acted on it. Its shell tool rebuilds `PATH` from a login shell, so it runs the Homebrew `aterm`. Mid-turn queuing is unverified.
+* **claude, codex v0.156.1** - both turn bracketed paste on at their prompt and take the stamped message as one paste, submitted on the delayed Enter. Codex's shell rebuilds `PATH` from a login shell, so it runs the Homebrew `aterm`. Mid-turn queuing is unverified for codex.
 * **goose, opencode** - unverified. They fall back to ready after 30 quiet seconds.
 
-**Ready means bracketed paste for claude and codex, never a quiet screen.** `agent-compose launch` stops at `Press Enter to continue` before the harness starts, which is quiet too, and a message typed there is lost.
+**Ready means bracketed paste for claude and codex, never a quiet screen**, since a gate or a slow start is quiet too.
 
 ## Wire contract
 

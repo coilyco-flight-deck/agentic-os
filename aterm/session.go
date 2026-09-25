@@ -15,7 +15,11 @@ import (
 	"github.com/charmbracelet/x/term"
 )
 
-const sessionCommand = "_session"
+const (
+	sessionCommand = "_session"
+	// An agent-compose older than the variable ignores it and still pauses.
+	noPauseEnv = "AGENT_COMPOSE_NO_PAUSE"
+)
 
 var (
 	sessionNoticeStyle  = lipgloss.NewStyle().Faint(true)
@@ -71,11 +75,7 @@ func runSession(options sessionOptions, stdin io.Reader, stdout, stderr io.Write
 		return runDaemonSession(daemon, options, name, stdout, stderr)
 	}
 	command := exec.Command(argv[0], argv[1:]...)
-	// The card is already resolved here, so the session carries it rather than
-	// re-resolving it later. `aterm card` re-renders from this.
-	if options.CardPayload != "" {
-		command.Env = append(os.Environ(), cardEnv+"="+options.CardPayload)
-	}
+	command.Env = childEnviron(options)
 	command.Stdin = os.Stdin
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
@@ -210,15 +210,15 @@ func parseSessionArgs(argv []string) (sessionOptions, error) {
 // runDaemonSession hands the harness to the daemon and attaches this window to
 // it as one client among any others. See docs/aterm-daemon.md.
 func runDaemonSession(daemon *conn, options sessionOptions, name string, stdout, stderr io.Writer) int {
-	environ := os.Environ()
-	if options.CardPayload != "" {
-		environ = append(environ, cardEnv+"="+options.CardPayload)
-	}
+	environ := childEnviron(options)
 	cwd, _ := os.Getwd()
 	rows, cols := 24, 80
 	if width, height, err := term.GetSize(os.Stdout.Fd()); err == nil {
 		rows, cols = height, width
 	}
+	// Anything unread now arrived before the session existed, so it is not
+	// Kai's. A card's color query leaves its reply here. See docs/aterm-daemon.md.
+	_ = flushInput(os.Stdin.Fd())
 	pump := startPump(os.Stdin)
 	_, err := daemon.request(frame{
 		Type:     "spawn",
@@ -255,4 +255,14 @@ func holdAttached(pump *inputPump, stdout io.Writer, code int, hold bool) int {
 	}
 	pump.waitLine()
 	return code
+}
+
+// childEnviron carries the resolved card for `aterm card`, and skips
+// agent-compose's Enter gate. See docs/aterm-daemon.md.
+func childEnviron(options sessionOptions) []string {
+	environ := append(os.Environ(), noPauseEnv+"=1")
+	if options.CardPayload != "" {
+		environ = append(environ, cardEnv+"="+options.CardPayload)
+	}
+	return environ
 }
