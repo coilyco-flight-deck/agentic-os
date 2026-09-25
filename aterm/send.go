@@ -210,3 +210,76 @@ func listAgents() ([]sessionView, error) {
 	}
 	return reply.Sessions, nil
 }
+
+// askChoice puts a question to whoever is at a client and waits for the pick.
+// Both front doors take it, the CLI and the MCP tool.
+func askChoice(ask choiceAsk) (choiceAnswer, error) {
+	token := strings.TrimSpace(os.Getenv(sessionTokenEnv))
+	if token == "" {
+		return choiceAnswer{}, withExit(exitUsage, fmt.Errorf(
+			"%s is unset: aterm ask speaks for a session aterm launched, so run it from inside one", sessionTokenEnv))
+	}
+	c, err := dialDaemon(false)
+	if err != nil {
+		return choiceAnswer{}, withExit(exitMissing, err)
+	}
+	defer c.Close()
+	reply, err := c.request(frame{Type: "ask", Token: token, Ask: &ask})
+	if err != nil {
+		if reply.Code != 0 {
+			return choiceAnswer{}, withExit(reply.Code, err)
+		}
+		return choiceAnswer{}, err
+	}
+	if reply.Answer == nil {
+		return choiceAnswer{}, fmt.Errorf("the daemon settled the ask without an answer")
+	}
+	return *reply.Answer, nil
+}
+
+func newAskCommand() *cli.Command {
+	return &cli.Command{
+		Name:      "ask",
+		Usage:     "put a multiple-choice question to Kai's client and print the pick",
+		ArgsUsage: "<question> <option[::description]>...",
+		Description: "The daemon stamps the asking seat from this session's token and shows the\n" +
+			"question on every attached client. It exits 1 when the ask is cancelled or times out.",
+		Flags: []cli.Flag{
+			&cli.StringFlag{Name: "header", Usage: "a short label above the question"},
+			&cli.BoolFlag{Name: "other", Usage: "allow a free-text answer"},
+			&cli.BoolFlag{Name: "multi", Usage: "allow more than one pick"},
+			&cli.BoolFlag{Name: "json", Usage: "print the answer as JSON"},
+		},
+		Action: func(_ context.Context, cmd *cli.Command) error {
+			args := cmd.Args().Slice()
+			if len(args) < 1 {
+				return withExit(exitUsage, fmt.Errorf("aterm ask needs a question"))
+			}
+			ask := choiceAsk{Question: args[0], Header: cmd.String("header"), AllowOther: cmd.Bool("other"), Multi: cmd.Bool("multi")}
+			for _, raw := range args[1:] {
+				label, description, _ := strings.Cut(raw, "::")
+				ask.Options = append(ask.Options, choiceOption{Label: label, Description: description})
+			}
+			answer, err := askChoice(ask)
+			if err != nil {
+				return err
+			}
+			writer := cmd.Root().Writer
+			if cmd.Bool("json") {
+				encoded, _ := json.MarshalIndent(answer, "", "  ")
+				fmt.Fprintf(writer, "%s\n", encoded)
+			} else {
+				for _, label := range answer.Labels {
+					fmt.Fprintln(writer, label)
+				}
+				if answer.Text != "" {
+					fmt.Fprintln(writer, answer.Text)
+				}
+			}
+			if answer.State != "answered" {
+				return fmt.Errorf("the ask was %s: %s", strings.ReplaceAll(answer.State, "_", " "), answer.Reason)
+			}
+			return nil
+		},
+	}
+}

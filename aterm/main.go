@@ -202,6 +202,7 @@ func newCommand(deps commandDeps) *cli.Command {
 			newDaemonCommand(),
 			newAttachCommand(),
 			newSendCommand(),
+			newAskCommand(),
 			newAgentsCommand(),
 			newMCPCommand(),
 		},

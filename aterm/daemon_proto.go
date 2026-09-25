@@ -63,11 +63,18 @@ type frame struct {
 	// replies and events
 	Message  *peerMessage  `json:"message,omitempty"`
 	Sessions []sessionView `json:"sessions,omitempty"`
-	Roster   *listedRoster `json:"roster,omitempty"`
-	Code     int           `json:"code,omitempty"`
-	Error    string        `json:"error,omitempty"`
-	Channel  string        `json:"channel,omitempty"`
-	PID      int           `json:"pid,omitempty"`
+	// ask_choice
+	Ask     *choiceAsk    `json:"ask,omitempty"`
+	AskID   string        `json:"ask_id,omitempty"`
+	Picks   []int         `json:"picks,omitempty"`
+	Text    string        `json:"text,omitempty"`
+	State   string        `json:"state,omitempty"`
+	Answer  *choiceAnswer `json:"answer,omitempty"`
+	Roster  *listedRoster `json:"roster,omitempty"`
+	Code    int           `json:"code,omitempty"`
+	Error   string        `json:"error,omitempty"`
+	Channel string        `json:"channel,omitempty"`
+	PID     int           `json:"pid,omitempty"`
 }
 
 // sessionView is one live session as a client sees it. It is the roster the

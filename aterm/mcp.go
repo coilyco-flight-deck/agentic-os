@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/urfave/cli/v3"
 )
@@ -45,6 +46,33 @@ type rpcError struct {
 }
 
 var mcpTools = []map[string]any{
+	{
+		"name": "ask_choice",
+		"description": "Ask Kai a multiple-choice question on her aterm client and wait for the pick. " +
+			"aterm stamps your seat on it. Returns the picked labels and any free text. A cancelled " +
+			"or timed-out ask returns an error saying which.",
+		"inputSchema": map[string]any{
+			"type":     "object",
+			"required": []string{"question", "options"},
+			"properties": map[string]any{
+				"question":    map[string]any{"type": "string"},
+				"header":      map[string]any{"type": "string", "description": "a short label above the question"},
+				"allow_other": map[string]any{"type": "boolean", "description": "let Kai type an answer instead"},
+				"multi":       map[string]any{"type": "boolean", "description": "allow more than one pick"},
+				"options": map[string]any{
+					"type": "array",
+					"items": map[string]any{
+						"type":     "object",
+						"required": []string{"label"},
+						"properties": map[string]any{
+							"label":       map[string]any{"type": "string"},
+							"description": map[string]any{"type": "string"},
+						},
+					},
+				},
+			},
+		},
+	},
 	{
 		"name": "list_agents",
 		"description": "List the live agent sessions on this host that send_message can reach. " +
@@ -144,6 +172,20 @@ func callMCPTool(name string, arguments json.RawMessage) (string, bool) {
 			return err.Error(), true
 		}
 		encoded, _ := json.MarshalIndent(agentsDocument(views), "", "  ")
+		return string(encoded), false
+	case "ask_choice":
+		var ask choiceAsk
+		if err := json.Unmarshal(arguments, &ask); err != nil {
+			return err.Error(), true
+		}
+		answer, err := askChoice(ask)
+		if err != nil {
+			return err.Error(), true
+		}
+		if answer.State != "answered" {
+			return fmt.Sprintf("the ask was %s: %s", strings.ReplaceAll(answer.State, "_", " "), answer.Reason), true
+		}
+		encoded, _ := json.Marshal(map[string]any{"picks": answer.Picks, "labels": answer.Labels, "text": answer.Text})
 		return string(encoded), false
 	case "send_message":
 		var params struct {

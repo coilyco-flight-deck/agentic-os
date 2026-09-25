@@ -12,22 +12,23 @@ aterm send frontend-eng "ready for review"
 aterm send --launch scientist -       # open the role if none answers, body on stdin
 aterm attach eng-platform-beetle-ox   # another terminal on a live session, Ctrl-] detaches
 aterm daemon                          # foreground, websocket on 127.0.0.1:7419
-aterm mcp                             # list_agents and send_message over MCP stdio
+aterm ask "Ship it?" yes no           # a choice card on Kai's client
+aterm mcp                             # list_agents, send_message, ask_choice
 ```
 
 ## What the daemon owns
 
 **`_session` hands the harness to the daemon instead of running it.** After the card, `_session` sends a `spawn` carrying the argv, its environment, directory, and window size, then attaches, relaying keys and output and following the window size. The argv reaches the harness untouched, the shadow child's own `--` included, and the window still holds on a non-zero exit.
 
-**A session is named `<role>-<identity>` from its card, and a spawn under a name in use ends the session holding it**: SIGTERM to its process group, 3 seconds, then SIGKILL. The daemon owns the process, so no pid start-time check is needed. For the claude seat aterm also passes `--name <role>-<identity>` ahead of the caller's arguments and stops running `claude` processes of that name the daemon did not start. A caller's own `--name` is kept, and `--no-stable-name` (or `ATERM_NO_STABLE_NAME`) stops nothing.
+**A session is named `<role>-<identity>` from its card, and a spawn under a name in use ends the session holding it**: SIGTERM to its process group, 3 seconds, then SIGKILL. For the claude seat aterm also passes `--name <role>-<identity>` ahead of the caller's arguments and stops running `claude` processes of that name the daemon did not start. A caller's own `--name` is kept, and `--no-stable-name` (or `ATERM_NO_STABLE_NAME`) stops nothing.
 
 **The harness starts without agent-compose's Enter gate.** The window drew its own card, and a daemon launch has nobody at it, so `_session` sets `AGENT_COMPOSE_NO_PAUSE=1`, which an older agent-compose ignores. It also flushes unread terminal input before attaching, since a reply to the card's color query arrives there and would read as Kai typing.
 
 **A session outlives its window.** Closing the window detaches that client, and the harness keeps running until it exits or the next launch of the role replaces it. `aterm attach` reattaches from any terminal with the last megabyte of output replayed.
 
-**A missing daemon costs messaging, never the session.** `_session` starts the daemon when none answers. If it still cannot connect, it prints one line and runs the harness directly. `aterm doctor` reports a `daemon` row, which is a warning only when the socket directory would be refused.
+**A missing daemon costs messaging, never the session.** `_session` starts the daemon when none answers. Failing that, it runs the harness directly. `aterm doctor` reports a `daemon` row, which is a warning only when the socket directory would be refused.
 
-**The socket is `/tmp/aterm-<uid>/daemon.sock`, keyed by uid rather than `HOME`**, because a session shadow moves `HOME` and every seat must reach one daemon. `ATERM_DAEMON_SOCKET` overrides it. The directory must be owned by the user and closed to others, and that permission is all of local client auth. A daemon with no session and no client for five minutes exits, so the next launch runs the upgraded binary. A second daemon loses a lock race and exits.
+**The socket is `/tmp/aterm-<uid>/daemon.sock`, keyed by uid rather than `HOME`**, because a session shadow moves `HOME` and every seat must reach one daemon. `ATERM_DAEMON_SOCKET` overrides it. The directory must be owned by the user and closed to others, and that permission is all of local client auth. An idle daemon exits after five minutes, so the next launch runs the upgraded binary.
 
 ## `aterm send`
 
@@ -37,11 +38,11 @@ aterm mcp                             # list_agents and send_message over MCP st
 
 **Targets resolve in tiers**: exact session name, then role slug, then identity, then harness. The first tier with a match wins, several matches in it refuse and name them, and none exits 3 with the live sessions listed. `--launch` on a role slug opens the role through `aterm <role>` and holds the message up to three minutes for it.
 
-**Delivery serializes with the keyboard.** One lock covers every PTY write, so a message never interleaves with keystrokes. A message is `queued` until the target is ready, `held` while Kai typed in the last 1.5 seconds or has an unsent draft touched in the last minute, then `delivered` or `failed`. The draft count follows printable keys, backspace, and pastes, and Enter, Ctrl-C, or Ctrl-U clear it. A held message lands after her draft is sent.
+**Delivery serializes with the keyboard.** One lock covers every PTY write, so a message never interleaves with keystrokes. A message is `queued` until the target is ready, `held` while Kai typed in the last 1.5 seconds or has a draft touched in the last minute, then `delivered` or `failed`. Enter, Ctrl-C, or Ctrl-U clear the draft, and a held message lands after it.
 
 **A program that asked for bracketed paste gets the message as one paste, then Enter 300ms later**, since a TUI reading a paste as a burst takes an Enter that arrives with it as a newline. Without bracketed paste, lines are joined with spaces so a newline cannot submit early. The daemon reads the mode from the program's own output.
 
-**A process inside a session cannot type into one.** The daemon reads the connecting pid from the kernel and walks its parents. A process under any session may send, which is stamped, but its raw input is refused, unless it spawned that session itself. This guards against mistakes, not a hostile same-user process, which could escape the parent chain by double-forking or reach the window some other way.
+**A process inside a session cannot type into one.** The daemon reads the connecting pid from the kernel and walks its parents. A process under any session may send, which is stamped, but its raw input is refused, unless it spawned that session itself. This guards against mistakes, not a hostile same-user process, which can double-fork out of the chain.
 
 ## Per-harness delivery
 
@@ -61,8 +62,10 @@ Observed on 2026-09-25 in real aterm windows: a claude seat sent to a codex seat
 * `list` answers `sessions`. `subscribe` to channel `sessions` pushes the roster on every change, and `message` events carry each state change, never the body, which only the target's terminal receives.
 * `whoami` resolves a token to its session. `roster` answers with `aterm.roster.v1`, the launchable roles `aterm --list --json` prints, read fresh per request. `launch` with a `role` and optional `seat` opens it as `aterm <role> [seat]` would, answering `launched`.
 
-**Browsers attach over a loopback websocket**, `127.0.0.1:7419` by default. `--websocket` or `ATERM_DAEMON_WS` moves it, and an empty value turns it off. A non-loopback address is refused, since there is no client auth yet. A browser does not apply CORS to a websocket, so any page Kai opens could reach one. Before the upgrade, the daemon refuses a missing Origin, a non-loopback Origin, and a non-loopback Host, which is how a rebound DNS name arrives. A browser has no pid to walk, so it types as a person. A taken port costs browser clients, never the daemon.
+* `ask` (from `aterm ask` or the `ask_choice` MCP tool) takes a `question`, `options` of `label` and `description`, `header`, `allow_other`, and `multi`. The daemon stamps the asker from its token and pushes `ask` to subscribers, replayed on subscribe. A client's `answer` (`ask_id`, `picks`, `text`) or `cancel_ask` settles it, and `asked` tells every client to drop the card. An asker leaving cancels its asks, and 15 minutes times one out. An answer is Kai's input, so it takes the typing guard.
+
+**Browsers attach over a loopback websocket**, `127.0.0.1:7419` by default, moved by `--websocket` or `ATERM_DAEMON_WS`, off when empty. A non-loopback address is refused until client auth exists. A browser applies no CORS to a websocket, so before the upgrade the daemon refuses a missing Origin, a non-loopback Origin, and a non-loopback Host (a rebound DNS name). A browser has no pid to walk, so it types as a person.
 
 ## Not built yet
 
-Tailnet reach, meaning a non-loopback listener, client auth, and daemon discovery, is teable:coilyco/agentic-os#8220's next milestone, along with the MCP Apps gateway and the streamed browser. `aterm mcp` ships, and projecting it into each harness registry is a separate change.
+Tailnet reach (listener, client auth, discovery), the MCP Apps gateway, and the streamed browser, on teable:coilyco/agentic-os#8220. Projecting `aterm mcp` into harness registries is teable:coilyco/agentic-os-kai#8241.

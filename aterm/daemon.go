@@ -34,6 +34,8 @@ type daemon struct {
 	sessions    map[string]*ptySession
 	tokens      map[string]*ptySession
 	orphans     []*pendingSend
+	asks        map[string]*pendingAsk
+	askTimeout  time.Duration
 	subscribers map[*conn]bool
 	conns       int
 	lastActive  time.Time
@@ -47,6 +49,8 @@ func newDaemon(logf func(string, ...any)) *daemon {
 	return &daemon{
 		sessions:    map[string]*ptySession{},
 		tokens:      map[string]*ptySession{},
+		asks:        map[string]*pendingAsk{},
+		askTimeout:  defaultAskTimeout,
 		subscribers: map[*conn]bool{},
 		lastActive:  time.Now(),
 		processes:   listProcesses,
@@ -171,6 +175,7 @@ type client struct {
 	browser  bool
 	owned    map[string]bool
 	attached map[string]*ptySession
+	asks     []string
 }
 
 func (d *daemon) serve(raw net.Conn) {
@@ -200,6 +205,8 @@ func (d *daemon) serveConn(c *conn, pid int, browser bool) {
 		for _, s := range cl.attached {
 			s.detach(c)
 		}
+		asked := cl.asks
+		d.settleWhere(func(ask choiceAsk) bool { return slices.Contains(asked, ask.ID) }, "the asking call ended")
 		d.mu.Lock()
 		d.conns--
 		d.lastActive = time.Now()
@@ -300,7 +307,24 @@ func (d *daemon) handle(cl *client, message frame) error {
 		d.mu.Lock()
 		d.subscribers[cl.c] = true
 		d.mu.Unlock()
-		return cl.c.write(frame{Type: "sessions", ID: message.ID, Channel: "sessions", Sessions: d.views()})
+		if err := cl.c.write(frame{Type: "sessions", ID: message.ID, Channel: "sessions", Sessions: d.views()}); err != nil {
+			return err
+		}
+		for _, ask := range d.pendingAsks() {
+			if err := cl.c.write(frame{Type: "ask", Ask: &ask}); err != nil {
+				return err
+			}
+		}
+		return nil
+	case "ask":
+		return d.ask(cl, message)
+	case "answer":
+		return d.answer(cl, message)
+	case "cancel_ask":
+		if !d.settle(message.AskID, choiceAnswer{State: "cancelled", Reason: "a client dismissed it"}) {
+			return withExit(exitOffRoster, fmt.Errorf("no pending ask %q", message.AskID))
+		}
+		return cl.c.write(frame{Type: "asked", ID: message.ID, AskID: message.AskID, State: "cancelled"})
 	}
 	return fmt.Errorf("unknown frame type %q", message.Type)
 }
@@ -384,6 +408,7 @@ func (d *daemon) forget(s *ptySession) {
 	delete(d.tokens, s.token)
 	d.lastActive = time.Now()
 	d.mu.Unlock()
+	d.settleWhere(func(ask choiceAsk) bool { return ask.Session == s.name }, s.name+" ended")
 	d.pushSessions()
 }
 
