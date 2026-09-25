@@ -116,7 +116,7 @@ func paneFlags() []cli.Flag {
 			Name:    "terminal-bin",
 			Value:   defaultTerminalBin,
 			Usage:   "terminal binary carrying the remote-control client",
-			Sources: cli.EnvVars("ATERM_TERMINAL_BIN", "KITTY_BIN"),
+			Sources: cli.EnvVars(terminalBinEnv, "KITTY_BIN"),
 		},
 	}
 }

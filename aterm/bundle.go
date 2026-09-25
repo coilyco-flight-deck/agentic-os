@@ -196,7 +196,7 @@ func bundleBinaryFlags() []cli.Flag {
 			Name:    "terminal-bin",
 			Value:   defaultTerminalBin,
 			Usage:   "terminal the bundles open",
-			Sources: cli.EnvVars("ATERM_TERMINAL_BIN", "KITTY_BIN"),
+			Sources: cli.EnvVars(terminalBinEnv, "KITTY_BIN"),
 		},
 	}
 }

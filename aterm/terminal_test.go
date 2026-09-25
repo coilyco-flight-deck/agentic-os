@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -69,9 +70,28 @@ func TestResolveTerminalTargetRefusesAScriptItCannotFollow(t *testing.T) {
 // The window carries the identity of the bundle holding the binary that drew
 // it, so `aterm platform` from a shell opens through the installed app too.
 func TestBundleTerminalPrefersTheRolesInstalledApp(t *testing.T) {
+	for _, dir := range []string{"Applications", "Desktop"} {
+		t.Run(dir, func(t *testing.T) { bundleTerminalCase(t, dir, false) })
+		t.Run(dir+" from a shadow", func(t *testing.T) { bundleTerminalCase(t, dir, true) })
+	}
+}
+
+// bundleTerminalCase installs a role's app under dir in Kai's home. From a
+// shadow, HOME is the session's and the canonical home is where the app is.
+func bundleTerminalCase(t *testing.T, dir string, shadowed bool) {
 	root := t.TempDir()
 	t.Setenv("HOME", root)
-	apps := filepath.Join(root, "Desktop")
+	for _, name := range []string{nativeSessionEnv, nativeSessionRootEnv, canonicalHomeEnv, canonicalProjectsEnv} {
+		t.Setenv(name, "")
+	}
+	if shadowed {
+		t.Setenv("HOME", t.TempDir())
+		t.Setenv(nativeSessionEnv, "ab12")
+		t.Setenv(nativeSessionRootEnv, t.TempDir())
+		t.Setenv(canonicalHomeEnv, root)
+		t.Setenv(canonicalProjectsEnv, filepath.Join(root, "projects"))
+	}
+	apps := filepath.Join(root, dir)
 	bundle := filepath.Join(apps, "Angie :: Agentic Platform Engineer.app", "Contents", "MacOS")
 	if err := os.MkdirAll(bundle, 0o755); err != nil {
 		t.Fatalf("stage the bundle: %v", err)
@@ -118,5 +138,12 @@ func TestResolveTerminalTargetLeavesTheGeneratingBundleBehind(t *testing.T) {
 	}
 	if got != real {
 		t.Fatalf("resolved %q, want the app %q", got, real)
+	}
+}
+
+func TestWindowEnvironDropsTheLaunchingBundlesTerminal(t *testing.T) {
+	got := windowEnviron([]string{"PATH=/bin", terminalBinEnv + "=/Apps/Platform Engineer.app/Contents/MacOS/kitty", "AOS_BIN=/bin/aos"})
+	if strings.Join(got, "|") != "PATH=/bin|AOS_BIN=/bin/aos" {
+		t.Fatalf("windowEnviron = %v, want only the bundle's terminal gone", got)
 	}
 }

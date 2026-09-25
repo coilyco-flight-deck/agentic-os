@@ -185,7 +185,7 @@ func newCommand(deps commandDeps) *cli.Command {
 				Name:    "terminal-bin",
 				Value:   defaultTerminalBin,
 				Usage:   "terminal to open the window with (kitty's flag dialect)",
-				Sources: cli.EnvVars("ATERM_TERMINAL_BIN", "KITTY_BIN"),
+				Sources: cli.EnvVars(terminalBinEnv, "KITTY_BIN"),
 			},
 		},
 		Commands: []*cli.Command{

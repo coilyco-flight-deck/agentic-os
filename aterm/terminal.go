@@ -13,6 +13,9 @@ import (
 // so the script is followed to the binary it execs. See docs/aterm.md.
 const terminalWrapperHops = 4
 
+// terminalBinEnv is what a role bundle's launcher exports for its own window.
+const terminalBinEnv = "ATERM_TERMINAL_BIN"
+
 var machOMagic = map[uint32]bool{
 	0xfeedface: true, 0xcefaedfe: true,
 	0xfeedfacf: true, 0xcffaedfe: true,
@@ -44,7 +47,28 @@ func resolveTerminalTarget(path string) (string, error) {
 // bundleTerminal is that identity from the other direction, for a session
 // started from a shell. Only a macOS bundle has the shape it looks for.
 func bundleTerminal(role string) string {
-	root := defaultBundleDir()
+	for _, root := range bundleSearchDirs() {
+		if terminal := bundleTerminalIn(root, role); terminal != "" {
+			return terminal
+		}
+	}
+	return ""
+}
+
+// bundleSearchDirs covers convergence's ~/Applications and the bundles verb's
+// default ~/Desktop, in Kai's home even from inside a shadow.
+func bundleSearchDirs() []string {
+	home, err := os.UserHomeDir()
+	if launch := readCanonicalLaunch(); launch.inShadow() && launch.complete() {
+		home, err = launch.Home, nil
+	}
+	if err != nil {
+		return nil
+	}
+	return []string{filepath.Join(home, "Applications"), filepath.Join(home, "Desktop")}
+}
+
+func bundleTerminalIn(root, role string) string {
 	entries, err := os.ReadDir(root)
 	if err != nil {
 		return ""

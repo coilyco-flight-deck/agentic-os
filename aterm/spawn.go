@@ -33,7 +33,7 @@ func spawnWindow(name string, args []string) error {
 	if environ == nil {
 		environ = os.Environ()
 	}
-	command.Env = environ
+	command.Env = windowEnviron(environ)
 	if err := command.Start(); err != nil {
 		return err
 	}
@@ -65,4 +65,17 @@ func terminalDetail(log *os.File) string {
 		return ""
 	}
 	return ": " + detail
+}
+
+// windowEnviron drops the terminal a bundle's launcher exported for its own
+// window, so a launch from inside that session opens the target role's app.
+func windowEnviron(environ []string) []string {
+	kept := make([]string, 0, len(environ))
+	for _, entry := range environ {
+		if name, _, _ := strings.Cut(entry, "="); name == terminalBinEnv {
+			continue
+		}
+		kept = append(kept, entry)
+	}
+	return kept
 }
