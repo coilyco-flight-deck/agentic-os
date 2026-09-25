@@ -23,6 +23,7 @@ type launchRequest struct {
 	NoMotion         bool
 	Extra            []string
 	Hold             bool
+	Headless         bool
 	StableName       bool
 	// Instance is the dictatable code that tells two sessions of one role apart.
 	Instance string
@@ -55,6 +56,9 @@ type launchPlan struct {
 	Child            []string       `json:"child"`
 	Executable       string         `json:"executable"`
 	Arguments        []string       `json:"arguments"`
+	// Session is this binary's session stage and the child after it, which a
+	// headless launch runs without the terminal.
+	Session []string `json:"session"`
 }
 
 // composeChild mirrors the acompose shell function so the window runs the same
@@ -187,8 +191,12 @@ func buildLaunchPlan(
 	// The daemon is not optional: without one answering, _session runs the
 	// harness directly. See docs/aterm-daemon.md.
 	session = append(session, "--daemon")
+	if request.Headless {
+		session = append(session, "--headless")
+	}
 	session = append(session, "--card", encoded, "--")
+	plan.Session = append(session, child...)
 	// kitty takes the program as trailing arguments, with no -e separator.
-	plan.Arguments = append(arguments, append(session, child...)...)
+	plan.Arguments = append(arguments, plan.Session...)
 	return plan, nil
 }

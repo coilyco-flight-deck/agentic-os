@@ -175,22 +175,26 @@ func awaitSession(watch *conn, state peerMessage, limit time.Duration) peerMessa
 	}
 }
 
-// launchRole opens the role the way a person would, through this binary, so
-// the roster check and the window are the ordinary ones.
+// launchRole opens the role through this binary, so the roster check is the
+// ordinary one. Headless, since nobody is at a launch the daemon starts.
 func launchRole(role, seat string) error {
 	self, err := os.Executable()
 	if err != nil {
 		return err
 	}
-	args := []string{role}
-	if seat != "" {
-		args = append(args, seat)
-	}
-	output, err := exec.Command(self, args...).CombinedOutput()
+	output, err := exec.Command(self, launchRoleArgs(role, seat)...).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("%v: %s", err, strings.TrimSpace(string(output)))
 	}
 	return nil
+}
+
+func launchRoleArgs(role, seat string) []string {
+	args := []string{"--headless", role}
+	if seat != "" {
+		args = append(args, seat)
+	}
+	return args
 }
 
 func describeMessage(state peerMessage) string {

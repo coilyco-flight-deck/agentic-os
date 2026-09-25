@@ -35,6 +35,9 @@ func runSession(options sessionOptions, stdin io.Reader, stdout, stderr io.Write
 		return 2
 	}
 	name := sessionName(options.Card.Name, options.Card.Role, options.Card.Instance)
+	if options.Headless {
+		return runHeadlessSession(options, name, stderr)
+	}
 	var daemon *conn
 	// The card is drawn here, not by the launcher, and the work ahead of the
 	// harness runs under it. See docs/aterm.md.
@@ -151,8 +154,10 @@ func holdWindow(stdin io.Reader, stdout io.Writer, notice string) {
 type sessionOptions struct {
 	Hold   bool
 	Daemon bool
-	Motion bool
-	Card   sessionCard
+	// Headless hands the harness to the daemon and exits, attaching nothing.
+	Headless bool
+	Motion   bool
+	Card     sessionCard
 	// CardPayload is the encoded card exactly as it arrived, so the session can
 	// pass it on without re-encoding what it decoded.
 	CardPayload string
@@ -171,6 +176,8 @@ func parseSessionArgs(argv []string) (sessionOptions, error) {
 			options.Motion = false
 		case "--daemon":
 			options.Daemon = true
+		case "--headless":
+			options.Headless = true
 		case "--card":
 			if index+1 >= len(argv) {
 				return sessionOptions{}, fmt.Errorf("%s --card needs a value", sessionCommand)
@@ -230,6 +237,48 @@ func runDaemonSession(daemon *conn, options sessionOptions, name string, stdout,
 		fmt.Fprintf(stderr, "\r\naterm: lost the aterm daemon, and %s with it\r\n", name)
 	}
 	return holdAttached(pump, stdout, result.code, options.Hold)
+}
+
+// headlessSize is the terminal a headless session starts in, until a client
+// attaches and resizes it.
+const headlessRows, headlessCols = 50, 160
+
+// runHeadlessSession spawns the harness in the daemon and returns without a
+// client. With no window to fall back to, a missing daemon is a failure.
+func runHeadlessSession(options sessionOptions, name string, stderr io.Writer) int {
+	if !options.Daemon {
+		fmt.Fprintln(stderr, "aterm: a headless session needs --daemon")
+		return 2
+	}
+	daemon, err := dialDaemon(true)
+	if err != nil {
+		fmt.Fprintf(stderr, "aterm: %v\n", err)
+		return 1
+	}
+	defer daemon.Close()
+	if options.Card.Seat == "claude" {
+		updateClaude(exec.LookPath, func(name string, args ...string) ([]byte, error) {
+			return exec.Command(name, args...).CombinedOutput()
+		}, stderr)
+	}
+	cwd, _ := os.Getwd()
+	_, err = daemon.request(frame{
+		Type:     "spawn",
+		Session:  name,
+		Role:     options.Card.Role,
+		Identity: options.Card.Name,
+		Seat:     options.Card.Seat,
+		Argv:     options.Argv,
+		Env:      childEnviron(options),
+		Cwd:      cwd,
+		Rows:     headlessRows,
+		Cols:     headlessCols,
+	})
+	if err != nil {
+		fmt.Fprintf(stderr, "aterm: %v\n", err)
+		return 1
+	}
+	return 0
 }
 
 func holdAttached(pump *inputPump, stdout io.Writer, code int, hold bool) int {

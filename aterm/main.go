@@ -38,6 +38,8 @@ type commandDeps struct {
 	output   func(context.Context, string, ...string) ([]byte, error)
 	run      func(context.Context, string, ...string) error
 	spawn    func(context.Context, string, ...string) error
+	// headless runs the session stage to completion, which is its spawn frame.
+	headless func(context.Context, string, ...string) error
 	self     func() (string, error)
 	pick     func(rosterDocument) (string, string, error)
 	tty      func() bool
@@ -67,6 +69,9 @@ func systemDeps() commandDeps {
 		},
 		spawn: func(_ context.Context, name string, args ...string) error {
 			return spawnWindow(name, args)
+		},
+		headless: func(_ context.Context, name string, args ...string) error {
+			return runHeadlessStage(name, args)
 		},
 		self:   os.Executable,
 		pick:   pickRoleAndSeat,
@@ -157,6 +162,10 @@ func newCommand(deps commandDeps) *cli.Command {
 			&cli.BoolFlag{
 				Name:  "json",
 				Usage: "machine-readable output, with --list or --dry-run",
+			},
+			&cli.BoolFlag{
+				Name:  "headless",
+				Usage: "run the session in the aterm daemon with no window, to type into from a client or `aterm attach`",
 			},
 			&cli.BoolFlag{
 				Name:  "hold",
@@ -265,6 +274,7 @@ func runLaunch(ctx context.Context, deps commandDeps, cmd *cli.Command) error {
 		NoMotion:         cmd.Bool("no-motion"),
 		Extra:            extra,
 		Hold:             cmd.Bool("hold"),
+		Headless:         cmd.Bool("headless"),
 		StableName:       !cmd.Bool("no-stable-name"),
 	}
 	aos, err := requireBinary(deps.lookPath, request.AOSBin)
@@ -284,7 +294,7 @@ func runLaunch(ctx context.Context, deps commandDeps, cmd *cli.Command) error {
 	group.Go(func() {
 		request.Workspace = workspaceLabel(ctx, deps, cwd, cmd.IsSet("working-directory"))
 	})
-	if creatureWanted(cmd.Bool("no-creature")) {
+	if creatureWanted(cmd.Bool("no-creature")) && !request.Headless {
 		group.Go(func() {
 			request.Creature = bakeCreaturePlate(role, creaturePresence, creatureWholeWindow)
 		})
@@ -308,6 +318,14 @@ func runLaunch(ctx context.Context, deps commandDeps, cmd *cli.Command) error {
 		}
 		_, err = fmt.Fprintf(stdout, "%s\n", encoded)
 		return err
+	}
+	// A headless session has no window to open, so the session stage itself
+	// runs detached and hands the harness to the daemon. See docs/aterm-daemon.md.
+	if request.Headless {
+		if err := deps.headless(ctx, self, plan.Session[1:]...); err != nil {
+			return withExit(exitSpawn, fmt.Errorf("start the headless session: %w", err))
+		}
+		return announce(stdout, plan)
 	}
 	terminal, err := requireBinary(deps.lookPath, request.TerminalBin)
 	if err != nil {

@@ -32,8 +32,9 @@ func platformOverlay(t *testing.T) overlayDocument {
 }
 
 type recordedSpawn struct {
-	name string
-	args []string
+	name     string
+	args     []string
+	headless bool
 }
 
 // stubInstance is the code the stub aos mints, drawn from the dictatable alphabet.
@@ -103,6 +104,10 @@ func stubDeps(t *testing.T, spawns *[]recordedSpawn, shadowed bool) commandDeps 
 		},
 		spawn: func(_ context.Context, name string, args ...string) error {
 			*spawns = append(*spawns, recordedSpawn{name: name, args: args})
+			return nil
+		},
+		headless: func(_ context.Context, name string, args ...string) error {
+			*spawns = append(*spawns, recordedSpawn{name: name, args: args, headless: true})
 			return nil
 		},
 		self: func() (string, error) { return "/stub/aterm", nil },
@@ -624,5 +629,31 @@ func TestTheRosterSolvedBackgroundWinsOverTheLocalTint(t *testing.T) {
 	document.Background = "not a color"
 	if _, err := buildBrand(document, "", ""); err == nil {
 		t.Fatal("an unparsable roster background should be refused, not tinted over")
+	}
+}
+
+// A launch the daemon starts has nobody at it, so it runs the session stage
+// with no terminal, and that stage hands the harness to the daemon.
+func TestHeadlessLaunchOpensNoWindow(t *testing.T) {
+	var spawns []recordedSpawn
+	if _, err := runAterm(t, stubDeps(t, &spawns, true), "--headless", "eng-platform", "claude"); err != nil {
+		t.Fatalf("launch: %v", err)
+	}
+	if len(spawns) != 1 || !spawns[0].headless || spawns[0].name != "/stub/aterm" {
+		t.Fatalf("spawns = %+v, want one headless session stage and no terminal", spawns)
+	}
+	args := strings.Join(spawns[0].args, " ")
+	if !strings.HasPrefix(args, sessionCommand+" --daemon --headless --card ") ||
+		!strings.Contains(args, " -- /stub/aos _native-shadow") {
+		t.Fatalf("stage args = %s", args)
+	}
+}
+
+func TestLaunchesTheDaemonStartsAreHeadless(t *testing.T) {
+	if got := strings.Join(launchRoleArgs("scientist", ""), " "); got != "--headless scientist" {
+		t.Fatalf("launch args = %q", got)
+	}
+	if got := strings.Join(launchRoleArgs("scientist", "codex"), " "); got != "--headless scientist codex" {
+		t.Fatalf("launch args = %q", got)
 	}
 }

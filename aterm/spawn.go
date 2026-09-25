@@ -67,6 +67,22 @@ func terminalDetail(log *os.File) string {
 	return ": " + detail
 }
 
+// runHeadlessStage runs the session stage on the environment a window would get,
+// and waits, since the stage exits once the daemon holds the harness.
+func runHeadlessStage(name string, args []string) error {
+	command := exec.Command(name, args...)
+	environ := canonicalEnviron(os.Environ(), readCanonicalLaunch())
+	if environ == nil {
+		environ = os.Environ()
+	}
+	command.Env = windowEnviron(environ)
+	output, err := command.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("%w: %s", err, strings.TrimSpace(string(output)))
+	}
+	return nil
+}
+
 // windowEnviron drops the terminal a bundle's launcher exported for its own
 // window, so a launch from inside that session opens the target role's app.
 func windowEnviron(environ []string) []string {

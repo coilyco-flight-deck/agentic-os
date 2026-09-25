@@ -436,6 +436,41 @@ func TestAwaitSessionNamesTheInstanceThatTookTheSend(t *testing.T) {
 	}
 }
 
+// A headless session stage spawns the harness and returns, and the session
+// then answers any client that attaches, as a windowed one does.
+func TestHeadlessSessionLivesInTheDaemonAlone(t *testing.T) {
+	testDaemon(t)
+	options := sessionOptions{
+		Daemon:   true,
+		Headless: true,
+		Card:     sessionCard{Role: "scientist", Name: "Evie", Seat: "codex", Instance: "cd12"},
+		Argv:     []string{"/bin/sh", "-c", `printf 'UP\033[?2004h\n'; cat`},
+	}
+	var stderr bytes.Buffer
+	if code := runSession(options, strings.NewReader(""), io.Discard, &stderr); code != 0 {
+		t.Fatalf("headless stage exited %d: %s", code, stderr.String())
+	}
+	client := dialTest(t)
+	if err := client.c.write(frame{Type: "attach", ID: "a", Session: "scientist-evie-cd12", Replay: true, Rows: 24, Cols: 80}); err != nil {
+		t.Fatalf("attach: %v", err)
+	}
+	client.until("UP")
+	if err := client.c.write(frame{Type: "input", Session: "scientist-evie-cd12", Data: []byte("typed-here\r")}); err != nil {
+		t.Fatalf("input: %v", err)
+	}
+	client.until("typed-here")
+	// Ready trails the paste mode by 1.5s, which is what `aterm agents` shows.
+	for deadline := time.Now().Add(5 * time.Second); ; time.Sleep(100 * time.Millisecond) {
+		reply, err := dialTest(t).c.request(frame{Type: "list"})
+		if err == nil && len(reply.Sessions) == 1 && reply.Sessions[0].Name == "scientist-evie-cd12" && reply.Sessions[0].Ready {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("list = %+v, %v; want the headless session, ready", reply.Sessions, err)
+		}
+	}
+}
+
 func TestDaemonRefusesANameALiveSessionHolds(t *testing.T) {
 	testDaemon(t)
 	first := dialTest(t)
