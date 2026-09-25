@@ -1,6 +1,6 @@
 """Canonical short agent-id generator over the dictatable alphabet.
 
-Two lowercase letters then two digits (`ab81`), over an alphabet that drops the
+Two lowercase letters then two digits (`ab85`), over an alphabet that drops the
 visually and phonetically ambiguous characters. The ward naming rewrite and the
 umbra Go port build against this module, so the alphabet, the shape and the
 seeded variant are a cross-language contract, mirrored byte for byte in
