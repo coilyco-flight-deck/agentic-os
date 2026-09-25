@@ -39,8 +39,16 @@ func fakeSpecComposer(t *testing.T, spec nativeLaunchSpec) {
 		t.Fatal(err)
 	}
 	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
-	// No inventory unless a test writes one, so the host's own is never read.
-	t.Setenv(nativeCanonicalHomeEnv, t.TempDir())
+	// An empty inventory of its own, so the host's is never read and the launch
+	// is scoped rather than refused. A test replaces it to exercise selection.
+	inventoryHome := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(inventoryHome, ".mcporter"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(inventoryHome, ".mcporter", "mcporter.json"), []byte(`{"mcpServers":{}}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv(nativeCanonicalHomeEnv, inventoryHome)
 	for _, name := range []string{"HOME", "USERPROFILE", "CODEX_HOME", "XDG_CONFIG_HOME", "CLAUDE_CONFIG_DIR",
 		"AGENT_COMPOSE_LAUNCH", "AGENT_COMPOSE_SESSION_BUNDLE", "AGENT_COMPOSE_MODEL_TIER"} {
 		t.Setenv(name, os.Getenv(name))
@@ -76,6 +84,10 @@ func TestSpecLaunchBuildsTheClaudeCommandAndEnvironment(t *testing.T) {
 		t.Fatal(err)
 	}
 	settings := filepath.Join(spec.RuntimeHome, ".claude", "settings.eng-platform.json")
+	if len(got) < 4 || got[1] != "--strict-mcp-config" || got[2] != "--mcp-config" {
+		t.Fatalf("a claude spec launch leads with its MCP scope, got %q", got)
+	}
+	got = append(got[:1], got[4:]...)
 	want := []string{"claude", "--name", "Beetle-Ox-ab12", "--settings", settings, "--model", "opus"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("argv\n got %q\nwant %q", got, want)

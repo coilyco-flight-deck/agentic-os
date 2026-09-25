@@ -217,7 +217,7 @@ func agentComposeRoleSlugs(ctx context.Context) ([]string, error) {
 }
 
 // nativeSpecMCPArgs narrows the inventory at <home>/.mcporter/mcporter.json to
-// the role. No inventory leaves the launch unscoped, as agent-compose did.
+// the role, and refuses without one, as agent-compose's launch does (#8260).
 func nativeSpecMCPArgs(ctx context.Context, spec nativeLaunchSpec, role, inventoryHome, stateDir string, args []string) ([]string, error) {
 	if spec.Harness != "claude" && spec.Harness != "codex" {
 		return nil, nil
@@ -232,7 +232,7 @@ func nativeSpecMCPArgs(ctx context.Context, spec nativeLaunchSpec, role, invento
 	}
 	servers, err := loadMCPScopeInventory(filepath.Join(inventoryHome, ".mcporter", "mcporter.json"), roles)
 	if errors.Is(err, errNoMCPInventory) {
-		return nil, nil
+		return nil, fmt.Errorf("mcp-scope refused the launch: %w; pass --mcp-config to launch with a scope of your own", err)
 	}
 	if err != nil {
 		return nil, err
