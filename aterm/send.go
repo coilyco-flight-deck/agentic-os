@@ -214,6 +214,9 @@ func agentState(view sessionView) string {
 	if !view.Ready {
 		parts = append(parts, "starting")
 	}
+	if len(view.Degraded) > 0 {
+		parts = append(parts, "degraded: "+strings.Join(view.Degraded, " "))
+	}
 	if view.Drafted {
 		parts = append(parts, "Kai drafting")
 	}

@@ -44,6 +44,13 @@ func withoutQueries(history []byte) []byte {
 // bracketed paste, which a TUI turns on to tell a paste from typing.
 var decset = regexp.MustCompile("\x1b\\[\\?([0-9;]*)([hl])")
 
+// degradedMark is agent-compose naming the startup steps a launch went without.
+// See docs/aterm-daemon.md.
+var degradedMark = regexp.MustCompile("\x1b\\]7750;agent-compose;degraded=([A-Za-z0-9,_-]*)(?:\x07|\x1b\\\\)")
+
+// scanTail is how much of a chunk's end is kept for a sequence split across reads.
+const scanTail = 256
+
 type ptySession struct {
 	d        *daemon
 	name     string
@@ -66,6 +73,7 @@ type ptySession struct {
 	outputOffset int64
 	paste        bool
 	pasteSeen    bool
+	degraded     []string
 	tail         []byte
 	lastOutput   time.Time
 	lastInput    time.Time
@@ -195,6 +203,7 @@ func (s *ptySession) output(chunk []byte) {
 	s.outputOffset += int64(len(chunk))
 	s.lastOutput = time.Now()
 	pasteBefore := s.paste
+	degradedBefore := len(s.degraded)
 	s.scanModes(chunk)
 	s.scrollback = append(s.scrollback, chunk...)
 	if over := len(s.scrollback) - scrollbackLimit; over > 0 {
@@ -202,10 +211,13 @@ func (s *ptySession) output(chunk []byte) {
 	}
 	clients := s.clientList()
 	pasteChanged := pasteBefore != s.paste
+	degradedChanged := degradedBefore != len(s.degraded)
 	s.mu.Unlock()
 	s.sendTo(clients, frame{Type: "output", Session: s.name, Data: chunk, Offset: offset})
 	if pasteChanged {
 		s.nudge()
+	}
+	if pasteChanged || degradedChanged {
 		s.d.pushSessions()
 	}
 }
@@ -227,8 +239,19 @@ func (s *ptySession) scanModes(chunk []byte) {
 			s.pasteSeen = true
 		}
 	}
-	if len(combined) > 32 {
-		combined = combined[len(combined)-32:]
+	for _, match := range degradedMark.FindAllSubmatchIndex(combined, -1) {
+		if match[1] <= len(s.tail) {
+			continue
+		}
+		s.degraded = nil
+		for _, step := range strings.Split(string(combined[match[2]:match[3]]), ",") {
+			if step != "" {
+				s.degraded = append(s.degraded, step)
+			}
+		}
+	}
+	if len(combined) > scanTail {
+		combined = combined[len(combined)-scanTail:]
 	}
 	s.tail = combined
 }
@@ -534,5 +557,6 @@ func (s *ptySession) view() sessionView {
 		Ready:    s.ready(time.Now()),
 		Drafted:  s.draft > 0,
 		Pending:  len(s.pending),
+		Degraded: append([]string(nil), s.degraded...),
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -423,5 +424,38 @@ func TestReplayDropsWhatATerminalWouldAnswer(t *testing.T) {
 	history := strings.Join(kept[:3], "") + strings.Join(queries, "") + strings.Join(kept[3:], "")
 	if got, want := string(withoutQueries([]byte(history))), strings.Join(kept, ""); got != want {
 		t.Fatalf("replay =\n%q\nwant\n%q", got, want)
+	}
+}
+
+func TestDaemonShowsTheStepsAgentComposeLaunchedWithout(t *testing.T) {
+	testDaemon(t)
+	client := dialTest(t)
+	client.spawn("eng-platform-beetle-ox-ab84", "eng-platform", "Beetle-Ox",
+		`printf '\033]7750;agent-compose;degraded=person,role-composition\007'; echo MARKED; sleep 60`)
+	client.until("MARKED")
+	reply, err := client.c.request(frame{Type: "list"})
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if len(reply.Sessions) != 1 || !slices.Equal(reply.Sessions[0].Degraded, []string{"person", "role-composition"}) {
+		encoded, _ := json.Marshal(reply.Sessions)
+		t.Fatalf("the session should carry its degraded steps: %s", encoded)
+	}
+	if got := agentState(reply.Sessions[0]); !strings.Contains(got, "degraded: person role-composition") {
+		t.Fatalf("aterm agents should say so: %q", got)
+	}
+}
+
+func TestScanModesReadsADegradedMarkSplitAcrossReads(t *testing.T) {
+	s := &ptySession{}
+	mark := "\x1b]7750;agent-compose;degraded=card\x07"
+	s.scanModes([]byte("banner " + mark[:12]))
+	s.scanModes([]byte(mark[12:] + " harness"))
+	if !slices.Equal(s.degraded, []string{"card"}) {
+		t.Fatalf("degraded = %v, want [card]", s.degraded)
+	}
+	s.scanModes([]byte("\x1b]7750;agent-compose;degraded=\x07"))
+	if len(s.degraded) != 0 {
+		t.Fatalf("an empty mark clears it, got %v", s.degraded)
 	}
 }

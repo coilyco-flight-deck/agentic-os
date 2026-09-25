@@ -93,6 +93,8 @@ type sessionView struct {
 	Ready   bool `json:"ready"`
 	Drafted bool `json:"kai_drafting"`
 	Pending int  `json:"pending"`
+	// Degraded names the startup steps agent-compose launched without.
+	Degraded []string `json:"degraded,omitempty"`
 }
 
 // peerMessage is one send and where it stands: queued, held, launching,
