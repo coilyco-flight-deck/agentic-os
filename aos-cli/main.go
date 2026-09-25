@@ -313,6 +313,8 @@ func newCommandWithDefaults(name string, defaults launchDefaults) *cli.Command {
 					&cli.StringFlag{Name: "harness"},
 					&cli.StringFlag{Name: "role"},
 					&cli.BoolFlag{Name: "probe"},
+					&cli.BoolFlag{Name: "new-id"},
+					&cli.StringFlag{Name: "session-id"},
 					&cli.BoolFlag{Name: "assigned-role"},
 					&cli.BoolFlag{Name: "list"},
 					&cli.BoolFlag{Name: "json"},

@@ -164,7 +164,7 @@ func newCommand(deps commandDeps) *cli.Command {
 			},
 			&cli.BoolFlag{
 				Name:    "no-stable-name",
-				Usage:   "keep the name Agent Compose gives a claude session, and do not stop running ones named aterm",
+				Usage:   "keep the name Agent Compose gives a claude session",
 				Sources: cli.EnvVars("ATERM_NO_STABLE_NAME"),
 			},
 			&cli.BoolFlag{
@@ -280,6 +280,7 @@ func runLaunch(ctx context.Context, deps commandDeps, cmd *cli.Command) error {
 	var shadowed bool
 	var group sync.WaitGroup
 	group.Go(func() { shadowed = nativeShadowAvailable(ctx, deps, aos) })
+	group.Go(func() { request.Instance = mintInstance(ctx, deps, aos) })
 	group.Go(func() {
 		request.Workspace = workspaceLabel(ctx, deps, cwd, cmd.IsSet("working-directory"))
 	})

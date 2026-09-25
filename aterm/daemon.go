@@ -383,8 +383,8 @@ func (d *daemon) views() []sessionView {
 	return views
 }
 
-// spawn ends any live session of the same name first, which is how a second
-// launch of a role replaces the first. The name is who answers, not a harness.
+// spawn refuses a name a live session holds rather than ending it, since two
+// sessions of one role run side by side. The name is who answers, not a harness.
 func (d *daemon) spawn(message frame) (*ptySession, error) {
 	if len(message.Argv) == 0 {
 		return nil, withExit(exitUsage, errors.New("spawn needs an argv"))
@@ -394,8 +394,8 @@ func (d *daemon) spawn(message frame) (*ptySession, error) {
 		name = "session-" + randomID(3)
 	}
 	if earlier := d.session(name); earlier != nil {
-		d.logf("ending earlier session %s (pid %d) for a new launch", name, earlier.pid)
-		earlier.end()
+		return nil, withExit(exitUsage, fmt.Errorf(
+			"session %s is already running as pid %d, so this launch would take its name", name, earlier.pid))
 	}
 	s, err := startPTYSession(d, name, message)
 	if err != nil {

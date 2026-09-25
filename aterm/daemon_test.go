@@ -353,32 +353,44 @@ func TestDaemonNamesTheLiveSessionsWhenNoneAnswers(t *testing.T) {
 	}
 }
 
-func TestDaemonEndsAnEarlierSessionOfTheSameName(t *testing.T) {
+func TestDaemonRunsTwoInstancesOfOneRoleSideBySide(t *testing.T) {
+	testDaemon(t)
+	first := dialTest(t)
+	first.spawn("eng-platform-beetle-ox-ab84", "eng-platform", "Beetle-Ox", `echo FIRST; sleep 60`)
+	first.until("FIRST")
+	second := dialTest(t)
+	second.spawn("eng-platform-beetle-ox-tu78", "eng-platform", "Beetle-Ox", `echo SECOND; sleep 60`)
+	second.until("SECOND")
+	reply, err := second.c.request(frame{Type: "list"})
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if len(reply.Sessions) != 2 {
+		encoded, _ := json.Marshal(reply.Sessions)
+		t.Fatalf("both instances should stay running: %s", encoded)
+	}
+}
+
+func TestDaemonRefusesANameALiveSessionHolds(t *testing.T) {
 	testDaemon(t)
 	first := dialTest(t)
 	first.spawn("eng-platform-beetle-ox", "eng-platform", "Beetle-Ox", `echo FIRST; sleep 60`)
 	first.until("FIRST")
 	second := dialTest(t)
-	second.spawn("eng-platform-beetle-ox", "eng-platform", "Beetle-Ox", `echo SECOND; sleep 60`)
-	second.until("SECOND")
-	deadline := time.Now().Add(10 * time.Second)
-	for {
-		_ = first.c.raw.SetReadDeadline(deadline)
-		message, err := first.c.read()
-		if err != nil {
-			t.Fatalf("the first session's client never heard it end: %v", err)
-		}
-		if message.Type == "exit" {
-			break
-		}
+	_, err := second.c.request(frame{
+		Type: "spawn", Session: "eng-platform-beetle-ox", Role: "eng-platform", Identity: "Beetle-Ox",
+		Seat: "claude", Argv: []string{"/bin/sh", "-c", "sleep 60"}, Env: os.Environ(), Cwd: "/", Rows: 24, Cols: 200,
+	})
+	if err == nil || !strings.Contains(err.Error(), "already running") {
+		t.Fatalf("a spawn under a live name should be refused, got %v", err)
 	}
-	reply, err := second.c.request(frame{Type: "list"})
+	reply, err := first.c.request(frame{Type: "list"})
 	if err != nil {
 		t.Fatalf("list: %v", err)
 	}
 	if len(reply.Sessions) != 1 {
 		encoded, _ := json.Marshal(reply.Sessions)
-		t.Fatalf("one session should remain: %s", encoded)
+		t.Fatalf("the first session should survive the refused launch: %s", encoded)
 	}
 }
 

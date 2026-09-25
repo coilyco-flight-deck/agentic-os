@@ -34,7 +34,7 @@ func runSession(options sessionOptions, stdin io.Reader, stdout, stderr io.Write
 		fmt.Fprintln(stderr, "aterm: "+sessionCommand+" needs a command after `--`")
 		return 2
 	}
-	name := stableSessionName(options.Card.Name, options.Card.Role)
+	name := sessionName(options.Card.Name, options.Card.Role, options.Card.Instance)
 	var daemon *conn
 	// The card is drawn here, not by the launcher, and the work ahead of the
 	// harness runs under it. See docs/aterm.md.
@@ -54,14 +54,6 @@ func runSession(options sessionOptions, stdin io.Reader, stdout, stderr io.Write
 			return
 		}
 		daemon = connected
-	}, func(notice io.Writer) {
-		// Runs before this session exists, so it can never be its own target.
-		if options.StableName {
-			if stopped := systemReaper(notice).clearClaude(name); stopped > 0 {
-				fmt.Fprintf(notice, "aterm: stopped %d earlier Claude session(s) named %s\n",
-					stopped, name)
-			}
-		}
 	}, func(notice io.Writer) {
 		// Best-effort ahead of the harness. See docs/aterm.md.
 		if options.Card.Seat == "claude" {
@@ -157,11 +149,10 @@ func holdWindow(stdin io.Reader, stdout io.Writer, notice string) {
 }
 
 type sessionOptions struct {
-	Hold       bool
-	Daemon     bool
-	StableName bool
-	Motion     bool
-	Card       sessionCard
+	Hold   bool
+	Daemon bool
+	Motion bool
+	Card   sessionCard
 	// CardPayload is the encoded card exactly as it arrived, so the session can
 	// pass it on without re-encoding what it decoded.
 	CardPayload string
@@ -180,8 +171,6 @@ func parseSessionArgs(argv []string) (sessionOptions, error) {
 			options.Motion = false
 		case "--daemon":
 			options.Daemon = true
-		case "--stable-name":
-			options.StableName = true
 		case "--card":
 			if index+1 >= len(argv) {
 				return sessionOptions{}, fmt.Errorf("%s --card needs a value", sessionCommand)

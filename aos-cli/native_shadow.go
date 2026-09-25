@@ -126,8 +126,10 @@ type nativeRuntime struct {
 	PlanFile     string
 	FleetFile    string
 	// Role narrows projection only. docs/native-agent-workspaces.md
-	Role   string
-	Random io.Reader
+	Role string
+	// RequestedID is the code the launcher already named the session with.
+	RequestedID string
+	Random      io.Reader
 	// Stderr is wrapped by the progress seam. docs/native-session-start.md
 	Stderr io.Writer
 	// Progress narrates startup. A nil value stays silent, which keeps tests
@@ -157,6 +159,20 @@ func (runtime nativeRuntime) claudeKeyringDelete() claudeKeyringDeleter {
 func runNativeShadow(ctx context.Context, cmd *cli.Command) error {
 	if cmd.Bool("probe") {
 		return nil
+	}
+	// aterm names a session before this verb reserves its code, so it asks for
+	// one here and hands it back as --session-id. docs/native-shadow.md
+	if cmd.Bool("new-id") {
+		id, err := nativeSessionID(nativeRuntime{})
+		if err != nil {
+			return err
+		}
+		fmt.Println(id)
+		return nil
+	}
+	requestedID := strings.TrimSpace(cmd.String("session-id"))
+	if requestedID != "" && !nativeValidSessionID(requestedID) {
+		return fmt.Errorf("_native-shadow has malformed session id %q", requestedID)
 	}
 	if lifecycle, handled := nativeShadowLifecycleVerb(cmd); handled {
 		runtime, err := resolveNativeRuntime()
@@ -188,6 +204,7 @@ func runNativeShadow(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 	runtime.Role = role
+	runtime.RequestedID = requestedID
 	runtime.Progress.Begin(harness, command)
 	// Before any session state exists, and after `--probe` returned, so a
 	// metadata read never waits. teable:coilyco-bridge/infrastructure#7054
@@ -2164,10 +2181,17 @@ func reserveNativeSession(
 	branchCollisions := 0
 	leaseCollisions := 0
 	directoryCollisions := 0
+	// A launcher that already named the session asks for its code first, and a
+	// taken one falls through to a fresh draw. docs/native-shadow.md
+	requested := runtime.RequestedID
 	for attempt := 0; attempt < nativeSessionIDAttempts; attempt++ {
-		id, err := nativeSessionID(runtime)
-		if err != nil {
-			return "", "", err
+		id := requested
+		requested = ""
+		if id == "" {
+			var err error
+			if id, err = nativeSessionID(runtime); err != nil {
+				return "", "", err
+			}
 		}
 		branch := "aos/" + harness + "/" + id
 		occupied := false
@@ -2257,6 +2281,22 @@ func nativeSessionID(runtime nativeRuntime) (string, error) {
 		id[index] = character
 	}
 	return string(id), nil
+}
+
+func nativeValidSessionID(id string) bool {
+	if len(id) != 4 {
+		return false
+	}
+	for index := range len(id) {
+		alphabet := nativeIDLetters
+		if index >= 2 {
+			alphabet = nativeIDDigits
+		}
+		if !strings.ContainsRune(alphabet, rune(id[index])) {
+			return false
+		}
+	}
+	return true
 }
 
 func nativeRandomCharacter(reader io.Reader, alphabet string) (byte, error) {

@@ -1,41 +1,11 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
-	"os"
-	"os/exec"
 	"slices"
 	"strings"
-	"syscall"
 	"testing"
-	"time"
 )
-
-func TestClaudeSessionNameReadsTheNameTheProcessWasStartedWith(t *testing.T) {
-	for _, testCase := range []struct {
-		name    string
-		command string
-		want    string
-	}{
-		{"plain", "claude --name aterm --settings s.json", "aterm"},
-		{"a name with spaces ps flattened", "claude --name Angie [she] (Platform Engineer) zr87 --settings s.json --model sonnet", "Angie [she] (Platform Engineer) zr87"},
-		{"the short flag", "/Users/k/.local/bin/claude -n aterm --model sonnet", "aterm"},
-		{"the equals form", "claude --name=aterm --model sonnet", "aterm"},
-		{"the last flag wins", "claude --name first --settings s.json --name aterm", "aterm"},
-		{"an interpreter first", "/bin/sh /tmp/x/claude --name aterm", "aterm"},
-		{"a name running to the end", "claude --model sonnet --name aterm", "aterm"},
-		{"not claude", "vim --name aterm", ""},
-		{"claude with no name", "claude --model sonnet", ""},
-		{"a claude only mentioned later", "grep claude --name aterm", ""},
-	} {
-		t.Run(testCase.name, func(t *testing.T) {
-			if got := claudeSessionName(testCase.command); got != testCase.want {
-				t.Fatalf("claudeSessionName(%q) = %q, want %q", testCase.command, got, testCase.want)
-			}
-		})
-	}
-}
 
 func TestHasNameFlagSeesEveryWayACallerNamesASession(t *testing.T) {
 	for arguments, want := range map[string]bool{
@@ -46,7 +16,6 @@ func TestHasNameFlagSeesEveryWayACallerNamesASession(t *testing.T) {
 		}
 	}
 }
-
 func TestLaunchPlanNamesOnlyClaudeSessionsTheCallerLeftUnnamed(t *testing.T) {
 	for _, testCase := range []struct {
 		name  string
@@ -72,12 +41,9 @@ func TestLaunchPlanNamesOnlyClaudeSessionsTheCallerLeftUnnamed(t *testing.T) {
 			if plan.StableName != testCase.named {
 				t.Fatalf("plan.StableName = %v, want %v", plan.StableName, testCase.named)
 			}
-			if slices.Contains(plan.Arguments, "--stable-name") != testCase.named {
-				t.Fatalf("session flag mismatch in %v", plan.Arguments)
-			}
 			// agent-compose drops its own name when it is handed one, so the flag
 			// has to reach it ahead of the caller's own arguments.
-			carriesName := slices.Contains(plan.Child, stableSessionName("Angie", "eng-platform"))
+			carriesName := slices.Contains(plan.Child, sessionName("Angie", "eng-platform", stubInstance))
 			if carriesName != testCase.named {
 				t.Fatalf("the child should carry the name only when named: %v", plan.Child)
 			}
@@ -85,156 +51,65 @@ func TestLaunchPlanNamesOnlyClaudeSessionsTheCallerLeftUnnamed(t *testing.T) {
 	}
 }
 
-// fakeProcesses answers the listing and the signals from a table, and treats a
-// process as gone once it has been sent SIGTERM.
-func fakeProcesses(self int, entries []processEntry) (sessionReaper, *[]int, *bytes.Buffer) {
-	var stopped []int
-	ended := map[int]bool{}
-	notice := &bytes.Buffer{}
-	return sessionReaper{
-		alive: func(pid int) bool { return !ended[pid] },
-		signal: func(pid int, _ syscall.Signal) error {
-			ended[pid] = true
-			stopped = append(stopped, pid)
-			return nil
-		},
-		processes: func() ([]processEntry, error) { return entries, nil },
-		self:      self,
-		wait:      func(time.Duration) {},
-		notice:    notice,
-	}, &stopped, notice
-}
-
-func TestClearClaudeStopsOnlyRunningSessionsOfThatName(t *testing.T) {
-	reaper, stopped, _ := fakeProcesses(900, []processEntry{
-		{PID: 10, PPID: 1, Command: "claude --name eng-platform-angie --settings s.json"},
-		{PID: 11, PPID: 1, Command: "claude --name Sprite [they] (Game Developer) ea64 --model sonnet"},
-		{PID: 12, PPID: 1, Command: "vim --name eng-platform-angie"},
-		{PID: 13, PPID: 1, Command: "claude --model sonnet"},
-		{PID: 900, PPID: 899, Command: "aterm _session --stable-name -- claude"},
-	})
-	if got := reaper.clearClaude(stableSessionName("Angie", "eng-platform")); got != 1 {
-		t.Fatalf("stopped = %d, want 1", got)
-	}
-	if !slices.Equal(*stopped, []int{10}) {
-		t.Fatalf("stopped pids = %v, want only 10", *stopped)
-	}
-}
-
-func TestStableSessionNameIsPerRole(t *testing.T) {
-	if stableSessionName("Angie", "eng-platform") == stableSessionName("Evie", "scientist") {
-		t.Fatal("two roles must not share a name, or a launch of one ends the other")
-	}
-	if stableSessionName("Angie", "eng-platform") != stableSessionName("Angie", "eng-platform") {
-		t.Fatal("a role must get the same name every launch, or nothing is cleared")
-	}
-	if stableSessionName("", "") != "" {
-		t.Fatalf("no role should mean no name, got %q", stableSessionName("", ""))
-	}
-}
-
-func TestStableSessionNameIsForWhoAnswers(t *testing.T) {
+func TestSessionNameIsForWhoAnswersAndWhichInstance(t *testing.T) {
 	for _, testCase := range []struct {
-		name string
-		role string
-		want string
+		name     string
+		role     string
+		instance string
+		want     string
 	}{
-		{"Vera", "sysadmin-senior", "sysadmin-senior-vera"},
-		{"Angie", "eng-platform", "eng-platform-angie"},
-		{"Valerie", "sysadmin-junior", "sysadmin-junior-valerie"},
-		{"Vera", "sysadmin-access", "sysadmin-access-vera"},
-		{"Vera", "", ""},
+		{"Vera", "sysadmin-senior", "", "sysadmin-senior-vera"},
+		{"Beetle-Ox", "eng-platform", "ab84", "eng-platform-beetle-ox-ab84"},
+		{"Valerie", "sysadmin-junior", "zv88", "sysadmin-junior-valerie-zv88"},
+		{"Vera", "", "ab84", ""},
 	} {
-		if got := stableSessionName(testCase.name, testCase.role); got != testCase.want {
-			t.Fatalf("stableSessionName(%q, %q) = %q, want %q", testCase.name, testCase.role, got, testCase.want)
+		if got := sessionName(testCase.name, testCase.role, testCase.instance); got != testCase.want {
+			t.Fatalf("sessionName(%q, %q, %q) = %q, want %q",
+				testCase.name, testCase.role, testCase.instance, got, testCase.want)
 		}
 	}
 }
 
-func TestClearClaudeLeavesAnotherRolesSessionRunning(t *testing.T) {
-	reaper, stopped, _ := fakeProcesses(900, []processEntry{
-		{PID: 10, PPID: 1, Command: "claude --name eng-platform-angie"},
-		{PID: 11, PPID: 1, Command: "claude --name scientist-evie"},
-		{PID: 12, PPID: 1, Command: "claude --name sysadmin-senior-vera"},
-	})
-	if got := reaper.clearClaude(stableSessionName("Angie", "eng-platform")); got != 1 {
-		t.Fatalf("stopped = %d, want 1", got)
-	}
-	if !slices.Equal(*stopped, []int{10}) {
-		t.Fatalf("stopped pids = %v, want only the platform session 10", *stopped)
+func TestTwoLaunchesOfOneRoleGetTwoNames(t *testing.T) {
+	if sessionName("Angie", "eng-platform", "ab84") == sessionName("Angie", "eng-platform", "tu78") {
+		t.Fatal("two instances of one role must not share a name, or neither is addressable")
 	}
 }
 
-func TestClearClaudeWithNoNameStopsNothing(t *testing.T) {
-	// claudeSessionName is "" for an unnamed claude, so an empty name would match it.
-	reaper, stopped, _ := fakeProcesses(900, []processEntry{
-		{PID: 10, PPID: 1, Command: "claude --model sonnet"},
-		{PID: 11, PPID: 1, Command: "claude --name scientist-evie"},
-	})
-	if got := reaper.clearClaude(stableSessionName("", "")); got != 0 || len(*stopped) != 0 {
-		t.Fatalf("stopped = %d pids %v, want none", got, *stopped)
-	}
-}
-
-func TestClearClaudeNeverStopsTheProcessThatHostsTheSession(t *testing.T) {
-	// A launch run from inside a claude named aterm must not end that claude,
-	// because it is an ancestor of the process asking.
-	reaper, stopped, _ := fakeProcesses(900, []processEntry{
-		{PID: 50, PPID: 1, Command: "claude --name eng-platform-angie"},
-		{PID: 60, PPID: 50, Command: "zsh"},
-		{PID: 900, PPID: 60, Command: "aterm _session --stable-name -- claude"},
-		{PID: 70, PPID: 1, Command: "claude --name eng-platform-angie"},
-	})
-	if got := reaper.clearClaude(stableSessionName("Angie", "eng-platform")); got != 1 {
-		t.Fatalf("stopped = %d, want 1", got)
-	}
-	if !slices.Equal(*stopped, []int{70}) {
-		t.Fatalf("stopped pids = %v, want only the unrelated 70", *stopped)
-	}
-}
-
-func TestClearClaudeNamesASurvivor(t *testing.T) {
-	reaper, _, notice := fakeProcesses(900, []processEntry{{PID: 10, PPID: 1, Command: "claude --name eng-platform-angie"}})
-	reaper.alive = func(int) bool { return true }
-	if got := reaper.clearClaude(stableSessionName("Angie", "eng-platform")); got != 0 {
-		t.Fatalf("stopped = %d, want 0", got)
-	}
-	if !strings.Contains(notice.String(), "would not end") {
-		t.Fatalf("the survivor should be named: %q", notice.String())
-	}
-}
-
-func TestListProcessesSeesThisProcessAndItsParent(t *testing.T) {
-	entries, err := listProcesses()
+func TestLaunchPlanCarriesTheMintedInstanceToTheShadowAndTheCard(t *testing.T) {
+	var spawns []recordedSpawn
+	out, err := runAterm(t, stubDeps(t, &spawns, true), "--dry-run", "--json", "prod-director", "codex")
 	if err != nil {
-		t.Skipf("this host's ps cannot list processes: %v", err)
+		t.Fatalf("dry run: %v", err)
 	}
-	for _, entry := range entries {
-		if entry.PID == os.Getpid() {
-			if entry.PPID != os.Getppid() || entry.Command == "" {
-				t.Fatalf("entry = %+v, want ppid %d and a command", entry, os.Getppid())
-			}
-			return
-		}
+	var plan launchPlan
+	if err := json.Unmarshal([]byte(out), &plan); err != nil {
+		t.Fatalf("decode plan: %v", err)
 	}
-	t.Fatalf("this process %d is missing from the listing", os.Getpid())
+	at := slices.Index(plan.Child, "--session-id")
+	if at < 0 || plan.Child[at+1] != stubInstance || slices.Index(plan.Child, "--") < at {
+		t.Fatalf("the shadow should be asked for %s ahead of its `--`: %v", stubInstance, plan.Child)
+	}
+	if plan.Card.Instance != stubInstance || plan.Identity.Instance != stubInstance {
+		t.Fatalf("card instance = %q, identity instance = %q, want %s",
+			plan.Card.Instance, plan.Identity.Instance, stubInstance)
+	}
 }
 
-func TestSystemReaperReadsAnEndedButUnreapedProcessAsGone(t *testing.T) {
-	child := exec.Command("sh", "-c", "exit 0")
-	if err := child.Start(); err != nil {
-		t.Fatalf("start: %v", err)
+func TestLaunchPlanWithoutAMintingAOSStaysUnsuffixed(t *testing.T) {
+	var spawns []recordedSpawn
+	out, err := runAterm(t, stubDeps(t, &spawns, false), "--dry-run", "--json", "eng-platform", "claude")
+	if err != nil {
+		t.Fatalf("dry run: %v", err)
 	}
-	// Not waited on yet, so it stays a zombie until the test reaps it.
-	t.Cleanup(func() { _ = child.Wait() })
-	deadline := time.Now().Add(5 * time.Second)
-	for !isZombie(child.Process.Pid) {
-		if time.Now().After(deadline) {
-			t.Skip("this host's ps does not report a zombie state")
-		}
-		time.Sleep(20 * time.Millisecond)
+	var plan launchPlan
+	if err := json.Unmarshal([]byte(out), &plan); err != nil {
+		t.Fatalf("decode plan: %v", err)
 	}
-	if systemReaper(&bytes.Buffer{}).alive(child.Process.Pid) {
-		t.Fatal("an ended process awaiting its parent should not read as alive")
+	if plan.Card.Instance != "" || slices.Contains(plan.Child, "--session-id") {
+		t.Fatalf("an aos that cannot mint should leave no instance: %+v", plan.Child)
+	}
+	if !slices.Contains(plan.Child, sessionName("Angie", "eng-platform", "")) {
+		t.Fatalf("the unsuffixed name should still reach claude: %v", plan.Child)
 	}
 }

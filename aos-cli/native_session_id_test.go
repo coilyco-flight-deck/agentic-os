@@ -75,3 +75,53 @@ func TestNativeLaunchRetriesOccupiedShortSessionIDs(t *testing.T) {
 		t.Fatalf("native artifacts = %#v, want short collision-free branch", lease.Artifacts)
 	}
 }
+
+func TestNativeLaunchTakesTheRequestedSessionID(t *testing.T) {
+	root := t.TempDir()
+	createNativeTestRepository(t, root, "owner", "one")
+	runtime := nativeTestRuntime(t, root)
+	runtime.RequestedID = "ab84"
+	runtime.Random = bytes.NewReader([]byte{0, 0, 0, 0})
+	writeNativeTestPlan(t, runtime.PlanFile, "one")
+	writeNativeTestList(t, runtime.FleetFile, "owner")
+
+	if _, err := prepareNativeLaunch(runtime, "claude"); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, lease := onlyNativeLease(t, runtime); lease.ID != "ab84" {
+		t.Fatalf("native session ID = %q, want the requested ab84", lease.ID)
+	}
+}
+
+func TestNativeLaunchDrawsFreshWhenTheRequestedIDIsTaken(t *testing.T) {
+	root := t.TempDir()
+	createNativeTestRepository(t, root, "owner", "one")
+	runtime := nativeTestRuntime(t, root)
+	runtime.RequestedID = "ab84"
+	runtime.Random = bytes.NewReader([]byte{2, 2, 2, 2})
+	writeNativeTestPlan(t, runtime.PlanFile, "one")
+	writeNativeTestList(t, runtime.FleetFile, "owner")
+	if err := os.MkdirAll(filepath.Join(runtime.SessionsRoot, "ab84"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := prepareNativeLaunch(runtime, "claude"); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, lease := onlyNativeLease(t, runtime); lease.ID != "cc66" {
+		t.Fatalf("native session ID = %q, want a fresh cc66 past the taken ab84", lease.ID)
+	}
+}
+
+func TestNativeValidSessionIDFollowsTheContract(t *testing.T) {
+	for id, want := range map[string]bool{
+		"ab84": true, "zz99": true, "AB81": false, "ab1": false,
+		"ai84": false, "ab31": false, "../x": false, "ab841": false,
+	} {
+		if got := nativeValidSessionID(id); got != want {
+			t.Errorf("nativeValidSessionID(%q) = %v, want %v", id, got, want)
+		}
+	}
+}

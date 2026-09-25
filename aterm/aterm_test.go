@@ -36,6 +36,9 @@ type recordedSpawn struct {
 	args []string
 }
 
+// stubInstance is the code the stub aos mints, drawn from the dictatable alphabet.
+const stubInstance = "ab84"
+
 // stubDeps answers the two Agent Compose reads from fixtures and records the
 // window it would have opened, so no test needs a terminal or a real harness.
 func stubDeps(t *testing.T, spawns *[]recordedSpawn, shadowed bool) commandDeps {
@@ -54,6 +57,12 @@ func stubDeps(t *testing.T, spawns *[]recordedSpawn, shadowed bool) commandDeps 
 			switch {
 			case len(args) > 0 && args[0] == "catalog":
 				return fixture(t, "roster.json"), nil
+			case len(args) > 1 && args[0] == "_native-shadow" && args[1] == "--new-id":
+				// An aos with no shadow verb has no minting verb either.
+				if !shadowed {
+					return nil, fmt.Errorf("flag provided but not defined: -new-id")
+				}
+				return []byte(stubInstance + "\n"), nil
 			case len(args) > 1 && args[0] == "_native-shadow" && args[1] == "--credential":
 				// aos owns the verdict, so the fixture host is simply logged in.
 				return []byte("live: valid until 2030-01-01T00:00:00Z\n"), nil
@@ -143,8 +152,8 @@ func TestLaunchPlanRunsTheNativeSessionInsideTheWindow(t *testing.T) {
 	}
 	want := []string{
 		"/stub/aos", "_native-shadow", "--harness", "claude",
-		"--role", "eng-platform", "--assigned-role", "--",
-		"/stub/agent-compose", "launch", "eng-platform", "claude", "--name", stableSessionName("Angie", "eng-platform"),
+		"--role", "eng-platform", "--session-id", stubInstance, "--assigned-role", "--",
+		"/stub/agent-compose", "launch", "eng-platform", "claude", "--name", sessionName("Angie", "eng-platform", stubInstance),
 	}
 	if strings.Join(plan.Child, " ") != strings.Join(want, " ") {
 		t.Fatalf("child = %v, want %v", plan.Child, want)

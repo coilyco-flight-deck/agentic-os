@@ -39,7 +39,9 @@ type sessionCard struct {
 	Tier string `json:"tier"`
 	// Name is the identity's own name, carried so a session started from
 	// inside this one (_session) can still re-derive its stable name.
-	Name       string       `json:"name"`
+	Name string `json:"name"`
+	// Instance rides with Name so _session derives the same suffixed name.
+	Instance   string       `json:"instance,omitempty"`
 	Expression string       `json:"expression"`
 	Workspace  string       `json:"workspace"`
 	Directory  string       `json:"directory"`
@@ -56,6 +58,7 @@ func buildSessionCard(document overlayDocument, plan launchPlan) sessionCard {
 		Seat:       plan.Identity.Seat,
 		Tier:       document.Seat.Tier,
 		Name:       plan.Identity.Name,
+		Instance:   plan.Identity.Instance,
 		Expression: plan.Identity.Expression,
 		Workspace:  plan.Workspace,
 		Directory:  plan.WorkingDirectory,

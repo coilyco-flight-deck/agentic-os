@@ -24,7 +24,9 @@ type launchRequest struct {
 	Extra            []string
 	Hold             bool
 	StableName       bool
-	Creature         creaturePlate
+	// Instance is the dictatable code that tells two sessions of one role apart.
+	Instance string
+	Creature creaturePlate
 }
 
 type launchIdentity struct {
@@ -33,6 +35,7 @@ type launchIdentity struct {
 	RoleDisplayName string `json:"role_display_name"`
 	Seat            string `json:"seat"`
 	Name            string `json:"name"`
+	Instance        string `json:"instance,omitempty"`
 	Pronouns        string `json:"pronouns"`
 	Annotation      string `json:"annotation"`
 	Expression      string `json:"expression"`
@@ -66,9 +69,28 @@ func composeChild(request launchRequest, agentCompose, aos string, shadowed bool
 		aos, "_native-shadow",
 		"--harness", request.Seat,
 		"--role", request.Role,
-		"--assigned-role", "--",
 	}
+	// The shadow takes the code the session is already named with, so the name
+	// and AOS_NATIVE_SESSION agree unless it was taken. See docs/aterm-daemon.md.
+	if request.Instance != "" {
+		child = append(child, "--session-id", request.Instance)
+	}
+	child = append(child, "--assigned-role", "--")
 	return append(child, launch...)
+}
+
+// mintInstance asks aos for the code, which keeps the contract to one Go
+// generator. An aos too old to mint leaves the session unsuffixed.
+func mintInstance(ctx context.Context, deps commandDeps, aos string) string {
+	raw, err := deps.output(ctx, aos, "_native-shadow", "--new-id")
+	if err != nil {
+		return ""
+	}
+	instance := strings.TrimSpace(string(raw))
+	if len(instance) != 4 || slugify(instance) != instance {
+		return ""
+	}
+	return instance
 }
 
 // nativeShadowAvailable probes the same way the acompose shell function does. An
@@ -94,7 +116,7 @@ func buildLaunchPlan(
 		return launchPlan{}, err
 	}
 	// Only claude takes --name, and a caller's own name is left as theirs.
-	name := stableSessionName(document.Seat.Name, request.Role)
+	name := sessionName(document.Seat.Name, request.Role, request.Instance)
 	named := request.StableName && request.Seat == "claude" && name != "" && !hasNameFlag(request.Extra)
 	if named {
 		request.Extra = append([]string{"--name", name}, request.Extra...)
@@ -133,6 +155,7 @@ func buildLaunchPlan(
 			RoleDisplayName: document.RoleDisplayName,
 			Seat:            document.Seat.Harness,
 			Name:            document.Seat.Name,
+			Instance:        request.Instance,
 			Pronouns:        document.Seat.Pronouns,
 			Annotation:      seatAnnotation(document),
 			Expression:      document.Expression,
@@ -164,9 +187,6 @@ func buildLaunchPlan(
 	// The daemon is not optional: without one answering, _session runs the
 	// harness directly. See docs/aterm-daemon.md.
 	session = append(session, "--daemon")
-	if named {
-		session = append(session, "--stable-name")
-	}
 	session = append(session, "--card", encoded, "--")
 	// kitty takes the program as trailing arguments, with no -e separator.
 	plan.Arguments = append(arguments, append(session, child...)...)

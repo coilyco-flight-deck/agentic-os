@@ -2,7 +2,7 @@
 
 The per-session checkout a native launch runs in, and the home beside it.
 
-A native AOS launch runs the agent inside a per-session shadow instead of the canonical checkout. This page holds the mechanics behind the AGENTS.md rules that reference it. Workspace projection itself is in [native agent workspaces](native-agent-workspaces.md).
+A native AOS launch runs the agent inside a per-session shadow instead of the canonical checkout. Workspace projection itself is in [native agent workspaces](native-agent-workspaces.md).
 
 ## Session markers
 
@@ -16,7 +16,7 @@ Session worktrees are linked from the canonical repository, so they share its Gi
 
 The working tree has no such protection. It lives under the platform temporary root, which the operating system purges on its own schedule. macOS empties `DARWIN_USER_TEMP_DIR` through `com.apple.bsd.dirhelper`, deleting files by access time and leaving the directory skeleton behind, which surfaces in Git as a worktree that is `prunable` with a missing gitdir.
 
-Committed work therefore survives a purged shadow and uncommitted work has no second copy. That asymmetry is the mechanism behind the remote-checkpoint rule, which is why the rule is stated as a consequence rather than an edict.
+Committed work therefore survives a purged shadow and uncommitted work has no second copy. That asymmetry is the mechanism behind the remote-checkpoint rule.
 
 ## Lifecycle verbs
 
@@ -24,6 +24,7 @@ Committed work therefore survives a purged shadow and uncommitted work has no se
 
 * `--list [--json]` - every lease, whether its process is live, whether the worktree is still on disk, how many commits sit on no remote, and one line saying what holds a session that cannot be released. `aterm.roster.v1`'s sibling contract is `agentic-os.native-shadows.v1`.
 * `--release [<id>]` - a session declaring itself finished. It marks the lease and never tears down a process that may still be running, so the worktree goes on the next sweep. Defaults to `$AOS_NATIVE_SESSION`.
+* `--new-id` - a fresh code for a launcher that names the session first. aterm hands it back as `--session-id`, used unless taken.
 * `--reap [--dry-run]` - runs the sweep an operator would otherwise have to trigger by launching another session. The dry run reports the same verdict the sweep enforces, the grace included, rather than a larger optimistic one.
 
 A dead lease waits out a 24-hour grace, because a crash and a clean exit look identical from outside. `--release` is the session saying which it was, and a released lease skips the grace once its process is gone.

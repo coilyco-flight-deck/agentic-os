@@ -20,11 +20,11 @@ aterm mcp                             # list_agents, send_message, ask_choice
 
 **`_session` hands the harness to the daemon instead of running it.** After the card, `_session` sends a `spawn` carrying the argv, its environment, directory, and window size, then attaches, relaying keys and output and following the window size. The argv reaches the harness untouched, the shadow child's own `--` included, and the window still holds on a non-zero exit.
 
-**A session is named `<role>-<identity>` from its card, and a spawn under a name in use ends the session holding it**: SIGTERM to its process group, 3 seconds, then SIGKILL. For the claude seat aterm also passes `--name <role>-<identity>` ahead of the caller's arguments and stops running `claude` processes of that name the daemon did not start. A caller's own `--name` is kept, and `--no-stable-name` (or `ATERM_NO_STABLE_NAME`) stops nothing.
+**A session is named `<role>-<identity>-<code>`, and a spawn under a live session's name is refused.** The code comes from `aos _native-shadow --new-id` and goes to the shadow as `--session-id`, so it doubles as `AOS_NATIVE_SESSION` unless taken. Two instances of one role run side by side, and an aos that cannot mint leaves the name unsuffixed. For the claude seat aterm passes the name as `--name` too, unless the caller named it or set `--no-stable-name` (`ATERM_NO_STABLE_NAME`).
 
 **The harness starts without agent-compose's Enter gate.** The window drew its own card, and a daemon launch has nobody at it, so `_session` sets `AGENT_COMPOSE_NO_PAUSE=1`, which an older agent-compose ignores. It also flushes unread terminal input before attaching, since a reply to the card's color query arrives there and would read as Kai typing.
 
-**A session outlives its window.** Closing the window detaches that client, and the harness keeps running until it exits or the next launch of the role replaces it. `aterm attach` reattaches from any terminal with the last megabyte of output replayed, minus terminal queries it would answer again.
+**A session outlives its window.** Closing the window detaches that client, and the harness keeps running until it exits. `aterm attach` reattaches from any terminal with the last megabyte of output replayed, minus terminal queries it would answer again.
 
 **A missing daemon costs messaging, never the session.** `_session` starts the daemon when none answers. Failing that, it runs the harness directly. `aterm doctor` reports a `daemon` row, which is a warning only when the socket directory would be refused.
 
