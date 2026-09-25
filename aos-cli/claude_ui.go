@@ -161,7 +161,6 @@ func claudeUIOverrides(roleColor string, melded []string) (map[string]string, er
 	for token, paired := range map[string]string{
 		"claudeShimmer":       "claude",
 		"promptBorderShimmer": "promptBorder",
-		"autoAcceptShimmer":   "autoAccept",
 		"permissionShimmer":   "permission",
 	} {
 		shimmer, err := claudeUIShimmer(overrides[paired])

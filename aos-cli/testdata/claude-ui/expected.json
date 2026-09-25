@@ -7,7 +7,6 @@
       "base": "dark",
       "overrides": {
         "autoAccept": "#8f8c47",
-        "autoAcceptShimmer": "#aeab65",
         "bashBorder": "#5fa87a",
         "briefLabelClaude": "#709b62",
         "claude": "#709b62",
@@ -65,7 +64,6 @@
       "base": "dark",
       "overrides": {
         "autoAccept": "#009a85",
-        "autoAcceptShimmer": "#3ebaa3",
         "bashBorder": "#5fa87a",
         "briefLabelClaude": "#0d9c92",
         "claude": "#0d9c92",
@@ -123,7 +121,6 @@
       "base": "dark",
       "overrides": {
         "autoAccept": "#2ed1aa",
-        "autoAcceptShimmer": "#5cf2ca",
         "bashBorder": "#5fa87a",
         "briefLabelClaude": "#14d5b8",
         "claude": "#14d5b8",
@@ -181,7 +178,6 @@
       "base": "dark",
       "overrides": {
         "autoAccept": "#e882e1",
-        "autoAcceptShimmer": "#ffa2ff",
         "bashBorder": "#b682ed",
         "briefLabelClaude": "#ee7eea",
         "claude": "#ee7eea",
@@ -239,7 +235,6 @@
       "base": "dark",
       "overrides": {
         "autoAccept": "#0084fd",
-        "autoAcceptShimmer": "#39a5ff",
         "bashBorder": "#b682ed",
         "blue_FOR_SUBAGENTS_ONLY": "#3b82ff",
         "briefLabelClaude": "#3b82ff",
@@ -297,7 +292,6 @@
       "base": "dark",
       "overrides": {
         "autoAccept": "#da6c74",
-        "autoAcceptShimmer": "#fd8b92",
         "bashBorder": "#b3be49",
         "briefLabelClaude": "#da656f",
         "claude": "#da656f",
@@ -355,7 +349,6 @@
       "base": "dark",
       "overrides": {
         "autoAccept": "#f09372",
-        "autoAcceptShimmer": "#ffb391",
         "bashBorder": "#b3be49",
         "briefLabelClaude": "#f7a060",
         "claude": "#f7a060",
@@ -413,7 +406,6 @@
       "base": "dark",
       "overrides": {
         "autoAccept": "#7f8fd6",
-        "autoAcceptShimmer": "#9daef8",
         "bashBorder": "#8f8c47",
         "briefLabelClaude": "#9190c1",
         "claude": "#9190c1",
@@ -471,7 +463,6 @@
       "base": "dark",
       "overrides": {
         "autoAccept": "#f09372",
-        "autoAcceptShimmer": "#ffb391",
         "bashBorder": "#009a85",
         "briefLabelClaude": "#ab9137",
         "claude": "#ab9137",
@@ -529,7 +520,6 @@
       "base": "dark",
       "overrides": {
         "autoAccept": "#8f8c47",
-        "autoAcceptShimmer": "#aeab65",
         "bashBorder": "#b3be49",
         "briefLabelClaude": "#99b052",
         "claude": "#99b052",
@@ -587,7 +577,6 @@
       "base": "dark",
       "overrides": {
         "autoAccept": "#009a85",
-        "autoAcceptShimmer": "#3ebaa3",
         "bashBorder": "#5fa87a",
         "briefLabelClaude": "#0d9c92",
         "claude": "#0d9c92",
@@ -645,7 +634,6 @@
       "base": "dark",
       "overrides": {
         "autoAccept": "#da6c74",
-        "autoAcceptShimmer": "#fd8b92",
         "bashBorder": "#b3be49",
         "briefLabelClaude": "#da656f",
         "claude": "#da656f",
@@ -703,7 +691,6 @@
       "base": "dark",
       "overrides": {
         "autoAccept": "#009a85",
-        "autoAcceptShimmer": "#3ebaa3",
         "bashBorder": "#5fa87a",
         "briefLabelClaude": "#0d9c92",
         "claude": "#0d9c92",
