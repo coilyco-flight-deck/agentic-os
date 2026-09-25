@@ -49,6 +49,10 @@ type nativeMCPServer struct {
 
 type nativeCodexPolicy struct {
 	DefaultToolsApprovalMode string `json:"defaultToolsApprovalMode"`
+	// EnvVars names variables Codex forwards from the harness to a stdio
+	// server, which otherwise gets a filtered environment.
+	EnvVars        []string `json:"envVars"`
+	ToolTimeoutSec int      `json:"toolTimeoutSec"`
 }
 
 type nativeMCPInventory struct {
@@ -345,6 +349,12 @@ func nativeCodexBlock(servers map[string]nativeMCPServer, home string) string {
 				"default_tools_approval_mode = %s\n",
 				strconv.Quote(config.Codex.DefaultToolsApprovalMode),
 			)
+		}
+		if len(config.Codex.EnvVars) > 0 {
+			fmt.Fprintf(&output, "env_vars = %s\n", nativeTOMLSlice(config.Codex.EnvVars))
+		}
+		if config.Codex.ToolTimeoutSec > 0 {
+			fmt.Fprintf(&output, "tool_timeout_sec = %d\n", config.Codex.ToolTimeoutSec)
 		}
 		output.WriteString("\n")
 	}

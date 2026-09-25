@@ -27,7 +27,7 @@ func TestProjectNativeMCPConvergesRegistriesAndAbsorbsLegacyBlock(t *testing.T) 
   "imports": [],
   "mcpServers": {
     "reader": {"baseUrl": "https://mcp.example.test/mcp", "headers": {"X-Test": "${HOME}/token"}, "x-codex": {"defaultToolsApprovalMode": "approve"}},
-    "local": {"command": "${HOME}/bin/server", "args": ["--stdio"], "env": {"CACHE": "${HOME}/cache"}}
+    "local": {"command": "${HOME}/bin/server", "args": ["--stdio"], "env": {"CACHE": "${HOME}/cache"}, "x-codex": {"envVars": ["SESSION_TOKEN"], "toolTimeoutSec": 960}}
   }
 }
 `)
@@ -99,6 +99,8 @@ enabled = false
 		`[mcp_servers."reader"]`,
 		`[mcp_servers."local"]`,
 		`default_tools_approval_mode = "approve"`,
+		`env_vars = ["SESSION_TOKEN"]`,
+		"tool_timeout_sec = 960",
 		strconv.Quote(filepath.Join(home, "bin", "server")),
 	} {
 		if !strings.Contains(codex, want) {

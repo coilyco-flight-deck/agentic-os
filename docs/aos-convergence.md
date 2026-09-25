@@ -42,6 +42,9 @@ imports remain an error. AOS always copies the safe inventory to
   and working directories
 * maps `x-codex.defaultToolsApprovalMode` to Codex
   `default_tools_approval_mode`
+* maps `x-codex.envVars` to Codex `env_vars`, the variables Codex forwards
+  to a stdio server from its filtered environment, and
+  `x-codex.toolTimeoutSec` to `tool_timeout_sec`
 
 Supported Codex approval modes are `auto`, `prompt`, `writes`, and `approve`.
 An omitted mode leaves the default in force. The first projection absorbs the
