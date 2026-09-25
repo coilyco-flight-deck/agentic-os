@@ -71,6 +71,11 @@ type keyState struct {
 	ss3     bool
 	params  []byte
 	inPaste bool
+	// str is an OSC, DCS, APC, PM or SOS string, which runs to BEL or ST.
+	str    bool
+	strEsc bool
+	// skip counts the raw bytes after an X10 mouse report's CSI M.
+	skip int
 }
 
 func startPTYSession(d *daemon, name string, message frame) (*ptySession, error) {
@@ -324,18 +329,28 @@ func (s *ptySession) typeInput(data []byte) error {
 	_, err := s.ptmx.Write(data)
 	s.mu.Lock()
 	s.lastInput = time.Now()
+	drafting := s.draft > 0
 	s.trackDraft(data)
+	flipped := drafting != (s.draft > 0)
 	s.mu.Unlock()
 	s.nudge()
+	if flipped {
+		s.d.pushSessions()
+	}
 	return err
 }
 
-// trackDraft counts what Kai has typed and not sent. Escape sequences are
-// keys, not text. Caller holds mu.
+// trackDraft counts what Kai has typed and not sent. Escape sequences and a
+// terminal's replies to queries are not text. Caller holds mu.
 func (s *ptySession) trackDraft(data []byte) {
 	keys := &s.keys
 	for _, b := range data {
 		switch {
+		case keys.skip > 0:
+			keys.skip--
+		case keys.str:
+			keys.str = !(b == 0x07 || (keys.strEsc && b == '\\'))
+			keys.strEsc = b == 0x1b
 		case keys.csi:
 			keys.params = append(keys.params, b)
 			if b >= 0x40 && b <= 0x7e {
@@ -344,6 +359,8 @@ func (s *ptySession) trackDraft(data []byte) {
 					keys.inPaste = true
 				case "201~":
 					keys.inPaste = false
+				case "M":
+					keys.skip = 3
 				}
 				keys.csi, keys.params = false, nil
 			}
@@ -353,6 +370,7 @@ func (s *ptySession) trackDraft(data []byte) {
 			keys.escape = false
 			keys.csi = b == '['
 			keys.ss3 = b == 'O'
+			keys.str = b == ']' || b == 'P' || b == '_' || b == '^' || b == 'X'
 		case b == 0x1b:
 			keys.escape = true
 		case keys.inPaste:

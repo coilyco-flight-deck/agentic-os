@@ -53,6 +53,14 @@ func TestTrackDraftFollowsWhatKaiHasNotSent(t *testing.T) {
 		{"Ctrl-U clears the line", []string{"abc\x15"}, 0},
 		{"Ctrl-C clears the line", []string{"abc\x03"}, 0},
 		{"multibyte counts once", []string{"é"}, 1},
+		// A terminal answers queries by writing into input, so these are not Kai.
+		{"an OSC reply ended by BEL", []string{"\x1b]11;rgb:0000/0000/0000\x07"}, 0},
+		{"an OSC reply ended by ST", []string{"\x1b]10;rgb:ffff/ffff/ffff\x1b\\"}, 0},
+		{"an OSC reply split across reads", []string{"\x1b]11;rgb:00", "00/0000/0000\x07"}, 0},
+		{"a DCS reply", []string{"\x1bP>|kitty(0.39)\x1b\\"}, 0},
+		{"an X10 mouse report", []string{"\x1b[M !!"}, 0},
+		{"one key per frame after a reply, then Enter", []string{"\x1b]11;rgb:0/0/0\x07", "l", "s", "\r"}, 0},
+		{"typing after a reply still counts", []string{"\x1b]11;rgb:0/0/0\x07", "l", "s"}, 2},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
 			s := &ptySession{}

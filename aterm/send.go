@@ -102,21 +102,25 @@ func sendMessage(target, body string, launch bool) (peerMessage, error) {
 	}
 	state := *reply.Message
 	if state.State == "launching" {
-		if err := launchTarget(target); err != nil {
+		if err := launchRole(target, ""); err != nil {
 			return state, fmt.Errorf("the message waits for %s, but opening it failed: %w", target, err)
 		}
 	}
 	return state, nil
 }
 
-// launchTarget opens the role the way a person would, through this binary,
-// so the roster check and the window are the ordinary ones.
-func launchTarget(role string) error {
+// launchRole opens the role the way a person would, through this binary, so
+// the roster check and the window are the ordinary ones.
+func launchRole(role, seat string) error {
 	self, err := os.Executable()
 	if err != nil {
 		return err
 	}
-	output, err := exec.Command(self, role).CombinedOutput()
+	args := []string{role}
+	if seat != "" {
+		args = append(args, seat)
+	}
+	output, err := exec.Command(self, args...).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("%v: %s", err, strings.TrimSpace(string(output)))
 	}

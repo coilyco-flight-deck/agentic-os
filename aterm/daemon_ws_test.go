@@ -116,6 +116,19 @@ func (c wsClient) next(want string, output *strings.Builder) frame {
 	}
 }
 
+func (c wsClient) nextAny() frame {
+	c.t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	_, data, err := c.ws.Read(ctx)
+	if err != nil {
+		c.t.Fatalf("read: %v", err)
+	}
+	var message frame
+	_ = json.Unmarshal(data, &message)
+	return message
+}
+
 func TestWebsocketCarriesTheSameFramesAndAnswersTheRoster(t *testing.T) {
 	d, address := wsDaemon(t)
 	ws, _, err := dialWS(t, address, "http://localhost:5173")
@@ -127,6 +140,16 @@ func TestWebsocketCarriesTheSameFramesAndAnswersTheRoster(t *testing.T) {
 	client.send(frame{Type: "hello", Format: daemonFormat})
 	if welcome := client.next("welcome", nil); welcome.Format != daemonFormat {
 		t.Fatalf("welcome = %+v", welcome)
+	}
+	var launched []string
+	d.launch = func(role, seat string) error { launched = append(launched, role+"/"+seat); return nil }
+	client.send(frame{Type: "launch", ID: "l", Role: "scientist", Seat: "codex"})
+	if reply := client.next("launched", nil); reply.Role != "scientist" || len(launched) != 1 || launched[0] != "scientist/codex" {
+		t.Fatalf("launch should run the role's launch once: %+v, %v", reply, launched)
+	}
+	client.send(frame{Type: "launch", ID: "bad", Role: "../etc"})
+	if reply := client.nextAny(); reply.Type != "error" || reply.Code != exitUsage {
+		t.Fatalf("an unsafe role slug must be refused with exit 2: %+v", reply)
 	}
 	client.send(frame{Type: "roster", ID: "r"})
 	roster := client.next("roster", nil)

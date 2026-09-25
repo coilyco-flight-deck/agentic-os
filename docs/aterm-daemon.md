@@ -57,8 +57,8 @@ Observed on 2026-09-25 with claude and codex seats launched through `agent-compo
 
 * `spawn`, `attach` (optional `replay`), `detach`, `input` and `output` (base64 `data`), `resize`, `exit` with `code`.
 * `send` answers `sent` with the message state, waiting up to 3 seconds for delivery.
-* `list` answers `sessions`. `subscribe` to channel `sessions` pushes the roster on every change, and `message` events carry each state change.
-* `whoami` resolves a token to its session. `roster` answers with `aterm.roster.v1`, the launchable roles `aterm --list --json` prints, read fresh per request.
+* `list` answers `sessions`. `subscribe` to channel `sessions` pushes the roster on every change, and `message` events carry each state change, never the body, which only the target's terminal receives.
+* `whoami` resolves a token to its session. `roster` answers with `aterm.roster.v1`, the launchable roles `aterm --list --json` prints, read fresh per request. `launch` with a `role` and optional `seat` opens it as `aterm <role> [seat]` would, answering `launched`.
 
 **Browsers attach over a loopback websocket**, `127.0.0.1:7419` by default. `--websocket` or `ATERM_DAEMON_WS` moves it, and an empty value turns it off. A non-loopback address is refused, since there is no client auth yet. A browser does not apply CORS to a websocket, so any page Kai opens could reach one. Before the upgrade, the daemon refuses a missing Origin, a non-loopback Origin, and a non-loopback Host, which is how a rebound DNS name arrives. A browser has no pid to walk, so it types as a person. A taken port costs browser clients, never the daemon.
 

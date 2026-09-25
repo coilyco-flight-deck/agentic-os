@@ -39,6 +39,7 @@ type daemon struct {
 	lastActive  time.Time
 	processes   func() ([]processEntry, error)
 	roster      func(context.Context) (listedRoster, error)
+	launch      func(role, seat string) error
 	logf        func(string, ...any)
 }
 
@@ -50,6 +51,7 @@ func newDaemon(logf func(string, ...any)) *daemon {
 		lastActive:  time.Now(),
 		processes:   listProcesses,
 		roster:      launchableRoster,
+		launch:      launchRole,
 		logf:        logf,
 	}
 }
@@ -271,6 +273,14 @@ func (d *daemon) handle(cl *client, message frame) error {
 		return d.send(cl.c, message)
 	case "list":
 		return cl.c.write(frame{Type: "sessions", ID: message.ID, Sessions: d.views()})
+	case "launch":
+		if !safeRoleSlug(message.Role) || (message.Seat != "" && !isNativeHarness(message.Seat)) {
+			return withExit(exitUsage, fmt.Errorf("launch needs a role slug and, optionally, a native seat"))
+		}
+		if err := d.launch(message.Role, message.Seat); err != nil {
+			return withExit(exitSpawn, err)
+		}
+		return cl.c.write(frame{Type: "launched", ID: message.ID, Role: message.Role, Seat: message.Seat})
 	case "roster":
 		roster, err := d.roster(context.Background())
 		if err != nil {
