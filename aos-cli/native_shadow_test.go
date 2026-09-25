@@ -420,6 +420,40 @@ func TestStageNativeRoleHomeReservesProjectedLoadPoints(t *testing.T) {
 	}
 }
 
+// A session points XDG_CONFIG_HOME at the shadow, so this link is the only route
+// the managed profile has into a seat; nothing else would carry its model routing.
+func TestStageNativeRoleHomeLinksOpenCodeConfig(t *testing.T) {
+	source := filepath.Join(t.TempDir(), "source")
+	target := filepath.Join(t.TempDir(), "target")
+	configDir := filepath.Join(source, ".config", "opencode")
+	if err := os.MkdirAll(configDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	host := filepath.Join(configDir, "opencode.json")
+	if err := os.WriteFile(host, []byte("{}\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(configDir, "AGENTS.md"), []byte("host\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := stageNativeRoleHome(source, target, ""); err != nil {
+		t.Fatal(err)
+	}
+
+	link := filepath.Join(target, ".config", "opencode", "opencode.json")
+	resolved, err := os.Readlink(link)
+	if err != nil {
+		t.Fatalf("session did not link the opencode config: %v", err)
+	}
+	if resolved != host {
+		t.Errorf("opencode config links to %s, want the host copy %s", resolved, host)
+	}
+	if _, err := os.Lstat(filepath.Join(target, ".config", "opencode", "AGENTS.md")); !os.IsNotExist(err) {
+		t.Errorf("host AGENTS.md shadows the projected doctrine: %v", err)
+	}
+}
+
 func TestStageNativeRoleHomeKeepsAgentComposeRecordsPerSession(t *testing.T) {
 	source := filepath.Join(t.TempDir(), "source")
 	target := filepath.Join(t.TempDir(), "target")

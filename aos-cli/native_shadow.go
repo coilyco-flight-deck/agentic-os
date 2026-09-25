@@ -22,19 +22,23 @@ import (
 )
 
 const (
-	nativeSweepInterval         = 24 * time.Hour
-	nativeDeadSessionGrace      = 24 * time.Hour
-	nativeLockPoll              = 100 * time.Millisecond
-	nativeLockNotice            = 5 * time.Second
-	nativeLockWait              = 2 * time.Minute
-	nativeLockGrace             = 5 * time.Second
-	nativeDeleteScans           = 3
-	nativeSessionIDAttempts     = 64
-	nativeIDLetters             = "abcdefghjkmpqrstuvwxyz"
-	nativeIDDigits              = "456789"
-	agentComposeModelTierEnv    = "AGENT_COMPOSE_MODEL_TIER"
-	agentComposeModelClassEnv   = "AGENT_COMPOSE_MODEL_CLASS"
-	agentComposeRuntimeHomeEnv  = "AGENT_COMPOSE_RUNTIME_HOME"
+	nativeSweepInterval        = 24 * time.Hour
+	nativeDeadSessionGrace     = 24 * time.Hour
+	nativeLockPoll             = 100 * time.Millisecond
+	nativeLockNotice           = 5 * time.Second
+	nativeLockWait             = 2 * time.Minute
+	nativeLockGrace            = 5 * time.Second
+	nativeDeleteScans          = 3
+	nativeSessionIDAttempts    = 64
+	nativeIDLetters            = "abcdefghjkmpqrstuvwxyz"
+	nativeIDDigits             = "456789"
+	agentComposeModelTierEnv   = "AGENT_COMPOSE_MODEL_TIER"
+	agentComposeModelClassEnv  = "AGENT_COMPOSE_MODEL_CLASS"
+	agentComposeRuntimeHomeEnv = "AGENT_COMPOSE_RUNTIME_HOME"
+	// The markers agent-compose stamps on a seat and reads back to decide a
+	// launch is nested under one that already converged. docs/native-harness-config.md
+	agentComposeLaunchEnv       = "AGENT_COMPOSE_LAUNCH"
+	agentComposeLaunchDepthEnv  = "AGENT_COMPOSE_LAUNCH_DEPTH"
 	claudeDisableAutoUpdaterEnv = "DISABLE_AUTOUPDATER"
 	nativeSessionEnv            = "AOS_NATIVE_SESSION"
 	// pnpm records the store it installed through, and a shadow home carries a

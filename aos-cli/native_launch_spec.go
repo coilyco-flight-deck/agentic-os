@@ -47,6 +47,23 @@ func splitAgentComposeLaunch(command []string) (string, string, string, []string
 	return command[0], command[2], command[3], append([]string(nil), command[4:]...), true
 }
 
+// composerLaunchEnv is the environment the projection call gets. A launch with a
+// runtime home of its own drops a parent seat's markers; the spec hands them back.
+func composerLaunchEnv() []string {
+	runtimeHome, canonicalHome := os.Getenv(agentComposeRuntimeHomeEnv), os.Getenv(nativeCanonicalHomeEnv)
+	if strings.TrimSpace(runtimeHome) == "" || samePath(runtimeHome, canonicalHome) {
+		return nil
+	}
+	dropped := map[string]bool{agentComposeLaunchEnv: true, agentComposeLaunchDepthEnv: true}
+	kept := make([]string, 0, len(os.Environ()))
+	for _, pair := range os.Environ() {
+		if name, _, _ := strings.Cut(pair, "="); !dropped[name] {
+			kept = append(kept, pair)
+		}
+	}
+	return kept
+}
+
 // resolveSpecLaunch runs agent-compose up to the exec and returns the harness
 // argv aos will exec itself, with the process environment already applied.
 func resolveSpecLaunch(ctx context.Context, command []string) ([]string, error) {
@@ -62,6 +79,7 @@ func resolveSpecLaunch(ctx context.Context, command []string) ([]string, error) 
 	defer os.RemoveAll(dir)
 	specPath := filepath.Join(dir, "spec.json")
 	composeRun := exec.CommandContext(ctx, composer, "launch", "--spec-out", specPath, role, harness)
+	composeRun.Env = composerLaunchEnv()
 	composeRun.Stdin, composeRun.Stdout, composeRun.Stderr = os.Stdin, os.Stdout, os.Stderr
 	if err := composeRun.Run(); err != nil {
 		return nil, fmt.Errorf("agent-compose launch --spec-out: %w", err)
