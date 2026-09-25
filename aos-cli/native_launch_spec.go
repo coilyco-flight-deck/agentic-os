@@ -87,6 +87,10 @@ func resolveSpecLaunch(ctx context.Context, command []string) ([]string, error) 
 	if err != nil {
 		return nil, err
 	}
+	// goose parses the scope only after its session verb.
+	if harness == "goose" && len(identity) > 0 {
+		return gooseCommand(harness, args, identity), nil
+	}
 	return append(append([]string{harness}, identity...), args...), nil
 }
 
@@ -156,7 +160,9 @@ func applyNativeLaunchSpecEnvironment(spec nativeLaunchSpec) error {
 // nativeSpecIdentityArgs is agent-compose's nativeIdentityArgs, in its order:
 // MCP scope, then --name, then --settings. A flag the caller already passed wins.
 func nativeSpecIdentityArgs(ctx context.Context, spec nativeLaunchSpec, inventoryHome string, args []string) ([]string, error) {
-	if spec.Harness != "claude" && spec.Harness != "codex" {
+	switch spec.Harness {
+	case "claude", "codex", "goose", "opencode":
+	default:
 		return nil, nil
 	}
 	role, err := nativeBundleRole(spec.BundleDir)

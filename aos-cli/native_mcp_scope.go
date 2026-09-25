@@ -12,6 +12,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/goccy/go-yaml"
 )
 
 // Per-role MCP narrowing for a spec-mode launch, moved from agent-compose
@@ -219,11 +221,21 @@ func agentComposeRoleSlugs(ctx context.Context) ([]string, error) {
 // nativeSpecMCPArgs narrows the inventory at <home>/.mcporter/mcporter.json to
 // the role, and refuses without one, as agent-compose's launch does (#8260).
 func nativeSpecMCPArgs(ctx context.Context, spec nativeLaunchSpec, role, inventoryHome, stateDir string, args []string) ([]string, error) {
-	if spec.Harness != "claude" && spec.Harness != "codex" {
-		return nil, nil
-	}
-	if spec.Harness == "claude" &&
-		(nativeSpecArgsCarry(args, "--mcp-config") || nativeSpecArgsCarry(args, "--strict-mcp-config")) {
+	switch spec.Harness {
+	case "claude":
+		if nativeSpecArgsCarry(args, "--mcp-config") || nativeSpecArgsCarry(args, "--strict-mcp-config") {
+			return nil, nil
+		}
+	case "codex":
+	case "goose":
+		if !gooseScopeApplies(args) {
+			return nil, nil
+		}
+	case "opencode":
+		if strings.TrimSpace(os.Getenv(openCodeConfigEnv)) != "" {
+			return nil, nil
+		}
+	default:
 		return nil, nil
 	}
 	roles, err := agentComposeRoleSlugs(ctx)
@@ -239,12 +251,195 @@ func nativeSpecMCPArgs(ctx context.Context, spec nativeLaunchSpec, role, invento
 	}
 	selection := selectMCPScope(servers, role)
 	fmt.Fprintln(os.Stderr, selection.summary())
-	if spec.Harness == "codex" {
+	switch spec.Harness {
+	case "codex":
 		return selection.codexOverrides(), nil
+	case "goose":
+		keep, err := gooseKeptExtensions(inventoryHome)
+		if err != nil {
+			return nil, err
+		}
+		return selection.gooseArgs(keep, inventoryHome)
+	case "opencode":
+		// An env var rather than a flag, set on this process the way the spec's
+		// own env is, since aos execs the harness with it.
+		content, err := selection.openCodeConfig(inventoryHome)
+		if err != nil {
+			return nil, err
+		}
+		return nil, os.Setenv(openCodeConfigEnv, content)
 	}
 	path, err := selection.writeClaudeConfig(filepath.Join(stateDir, "mcp"), inventoryHome)
 	if err != nil {
 		return nil, err
 	}
 	return []string{"--strict-mcp-config", "--mcp-config", path}, nil
+}
+
+// openCodeConfigEnv is OpenCode's inline config, merged over every other layer.
+const openCodeConfigEnv = "OPENCODE_CONFIG_CONTENT"
+
+// gooseSessionVerbs load extensions. Bare `goose` starts a session too, but
+// its root command parses none of the scope flags.
+var gooseSessionVerbs = map[string]bool{"session": true, "s": true, "run": true}
+
+// gooseScopeApplies is false for a verb that loads no extensions, a caller's
+// own --no-profile, and a resume, which restores the set its session recorded.
+func gooseScopeApplies(args []string) bool {
+	if len(args) > 0 && !gooseSessionVerbs[args[0]] {
+		return false
+	}
+	return !nativeSpecArgsCarry(args, "--no-profile") && !nativeSpecArgsCarry(args, "--resume") &&
+		!nativeSpecArgsCarry(args, "-r")
+}
+
+// gooseCommand puts the scope after the session verb, adding `session` to a
+// bare launch.
+func gooseCommand(harness string, args, scope []string) []string {
+	verb, rest := "session", args
+	if len(args) > 0 {
+		verb, rest = args[0], args[1:]
+	}
+	command := append([]string{harness, verb}, scope...)
+	return append(command, rest...)
+}
+
+// gooseKeptExtensions lists the enabled builtin and platform extensions in the
+// user's goose config, which --no-profile would otherwise drop with the rest.
+func gooseKeptExtensions(home string) ([]string, error) {
+	dir := strings.TrimSpace(os.Getenv("XDG_CONFIG_HOME"))
+	if dir == "" {
+		dir = filepath.Join(home, ".config")
+	}
+	path := filepath.Join(dir, "goose", "config.yaml")
+	raw, err := os.ReadFile(path)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("read goose config: %w", err)
+	}
+	var config struct {
+		Extensions map[string]struct {
+			Enabled bool   `yaml:"enabled"`
+			Type    string `yaml:"type"`
+		} `yaml:"extensions"`
+	}
+	if err := yaml.Unmarshal(raw, &config); err != nil {
+		return nil, fmt.Errorf("parse goose config %s: %w", path, err)
+	}
+	var keep []string
+	for name, extension := range config.Extensions {
+		if extension.Enabled && (extension.Type == "builtin" || extension.Type == "platform") {
+			keep = append(keep, name)
+		}
+	}
+	sort.Strings(keep)
+	return keep, nil
+}
+
+// gooseArgs replaces goose's configured extensions for one session with the
+// role's servers, keeping the builtin and platform extensions named in keep.
+func (selection mcpScopeSelection) gooseArgs(keep []string, home string) ([]string, error) {
+	args := []string{"--no-profile"}
+	if len(keep) > 0 {
+		args = append(args, "--with-builtin", strings.Join(keep, ","))
+	}
+	for _, name := range selection.Selected {
+		server := selection.servers[name]
+		rendered := mcpScopeClaudeServer(server, home)
+		if url, ok := rendered["url"].(string); ok {
+			// The flag takes a URL alone, so a header would be dropped silently.
+			if len(server.Headers) > 0 {
+				return nil, fmt.Errorf("goose cannot pass headers for MCP server %q", name)
+			}
+			args = append(args, "--with-streamable-http-extension", url)
+			continue
+		}
+		spec, err := gooseStdio(name, server, rendered)
+		if err != nil {
+			return nil, err
+		}
+		args = append(args, "--with-extension", spec)
+	}
+	return args, nil
+}
+
+// gooseStdio renders `name:ENV=v command args` in the grammar goose splits it
+// with: whitespace-separated, quotes group, and no backslash escapes.
+func gooseStdio(name string, server mcpScopeServer, rendered map[string]any) (string, error) {
+	if strings.TrimSpace(server.Cwd) != "" {
+		return "", fmt.Errorf("goose cannot set a working directory for MCP server %q", name)
+	}
+	var parts []string
+	env, _ := rendered["env"].(map[string]string)
+	keys := make([]string, 0, len(env))
+	for key := range env {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		parts = append(parts, key+"="+env[key])
+	}
+	parts = append(parts, rendered["command"].(string))
+	if args, ok := rendered["args"].([]string); ok {
+		parts = append(parts, args...)
+	}
+	quoted := make([]string, len(parts))
+	for index, part := range parts {
+		value, err := gooseQuote(part)
+		if err != nil {
+			return "", fmt.Errorf("goose cannot express an argument of MCP server %q: %w", name, err)
+		}
+		quoted[index] = value
+	}
+	return name + ":" + strings.Join(quoted, " "), nil
+}
+
+func gooseQuote(part string) (string, error) {
+	switch {
+	case part == "":
+		return "", errors.New("an empty argument splits to nothing")
+	case !strings.ContainsAny(part, " \t\n\"'"):
+		return part, nil
+	case !strings.Contains(part, `"`):
+		return `"` + part + `"`, nil
+	case !strings.Contains(part, "'"):
+		return "'" + part + "'", nil
+	}
+	return "", errors.New("it holds both quote characters")
+}
+
+// openCodeConfig defines the role's servers and turns off each omitted one.
+func (selection mcpScopeSelection) openCodeConfig(home string) (string, error) {
+	mcp := map[string]any{}
+	for _, name := range selection.Selected {
+		server := selection.servers[name]
+		rendered := mcpScopeClaudeServer(server, home)
+		if url, ok := rendered["url"].(string); ok {
+			entry := map[string]any{"type": "remote", "url": url, "enabled": true}
+			if headers, ok := rendered["headers"]; ok {
+				entry["headers"] = headers
+			}
+			mcp[name] = entry
+			continue
+		}
+		if strings.TrimSpace(server.Cwd) != "" {
+			return "", fmt.Errorf("opencode cannot set a working directory for MCP server %q", name)
+		}
+		command := []string{rendered["command"].(string)}
+		if args, ok := rendered["args"].([]string); ok {
+			command = append(command, args...)
+		}
+		entry := map[string]any{"type": "local", "command": command, "enabled": true}
+		if env, ok := rendered["env"]; ok {
+			entry["environment"] = env
+		}
+		mcp[name] = entry
+	}
+	for _, name := range selection.Omitted {
+		mcp[name] = map[string]any{"enabled": false}
+	}
+	payload, err := json.Marshal(map[string]any{"mcp": mcp})
+	return string(payload), err
 }
