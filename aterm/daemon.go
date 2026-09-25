@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
@@ -37,6 +38,7 @@ type daemon struct {
 	conns       int
 	lastActive  time.Time
 	processes   func() ([]processEntry, error)
+	roster      func(context.Context) (listedRoster, error)
 	logf        func(string, ...any)
 }
 
@@ -47,13 +49,37 @@ func newDaemon(logf func(string, ...any)) *daemon {
 		subscribers: map[*conn]bool{},
 		lastActive:  time.Now(),
 		processes:   listProcesses,
+		roster:      launchableRoster,
 		logf:        logf,
 	}
 }
 
+// launchableRoster is `aterm --list --json` for a client that cannot shell
+// out. It is read per request, since the read is fast and roles turn over.
+func launchableRoster(ctx context.Context) (listedRoster, error) {
+	deps := systemDeps()
+	deps.notice = nil
+	agentCompose, err := requireBinary(deps.lookPath, envOr("AGENT_COMPOSE_BIN", defaultOverlayBin))
+	if err != nil {
+		return listedRoster{}, err
+	}
+	document, err := loadRoster(ctx, deps, agentCompose)
+	if err != nil {
+		return listedRoster{}, err
+	}
+	return listRoster(document), nil
+}
+
+func envOr(name, fallback string) string {
+	if value := strings.TrimSpace(os.Getenv(name)); value != "" {
+		return value
+	}
+	return fallback
+}
+
 // runDaemon holds the lock, owns the socket, and serves until idle. A second
 // daemon finding the lock held exits cleanly, which settles a start race.
-func runDaemon(socket string, idle time.Duration, stderr io.Writer) error {
+func runDaemon(socket, websocketAddress string, idle time.Duration, stderr io.Writer) error {
 	dir := filepath.Dir(socket)
 	if err := ensureSocketDir(dir); err != nil {
 		return err
@@ -87,6 +113,14 @@ func runDaemon(socket string, idle time.Duration, stderr io.Writer) error {
 		<-stop
 		_ = listener.Close()
 	}()
+	if websocketAddress != "" {
+		server, err := d.listenWebsocket(websocketAddress)
+		if err != nil {
+			logf("no websocket, so browser clients cannot attach: %v", err)
+		} else {
+			defer server.Close()
+		}
+	}
 	go d.watchIdle(listener, idle)
 	for {
 		raw, err := listener.Accept()
@@ -128,16 +162,21 @@ func (d *daemon) endAll() {
 }
 
 // client is one connection's standing: which sessions it spawned, which it is
-// attached to, and whether it may type.
+// attached to, and whether it may type. A browser has no pid to walk.
 type client struct {
 	c        *conn
 	peerPID  int
+	browser  bool
 	owned    map[string]bool
 	attached map[string]*ptySession
 }
 
 func (d *daemon) serve(raw net.Conn) {
-	c := newConn(raw)
+	pid, _ := peerPID(raw)
+	d.serveConn(newConn(raw), pid, false)
+}
+
+func (d *daemon) serveConn(c *conn, pid int, browser bool) {
 	defer c.Close()
 	hello, err := c.read()
 	if err != nil || hello.Type != "hello" {
@@ -154,8 +193,7 @@ func (d *daemon) serve(raw net.Conn) {
 	d.conns++
 	d.lastActive = time.Now()
 	d.mu.Unlock()
-	pid, _ := peerPID(raw)
-	cl := &client{c: c, peerPID: pid, owned: map[string]bool{}, attached: map[string]*ptySession{}}
+	cl := &client{c: c, peerPID: pid, browser: browser, owned: map[string]bool{}, attached: map[string]*ptySession{}}
 	defer func() {
 		for _, s := range cl.attached {
 			s.detach(c)
@@ -220,7 +258,7 @@ func (d *daemon) handle(cl *client, message frame) error {
 		if s == nil {
 			return fmt.Errorf("not attached to %q", message.Session)
 		}
-		if !cl.owned[s.name] && d.insideSession(cl.peerPID) {
+		if !cl.owned[s.name] && !cl.browser && d.insideSession(cl.peerPID) {
 			return errors.New("a process inside an aterm session cannot type into one, use `aterm send`")
 		}
 		return s.typeInput(message.Data)
@@ -233,6 +271,12 @@ func (d *daemon) handle(cl *client, message frame) error {
 		return d.send(cl.c, message)
 	case "list":
 		return cl.c.write(frame{Type: "sessions", ID: message.ID, Sessions: d.views()})
+	case "roster":
+		roster, err := d.roster(context.Background())
+		if err != nil {
+			return err
+		}
+		return cl.c.write(frame{Type: "roster", ID: message.ID, Roster: &roster})
 	case "whoami":
 		s := d.byToken(message.Token)
 		if s == nil {
@@ -459,7 +503,6 @@ func (d *daemon) broadcast(message frame) {
 	}
 	d.mu.Unlock()
 	for _, c := range subscribers {
-		_ = c.raw.SetWriteDeadline(time.Now().Add(clientWriteTimeout))
 		if err := c.write(message); err != nil {
 			d.mu.Lock()
 			delete(d.subscribers, c)

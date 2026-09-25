@@ -11,7 +11,7 @@ aterm agents                          # live sessions, the targets send takes
 aterm send frontend-eng "ready for review"
 aterm send --launch scientist -       # open the role if none answers, body on stdin
 aterm attach eng-platform-beetle-ox   # another terminal on a live session, Ctrl-] detaches
-aterm daemon                          # foreground, for a service manager
+aterm daemon                          # foreground, websocket on 127.0.0.1:7419
 aterm mcp                             # list_agents and send_message over MCP stdio
 ```
 
@@ -53,13 +53,15 @@ Observed on 2026-09-25 with claude and codex seats launched through `agent-compo
 
 ## Wire contract
 
-`aterm.daemon.v1` is one JSON object per line over the socket, the same objects a websocket will carry. Both sides open with `hello` and `welcome` naming the format, and a mismatch refuses. Requests carry an `id` echoed on the reply or on an `error` with `code`.
+`aterm.daemon.v1` is one JSON object per line over the socket, and one per text message over the websocket. Both sides open with `hello` and `welcome` naming the format, and a mismatch refuses. Requests carry an `id` echoed on the reply or on an `error` with `code`.
 
 * `spawn`, `attach` (optional `replay`), `detach`, `input` and `output` (base64 `data`), `resize`, `exit` with `code`.
 * `send` answers `sent` with the message state, waiting up to 3 seconds for delivery.
 * `list` answers `sessions`. `subscribe` to channel `sessions` pushes the roster on every change, and `message` events carry each state change.
-* `whoami` resolves a token to its session.
+* `whoami` resolves a token to its session. `roster` answers with `aterm.roster.v1`, the launchable roles `aterm --list --json` prints, read fresh per request.
+
+**Browsers attach over a loopback websocket**, `127.0.0.1:7419` by default. `--websocket` or `ATERM_DAEMON_WS` moves it, and an empty value turns it off. A non-loopback address is refused, since there is no client auth yet. A browser does not apply CORS to a websocket, so any page Kai opens could reach one. Before the upgrade, the daemon refuses a missing Origin, a non-loopback Origin, and a non-loopback Host, which is how a rebound DNS name arrives. A browser has no pid to walk, so it types as a person. A taken port costs browser clients, never the daemon.
 
 ## Not built yet
 
-Tailnet reach, meaning a websocket listener, client auth, and daemon discovery, is teable:coilyco/agentic-os#8220's next milestone, along with the MCP Apps gateway and the streamed browser. `aterm mcp` ships, and projecting it into each harness registry is a separate change.
+Tailnet reach, meaning a non-loopback listener, client auth, and daemon discovery, is teable:coilyco/agentic-os#8220's next milestone, along with the MCP Apps gateway and the streamed browser. `aterm mcp` ships, and projecting it into each harness registry is a separate change.

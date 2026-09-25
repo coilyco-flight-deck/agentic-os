@@ -63,6 +63,7 @@ type frame struct {
 	// replies and events
 	Message  *peerMessage  `json:"message,omitempty"`
 	Sessions []sessionView `json:"sessions,omitempty"`
+	Roster   *listedRoster `json:"roster,omitempty"`
 	Code     int           `json:"code,omitempty"`
 	Error    string        `json:"error,omitempty"`
 	Channel  string        `json:"channel,omitempty"`
@@ -99,42 +100,63 @@ type peerMessage struct {
 	Accepted time.Time `json:"accepted"`
 }
 
-// conn is one side of a framed connection. Writes are serialized because the
-// daemon writes events from several goroutines.
+// conn is one side of a framed connection, over the unix socket or a
+// websocket. Writes are serialized because events come from several goroutines.
 type conn struct {
-	raw     net.Conn
-	scanner *bufio.Scanner
-	mu      sync.Mutex
-	encoder *json.Encoder
+	raw       net.Conn
+	readLine  func() ([]byte, error)
+	writeLine func([]byte) error
+	closer    func() error
+	mu        sync.Mutex
 }
 
+// newConn frames a stream as one JSON object per line.
 func newConn(raw net.Conn) *conn {
 	scanner := bufio.NewScanner(raw)
 	scanner.Buffer(make([]byte, 64<<10), maxFrame)
-	return &conn{raw: raw, scanner: scanner, encoder: json.NewEncoder(raw)}
+	return &conn{
+		raw: raw,
+		readLine: func() ([]byte, error) {
+			if !scanner.Scan() {
+				if err := scanner.Err(); err != nil {
+					return nil, err
+				}
+				return nil, errors.New("connection closed")
+			}
+			return scanner.Bytes(), nil
+		},
+		writeLine: func(line []byte) error {
+			_ = raw.SetWriteDeadline(time.Now().Add(clientWriteTimeout))
+			_, err := raw.Write(append(line, '\n'))
+			return err
+		},
+		closer: raw.Close,
+	}
 }
 
 func (c *conn) write(message frame) error {
+	encoded, err := json.Marshal(message)
+	if err != nil {
+		return err
+	}
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	return c.encoder.Encode(message)
+	return c.writeLine(encoded)
 }
 
 func (c *conn) read() (frame, error) {
-	if !c.scanner.Scan() {
-		if err := c.scanner.Err(); err != nil {
-			return frame{}, err
-		}
-		return frame{}, errors.New("connection closed")
+	line, err := c.readLine()
+	if err != nil {
+		return frame{}, err
 	}
 	var message frame
-	if err := json.Unmarshal(c.scanner.Bytes(), &message); err != nil {
+	if err := json.Unmarshal(line, &message); err != nil {
 		return frame{}, fmt.Errorf("malformed frame: %w", err)
 	}
 	return message, nil
 }
 
-func (c *conn) Close() error { return c.raw.Close() }
+func (c *conn) Close() error { return c.closer() }
 
 // daemonSocket is keyed by uid rather than HOME, because a session shadow
 // moves HOME and every seat on the host must reach the same daemon.

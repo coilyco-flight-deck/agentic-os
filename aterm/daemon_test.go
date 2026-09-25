@@ -173,7 +173,7 @@ func testDaemon(t *testing.T) string {
 	stopped := make(chan struct{})
 	go func() {
 		defer close(stopped)
-		_ = runDaemon(socket, time.Hour, io.Discard)
+		_ = runDaemon(socket, "", time.Hour, io.Discard)
 	}()
 	for waited := 0; waited < 100; waited++ {
 		if _, err := os.Stat(socket); err == nil {

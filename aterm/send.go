@@ -23,10 +23,16 @@ func newDaemonCommand() *cli.Command {
 			"manager or for watching one. It exits after five idle minutes.",
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "socket", Value: daemonSocket(), Usage: "unix socket to serve"},
+			&cli.StringFlag{
+				Name:    "websocket",
+				Value:   defaultDaemonWS,
+				Usage:   "loopback address for browser clients, empty for none",
+				Sources: cli.EnvVars(daemonWSEnv),
+			},
 			&cli.DurationFlag{Name: "idle", Value: daemonIdle, Usage: "exit after this long with no session and no client"},
 		},
 		Action: func(_ context.Context, cmd *cli.Command) error {
-			return runDaemon(cmd.String("socket"), cmd.Duration("idle"), cmd.Root().ErrWriter)
+			return runDaemon(cmd.String("socket"), cmd.String("websocket"), cmd.Duration("idle"), cmd.Root().ErrWriter)
 		},
 	}
 }

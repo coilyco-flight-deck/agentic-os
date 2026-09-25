@@ -6,6 +6,7 @@ require (
 	github.com/charmbracelet/huh v1.0.0
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/charmbracelet/x/term v0.2.1
+	github.com/coder/websocket v1.8.15
 	github.com/creack/pty v1.1.24
 	github.com/muesli/termenv v0.16.0
 	github.com/urfave/cli/v3 v3.11.0

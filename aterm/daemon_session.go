@@ -284,7 +284,6 @@ func (s *ptySession) clientList() []*conn {
 
 func (s *ptySession) sendTo(clients []*conn, message frame) {
 	for _, c := range clients {
-		_ = c.raw.SetWriteDeadline(time.Now().Add(clientWriteTimeout))
 		if err := c.write(message); err != nil {
 			s.detach(c)
 		}
