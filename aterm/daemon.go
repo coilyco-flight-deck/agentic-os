@@ -36,6 +36,7 @@ type daemon struct {
 	orphans     []*pendingSend
 	asks        map[string]*pendingAsk
 	askTimeout  time.Duration
+	clientDir   string
 	subscribers map[*conn]bool
 	conns       int
 	lastActive  time.Time
@@ -83,9 +84,21 @@ func envOr(name, fallback string) string {
 	return fallback
 }
 
+// daemonOptions is what the daemon verb takes. An empty address or port turns
+// that listener off.
+type daemonOptions struct {
+	Socket      string
+	Websocket   string
+	TailnetPort string
+	AllowTags   []string
+	ClientDir   string
+	Idle        time.Duration
+}
+
 // runDaemon holds the lock, owns the socket, and serves until idle. A second
 // daemon finding the lock held exits cleanly, which settles a start race.
-func runDaemon(socket, websocketAddress string, idle time.Duration, stderr io.Writer) error {
+func runDaemon(options daemonOptions, stderr io.Writer) error {
+	socket, idle := options.Socket, options.Idle
 	dir := filepath.Dir(socket)
 	if err := ensureSocketDir(dir); err != nil {
 		return err
@@ -119,10 +132,19 @@ func runDaemon(socket, websocketAddress string, idle time.Duration, stderr io.Wr
 		<-stop
 		_ = listener.Close()
 	}()
-	if websocketAddress != "" {
-		server, err := d.listenWebsocket(websocketAddress)
+	d.clientDir = options.ClientDir
+	if options.Websocket != "" {
+		server, err := d.listenWebsocket(options.Websocket)
 		if err != nil {
 			logf("no websocket, so browser clients cannot attach: %v", err)
+		} else {
+			defer server.Close()
+		}
+	}
+	if options.TailnetPort != "" {
+		server, err := d.listenTailnet(options.TailnetPort, options.AllowTags, filepath.Join(dir, "tailnet"))
+		if err != nil {
+			logf("no tailnet listener, so other devices cannot attach: %v", err)
 		} else {
 			defer server.Close()
 		}

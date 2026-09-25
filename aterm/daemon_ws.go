@@ -7,6 +7,8 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
+	"strings"
 
 	"github.com/coder/websocket"
 )
@@ -17,10 +19,6 @@ const (
 	// See docs/aterm-daemon.md.
 	defaultDaemonWS = "127.0.0.1:7419"
 )
-
-// loopbackOrigins match an Origin's host and port. A browser sends Origin on
-// every websocket, and nothing else here stops another site's page.
-var loopbackOrigins = []string{"localhost", "localhost:*", "127.0.0.1", "127.0.0.1:*", `\[::1\]`, `\[::1\]:*`}
 
 // requireLoopback refuses a listen address that is not a loopback IP, since
 // the listener has no auth beyond Origin.
@@ -47,23 +45,66 @@ func isLoopbackHost(hostport string) bool {
 	return ip != nil && ip.IsLoopback()
 }
 
-// websocketHandler carries the unix socket's frames, one per text message, to
-// loopback browsers only. See docs/aterm-daemon.md.
-func (d *daemon) websocketHandler() http.Handler {
+// accessPolicy is who one listener serves. admit judges the connecting peer,
+// and origin the page that asks to open a websocket.
+type accessPolicy struct {
+	admit  func(*http.Request) error
+	origin func(*http.Request, *url.URL) bool
+}
+
+// loopbackPolicy refuses a Host that is not loopback, which is how a rebound
+// DNS name arrives, and any page that is not on loopback itself.
+func loopbackPolicy() accessPolicy {
+	return accessPolicy{
+		admit: func(r *http.Request) error {
+			if !isLoopbackHost(r.Host) {
+				return errors.New("loopback hosts only")
+			}
+			return nil
+		},
+		origin: func(_ *http.Request, origin *url.URL) bool { return isLoopbackHost(origin.Host) },
+	}
+}
+
+func (d *daemon) websocketHandler() http.Handler { return d.handler(loopbackPolicy()) }
+
+// handler serves the client's files, and upgrades a websocket to the same
+// frames as the unix socket. A browser has no pid to walk, so it types as a person.
+func (d *daemon) handler(policy accessPolicy) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		origin := r.Header.Get("Origin")
-		parsed, err := url.Parse(origin)
-		if !isLoopbackHost(r.Host) || origin == "" || err != nil || !isLoopbackHost(parsed.Host) {
-			http.Error(w, "aterm daemon: loopback browser origins only", http.StatusForbidden)
+		if err := policy.admit(r); err != nil {
+			http.Error(w, "aterm daemon: "+err.Error(), http.StatusForbidden)
 			return
 		}
-		ws, err := websocket.Accept(w, r, &websocket.AcceptOptions{OriginPatterns: loopbackOrigins})
+		if !strings.EqualFold(r.Header.Get("Upgrade"), "websocket") {
+			d.serveClient(w, r)
+			return
+		}
+		origin := r.Header.Get("Origin")
+		parsed, err := url.Parse(origin)
+		if origin == "" || err != nil || !policy.origin(r, parsed) {
+			http.Error(w, "aterm daemon: this page may not open a session socket", http.StatusForbidden)
+			return
+		}
+		// The origin was judged above, per listener, so the library's own
+		// same-host check would only repeat it.
+		ws, err := websocket.Accept(w, r, &websocket.AcceptOptions{InsecureSkipVerify: true})
 		if err != nil {
 			return
 		}
 		ws.SetReadLimit(maxFrame)
 		d.serveConn(newWebsocketConn(r.Context(), ws), 0, true)
 	})
+}
+
+// serveClient is the built aterm client, so a browser opens the daemon's own
+// address and gets a page whose websocket is same-origin.
+func (d *daemon) serveClient(w http.ResponseWriter, r *http.Request) {
+	if info, err := os.Stat(d.clientDir); d.clientDir == "" || err != nil || !info.IsDir() {
+		http.Error(w, "aterm daemon: no client is installed at "+d.clientDir, http.StatusNotFound)
+		return
+	}
+	http.FileServer(http.Dir(d.clientDir)).ServeHTTP(w, r)
 }
 
 func newWebsocketConn(ctx context.Context, ws *websocket.Conn) *conn {
@@ -94,7 +135,7 @@ func (d *daemon) listenWebsocket(address string) (*http.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	server := &http.Server{Handler: d.websocketHandler()}
+	server := &http.Server{Handler: d.handler(loopbackPolicy())}
 	go func() { _ = server.Serve(listener) }()
 	d.logf("serving websocket on ws://%s", listener.Addr())
 	return server, nil

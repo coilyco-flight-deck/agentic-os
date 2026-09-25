@@ -29,10 +29,30 @@ func newDaemonCommand() *cli.Command {
 				Usage:   "loopback address for browser clients, empty for none",
 				Sources: cli.EnvVars(daemonWSEnv),
 			},
+			&cli.StringFlag{
+				Name:    "tailnet-port",
+				Value:   "7419",
+				Usage:   "HTTPS port on this node's tailnet address, empty for none",
+				Sources: cli.EnvVars(daemonTailnetPortEnv),
+			},
+			&cli.StringSliceFlag{
+				Name:    "allow-tags",
+				Value:   defaultAllowTags,
+				Usage:   "tailnet tags whose devices may attach, besides this node owner's own",
+				Sources: cli.EnvVars(daemonAllowTagsEnv),
+			},
+			&cli.StringFlag{Name: "client-dir", Value: defaultClientDir(), Usage: "built aterm client served at /"},
 			&cli.DurationFlag{Name: "idle", Value: daemonIdle, Usage: "exit after this long with no session and no client"},
 		},
 		Action: func(_ context.Context, cmd *cli.Command) error {
-			return runDaemon(cmd.String("socket"), cmd.String("websocket"), cmd.Duration("idle"), cmd.Root().ErrWriter)
+			return runDaemon(daemonOptions{
+				Socket:      cmd.String("socket"),
+				Websocket:   cmd.String("websocket"),
+				TailnetPort: cmd.String("tailnet-port"),
+				AllowTags:   cmd.StringSlice("allow-tags"),
+				ClientDir:   cmd.String("client-dir"),
+				Idle:        cmd.Duration("idle"),
+			}, cmd.Root().ErrWriter)
 		},
 	}
 }

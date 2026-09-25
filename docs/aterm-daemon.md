@@ -42,7 +42,7 @@ aterm mcp                             # list_agents, send_message, ask_choice
 
 **A program that asked for bracketed paste gets the message as one paste, then Enter 300ms later**, since a TUI reading a paste as a burst takes an Enter that arrives with it as a newline. Without bracketed paste, lines are joined with spaces so a newline cannot submit early. The daemon reads the mode from the program's own output.
 
-**A process inside a session cannot type into one.** The daemon reads the connecting pid from the kernel and walks its parents. A process under any session may send, which is stamped, but its raw input is refused, unless it spawned that session itself. This guards against mistakes, not a hostile same-user process, which can double-fork out of the chain.
+**A process inside a session cannot type into one.** The daemon reads the connecting pid from the kernel and walks its parents. Such a process may send, stamped, but not type, unless it spawned that session. This guards against mistakes, not a hostile same-user process, which can double-fork out of the chain.
 
 ## Per-harness delivery
 
@@ -64,8 +64,8 @@ Observed on 2026-09-25 in real aterm windows: a claude seat sent to a codex seat
 
 * `ask` (from `aterm ask` or the `ask_choice` MCP tool) takes a `question`, `options` of `label` and `description`, `header`, `allow_other`, and `multi`. The daemon stamps the asker from its token and pushes `ask` to subscribers, replayed on subscribe. A client's `answer` (`ask_id`, `picks`, `text`) or `cancel_ask` settles it, and `asked` tells every client to drop the card. An asker leaving cancels its asks, and 15 minutes times one out. An answer is Kai's input, so it takes the typing guard.
 
-**Browsers attach over a loopback websocket**, `127.0.0.1:7419` by default, moved by `--websocket` or `ATERM_DAEMON_WS`, off when empty. A non-loopback address is refused until client auth exists. A browser applies no CORS to a websocket, so before the upgrade the daemon refuses a missing Origin, a non-loopback Origin, and a non-loopback Host (a rebound DNS name). A browser has no pid to walk, so it types as a person.
+**Browsers get the client from `--client-dir` (`~/.local/share/aterm/client`) at `/`, and a websocket there.** Loopback is `127.0.0.1:7419` (`--websocket`), refusing a non-loopback Host or Origin. The tailnet is HTTPS on this node's tailnet name, port 7419 (`--tailnet-port`, empty for none), certified by `tailscale cert`. `tailscale whois` admits a peer, never the request: this node owner's untagged device, or one tagged `tag:physical` (`--allow-tags`), mirroring the tailnet's SSH grant between physical devices. A websocket opens only from the page the daemon served.
 
 ## Not built yet
 
-Tailnet reach (listener, client auth, discovery), the MCP Apps gateway, and the streamed browser, on teable:coilyco/agentic-os#8220. Projecting `aterm mcp` into harness registries is teable:coilyco/agentic-os-kai#8241.
+The MCP Apps gateway and the streamed browser, on teable:coilyco/agentic-os#8220.
