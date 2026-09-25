@@ -41,17 +41,24 @@ func newDaemonCommand() *cli.Command {
 				Usage:   "tailnet tags whose devices may attach, besides this node owner's own",
 				Sources: cli.EnvVars(daemonAllowTagsEnv),
 			},
+			&cli.StringSliceFlag{
+				Name:    "allow-origins",
+				Value:   defaultAllowOrigins,
+				Usage:   "hosted client pages that may open a session socket on the tailnet",
+				Sources: cli.EnvVars(daemonAllowOrigins),
+			},
 			&cli.StringFlag{Name: "client-dir", Value: defaultClientDir(), Usage: "built aterm client served at /"},
 			&cli.DurationFlag{Name: "idle", Value: daemonIdle, Usage: "exit after this long with no session and no client"},
 		},
 		Action: func(_ context.Context, cmd *cli.Command) error {
 			return runDaemon(daemonOptions{
-				Socket:      cmd.String("socket"),
-				Websocket:   cmd.String("websocket"),
-				TailnetPort: cmd.String("tailnet-port"),
-				AllowTags:   cmd.StringSlice("allow-tags"),
-				ClientDir:   cmd.String("client-dir"),
-				Idle:        cmd.Duration("idle"),
+				Socket:       cmd.String("socket"),
+				Websocket:    cmd.String("websocket"),
+				TailnetPort:  cmd.String("tailnet-port"),
+				AllowTags:    cmd.StringSlice("allow-tags"),
+				AllowOrigins: cmd.StringSlice("allow-origins"),
+				ClientDir:    cmd.String("client-dir"),
+				Idle:         cmd.Duration("idle"),
 			}, cmd.Root().ErrWriter)
 		},
 	}

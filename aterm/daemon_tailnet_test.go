@@ -57,7 +57,7 @@ func tailnetServer(t *testing.T, whois func(string) (tailnetPeer, error)) (strin
 		t.Fatal(err)
 	}
 	node := tailnetNode{FQDN: testFQDN, IPv4: "127.0.0.1", Owner: "kai@example.com"}
-	server := httptest.NewTLSServer(d.handler(tailnetPolicy(node, []string{"tag:physical"}, whois)))
+	server := httptest.NewTLSServer(d.handler(tailnetPolicy(node, []string{"tag:physical"}, []string{"https://coilyco.dev"}, whois)))
 	t.Cleanup(server.Close)
 	_, port, _ := net.SplitHostPort(server.Listener.Addr().String())
 	// Trust the test server's own certificate. It names example.com, and the
@@ -126,12 +126,14 @@ func TestTailnetWebsocketTakesOnlyThePageItServed(t *testing.T) {
 		defer cancel()
 		return websocket.Dial(ctx, address, &websocket.DialOptions{HTTPClient: client, HTTPHeader: http.Header{"Origin": {origin}}})
 	}
-	ws, _, err := dial(base)
-	if err != nil {
-		t.Fatalf("the daemon's own page must open a socket: %v", err)
+	for _, origin := range []string{base, "https://coilyco.dev", "https://COILYCO.dev"} {
+		ws, _, err := dial(origin)
+		if err != nil {
+			t.Fatalf("origin %q must open a socket: %v", origin, err)
+		}
+		_ = ws.CloseNow()
 	}
-	_ = ws.CloseNow()
-	for _, origin := range []string{"https://evil.example", "http://" + strings.TrimPrefix(base, "https://"), "http://localhost:5173"} {
+	for _, origin := range []string{"https://evil.example", "http://" + strings.TrimPrefix(base, "https://"), "http://localhost:5173", "http://coilyco.dev", "https://coilyco.dev.evil.example", "https://www.coilyco.dev"} {
 		if ws, response, err := dial(origin); err == nil {
 			_ = ws.CloseNow()
 			t.Fatalf("origin %q must be refused", origin)

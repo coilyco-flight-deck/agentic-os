@@ -21,6 +21,7 @@ import (
 const (
 	daemonTailnetPortEnv = "ATERM_DAEMON_TAILNET_PORT"
 	daemonAllowTagsEnv   = "ATERM_DAEMON_ALLOW_TAGS"
+	daemonAllowOrigins   = "ATERM_DAEMON_ALLOW_ORIGINS"
 	clientDirEnv         = "ATERM_CLIENT_DIR"
 	// A whois answer is reused this long, so a page load's requests make one call.
 	whoisTTL = time.Minute
@@ -29,6 +30,10 @@ const (
 // defaultAllowTags mirrors the tailnet's SSH grant between physical devices,
 // so admitting them grants nothing SSH does not. See docs/aterm-daemon.md.
 var defaultAllowTags = []string{"tag:physical"}
+
+// defaultAllowOrigins are hosted client pages that may open a session socket
+// on the tailnet, besides the page the daemon serves itself.
+var defaultAllowOrigins = []string{"https://coilyco.dev"}
 
 var tailscaleBin = "tailscale"
 
@@ -114,7 +119,7 @@ func admitPeer(peer tailnetPeer, owner string, allowTags []string) error {
 
 // tailnetPolicy asks tailscaled who each peer is rather than trusting anything
 // the request says, and serves a websocket only to the page it served itself.
-func tailnetPolicy(node tailnetNode, allowTags []string, whois func(string) (tailnetPeer, error)) accessPolicy {
+func tailnetPolicy(node tailnetNode, allowTags, allowOrigins []string, whois func(string) (tailnetPeer, error)) accessPolicy {
 	type verdict struct {
 		err     error
 		expires time.Time
@@ -146,14 +151,18 @@ func tailnetPolicy(node tailnetNode, allowTags []string, whois func(string) (tai
 			return err
 		},
 		origin: func(r *http.Request, origin *url.URL) bool {
-			return origin.Scheme == "https" && strings.EqualFold(origin.Host, r.Host)
+			if origin.Scheme != "https" {
+				return false
+			}
+			site := "https://" + strings.ToLower(origin.Host)
+			return strings.EqualFold(origin.Host, r.Host) || slices.Contains(allowOrigins, site)
 		},
 	}
 }
 
 // listenTailnet serves HTTPS on this node's tailnet address, certified by
 // tailscaled. A failure costs remote clients, never the daemon.
-func (d *daemon) listenTailnet(port string, allowTags []string, certDir string) (*http.Server, error) {
+func (d *daemon) listenTailnet(port string, allowTags, allowOrigins []string, certDir string) (*http.Server, error) {
 	node, err := readTailnetNode()
 	if err != nil {
 		return nil, err
@@ -174,7 +183,7 @@ func (d *daemon) listenTailnet(port string, allowTags []string, certDir string) 
 		return nil, err
 	}
 	server := &http.Server{
-		Handler:   d.handler(tailnetPolicy(node, allowTags, tailscaleWhois)),
+		Handler:   d.handler(tailnetPolicy(node, allowTags, allowOrigins, tailscaleWhois)),
 		TLSConfig: &tls.Config{Certificates: []tls.Certificate{cert}, MinVersion: tls.VersionTLS12},
 	}
 	go func() { _ = server.ServeTLS(listener, "", "") }()

@@ -91,8 +91,10 @@ type daemonOptions struct {
 	Websocket   string
 	TailnetPort string
 	AllowTags   []string
-	ClientDir   string
-	Idle        time.Duration
+	// AllowOrigins are hosted client pages, like https://coilyco.dev.
+	AllowOrigins []string
+	ClientDir    string
+	Idle         time.Duration
 }
 
 // runDaemon holds the lock, owns the socket, and serves until idle. A second
@@ -142,7 +144,7 @@ func runDaemon(options daemonOptions, stderr io.Writer) error {
 		}
 	}
 	if options.TailnetPort != "" {
-		server, err := d.listenTailnet(options.TailnetPort, options.AllowTags, filepath.Join(dir, "tailnet"))
+		server, err := d.listenTailnet(options.TailnetPort, options.AllowTags, options.AllowOrigins, filepath.Join(dir, "tailnet"))
 		if err != nil {
 			logf("no tailnet listener, so other devices cannot attach: %v", err)
 		} else {
