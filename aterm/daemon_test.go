@@ -399,3 +399,17 @@ func TestReadyWaitsForBracketedPasteOnAWatchedSeat(t *testing.T) {
 		t.Fatal("an unwatched seat falls back to a long quiet start")
 	}
 }
+
+func TestReplayDropsWhatATerminalWouldAnswer(t *testing.T) {
+	queries := []string{
+		"\x1b[6n", "\x1b[?6n", "\x1b[5n", "\x1b[c", "\x1b[>c", "\x1b[>0q", "\x1b[?u",
+		"\x1b[?2026$p", "\x1b[14t", "\x1b[18t",
+		"\x1b]11;?\x07", "\x1b]10;?\x1b\\", "\x1b]4;1;?\x07",
+		"\x1bP+q544e\x1b\\", "\x1bP$qm\x1b\\", "\x1b_Gi=31,a=q;AAAA\x1b\\",
+	}
+	kept := []string{"hello ", "\x1b[31mred\x1b[0m", "\x1b[?2004h", "\x1b[2J", "\x1b[8;24;80t", "\x1b]0;title\x07", " world"}
+	history := strings.Join(kept[:3], "") + strings.Join(queries, "") + strings.Join(kept[3:], "")
+	if got, want := string(withoutQueries([]byte(history))), strings.Join(kept, ""); got != want {
+		t.Fatalf("replay =\n%q\nwant\n%q", got, want)
+	}
+}

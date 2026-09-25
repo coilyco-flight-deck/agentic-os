@@ -24,7 +24,7 @@ aterm mcp                             # list_agents, send_message, ask_choice
 
 **The harness starts without agent-compose's Enter gate.** The window drew its own card, and a daemon launch has nobody at it, so `_session` sets `AGENT_COMPOSE_NO_PAUSE=1`, which an older agent-compose ignores. It also flushes unread terminal input before attaching, since a reply to the card's color query arrives there and would read as Kai typing.
 
-**A session outlives its window.** Closing the window detaches that client, and the harness keeps running until it exits or the next launch of the role replaces it. `aterm attach` reattaches from any terminal with the last megabyte of output replayed.
+**A session outlives its window.** Closing the window detaches that client, and the harness keeps running until it exits or the next launch of the role replaces it. `aterm attach` reattaches from any terminal with the last megabyte of output replayed, minus terminal queries it would answer again.
 
 **A missing daemon costs messaging, never the session.** `_session` starts the daemon when none answers. Failing that, it runs the harness directly. `aterm doctor` reports a `daemon` row, which is a warning only when the socket directory would be refused.
 

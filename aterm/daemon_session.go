@@ -27,6 +27,19 @@ const (
 	draftHold = time.Minute
 )
 
+// terminalQuery matches output a terminal answers: status, attribute, version,
+// mode, window, color, setting, capability, and kitty graphics queries.
+var terminalQuery = regexp.MustCompile("\x1b\\[(?:\\??[0-9;]*n|[>=]?[0-9;]*c|>[0-9;]*q|\\?u|\\??[0-9;]*\\$p|(?:1[13-689]|2[01])t)" +
+	"|\x1b\\](?:4;[0-9]+|1[0-9]|52;[a-z]*);\\?(?:\x07|\x1b\\\\)" +
+	"|\x1bP[$+]q[^\x1b]*\x1b\\\\" +
+	"|\x1b_G[^\x1b]*a=q[^\x1b]*\x1b\\\\")
+
+// withoutQueries is the replay a late client gets. Its terminal would answer
+// every query in the history again, and the answers would land as typed input.
+func withoutQueries(history []byte) []byte {
+	return terminalQuery.ReplaceAll(append([]byte(nil), history...), nil)
+}
+
 // decset matches a private mode set or reset. 2004 among its parameters is
 // bracketed paste, which a TUI turns on to tell a paste from typing.
 var decset = regexp.MustCompile("\x1b\\[\\?([0-9;]*)([hl])")
@@ -300,7 +313,7 @@ func (s *ptySession) attach(c *conn, replay bool) {
 	s.clients[c] = true
 	var history []byte
 	if replay {
-		history = append([]byte(nil), s.scrollback...)
+		history = withoutQueries(s.scrollback)
 	}
 	offset := s.outputOffset - int64(len(history))
 	s.mu.Unlock()
