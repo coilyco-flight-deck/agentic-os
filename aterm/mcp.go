@@ -91,6 +91,8 @@ var mcpTools = []map[string]any{
 				"to":      map[string]any{"type": "string", "description": "role slug, identity, harness, or session name"},
 				"message": map[string]any{"type": "string"},
 				"launch":  map[string]any{"type": "boolean", "description": "open the role when no session answers, and deliver into it"},
+				"new": map[string]any{"type": "boolean", "description": "open a new instance of the role even when one is live, " +
+					"deliver into it, and return its session name. `to` must be a role slug"},
 			},
 		},
 	},
@@ -192,11 +194,12 @@ func callMCPTool(name string, arguments json.RawMessage) (string, bool) {
 			To      string `json:"to"`
 			Message string `json:"message"`
 			Launch  bool   `json:"launch"`
+			New     bool   `json:"new"`
 		}
 		if err := json.Unmarshal(arguments, &params); err != nil {
 			return err.Error(), true
 		}
-		state, err := sendMessage(params.To, params.Message, params.Launch)
+		state, err := sendMessage(params.To, params.Message, params.Launch, params.New)
 		if err != nil {
 			return err.Error(), true
 		}

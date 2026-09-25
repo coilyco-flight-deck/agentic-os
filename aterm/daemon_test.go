@@ -372,6 +372,70 @@ func TestDaemonRunsTwoInstancesOfOneRoleSideBySide(t *testing.T) {
 	}
 }
 
+// A new-instance send skips the live session of its role, and each fresh
+// spawn takes one such send, so two asked at once land in two instances.
+func TestDaemonNewDeliversIntoAFreshInstanceNotTheLiveOne(t *testing.T) {
+	testDaemon(t)
+	sender := dialTest(t)
+	sender.spawn("eng-platform-beetle-ox", "eng-platform", "Beetle-Ox", `echo TOKEN=$ATERM_SESSION_TOKEN; sleep 60`)
+	token := sender.token()
+	old := dialTest(t)
+	old.spawn("frontend-eng-imp-dragonfly-ab84", "frontend-eng", "Imp-Dragonfly", `printf 'OLD\033[?2004h\n'; cat`)
+	old.until("OLD")
+	c := dialTest(t)
+	for _, body := range []string{"first-ask", "second-ask"} {
+		reply, err := c.c.request(frame{Type: "send", Token: token, Target: "frontend-eng", Body: body, New: true})
+		if err != nil {
+			t.Fatalf("send %s: %v", body, err)
+		}
+		if reply.Message.State != "launching" || reply.Message.Session != "" {
+			t.Fatalf("a new-instance send should wait for a launch, got %+v", *reply.Message)
+		}
+	}
+	for _, instance := range []struct{ name, body string }{
+		{"frontend-eng-imp-dragonfly-ab85", "first-ask"},
+		{"frontend-eng-imp-dragonfly-ab86", "second-ask"},
+	} {
+		fresh := dialTest(t)
+		fresh.spawn(instance.name, "frontend-eng", "Imp-Dragonfly", `printf 'UP\033[?2004h\n'; cat`)
+		fresh.until(instance.body)
+	}
+	sendAs(t, token, "frontend-eng-imp-dragonfly-ab84", "marker")
+	old.until("marker")
+	if output := old.output.String(); strings.Contains(output, "-ask") {
+		t.Fatalf("the live instance should get no new-instance send:\n%q", output)
+	}
+	reply, err := c.c.request(frame{Type: "send", Token: token, Target: "frontend-eng-imp-dragonfly-ab84", Body: "x", New: true})
+	if err == nil || reply.Code != exitUsage {
+		t.Fatalf("new on a session name should be refused with exit 2, got %v (code %d)", err, reply.Code)
+	}
+}
+
+// The sender learns which instance took a launching send, so it can address
+// the new one by name afterwards.
+func TestAwaitSessionNamesTheInstanceThatTookTheSend(t *testing.T) {
+	testDaemon(t)
+	sender := dialTest(t)
+	sender.spawn("eng-platform-beetle-ox", "eng-platform", "Beetle-Ox", `echo TOKEN=$ATERM_SESSION_TOKEN; sleep 60`)
+	token := sender.token()
+	watch := dialTest(t)
+	if !slices.Contains(watch.c.features, sendNewFeature) {
+		t.Fatalf("the daemon should advertise %s, or a client refuses to send new", sendNewFeature)
+	}
+	if err := watch.c.write(frame{Type: "subscribe", ID: "s", Channel: "sessions"}); err != nil {
+		t.Fatalf("subscribe: %v", err)
+	}
+	reply, err := dialTest(t).c.request(frame{Type: "send", Token: token, Target: "scientist", Body: "hi", New: true})
+	if err != nil {
+		t.Fatalf("send: %v", err)
+	}
+	dialTest(t).spawn("scientist-evie-cd12", "scientist", "Evie", `sleep 60`)
+	state := awaitSession(watch.c, *reply.Message, 10*time.Second)
+	if state.Session != "scientist-evie-cd12" {
+		t.Fatalf("awaitSession = %+v, want the fresh instance named", state)
+	}
+}
+
 func TestDaemonRefusesANameALiveSessionHolds(t *testing.T) {
 	testDaemon(t)
 	first := dialTest(t)

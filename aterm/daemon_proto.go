@@ -35,7 +35,9 @@ type frame struct {
 	ID      string `json:"id,omitempty"`
 	Format  string `json:"format,omitempty"`
 	Version string `json:"version,omitempty"`
-	Session string `json:"session,omitempty"`
+	// Features lists what the daemon answers beyond the format, in welcome.
+	Features []string `json:"features,omitempty"`
+	Session  string   `json:"session,omitempty"`
 
 	// spawn
 	Role     string   `json:"role,omitempty"`
@@ -59,6 +61,8 @@ type frame struct {
 	Target string `json:"target,omitempty"`
 	Body   string `json:"body,omitempty"`
 	Launch bool   `json:"launch,omitempty"`
+	// New opens a fresh instance of the role even when one is live.
+	New bool `json:"new,omitempty"`
 
 	// replies and events
 	Message  *peerMessage  `json:"message,omitempty"`
@@ -117,7 +121,12 @@ type conn struct {
 	writeLine func([]byte) error
 	closer    func() error
 	mu        sync.Mutex
+	features  []string
 }
+
+// sendNewFeature is how a client knows the daemon reads `new` on a send. A
+// daemon predating it ignores the field and delivers to the live session.
+const sendNewFeature = "send-new"
 
 // newConn frames a stream as one JSON object per line.
 func newConn(raw net.Conn) *conn {
@@ -230,6 +239,7 @@ func dialDaemon(start bool) (*conn, error) {
 		return nil, fmt.Errorf("the aterm daemon speaks %q, this aterm speaks %s: %s",
 			reply.Format, daemonFormat, reply.Error)
 	}
+	c.features = reply.Features
 	return c, nil
 }
 

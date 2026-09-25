@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"slices"
 	"strings"
 	"time"
 
@@ -74,6 +75,7 @@ func newSendCommand() *cli.Command {
 			"It waits while Kai is typing in the target and lands after her draft.",
 		Flags: []cli.Flag{
 			&cli.BoolFlag{Name: "launch", Usage: "when no session answers to a role, open one and deliver into it"},
+			&cli.BoolFlag{Name: "new", Usage: "open a new instance of the role even when one is live, and deliver into it"},
 			&cli.BoolFlag{Name: "json", Usage: "print the message state as JSON"},
 		},
 		Action: func(_ context.Context, cmd *cli.Command) error {
@@ -89,7 +91,7 @@ func newSendCommand() *cli.Command {
 				}
 				body = string(raw)
 			}
-			state, err := sendMessage(args[0], body, cmd.Bool("launch"))
+			state, err := sendMessage(args[0], body, cmd.Bool("launch"), cmd.Bool("new"))
 			if err != nil {
 				return err
 			}
@@ -106,7 +108,7 @@ func newSendCommand() *cli.Command {
 
 // sendMessage is the one path both front doors take, the CLI and the MCP
 // tool, so the two cannot drift.
-func sendMessage(target, body string, launch bool) (peerMessage, error) {
+func sendMessage(target, body string, launch, fresh bool) (peerMessage, error) {
 	token := strings.TrimSpace(os.Getenv(sessionTokenEnv))
 	if token == "" {
 		return peerMessage{}, withExit(exitUsage, fmt.Errorf(
@@ -117,7 +119,11 @@ func sendMessage(target, body string, launch bool) (peerMessage, error) {
 		return peerMessage{}, withExit(exitMissing, err)
 	}
 	defer c.Close()
-	reply, err := c.request(frame{Type: "send", Token: token, Target: target, Body: body, Launch: launch})
+	if fresh && !slices.Contains(c.features, sendNewFeature) {
+		return peerMessage{}, fmt.Errorf("the running aterm daemon predates new-instance sends and would deliver " +
+			"to the live session. It restarts on the upgraded binary after five idle minutes")
+	}
+	reply, err := c.request(frame{Type: "send", Token: token, Target: target, Body: body, Launch: launch, New: fresh})
 	if err != nil {
 		if reply.Code != 0 {
 			return peerMessage{}, withExit(reply.Code, err)
@@ -128,12 +134,45 @@ func sendMessage(target, body string, launch bool) (peerMessage, error) {
 		return peerMessage{}, fmt.Errorf("the daemon answered without a message state")
 	}
 	state := *reply.Message
-	if state.State == "launching" {
-		if err := launchRole(target, ""); err != nil {
-			return state, fmt.Errorf("the message waits for %s, but opening it failed: %w", target, err)
+	if state.State != "launching" {
+		return state, nil
+	}
+	// Subscribe before launching, so the adoption cannot land unseen.
+	watch, err := dialDaemon(false)
+	if err == nil {
+		defer watch.Close()
+		err = watch.write(frame{Type: "subscribe", ID: randomID(6), Channel: "sessions"})
+	}
+	if launchErr := launchRole(target, ""); launchErr != nil {
+		return state, fmt.Errorf("the message waits for %s, but opening it failed: %w", target, launchErr)
+	}
+	if err != nil {
+		return state, nil
+	}
+	return awaitSession(watch, state, adoptWait), nil
+}
+
+// adoptWait bounds how long a launching send waits to learn which session
+// took it. The daemon keeps holding the message for launchWait after this.
+const adoptWait = 45 * time.Second
+
+// awaitSession reads the sessions channel until the daemon hands the message
+// to a session, so the caller learns the new instance's name.
+func awaitSession(watch *conn, state peerMessage, limit time.Duration) peerMessage {
+	_ = watch.raw.SetReadDeadline(time.Now().Add(limit))
+	for {
+		event, err := watch.read()
+		if err != nil {
+			return state
+		}
+		if event.Type != "message" || event.Message == nil || event.Message.ID != state.ID {
+			continue
+		}
+		state = *event.Message
+		if state.Session != "" || state.State == "failed" {
+			return state
 		}
 	}
-	return state, nil
 }
 
 // launchRole opens the role the way a person would, through this binary, so

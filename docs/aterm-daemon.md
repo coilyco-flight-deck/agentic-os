@@ -24,7 +24,7 @@ aterm mcp                             # list_agents, send_message, ask_choice
 
 **The harness starts without agent-compose's Enter gate.** The window drew its own card, and a daemon launch has nobody at it, so `_session` sets `AGENT_COMPOSE_NO_PAUSE=1`. It also flushes unread terminal input before attaching, since a reply to the card's color query arrives there and would read as Kai typing. agent-compose's `ESC ] 7750 ; agent-compose ; degraded=<steps> BEL` becomes the session's `degraded` field.
 
-**A session outlives its window.** Closing the window detaches that client, and the harness keeps running until it exits. `aterm attach` reattaches from any terminal with the last megabyte of output replayed, minus terminal queries it would answer again.
+**A session outlives its window.** Closing the window detaches that client, and the harness runs on. `aterm attach` reattaches from any terminal with the last megabyte of output replayed, minus terminal queries it would answer again.
 
 **A missing daemon costs messaging, never the session.** `_session` starts the daemon when none answers. Failing that, it runs the harness directly. `aterm doctor` reports a `daemon` row, which is a warning only when the socket directory would be refused.
 
@@ -34,21 +34,21 @@ aterm mcp                             # list_agents, send_message, ask_choice
 
 **The sender is stamped by the daemon, never declared.** Each spawn gets a fresh `ATERM_SESSION_TOKEN` in its environment, replacing any inherited one. `send` presents it, and the daemon resolves it to the seat and types `[from <role> <identity>] <body>`. A token the daemon did not issue exits 2. Text a person types carries no envelope.
 
-**A body cannot forge a second envelope.** A body line opening with `[from `, after leading space, gets a `\` in front. Every C0 control byte but tab, DEL, and C1 control is written in caret or `<U+XXXX>` notation, since an escape byte would end a bracketed paste and send the rest as keys. The client marks stamped rows by matching the envelope, so this escaping is required.
+**A body cannot forge a second envelope.** A body line opening with `[from `, after leading space, gets a `\` in front. Every C0 control byte but tab, DEL, and C1 control is written in caret or `<U+XXXX>` notation, since an escape byte would end a bracketed paste and send the rest as keys. The client matches the envelope, so this is required.
 
-**Targets resolve in tiers**: exact session name, then role slug, then identity, then harness. The first tier with a match wins, several matches in it refuse and name them, and none exits 3 with the live sessions listed. `--launch` on a role slug opens the role through `aterm <role>` and holds the message up to three minutes for it.
+**Targets resolve in tiers**: exact session name, then role slug, then identity, then harness. The first tier with a match wins, several matches in it refuse and name them, and none exits 3 with the live sessions listed. `--launch` on a role slug opens the role through `aterm <role>` and holds the message up to three minutes for it. `--new` (MCP `new`) always opens another instance, one per message, and names it. A client refuses it unless `welcome` lists `send-new`, since an older daemon delivers to the live one. teable:coilyco/agentic-os#8264
 
 **Delivery serializes with the keyboard.** One lock covers every PTY write, so a message never interleaves with keystrokes. A message is `queued` until the target is ready, `held` while Kai typed in the last 1.5 seconds or has a draft touched in the last minute, then `delivered` or `failed`. Enter, Ctrl-C, or Ctrl-U clear the draft, and a held message lands after it.
 
-**A program that asked for bracketed paste gets the message as one paste, then Enter 300ms later**, since a TUI reading a paste as a burst takes an Enter that arrives with it as a newline. Without bracketed paste, lines are joined with spaces so a newline cannot submit early. The daemon reads the mode from the program's own output.
+**A program that asked for bracketed paste gets the message as one paste, then Enter 300ms later**, since an Enter inside the paste reads as a newline. Without bracketed paste, lines are joined with spaces so a newline cannot submit early. The daemon reads the mode from the program's own output.
 
-**A process inside a session cannot type into one.** The daemon reads the connecting pid from the kernel and walks its parents. Such a process may send, stamped, but not type, unless it spawned that session. It guards against mistakes, not a same-user process that double-forks out.
+**A process inside a session cannot type into one.** The daemon reads the connecting pid from the kernel and walks its parents. Such a process may send, stamped, but not type, unless it spawned that session. It guards against mistakes, not a double-forking process.
 
 ## Per-harness delivery
 
-Observed on 2026-09-25 in real aterm windows: a claude seat sent to a codex seat, and codex answered back, each `delivered` within seconds.
+Observed 2026-09-25: a claude seat and a codex seat messaged each other, each `delivered` within seconds.
 
-* **claude, codex v0.156.1** - both turn bracketed paste on at their prompt and take the stamped message as one paste, submitted on the delayed Enter. Codex's shell rebuilds `PATH` from a login shell, so it runs the Homebrew `aterm`. Mid-turn queuing is unverified for codex.
+* **claude, codex v0.156.1** - both turn bracketed paste on at their prompt and take the stamped message as one paste, submitted on the delayed Enter. Mid-turn queuing is unverified for codex.
 * **goose, opencode** - unverified. They fall back to ready after 30 quiet seconds.
 
 **Ready means bracketed paste for claude and codex, never a quiet screen**, since a gate or a slow start is quiet too.
@@ -58,7 +58,7 @@ Observed on 2026-09-25 in real aterm windows: a claude seat sent to a codex seat
 `aterm.daemon.v1` is one JSON object per line over the socket, and one per text message over the websocket. Both sides open with `hello` and `welcome` naming the format, and a mismatch refuses. Requests carry an `id` echoed on the reply or on an `error` with `code`.
 
 * `spawn`, `attach` (optional `replay`), `detach`, `input` and `output` (base64 `data`), `resize`, `exit` with `code`.
-* `send` answers `sent` with the message state, waiting up to 3 seconds for delivery.
+* `send` answers `sent` with the message state, waiting up to 3 seconds for delivery unless `launching`.
 * `list` answers `sessions`. `subscribe` to channel `sessions` pushes the roster on every change, and `message` events carry each state change, never the body, which only the target's terminal receives.
 * `whoami` resolves a token to its session. `roster` answers with `aterm.roster.v1`, the launchable roles `aterm --list --json` prints, read fresh per request. `launch` with a `role` and optional `seat` opens it as `aterm <role> [seat]` would, answering `launched`.
 

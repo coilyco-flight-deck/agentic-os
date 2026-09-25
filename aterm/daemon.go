@@ -217,7 +217,7 @@ func (d *daemon) serveConn(c *conn, pid int, browser bool) {
 		_ = c.write(frame{Type: "welcome", Format: daemonFormat, Error: "unsupported format " + hello.Format})
 		return
 	}
-	if err := c.write(frame{Type: "welcome", Format: daemonFormat, Version: version, PID: os.Getpid()}); err != nil {
+	if err := c.write(frame{Type: "welcome", Format: daemonFormat, Version: version, PID: os.Getpid(), Features: []string{sendNewFeature}}); err != nil {
 		return
 	}
 	d.mu.Lock()
@@ -404,10 +404,14 @@ func (d *daemon) spawn(message frame) (*ptySession, error) {
 	d.mu.Lock()
 	d.sessions[name] = s
 	d.tokens[s.token] = s
+	// A fresh instance answers one new-instance send, so two asked for at once
+	// open two sessions rather than both landing in the first.
 	var adopted []*pendingSend
+	tookFresh := false
 	kept := d.orphans[:0]
 	for _, orphan := range d.orphans {
-		if orphan.target == s.role {
+		if orphan.target == s.role && (!orphan.fresh || !tookFresh) {
+			tookFresh = tookFresh || orphan.fresh
 			adopted = append(adopted, orphan)
 			continue
 		}
@@ -437,7 +441,6 @@ func (d *daemon) forget(s *ptySession) {
 }
 
 // send resolves the sender from its token and never from anything it says.
-// The reply waits briefly so a message delivered at once reports delivered.
 func (d *daemon) send(c *conn, message frame) error {
 	sender := d.byToken(message.Token)
 	if sender == nil {
@@ -458,6 +461,18 @@ func (d *daemon) send(c *conn, message frame) error {
 		text: envelope(sender.role, sender.identity, message.Body),
 		done: make(chan struct{}),
 		d:    d,
+	}
+	if message.New {
+		if !safeRoleSlug(message.Target) || d.session(message.Target) != nil {
+			return withExit(exitUsage, fmt.Errorf("new opens an instance of a role, and %q is not a role slug", message.Target))
+		}
+		pending.target, pending.fresh = message.Target, true
+		pending.setState("launching", "a new instance was asked to open")
+		d.mu.Lock()
+		d.orphans = append(d.orphans, pending)
+		d.mu.Unlock()
+		go d.reportSent(c, message.ID, pending)
+		return nil
 	}
 	targets := d.resolve(message.Target)
 	if slices.Contains(targets, sender) {
@@ -482,15 +497,21 @@ func (d *daemon) send(c *conn, message frame) error {
 		return withExit(exitOffRoster, fmt.Errorf("no live session answers to %q. Live: %s",
 			message.Target, d.liveNames()))
 	}
-	go func() {
+	go d.reportSent(c, message.ID, pending)
+	return nil
+}
+
+// reportSent waits briefly so a message delivered at once reports delivered.
+// A launching one answers at once, since the sender launches after the reply.
+func (d *daemon) reportSent(c *conn, id string, pending *pendingSend) {
+	if pending.snapshot().State != "launching" {
 		select {
 		case <-pending.done:
 		case <-time.After(3 * time.Second):
 		}
-		snapshot := pending.snapshot()
-		_ = c.write(frame{Type: "sent", ID: message.ID, Message: &snapshot})
-	}()
-	return nil
+	}
+	snapshot := pending.snapshot()
+	_ = c.write(frame{Type: "sent", ID: id, Message: &snapshot})
 }
 
 func (d *daemon) liveNames() string {
@@ -607,6 +628,7 @@ type pendingSend struct {
 	msg    peerMessage
 	text   string
 	target string
+	fresh  bool
 	done   chan struct{}
 	once   sync.Once
 	d      *daemon
