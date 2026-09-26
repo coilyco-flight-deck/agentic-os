@@ -67,6 +67,19 @@ wrap aosguard ops kubectl {
     can run "rollout undo" {
         describe "roll a workload back to a prior revision"
     }
+    // incident surface - one annotation key on one kind, Kai's grant (#8288).
+    // argv pins --overwrite, so no boolean flag sits beside the argN guards.
+    can run annotate {
+        argv "annotate" "--overwrite"
+        when arg0 matches externalsecret
+        when arg2 matches "force-sync=*" "force-sync/*=*"
+        deny-when arg3 matches "*"
+        allow-flag --namespace
+        allow-flag --context
+        value-flag --namespace
+        value-flag --context
+        describe "force an ExternalSecret to reconcile: `annotate externalsecret <name> force-sync[/<suffix>]=<value> --namespace <ns>`; --overwrite is always applied; no other kind or key"
+    }
     // intentionally unexposed - destructive or shell-equivalent
     never run delete
     never run exec
