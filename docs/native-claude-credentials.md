@@ -89,7 +89,7 @@ One shut, two open:
 
 The live-infrastructure CLI denies (`gcloud`, `kubectl`, `helm`, `terraform`,
 `gsutil`, `mongosh`, `mongo`) are **retired**, Kai's call 2026-09-14: a deny
-matched the command string, missing `just <verb>` while blocking the direct call.
+matched the command string, missing `just <verb>` while blocking the direct call. Bare `kubectl` and `helm` came back per role in the launch `--settings`: `teable:coilyco/agentic-os#8282`.
 
 * **Harness memory directory** - `Edit` against
   `**/.claude/projects/**/memory/**`, one rule that binds Write, Edit,
